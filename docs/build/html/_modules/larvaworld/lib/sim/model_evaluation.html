@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.sim.model_evaluation &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.sim.model_evaluation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.sim.model_evaluation</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.cli.argparser</span> <span class="kn">import</span> <span class="n">update_larva_groups</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">NestedConf</span><span class="p">,</span> <span class="n">PositiveInteger</span><span class="p">,</span> <span class="n">class_generator</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.process.evaluation</span> <span class="kn">import</span> <span class="n">DataEvaluation</span>
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">util</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;EvalRun&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;eval_model_graphs&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;add_var_mIDs&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;adapt_6mIDs&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;adapt_3modules&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;modelConf_analysis&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">class</span> <span class="nc">EvalDataConf</span><span class="p">(</span><span class="n">DataEvaluation</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dataset</span> <span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="s1">&#39;experiment&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="s1">&#39;experiment&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="s1">&#39;grey&#39;</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dt</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;duration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">*</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;dt&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">60</span>
+
+
+
+
+<span class="k">class</span> <span class="nc">EvalConf</span><span class="p">(</span><span class="n">EvalDataConf</span><span class="p">):</span>
+    <span class="n">modelIDs</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">confID_selector</span><span class="p">(</span><span class="n">single</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">dataset_ids</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">([],</span> <span class="n">item_type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The ids for the generated datasets&#39;</span><span class="p">)</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">PositiveInteger</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;# agents/group&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Number of agents per model ID&#39;</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># mIDs = self.modelIDs</span>
+        <span class="c1"># dIDs=self.dataset_ids</span>
+        <span class="c1"># Nm=len(mIDs)</span>
+        <span class="c1"># self.larva_groups = reg.lgs(sample=self.refID, mIDs=mIDs, ids=dIDs, cs=aux.N_colors(Nm), expand=True, N=self.N)</span>
+
+
+
+<div class="viewcode-block" id="EvalRun"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/model_evaluation.html#larvaworld.lib.sim.model_evaluation.EvalRun">[docs]</a><span class="k">class</span> <span class="nc">EvalRun</span><span class="p">(</span><span class="n">EvalConf</span><span class="p">,</span> <span class="n">reg</span><span class="o">.</span><span class="n">SimConfiguration</span><span class="p">):</span>
+
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">enrichment</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Simulation mode &#39;Eval&#39; compares/evaluates different models against a reference dataset obtained by a real or simulated experiment.</span>
+
+
+<span class="sd">        Args:</span>
+<span class="sd">            parameters: Dictionary of configuration parameters to be passed to the ABM model</span>
+<span class="sd">            dataset: The stored dataset used as reference to evaluate the performance of the simulated models. If not specified it is retrieved using either the storage path (parameters.dir) or the respective unique reference ID (parameters.RefID)</span>
+<span class="sd">            dur: Duration of the simulation. If not specifies defaults to the reference dataset duration.</span>
+<span class="sd">            experiment: The type of experiment. Defaults to &#39;dispersion&#39;</span>
+<span class="sd">            **kwargs: Arguments passed to parent class</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">runtype</span><span class="o">=</span><span class="s1">&#39;Eval&#39;</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">show</span> <span class="o">=</span> <span class="n">show</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enrichment</span> <span class="o">=</span> <span class="n">enrichment</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">figs</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;errors&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s1">&#39;hist&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s1">&#39;boxplot&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s1">&#39;stride_cycle&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s1">&#39;loco&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="p">{},</span>
+                                  <span class="s1">&#39;models&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;table&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s1">&#39;summary&#39;</span><span class="p">:</span> <span class="p">{}}})</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_plot_dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_dir</span><span class="si">}</span><span class="s1">/errors&#39;</span>
+
+
+<div class="viewcode-block" id="EvalRun.simulate"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/model_evaluation.html#larvaworld.lib.sim.model_evaluation.EvalRun.simulate">[docs]</a>    <span class="k">def</span> <span class="nf">simulate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">conf</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Exp</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
+        <span class="n">conf</span><span class="o">.</span><span class="n">larva_groups</span> <span class="o">=</span> <span class="n">update_larva_groups</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">larva_groups</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">,</span> <span class="n">mIDs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">modelIDs</span><span class="p">,</span> <span class="n">dIDs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_ids</span><span class="p">,</span>
+                                                <span class="n">sample</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">refID</span><span class="p">)</span>
+
+
+        <span class="c1"># mIDs = self.modelIDs</span>
+        <span class="c1"># dIDs=self.dataset_ids</span>
+        <span class="n">Nm</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modelIDs</span><span class="p">)</span>
+        <span class="n">kws</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;dt&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span>
+            <span class="s1">&#39;duration&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">config</span>
+
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">offline</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simulating offline </span><span class="si">{</span><span class="n">Nm</span><span class="si">}</span><span class="s1"> models : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_ids</span><span class="si">}</span><span class="s1"> with </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="si">}</span><span class="s1"> larvae each&#39;</span><span class="p">)</span>
+            <span class="n">tor_durs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">ii</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s1">&#39;tortuosity&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:])</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">s_pars</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">e_pars</span> <span class="k">if</span> <span class="n">ii</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;tortuosity&#39;</span><span class="p">)])</span>
+            <span class="n">dsp</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="s1">&#39;dsp&#39;</span><span class="p">)</span>
+            <span class="n">dsp_temp</span> <span class="o">=</span> <span class="p">[</span><span class="n">ii</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">dsp</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">s_pars</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">e_pars</span> <span class="k">if</span> <span class="n">ii</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">dsp</span><span class="si">}</span><span class="s1">_&#39;</span><span class="p">)]</span>
+            <span class="n">dsp_starts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">ii</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">dsp_temp</span><span class="p">])</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">dsp_stops</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">ii</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">dsp_temp</span><span class="p">])</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">sim_models</span><span class="p">(</span><span class="n">mIDs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">modelIDs</span><span class="p">,</span> <span class="n">tor_durs</span><span class="o">=</span><span class="n">tor_durs</span><span class="p">,</span>
+                                        <span class="n">dsp_starts</span><span class="o">=</span><span class="n">dsp_starts</span><span class="p">,</span> <span class="n">dsp_stops</span><span class="o">=</span><span class="n">dsp_stops</span><span class="p">,</span>
+                                        <span class="n">dataset_ids</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_ids</span><span class="p">,</span><span class="n">lgs</span><span class="o">=</span><span class="n">conf</span><span class="o">.</span><span class="n">larva_groups</span><span class="p">,</span>
+                                        <span class="n">enrichment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">enrichment</span><span class="p">,</span>
+                                        <span class="n">Nids</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">,</span> <span class="n">env_params</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">env_params</span><span class="p">,</span>
+                                        <span class="n">refDataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">data_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">larvaworld.lib.sim.single_run</span> <span class="kn">import</span> <span class="n">ExpRun</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simulating </span><span class="si">{</span><span class="n">Nm</span><span class="si">}</span><span class="s1"> models : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_ids</span><span class="si">}</span><span class="s1"> with </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="si">}</span><span class="s1"> larvae each&#39;</span><span class="p">)</span>
+
+            <span class="c1"># conf.larva_groups=self.larva_groups</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enrichment</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">conf</span><span class="o">.</span><span class="n">enrichment</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">kws0</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span>
+                <span class="s1">&#39;dir&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="p">,</span>
+                <span class="s1">&#39;store_data&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_data</span><span class="p">,</span>
+                <span class="s1">&#39;experiment&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span>
+                <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="s1">&#39;offline&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">offline</span><span class="p">,</span>
+                <span class="s1">&#39;parameters&#39;</span><span class="p">:</span> <span class="n">conf</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kws</span>
+            <span class="p">})</span>
+            <span class="n">run</span> <span class="o">=</span> <span class="n">ExpRun</span><span class="p">(</span><span class="o">**</span><span class="n">kws0</span><span class="p">)</span>
+            <span class="n">run</span><span class="o">.</span><span class="n">simulate</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span> <span class="o">=</span> <span class="n">run</span><span class="o">.</span><span class="n">datasets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analyze</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_data</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span></div>
+
+<div class="viewcode-block" id="EvalRun.get_error_plots"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/model_evaluation.html#larvaworld.lib.sim.model_evaluation.EvalRun.get_error_plots">[docs]</a>    <span class="k">def</span> <span class="nf">get_error_plots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error_dict</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;pooled&#39;</span><span class="p">):</span>
+        <span class="n">GD</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">graphs</span><span class="o">.</span><span class="n">dict</span>
+        <span class="n">label_dic</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;1:1&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;end&#39;</span><span class="p">:</span> <span class="s1">&#39;RSS error&#39;</span><span class="p">,</span> <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="sa">r</span><span class="s1">&#39;median 1:1 distribution KS$_</span><span class="si">{D}</span><span class="s1">$&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;pooled&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;end&#39;</span><span class="p">:</span> <span class="s1">&#39;Pooled endpoint values KS$_</span><span class="si">{D}</span><span class="s1">$&#39;</span><span class="p">,</span> <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="s1">&#39;Pooled distributions KS$_</span><span class="si">{D}</span><span class="s1">$&#39;</span><span class="p">}</span>
+        <span class="p">}</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">label_dic</span><span class="p">[</span><span class="n">mode</span><span class="p">]</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">norm</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_modes</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_error_dict</span><span class="p">(</span><span class="n">error_dict</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+            <span class="n">df0</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">())})</span>
+            <span class="n">kws</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;save_to&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error_plot_dir</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">norm</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;show&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">show</span>
+            <span class="p">}</span>
+            <span class="n">bars</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">tabs</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">tabs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;error table&#39;</span><span class="p">](</span><span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">labels</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+            <span class="n">tabs</span><span class="p">[</span><span class="s1">&#39;mean&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;error table&#39;</span><span class="p">](</span><span class="n">data</span><span class="o">=</span><span class="n">df0</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;average error&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+            <span class="n">bars</span><span class="p">[</span><span class="s1">&#39;full&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;error barplot&#39;</span><span class="p">](</span><span class="n">error_dict</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">evaluation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluation</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+            <span class="c1"># Summary figure with barplots and tables for both endpoint and timeseries metrics</span>
+            <span class="n">bars</span><span class="p">[</span><span class="s1">&#39;summary&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;error summary&#39;</span><span class="p">](</span><span class="n">norm_mode</span><span class="o">=</span><span class="n">norm</span><span class="p">,</span> <span class="n">eval_mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">error_dict</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>
+                                                  <span class="n">evaluation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluation</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+            <span class="n">dic</span><span class="p">[</span><span class="n">norm</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tables&#39;</span><span class="p">:</span> <span class="n">tabs</span><span class="p">,</span> <span class="s1">&#39;barplots&#39;</span><span class="p">:</span> <span class="n">bars</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(</span><span class="n">dic</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="EvalRun.analyze"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/model_evaluation.html#larvaworld.lib.sim.model_evaluation.EvalRun.analyze">[docs]</a>    <span class="k">def</span> <span class="nf">analyze</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Evaluating all models&#39;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_modes</span><span class="p">:</span>
+
+            <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_datasets</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">errors</span><span class="p">[</span><span class="n">mode</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_error_plots</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">error_dicts</span><span class="p">[</span><span class="n">mode</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span></div>
+
+<div class="viewcode-block" id="EvalRun.store"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/model_evaluation.html#larvaworld.lib.sim.model_evaluation.EvalRun.store">[docs]</a>    <span class="k">def</span> <span class="nf">store</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">aux</span><span class="o">.</span><span class="n">save_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">error_dicts</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="si">}</span><span class="s1">/error_dicts.txt&#39;</span><span class="p">)</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Results saved at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="EvalRun.plot_models"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/model_evaluation.html#larvaworld.lib.sim.model_evaluation.EvalRun.plot_models">[docs]</a>    <span class="k">def</span> <span class="nf">plot_models</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">GD</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">graphs</span><span class="o">.</span><span class="n">dict</span>
+        <span class="n">save_to</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_dir</span>
+        <span class="k">for</span> <span class="n">mID</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modelIDs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">table</span><span class="p">[</span><span class="n">mID</span><span class="p">]</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;model table&#39;</span><span class="p">](</span><span class="n">mID</span><span class="o">=</span><span class="n">mID</span><span class="p">,</span> <span class="n">save_to</span><span class="o">=</span><span class="n">save_to</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">14</span><span class="p">,</span> <span class="mi">11</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">summary</span><span class="p">[</span><span class="n">mID</span><span class="p">]</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;model summary&#39;</span><span class="p">](</span><span class="n">mID</span><span class="o">=</span><span class="n">mID</span><span class="p">,</span> <span class="n">save_to</span><span class="o">=</span><span class="n">save_to</span><span class="p">,</span> <span class="n">refID</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">refID</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EvalRun.plot_results"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/model_evaluation.html#larvaworld.lib.sim.model_evaluation.EvalRun.plot_results">[docs]</a>    <span class="k">def</span> <span class="nf">plot_results</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;hists&#39;</span><span class="p">,</span> <span class="s1">&#39;trajectories&#39;</span><span class="p">,</span> <span class="s1">&#39;dispersion&#39;</span><span class="p">,</span> <span class="s1">&#39;bouts&#39;</span><span class="p">,</span> <span class="s1">&#39;fft&#39;</span><span class="p">,</span> <span class="s1">&#39;boxplots&#39;</span><span class="p">]):</span>
+        <span class="n">GD</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">graphs</span><span class="o">.</span><span class="n">dict</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">h5_ks</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;epochs&#39;</span><span class="p">,</span> <span class="s1">&#39;angular&#39;</span><span class="p">,</span> <span class="s1">&#39;dspNtor&#39;</span><span class="p">])</span>
+        <span class="n">kws</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;datasets&#39;</span><span class="p">:</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">,</span>
+            <span class="s1">&#39;save_to&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_dir</span><span class="p">,</span>
+            <span class="s1">&#39;show&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">show</span>
+        <span class="p">}</span>
+        <span class="n">kws1</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;subfolder&#39;</span> <span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kws</span>
+        <span class="p">}</span>
+
+        <span class="n">kws2</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
+            <span class="s1">&#39;datasets&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">,</span>
+            <span class="s1">&#39;save_to&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_dir</span><span class="p">,</span>
+            <span class="s1">&#39;show&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">show</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">summary</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;eval summary&#39;</span><span class="p">](</span><span class="o">**</span><span class="n">kws2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">stride_cycle</span><span class="o">.</span><span class="n">norm</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;stride cycle&#39;</span><span class="p">](</span><span class="n">shorts</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;sv&#39;</span><span class="p">,</span> <span class="s1">&#39;fov&#39;</span><span class="p">,</span> <span class="s1">&#39;rov&#39;</span><span class="p">,</span> <span class="s1">&#39;foa&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">],</span>
+                                                         <span class="n">individuals</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;dispersion&#39;</span> <span class="ow">in</span> <span class="n">plots</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">r0</span><span class="p">,</span> <span class="n">r1</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dsp_starts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dsp_stops</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">loco</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;dsp_</span><span class="si">{</span><span class="n">r0</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">r1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span>
+                    <span class="s1">&#39;plot&#39;</span><span class="p">:</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;dispersal&#39;</span><span class="p">](</span><span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="o">**</span><span class="n">kws1</span><span class="p">),</span>
+                    <span class="s1">&#39;traj&#39;</span><span class="p">:</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;trajectories&#39;</span><span class="p">](</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;traj_</span><span class="si">{</span><span class="n">r0</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">r1</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;origin&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kws1</span><span class="p">),</span>
+                    <span class="s1">&#39;summary&#39;</span><span class="p">:</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;dispersal summary&#39;</span><span class="p">](</span><span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">),</span> <span class="o">**</span><span class="n">kws2</span><span class="p">)</span>
+                <span class="p">})</span>
+        <span class="k">if</span> <span class="s1">&#39;bouts&#39;</span> <span class="ow">in</span> <span class="n">plots</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">epochs</span><span class="o">.</span><span class="n">turn</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;epochs&#39;</span><span class="p">](</span><span class="n">turns</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">epochs</span><span class="o">.</span><span class="n">runNpause</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;epochs&#39;</span><span class="p">](</span><span class="n">stridechain_duration</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;fft&#39;</span> <span class="ow">in</span> <span class="n">plots</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">loco</span><span class="o">.</span><span class="n">fft</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;fft multi&#39;</span><span class="p">](</span><span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;hists&#39;</span> <span class="ow">in</span> <span class="n">plots</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">hist</span><span class="o">.</span><span class="n">ang</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;angular pars&#39;</span><span class="p">](</span><span class="n">half_circles</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">absolute</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">Nbins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">Npars</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                                                    <span class="n">include_rear</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kws1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">hist</span><span class="o">.</span><span class="n">crawl</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;crawl pars&#39;</span><span class="p">](</span><span class="n">pvalues</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kws1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;trajectories&#39;</span> <span class="ow">in</span> <span class="n">plots</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">loco</span><span class="o">.</span><span class="n">trajectories</span> <span class="o">=</span> <span class="n">GD</span><span class="p">[</span><span class="s1">&#39;trajectories&#39;</span><span class="p">](</span><span class="o">**</span><span class="n">kws1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;boxplots&#39;</span> <span class="ow">in</span> <span class="n">plots</span><span class="p">:</span>
+            <span class="k">pass</span></div></div>
+            <span class="c1"># self.figs.boxplot.end = self.plot_data(mode=&#39;end&#39;, type=&#39;box&#39;)</span>
+            <span class="c1"># self.figs.boxplot.step = self.plot_data(mode=&#39;step&#39;, type=&#39;box&#39;)</span>
+
+
+
+
+
+
+
+
+<span class="n">reg</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">Eval</span><span class="o">=</span><span class="n">class_generator</span><span class="p">(</span><span class="n">EvalConf</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="eval_model_graphs"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/model_evaluation.html#larvaworld.lib.sim.model_evaluation.eval_model_graphs">[docs]</a><span class="k">def</span> <span class="nf">eval_model_graphs</span><span class="p">(</span><span class="n">refID</span><span class="p">,</span> <span class="n">mIDs</span><span class="p">,</span> <span class="n">dIDs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                      <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">mIDs</span><span class="p">)</span><span class="si">}</span><span class="s1">mIDs&#39;</span>
+    <span class="k">if</span> <span class="nb">dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">dir</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Ref</span><span class="o">.</span><span class="n">getID</span><span class="p">(</span><span class="n">refID</span><span class="p">)</span><span class="si">}</span><span class="s1">/model/evaluation&#39;</span>
+
+    <span class="n">parameters</span> <span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">Eval</span><span class="p">(</span><span class="n">refID</span><span class="o">=</span><span class="n">refID</span><span class="p">,</span> <span class="n">modelIDs</span><span class="o">=</span><span class="n">mIDs</span><span class="p">,</span><span class="n">dataset_ids</span><span class="o">=</span><span class="n">dIDs</span><span class="p">,</span><span class="n">N</span><span class="o">=</span><span class="n">N</span><span class="p">)</span><span class="o">.</span><span class="n">nestedConf</span>
+
+    <span class="n">evrun</span> <span class="o">=</span> <span class="n">EvalRun</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span>
+                    <span class="nb">dir</span><span class="o">=</span><span class="nb">dir</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">evrun</span><span class="o">.</span><span class="n">simulate</span><span class="p">()</span>
+    <span class="n">evrun</span><span class="o">.</span><span class="n">plot_models</span><span class="p">()</span>
+    <span class="n">evrun</span><span class="o">.</span><span class="n">plot_results</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">evrun</span></div>
+
+
+<div class="viewcode-block" id="add_var_mIDs"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/model_evaluation.html#larvaworld.lib.sim.model_evaluation.add_var_mIDs">[docs]</a><span class="k">def</span> <span class="nf">add_var_mIDs</span><span class="p">(</span><span class="n">refID</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mID0s</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mIDs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample_ks</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">loadRef</span><span class="p">(</span><span class="n">refID</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">e</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">endpoint_data</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">config</span>
+
+    <span class="k">if</span> <span class="n">mID0s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mID0s</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">modelConfs</span><span class="o">.</span><span class="n">average</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">mIDs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mIDs</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">mID0</span><span class="si">}</span><span class="s1">_var&#39;</span> <span class="k">for</span> <span class="n">mID0</span> <span class="ow">in</span> <span class="n">mID0s</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">sample_ks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sample_ks</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;brain.crawler_params.stride_dst_mean&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;brain.crawler_params.stride_dst_std&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;brain.crawler_params.max_scaled_vel&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;brain.crawler_params.max_vel_phase&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;brain.crawler_params.freq&#39;</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="s1">&#39;sample&#39;</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sample_ks</span><span class="p">}</span>
+    <span class="n">entries</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">mID0</span><span class="p">,</span> <span class="n">mID</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">mID0s</span><span class="p">,</span> <span class="n">mIDs</span><span class="p">):</span>
+        <span class="n">m0</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">getID</span><span class="p">(</span><span class="n">mID0</span><span class="p">)</span><span class="o">.</span><span class="n">get_copy</span><span class="p">()</span>
+        <span class="c1"># m0 = reg.stored.getModel(mID0).get_copy()</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">m0</span><span class="o">.</span><span class="n">update_existingnestdict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">setID</span><span class="p">(</span><span class="n">mID</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+        <span class="n">entries</span><span class="p">[</span><span class="n">mID</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span>
+    <span class="k">return</span> <span class="n">entries</span></div>
+
+<div class="viewcode-block" id="adapt_6mIDs"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/model_evaluation.html#larvaworld.lib.sim.model_evaluation.adapt_6mIDs">[docs]</a><span class="k">def</span> <span class="nf">adapt_6mIDs</span><span class="p">(</span><span class="n">refID</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">loadRef</span><span class="p">(</span><span class="n">refID</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">e</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">endpoint_data</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">config</span>
+
+
+    <span class="n">fit_kws</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;eval_metrics&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;angular kinematics&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;fov&#39;</span><span class="p">,</span> <span class="s1">&#39;foa&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;spatial displacement&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;v_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;pau_v_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;run_v_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span>
+                                     <span class="s1">&#39;dsp_0_40_max&#39;</span><span class="p">,</span> <span class="s1">&#39;dsp_0_60_max&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;temporal dynamics&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fsv&#39;</span><span class="p">,</span> <span class="s1">&#39;ffov&#39;</span><span class="p">,</span> <span class="s1">&#39;run_tr&#39;</span><span class="p">,</span> <span class="s1">&#39;pau_tr&#39;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;cycle_curves&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fov&#39;</span><span class="p">,</span> <span class="s1">&#39;foa&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="c1"># fit_dict = GA_optimization(d = d, fit_kws=fit_kws)</span>
+    <span class="n">entries</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">mIDs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">Tmod</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NEU&#39;</span><span class="p">,</span> <span class="s1">&#39;SIN&#39;</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">Ifmod</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;PHI&#39;</span><span class="p">,</span> <span class="s1">&#39;SQ&#39;</span><span class="p">,</span> <span class="s1">&#39;DEF&#39;</span><span class="p">]:</span>
+            <span class="n">mID0</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;RE_</span><span class="si">{</span><span class="n">Tmod</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">Ifmod</span><span class="si">}</span><span class="s1">_DEF&#39;</span>
+            <span class="n">mID</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">Ifmod</span><span class="si">}</span><span class="s1">on</span><span class="si">{</span><span class="n">Tmod</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">adapt_mID</span><span class="p">(</span><span class="n">refID</span><span class="o">=</span><span class="n">refID</span><span class="p">,</span> <span class="n">mID0</span><span class="o">=</span><span class="n">mID0</span><span class="p">,</span> <span class="n">mID</span><span class="o">=</span><span class="n">mID</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
+                                   <span class="n">space_mkeys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;turner&#39;</span><span class="p">,</span> <span class="s1">&#39;interference&#39;</span><span class="p">],</span><span class="o">**</span><span class="n">fit_kws</span><span class="p">)</span>
+            <span class="n">entries</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+            <span class="n">mIDs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mID</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">entries</span><span class="p">,</span> <span class="n">mIDs</span></div>
+
+<div class="viewcode-block" id="adapt_3modules"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/model_evaluation.html#larvaworld.lib.sim.model_evaluation.adapt_3modules">[docs]</a><span class="k">def</span> <span class="nf">adapt_3modules</span><span class="p">(</span><span class="n">refID</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">loadRef</span><span class="p">(</span><span class="n">refID</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">e</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">endpoint_data</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">config</span>
+
+    <span class="n">fit_kws</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;eval_metrics&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;angular kinematics&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;fov&#39;</span><span class="p">,</span> <span class="s1">&#39;foa&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;spatial displacement&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;v_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;pau_v_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;run_v_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span>
+                                     <span class="s1">&#39;dsp_0_40_max&#39;</span><span class="p">,</span> <span class="s1">&#39;dsp_0_60_max&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;temporal dynamics&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fsv&#39;</span><span class="p">,</span> <span class="s1">&#39;ffov&#39;</span><span class="p">,</span> <span class="s1">&#39;run_tr&#39;</span><span class="p">,</span> <span class="s1">&#39;pau_tr&#39;</span><span class="p">],</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;cycle_curves&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fov&#39;</span><span class="p">,</span> <span class="s1">&#39;foa&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="c1"># fit_dict = GA_optimization(d = d, fit_kws=fit_kws)</span>
+    <span class="n">entries</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">mIDs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">Cmod</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;RE&#39;</span><span class="p">,</span> <span class="s1">&#39;SQ&#39;</span><span class="p">,</span> <span class="s1">&#39;GAU&#39;</span><span class="p">,</span> <span class="s1">&#39;CON&#39;</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">Tmod</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;NEU&#39;</span><span class="p">,</span> <span class="s1">&#39;SIN&#39;</span><span class="p">,</span> <span class="s1">&#39;CON&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">Ifmod</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;PHI&#39;</span><span class="p">,</span> <span class="s1">&#39;SQ&#39;</span><span class="p">,</span> <span class="s1">&#39;DEF&#39;</span><span class="p">]:</span>
+                <span class="n">mID0</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">Cmod</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">Tmod</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">Ifmod</span><span class="si">}</span><span class="s1">_DEF&#39;</span>
+                <span class="n">mID</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">mID0</span><span class="si">}</span><span class="s1">_fit&#39;</span>
+                <span class="n">entry</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">adapt_mID</span><span class="p">(</span><span class="n">refID</span><span class="o">=</span><span class="n">refID</span><span class="p">,</span> <span class="n">mID0</span><span class="o">=</span><span class="n">mID0</span><span class="p">,</span> <span class="n">mID</span><span class="o">=</span><span class="n">mID</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
+                                       <span class="n">space_mkeys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;crawler&#39;</span><span class="p">,</span> <span class="s1">&#39;turner&#39;</span><span class="p">,</span> <span class="s1">&#39;interference&#39;</span><span class="p">],</span><span class="o">**</span><span class="n">fit_kws</span><span class="p">)</span>
+                <span class="n">entries</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+                <span class="n">mIDs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mID</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">entries</span><span class="p">,</span> <span class="n">mIDs</span></div>
+
+
+<div class="viewcode-block" id="modelConf_analysis"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/model_evaluation.html#larvaworld.lib.sim.model_evaluation.modelConf_analysis">[docs]</a><span class="k">def</span> <span class="nf">modelConf_analysis</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">avgVSvar</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">mods3</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">config</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">endpoint_data</span>
+    <span class="n">refID</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">refID</span>
+    <span class="k">if</span> <span class="s1">&#39;modelConfs&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">modelConfs</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;average&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s1">&#39;variable&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s1">&#39;individual&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s1">&#39;3modules&#39;</span><span class="p">:</span> <span class="p">{}})</span>
+    <span class="k">if</span> <span class="n">avgVSvar</span><span class="p">:</span>
+        <span class="n">entries_avg</span><span class="p">,</span> <span class="n">mIDs_avg</span> <span class="o">=</span> <span class="n">adapt_6mIDs</span><span class="p">(</span><span class="n">refID</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">refID</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">modelConfs</span><span class="o">.</span><span class="n">average</span> <span class="o">=</span> <span class="n">entries_avg</span>
+
+        <span class="n">reg</span><span class="o">.</span><span class="n">graphs</span><span class="o">.</span><span class="n">store_model_graphs</span><span class="p">(</span><span class="n">mIDs_avg</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">dir</span><span class="p">)</span>
+        <span class="n">eval_model_graphs</span><span class="p">(</span><span class="n">refID</span><span class="p">,</span> <span class="n">mIDs</span><span class="o">=</span><span class="n">mIDs_avg</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;6mIDs_avg&#39;</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+        <span class="n">entries_var</span> <span class="o">=</span> <span class="n">add_var_mIDs</span><span class="p">(</span><span class="n">refID</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">refID</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span><span class="n">mID0s</span><span class="o">=</span><span class="n">mIDs_avg</span><span class="p">)</span>
+        <span class="n">mIDs_var</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">entries_var</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">modelConfs</span><span class="o">.</span><span class="n">variable</span> <span class="o">=</span> <span class="n">entries_var</span>
+        <span class="n">eval_model_graphs</span><span class="p">(</span><span class="n">refID</span><span class="p">,</span> <span class="n">mIDs</span><span class="o">=</span><span class="n">mIDs_var</span><span class="p">,</span>  <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;6mIDs_var&#39;</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">eval_model_graphs</span><span class="p">(</span><span class="n">refID</span><span class="p">,</span> <span class="n">mIDs</span><span class="o">=</span><span class="n">mIDs_avg</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">mIDs_var</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span> <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;3mIDs_avgVSvar1&#39;</span><span class="p">,</span>
+                          <span class="n">N</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">eval_model_graphs</span><span class="p">(</span><span class="n">refID</span><span class="p">,</span> <span class="n">mIDs</span><span class="o">=</span><span class="n">mIDs_avg</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span> <span class="o">+</span> <span class="n">mIDs_var</span><span class="p">[</span><span class="mi">3</span><span class="p">:],</span> <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;3mIDs_avgVSvar2&#39;</span><span class="p">,</span>
+                          <span class="n">N</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mods3</span><span class="p">:</span>
+        <span class="n">entries_3m</span><span class="p">,</span> <span class="n">mIDs_3m</span> <span class="o">=</span> <span class="n">adapt_3modules</span><span class="p">(</span><span class="n">refID</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">refID</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">modelConfs</span><span class="p">[</span><span class="s1">&#39;3modules&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">entries_3m</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">graphs</span><span class="o">.</span><span class="n">store_model_graphs</span><span class="p">(</span><span class="n">mIDs_3m</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">dir</span><span class="p">)</span>
+
+        <span class="n">dIDs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;NEU&#39;</span><span class="p">,</span> <span class="s1">&#39;SIN&#39;</span><span class="p">,</span> <span class="s1">&#39;CON&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">Cmod</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;RE&#39;</span><span class="p">,</span> <span class="s1">&#39;SQ&#39;</span><span class="p">,</span> <span class="s1">&#39;GAU&#39;</span><span class="p">,</span> <span class="s1">&#39;CON&#39;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">Ifmod</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;PHI&#39;</span><span class="p">,</span> <span class="s1">&#39;SQ&#39;</span><span class="p">,</span> <span class="s1">&#39;DEF&#39;</span><span class="p">]:</span>
+                <span class="n">mIDs</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">Cmod</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">Tmod</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">Ifmod</span><span class="si">}</span><span class="s1">_DEF_fit&#39;</span> <span class="k">for</span> <span class="n">Tmod</span> <span class="ow">in</span> <span class="n">dIDs</span><span class="p">]</span>
+                <span class="nb">id</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Tmod_variable_Cmod_</span><span class="si">{</span><span class="n">Cmod</span><span class="si">}</span><span class="s1">_Ifmod_</span><span class="si">{</span><span class="n">Ifmod</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="n">eval_model_graphs</span><span class="p">(</span><span class="n">mIDs</span><span class="o">=</span><span class="n">mIDs</span><span class="p">,</span> <span class="n">dIDs</span><span class="o">=</span><span class="n">dIDs</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">c</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">save_config</span><span class="p">()</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

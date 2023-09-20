@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.aux.par_aux &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.aux.par_aux</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.aux.par_aux</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;bar&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;tilde&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;wave&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sub&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sup&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;subsup&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;th&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;omega&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Delta&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sum&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;delta&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;dot&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ddot&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;circle&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;mathring&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;circledast&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;base_dtype&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+
+<div class="viewcode-block" id="bar"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.bar">[docs]</a><span class="k">def</span> <span class="nf">bar</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s1">&#39;$\bar</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+<div class="viewcode-block" id="tilde"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.tilde">[docs]</a><span class="k">def</span> <span class="nf">tilde</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s1">&#39;$\tilde</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+
+<div class="viewcode-block" id="wave"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.wave">[docs]</a><span class="k">def</span> <span class="nf">wave</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s1">&#39;$\~</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+
+<div class="viewcode-block" id="sub"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.sub">[docs]</a><span class="k">def</span> <span class="nf">sub</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s1">&#39;$</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">_</span><span class="se">{{</span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+
+<div class="viewcode-block" id="sup"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.sup">[docs]</a><span class="k">def</span> <span class="nf">sup</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s1">&#39;$</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">^</span><span class="se">{{</span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+
+<div class="viewcode-block" id="subsup"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.subsup">[docs]</a><span class="k">def</span> <span class="nf">subsup</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s1">&#39;$</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">_</span><span class="se">{{</span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="se">}}</span><span class="s1">^</span><span class="se">{{</span><span class="si">{</span><span class="n">z</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+<span class="c1">#</span>
+<span class="c1"># def hat(p):</span>
+<span class="c1">#     return f&#39;$\hat{{{p.replace(&quot;$&quot;, &quot;&quot;)}}}$&#39;</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># def ast(p):</span>
+<span class="c1">#     return f&#39;${p.replace(&quot;$&quot;, &quot;&quot;)}^{{*}}$&#39;</span>
+
+
+<div class="viewcode-block" id="th"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.th">[docs]</a><span class="k">def</span> <span class="nf">th</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">fr</span><span class="s1">&#39;$\theta_</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+<div class="viewcode-block" id="omega"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.omega">[docs]</a><span class="k">def</span> <span class="nf">omega</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">fr</span><span class="s1">&#39;$\omega_</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+
+<div class="viewcode-block" id="Delta"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.Delta">[docs]</a><span class="k">def</span> <span class="nf">Delta</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">fr</span><span class="s1">&#39;$\Delta</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+
+<div class="viewcode-block" id="sum"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.sum">[docs]</a><span class="k">def</span> <span class="nf">sum</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">fr</span><span class="s1">&#39;$\sum</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+
+<div class="viewcode-block" id="delta"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.delta">[docs]</a><span class="k">def</span> <span class="nf">delta</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">fr</span><span class="s1">&#39;$\delta</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+
+<span class="c1"># def hat_th(p):</span>
+<span class="c1">#     return fr&#39;$\hat{{\theta}}_{{{p}}}$&#39;</span>
+
+
+<div class="viewcode-block" id="dot"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.dot">[docs]</a><span class="k">def</span> <span class="nf">dot</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">fr</span><span class="s1">&#39;$\dot</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+<div class="viewcode-block" id="circle"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.circle">[docs]</a><span class="k">def</span> <span class="nf">circle</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">fr</span><span class="s1">&#39;$\mathring</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+
+<span class="c1"># def circledcirc(p):</span>
+<span class="c1">#     return f&#39;${p.replace(&quot;$&quot;, &quot;&quot;)}^{{\circledcirc}}$&#39;</span>
+
+<div class="viewcode-block" id="mathring"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.mathring">[docs]</a><span class="k">def</span> <span class="nf">mathring</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">fr</span><span class="s1">&#39;$\mathring</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+
+<div class="viewcode-block" id="circledast"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.circledast">[docs]</a><span class="k">def</span> <span class="nf">circledast</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;$</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="s1">^</span><span class="se">{{</span><span class="s1">\circledast</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+
+<span class="c1"># def odot(p):</span>
+<span class="c1">#     return f&#39;${p.replace(&quot;$&quot;, &quot;&quot;)}^{{\odot}}$&#39;</span>
+
+
+<span class="c1"># def paren(p):</span>
+<span class="c1">#     return fr&#39;$({{{p.replace(&quot;$&quot;, &quot;&quot;)}}})$&#39;</span>
+
+
+<span class="c1"># def brack(p):</span>
+<span class="c1">#     return fr&#39;$[{{{p.replace(&quot;$&quot;, &quot;&quot;)}}}]$&#39;</span>
+
+
+<div class="viewcode-block" id="ddot"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.ddot">[docs]</a><span class="k">def</span> <span class="nf">ddot</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">fr</span><span class="s1">&#39;$\ddot</span><span class="se">{{</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="si">}</span><span class="se">}}</span><span class="s1">$&#39;</span></div>
+
+
+<span class="c1"># def dot_th(p):</span>
+<span class="c1">#     return fr&#39;$\dot{{\theta}}_{{{p.replace(&quot;$&quot;, &quot;&quot;)}}}$&#39;</span>
+
+
+<span class="c1"># def ddot_th(p):</span>
+<span class="c1">#     return fr&#39;$\ddot{{\theta}}_{{{p.replace(&quot;$&quot;, &quot;&quot;)}}}$&#39;</span>
+
+
+<span class="c1"># def dot_hat_th(p):</span>
+<span class="c1">#     return fr&#39;$\dot{{\hat{{\theta}}}}_{{{p}}}$&#39;</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># def ddot_hat_th(p):</span>
+<span class="c1">#     return fr&#39;$\ddot{{\hat{{\theta}}}}_{{{p}}}$&#39;</span>
+
+
+<span class="c1"># def lin(p):</span>
+<span class="c1">#     return fr&#39;${{{p.replace(&quot;$&quot;, &quot;&quot;)}}}_{{l}}$&#39;</span>
+
+
+
+<div class="viewcode-block" id="base_dtype"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/par_aux.html#larvaworld.lib.aux.par_aux.base_dtype">[docs]</a><span class="k">def</span> <span class="nf">base_dtype</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]:</span>
+        <span class="n">base_t</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="k">elif</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]:</span>
+        <span class="n">base_t</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">base_t</span> <span class="o">=</span> <span class="n">t</span>
+    <span class="k">return</span> <span class="n">base_t</span></div>
+
+
+
+
+
+
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.plot.deb &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.plot.deb</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.plot.deb</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span><span class="p">,</span> <span class="n">ticker</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">signal</span>
+
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span><span class="p">,</span> <span class="n">plot</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;plot_gut&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;plot_food_amount&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;plot_debs&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;plot_EEB_vs_food_quality&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="plot_gut"><a class="viewcode-back" href="../../../../content/larvaworld/lib/plot/deb.html#larvaworld.lib.plot.deb.plot_gut">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">graph</span><span class="p">(</span><span class="s1">&#39;gut&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">plot_gut</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">AutoPlot</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;gut&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">P</span><span class="o">.</span><span class="n">plot_quantiles</span><span class="p">(</span><span class="n">par</span><span class="o">=</span><span class="s1">&#39;gut_occupancy&#39;</span><span class="p">,</span> <span class="n">coeff</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">ylab</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">% g</span><span class="s1">ut occupied&#39;</span><span class="p">,</span><span class="n">ylim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">])</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    x = P.trange()</span>
+<span class="sd">    for l, d, c in P.data_palette:</span>
+<span class="sd">        df = d.step_data[&#39;gut_occupancy&#39;] * 100</span>
+<span class="sd">        plot.plot_quantiles(df=df, x=x, axis=P.axs[0], color_shading=c, label=l)</span>
+<span class="sd">    P.conf_ax(xlab=&#39;time, $min$&#39;, ylab=&#39;% gut occupied&#39;,</span>
+<span class="sd">              xlim=P.tlim, ylim=[0, 100], xMaxN=5, yMaxN=5, leg_loc=&#39;upper left&#39;)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="n">P</span><span class="o">.</span><span class="n">adjust</span><span class="p">((</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.005</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">P</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="plot_food_amount"><a class="viewcode-back" href="../../../../content/larvaworld/lib/plot/deb.html#larvaworld.lib.plot.deb.plot_food_amount">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">graph</span><span class="p">(</span><span class="s1">&#39;food intake (timeplot)&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">plot_food_amount</span><span class="p">(</span><span class="n">filt_amount</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">scaled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;food_intake&#39;</span>
+    <span class="n">ylab</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;Cumulative food intake $(mg)$&#39;</span>
+    <span class="n">par</span> <span class="o">=</span> <span class="s1">&#39;ingested_food_volume&#39;</span>
+    <span class="k">if</span> <span class="n">scaled</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;scaled_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">ylab</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;Cumulative food intake as </span><span class="si">% la</span><span class="s1">rval mass&#39;</span>
+        <span class="n">par</span> <span class="o">=</span> <span class="s1">&#39;ingested_body_mass_ratio&#39;</span>
+    <span class="k">if</span> <span class="n">filt_amount</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;filtered_</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">ylab</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;Food intake $(mg)$&#39;</span>
+    <span class="k">if</span> <span class="n">filt_amount</span> <span class="ow">and</span> <span class="n">scaled</span><span class="p">:</span>
+        <span class="n">ylab</span> <span class="o">=</span> <span class="s1">&#39;Food intake as </span><span class="si">% la</span><span class="s1">rval mass&#39;</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">AutoPlot</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">lab</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">P</span><span class="o">.</span><span class="n">data_palette</span><span class="p">:</span>
+        <span class="n">dst_df</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">step_data</span><span class="p">[</span><span class="n">par</span><span class="p">]</span>
+        <span class="n">dst_m</span> <span class="o">=</span> <span class="n">dst_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s1">&#39;Step&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">dst_u</span> <span class="o">=</span> <span class="n">dst_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s1">&#39;Step&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span>
+        <span class="n">dst_b</span> <span class="o">=</span> <span class="n">dst_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s1">&#39;Step&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">filt_amount</span><span class="p">:</span>
+            <span class="n">sos</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Wn</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s1">&#39;lowpass&#39;</span><span class="p">,</span> <span class="n">analog</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">P</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;sos&#39;</span><span class="p">)</span>
+            <span class="n">dst_m</span> <span class="o">=</span> <span class="n">dst_m</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span>
+            <span class="n">dst_m</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">dst_m</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">sosfiltfilt</span><span class="p">(</span><span class="n">sos</span><span class="p">,</span> <span class="n">dst_m</span><span class="p">)</span>
+            <span class="n">dst_u</span> <span class="o">=</span> <span class="n">dst_u</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span>
+            <span class="n">dst_u</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">dst_u</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">sosfiltfilt</span><span class="p">(</span><span class="n">sos</span><span class="p">,</span> <span class="n">dst_u</span><span class="p">)</span>
+            <span class="n">dst_b</span> <span class="o">=</span> <span class="n">dst_b</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span>
+            <span class="n">dst_b</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">dst_b</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">sosfiltfilt</span><span class="p">(</span><span class="n">sos</span><span class="p">,</span> <span class="n">dst_b</span><span class="p">)</span>
+        <span class="n">plot</span><span class="o">.</span><span class="n">plot_mean_and_range</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">P</span><span class="o">.</span><span class="n">trange</span><span class="p">(),</span> <span class="n">mean</span><span class="o">=</span><span class="n">dst_m</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="n">dst_b</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="n">dst_u</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">P</span><span class="o">.</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">color_shading</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">lab</span><span class="p">)</span>
+    <span class="n">P</span><span class="o">.</span><span class="n">conf_ax</span><span class="p">(</span><span class="n">xlab</span><span class="o">=</span><span class="s1">&#39;time, $min$&#39;</span><span class="p">,</span> <span class="n">ylab</span><span class="o">=</span><span class="n">ylab</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="n">P</span><span class="o">.</span><span class="n">tlim</span><span class="p">,</span> <span class="n">xMaxN</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">leg_loc</span><span class="o">=</span><span class="s1">&#39;upper left&#39;</span><span class="p">)</span>
+    <span class="n">P</span><span class="o">.</span><span class="n">adjust</span><span class="p">((</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.005</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">P</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="plot_debs"><a class="viewcode-back" href="../../../../content/larvaworld/lib/plot/deb.html#larvaworld.lib.plot.deb.plot_debs">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">graph</span><span class="p">(</span><span class="s1">&#39;deb&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">plot_debs</span><span class="p">(</span><span class="n">deb_dicts</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">,</span> <span class="n">roversVSsitters</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">include_egg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;hours&#39;</span><span class="p">,</span> <span class="n">sim_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">force_ymin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">color_epoch_quality</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">datasets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label_epochs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">label_lifestages</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;debs&#39;</span>
+    <span class="k">if</span> <span class="n">save_to</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">save_to</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">reg</span><span class="o">.</span><span class="n">SIM_DIR</span><span class="si">}</span><span class="s1">/deb_runs&#39;</span>
+    <span class="k">if</span> <span class="n">deb_dicts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">deb_dicts</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">flatten_list</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">load_dicts</span><span class="p">(</span><span class="s1">&#39;deb&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">])</span>
+    <span class="n">Ndebs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">deb_dicts</span><span class="p">)</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">deb_dicts</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">Ndebs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)]</span>
+        <span class="n">leg_ids</span> <span class="o">=</span> <span class="n">ids</span>
+        <span class="n">leg_cols</span> <span class="o">=</span> <span class="n">cols</span>
+    <span class="k">elif</span> <span class="n">roversVSsitters</span><span class="p">:</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">temp_id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="s1">&#39;Rover&#39;</span><span class="p">):</span>
+                <span class="n">cols</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="nb">str</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="s1">&#39;Sitter&#39;</span><span class="p">):</span>
+                <span class="n">cols</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cols</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">))</span>
+                <span class="n">temp_id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="k">if</span> <span class="n">temp_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">leg_cols</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span>
+            <span class="n">leg_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">temp_id</span><span class="p">,</span> <span class="s1">&#39;Rovers&#39;</span><span class="p">,</span> <span class="s1">&#39;Sitters&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">leg_cols</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span>
+            <span class="n">leg_ids</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Rovers&#39;</span><span class="p">,</span> <span class="s1">&#39;Sitters&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.9</span> <span class="o">-</span> <span class="n">i</span><span class="p">,</span> <span class="mf">0.1</span> <span class="o">+</span> <span class="n">i</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="n">Ndebs</span><span class="p">)]</span>
+        <span class="n">leg_ids</span> <span class="o">=</span> <span class="n">ids</span>
+        <span class="n">leg_cols</span> <span class="o">=</span> <span class="n">cols</span>
+
+    <span class="n">labels0</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;mass&#39;</span><span class="p">,</span> <span class="s1">&#39;length&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;reserve&#39;</span><span class="p">,</span> <span class="s1">&#39;reserve_density&#39;</span><span class="p">,</span> <span class="s1">&#39;hunger&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;pupation_buffer&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;f&#39;</span><span class="p">,</span> <span class="s1">&#39;f_filt&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;EEB&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;M_gut&#39;</span><span class="p">,</span> <span class="s1">&#39;mol_ingested&#39;</span><span class="p">,</span> <span class="s1">&#39;M_absorbed&#39;</span><span class="p">,</span> <span class="s1">&#39;M_faeces&#39;</span><span class="p">,</span> <span class="s1">&#39;M_not_digested&#39;</span><span class="p">,</span> <span class="s1">&#39;M_not_absorbed&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;R_faeces&#39;</span><span class="p">,</span> <span class="s1">&#39;R_absorbed&#39;</span><span class="p">,</span> <span class="s1">&#39;R_not_digested&#39;</span><span class="p">,</span> <span class="s1">&#39;gut_occupancy&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;deb_p_A&#39;</span><span class="p">,</span> <span class="s1">&#39;sim_p_A&#39;</span><span class="p">,</span> <span class="s1">&#39;gut_p_A&#39;</span><span class="p">,</span> <span class="s1">&#39;gut_f&#39;</span><span class="p">,</span> <span class="s1">&#39;gut_p_A_deviation&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;M_X&#39;</span><span class="p">,</span> <span class="s1">&#39;M_P&#39;</span><span class="p">,</span> <span class="s1">&#39;M_Pu&#39;</span><span class="p">,</span> <span class="s1">&#39;M_g&#39;</span><span class="p">,</span> <span class="s1">&#39;M_c&#39;</span><span class="p">,</span> <span class="s1">&#39;R_M_c&#39;</span><span class="p">,</span> <span class="s1">&#39;R_M_g&#39;</span><span class="p">,</span> <span class="s1">&#39;R_M_X_M_P&#39;</span><span class="p">,</span> <span class="s1">&#39;R_M_X&#39;</span><span class="p">,</span> <span class="s1">&#39;R_M_P&#39;</span>
+               <span class="p">]</span>
+    <span class="n">ylabels0</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;wet weight $(mg)$&#39;</span><span class="p">,</span> <span class="s1">&#39;body length $(mm)$&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;reserve $(J)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;reserve density $(-)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;hunger drive $(-)$&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;pupation buffer $(-)$&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;f $^</span><span class="si">{sim}</span><span class="s1">$ $(-)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;f $_</span><span class="si">{filt}</span><span class="s1">^</span><span class="si">{sim}</span><span class="s1">$ $(-)$&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;exploit VS explore $(-)$&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;gut content $(mg)$&#39;</span><span class="p">,</span> <span class="s1">&#39;food intake $(C-mmole)$&#39;</span><span class="p">,</span> <span class="s1">&#39;food absorption $(mg)$&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;faeces $(mg)$&#39;</span><span class="p">,</span> <span class="s1">&#39;food not digested $(mg)$&#39;</span><span class="p">,</span> <span class="s1">&#39;product not absorbed $(mg)$&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;faeces fraction&#39;</span><span class="p">,</span> <span class="s1">&#39;absorption efficiency&#39;</span><span class="p">,</span> <span class="s1">&#39;fraction not digested&#39;</span><span class="p">,</span> <span class="s1">&#39;gut occupancy&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;[p$_</span><span class="si">{A}</span><span class="s1">^</span><span class="si">{deb}</span><span class="s1">$] $(microJ/cm^3)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;[p$_</span><span class="si">{A}</span><span class="s1">^</span><span class="si">{sim}</span><span class="s1">$] $(microJ/cm^3)$&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;[p$_</span><span class="si">{A}</span><span class="s1">^</span><span class="si">{gut}</span><span class="s1">$] $(microJ/cm^3)$&#39;</span><span class="p">,</span>
+                <span class="c1"># r&#39;[p$_{A}^{deb}$] $(\mu J/cm^3)$&#39;, r&#39;[p$_{A}^{sim}$] $(\mu J/cm^3)$&#39;,r&#39;[p$_{A}^{gut}$] $(\mu J/cm^3)$&#39;,</span>
+                <span class="sa">r</span><span class="s1">&#39;f $^</span><span class="si">{gut}</span><span class="s1">$ $(-)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;$\Delta$p$_</span><span class="si">{A}</span><span class="s1">^</span><span class="si">{gut}</span><span class="s1">$ $(-)$&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;Food in gut $(C-moles)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;Product in gut $(C-moles)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;Product absorbed $(C-mmoles)$&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;Active enzyme amount in gut $(-)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;Available carrier amount in gut surface $(-)$&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;Available carrier ratio in gut surface $(-)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;Active enzyme ratio in gut surface $(-)$&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;Food VS Product ratio in gut $(-)$&#39;</span><span class="p">,</span>
+                <span class="sa">r</span><span class="s1">&#39;Ratio of Food in gut $(-)$&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;Ratio of Product in gut $(-)$&#39;</span>
+                <span class="c1"># r&#39;(deb) assimilation energy $(J)$&#39;, r&#39;(f) assimilation energy $(J)$&#39;, r&#39;(gut) assimilation energy $(J)$&#39;</span>
+                <span class="p">]</span>
+    <span class="n">sharey</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;energy&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;growth&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;full&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;feeding&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">labels0</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">labels0</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">mode</span><span class="p">)]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;food_mass&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">26</span><span class="p">]</span>
+        <span class="c1"># idx = [9, 10, 11, 12, 13, 14]</span>
+        <span class="n">sharey</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;food_ratio&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">17</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">18</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;food_mass_1&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;food_mass_2&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;food_ratio_1&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">]</span>
+        <span class="c1"># idx = [18, 16]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;food_ratio_2&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">17</span><span class="p">,</span> <span class="mi">15</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;assimilation&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">19</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">]</span>
+        <span class="n">sharey</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;fs&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">22</span><span class="p">]</span>
+        <span class="n">sharey</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;plug_flow_food&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">24</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">31</span><span class="p">]</span>
+        <span class="c1"># sharey = True</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;plug_flow_enzymes&#39;</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="mi">29</span><span class="p">,</span> <span class="mi">30</span><span class="p">]</span>
+        <span class="c1"># sharey = True</span>
+
+    <span class="n">tickstep</span> <span class="o">=</span> <span class="mi">24</span>
+    <span class="n">time_unit_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;hours&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s1">&#39;minutes&#39;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span>
+        <span class="s1">&#39;seconds&#39;</span><span class="p">:</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">t_coef</span> <span class="o">=</span> <span class="n">time_unit_dict</span><span class="p">[</span><span class="n">time_unit</span><span class="p">]</span>
+
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">labels0</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">]</span>
+    <span class="n">ylabels</span> <span class="o">=</span> <span class="p">[</span><span class="n">ylabels0</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">]</span>
+    <span class="n">Npars</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+
+    <span class="n">P</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">AutoBasePlot</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span><span class="n">save_to</span><span class="o">=</span><span class="n">save_to</span><span class="p">,</span> <span class="n">build_kws</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Nrows&#39;</span><span class="p">:</span> <span class="n">Npars</span><span class="p">,</span> <span class="s1">&#39;sharex&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span><span class="s1">&#39;sharey&#39;</span><span class="p">:</span> <span class="n">sharey</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">t0s</span><span class="p">,</span> <span class="n">t1s</span><span class="p">,</span> <span class="n">t2s</span><span class="p">,</span> <span class="n">t3s</span><span class="p">,</span> <span class="n">max_ages</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">jj</span><span class="p">,</span> <span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">deb_dicts</span><span class="p">,</span> <span class="n">ids</span><span class="p">,</span> <span class="n">cols</span><span class="p">)):</span>
+        <span class="n">t0_sim</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">,</span> <span class="n">t3</span><span class="p">,</span> <span class="n">age</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;sim_start&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;birth&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;pupation&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;death&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;hours_as_larva&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">d</span><span class="p">[</span>
+            <span class="s1">&#39;birth&#39;</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">])</span>
+        <span class="n">t00</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">epochs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;epochs&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="s1">&#39;epoch_qs&#39;</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">epoch_qs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;epoch_qs&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">epoch_qs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">epochs</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">sim_only</span><span class="p">:</span>
+            <span class="n">t0_sim</span> <span class="o">-=</span> <span class="n">t3</span>
+            <span class="n">t00</span> <span class="o">-=</span> <span class="n">t3</span>
+            <span class="n">t0</span> <span class="o">-=</span> <span class="n">t3</span>
+            <span class="n">t1</span> <span class="o">-=</span> <span class="n">t3</span>
+            <span class="n">t2</span> <span class="o">-=</span> <span class="n">t3</span>
+            <span class="n">age</span> <span class="o">-=</span> <span class="n">t3</span>
+            <span class="n">epochs</span> <span class="o">-=</span> <span class="n">t3</span>
+            <span class="n">t3</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">include_egg</span><span class="p">:</span>
+            <span class="n">t0_sim</span> <span class="o">-=</span> <span class="n">t0</span>
+            <span class="n">t00</span> <span class="o">-=</span> <span class="n">t0</span>
+            <span class="n">t1</span> <span class="o">-=</span> <span class="n">t0</span>
+            <span class="n">t2</span> <span class="o">-=</span> <span class="n">t0</span>
+            <span class="n">t3</span> <span class="o">-=</span> <span class="n">t0</span>
+            <span class="n">age</span> <span class="o">-=</span> <span class="n">t0</span>
+            <span class="n">epochs</span> <span class="o">-=</span> <span class="n">t0</span>
+            <span class="n">t0</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">t0_sim</span> <span class="o">*=</span> <span class="n">t_coef</span>
+        <span class="n">t00</span> <span class="o">*=</span> <span class="n">t_coef</span>
+        <span class="n">t0</span> <span class="o">*=</span> <span class="n">t_coef</span>
+        <span class="n">t1</span> <span class="o">*=</span> <span class="n">t_coef</span>
+        <span class="n">t2</span> <span class="o">*=</span> <span class="n">t_coef</span>
+        <span class="n">t3</span> <span class="o">*=</span> <span class="n">t_coef</span>
+        <span class="n">age</span> <span class="o">*=</span> <span class="n">t_coef</span>
+        <span class="n">epochs</span> <span class="o">*=</span> <span class="n">t_coef</span>
+        <span class="n">tickstep</span> <span class="o">*=</span> <span class="n">t_coef</span>
+
+        <span class="n">t0s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t0</span><span class="p">)</span>
+        <span class="n">t1s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span>
+        <span class="n">t2s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t2</span><span class="p">)</span>
+        <span class="n">t3s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t3</span><span class="p">)</span>
+        <span class="n">max_ages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">age</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">yl</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">ylabels</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">l</span> <span class="o">==</span> <span class="s1">&#39;f_filt&#39;</span><span class="p">:</span>
+                <span class="n">ppp</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;f&#39;</span><span class="p">]</span>
+                <span class="n">sos</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">butter</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">Wn</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;fr&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s1">&#39;lowpass&#39;</span><span class="p">,</span> <span class="n">analog</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;fr&#39;</span><span class="p">],</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;sos&#39;</span><span class="p">)</span>
+                <span class="n">ppp</span> <span class="o">=</span> <span class="n">signal</span><span class="o">.</span><span class="n">sosfiltfilt</span><span class="p">(</span><span class="n">sos</span><span class="p">,</span> <span class="n">ppp</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ppp</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">l</span><span class="p">]</span>
+            <span class="n">ax</span> <span class="o">=</span> <span class="n">P</span><span class="o">.</span><span class="n">axs</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">age</span><span class="p">,</span> <span class="n">ppp</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tt</span> <span class="ow">in</span> <span class="p">[</span><span class="n">t0</span><span class="p">,</span><span class="n">t1</span><span class="p">,</span><span class="n">t2</span><span class="p">]:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">tt</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;dashdot&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+            <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">t00</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;darkgrey&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t0_sim</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;lightgrey&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+
+
+            <span class="k">if</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;simulation&#39;</span><span class="p">]:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;grey&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">st0</span><span class="p">,</span> <span class="n">st1</span><span class="p">),</span> <span class="n">qq</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">epoch_qs</span><span class="p">):</span>
+                <span class="n">q_col</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">col_range</span><span class="p">(</span><span class="n">qq</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">high</span><span class="o">=</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span> <span class="k">if</span> <span class="n">color_epoch_quality</span> <span class="k">else</span> <span class="n">c</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">st0</span><span class="p">,</span> <span class="n">st1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">q_col</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">l</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;pupation_buffer&#39;</span><span class="p">,</span> <span class="s1">&#39;EEB&#39;</span><span class="p">,</span> <span class="s1">&#39;R_faeces&#39;</span><span class="p">,</span> <span class="s1">&#39;R_absorbed&#39;</span><span class="p">,</span> <span class="s1">&#39;R_not_digested&#39;</span><span class="p">,</span>
+                     <span class="s1">&#39;gut_occupancy&#39;</span><span class="p">]:</span>
+                <span class="n">ylim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">:</span>
+                <span class="n">ylim</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">force_ymin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ylim</span> <span class="o">=</span> <span class="p">(</span><span class="n">force_ymin</span><span class="p">,</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">P</span><span class="o">.</span><span class="n">conf_ax</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">ylab</span><span class="o">=</span><span class="n">yl</span><span class="p">,</span> <span class="n">ylabelpad</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">ylabelfontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">yMaxN</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">yStrN</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">yticklabelsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                      <span class="n">ylim</span><span class="o">=</span><span class="n">ylim</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">l</span> <span class="o">==</span> <span class="s1">&#39;f&#39;</span> <span class="ow">or</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;fs&#39;</span><span class="p">:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">ppp</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;dashed&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;assimilation&#39;</span><span class="p">:</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">ppp</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;dashed&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">label_lifestages</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">sim_only</span><span class="p">:</span>
+                <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()</span>
+                <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_xlim</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">jj</span> <span class="o">==</span> <span class="n">Ndebs</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">ytext</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">y1</span> <span class="o">-</span> <span class="n">y0</span><span class="p">)</span>
+                        <span class="n">xtext</span> <span class="o">=</span> <span class="n">t00</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">t0</span> <span class="o">-</span> <span class="n">t00</span><span class="p">)</span>
+                        <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;$incubation$&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span>
+                                    <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="n">xtext</span><span class="p">,</span> <span class="n">ytext</span><span class="p">),</span> <span class="n">xycoords</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">,</span>
+                                    <span class="p">)</span>
+                    <span class="k">except</span><span class="p">:</span>
+                        <span class="k">pass</span>
+
+                <span class="k">try</span><span class="p">:</span>
+
+                    <span class="n">ytext</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">y1</span> <span class="o">-</span> <span class="n">y0</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x1</span> <span class="o">&gt;</span> <span class="n">t1</span><span class="p">:</span>
+                        <span class="n">xtext</span> <span class="o">=</span> <span class="n">t1</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x1</span> <span class="o">-</span> <span class="n">t1</span><span class="p">)</span>
+                        <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;$pupation$&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span>
+                                    <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="n">xtext</span><span class="p">,</span> <span class="n">ytext</span><span class="p">),</span> <span class="n">xycoords</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">,</span>
+                                    <span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">if</span> <span class="n">label_epochs</span> <span class="ow">and</span> <span class="n">Ndebs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()</span>
+                    <span class="n">ytext</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">+</span> <span class="mf">0.8</span> <span class="o">*</span> <span class="p">(</span><span class="n">y1</span> <span class="o">-</span> <span class="n">y0</span><span class="p">)</span>
+                    <span class="n">xpre</span> <span class="o">=</span> <span class="n">t0</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">t0_sim</span> <span class="o">-</span> <span class="n">t0</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">t0_sim</span> <span class="o">-</span> <span class="n">t0</span> <span class="o">&gt;</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">age</span><span class="p">)</span> <span class="o">-</span> <span class="n">t00</span><span class="p">):</span>
+                        <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;$prediction$&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span>
+                                    <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="n">xpre</span><span class="p">,</span> <span class="n">ytext</span><span class="p">),</span> <span class="n">xycoords</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">,</span>
+                                    <span class="p">)</span>
+                    <span class="n">xsim</span> <span class="o">=</span> <span class="n">t0_sim</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">age</span><span class="p">)</span> <span class="o">-</span> <span class="n">t0_sim</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">age</span><span class="p">)</span> <span class="o">-</span> <span class="n">t0_sim</span> <span class="o">&gt;</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">age</span><span class="p">)</span> <span class="o">-</span> <span class="n">t00</span><span class="p">):</span>
+                        <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;$simulation$&#39;</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span>
+                                    <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="n">xsim</span><span class="p">,</span> <span class="n">ytext</span><span class="p">),</span> <span class="n">xycoords</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">,</span>
+                                    <span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">pass</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">t2</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()</span>
+                    <span class="n">ytext</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">-</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="p">(</span><span class="n">y1</span> <span class="o">-</span> <span class="n">y0</span><span class="p">)</span>
+                    <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">y0</span><span class="p">),</span> <span class="n">xycoords</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">,</span>
+                                <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">ytext</span><span class="p">),</span> <span class="n">textcoords</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">,</span>
+                                <span class="n">arrowprops</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="n">shrink</span><span class="o">=</span><span class="mf">0.08</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+                                <span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">pass</span>
+
+
+    <span class="n">T0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">t0s</span><span class="p">)</span>
+    <span class="n">T1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">t1s</span><span class="p">)</span>
+    <span class="n">T2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">t2s</span><span class="p">)</span>
+
+    <span class="n">fontsize</span> <span class="o">=</span> <span class="mi">20</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span>
+    <span class="n">texts</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;egg&#39;</span><span class="p">,</span> <span class="s1">&#39;hatch&#39;</span><span class="p">,</span> <span class="s1">&#39;pupation&#39;</span><span class="p">,</span> <span class="s1">&#39;death&#39;</span><span class="p">]</span>
+    <span class="n">text_xs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">T0</span><span class="p">,</span> <span class="n">T1</span><span class="p">,</span> <span class="n">T2</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">texts</span><span class="p">,</span> <span class="n">text_xs</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()</span>
+            <span class="n">ytext</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">-</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="p">(</span><span class="n">y1</span> <span class="o">-</span> <span class="n">y0</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y0</span><span class="p">),</span> <span class="n">xycoords</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">fontsize</span><span class="p">,</span>
+                        <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ytext</span><span class="p">),</span> <span class="n">textcoords</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">,</span>
+                        <span class="n">horizontalalignment</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">verticalalignment</span><span class="o">=</span><span class="s1">&#39;top&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="n">P</span><span class="o">.</span><span class="n">conf_ax</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">xlab</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;time $(</span><span class="si">{</span><span class="n">time_unit</span><span class="si">}</span><span class="s1">)$&#39;</span><span class="p">,</span> <span class="n">xMaxN</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">max_ages</span><span class="p">)</span> <span class="k">if</span> <span class="n">sim_only</span> <span class="k">else</span> <span class="kc">None</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">sim_only</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">P</span><span class="o">.</span><span class="n">axs</span><span class="p">:</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">ticks</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">max_ages</span><span class="p">),</span> <span class="n">tickstep</span><span class="p">))</span>
+
+    <span class="n">plot</span><span class="o">.</span><span class="n">dataset_legend</span><span class="p">(</span><span class="n">leg_ids</span><span class="p">,</span> <span class="n">leg_cols</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">P</span><span class="o">.</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;upper left&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">prop</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;size&#39;</span><span class="p">:</span> <span class="mi">15</span><span class="p">})</span>
+
+    <span class="n">P</span><span class="o">.</span><span class="n">adjust</span><span class="p">((</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.93</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.15</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span> <span class="n">H</span><span class="o">=</span><span class="mf">0.15</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">P</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="plot_EEB_vs_food_quality"><a class="viewcode-back" href="../../../../content/larvaworld/lib/plot/deb.html#larvaworld.lib.plot.deb.plot_EEB_vs_food_quality">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">graph</span><span class="p">(</span><span class="s1">&#39;EEBvsQuality&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">plot_EEB_vs_food_quality</span><span class="p">(</span><span class="n">refIDs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">species_list</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;rover&#39;</span><span class="p">,</span> <span class="s1">&#39;sitter&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">refIDs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="p">(</span><span class="s1">&#39;No sample configurations provided&#39;</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">larvaworld.lib.model.modules.intermitter</span> <span class="kn">import</span> <span class="n">get_EEB_poly1d</span>
+    <span class="kn">from</span> <span class="nn">larvaworld.lib.model.deb.deb</span> <span class="kn">import</span> <span class="n">DEB</span>
+
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+        <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;EEB_vs_food_quality&#39;</span>
+    <span class="n">qs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span>
+
+    <span class="n">P</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">AutoBasePlot</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">build_kws</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;Nrows&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;Ncols&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">refIDs</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">:</span> <span class="mi">7</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">refID</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">refIDs</span><span class="p">):</span>
+        <span class="n">kws</span><span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getRef</span><span class="p">(</span><span class="n">refID</span><span class="p">)[</span><span class="s1">&#39;intermitter&#39;</span><span class="p">]</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">get_EEB_poly1d</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">species</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">N_colors</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">species_list</span><span class="p">)),</span> <span class="n">species_list</span><span class="p">):</span>
+            <span class="n">ss</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">EEBs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">cc</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="n">col</span><span class="p">,</span>
+                  <span class="s1">&#39;label&#39;</span><span class="p">:</span> <span class="n">species</span><span class="p">,</span>
+                  <span class="s1">&#39;marker&#39;</span><span class="p">:</span> <span class="s1">&#39;.&#39;</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">qs</span><span class="p">:</span>
+                <span class="n">deb</span> <span class="o">=</span> <span class="n">DEB</span><span class="p">(</span><span class="n">substrate_quality</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="n">species</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">deb</span><span class="o">.</span><span class="n">fr_feed</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">ss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="n">EEBs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">z</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+
+            <span class="n">P</span><span class="o">.</span><span class="n">axs</span><span class="p">[</span><span class="mi">3</span> <span class="o">*</span> <span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">qs</span><span class="p">,</span> <span class="n">ss</span><span class="p">,</span> <span class="o">**</span><span class="n">cc</span><span class="p">)</span>
+            <span class="n">P</span><span class="o">.</span><span class="n">axs</span><span class="p">[</span><span class="mi">3</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">qs</span><span class="p">,</span> <span class="n">EEBs</span><span class="p">,</span> <span class="o">**</span><span class="n">cc</span><span class="p">)</span>
+            <span class="n">P</span><span class="o">.</span><span class="n">axs</span><span class="p">[</span><span class="mi">3</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">ss</span><span class="p">,</span> <span class="n">EEBs</span><span class="p">,</span> <span class="o">**</span><span class="n">cc</span><span class="p">)</span>
+
+        <span class="n">P</span><span class="o">.</span><span class="n">conf_ax</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">0</span><span class="p">,</span> <span class="n">xlab</span><span class="o">=</span><span class="s1">&#39;food quality&#39;</span><span class="p">,</span> <span class="n">ylab</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;estimated feed freq $Hz$&#39;</span><span class="p">)</span>
+        <span class="n">P</span><span class="o">.</span><span class="n">conf_ax</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">xlab</span><span class="o">=</span><span class="s1">&#39;food quality&#39;</span><span class="p">,</span> <span class="n">ylab</span><span class="o">=</span><span class="s1">&#39;EEB&#39;</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">P</span><span class="o">.</span><span class="n">conf_ax</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span> <span class="n">xlab</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;estimated feed freq $Hz$&#39;</span><span class="p">,</span> <span class="n">ylab</span><span class="o">=</span><span class="s1">&#39;EEB&#39;</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">P</span><span class="o">.</span><span class="n">axs</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">P</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
+
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

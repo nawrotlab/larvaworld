@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.screen &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="drawing" href="drawing.html" />
+    <link rel="prev" title="spatial" href="../process/spatial.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">larvaworld.cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">larvaworld.gui</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">larvaworld.lib</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">larvaworld.lib.model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../param/index.html">larvaworld.lib.param</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plot/index.html">larvaworld.lib.plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../process/index.html">larvaworld.lib.process</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">larvaworld.lib.screen</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html">drawing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html">rendering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html">side_panel</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sim/index.html">larvaworld.lib.sim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../util/index.html">larvaworld.lib.util</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">reg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">larvaworld.lib</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.screen</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/screen/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="larvaworld-lib-screen">
+<h1>larvaworld.lib.screen<a class="headerlink" href="#larvaworld-lib-screen" title="Permalink to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="drawing.html">drawing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="drawing.html#basescreenmanager">BaseScreenManager</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.__params"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager._param"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager._parameters_state"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.check"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.check()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.close"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.draw_agents"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.draw_agents()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.draw_arena"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.draw_arena()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.draw_aux"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.draw_aux()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.evaluate_graphs"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.evaluate_graphs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.evaluate_input"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.evaluate_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.initialize"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.initialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.name"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.render"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.render()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.screen_color"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.screen_color</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.snapshot_tick"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.snapshot_tick</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.tank_color"><code class="docutils literal notranslate"><span class="pre">BaseScreenManager.tank_color</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drawing.html#ga-screenmanager">GA_ScreenManager</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager"><code class="docutils literal notranslate"><span class="pre">GA_ScreenManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager.__params"><code class="docutils literal notranslate"><span class="pre">GA_ScreenManager.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager._param"><code class="docutils literal notranslate"><span class="pre">GA_ScreenManager._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager._parameters_state"><code class="docutils literal notranslate"><span class="pre">GA_ScreenManager._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager.draw_arena"><code class="docutils literal notranslate"><span class="pre">GA_ScreenManager.draw_arena()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager.draw_aux"><code class="docutils literal notranslate"><span class="pre">GA_ScreenManager.draw_aux()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager.evaluate_input"><code class="docutils literal notranslate"><span class="pre">GA_ScreenManager.evaluate_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager.finalize"><code class="docutils literal notranslate"><span class="pre">GA_ScreenManager.finalize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager.initialize"><code class="docutils literal notranslate"><span class="pre">GA_ScreenManager.initialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager.name"><code class="docutils literal notranslate"><span class="pre">GA_ScreenManager.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drawing.html#screenmanager">ScreenManager</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager"><code class="docutils literal notranslate"><span class="pre">ScreenManager</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.__params"><code class="docutils literal notranslate"><span class="pre">ScreenManager.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager._param"><code class="docutils literal notranslate"><span class="pre">ScreenManager._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager._parameters_state"><code class="docutils literal notranslate"><span class="pre">ScreenManager._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.build_aux"><code class="docutils literal notranslate"><span class="pre">ScreenManager.build_aux()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.capture_snapshot"><code class="docutils literal notranslate"><span class="pre">ScreenManager.capture_snapshot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.draw_arena"><code class="docutils literal notranslate"><span class="pre">ScreenManager.draw_arena()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.draw_aux"><code class="docutils literal notranslate"><span class="pre">ScreenManager.draw_aux()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.eval_keypress"><code class="docutils literal notranslate"><span class="pre">ScreenManager.eval_keypress()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.eval_selection"><code class="docutils literal notranslate"><span class="pre">ScreenManager.eval_selection()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.evaluate_graphs"><code class="docutils literal notranslate"><span class="pre">ScreenManager.evaluate_graphs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.evaluate_input"><code class="docutils literal notranslate"><span class="pre">ScreenManager.evaluate_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.finalize"><code class="docutils literal notranslate"><span class="pre">ScreenManager.finalize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.initialize"><code class="docutils literal notranslate"><span class="pre">ScreenManager.initialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.name"><code class="docutils literal notranslate"><span class="pre">ScreenManager.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.step"><code class="docutils literal notranslate"><span class="pre">ScreenManager.step()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawing.html#larvaworld.lib.screen.drawing.ScreenManager.toggle"><code class="docutils literal notranslate"><span class="pre">ScreenManager.toggle()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rendering.html">rendering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rendering.html#idbox">IDBox</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.IDBox"><code class="docutils literal notranslate"><span class="pre">IDBox</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.IDBox.__params"><code class="docutils literal notranslate"><span class="pre">IDBox.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.IDBox._param"><code class="docutils literal notranslate"><span class="pre">IDBox._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.IDBox._parameters_state"><code class="docutils literal notranslate"><span class="pre">IDBox._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.IDBox.agent"><code class="docutils literal notranslate"><span class="pre">IDBox.agent</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.IDBox.draw"><code class="docutils literal notranslate"><span class="pre">IDBox.draw()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.IDBox.name"><code class="docutils literal notranslate"><span class="pre">IDBox.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.IDBox.update_agent"><code class="docutils literal notranslate"><span class="pre">IDBox.update_agent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.IDBox.update_font_centre_pos"><code class="docutils literal notranslate"><span class="pre">IDBox.update_font_centre_pos()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.IDBox.visible"><code class="docutils literal notranslate"><span class="pre">IDBox.visible</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rendering.html#labelledgroupedobject">LabelledGroupedObject</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.LabelledGroupedObject"><code class="docutils literal notranslate"><span class="pre">LabelledGroupedObject</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.LabelledGroupedObject.__params"><code class="docutils literal notranslate"><span class="pre">LabelledGroupedObject.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.LabelledGroupedObject._draw"><code class="docutils literal notranslate"><span class="pre">LabelledGroupedObject._draw()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.LabelledGroupedObject._param"><code class="docutils literal notranslate"><span class="pre">LabelledGroupedObject._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.LabelledGroupedObject._parameters_state"><code class="docutils literal notranslate"><span class="pre">LabelledGroupedObject._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.LabelledGroupedObject.name"><code class="docutils literal notranslate"><span class="pre">LabelledGroupedObject.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rendering.html#screenbox">ScreenBox</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenBox"><code class="docutils literal notranslate"><span class="pre">ScreenBox</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenBox.__params"><code class="docutils literal notranslate"><span class="pre">ScreenBox.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenBox._param"><code class="docutils literal notranslate"><span class="pre">ScreenBox._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenBox._parameters_state"><code class="docutils literal notranslate"><span class="pre">ScreenBox._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenBox.draw"><code class="docutils literal notranslate"><span class="pre">ScreenBox.draw()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenBox.linewidth"><code class="docutils literal notranslate"><span class="pre">ScreenBox.linewidth</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenBox.name"><code class="docutils literal notranslate"><span class="pre">ScreenBox.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenBox.show_frame"><code class="docutils literal notranslate"><span class="pre">ScreenBox.show_frame</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenBox.visible"><code class="docutils literal notranslate"><span class="pre">ScreenBox.visible</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rendering.html#screenmsgtext">ScreenMsgText</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenMsgText"><code class="docutils literal notranslate"><span class="pre">ScreenMsgText</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenMsgText.__params"><code class="docutils literal notranslate"><span class="pre">ScreenMsgText.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenMsgText._param"><code class="docutils literal notranslate"><span class="pre">ScreenMsgText._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenMsgText._parameters_state"><code class="docutils literal notranslate"><span class="pre">ScreenMsgText._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenMsgText.draw"><code class="docutils literal notranslate"><span class="pre">ScreenMsgText.draw()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenMsgText.font_size_scale"><code class="docutils literal notranslate"><span class="pre">ScreenMsgText.font_size_scale</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenMsgText.font_type"><code class="docutils literal notranslate"><span class="pre">ScreenMsgText.font_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenMsgText.name"><code class="docutils literal notranslate"><span class="pre">ScreenMsgText.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenMsgText.set_default_color"><code class="docutils literal notranslate"><span class="pre">ScreenMsgText.set_default_color()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenMsgText.text_centre_scale"><code class="docutils literal notranslate"><span class="pre">ScreenMsgText.text_centre_scale</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rendering.html#screentextboxrect">ScreenTextBoxRect</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenTextBoxRect"><code class="docutils literal notranslate"><span class="pre">ScreenTextBoxRect</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenTextBoxRect.__params"><code class="docutils literal notranslate"><span class="pre">ScreenTextBoxRect.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenTextBoxRect._param"><code class="docutils literal notranslate"><span class="pre">ScreenTextBoxRect._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenTextBoxRect._parameters_state"><code class="docutils literal notranslate"><span class="pre">ScreenTextBoxRect._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenTextBoxRect.name"><code class="docutils literal notranslate"><span class="pre">ScreenTextBoxRect.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.ScreenTextBoxRect.visible"><code class="docutils literal notranslate"><span class="pre">ScreenTextBoxRect.visible</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rendering.html#simulationclock">SimulationClock</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationClock"><code class="docutils literal notranslate"><span class="pre">SimulationClock</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationClock.__params"><code class="docutils literal notranslate"><span class="pre">SimulationClock.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationClock._param"><code class="docutils literal notranslate"><span class="pre">SimulationClock._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationClock._parameters_state"><code class="docutils literal notranslate"><span class="pre">SimulationClock._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationClock.draw"><code class="docutils literal notranslate"><span class="pre">SimulationClock.draw()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationClock.name"><code class="docutils literal notranslate"><span class="pre">SimulationClock.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationClock.pos_scale"><code class="docutils literal notranslate"><span class="pre">SimulationClock.pos_scale</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationClock.set_default_color"><code class="docutils literal notranslate"><span class="pre">SimulationClock.set_default_color()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationClock.tick_clock"><code class="docutils literal notranslate"><span class="pre">SimulationClock.tick_clock()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rendering.html#simulationscale">SimulationScale</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationScale"><code class="docutils literal notranslate"><span class="pre">SimulationScale</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationScale.__params"><code class="docutils literal notranslate"><span class="pre">SimulationScale.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationScale._param"><code class="docutils literal notranslate"><span class="pre">SimulationScale._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationScale._parameters_state"><code class="docutils literal notranslate"><span class="pre">SimulationScale._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationScale.compute_lines"><code class="docutils literal notranslate"><span class="pre">SimulationScale.compute_lines()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationScale.draw"><code class="docutils literal notranslate"><span class="pre">SimulationScale.draw()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationScale.name"><code class="docutils literal notranslate"><span class="pre">SimulationScale.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationScale.pos_scale"><code class="docutils literal notranslate"><span class="pre">SimulationScale.pos_scale</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationScale.set_default_color"><code class="docutils literal notranslate"><span class="pre">SimulationScale.set_default_color()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationScale.update_scale"><code class="docutils literal notranslate"><span class="pre">SimulationScale.update_scale()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rendering.html#simulationstate">SimulationState</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationState"><code class="docutils literal notranslate"><span class="pre">SimulationState</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationState.__params"><code class="docutils literal notranslate"><span class="pre">SimulationState.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationState._param"><code class="docutils literal notranslate"><span class="pre">SimulationState._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationState._parameters_state"><code class="docutils literal notranslate"><span class="pre">SimulationState._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationState.draw"><code class="docutils literal notranslate"><span class="pre">SimulationState.draw()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationState.name"><code class="docutils literal notranslate"><span class="pre">SimulationState.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationState.pos_scale"><code class="docutils literal notranslate"><span class="pre">SimulationState.pos_scale</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationState.set_default_color"><code class="docutils literal notranslate"><span class="pre">SimulationState.set_default_color()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.SimulationState.set_text"><code class="docutils literal notranslate"><span class="pre">SimulationState.set_text()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rendering.html#viewer">Viewer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer"><code class="docutils literal notranslate"><span class="pre">Viewer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer.__params"><code class="docutils literal notranslate"><span class="pre">Viewer.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer._param"><code class="docutils literal notranslate"><span class="pre">Viewer._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer._parameters_state"><code class="docutils literal notranslate"><span class="pre">Viewer._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer.close"><code class="docutils literal notranslate"><span class="pre">Viewer.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer.close_requested"><code class="docutils literal notranslate"><span class="pre">Viewer.close_requested()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer.decrease_fps"><code class="docutils literal notranslate"><span class="pre">Viewer.decrease_fps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer.increase_fps"><code class="docutils literal notranslate"><span class="pre">Viewer.increase_fps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer.load_from_file"><code class="docutils literal notranslate"><span class="pre">Viewer.load_from_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer.name"><code class="docutils literal notranslate"><span class="pre">Viewer.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer.put"><code class="docutils literal notranslate"><span class="pre">Viewer.put()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer.remove"><code class="docutils literal notranslate"><span class="pre">Viewer.remove()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html#larvaworld.lib.screen.rendering.Viewer.render"><code class="docutils literal notranslate"><span class="pre">Viewer.render()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="side_panel.html">side_panel</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="side_panel.html#sidepanel">SidePanel</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel"><code class="docutils literal notranslate"><span class="pre">SidePanel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.DEFAULT_MARGIN"><code class="docutils literal notranslate"><span class="pre">SidePanel.DEFAULT_MARGIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.FONT_SIZE"><code class="docutils literal notranslate"><span class="pre">SidePanel.FONT_SIZE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.LEFT_MARGIN"><code class="docutils literal notranslate"><span class="pre">SidePanel.LEFT_MARGIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.LINE_SPACING_MAX"><code class="docutils literal notranslate"><span class="pre">SidePanel.LINE_SPACING_MAX</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.LINE_SPACING_MIN"><code class="docutils literal notranslate"><span class="pre">SidePanel.LINE_SPACING_MIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.SCENE_HEIGHT_THRESHOLD"><code class="docutils literal notranslate"><span class="pre">SidePanel.SCENE_HEIGHT_THRESHOLD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.display_ga_info"><code class="docutils literal notranslate"><span class="pre">SidePanel.display_ga_info()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.draw"><code class="docutils literal notranslate"><span class="pre">SidePanel.draw()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.render_controls"><code class="docutils literal notranslate"><span class="pre">SidePanel.render_controls()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.render_intro"><code class="docutils literal notranslate"><span class="pre">SidePanel.render_intro()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.render_line"><code class="docutils literal notranslate"><span class="pre">SidePanel.render_line()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.render_results"><code class="docutils literal notranslate"><span class="pre">SidePanel.render_results()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../process/spatial.html" class="btn btn-neutral float-left" title="spatial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="drawing.html" class="btn btn-neutral float-right" title="drawing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

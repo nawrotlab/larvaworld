@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>_larva_replay &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">_larva_replay</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/content/larvaworld/lib/model/agents/_larva_replay.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.model.agents._larva_replay">
+<span id="larva-replay"></span><h1>_larva_replay<a class="headerlink" href="#module-larvaworld.lib.model.agents._larva_replay" title="Permalink to this heading"></a></h1>
+<section id="larvareplay">
+<h2>LarvaReplay<a class="headerlink" href="#larvareplay" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplay">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.agents._larva_replay.</span></span><span class="sig-name descname"><span class="pre">LarvaReplay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_replay.html#LarvaReplay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplay" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="_larva.html#larvaworld.lib.model.agents._larva.Larva" title="larvaworld.lib.model.agents._larva.Larva"><code class="xref py py-class docutils literal notranslate"><span class="pre">Larva</span></code></a></p>
+<p>params(length=PositiveNumber, orientation=RandomizedPhase, radius=PositiveNumber, pos=NumericTuple2DRobust, odor=ClassAttr, default_color=RandomizedColor, selected=Boolean, visible=Boolean, group=String, unique_id=String, name=String)
+[1;32mParameters of 'LarvaReplay'
+===========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                             Value                            Type                   Bounds             Mode  [0m</p>
+<p>unique_id                         None                           String                                   V RW AN
+group                             None                           String                                   V RW AN
+default_color                   'black'                     RandomizedColor                                 V RW
+visible                           True                          Boolean                  (0, 1)             V RW
+selected                         False                          Boolean                  (0, 1)             V RW
+odor            Odor(id=None, intensity=None, name='O...       ClassAttr                                    V RW
+pos                            (0.0, 0.0)                 NumericTuple2DRobust                              V RW
+radius                           0.003                       PositiveNumber            (0.0,[1;36m 0.1[0m)           V RW
+orientation                 0.64665126131922                RandomizedPhase     (0.0, 6.283185307179586)  V RW AN
+length                             1                         PositiveNumber           (0.0, None)           V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34munique_id:     The unique ID of the entity[0m
+[1;31mgroup:         The unique ID of the entity&quot;s group[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m
+[1;31modor:          The odor of the agent[0m
+[1;34mpos:           The xy spatial position coordinates[0m
+[1;31mradius:        The spatial radius of the source in meters[0m
+[1;34morientation:   The absolute orientation in space.[0m
+[1;31mlength:        The initial length of the body in meters[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplay.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'group':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'length':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'orientation':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedPhase</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'radius':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplay.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplay._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplay._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplay._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplay._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplay.front_orientation">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">front_orientation</span></span><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplay.front_orientation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplay.midline_xy">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">midline_xy</span></span><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplay.midline_xy" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplay.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LarvaReplay'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplay.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplay.rear_orientation">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rear_orientation</span></span><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplay.rear_orientation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplay.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_replay.html#LarvaReplay.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplay.step" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="larvareplaycontoured">
+<h2>LarvaReplayContoured<a class="headerlink" href="#larvareplaycontoured" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.agents._larva_replay.</span></span><span class="sig-name descname"><span class="pre">LarvaReplayContoured</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_replay.html#LarvaReplayContoured"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplay" title="larvaworld.lib.model.agents._larva_replay.LarvaReplay"><code class="xref py py-class docutils literal notranslate"><span class="pre">LarvaReplay</span></code></a>, <a class="reference internal" href="_larva.html#larvaworld.lib.model.agents._larva.LarvaContoured" title="larvaworld.lib.model.agents._larva.LarvaContoured"><code class="xref py py-class docutils literal notranslate"><span class="pre">LarvaContoured</span></code></a></p>
+<p>params(length=PositiveNumber, orientation=RandomizedPhase, radius=PositiveNumber, pos=NumericTuple2DRobust, odor=ClassAttr, default_color=RandomizedColor, selected=Boolean, visible=Boolean, group=String, unique_id=String, closed=Boolean, vertices=XYLine, width=PositiveNumber, name=String)
+[1;32mParameters of 'LarvaReplayContoured'
+====================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                             Value                            Type                   Bounds             Mode  [0m</p>
+<p>width                            0.001                       PositiveNumber           (0.0,[1;36m 10.0[0m)           V RW
+vertices                           []                            XYLine                (0, None)            V RW
+closed                           False                          Boolean                  (0, 1)             V RW
+unique_id                         None                           String                                   V RW AN
+group                             None                           String                                   V RW AN
+default_color                   'black'                     RandomizedColor                                 V RW
+visible                           True                          Boolean                  (0, 1)             V RW
+selected                         False                          Boolean                  (0, 1)             V RW
+odor            Odor(id=None, intensity=None, name='O...       ClassAttr                                    V RW
+pos                            (0.0, 0.0)                 NumericTuple2DRobust                              V RW
+radius                           0.003                       PositiveNumber            (0.0,[1;36m 0.1[0m)           V RW
+orientation                 0.64665126131922                RandomizedPhase     (0.0, 6.283185307179586)  V RW AN
+length                             1                         PositiveNumber           (0.0, None)           V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mwidth:         The width of the line vertices[0m
+[1;31mvertices:      The list of 2d points[0m
+[1;34mclosed:        Whether the line is closed[0m
+[1;31munique_id:     The unique ID of the entity[0m
+[1;34mgroup:         The unique ID of the entity&quot;s group[0m
+[1;31mdefault_color: The default color of the entity[0m
+[1;34mvisible:       Whether the entity is visible or not[0m
+[1;31mselected:      Whether the entity is selected or not[0m
+[1;34modor:          The odor of the agent[0m
+[1;31mpos:           The xy spatial position coordinates[0m
+[1;34mradius:        The spatial radius of the source in meters[0m
+[1;31morientation:   The absolute orientation in space.[0m
+[1;34mlength:        The initial length of the body in meters[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'closed':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'group':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'length':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'orientation':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedPhase</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'radius':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'vertices':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured.contour_xy">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">contour_xy</span></span><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured.contour_xy" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LarvaReplayContoured'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_replay.html#LarvaReplayContoured.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured.step" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="larvareplaysegmented">
+<h2>LarvaReplaySegmented<a class="headerlink" href="#larvareplaysegmented" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.agents._larva_replay.</span></span><span class="sig-name descname"><span class="pre">LarvaReplaySegmented</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_replay.html#LarvaReplaySegmented"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplay" title="larvaworld.lib.model.agents._larva_replay.LarvaReplay"><code class="xref py py-class docutils literal notranslate"><span class="pre">LarvaReplay</span></code></a>, <a class="reference internal" href="_larva.html#larvaworld.lib.model.agents._larva.LarvaSegmented" title="larvaworld.lib.model.agents._larva.LarvaSegmented"><code class="xref py py-class docutils literal notranslate"><span class="pre">LarvaSegmented</span></code></a></p>
+<p>params(Nsegs=PositiveInteger, segment_ratio=Parameter, segs=List, density=PositiveNumber, base_vertices=XYLine, body_plan=Selector, guide_points=XYLine, symmetry=Selector, closed=Boolean, vertices=XYLine, width=PositiveNumber, length=PositiveNumber, orientation=RandomizedPhase, radius=PositiveNumber, pos=NumericTuple2DRobust, odor=ClassAttr, default_color=RandomizedColor, selected=Boolean, visible=Boolean, group=String, unique_id=String, name=String)</p>
+<blockquote>
+<div><dl>
+<dt>if self.Nsegs==2:</dt><dd><p>xy=self.data[aux.nam.xy('centroid')].values
+ho=np.deg2rad(self.data['front_orientation'].values)
+bo=np.deg2rad(self.data['bend'].values)
+l1, l2 = self.length * self.seg_ratio</p>
+<p>p1=xy+aux.rotationMatrix(-ho) &#64; (l1/2,0)
+p2=xy+aux.rotationMatrix(-ho+bo) &#64; (-l2/2,0)</p>
+</dd>
+<dt>elif self.Nsegs==self.model.config.Npoints-1:</dt><dd><p>or_pars = aux.nam.orient(aux.nam.midline(self.Nsegs, type='seg'))
+assert aux.cols_exist(or_pars, self.data)
+ors=np.deg2rad(self.data[or_pars].values)
+ps=self.mid_ar</p>
+</dd>
+</dl>
+</div></blockquote>
+<section id="mparameters-of-larvareplaysegmented">
+<h3>[1;32mParameters of 'LarvaReplaySegmented'<a class="headerlink" href="#mparameters-of-larvareplaysegmented" title="Permalink to this heading"></a></h3>
+<p>[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                             Value                            Type                   Bounds             Mode  [0m</p>
+<p>unique_id                         None                           String                                   V RW AN
+group                             None                           String                                   V RW AN
+default_color                   'black'                     RandomizedColor                                 V RW
+visible                           True                          Boolean                  (0, 1)             V RW
+selected                         False                          Boolean                  (0, 1)             V RW
+odor            Odor(id=None, intensity=None, name='O...       ClassAttr                                    V RW
+pos                            (0.0, 0.0)                 NumericTuple2DRobust                              V RW
+radius                           0.003                       PositiveNumber            (0.0,[1;36m 0.1[0m)           V RW
+orientation                 0.64665126131922                RandomizedPhase     (0.0, 6.283185307179586)  V RW AN
+length                             1                         PositiveNumber           (0.0, None)           V RW
+width                            0.001                       PositiveNumber           (0.0,[1;36m 10.0[0m)           V RW
+vertices                           []                            XYLine                (0, None)            V RW
+closed                           False                          Boolean                  (0, 1)             V RW
+symmetry                      'bilateral'                       Selector                                    V RW
+guide_points                       []                            XYLine                (0, None)            V RW
+base_vertices                      []                            XYLine                (0, None)            V RW
+body_plan                  'drosophila_larva'                   Selector                                    V RW
+density                          300.0                       PositiveNumber          (0.0,[1;36m 10000.0[0m)         V RW
+Nsegs                              2                        PositiveInteger             (0,[1;36m 20[0m)             V RW
+segment_ratio                     None                         Parameter                                  V RW AN
+segs                               []                             List                 (0, None)            V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34munique_id:     The unique ID of the entity[0m
+[1;31mgroup:         The unique ID of the entity&quot;s group[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m
+[1;31modor:          The odor of the agent[0m
+[1;34mpos:           The xy spatial position coordinates[0m
+[1;31mradius:        The spatial radius of the source in meters[0m
+[1;34morientation:   The absolute orientation in space.[0m
+[1;31mlength:        The initial length of the body in meters[0m
+[1;34mwidth:         The width of the line vertices[0m
+[1;31mvertices:      The list of 2d points[0m
+[1;34mclosed:        Whether the line is closed[0m
+[1;31msymmetry:      The body symmetry.[0m
+[1;34mguide_points:  A list of 2d points outside the midline in order to generate the vertices[0m
+[1;31mbase_vertices: The list of 2d points[0m
+[1;34mbody_plan:     The body plan.[0m
+[1;31mdensity:       The density of the larva body in kg/m**2[0m
+[1;34mNsegs:         The number of segments comprising the segmented larva body.[0m
+[1;31msegment_ratio: The number of segments comprising the segmented larva body.[0m
+[1;34msegs:          The body segments.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'Nsegs':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'base_vertices':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'body_plan':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'closed':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'density':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'group':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'guide_points':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'length':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'orientation':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedPhase</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'radius':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'segment_ratio':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'segs':</span> <span class="pre">&lt;param.List</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'symmetry':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'vertices':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LarvaReplaySegmented'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_replay.html#LarvaReplaySegmented.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented.step" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.sim.dataset_replay &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.sim.dataset_replay</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.sim.dataset_replay</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span><span class="p">,</span> <span class="n">util</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.aux</span> <span class="kn">import</span> <span class="n">nam</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib.model</span> <span class="kn">import</span> <span class="n">agents</span><span class="p">,</span> <span class="n">envs</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">XYops</span>
+<span class="c1"># from larvaworld.lib.process.dataset import RefDataset</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.screen</span> <span class="kn">import</span> <span class="n">ScreenManager</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.sim.base_run</span> <span class="kn">import</span> <span class="n">BaseRun</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;ReplayRun&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="ReplayRun"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/dataset_replay.html#larvaworld.lib.sim.dataset_replay.ReplayRun">[docs]</a><span class="k">class</span> <span class="nc">ReplayRun</span><span class="p">(</span><span class="n">BaseRun</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">parameters</span><span class="p">,</span>  <span class="n">dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">screen_kws</span><span class="o">=</span><span class="p">{},</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Simulation mode &#39;Replay&#39; reconstructs a real or simulated experiment from stored data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parameters: Dictionary of configuration parameters to be passed to the ABM model</span>
+<span class="sd">            dataset: The stored dataset to replay. If not specified it is retrieved using either the storage path (parameters.dir) or the respective unique reference ID (parameters.RefID)</span>
+<span class="sd">            experiment: The type of experiment. Defaults to &#39;replay&#39;</span>
+<span class="sd">            **kwargs: Arguments passed to parent class</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Ref</span><span class="o">.</span><span class="n">retrieve_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">parameters</span><span class="o">.</span><span class="n">refID</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="n">parameters</span><span class="o">.</span><span class="n">refDir</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">refDataset</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+        <span class="c1"># Configure the dataset to replay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refDataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">smaller_dataset</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">refDataset</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">refDataset</span><span class="o">.</span><span class="n">config</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">Nsteps</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s1">&#39;duration&#39;</span><span class="p">:</span><span class="n">c</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span>
+                       <span class="s1">&#39;dt&#39;</span><span class="p">:</span><span class="n">c</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span>
+                       <span class="s1">&#39;Nsteps&#39;</span><span class="p">:</span><span class="n">c</span><span class="o">.</span><span class="n">Nsteps</span><span class="p">})</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">runtype</span><span class="o">=</span><span class="s1">&#39;Replay&#39;</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">configuration_text</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span>
+        <span class="n">pref0</span> <span class="o">=</span> <span class="s1">&#39;     &#39;</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Dataset Replay configuration : </span><span class="se">\n</span><span class="s2">&quot;</span> \
+               <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pref0</span><span class="si">}</span><span class="s2">Reference Dataset : </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">refID</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span> \
+               <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pref0</span><span class="si">}</span><span class="s2">Duration (min) : </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">duration</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span> \
+               <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pref0</span><span class="si">}</span><span class="s2">Timestep (sec) : </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">dt</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span> \
+               <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pref0</span><span class="si">}</span><span class="s2">Time range (sec) : </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">time_range</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span> \
+               <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pref0</span><span class="si">}</span><span class="s2">Transposition : </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">transposition</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span> \
+               <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pref0</span><span class="si">}</span><span class="s2">Tracked midline point : </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">point</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">text</span>
+
+<div class="viewcode-block" id="ReplayRun.setup"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/dataset_replay.html#larvaworld.lib.sim.dataset_replay.ReplayRun.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># s,e,c=self.step_data,self.endpoint_data,self.config</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">draw_Nsegs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">draw_Nsegs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_env</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">env_params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_agents</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">refDataset</span><span class="p">)</span>
+        <span class="n">screen_kws</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;video&#39;</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">overlap_mode</span> <span class="k">else</span> <span class="s1">&#39;image&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;show_display&#39;</span> <span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s1">&#39;image_mode&#39;</span><span class="p">:</span><span class="s1">&#39;overlap&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">overlap_mode</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;background_motion&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">background_motion</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_manager</span> <span class="o">=</span> <span class="n">ScreenManager</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">screen_kws</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ReplayRun.build_agents"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/dataset_replay.html#larvaworld.lib.sim.dataset_replay.ReplayRun.build_agents">[docs]</a>    <span class="k">def</span> <span class="nf">build_agents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="k">if</span> <span class="s1">&#39;length&#39;</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">ls</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ls</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.005</span>
+
+        <span class="n">ors</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;front_orientation&#39;</span><span class="p">,</span><span class="s1">&#39;rear_orientation&#39;</span><span class="p">]</span>
+        <span class="k">assert</span> <span class="n">aux</span><span class="o">.</span><span class="n">cols_exist</span><span class="p">(</span><span class="n">ors</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+        <span class="c1"># mid_ps = c.midline_xy</span>
+        <span class="c1"># con_ps = c.contour_xy</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">draw_Nsegs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">draw_Nsegs</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">draw_Nsegs</span> <span class="o">==</span> <span class="n">c</span><span class="o">.</span><span class="n">Npoints</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># or_ps = c.seg_orientations</span>
+                <span class="c1"># assert or_ps.exist_in(s)</span>
+                <span class="c1"># assert mid_ps.exist_in(s)</span>
+                <span class="n">seg_orientD</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">midline_seg_orients_data_byID</span>
+                <span class="n">midlineD</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">midline_seg_xy_data_byID</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">contourD</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">contour_xy_data_byID</span>
+            <span class="n">midlineD</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">midline_xy_data_byID</span>
+
+        <span class="n">confs</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="nb">id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">):</span>
+            <span class="n">conf</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;unique_id&#39;</span><span class="p">:</span> <span class="nb">id</span><span class="p">,</span> <span class="s1">&#39;length&#39;</span><span class="p">:</span> <span class="n">ls</span><span class="p">[</span><span class="n">i</span><span class="p">]})</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+            <span class="n">ss</span><span class="o">=</span><span class="n">s</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;AgentID&#39;</span><span class="p">,</span> <span class="n">drop_level</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">xy</span><span class="o">=</span><span class="n">ss</span><span class="p">[[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">np2Dtotuples</span><span class="p">(</span><span class="n">xy</span><span class="p">)</span>
+            <span class="n">fo</span><span class="p">,</span><span class="n">ro</span><span class="o">=</span><span class="n">ss</span><span class="p">[</span><span class="s1">&#39;front_orientation&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">ss</span><span class="p">[</span><span class="s1">&#39;rear_orientation&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">front_orientation</span> <span class="o">=</span> <span class="n">fo</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">rear_orientation</span> <span class="o">=</span> <span class="n">ro</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">draw_Nsegs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">conf</span><span class="o">.</span><span class="n">Nsegs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">draw_Nsegs</span>
+                <span class="k">if</span> <span class="n">conf</span><span class="o">.</span><span class="n">Nsegs</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">seg_orientations</span> <span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">fo</span><span class="p">,</span><span class="n">ro</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+                    <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span> <span class="o">=</span> <span class="n">conf</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span>  <span class="n">conf</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="mi">2</span>
+                    <span class="n">p1</span> <span class="o">=</span> <span class="n">xy</span> <span class="o">+</span> <span class="n">aux</span><span class="o">.</span><span class="n">rotationMatrix</span><span class="p">(</span><span class="o">-</span><span class="n">fo</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">l1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="n">p2</span> <span class="o">=</span> <span class="n">xy</span> <span class="o">-</span> <span class="n">aux</span><span class="o">.</span><span class="n">rotationMatrix</span><span class="p">(</span><span class="o">-</span><span class="n">ro</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">l2</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">midline</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">p1</span><span class="p">,</span><span class="n">p2</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
+                <span class="k">elif</span> <span class="n">conf</span><span class="o">.</span><span class="n">Nsegs</span> <span class="o">==</span> <span class="n">c</span><span class="o">.</span><span class="n">Npoints</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="c1"># or_ps = aux.nam.orient(aux.nam.midline(conf.Nsegs, type=&#39;seg&#39;))</span>
+                    <span class="c1"># assert or_ps.exist_in(ss)</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">seg_orientations</span> <span class="o">=</span> <span class="n">seg_orientD</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+
+                    <span class="c1"># # assert mid_ps.exist_in(ss)</span>
+                    <span class="c1"># mid = ss[mid_ps].values.reshape([-1, c.Npoints, 2])</span>
+                    <span class="c1"># mid2=copy.deepcopy(mid)</span>
+                    <span class="c1"># for i in range(conf.Nsegs):</span>
+                    <span class="c1">#     mid2[:,i,:]=(mid[:,i,:]+mid[:,i+1:])/2</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">midline</span> <span class="o">=</span> <span class="n">midlineD</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span>
+            <span class="k">else</span><span class="p">:</span>
+
+                <span class="c1"># assert con_ps.exist_in(ss)</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">contour</span> <span class="o">=</span> <span class="n">contourD</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+                <span class="c1"># assert mid_ps.exist_in(ss)</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">midline</span> <span class="o">=</span> <span class="n">midlineD</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+            <span class="n">conf</span><span class="o">.</span><span class="n">data</span><span class="o">=</span><span class="n">data</span>
+            <span class="n">confs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">place_agents</span><span class="p">(</span><span class="n">confs</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="ReplayRun.sim_step"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/dataset_replay.html#larvaworld.lib.sim.dataset_replay.ReplayRun.sim_step">[docs]</a>    <span class="k">def</span> <span class="nf">sim_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Proceeds the simulation by one step, incrementing `Model.t` by 1</span>
+<span class="sd">        and then calling :func:`Model.step` and :func:`Model.update`.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_paused</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_steps</span> <span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="ReplayRun.step"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/dataset_replay.html#larvaworld.lib.sim.dataset_replay.ReplayRun.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Defines the models&#39; events per simulation step. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_manager</span><span class="o">.</span><span class="n">step</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ReplayRun.end"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/dataset_replay.html#larvaworld.lib.sim.dataset_replay.ReplayRun.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_manager</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ReplayRun.smaller_dataset"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/dataset_replay.html#larvaworld.lib.sim.dataset_replay.ReplayRun.smaller_dataset">[docs]</a>    <span class="k">def</span> <span class="nf">smaller_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">p</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">h5_ks</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;contour&#39;</span><span class="p">,</span> <span class="s1">&#39;midline&#39;</span><span class="p">,</span> <span class="s1">&#39;angular&#39;</span><span class="p">])</span>
+        <span class="n">c</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">config</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">reg</span><span class="o">.</span><span class="n">DatasetConfig</span><span class="p">)</span>
+        <span class="c1"># Group mode</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">track_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">point_idx</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">track_point</span>
+
+
+
+
+
+
+
+        <span class="c1"># Unit mode</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">fix_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">fix_point</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">get_track_point</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">fix_point</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">fix_point</span> <span class="o">==</span> <span class="s1">&#39;centroid&#39;</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">fix_segment</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">fix_point2</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">fix_segment</span> <span class="o">==</span> <span class="s1">&#39;rear&#39;</span><span class="p">:</span>
+                    <span class="n">P2_idx</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">fix_point</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">p</span><span class="o">.</span><span class="n">fix_segment</span> <span class="o">==</span> <span class="s1">&#39;front&#39;</span><span class="p">:</span>
+                    <span class="n">P2_idx</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">fix_point</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">fix_point2</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">get_track_point</span><span class="p">(</span><span class="n">P2_idx</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">fix_point</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">agent_ids</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">[]]:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">([</span><span class="nb">type</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">]):</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">agent_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">agent_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">]]</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">agent_ids</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">agent_ids</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">fix_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">agent_ids</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">update_ids_in_data</span><span class="p">()</span>
+
+
+
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">env_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">env_params</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">env_params</span><span class="o">.</span><span class="n">nestedConf</span>
+
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">close_view</span><span class="p">:</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">env_params</span><span class="o">.</span><span class="n">arena</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">Arena</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">))</span><span class="o">.</span><span class="n">nestedConf</span>
+
+        <span class="n">s</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">step_data</span>
+
+
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">time_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">time_range</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s1">&lt;=Step*</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">dt</span><span class="si">}</span><span class="s1">&lt;=</span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="n">xy_pars</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">point</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">aux</span><span class="o">.</span><span class="n">cols_exist</span><span class="p">(</span><span class="n">xy_pars</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+        <span class="n">s</span><span class="p">[[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">xy_pars</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">fix_point</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span><span class="p">,</span> <span class="n">bg</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">preprocessing</span><span class="p">[</span><span class="s1">&#39;fixation&#39;</span><span class="p">](</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">P1</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">fix_point</span><span class="p">,</span><span class="n">P2</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">fix_point2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bg</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">background_motion</span><span class="o">=</span><span class="n">bg</span>
+
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">transposition</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">preprocessing</span><span class="p">[</span><span class="s2">&quot;transposition&quot;</span><span class="p">](</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">transposition</span><span class="o">=</span><span class="n">p</span><span class="o">.</span><span class="n">transposition</span><span class="p">,</span><span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">xy_max</span><span class="o">=</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">point</span><span class="p">)]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">env_params</span><span class="o">.</span><span class="n">arena</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">Arena</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="p">(</span><span class="n">xy_max</span><span class="p">,</span> <span class="n">xy_max</span><span class="p">))</span><span class="o">.</span><span class="n">nestedConf</span>
+
+        <span class="n">d</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="n">s</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">d</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

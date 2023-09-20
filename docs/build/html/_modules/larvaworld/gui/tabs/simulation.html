@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.gui.tabs.simulation &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.gui.tabs.simulation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.gui.tabs.simulation</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">PySimpleGUI</span> <span class="k">as</span> <span class="nn">sg</span>
+
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span><span class="p">,</span> <span class="n">sim</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.gui</span> <span class="kn">import</span> <span class="n">gui_aux</span>
+<span class="kn">from</span> <span class="nn">larvaworld.gui.tabs</span> <span class="kn">import</span> <span class="n">DrawEnvTab</span><span class="p">,</span> <span class="n">EnvTab</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;SimTab&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="SimTab"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/simulation.html#larvaworld.gui.tabs.simulation.SimTab">[docs]</a><span class="k">class</span> <span class="nc">SimTab</span><span class="p">(</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">GuiTab</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">canvas_size</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">col_size</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_stored</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_stored&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k_active</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_active&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">DL0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">datalists</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">k_active</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">DL1</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">datalists</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">k_stored</span><span class="p">]</span>
+
+<div class="viewcode-block" id="SimTab.build"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/simulation.html#larvaworld.gui.tabs.simulation.SimTab.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">l0</span><span class="p">,</span> <span class="n">l1</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">g1</span><span class="p">,</span> <span class="n">d1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_conf</span><span class="p">()</span>
+        <span class="n">l2</span><span class="p">,</span> <span class="n">c2</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">d2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_RUN</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">draw_tab</span> <span class="o">=</span> <span class="n">DrawEnvTab</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;draw&#39;</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="p">)</span>
+        <span class="n">l3</span><span class="p">,</span> <span class="n">c3</span><span class="p">,</span> <span class="n">g3</span><span class="p">,</span> <span class="n">d3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">draw_tab</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+        <span class="n">tab_kws</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;font&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;Helvetica&quot;</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="s2">&quot;normal&quot;</span><span class="p">),</span> <span class="s1">&#39;selected_title_color&#39;</span><span class="p">:</span> <span class="s1">&#39;darkblue&#39;</span><span class="p">,</span> <span class="s1">&#39;title_color&#39;</span><span class="p">:</span> <span class="s1">&#39;grey&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;tab_background_color&#39;</span><span class="p">:</span> <span class="s1">&#39;lightgrey&#39;</span><span class="p">}</span>
+
+        <span class="n">ts</span> <span class="o">=</span> <span class="p">[</span><span class="n">sg</span><span class="o">.</span><span class="n">Tab</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">nl</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">_SIM TAB&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">nl</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="s1">&#39;draw&#39;</span><span class="p">,</span><span class="s1">&#39;setup&#39;</span><span class="p">,</span> <span class="s1">&#39;exec&#39;</span><span class="p">],</span> <span class="p">[</span><span class="n">l3</span><span class="p">,</span><span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">])]</span>
+        <span class="n">l_tabs</span> <span class="o">=</span> <span class="n">sg</span><span class="o">.</span><span class="n">TabGroup</span><span class="p">([</span><span class="n">ts</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;ACTIVE_SIM_TAB&#39;</span><span class="p">,</span> <span class="n">tab_location</span><span class="o">=</span><span class="s1">&#39;topleft&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">tab_kws</span><span class="p">)</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="p">[[</span><span class="n">l0</span><span class="p">,</span> <span class="n">l_tabs</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">l</span><span class="p">,</span> <span class="p">{</span><span class="o">**</span><span class="n">c1</span><span class="p">,</span> <span class="o">**</span><span class="n">c2</span><span class="p">,</span> <span class="o">**</span><span class="n">c3</span><span class="p">},</span> <span class="p">{</span><span class="o">**</span><span class="n">g1</span><span class="p">,</span> <span class="o">**</span><span class="n">g2</span><span class="p">,</span> <span class="o">**</span><span class="n">g3</span><span class="p">},</span> <span class="p">{</span><span class="o">**</span><span class="n">d1</span><span class="p">,</span> <span class="o">**</span><span class="n">d2</span><span class="p">,</span> <span class="o">**</span><span class="n">d3</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="SimTab.build_RUN"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/simulation.html#larvaworld.gui.tabs.simulation.SimTab.build_RUN">[docs]</a>    <span class="k">def</span> <span class="nf">build_RUN</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">kA</span><span class="p">,</span> <span class="n">kS</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_active</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_stored</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="n">kA</span><span class="p">:</span> <span class="p">{},</span> <span class="n">kS</span><span class="p">:</span> <span class="p">{}}</span>
+        <span class="n">g1</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">GraphList</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">tab</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">canvas_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas_size</span><span class="p">,</span> <span class="n">list_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">w_list</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span>
+        <span class="n">dl1</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">DataList</span><span class="p">(</span><span class="n">kA</span><span class="p">,</span> <span class="nb">dict</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="n">kA</span><span class="p">],</span> <span class="n">tab</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">buttons</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;select_all&#39;</span><span class="p">,</span> <span class="s1">&#39;stop&#39;</span><span class="p">],</span> <span class="n">disp</span><span class="o">=</span><span class="s1">&#39;Active simulations&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">w_list</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+        <span class="n">dl2</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">DataList</span><span class="p">(</span><span class="n">kS</span><span class="p">,</span> <span class="nb">dict</span><span class="o">=</span><span class="n">d</span><span class="p">[</span><span class="n">kS</span><span class="p">],</span> <span class="n">tab</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">buttons</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;select_all&#39;</span><span class="p">,</span> <span class="s1">&#39;remove&#39;</span><span class="p">],</span> <span class="n">disp</span><span class="o">=</span><span class="s1">&#39;Completed simulations&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">w_list</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">gui_cols</span><span class="p">(</span><span class="n">cols</span><span class="o">=</span><span class="p">[[</span><span class="n">g1</span><span class="o">.</span><span class="n">canvas</span><span class="p">],</span> <span class="p">[</span><span class="n">dl1</span><span class="p">,</span> <span class="n">dl2</span><span class="p">,</span> <span class="n">g1</span><span class="p">]],</span> <span class="n">x_fracs</span><span class="o">=</span><span class="p">[</span><span class="mf">0.53</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">],</span> <span class="n">as_pane</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">l</span><span class="p">,</span> <span class="p">{},</span> <span class="p">{</span><span class="n">g1</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">g1</span><span class="p">},</span> <span class="n">d</span></div>
+
+<div class="viewcode-block" id="SimTab.build_conf"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/simulation.html#larvaworld.gui.tabs.simulation.SimTab.build_conf">[docs]</a>    <span class="k">def</span> <span class="nf">build_conf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">kws</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;background_color&#39;</span><span class="p">:</span> <span class="s1">&#39;lightgreen&#39;</span><span class="p">}</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">PadTable</span><span class="p">(</span><span class="s1">&#39;larva_groups&#39;</span><span class="p">,</span> <span class="n">buttons</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;add&#39;</span><span class="p">,</span> <span class="s1">&#39;remove&#39;</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="s1">&#39;Group ID&#39;</span><span class="p">,</span> <span class="n">col_widths</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
+                              <span class="n">heading_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;N&#39;</span><span class="p">:</span> <span class="s1">&#39;distribution.N&#39;</span><span class="p">,</span> <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;default_color&#39;</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="s1">&#39;model&#39;</span><span class="p">},</span>
+                              <span class="n">dict_name</span><span class="o">=</span><span class="s1">&#39;LarvaGroup&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">envtab</span> <span class="o">=</span> <span class="n">EnvTab</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;environment&#39;</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="p">,</span> <span class="n">conftype</span><span class="o">=</span><span class="s1">&#39;Env&#39;</span><span class="p">)</span>
+        <span class="n">tab1_l</span><span class="p">,</span> <span class="n">tab1_c</span><span class="p">,</span> <span class="n">tab1_g</span><span class="p">,</span> <span class="n">tab1_d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">envtab</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+        <span class="n">sl1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">envtab</span><span class="o">.</span><span class="n">selectionlists</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">envtab</span><span class="o">.</span><span class="n">conftype</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selectionlists</span><span class="p">[</span><span class="n">sl1</span><span class="o">.</span><span class="n">conftype</span><span class="p">]</span> <span class="o">=</span> <span class="n">sl1</span>
+
+        <span class="n">s2</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">PadTable</span><span class="p">(</span><span class="s1">&#39;trials&#39;</span><span class="p">,</span> <span class="n">buttons</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;add&#39;</span><span class="p">,</span> <span class="s1">&#39;remove&#39;</span><span class="p">],</span> <span class="n">index</span><span class="o">=</span><span class="s1">&#39;idx&#39;</span><span class="p">,</span> <span class="n">col_widths</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
+                              <span class="n">heading_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;start&#39;</span><span class="p">:</span> <span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="s1">&#39;stop&#39;</span><span class="p">:</span> <span class="s1">&#39;stop&#39;</span><span class="p">,</span> <span class="s1">&#39;quality&#39;</span><span class="p">:</span> <span class="s1">&#39;substrate.quality&#39;</span><span class="p">,</span>
+                                            <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;substrate.type&#39;</span><span class="p">},</span> <span class="n">dict_name</span><span class="o">=</span><span class="s1">&#39;epoch&#39;</span><span class="p">)</span>
+        <span class="n">sl3</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">SelectionList</span><span class="p">(</span><span class="n">tab</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">buttons</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;load&#39;</span><span class="p">,</span> <span class="s1">&#39;save&#39;</span><span class="p">,</span> <span class="s1">&#39;delete&#39;</span><span class="p">,</span> <span class="s1">&#39;exec&#39;</span><span class="p">,</span> <span class="s1">&#39;tree&#39;</span><span class="p">,</span> <span class="s1">&#39;conf_tree&#39;</span><span class="p">],</span> <span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">root_key</span><span class="o">=</span><span class="s1">&#39;Exp&#39;</span><span class="p">,</span>
+                                    <span class="n">sublists</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;env_params&#39;</span><span class="p">:</span> <span class="n">sl1</span><span class="p">,</span> <span class="s1">&#39;larva_groups&#39;</span><span class="p">:</span> <span class="n">s1</span><span class="p">},</span> <span class="n">text_kws</span><span class="o">=</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">t_kws</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">width</span><span class="o">=</span><span class="mi">28</span><span class="p">)</span>
+        <span class="n">sl4</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">SelectionList</span><span class="p">(</span><span class="n">tab</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">conftype</span><span class="o">=</span><span class="s1">&#39;ExpGroup&#39;</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="s1">&#39;Behavior/field :&#39;</span><span class="p">,</span> <span class="n">buttons</span><span class="o">=</span><span class="p">[],</span> <span class="n">single_line</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                    <span class="n">width</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">text_kws</span><span class="o">=</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">t_kws</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span> <span class="n">sublists</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;simulations&#39;</span><span class="p">:</span> <span class="n">sl3</span><span class="p">})</span>
+
+        <span class="n">c1</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">PadDict</span><span class="p">(</span><span class="s1">&#39;sim_params&#39;</span><span class="p">,</span> <span class="n">disp_name</span><span class="o">=</span><span class="s1">&#39;Configuration&#39;</span><span class="p">,</span> <span class="n">text_kws</span><span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">t_kws</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">header_width</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="n">c2</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">PadDict</span><span class="p">(</span><span class="s1">&#39;output&#39;</span><span class="p">,</span> <span class="n">text_kws</span><span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">t_kws</span><span class="p">(</span><span class="mi">7</span><span class="p">),</span> <span class="n">Ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">header_width</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+
+        <span class="n">ll3</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">gui_col</span><span class="p">([</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">,</span> <span class="n">s2</span><span class="p">],</span> <span class="n">x_frac</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">as_pane</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">l1</span> <span class="o">=</span> <span class="p">[</span><span class="n">tab1_l</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="p">[</span><span class="n">ll3</span><span class="p">]]</span>
+        <span class="c1"># l1 = [self.envtab.layout[0]+[ll3]]</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="n">c1</span><span class="p">,</span> <span class="n">c2</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="n">s1</span><span class="p">]:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">get_subdicts</span><span class="p">())</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">tab1_c</span><span class="p">)</span>
+        <span class="n">l0</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">gui_col</span><span class="p">([</span><span class="n">sl4</span><span class="p">,</span> <span class="n">sl3</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="s1">&#39;arena&#39;</span><span class="p">]],</span> <span class="n">x_frac</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">as_pane</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">l0</span><span class="p">,</span> <span class="n">l1</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">tab1_g</span><span class="p">,</span> <span class="n">tab1_d</span></div>
+
+<div class="viewcode-block" id="SimTab.update"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/simulation.html#larvaworld.gui.tabs.simulation.SimTab.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+
+        <span class="n">c</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">output_keys</span><span class="p">,</span> <span class="p">[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">conf</span><span class="p">[</span><span class="s1">&#39;collections&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="kc">False</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">reg</span><span class="o">.</span><span class="n">output_keys</span><span class="p">])))</span>
+        <span class="n">sim</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s1">&#39;sim_params&#39;</span><span class="p">])</span>
+        <span class="n">sim</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;sim_ID&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">reg</span><span class="o">.</span><span class="n">next_idx</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">conftype</span><span class="o">=</span><span class="s2">&quot;Exp&quot;</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;single_runs/</span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">})</span>
+        <span class="n">c</span><span class="p">[</span><span class="s1">&#39;sim_params&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">sim</span><span class="p">)</span>
+        <span class="n">c</span><span class="p">[</span><span class="s1">&#39;trials&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Trial</span><span class="o">.</span><span class="n">getID</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s1">&#39;trials&#39;</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">draw_tab</span><span class="o">.</span><span class="n">set_env_db</span><span class="p">(</span><span class="n">env</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Env</span><span class="o">.</span><span class="n">getID</span><span class="p">(</span><span class="n">conf</span><span class="o">.</span><span class="n">env_params</span><span class="p">),</span> <span class="n">lg</span><span class="o">=</span><span class="n">conf</span><span class="p">[</span><span class="s1">&#39;larva_groups&#39;</span><span class="p">])</span>
+        <span class="n">w</span><span class="o">.</span><span class="n">write_event_value</span><span class="p">(</span><span class="s1">&#39;RESET_ARENA&#39;</span><span class="p">,</span> <span class="s1">&#39;Draw the initial arena&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimTab.get"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/simulation.html#larvaworld.gui.tabs.simulation.SimTab.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">as_entry</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">conf</span> <span class="o">=</span> <span class="p">{</span>
+
+            <span class="s1">&#39;sim_params&#39;</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">&#39;sim_params&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get_dict</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">),</span>
+            <span class="s1">&#39;collections&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">reg</span><span class="o">.</span><span class="n">output_keys</span> <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get_dict</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">)[</span><span class="n">k</span><span class="p">]],</span>
+            <span class="s1">&#39;enrichment&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_conf</span><span class="p">(</span><span class="n">v</span><span class="p">)[</span><span class="s1">&#39;enrichment&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;trials&#39;</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">&#39;trials&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get_dict</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">conf</span></div>
+
+<div class="viewcode-block" id="SimTab.run"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/simulation.html#larvaworld.gui.tabs.simulation.SimTab.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="n">conf</span><span class="p">[</span><span class="s1">&#39;env_params&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">envtab</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">as_entry</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="s1">&#39;sim_params&#39;</span><span class="p">][</span><span class="s1">&#39;duration&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">/</span> <span class="n">conf</span><span class="p">[</span><span class="s1">&#39;sim_params&#39;</span><span class="p">][</span><span class="s1">&#39;dt&#39;</span><span class="p">]</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_list</span><span class="o">.</span><span class="n">progressbar</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">N</span><span class="p">)</span>
+        <span class="n">conf</span><span class="p">[</span><span class="s1">&#39;experiment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="n">conf</span><span class="p">[</span><span class="s1">&#39;vis_kwargs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="o">.</span><span class="n">get_vis_kwargs</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_id</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="s1">&#39;sim_params&#39;</span><span class="p">][</span><span class="s1">&#39;sim_ID&#39;</span><span class="p">]</span>
+        <span class="n">exec</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">Exec</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;sim&#39;</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span> <span class="n">progressbar</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">w_progressbar</span><span class="o">=</span><span class="n">w</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">k</span><span class="p">],</span>
+                    <span class="n">run_externally</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="o">.</span><span class="n">run_externally</span><span class="p">[</span><span class="s1">&#39;sim&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">DL0</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">active_id</span><span class="p">:</span> <span class="n">exec</span><span class="p">})</span>
+        <span class="n">exec</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span></div>
+
+<div class="viewcode-block" id="SimTab.eval"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/simulation.html#larvaworld.gui.tabs.simulation.SimTab.eval">[docs]</a>    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">==</span><span class="bp">self</span><span class="o">.</span><span class="n">DL1</span><span class="o">.</span><span class="n">key</span> <span class="p">:</span>
+            <span class="n">ks</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">DL1</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ks</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">graph_list</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DL1</span><span class="o">.</span><span class="n">dict</span><span class="p">[</span><span class="n">ks</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="s1">&#39;figs&#39;</span><span class="p">])</span>
+
+        <span class="c1"># print(self.base_list.progressbar.k_incomplete)</span>
+        <span class="c1"># active_ids = v[self.k_active_ids]</span>
+        <span class="c1"># if e == f&#39;STOP {self.k_active}&#39;:</span>
+        <span class="c1">#     for act_id in active_ids:</span>
+        <span class="c1">#         # self.DL0.dict[act_id][&#39;process&#39;].kill()</span>
+        <span class="c1">#         self.DL0.dict[act_id].terminate()</span>
+        <span class="c1">#     self.DL0.remove(w, active_ids)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_list</span><span class="o">.</span><span class="n">progressbar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">e</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_list</span><span class="o">.</span><span class="n">progressbar</span><span class="o">.</span><span class="n">k_incomplete</span><span class="p">:</span>
+            <span class="k">pass</span>
+            <span class="c1"># self.DL0.dict[self.active_id].terminate()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">draw_tab</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
+        <span class="c1"># self.env_tab.eval(e, v, w, c, d, g)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_subprocesses</span><span class="p">(</span><span class="n">w</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SimTab.check_subprocesses"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/simulation.html#larvaworld.gui.tabs.simulation.SimTab.check_subprocesses">[docs]</a>    <span class="k">def</span> <span class="nf">check_subprocesses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+        <span class="n">complete</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">sim_id</span><span class="p">,</span> <span class="n">ex</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">DL0</span><span class="o">.</span><span class="n">dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">ex</span><span class="o">.</span><span class="n">check</span><span class="p">():</span>
+                <span class="n">entries</span><span class="p">,</span> <span class="n">fig_dict</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">results</span>
+                <span class="k">if</span> <span class="n">entries</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">ex</span><span class="o">.</span><span class="n">progressbar</span><span class="o">.</span><span class="n">done</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">graph_list</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">fig_dict</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">DL1</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">entries</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ex</span><span class="o">.</span><span class="n">progressbar</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+                <span class="n">complete</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sim_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">DL0</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">complete</span><span class="p">)</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">larvaworld.gui.tabs.larvaworld_gui</span> <span class="kn">import</span> <span class="n">LarvaworldGui</span>
+    <span class="c1"># larvaworld_gui = LarvaworldGui()</span>
+    <span class="n">larvaworld_gui</span> <span class="o">=</span> <span class="n">LarvaworldGui</span><span class="p">(</span><span class="n">tabs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;sim&#39;</span><span class="p">])</span>
+    <span class="n">larvaworld_gui</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

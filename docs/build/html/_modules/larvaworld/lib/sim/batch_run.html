@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.sim.batch_run &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.sim.batch_run</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.sim.batch_run</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">agentpy</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">agentpy</span> <span class="k">as</span> <span class="nn">ap</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.plot.scape</span> <span class="kn">import</span> <span class="n">plot_heatmap_PI</span><span class="p">,</span> <span class="n">plot_3d</span><span class="p">,</span> <span class="n">plot_3pars</span><span class="p">,</span> <span class="n">plot_2d</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.sim</span> <span class="kn">import</span> <span class="n">ExpRun</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;BatchRun&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="BatchRun"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/batch_run.html#larvaworld.lib.sim.batch_run.BatchRun">[docs]</a><span class="k">class</span> <span class="nc">BatchRun</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">SimConfiguration</span><span class="p">,</span><span class="n">ap</span><span class="o">.</span><span class="n">Experiment</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">space_search</span><span class="p">,</span><span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">space_kws</span><span class="o">=</span><span class="p">{},</span><span class="n">optimization</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">exp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exp_kws</span><span class="o">=</span><span class="p">{},</span> <span class="n">store_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Simulation mode &#39;Batch&#39; launches a batch-run of a specified experiment type that performs a parameter-space search.</span>
+<span class="sd">        Extends the agentpy.Experiment class.</span>
+<span class="sd">        Controls the execution of multiple single simulations (&#39;Exp&#39; mode, see ExpRun class) with slightly different parameter-sets to cover a predefined parameter-space.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            experiment: The preconfigured type of batch-run to launch</span>
+<span class="sd">            save_to: Path to store data. If not specified, it is automatically set to the runtype-specific subdirectory under the platform&#39;s ROOT/DATA directory</span>
+<span class="sd">            id: Unique ID of the batch-run simulation. If not specified it is automatically set according to the batch-run type</span>
+<span class="sd">            space_search: Dictionary that configures the parameter-space to be covered. Each entry is a parameter name and the respective arguments</span>
+<span class="sd">            space_kws: Additional arguments for the parameter-space construction</span>
+<span class="sd">            optimization: Arguments that define an optional optimization process that guides the space-search. If not specified the space is grid-searched.</span>
+<span class="sd">            exp: The type of experiment for single runs launched by the batch-run</span>
+<span class="sd">            exp_kws: Additional arguments for the single runs</span>
+<span class="sd">            store_data: Whether to store batch-run results</span>
+<span class="sd">            **kwargs: Arguments passed to parent class</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">SimConfiguration</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtype</span><span class="o">=</span><span class="s1">&#39;Batch&#39;</span><span class="p">,</span><span class="n">experiment</span><span class="o">=</span><span class="n">experiment</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span>
+                                <span class="n">store_data</span><span class="o">=</span><span class="n">store_data</span><span class="p">)</span>
+
+        <span class="c1"># Define directories</span>
+        <span class="c1"># path=f&#39;{reg.SIM_DIR}/{self.runtype.lower()}_runs&#39;</span>
+        <span class="c1"># if save_to is None:</span>
+        <span class="c1">#     save_to = path</span>
+        <span class="c1"># self.h5_path=f&#39;{path}/{self.experiment}/{self.experiment}.h5&#39;</span>
+
+        <span class="c1"># self.dir = f&#39;{save_to}/{self.experiment}/{self.id}&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="si">}</span><span class="s1">/results.h5&#39;</span>
+        <span class="c1"># self.plot_dir = f&#39;{self.dir}/plots&#39;</span>
+        <span class="c1"># self.data_dir = f&#39;{self.dir}/data&#39;</span>
+        <span class="c1"># os.makedirs(self.plot_dir, exist_ok=True)</span>
+        <span class="c1"># os.makedirs(self.data_dir, exist_ok=True)</span>
+
+        <span class="c1"># self.save_to = self.dir</span>
+        <span class="c1"># self.store_data = store_data</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">exp_conf</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Exp</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">exp</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">exp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exp_conf</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">exp_kws</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">optimization</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">optimization</span><span class="p">[</span><span class="s1">&#39;ranges&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">space_search</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;range&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">space_search</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="s1">&#39;range&#39;</span> <span class="ow">in</span> <span class="n">space_search</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimization</span> <span class="o">=</span> <span class="n">optimization</span>
+        <span class="n">ap</span><span class="o">.</span><span class="n">Experiment</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_class</span><span class="o">=</span><span class="n">ExpRun</span><span class="p">,</span> <span class="n">sample</span> <span class="o">=</span> <span class="n">space_search_sample</span><span class="p">(</span><span class="n">space_search</span><span class="p">,</span> <span class="o">**</span><span class="n">space_kws</span><span class="p">),</span>
+                         <span class="n">store_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">figs</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="BatchRun._single_sim"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/batch_run.html#larvaworld.lib.sim.batch_run.BatchRun._single_sim">[docs]</a>    <span class="k">def</span> <span class="nf">_single_sim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Perform a single simulation.&quot;&quot;&quot;</span>
+        <span class="n">sample_id</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">run_id</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">run_id</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_conf</span><span class="o">.</span><span class="n">update_existingnestdict_by_suffix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">[</span><span class="n">sample_id</span><span class="p">])</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span> <span class="n">_run_id</span><span class="o">=</span><span class="n">run_id</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_random</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_random</span><span class="p">[</span><span class="n">run_id</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">sample_id</span><span class="p">]</span><span class="o">=</span><span class="n">ds</span>
+        <span class="k">if</span> <span class="s1">&#39;variables&#39;</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">output</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">model</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="s1">&#39;variables&#39;</span><span class="p">]</span>  <span class="c1"># Remove dynamic variables from record</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">output</span></div>
+
+<div class="viewcode-block" id="BatchRun.default_processing"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/batch_run.html#larvaworld.lib.sim.batch_run.BatchRun.default_processing">[docs]</a>    <span class="k">def</span> <span class="nf">default_processing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimization</span><span class="o">.</span><span class="n">fit_par</span>
+        <span class="n">s</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">step_data</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">endpoint_data</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">elif</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Could not retrieve fit parameter from dataset&#39;</span><span class="p">)</span>
+
+        <span class="n">ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimization</span><span class="o">.</span><span class="n">operations</span>
+        <span class="k">if</span> <span class="n">ops</span><span class="o">.</span><span class="n">abs</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ops</span><span class="o">.</span><span class="n">mean</span><span class="p">:</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ops</span><span class="o">.</span><span class="n">std</span><span class="p">:</span>
+            <span class="n">fit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fit</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">threshold_reached</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_df</span><span class="p">[</span><span class="s1">&#39;fit&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimization</span><span class="o">.</span><span class="n">minimize</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">fits</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimization</span><span class="o">.</span><span class="n">threshold</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">fits</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimization</span><span class="o">.</span><span class="n">threshold</span>
+
+<div class="viewcode-block" id="BatchRun.end"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/batch_run.html#larvaworld.lib.sim.batch_run.BatchRun.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">par_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">_combine_pars</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">par_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimization</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">par_df</span><span class="p">[</span><span class="s1">&#39;fit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">default_processing</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_df</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimization</span><span class="o">.</span><span class="n">max_Nsims</span><span class="p">:</span>
+                <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Maximum number of simulations reached. Halting search&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold_reached</span><span class="p">:</span>
+                <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Best result reached threshold. Halting search&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Not reached threshold. Expanding space search&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="BatchRun.simulate"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/batch_run.html#larvaworld.lib.sim.batch_run.BatchRun.simulate">[docs]</a>    <span class="k">def</span> <span class="nf">simulate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;PI&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_type</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">PI_heatmap</span><span class="p">()</span>
+        <span class="c1"># if &#39;chemo&#39; in self.batch_type :</span>
+            <span class="c1"># p=&#39;final_dst_to_Source&#39;</span>
+            <span class="c1"># self.par_df[p] = [self.datasets[i][0].endpoint_data[p].mean() for i in self.par_df.index]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_results</span><span class="p">()</span>
+        <span class="c1"># self.par_df.to_csv(os.path.join(self.data_dir, &#39;results.csv&#39;), index=True, header=True)</span>
+        <span class="n">aux</span><span class="o">.</span><span class="n">storeH5</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">par_df</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;results&#39;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">df_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">figs</span></div>
+
+<div class="viewcode-block" id="BatchRun.plot_results"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/batch_run.html#larvaworld.lib.sim.batch_run.BatchRun.plot_results">[docs]</a>    <span class="k">def</span> <span class="nf">plot_results</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">p_ns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_names</span>
+        <span class="n">target_ns</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">p_ns</span><span class="p">]</span>
+        <span class="n">kws</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;df&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_df</span><span class="p">,</span>
+               <span class="s1">&#39;save_to&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_dir</span><span class="p">,</span>
+               <span class="s1">&#39;show&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">target_ns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_ns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">p_ns</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">VS</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plot_2d</span><span class="p">(</span><span class="n">labels</span><span class="o">=</span><span class="n">p_ns</span> <span class="o">+</span> <span class="p">[</span><span class="n">target</span><span class="p">],</span> <span class="n">pref</span><span class="o">=</span><span class="n">target</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_ns</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">plot_3pars</span><span class="p">(</span><span class="nb">vars</span><span class="o">=</span><span class="n">p_ns</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span> <span class="n">pref</span><span class="o">=</span><span class="n">target</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_ns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pair</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">p_ns</span><span class="p">,</span> <span class="mi">2</span><span class="p">)):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">plot_3pars</span><span class="p">(</span><span class="nb">vars</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">pair</span><span class="p">),</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span> <span class="n">pref</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="BatchRun.PI_heatmap"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/batch_run.html#larvaworld.lib.sim.batch_run.BatchRun.PI_heatmap">[docs]</a>    <span class="k">def</span> <span class="nf">PI_heatmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">PIs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">PI</span><span class="p">[</span><span class="s1">&#39;PI&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_df</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">Lgains</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_df</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">Rgains</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">par_df</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">Lgains</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;left_gain&quot;</span><span class="p">),</span>
+                          <span class="n">columns</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">Rgains</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;right_gain&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">Lgain</span><span class="p">,</span> <span class="n">Rgain</span><span class="p">,</span> <span class="n">PI</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">Lgains</span><span class="p">,</span> <span class="n">Rgains</span><span class="p">,</span> <span class="n">PIs</span><span class="p">):</span>
+            <span class="n">df</span><span class="p">[</span><span class="n">Rgain</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">Lgain</span><span class="p">]</span> <span class="o">=</span> <span class="n">PI</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_dir</span><span class="si">}</span><span class="s1">/PIs.csv&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">figs</span><span class="p">[</span><span class="s1">&#39;PI_heatmap&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plot_heatmap_PI</span><span class="p">(</span><span class="n">save_to</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_dir</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+
+<span class="k">def</span> <span class="nf">space_search_sample</span><span class="p">(</span><span class="n">space_dict</span><span class="p">,</span><span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">dic</span><span class="o">=</span><span class="p">{}</span>
+    <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">args</span> <span class="ow">in</span> <span class="n">space_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="s1">&#39;values&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="s1">&#39;range&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="p">:</span>
+            <span class="n">dic</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="n">dic</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">=</span><span class="n">ap</span><span class="o">.</span><span class="n">Values</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;values&#39;</span><span class="p">])</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="n">r0</span><span class="p">,</span><span class="n">r1</span><span class="o">=</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;range&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s1">&#39;Ngrid&#39;</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="p">:</span>
+                <span class="n">vs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;Ngrid&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">r0</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">r1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span><span class="p">:</span>
+                    <span class="n">vs</span> <span class="o">=</span> <span class="n">vs</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+                <span class="n">dic</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">ap</span><span class="o">.</span><span class="n">Values</span><span class="p">(</span><span class="o">*</span><span class="n">vs</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+            <span class="k">else</span> <span class="p">:</span>
+                <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">r0</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">r1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">int</span><span class="p">:</span>
+                    <span class="n">dic</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">ap</span><span class="o">.</span><span class="n">IntRange</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">r0</span><span class="p">)</span> <span class="o">==</span> <span class="nb">float</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">r1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">float</span><span class="p">:</span>
+                    <span class="n">dic</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">ap</span><span class="o">.</span><span class="n">Range</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ap</span><span class="o">.</span><span class="n">Sample</span><span class="p">(</span><span class="n">dic</span><span class="p">,</span><span class="n">n</span><span class="o">=</span><span class="n">n</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="s1">&#39;chemorbit&#39;</span>
+    <span class="n">batch_conf</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Batch</span><span class="o">.</span><span class="n">getID</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+    <span class="n">m</span> <span class="o">=</span> <span class="n">BatchRun</span><span class="p">(</span><span class="n">batch_type</span><span class="o">=</span><span class="n">e</span><span class="p">,</span> <span class="o">**</span><span class="n">batch_conf</span><span class="p">)</span>
+    <span class="n">m</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="c1"># m.PI_heatmap(show=True)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.model.deb.gut &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.model.deb.gut</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.model.deb.gut</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">PositiveNumber</span><span class="p">,</span> <span class="n">NestedConf</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;Gut&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="Gut"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/gut.html#larvaworld.lib.model.deb.gut.Gut">[docs]</a><span class="k">class</span> <span class="nc">Gut</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">M_gm</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;gut capacity in C-moles for unit of gut volume&#39;</span><span class="p">)</span>
+    <span class="n">r_w2l</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;body width to length ratio&#39;</span><span class="p">)</span>
+    <span class="n">r_gut_w</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">(</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;gut width relative to body width&#39;</span><span class="p">)</span>
+    <span class="n">y_P_X</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;yield of product by food&#39;</span><span class="p">)</span>
+    <span class="n">k_abs</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;rate constant for absorption : k_P * y_Pc&#39;</span><span class="p">)</span>
+    <span class="n">f_abs</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;scaled functional response for absorption : M_P/(M_P+M_K_P)&#39;</span><span class="p">)</span>
+    <span class="n">k_dig</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;rate constant for digestion : k_X * y_Xg&#39;</span><span class="p">)</span>
+    <span class="n">f_dig</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;scaled functional response for digestion : M_X/(M_X+M_K_X)&#39;</span><span class="p">)</span>
+    <span class="n">k_c</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;release rate of carriers&#39;</span><span class="p">)</span>
+    <span class="n">k_g</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;decay rate of enzyme&#39;</span><span class="p">)</span>
+    <span class="n">M_c_per_cm2</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">8</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;area specific amount of carriers in the gut per unit of gut surface&#39;</span><span class="p">)</span>
+    <span class="n">J_g_per_cm2</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">24</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;secretion rate of enzyme per unit of gut surface per day&#39;</span><span class="p">)</span>
+    <span class="n">constant_M_c</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;constant carrier density&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to assume a constant amount of carrier enzymes on the gut surface.&#39;</span><span class="p">)</span>
+
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deb</span><span class="p">,</span> <span class="n">save_dict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deb</span> <span class="o">=</span> <span class="n">deb</span>
+        <span class="c1"># Arbitrary parameters</span>
+        <span class="n">r_gut_w2L</span><span class="o">=</span><span class="mf">0.5</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">r_w2l</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">r_gut_w</span> <span class="c1"># gut radius relative to body length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r_gut_V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">r_gut_w2L</span>  <span class="c1"># gut volume per unit of body volume</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r_gut_A</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">r_gut_w2L</span>  <span class="c1"># gut surface area per unit of body surface area</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A_g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r_gut_A</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">L</span> <span class="o">**</span> <span class="mi">2</span>  <span class="c1"># Gut surface area</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V_gm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r_gut_V</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">V</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">M_c_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_c_per_cm2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">A_g</span>  <span class="c1"># amount of carriers in the gut surface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">J_g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">J_g_per_cm2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">A_g</span>  <span class="c1"># total secretion rate of enzyme in the gut surface</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">M_X</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M_P</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M_Pu</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M_g</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M_c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_c_max</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">residence_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_residence_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">base_f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">J_X_Am</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">Lb</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mol_not_digested</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mol_not_absorbed</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mol_faeces</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_A</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mol_ingested</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gut_X</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gut_f</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nfeeds</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="n">save_dict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_dict</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dict</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="Gut.update"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/gut.html#larvaworld.lib.model.deb.gut.Gut.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">V_X</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">A_g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r_gut_A</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">L</span> <span class="o">**</span> <span class="mi">2</span>  <span class="c1"># Gut surface area</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">V_gm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r_gut_V</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">V</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M_c_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_c_per_cm2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">A_g</span>  <span class="c1"># amount of carriers in the gut surface</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">J_g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">J_g_per_cm2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">A_g</span> <span class="c1"># total secretion rate of enzyme in the gut surface</span>
+
+        <span class="k">if</span> <span class="n">V_X</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Nfeeds</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">V</span> <span class="o">+=</span> <span class="n">V_X</span>
+            <span class="n">M_X_in</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">substrate</span><span class="o">.</span><span class="n">X</span> <span class="o">*</span> <span class="n">V_X</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mol_ingested</span> <span class="o">+=</span> <span class="n">M_X_in</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">M_X</span> <span class="o">+=</span> <span class="n">M_X_in</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolve_occupancy</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Gut.resolve_occupancy"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/gut.html#larvaworld.lib.model.deb.gut.Gut.resolve_occupancy">[docs]</a>    <span class="k">def</span> <span class="nf">resolve_occupancy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dM</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">M_X</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_P</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">Cmax</span>
+        <span class="k">if</span> <span class="n">dM</span><span class="o">&gt;</span><span class="mi">0</span> <span class="p">:</span>
+            <span class="n">rP</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">M_P</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">M_P</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">M_X</span><span class="p">)</span>
+            <span class="n">dP</span><span class="o">=</span><span class="n">rP</span><span class="o">*</span><span class="n">dM</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">M_P</span><span class="o">-=</span><span class="n">dP</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mol_not_absorbed</span><span class="o">+=</span><span class="n">dP</span>
+            <span class="n">dX</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">rP</span><span class="p">)</span><span class="o">*</span><span class="n">dM</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">M_X</span><span class="o">-=</span><span class="n">dX</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mol_not_digested</span> <span class="o">+=</span> <span class="n">dX</span></div>
+
+<div class="viewcode-block" id="Gut.digest"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/gut.html#larvaworld.lib.model.deb.gut.Gut.digest">[docs]</a>    <span class="k">def</span> <span class="nf">digest</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">dt</span><span class="o">*</span><span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span>
+        <span class="c1"># print(dt)</span>
+        <span class="c1"># FIXME there should be another term A_g after J_g</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M_g</span> <span class="o">+=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">J_g</span><span class="o">*</span><span class="n">dt</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_g</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_g</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_X</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_dig</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_dig</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_g</span>
+            <span class="n">dM_X</span> <span class="o">=</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">M_X</span><span class="p">,</span> <span class="n">temp</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dM_X</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M_X</span> <span class="o">+=</span> <span class="n">dM_X</span>
+        <span class="n">dM_P_added</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">y_P_X</span> <span class="o">*</span> <span class="n">dM_X</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_P</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_c</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_abs</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_abs</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_c</span> <span class="o">*</span> <span class="n">dt</span>
+            <span class="n">dM_Pu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">M_P</span><span class="p">,</span> <span class="n">temp</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dM_Pu</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M_P</span> <span class="o">+=</span> <span class="n">dM_P_added</span> <span class="o">-</span> <span class="n">dM_Pu</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">M_Pu</span> <span class="o">+=</span> <span class="n">dM_Pu</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant_M_c</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">M_c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_c_max</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dM_c_released</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">M_c_max</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_c</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">k_c</span> <span class="o">*</span> <span class="n">dt</span>
+            <span class="n">dM_c</span> <span class="o">=</span> <span class="n">dM_c_released</span> <span class="o">-</span> <span class="n">dM_Pu</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">M_c</span> <span class="o">+=</span> <span class="n">dM_c</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_A</span> <span class="o">=</span> <span class="n">dM_Pu</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">mu_E</span></div>
+
+<div class="viewcode-block" id="Gut.get_residence_time"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/gut.html#larvaworld.lib.model.deb.gut.Gut.get_residence_time">[docs]</a>    <span class="k">def</span> <span class="nf">get_residence_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">J_X_Am</span><span class="p">,</span> <span class="n">Lb</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">r_gut_V</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">M_gm</span> <span class="o">/</span> <span class="p">(</span><span class="n">J_X_Am</span> <span class="o">/</span> <span class="n">Lb</span><span class="p">)</span> <span class="o">/</span> <span class="n">f</span></div>
+
+
+<div class="viewcode-block" id="Gut.get_residence_ticks"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/gut.html#larvaworld.lib.model.deb.gut.Gut.get_residence_ticks">[docs]</a>    <span class="k">def</span> <span class="nf">get_residence_ticks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">residence_ticks</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">residence_time</span> <span class="o">/</span> <span class="n">dt</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">M_ingested</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_ingested</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">w_X</span> <span class="o">*</span> <span class="mi">1000</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">M_faeces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_faeces</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">w_P</span> <span class="o">*</span> <span class="mi">1000</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">M_not_digested</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_not_digested</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">w_X</span> <span class="o">*</span> <span class="mi">1000</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">M_not_absorbed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_not_absorbed</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">w_P</span> <span class="o">*</span> <span class="mi">1000</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">R_absorbed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_Pu</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_ingested</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_ingested</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">R_faeces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_faeces</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_ingested</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_ingested</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">R_not_digested</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_not_digested</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_ingested</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_ingested</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">R_M_c</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_c</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_c_max</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">R_M_g</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_g</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">J_g</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">R_M_X_M_P</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_X</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_P</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_P</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">R_M_X</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_X</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">Cmax</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">R_M_P</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_P</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">Cmax</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">occupancy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">V</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">Vmax</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">M</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">V</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">d_V</span> <span class="o">*</span> <span class="mi">1000</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Vmax</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">V_gm</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">V</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Cmax</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># in mol</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_gm</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">V_gm</span>
+
+<div class="viewcode-block" id="Gut.init_dict"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/gut.html#larvaworld.lib.model.deb.gut.Gut.init_dict">[docs]</a>    <span class="k">def</span> <span class="nf">init_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dict_keys</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;R_absorbed&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;mol_ingested&#39;</span><span class="p">,</span>
+            <span class="c1"># &#39;mol_absorbed&#39;,</span>
+            <span class="s1">&#39;gut_p_A&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;M_X&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;M_P&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;M_Pu&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;M_g&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;M_c&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;R_M_c&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;R_M_g&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;R_M_X&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;R_M_P&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;R_M_X_M_P&#39;</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dict_keys</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="Gut.update_dict"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/gut.html#larvaworld.lib.model.deb.gut.Gut.update_dict">[docs]</a>    <span class="k">def</span> <span class="nf">update_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">gut_dict_values</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">R_absorbed</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mol_ingested</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span>
+            <span class="c1"># self.mol_absorbed,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">p_A</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">V</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">M_X</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">M_P</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">M_Pu</span><span class="o">*</span><span class="mi">1000</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">M_g</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">M_c</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">R_M_c</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">R_M_g</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">R_M_X</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">R_M_P</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">R_M_X_M_P</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dict_keys</span><span class="p">,</span> <span class="n">gut_dict_values</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Gut.ingested_mass"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/gut.html#larvaworld.lib.model.deb.gut.Gut.ingested_mass">[docs]</a>    <span class="k">def</span> <span class="nf">ingested_mass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_ingested</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">w_X</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;g&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">m</span>
+        <span class="k">elif</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;mg&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">m</span> <span class="o">*</span> <span class="mi">1000</span></div>
+
+<div class="viewcode-block" id="Gut.absorbed_mass"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/gut.html#larvaworld.lib.model.deb.gut.Gut.absorbed_mass">[docs]</a>    <span class="k">def</span> <span class="nf">absorbed_mass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;mg&#39;</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_Pu</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">w_E</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;g&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">m</span>
+        <span class="k">elif</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;mg&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">m</span> <span class="o">*</span> <span class="mi">1000</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ingested_volume</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mol_ingested</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">w_X</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">deb</span><span class="o">.</span><span class="n">d_X</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

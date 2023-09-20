@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.reg &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.reg</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.reg</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">abspath</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;VERBOSE&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;vprint&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ROOT_DIR&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;DATA_DIR&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SIM_DIR&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;BATCH_DIR&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;CONF_DIR&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SIMTYPES&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;CONFTYPES&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;GROUPTYPES&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;getPar&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;get_null&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;loadRef&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;getRef&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;loadRefGroup&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="n">VERBOSE</span> <span class="o">=</span><span class="mi">2</span>
+<div class="viewcode-block" id="vprint"><a class="viewcode-back" href="../../../content/larvaworld/lib/reg.html#larvaworld.lib.reg.vprint">[docs]</a><span class="k">def</span> <span class="nf">vprint</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;=</span> <span class="n">VERBOSE</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="p">)</span></div>
+<span class="n">vprint</span><span class="p">(</span><span class="s2">&quot;Initializing larvaworld registry&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+
+<span class="n">vprint</span><span class="p">(</span><span class="s2">&quot;Initializing path registry&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="n">ROOT_DIR</span> <span class="o">=</span> <span class="n">dirname</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))))</span>
+<span class="n">DATA_DIR</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ROOT_DIR</span><span class="si">}</span><span class="s1">/data&#39;</span>
+<span class="n">SIM_DIR</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">DATA_DIR</span><span class="si">}</span><span class="s1">/SimGroup&#39;</span>
+<span class="n">BATCH_DIR</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">SIM_DIR</span><span class="si">}</span><span class="s1">/batch_runs&#39;</span>
+<span class="n">CONF_DIR</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">ROOT_DIR</span><span class="si">}</span><span class="s1">/lib/reg/confDicts&#39;</span>
+
+
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">CONF_DIR</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">SIMTYPES</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Exp&#39;</span><span class="p">,</span> <span class="s1">&#39;Batch&#39;</span><span class="p">,</span> <span class="s1">&#39;Ga&#39;</span><span class="p">,</span> <span class="s1">&#39;Eval&#39;</span><span class="p">,</span><span class="s1">&#39;Replay&#39;</span><span class="p">]</span>
+
+<span class="n">CONFTYPES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Ref&#39;</span><span class="p">,</span> <span class="s1">&#39;Model&#39;</span><span class="p">,</span> <span class="s1">&#39;ModelGroup&#39;</span><span class="p">,</span> <span class="s1">&#39;Env&#39;</span><span class="p">,</span> <span class="s1">&#39;Exp&#39;</span><span class="p">,</span> <span class="s1">&#39;ExpGroup&#39;</span><span class="p">,</span> <span class="s1">&#39;Batch&#39;</span><span class="p">,</span> <span class="s1">&#39;Ga&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;LabFormat&#39;</span><span class="p">,</span> <span class="s1">&#39;Trial&#39;</span><span class="p">,</span> <span class="s1">&#39;Life&#39;</span><span class="p">,</span> <span class="s1">&#39;Tree&#39;</span><span class="p">,</span> <span class="s1">&#39;Food&#39;</span><span class="p">]</span>
+
+<span class="n">GROUPTYPES</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;LarvaGroup&#39;</span><span class="p">,</span> <span class="s1">&#39;FoodGroup&#39;</span><span class="p">,</span> <span class="s1">&#39;epoch&#39;</span><span class="p">]</span>
+
+
+
+
+
+
+<span class="n">vprint</span><span class="p">(</span><span class="s2">&quot;Initializing function registry&quot;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.units</span> <span class="kn">import</span> <span class="n">units</span>
+<span class="kn">from</span> <span class="nn">.facade</span> <span class="kn">import</span> <span class="n">funcs</span>
+<span class="kn">from</span> <span class="nn">.parFunc</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.stored</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">.distro</span> <span class="kn">import</span> <span class="n">distro_database</span><span class="p">,</span><span class="n">get_dist</span>
+
+<span class="n">vprint</span><span class="p">(</span><span class="s2">&quot;Initializing parameter registry&quot;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.parDB</span> <span class="kn">import</span> <span class="n">output_keys</span><span class="p">,</span> <span class="n">par</span>
+
+<span class="n">vprint</span><span class="p">(</span><span class="s2">&quot;Initializing configuration registry&quot;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.config</span> <span class="kn">import</span> <span class="n">Path</span><span class="p">,</span><span class="n">stored</span><span class="p">,</span> <span class="n">lgs</span><span class="p">,</span> <span class="n">lg</span><span class="p">,</span> <span class="n">next_idx</span><span class="p">,</span> <span class="n">imitation_exp</span>
+
+<span class="kn">from</span> <span class="nn">.generators</span> <span class="kn">import</span> <span class="n">gen</span><span class="p">,</span><span class="n">GTRvsS</span><span class="p">,</span><span class="n">full_lg</span><span class="p">,</span><span class="n">ConfType</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">resetConfs</span><span class="p">,</span><span class="n">LarvaGroup</span><span class="p">,</span> <span class="n">ExpConf</span><span class="p">,</span> <span class="n">FoodConf</span><span class="p">,</span> <span class="n">DatasetConfig</span><span class="p">,</span><span class="n">SimConfiguration</span><span class="p">,</span><span class="n">SimConfigurationParams</span>
+<span class="kn">from</span> <span class="nn">.controls</span> <span class="kn">import</span> <span class="n">controls</span>
+
+<span class="n">vprint</span><span class="p">(</span><span class="s2">&quot;Initializing model registry&quot;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">model</span>
+
+<span class="n">vprint</span><span class="p">(</span><span class="s2">&quot;Initializing graph registry&quot;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.graph</span> <span class="kn">import</span> <span class="n">graphs</span>
+
+
+
+
+
+
+<div class="viewcode-block" id="getPar"><a class="viewcode-back" href="../../../content/larvaworld/lib/reg.html#larvaworld.lib.reg.getPar">[docs]</a><span class="k">def</span> <span class="nf">getPar</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">to_return</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">par</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">to_return</span><span class="o">=</span><span class="n">to_return</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_null"><a class="viewcode-back" href="../../../content/larvaworld/lib/reg.html#larvaworld.lib.reg.get_null">[docs]</a><span class="k">def</span> <span class="nf">get_null</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">par</span><span class="o">.</span><span class="n">get_null</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="loadRef"><a class="viewcode-back" href="../../../content/larvaworld/lib/reg.html#larvaworld.lib.reg.loadRef">[docs]</a><span class="k">def</span> <span class="nf">loadRef</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="p">:</span>
+    <span class="k">return</span> <span class="n">conf</span><span class="o">.</span><span class="n">Ref</span><span class="o">.</span><span class="n">loadRef</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="getRef"><a class="viewcode-back" href="../../../content/larvaworld/lib/reg.html#larvaworld.lib.reg.getRef">[docs]</a><span class="k">def</span> <span class="nf">getRef</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="p">:</span>
+    <span class="k">return</span> <span class="n">conf</span><span class="o">.</span><span class="n">Ref</span><span class="o">.</span><span class="n">getRef</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="loadRefGroup"><a class="viewcode-back" href="../../../content/larvaworld/lib/reg.html#larvaworld.lib.reg.loadRefGroup">[docs]</a><span class="k">def</span> <span class="nf">loadRefGroup</span><span class="p">(</span><span class="n">group_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="p">:</span>
+    <span class="k">return</span> <span class="n">conf</span><span class="o">.</span><span class="n">Ref</span><span class="o">.</span><span class="n">loadRefGroup</span><span class="p">(</span><span class="n">group_id</span><span class="o">=</span><span class="n">group_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<span class="c1"># resetConfs(init=True)</span>
+
+<span class="c1"># stored.resetConfs(init=True)</span>
+
+<span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Registry configured!&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

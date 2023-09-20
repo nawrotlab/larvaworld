@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.process.evaluation &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.process.evaluation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.process.evaluation</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">param</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">ks_2samp</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">MinMaxScaler</span><span class="p">,</span> <span class="n">StandardScaler</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">NestedConf</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;eval_end_fast&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;eval_distro_fast&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;eval_fast&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;RSS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;RSS_dic&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;eval_RSS&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;col_df&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Evaluation&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;DataEvaluation&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="eval_end_fast"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.eval_end_fast">[docs]</a><span class="k">def</span> <span class="nf">eval_end_fast</span><span class="p">(</span><span class="n">ee</span><span class="p">,</span> <span class="n">e_data</span><span class="p">,</span> <span class="n">e_sym</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;pooled&#39;</span><span class="p">):</span>
+    <span class="n">E</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">sym</span> <span class="ow">in</span> <span class="n">e_sym</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">e_vs</span> <span class="o">=</span> <span class="n">e_data</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+        <span class="n">E</span><span class="p">[</span><span class="n">sym</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ee</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;1:1&#39;</span><span class="p">:</span>
+                <span class="n">E</span><span class="p">[</span><span class="n">sym</span><span class="p">]</span> <span class="o">=</span> <span class="p">((</span><span class="n">e_vs</span> <span class="o">-</span> <span class="n">ee</span><span class="p">[</span><span class="n">p</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">**</span> <span class="mf">.5</span>
+            <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;pooled&#39;</span><span class="p">:</span>
+                <span class="n">E</span><span class="p">[</span><span class="n">sym</span><span class="p">]</span> <span class="o">=</span> <span class="n">ks_2samp</span><span class="p">(</span><span class="n">e_vs</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">ee</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">E</span></div>
+
+<div class="viewcode-block" id="eval_distro_fast"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.eval_distro_fast">[docs]</a><span class="k">def</span> <span class="nf">eval_distro_fast</span><span class="p">(</span><span class="n">ss</span><span class="p">,</span> <span class="n">s_data</span><span class="p">,</span> <span class="n">s_sym</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;pooled&#39;</span><span class="p">,</span> <span class="n">min_size</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;1:1&#39;</span><span class="p">:</span>
+        <span class="n">E</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">sym</span> <span class="ow">in</span> <span class="n">s_sym</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ss</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">pps</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">s_data</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+                    <span class="n">sp</span><span class="p">,</span> <span class="n">ssp</span> <span class="o">=</span> <span class="n">s_data</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">ss</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;AgentID&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
+                    <span class="k">if</span> <span class="n">sp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">min_size</span> <span class="ow">and</span> <span class="n">ssp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">min_size</span><span class="p">:</span>
+                        <span class="n">pps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ks_2samp</span><span class="p">(</span><span class="n">sp</span><span class="p">,</span> <span class="n">ssp</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+                <span class="n">E</span><span class="p">[</span><span class="n">sym</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">pps</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;pooled&#39;</span><span class="p">:</span>
+        <span class="n">E</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">sym</span> <span class="ow">in</span> <span class="n">s_sym</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ss</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">spp</span><span class="p">,</span> <span class="n">sspp</span> <span class="o">=</span> <span class="n">s_data</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">ss</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
+                <span class="k">if</span> <span class="n">spp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">min_size</span> <span class="ow">and</span> <span class="n">sspp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">min_size</span><span class="p">:</span>
+                    <span class="n">E</span><span class="p">[</span><span class="n">sym</span><span class="p">]</span> <span class="o">=</span> <span class="n">ks_2samp</span><span class="p">(</span><span class="n">spp</span><span class="p">,</span> <span class="n">sspp</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;1:pooled&#39;</span><span class="p">:</span>
+        <span class="n">ids</span><span class="o">=</span><span class="n">ss</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">E</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">:{}</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">}</span>
+        <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="n">sss</span> <span class="o">=</span> <span class="n">ss</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s2">&quot;AgentID&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">sym</span> <span class="ow">in</span> <span class="n">s_sym</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ss</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                    <span class="n">sp</span><span class="p">,</span> <span class="n">ssp</span> <span class="o">=</span> <span class="n">s_data</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">sss</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
+                    <span class="k">if</span> <span class="n">sp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">min_size</span> <span class="ow">and</span> <span class="n">ssp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">min_size</span><span class="p">:</span>
+                        <span class="n">E</span><span class="p">[</span><span class="nb">id</span><span class="p">][</span><span class="n">sym</span><span class="p">]</span> <span class="o">=</span> <span class="n">ks_2samp</span><span class="p">(</span><span class="n">sp</span><span class="p">,</span> <span class="n">ssp</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span>
+
+    <span class="k">return</span> <span class="n">E</span></div>
+
+<div class="viewcode-block" id="eval_fast"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.eval_fast">[docs]</a><span class="k">def</span> <span class="nf">eval_fast</span><span class="p">(</span><span class="n">datasets</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">symbols</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;pooled&#39;</span><span class="p">,</span> <span class="n">min_size</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+    <span class="n">GEend</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="o">.</span><span class="n">id</span><span class="p">:</span> <span class="n">eval_end_fast</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">endpoint_data</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">symbols</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">}</span>
+    <span class="n">GEdistro</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="o">.</span><span class="n">id</span><span class="p">:</span> <span class="n">eval_distro_fast</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">step_data</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">symbols</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">min_size</span><span class="o">=</span><span class="n">min_size</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span>
+                <span class="ow">in</span> <span class="n">datasets</span><span class="p">}</span>
+    <span class="c1"># if mode == &#39;1:1&#39;:</span>
+    <span class="c1">#     labels = [&#39;RSS error&#39;, r&#39;median 1:1 distribution KS$_{D}$&#39;]</span>
+    <span class="c1"># elif mode == &#39;pooled&#39;:</span>
+    <span class="c1">#     labels = [&#39;pooled endpoint KS$_{D}$&#39;, &#39;pooled distribution KS$_{D}$&#39;]</span>
+    <span class="c1"># elif mode == &#39;1:pooled&#39;:</span>
+    <span class="c1">#     labels = [&#39;individual endpoint KS$_{D}$&#39;, &#39;individual distribution KS$_{D}$&#39;]</span>
+    <span class="n">E</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;end&#39;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">GEend</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span><span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">GEdistro</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">})</span>
+    <span class="n">E</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;metric&#39;</span>
+    <span class="n">E</span><span class="o">.</span><span class="n">step</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;metric&#39;</span>
+    <span class="k">return</span> <span class="n">E</span></div>
+
+
+<div class="viewcode-block" id="RSS"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.RSS">[docs]</a><span class="k">def</span> <span class="nf">RSS</span><span class="p">(</span><span class="n">vs0</span><span class="p">,</span> <span class="n">vs</span><span class="p">):</span>
+    <span class="n">er</span> <span class="o">=</span> <span class="p">(</span><span class="n">vs</span> <span class="o">-</span> <span class="n">vs0</span><span class="p">)</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">vs0</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">vs0</span><span class="p">))</span>
+
+    <span class="n">ee</span> <span class="o">=</span> <span class="p">(</span><span class="n">er</span> <span class="o">/</span> <span class="n">r</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+    <span class="n">MSE</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">ee</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">MSE</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RSS_dic"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.RSS_dic">[docs]</a><span class="k">def</span> <span class="nf">RSS_dic</span><span class="p">(</span><span class="n">dd</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pooled_cycle_curves</span>
+    <span class="n">ff</span> <span class="o">=</span> <span class="n">dd</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pooled_cycle_curves</span>
+
+    <span class="k">def</span> <span class="nf">RSS0</span><span class="p">(</span><span class="n">ff</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">sh</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+        <span class="n">vs0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="n">sh</span><span class="p">][</span><span class="n">mode</span><span class="p">])</span>
+        <span class="n">vs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ff</span><span class="p">[</span><span class="n">sh</span><span class="p">][</span><span class="n">mode</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">RSS</span><span class="p">(</span><span class="n">vs0</span><span class="p">,</span> <span class="n">vs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">RSS1</span><span class="p">(</span><span class="n">ff</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">sh</span><span class="p">):</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">f</span><span class="p">[</span><span class="n">sh</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">dic</span><span class="p">[</span><span class="n">mode</span><span class="p">]</span> <span class="o">=</span> <span class="n">RSS0</span><span class="p">(</span><span class="n">ff</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">sh</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dic</span>
+
+    <span class="n">dic</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">sh</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">dic</span><span class="p">[</span><span class="n">sh</span><span class="p">]</span> <span class="o">=</span> <span class="n">RSS1</span><span class="p">(</span><span class="n">ff</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">sh</span><span class="p">)</span>
+
+    <span class="n">stat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">dic</span><span class="p">[</span><span class="n">sh</span><span class="p">][</span><span class="s1">&#39;norm&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">sh</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">sh</span> <span class="o">!=</span> <span class="s1">&#39;sv&#39;</span><span class="p">]),</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">dd</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pooled_cycle_curves_errors</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;dict&#39;</span><span class="p">:</span> <span class="n">dic</span><span class="p">,</span> <span class="s1">&#39;stat&#39;</span><span class="p">:</span> <span class="n">stat</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">stat</span></div>
+
+<div class="viewcode-block" id="eval_RSS"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.eval_RSS">[docs]</a><span class="k">def</span> <span class="nf">eval_RSS</span><span class="p">(</span><span class="n">rss</span><span class="p">,</span><span class="n">rss_target</span><span class="p">,</span><span class="n">rss_sym</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;1:pooled&#39;</span><span class="p">)</span> <span class="p">:</span>
+    <span class="k">assert</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;1:pooled&#39;</span>
+    <span class="n">RSS_dic</span><span class="o">=</span><span class="p">{}</span>
+    <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">rrss</span> <span class="ow">in</span> <span class="n">rss</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">RSS_dic</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">sym</span> <span class="ow">in</span> <span class="n">rss_sym</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">rrss</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">RSS_dic</span><span class="p">[</span><span class="nb">id</span><span class="p">][</span><span class="n">sym</span><span class="p">]</span> <span class="o">=</span> <span class="n">RSS</span><span class="p">(</span><span class="n">rrss</span><span class="p">[</span><span class="n">p</span><span class="p">],</span> <span class="n">rss_target</span><span class="p">[</span><span class="n">p</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">RSS_dic</span></div>
+
+
+
+<div class="viewcode-block" id="col_df"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.col_df">[docs]</a><span class="k">def</span> <span class="nf">col_df</span><span class="p">(</span><span class="n">shorts</span><span class="p">,</span> <span class="n">groups</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">cm</span>
+    <span class="n">group_col_dic</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;angular kinematics&#39;</span><span class="p">:</span> <span class="s1">&#39;Blues&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;spatial displacement&#39;</span><span class="p">:</span> <span class="s1">&#39;Greens&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;temporal dynamics&#39;</span><span class="p">:</span> <span class="s1">&#39;Reds&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;dispersal&#39;</span><span class="p">:</span> <span class="s1">&#39;Purples&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;tortuosity&#39;</span><span class="p">:</span> <span class="s1">&#39;Purples&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="s1">&#39;Oranges&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;stride cycle&#39;</span><span class="p">:</span> <span class="s1">&#39;Oranges&#39;</span><span class="p">,</span>
+
+    <span class="p">}</span>
+    <span class="n">group_label_dic</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;angular kinematics&#39;</span><span class="p">:</span> <span class="sa">r</span><span class="s1">&#39;$\bf</span><span class="si">{angular}</span><span class="s1">$ $\bf</span><span class="si">{kinematics}</span><span class="s1">$&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;spatial displacement&#39;</span><span class="p">:</span> <span class="sa">r</span><span class="s1">&#39;$\bf</span><span class="si">{spatial}</span><span class="s1">$ $\bf</span><span class="si">{displacement}</span><span class="s1">$&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;temporal dynamics&#39;</span><span class="p">:</span> <span class="sa">r</span><span class="s1">&#39;$\bf</span><span class="si">{temporal}</span><span class="s1">$ $\bf</span><span class="si">{dynamics}</span><span class="s1">$&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;dispersal&#39;</span><span class="p">:</span> <span class="sa">r</span><span class="s1">&#39;$\bf</span><span class="si">{dispersal}</span><span class="s1">$&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;tortuosity&#39;</span><span class="p">:</span> <span class="sa">r</span><span class="s1">&#39;$\bf</span><span class="si">{tortuosity}</span><span class="s1">$&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="sa">r</span><span class="s1">&#39;$\bf</span><span class="si">{epochs}</span><span class="s1">$&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;stride cycle&#39;</span><span class="p">:</span> <span class="sa">r</span><span class="s1">&#39;$\bf</span><span class="si">{stride}</span><span class="s1">$ $\bf</span><span class="si">{cycle}</span><span class="s1">$&#39;</span><span class="p">,</span>
+
+    <span class="p">}</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="p">{</span><span class="s1">&#39;group&#39;</span><span class="p">:</span> <span class="n">groups</span><span class="p">,</span>
+         <span class="s1">&#39;group_label&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">group_label_dic</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">],</span>
+         <span class="s1">&#39;shorts&#39;</span><span class="p">:</span> <span class="n">shorts</span><span class="p">,</span>
+         <span class="s1">&#39;pars&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="n">sh</span><span class="p">)</span> <span class="k">for</span> <span class="n">sh</span> <span class="ow">in</span> <span class="n">shorts</span><span class="p">],</span>
+         <span class="s1">&#39;symbols&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="n">sh</span><span class="p">,</span> <span class="n">to_return</span><span class="o">=</span><span class="s1">&#39;l&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">sh</span> <span class="ow">in</span> <span class="n">shorts</span><span class="p">],</span>
+         <span class="s1">&#39;group_color&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">group_col_dic</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">]</span>
+         <span class="p">})</span>
+
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;cols&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="p">[(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;group&#39;</span><span class="p">],</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;symbols&#39;</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;par_colors&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="p">[</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;group_color&#39;</span><span class="p">])(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;pars&#39;</span><span class="p">]))],</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;group&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+<span class="c1"># def arrange_evaluation(d, evaluation_metrics=None):</span>
+<span class="c1">#     if evaluation_metrics is None:</span>
+<span class="c1">#         evaluation_metrics = {</span>
+<span class="c1">#             &#39;angular kinematics&#39;: [&#39;run_fov_mu&#39;, &#39;pau_fov_mu&#39;, &#39;b&#39;, &#39;fov&#39;, &#39;foa&#39;, &#39;rov&#39;, &#39;roa&#39;, &#39;tur_fou&#39;],</span>
+<span class="c1">#             &#39;spatial displacement&#39;: [&#39;cum_d&#39;, &#39;run_d&#39;, &#39;str_c_l&#39;, &#39;v_mu&#39;, &#39;pau_v_mu&#39;, &#39;run_v_mu&#39;, &#39;v&#39;, &#39;a&#39;,</span>
+<span class="c1">#                                      &#39;dsp_0_40_max&#39;, &#39;str_N&#39;, &#39;tor5&#39;, &#39;tor20&#39;],</span>
+<span class="c1">#             &#39;temporal dynamics&#39;: [&#39;fsv&#39;, &#39;ffov&#39;, &#39;run_t&#39;, &#39;pau_t&#39;, &#39;run_tr&#39;, &#39;pau_tr&#39;],</span>
+<span class="c1">#             &#39;stride cycle&#39;: [&#39;str_d_mu&#39;, &#39;str_d_std&#39;, &#39;str_sv_mu&#39;, &#39;str_fov_mu&#39;, &#39;str_fov_std&#39;],</span>
+<span class="c1">#             #&#39;epochs&#39;: [&#39;run_t&#39;, &#39;pau_t&#39;],</span>
+<span class="c1">#             #&#39;tortuosity&#39;: [&#39;tor5&#39;, &#39;tor20&#39;]</span>
+<span class="c1">#         }</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#     if not hasattr(d, &#39;step_data&#39;):</span>
+<span class="c1">#         d.load(h5_ks=[&#39;epochs&#39;,&#39;base_spatial&#39;,&#39;angular&#39;,&#39;dspNtor&#39;])</span>
+<span class="c1">#     s,e=d.step_data,d.endpoint_data</span>
+<span class="c1">#     all_ks=aux.SuperList(evaluation_metrics.values()).flatten.unique</span>
+<span class="c1">#     all_ps = aux.SuperList(reg.getPar(all_ks))</span>
+<span class="c1">#     Eps = all_ps.existing(e)</span>
+<span class="c1">#     Dps = all_ps.existing(s)</span>
+<span class="c1">#     Dps=Dps.nonexisting(Eps)</span>
+<span class="c1">#     Eks = reg.getPar(p=Eps, to_return=&#39;k&#39;)</span>
+<span class="c1">#     Dks = reg.getPar(p=Dps, to_return=&#39;k&#39;)</span>
+<span class="c1">#     target_data = aux.AttrDict({&#39;step&#39;: {p:s[p].dropna() for p in Dps}, &#39;end&#39;: {p:e[p] for p in Eps}})</span>
+<span class="c1">#</span>
+<span class="c1">#     dic = aux.AttrDict({&#39;end&#39;: {&#39;shorts&#39;: [], &#39;groups&#39;: []}, &#39;step&#39;: {&#39;shorts&#39;: [], &#39;groups&#39;: []}})</span>
+<span class="c1">#     for g, shs in evaluation_metrics.items():</span>
+<span class="c1">#         Eshorts, Dshorts = aux.existing_cols(shs,Eks), aux.existing_cols(shs,Dks)</span>
+<span class="c1">#</span>
+<span class="c1">#         if len(Eshorts) &gt; 0:</span>
+<span class="c1">#             dic.end.shorts.append(Eshorts)</span>
+<span class="c1">#             dic.end.groups.append(g)</span>
+<span class="c1">#         if len(Dshorts) &gt; 0:</span>
+<span class="c1">#             dic.step.shorts.append(Dshorts)</span>
+<span class="c1">#             dic.step.groups.append(g)</span>
+<span class="c1">#     ev = aux.AttrDict({k: col_df(**v) for k, v in dic.items()})</span>
+<span class="c1">#</span>
+<span class="c1">#     return ev, target_data</span>
+
+<div class="viewcode-block" id="Evaluation"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.Evaluation">[docs]</a><span class="k">class</span> <span class="nc">Evaluation</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">)</span> <span class="p">:</span>
+    <span class="n">refID</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Ref</span><span class="o">.</span><span class="n">confID_selector</span><span class="p">()</span>
+    <span class="n">eval_metrics</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span>
+        <span class="s1">&#39;angular kinematics&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;run_fov_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;pau_fov_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;fov&#39;</span><span class="p">,</span> <span class="s1">&#39;foa&#39;</span><span class="p">,</span> <span class="s1">&#39;rov&#39;</span><span class="p">,</span> <span class="s1">&#39;roa&#39;</span><span class="p">,</span> <span class="s1">&#39;tur_fou&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;spatial displacement&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;cum_d&#39;</span><span class="p">,</span> <span class="s1">&#39;run_d&#39;</span><span class="p">,</span> <span class="s1">&#39;str_c_l&#39;</span><span class="p">,</span> <span class="s1">&#39;v_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;pau_v_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;run_v_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span>
+                                 <span class="s1">&#39;dsp_0_40_max&#39;</span><span class="p">,</span> <span class="s1">&#39;str_N&#39;</span><span class="p">,</span> <span class="s1">&#39;tor5&#39;</span><span class="p">,</span> <span class="s1">&#39;tor20&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;temporal dynamics&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;fsv&#39;</span><span class="p">,</span> <span class="s1">&#39;ffov&#39;</span><span class="p">,</span> <span class="s1">&#39;run_t&#39;</span><span class="p">,</span> <span class="s1">&#39;pau_t&#39;</span><span class="p">,</span> <span class="s1">&#39;run_tr&#39;</span><span class="p">,</span> <span class="s1">&#39;pau_tr&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;stride cycle&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;str_d_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;str_d_std&#39;</span><span class="p">,</span> <span class="s1">&#39;str_sv_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;str_fov_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;str_fov_std&#39;</span><span class="p">,</span> <span class="s1">&#39;str_N&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;run_t&#39;</span><span class="p">,</span> <span class="s1">&#39;pau_t&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;tortuosity&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;tor5&#39;</span><span class="p">,</span> <span class="s1">&#39;tor20&#39;</span><span class="p">]}),</span>
+        <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Evaluation metrics to use&#39;</span><span class="p">)</span>
+    <span class="n">cycle_curve_metrics</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Ref</span><span class="o">.</span><span class="n">retrieve_dataset</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">refID</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eval_metrics</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="s1">&#39;step_data&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">h5_ks</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;epochs&#39;</span><span class="p">,</span> <span class="s1">&#39;base_spatial&#39;</span><span class="p">,</span> <span class="s1">&#39;angular&#39;</span><span class="p">,</span> <span class="s1">&#39;dspNtor&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Evaluation.build"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.Evaluation.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eval_metrics</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">evaluation</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">arrange_evaluation</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">s_shorts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_curve_metrics</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">config</span><span class="p">,</span><span class="s1">&#39;pooled_cycle_curves&#39;</span><span class="p">)</span> <span class="p">:</span>
+                <span class="kn">from</span> <span class="nn">larvaworld.lib.process.annotation</span> <span class="kn">import</span> <span class="n">compute_interference</span>
+                <span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">data</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pooled_cycle_curves</span> <span class="o">=</span> <span class="n">compute_interference</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">chunk_dicts</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;chunk_dicts&#39;</span><span class="p">))</span>
+
+            <span class="n">cycle_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sv&#39;</span><span class="p">:</span> <span class="s1">&#39;abs&#39;</span><span class="p">,</span> <span class="s1">&#39;fov&#39;</span><span class="p">:</span> <span class="s1">&#39;norm&#39;</span><span class="p">,</span> <span class="s1">&#39;rov&#39;</span><span class="p">:</span> <span class="s1">&#39;norm&#39;</span><span class="p">,</span> <span class="s1">&#39;foa&#39;</span><span class="p">:</span> <span class="s1">&#39;norm&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="s1">&#39;norm&#39;</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cycle_modes</span> <span class="o">=</span> <span class="p">{</span><span class="n">sh</span><span class="p">:</span> <span class="n">cycle_dict</span><span class="p">[</span><span class="n">sh</span><span class="p">]</span> <span class="k">for</span> <span class="n">sh</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_curve_metrics</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cycle_curve_target</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="n">sh</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">pooled_cycle_curves</span><span class="p">[</span><span class="n">sh</span><span class="p">][</span><span class="n">mod</span><span class="p">])</span> <span class="k">for</span> <span class="n">sh</span><span class="p">,</span> <span class="n">mod</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_modes</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rss_sym</span> <span class="o">=</span> <span class="p">{</span><span class="n">sh</span><span class="p">:</span> <span class="n">sh</span> <span class="k">for</span> <span class="n">sh</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_curve_metrics</span><span class="p">}</span></div>
+
+
+
+
+
+<div class="viewcode-block" id="Evaluation.arrange_evaluation"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.Evaluation.arrange_evaluation">[docs]</a>    <span class="k">def</span> <span class="nf">arrange_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="n">s</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">step_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">endpoint_data</span>
+        <span class="n">all_ks</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">SuperList</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eval_metrics</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="o">.</span><span class="n">flatten</span><span class="o">.</span><span class="n">unique</span>
+        <span class="n">all_ps</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">SuperList</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="n">all_ks</span><span class="p">[:]))</span>
+        <span class="n">Eps</span> <span class="o">=</span> <span class="n">all_ps</span><span class="o">.</span><span class="n">existing</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="n">Dps</span> <span class="o">=</span> <span class="n">all_ps</span><span class="o">.</span><span class="n">existing</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">Dps</span> <span class="o">=</span> <span class="n">Dps</span><span class="o">.</span><span class="n">nonexisting</span><span class="p">(</span><span class="n">Eps</span><span class="p">)</span>
+        <span class="n">Eks</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">Eps</span><span class="p">[:],</span> <span class="n">to_return</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+        <span class="n">Dks</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">Dps</span><span class="p">[:],</span> <span class="n">to_return</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+        <span class="n">target_data</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">p</span><span class="p">:</span> <span class="n">s</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">Dps</span><span class="p">},</span> <span class="s1">&#39;end&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">p</span><span class="p">:</span> <span class="n">e</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">Eps</span><span class="p">}})</span>
+
+        <span class="n">dic</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;end&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;shorts&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;groups&#39;</span><span class="p">:</span> <span class="p">[]},</span> <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;shorts&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;groups&#39;</span><span class="p">:</span> <span class="p">[]}})</span>
+        <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">shs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">Eshorts</span><span class="p">,</span> <span class="n">Dshorts</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">existing_cols</span><span class="p">(</span><span class="n">shs</span><span class="p">,</span> <span class="n">Eks</span><span class="p">),</span> <span class="n">aux</span><span class="o">.</span><span class="n">existing_cols</span><span class="p">(</span><span class="n">shs</span><span class="p">,</span> <span class="n">Dks</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Eshorts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">dic</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">shorts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Eshorts</span><span class="p">)</span>
+                <span class="n">dic</span><span class="o">.</span><span class="n">end</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">Dshorts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">dic</span><span class="o">.</span><span class="n">step</span><span class="o">.</span><span class="n">shorts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Dshorts</span><span class="p">)</span>
+                <span class="n">dic</span><span class="o">.</span><span class="n">step</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+        <span class="n">ev</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">col_df</span><span class="p">(</span><span class="o">**</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dic</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s_pars</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">flatten_list</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">][</span><span class="s1">&#39;pars&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s_shorts</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">flatten_list</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">][</span><span class="s1">&#39;shorts&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">s_symbols</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">flatten_list</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">][</span><span class="s1">&#39;symbols&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e_pars</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">flatten_list</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">][</span><span class="s1">&#39;pars&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">e_symbols</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">flatten_list</span><span class="p">(</span><span class="n">ev</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">][</span><span class="s1">&#39;symbols&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eval_symbols</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(</span>
+            <span class="p">{</span><span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s_pars</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">s_symbols</span><span class="p">)),</span> <span class="s1">&#39;end&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">e_pars</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">e_symbols</span><span class="p">))})</span>
+        <span class="k">return</span> <span class="n">ev</span><span class="p">,</span> <span class="n">target_data</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">func_eval_metric_solo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">ss</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;KS&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">sym</span><span class="p">:</span> <span class="n">ks_2samp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_data</span><span class="o">.</span><span class="n">step</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">ss</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span>
+                                        <span class="n">p</span><span class="p">,</span> <span class="n">sym</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_symbols</span><span class="o">.</span><span class="n">step</span><span class="o">.</span><span class="n">items</span><span class="p">()}})</span>
+
+        <span class="k">return</span> <span class="n">func</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">func_eval_metric_multi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">gfunc</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(</span>
+                <span class="p">{</span><span class="s1">&#39;KS&#39;</span><span class="p">:</span> <span class="n">eval_distro_fast</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_data</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_symbols</span><span class="o">.</span><span class="n">step</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;1:pooled&#39;</span><span class="p">,</span> <span class="n">min_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)})</span>
+
+        <span class="k">return</span> <span class="n">gfunc</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">func_cycle_curve_solo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">ss</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">larvaworld.lib.process.annotation</span> <span class="kn">import</span> <span class="n">cycle_curve_dict</span>
+            <span class="n">c0</span> <span class="o">=</span> <span class="n">cycle_curve_dict</span><span class="p">(</span><span class="n">s</span><span class="o">=</span><span class="n">ss</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">shs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_curve_metrics</span><span class="p">)</span>
+            <span class="n">eval_curves</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(({</span><span class="n">sh</span><span class="p">:</span> <span class="n">c0</span><span class="p">[</span><span class="n">sh</span><span class="p">][</span><span class="n">mode</span><span class="p">]</span> <span class="k">for</span> <span class="n">sh</span><span class="p">,</span> <span class="n">mode</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_modes</span><span class="o">.</span><span class="n">items</span><span class="p">()}))</span>
+            <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(</span>
+                <span class="p">{</span><span class="s1">&#39;RSS&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">sh</span><span class="p">:</span> <span class="n">RSS</span><span class="p">(</span><span class="n">ref_curve</span><span class="p">,</span> <span class="n">eval_curves</span><span class="p">[</span><span class="n">sh</span><span class="p">])</span> <span class="k">for</span> <span class="n">sh</span><span class="p">,</span> <span class="n">ref_curve</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_curve_target</span><span class="o">.</span><span class="n">items</span><span class="p">()}})</span>
+
+        <span class="k">return</span> <span class="n">func</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">func_cycle_curve_multi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">gfunc</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+            <span class="kn">from</span> <span class="nn">larvaworld.lib.process.annotation</span> <span class="kn">import</span> <span class="n">cycle_curve_dict_multi</span>
+
+            <span class="n">rss0</span> <span class="o">=</span> <span class="n">cycle_curve_dict_multi</span><span class="p">(</span><span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">shs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_curve_metrics</span><span class="p">)</span>
+            <span class="n">rss</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(</span>
+                <span class="p">{</span><span class="nb">id</span><span class="p">:</span> <span class="p">{</span><span class="n">sh</span><span class="p">:</span> <span class="n">dic</span><span class="p">[</span><span class="n">sh</span><span class="p">][</span><span class="n">mod</span><span class="p">]</span> <span class="k">for</span> <span class="n">sh</span><span class="p">,</span> <span class="n">mod</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_modes</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">dic</span> <span class="ow">in</span> <span class="n">rss0</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+            <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;RSS&#39;</span><span class="p">:</span> <span class="n">eval_RSS</span><span class="p">(</span><span class="n">rss</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cycle_curve_target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rss_sym</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;1:pooled&#39;</span><span class="p">)})</span>
+        <span class="k">return</span> <span class="n">gfunc</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fit_func_multi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">fit_func</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+            <span class="n">fit_dicts</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_curve_metrics</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">fit_dicts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func_cycle_curve_multi</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eval_metrics</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">fit_dicts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func_eval_metric_multi</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">fit_dicts</span>
+        <span class="k">return</span> <span class="n">fit_func</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fit_func_solo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">fit_func</span><span class="p">(</span><span class="n">ss</span><span class="p">):</span>
+            <span class="n">fit_dicts</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cycle_curve_metrics</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">fit_dicts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func_cycle_curve_solo</span><span class="p">(</span><span class="n">ss</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eval_metrics</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">fit_dicts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func_eval_metric_solo</span><span class="p">(</span><span class="n">ss</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">fit_dicts</span>
+
+        <span class="k">return</span> <span class="n">fit_func</span>
+
+
+<div class="viewcode-block" id="Evaluation.eval_datasets"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.Evaluation.eval_datasets">[docs]</a>    <span class="k">def</span> <span class="nf">eval_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ds</span><span class="p">,</span><span class="n">mode</span><span class="p">,</span> <span class="n">min_size</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">eval_fast</span><span class="p">(</span><span class="n">datasets</span><span class="o">=</span><span class="n">ds</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_data</span><span class="p">,</span> <span class="n">symbols</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">eval_symbols</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">min_size</span><span class="o">=</span><span class="n">min_size</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DataEvaluation"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.DataEvaluation">[docs]</a><span class="k">class</span> <span class="nc">DataEvaluation</span><span class="p">(</span><span class="n">Evaluation</span><span class="p">)</span> <span class="p">:</span>
+
+
+    <span class="n">norm_modes</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ListSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="s1">&#39;minmax&#39;</span><span class="p">],</span> <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="s1">&#39;minmax&#39;</span><span class="p">,</span> <span class="s1">&#39;std&#39;</span><span class="p">],</span>
+                                    <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Normalization modes to use&#39;</span><span class="p">)</span>
+    <span class="n">eval_modes</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ListSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pooled&#39;</span><span class="p">],</span> <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pooled&#39;</span><span class="p">,</span> <span class="s1">&#39;1:1&#39;</span><span class="p">,</span> <span class="s1">&#39;1:pooled&#39;</span><span class="p">],</span>
+                                    <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Evaluation modes to use&#39;</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_dicts</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+
+
+
+
+
+
+
+<div class="viewcode-block" id="DataEvaluation.norm_error_dict"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/evaluation.html#larvaworld.lib.process.evaluation.DataEvaluation.norm_error_dict">[docs]</a>    <span class="k">def</span> <span class="nf">norm_error_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error_dict</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;raw&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">error_dict</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;minmax&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="n">k</span> <span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">MinMaxScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">error_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;std&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="n">k</span> <span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">StandardScaler</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">error_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span></div></div>
+
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.util.data_aux &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.util.data_aux</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.util.data_aux</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">param</span>
+
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param.param_aux</span> <span class="kn">import</span> <span class="n">vpar</span><span class="p">,</span> <span class="n">get_vfunc</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;init2mdict&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;gConf&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;get_ks&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;LarvaworldParam&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;get_LarvaworldParam&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;prepare_LarvaworldParam&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;build_LarvaworldParam&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="init2mdict"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/data_aux.html#larvaworld.lib.util.data_aux.init2mdict">[docs]</a><span class="k">def</span> <span class="nf">init2mdict</span><span class="p">(</span><span class="n">d0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="n">D0</span><span class="p">):</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">kk</span><span class="p">,</span> <span class="n">vv</span> <span class="ow">in</span> <span class="n">D0</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="k">pass</span>
+            <span class="k">elif</span> <span class="s1">&#39;dtype&#39;</span> <span class="ow">in</span> <span class="n">vv</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="n">vv</span><span class="p">[</span><span class="s1">&#39;dtype&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="nb">dict</span><span class="p">:</span>
+                <span class="n">mdict</span> <span class="o">=</span> <span class="n">check</span><span class="p">(</span><span class="n">vv</span><span class="p">)</span>
+                <span class="n">vv0</span> <span class="o">=</span> <span class="p">{</span><span class="n">kkk</span><span class="p">:</span> <span class="n">vvv</span> <span class="k">for</span> <span class="n">kkk</span><span class="p">,</span> <span class="n">vvv</span> <span class="ow">in</span> <span class="n">vv</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">kkk</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mdict</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+                <span class="k">if</span> <span class="s1">&#39;v0&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">vv0</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">vv0</span><span class="p">[</span><span class="s1">&#39;v0&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gConf</span><span class="p">(</span><span class="n">mdict</span><span class="p">)</span>
+                <span class="n">D</span><span class="p">[</span><span class="n">kk</span><span class="p">]</span> <span class="o">=</span> <span class="n">build_LarvaworldParam</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">kk</span><span class="p">,</span> <span class="n">mdict</span><span class="o">=</span><span class="n">mdict</span><span class="p">,</span> <span class="o">**</span><span class="n">vv0</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="nb">any</span><span class="p">([</span><span class="n">a</span> <span class="ow">in</span> <span class="n">vv</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;symbol&#39;</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">,</span> <span class="s1">&#39;disp&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">]]):</span>
+                <span class="n">D</span><span class="p">[</span><span class="n">kk</span><span class="p">]</span> <span class="o">=</span> <span class="n">build_LarvaworldParam</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">kk</span><span class="p">,</span> <span class="o">**</span><span class="n">vv</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">D</span><span class="p">[</span><span class="n">kk</span><span class="p">]</span> <span class="o">=</span> <span class="n">check</span><span class="p">(</span><span class="n">vv</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">D</span>
+
+    <span class="n">d</span> <span class="o">=</span> <span class="n">check</span><span class="p">(</span><span class="n">d0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="gConf"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/data_aux.html#larvaworld.lib.util.data_aux.gConf">[docs]</a><span class="k">def</span> <span class="nf">gConf</span><span class="p">(</span><span class="n">mdict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">mdict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mdict</span><span class="p">,</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">mdict</span><span class="o">.</span><span class="n">v</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mdict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+
+        <span class="n">conf</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">mdict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+                <span class="n">conf</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">v</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">conf</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">gConf</span><span class="p">(</span><span class="n">mdict</span><span class="o">=</span><span class="n">p</span><span class="p">)</span>
+            <span class="n">conf</span><span class="o">.</span><span class="n">update_existingdict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">conf</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(</span><span class="n">mdict</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_ks"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/data_aux.html#larvaworld.lib.util.data_aux.get_ks">[docs]</a><span class="k">def</span> <span class="nf">get_ks</span><span class="p">(</span><span class="n">d0</span><span class="p">,</span> <span class="n">k0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ks</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">d0</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">k0</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">k0</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+            <span class="n">ks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ks</span> <span class="o">=</span> <span class="n">get_ks</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">k0</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">ks</span><span class="o">=</span><span class="n">ks</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ks</span></div>
+
+<div class="viewcode-block" id="LarvaworldParam"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/data_aux.html#larvaworld.lib.util.data_aux.LarvaworldParam">[docs]</a><span class="k">class</span> <span class="nc">LarvaworldParam</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Name of the parameter&#39;</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Dataset name of the parameter&#39;</span><span class="p">)</span>
+    <span class="n">disp</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Displayed name of the parameter&#39;</span><span class="p">)</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Key of the parameter&#39;</span><span class="p">)</span>
+    <span class="n">sym</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Symbol of the parameter&#39;</span><span class="p">)</span>
+    <span class="n">codename</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Name of the parameter in code&#39;</span><span class="p">)</span>
+    <span class="n">dtype</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Data type of the parameter value&#39;</span><span class="p">)</span>
+    <span class="n">mdict</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The parameter dict in case of a dict header&#39;</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">func</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Function to get the parameter from a dataset&#39;</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">required_ks</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Keys of prerequired parameters for computation in a dataset&#39;</span><span class="p">)</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">s</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">disp</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">l</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">disp</span> <span class="o">+</span> <span class="s1">&#39;  &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ulabel</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">symunit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sym</span> <span class="o">+</span> <span class="s1">&#39;  &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ulabel</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ulabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span> <span class="o">==</span> <span class="n">reg</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">dimensionless</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;(&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">unit</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">unit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span> <span class="o">==</span> <span class="n">reg</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">dimensionless</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;-&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">fr</span><span class="s1">&#39;$</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="si">}</span><span class="s1">$&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">upint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">pint_pandas</span> <span class="kn">import</span> <span class="n">PintType</span>
+            <span class="n">ustring</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;pint[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">u</span><span class="si">}</span><span class="s1">]&#39;</span>
+            <span class="k">return</span> <span class="n">PintType</span><span class="p">(</span><span class="n">ustring</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">u</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">short</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span>
+
+    <span class="o">@</span> <span class="nb">property</span>
+    <span class="k">def</span> <span class="nf">gConf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mdict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="k">return</span> <span class="n">gConf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mdict</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">v0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">default</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">initial_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">default</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">symbol</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sym</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">label</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">label</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">disp</span>
+
+    <span class="c1"># @property</span>
+    <span class="c1"># def lab(self):</span>
+    <span class="c1">#     return self.l</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tooltip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">doc</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">doc</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">help</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">doc</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">parclass</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">min</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">bounds</span>
+            <span class="k">return</span> <span class="n">vmin</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">bounds</span>
+            <span class="k">return</span> <span class="n">vmax</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">lim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">lim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">bounds</span>
+            <span class="k">return</span> <span class="n">lim</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parclass</span> <span class="ow">in</span> <span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">,</span> <span class="n">param</span><span class="o">.</span><span class="n">Range</span><span class="p">]</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">step</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">parclass</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.01</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+            <span class="k">return</span> <span class="mf">0.01</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Ndec</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># @property</span>
+    <span class="c1"># def get_ParsArg(self):</span>
+    <span class="c1">#     from cli.parser import build_ParsArg</span>
+    <span class="c1">#     return build_ParsArg(name=self.name, k=self.k, h=self.help, dtype=self.dtype, v=self.initial_value, vs=None)</span>
+
+<div class="viewcode-block" id="LarvaworldParam.exists"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/data_aux.html#larvaworld.lib.util.data_aux.LarvaworldParam.exists">[docs]</a>    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="n">par</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">d</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">dataset</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;end&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s1">&#39;step_data&#39;</span><span class="p">):</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">step_data</span>
+            <span class="k">if</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">dic</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="s1">&#39;endpoint_data&#39;</span><span class="p">):</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">endpoint_data</span>
+            <span class="k">if</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">dic</span><span class="o">.</span><span class="n">end</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">config</span>
+        <span class="k">if</span> <span class="s1">&#39;aux_pars&#39;</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">ps</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">aux_pars</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">dic</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">ps</span>
+        <span class="k">return</span> <span class="n">dic</span></div>
+
+<div class="viewcode-block" id="LarvaworldParam.get"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/data_aux.html#larvaworld.lib.util.data_aux.LarvaworldParam.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">compute</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">exists</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">exists</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_par</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">par</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">d</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">compute</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">compute</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Parameter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">disp</span><span class="si">}</span><span class="s1"> not found&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="LarvaworldParam.compute"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/data_aux.html#larvaworld.lib.util.data_aux.LarvaworldParam.compute">[docs]</a>    <span class="k">def</span> <span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Function to compute parameter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">disp</span><span class="si">}</span><span class="s1"> is not defined&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="LarvaworldParam.randomize"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/data_aux.html#larvaworld.lib.util.data_aux.LarvaworldParam.randomize">[docs]</a>    <span class="k">def</span> <span class="nf">randomize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parclass</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">:</span>
+            <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">bounds</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">crop_to_bounds</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ndec</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">p</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">:</span>
+            <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">bounds</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">p</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ndec</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">p</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Selector</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">objects</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">p</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">p</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Range</span><span class="p">:</span>
+            <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">bounds</span>
+            <span class="n">vv0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ndec</span><span class="p">)</span>
+            <span class="n">vv1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">vv0</span><span class="p">,</span> <span class="n">vmax</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ndec</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">vv0</span><span class="p">,</span> <span class="n">vv1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="LarvaworldParam.mutate"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/data_aux.html#larvaworld.lib.util.data_aux.LarvaworldParam.mutate">[docs]</a>    <span class="k">def</span> <span class="nf">mutate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Pmut</span><span class="p">,</span> <span class="n">Cmut</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">Pmut</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parclass</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">:</span>
+
+                <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">bounds</span>
+                <span class="n">vr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">vmax</span> <span class="o">-</span> <span class="n">vmin</span><span class="p">)</span>
+                <span class="n">v0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">vmin</span> <span class="o">+</span> <span class="n">vr</span> <span class="o">/</span> <span class="mi">2</span>
+                <span class="n">vv</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">gauss</span><span class="p">(</span><span class="n">v0</span><span class="p">,</span> <span class="n">Cmut</span> <span class="o">*</span> <span class="n">vr</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">crop_to_bounds</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ndec</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">parclass</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">:</span>
+                <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">bounds</span>
+                <span class="n">vr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">vmax</span> <span class="o">-</span> <span class="n">vmin</span><span class="p">)</span>
+                <span class="n">v0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">vmin</span> <span class="o">+</span> <span class="n">vr</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">vv</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">gauss</span><span class="p">(</span><span class="n">v0</span><span class="p">,</span> <span class="n">Cmut</span> <span class="o">*</span> <span class="n">vr</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">crop_to_bounds</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">vv</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">parclass</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">:</span>
+                <span class="n">v0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">0.5</span>
+                <span class="n">vv</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">gauss</span><span class="p">(</span><span class="n">v0</span><span class="p">,</span> <span class="n">Cmut</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">crop_to_bounds</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ndec</span><span class="p">))</span>
+                <span class="c1"># self.v = np.round(self.v, self.Ndec)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">parclass</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Selector</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">objects</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">parclass</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">parclass</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Range</span><span class="p">:</span>
+                <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">bounds</span>
+                <span class="n">vr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">vmax</span> <span class="o">-</span> <span class="n">vmin</span><span class="p">)</span>
+                <span class="n">v0</span><span class="p">,</span> <span class="n">v1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="p">)</span>
+                <span class="n">vv0</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">gauss</span><span class="p">(</span><span class="n">v0</span><span class="p">,</span> <span class="n">Cmut</span> <span class="o">*</span> <span class="n">vr</span><span class="p">)</span>
+                <span class="n">vv1</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">gauss</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">Cmut</span> <span class="o">*</span> <span class="n">vr</span><span class="p">)</span>
+                <span class="n">vv0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">vv0</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="n">vmax</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ndec</span><span class="p">)</span>
+                <span class="n">vv1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">vv1</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="n">vv0</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="n">vmax</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ndec</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">vv0</span><span class="p">,</span> <span class="n">vv1</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="get_LarvaworldParam"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/data_aux.html#larvaworld.lib.util.data_aux.get_LarvaworldParam">[docs]</a><span class="k">def</span> <span class="nf">get_LarvaworldParam</span><span class="p">(</span><span class="n">vparfunc</span><span class="p">,</span> <span class="n">v0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dv</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">u_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">_LarvaworldParam</span><span class="p">(</span><span class="n">LarvaworldParam</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">vparfunc</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">dimensionless</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Unit of the parameter values&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">u_name</span><span class="p">)</span>
+
+    <span class="n">par</span> <span class="o">=</span> <span class="n">_LarvaworldParam</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">par</span></div>
+
+
+<div class="viewcode-block" id="prepare_LarvaworldParam"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/data_aux.html#larvaworld.lib.util.data_aux.prepare_LarvaworldParam">[docs]</a><span class="k">def</span> <span class="nf">prepare_LarvaworldParam</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sym</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">symbol</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">codename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lab</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">u_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mdict</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">required_ks</span><span class="o">=</span><span class="p">[],</span> <span class="n">u</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">dimensionless</span><span class="p">,</span> <span class="n">v0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">v</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dv</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">vfunc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vparfunc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Method that formats the dictionary of attributes for a parameter in order to create a LarvaworldParam instance</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">codename</span> <span class="o">=</span> <span class="n">p</span> <span class="k">if</span> <span class="n">codename</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">codename</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">p</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">d</span>
+    <span class="n">disp</span> <span class="o">=</span> <span class="n">d</span> <span class="k">if</span> <span class="n">disp</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">disp</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">k</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">d</span>
+    <span class="n">v0</span> <span class="o">=</span> <span class="n">v</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">v0</span>
+    <span class="k">if</span> <span class="n">sym</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">symbol</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sym</span> <span class="o">=</span> <span class="n">symbol</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sym</span> <span class="o">=</span> <span class="n">k</span>
+
+    <span class="k">if</span> <span class="n">lab</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">u</span> <span class="o">==</span> <span class="n">reg</span><span class="o">.</span><span class="n">units</span><span class="o">.</span><span class="n">dimensionless</span><span class="p">:</span>
+            <span class="n">lab</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">disp</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ulab</span><span class="o">=</span><span class="sa">fr</span><span class="s1">&#39;$</span><span class="si">{</span><span class="n">u</span><span class="si">}</span><span class="s1">$&#39;</span>
+            <span class="n">lab</span> <span class="o">=</span> <span class="sa">fr</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">disp</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">ulab</span><span class="si">}</span><span class="s1">)&#39;</span>
+    <span class="k">if</span> <span class="n">dv</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+        <span class="n">dv</span> <span class="o">=</span> <span class="mf">0.01</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">lab</span> <span class="k">if</span> <span class="n">h</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">h</span>
+
+    <span class="k">if</span> <span class="n">vparfunc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+
+
+
+
+
+        <span class="k">if</span> <span class="n">vfunc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vfunc</span> <span class="o">=</span><span class="n">get_vfunc</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">lim</span><span class="o">=</span><span class="n">lim</span><span class="p">,</span> <span class="n">vs</span><span class="o">=</span><span class="n">vs</span><span class="p">)</span>
+        <span class="n">vparfunc</span> <span class="o">=</span> <span class="n">vpar</span><span class="p">(</span><span class="n">vfunc</span><span class="p">,</span> <span class="n">v0</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">lab</span><span class="p">,</span> <span class="n">lim</span><span class="p">,</span> <span class="n">dv</span><span class="p">,</span> <span class="n">vs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">vparfunc</span> <span class="o">=</span> <span class="n">vparfunc</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span>
+        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span>
+        <span class="s1">&#39;p&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span>
+        <span class="s1">&#39;d&#39;</span><span class="p">:</span> <span class="n">d</span><span class="p">,</span>
+        <span class="s1">&#39;k&#39;</span><span class="p">:</span> <span class="n">k</span><span class="p">,</span>
+        <span class="s1">&#39;disp&#39;</span><span class="p">:</span> <span class="n">disp</span><span class="p">,</span>
+        <span class="s1">&#39;sym&#39;</span><span class="p">:</span> <span class="n">sym</span><span class="p">,</span>
+        <span class="s1">&#39;codename&#39;</span><span class="p">:</span> <span class="n">codename</span><span class="p">,</span>
+        <span class="s1">&#39;dtype&#39;</span><span class="p">:</span> <span class="n">dtype</span><span class="p">,</span>
+        <span class="s1">&#39;func&#39;</span><span class="p">:</span> <span class="n">func</span><span class="p">,</span>
+        <span class="s1">&#39;u&#39;</span><span class="p">:</span> <span class="n">u</span><span class="p">,</span>
+        <span class="s1">&#39;u_name&#39;</span><span class="p">:</span> <span class="n">u_name</span><span class="p">,</span>
+        <span class="s1">&#39;required_ks&#39;</span><span class="p">:</span> <span class="n">required_ks</span><span class="p">,</span>
+        <span class="s1">&#39;vparfunc&#39;</span><span class="p">:</span> <span class="n">vparfunc</span><span class="p">,</span>
+        <span class="s1">&#39;mdict&#39;</span><span class="p">:</span> <span class="n">mdict</span><span class="p">,</span>
+        <span class="s1">&#39;dv&#39;</span><span class="p">:</span> <span class="n">dv</span><span class="p">,</span>
+        <span class="s1">&#39;v0&#39;</span><span class="p">:</span> <span class="n">v0</span><span class="p">,</span>
+
+    <span class="p">})</span></div>
+
+
+
+<div class="viewcode-block" id="build_LarvaworldParam"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/data_aux.html#larvaworld.lib.util.data_aux.build_LarvaworldParam">[docs]</a><span class="k">def</span> <span class="nf">build_LarvaworldParam</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="p">:</span>
+    <span class="n">pre_p</span> <span class="o">=</span> <span class="n">prepare_LarvaworldParam</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">get_LarvaworldParam</span><span class="p">(</span><span class="o">**</span><span class="n">pre_p</span><span class="p">)</span></div>
+
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

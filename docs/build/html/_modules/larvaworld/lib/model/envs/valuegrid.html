@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.model.envs.valuegrid &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.model.envs.valuegrid</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.model.envs.valuegrid</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">math</span>
+
+<span class="kn">import</span> <span class="nn">agentpy</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">param</span>
+<span class="kn">from</span> <span class="nn">scipy.ndimage.filters</span> <span class="kn">import</span> <span class="n">gaussian_filter</span>
+<span class="kn">from</span> <span class="nn">shapely</span> <span class="kn">import</span> <span class="n">geometry</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">aux</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.model</span> <span class="kn">import</span> <span class="n">NamedObject</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">Substrate</span><span class="p">,</span> <span class="n">ClassAttr</span><span class="p">,</span> <span class="n">PositiveNumber</span><span class="p">,</span> <span class="n">Phase</span><span class="p">,</span> <span class="n">Viewable</span><span class="p">,</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">ViewableNamedGrid</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.screen.rendering</span> <span class="kn">import</span> <span class="n">ScreenTextBox</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;GridOverSpace&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ValueGrid&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;FoodGrid&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;OdorScape&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;GaussianValueLayer&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;DiffusionValueLayer&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;WindScape&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ThermoScape&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;create_odor_layers&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">class</span> <span class="nc">SpatialEntity</span><span class="p">(</span><span class="n">Viewable</span><span class="p">,</span><span class="n">NamedObject</span><span class="p">):</span>
+    <span class="n">default_color</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Color</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">)</span>
+    <span class="n">visible</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">record_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;p&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Records the positions of each agent.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            label (string, optional):</span>
+<span class="sd">                Name under which to record each position (default p).</span>
+<span class="sd">                A number will be added for each coordinate (e.g. p1, p2, ...).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">agent</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">positions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pos</span><span class="p">):</span>
+                <span class="n">agent</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">label</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">p</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GridOverSpace"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace">[docs]</a><span class="k">class</span> <span class="nc">GridOverSpace</span><span class="p">(</span><span class="n">ViewableNamedGrid</span><span class="p">,</span> <span class="n">agentpy</span><span class="o">.</span><span class="n">Grid</span><span class="p">):</span>
+    <span class="n">unique_id</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s1">&#39;GridOverArena&#39;</span><span class="p">)</span>
+    <span class="n">default_color</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Color</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">)</span>
+    <span class="n">visible</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># initial_value = param.Number(0.0, doc=&#39;initial value over the grid&#39;)</span>
+    <span class="c1"># fixed_max = param.Boolean(False, doc=&#39;whether the max is kept constant&#39;)</span>
+    <span class="c1"># grid_dims = PositiveIntegerRange((51, 51), softmax=500, doc=&#39;The spatial resolution of the food grid.&#39;)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">model</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">ViewableNamedGrid</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">agentpy</span><span class="o">.</span><span class="n">Grid</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_dims</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_torus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">_torus</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">XY</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_dims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+        <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">range</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell_radius</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">xy</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">XY</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meshgrid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_vertices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_grid_vertices</span><span class="p">()</span>
+
+    <span class="o">@</span> <span class="nb">property</span>
+    <span class="k">def</span> <span class="nf">space</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">space</span>
+
+<div class="viewcode-block" id="GridOverSpace.get_grid_cell"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace.get_grid_cell">[docs]</a>    <span class="k">def</span> <span class="nf">get_grid_cell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">XY</span><span class="o">*</span><span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">xy</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="GridOverSpace.generate_grid_vertices"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace.generate_grid_vertices">[docs]</a>    <span class="k">def</span> <span class="nf">generate_grid_vertices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">):</span>
+                <span class="n">vertices</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_vertices</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">vertices</span></div>
+
+<div class="viewcode-block" id="GridOverSpace.cell_vertices"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace.cell_vertices">[docs]</a>    <span class="k">def</span> <span class="nf">cell_vertices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xy</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">XY</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">X</span><span class="p">),</span> <span class="n">y</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">-</span> <span class="n">Y</span><span class="p">)),</span>
+                      <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">X</span><span class="p">),</span> <span class="n">y</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">-</span> <span class="n">Y</span><span class="p">)),</span>
+                      <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">X</span><span class="p">),</span> <span class="n">y</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">Y</span><span class="p">)),</span>
+                      <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">X</span><span class="p">),</span> <span class="n">y</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">Y</span><span class="p">))])</span></div></div>
+
+<div class="viewcode-block" id="ValueGrid"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid">[docs]</a><span class="k">class</span> <span class="nc">ValueGrid</span><span class="p">(</span><span class="n">SpatialEntity</span><span class="p">,</span> <span class="n">Grid</span><span class="p">):</span>
+    <span class="n">initial_value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;initial value over the grid&#39;</span><span class="p">)</span>
+
+    <span class="n">fixed_max</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;whether the max is kept constant&#39;</span><span class="p">)</span>
+    <span class="c1"># grid_dims = PositiveIntegerRange((51, 51),softmax=500, doc=&#39;The spatial resolution of the food grid.&#39;)</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sources</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">sources</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sources</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sources</span> <span class="o">=</span> <span class="n">sources</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">XY0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_dims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_dims</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span>
+
+        <span class="k">if</span> <span class="n">max_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">max_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_value</span> <span class="o">=</span> <span class="n">max_value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_value</span> <span class="o">=</span> <span class="n">min_value</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">match_space</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">space</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ValueGrid.match_space"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.match_space">[docs]</a>    <span class="k">def</span> <span class="nf">match_space</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">space</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xy0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">space</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">xy0</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">XY0</span>
+        <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span><span class="n">space</span><span class="o">.</span><span class="n">range</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cell_radius</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">xy0</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">XY0</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meshgrid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">y0</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_vertices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_grid_vertices</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ValueGrid.update_values"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.update_values">[docs]</a>    <span class="k">def</span> <span class="nf">update_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="ValueGrid.add_value"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.add_value">[docs]</a>    <span class="k">def</span> <span class="nf">add_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_cell_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_grid_cell</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">value</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ValueGrid.get_value"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.get_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_grid_cell</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span></div>
+        <span class="c1"># return self.get_cell_value(self.get_grid_cell(p))</span>
+
+
+<div class="viewcode-block" id="ValueGrid.get_grid_cell"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.get_grid_cell">[docs]</a>    <span class="k">def</span> <span class="nf">get_grid_cell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">XY0</span><span class="o">*</span><span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">xy0</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span></div>
+
+
+
+
+<div class="viewcode-block" id="ValueGrid.add_cell_value"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.add_cell_value">[docs]</a>    <span class="k">def</span> <span class="nf">add_cell_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">v0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="n">cell</span><span class="p">]</span>
+        <span class="n">v1</span> <span class="o">=</span> <span class="n">v0</span> <span class="o">+</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_max</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">max_value</span><span class="p">,</span> <span class="n">v1</span><span class="p">])</span>
+        <span class="n">v2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">min_value</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="n">cell</span><span class="p">]</span> <span class="o">=</span> <span class="n">v2</span>
+        <span class="c1"># print(v2/self.initial_value,self.initial_value)</span>
+        <span class="k">if</span> <span class="n">v1</span> <span class="o">&lt;</span> <span class="n">v2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_value</span> <span class="o">-</span> <span class="n">v0</span>
+        <span class="k">elif</span> <span class="n">v1</span> <span class="o">&gt;</span> <span class="n">v2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_value</span> <span class="o">-</span> <span class="n">v0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="ValueGrid.generate_grid_vertices"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.generate_grid_vertices">[docs]</a>    <span class="k">def</span> <span class="nf">generate_grid_vertices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">):</span>
+                <span class="n">vertices</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_vertices</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">vertices</span></div>
+
+<div class="viewcode-block" id="ValueGrid.cell_vertices"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.cell_vertices">[docs]</a>    <span class="k">def</span> <span class="nf">cell_vertices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">X</span><span class="p">),</span> <span class="n">y</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">-</span> <span class="n">Y</span><span class="p">)),</span>
+                      <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">X</span><span class="p">),</span> <span class="n">y</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">-</span> <span class="n">Y</span><span class="p">)),</span>
+                      <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">X</span><span class="p">),</span> <span class="n">y</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">Y</span><span class="p">)),</span>
+                      <span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">X</span><span class="p">),</span> <span class="n">y</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">Y</span><span class="p">))])</span></div>
+
+<div class="viewcode-block" id="ValueGrid.cel_pos"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.cel_pos">[docs]</a>    <span class="k">def</span> <span class="nf">cel_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ValueGrid.reset"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_dims</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span></div>
+
+<div class="viewcode-block" id="ValueGrid.empty_grid"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.empty_grid">[docs]</a>    <span class="k">def</span> <span class="nf">empty_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_dims</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ValueGrid.draw_peak"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.draw_peak">[docs]</a>    <span class="k">def</span> <span class="nf">draw_peak</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unravel_index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">argmax</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cel_pos</span><span class="p">(</span><span class="o">*</span><span class="n">idx</span><span class="p">)</span>
+
+        <span class="n">v</span><span class="o">.</span><span class="n">draw_circle</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_radius</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_color</span><span class="p">,</span> <span class="n">filled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.0005</span><span class="p">)</span>
+        <span class="n">p_text</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">text_box</span> <span class="o">=</span> <span class="n">ScreenTextBox</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="mi">2</span><span class="p">)),</span>
+                                 <span class="n">default_color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_color</span><span class="p">,</span> <span class="n">visible</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                 <span class="n">text_centre</span> <span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">space2screen_pos</span><span class="p">(</span><span class="n">p_text</span><span class="p">)))</span>
+        <span class="n">text_box</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ValueGrid.draw"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.draw">[docs]</a>    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">Cgrid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_color_grid</span><span class="p">()</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">):</span>
+                    <span class="n">v</span><span class="o">.</span><span class="n">draw_polygon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_vertices</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span> <span class="n">Cgrid</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span> <span class="n">filled</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">draw_peak</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">screen_manager</span><span class="o">.</span><span class="n">odor_aura</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">draw_isocontours</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ValueGrid.draw_isocontours"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.draw_isocontours">[docs]</a>    <span class="k">def</span> <span class="nf">draw_isocontours</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="mi">8</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">4</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_color</span>
+        <span class="n">vmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+            <span class="n">vv</span> <span class="o">=</span> <span class="n">vmax</span> <span class="o">*</span> <span class="n">k</span> <span class="o">**</span> <span class="o">-</span><span class="n">i</span>
+            <span class="k">if</span> <span class="n">vv</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">((</span><span class="n">vv</span> <span class="o">&lt;=</span> <span class="n">g</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">g</span> <span class="o">&lt;</span> <span class="n">vv</span> <span class="o">*</span> <span class="n">k</span><span class="p">))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">points</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cel_pos</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="ow">in</span> <span class="n">inds</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">ps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+                    <span class="n">pxy</span> <span class="o">=</span> <span class="n">ps</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">ps</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]),</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">])</span>
+                    <span class="n">v</span><span class="o">.</span><span class="n">draw_convex</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">filled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.0005</span><span class="p">)</span>
+                    <span class="n">text_box</span> <span class="o">=</span> <span class="n">ScreenTextBox</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span> <span class="n">default_color</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">visible</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                        <span class="n">text_centre</span> <span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">space2screen_pos</span><span class="p">(</span><span class="n">pxy</span><span class="p">)))</span>
+                    <span class="n">text_box</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="ValueGrid.get_color_grid"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.get_color_grid">[docs]</a>    <span class="k">def</span> <span class="nf">get_color_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">v0</span><span class="p">,</span> <span class="n">v1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_value</span>
+        <span class="n">gg</span> <span class="o">=</span> <span class="p">(</span><span class="n">g</span> <span class="o">-</span> <span class="n">v0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">v1</span> <span class="o">-</span> <span class="n">v0</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">k</span><span class="p">))</span> <span class="o">**</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">m</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">k</span> <span class="o">*</span> <span class="n">gg</span><span class="p">))</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">col_range</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span> <span class="n">high</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_color</span><span class="p">,</span> <span class="n">mul255</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div></div>
+
+
+
+<div class="viewcode-block" id="FoodGrid"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid">[docs]</a><span class="k">class</span> <span class="nc">FoodGrid</span><span class="p">(</span><span class="n">ValueGrid</span><span class="p">):</span>
+    <span class="n">unique_id</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s1">&#39;FoodGrid&#39;</span><span class="p">)</span>
+    <span class="n">default_color</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Color</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">)</span>
+    <span class="n">fixed_max</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">initial_value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="mi">10</span><span class="o">**-</span><span class="mi">6</span><span class="p">)</span>
+    <span class="n">substrate</span> <span class="o">=</span> <span class="n">ClassAttr</span><span class="p">(</span><span class="n">Substrate</span><span class="p">,</span><span class="n">default</span><span class="o">=</span><span class="n">Substrate</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;standard&#39;</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The substrate where the agent feeds&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FoodGrid.get_color"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid.get_color">[docs]</a>    <span class="k">def</span> <span class="nf">get_color</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">v0</span><span class="p">,</span> <span class="n">v1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_value</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">v0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">v1</span> <span class="o">-</span> <span class="n">v0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">col_range</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">low</span><span class="o">=</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span> <span class="n">high</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_color</span><span class="p">,</span> <span class="n">mul255</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FoodGrid.draw"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid.draw">[docs]</a>    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">draw_polygon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">vertices</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_color</span><span class="p">(</span><span class="n">v</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">),</span> <span class="n">filled</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">):</span>
+                <span class="n">vv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">vv</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">:</span>
+                    <span class="n">v</span><span class="o">.</span><span class="n">draw_polygon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid_vertices</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_color</span><span class="p">(</span><span class="n">vv</span><span class="p">),</span> <span class="n">filled</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="OdorScape"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.OdorScape">[docs]</a><span class="k">class</span> <span class="nc">OdorScape</span><span class="p">(</span><span class="n">ValueGrid</span><span class="p">):</span>
+    <span class="n">unique_id</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s1">&#39;Odorscape&#39;</span><span class="p">)</span>
+    <span class="n">odorscape</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Selector</span><span class="p">(</span><span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">,</span> <span class="s1">&#39;Diffusion&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The odorscape algorithm&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subclass_initialized</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">subclass_initialized</span> <span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;odorscape&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">subclasses</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s1">&#39;Gaussian&#39;</span><span class="p">:</span> <span class="n">GaussianValueLayer</span><span class="p">,</span>
+                    <span class="s1">&#39;Diffusion&#39;</span><span class="p">:</span> <span class="n">DiffusionValueLayer</span><span class="p">,</span>
+                <span class="p">}</span>
+                <span class="n">odorscape</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;odorscape&#39;</span><span class="p">]</span>
+                <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;odorscape&#39;</span><span class="p">)</span>
+                <span class="n">subclasses</span><span class="p">[</span><span class="n">odorscape</span><span class="p">](</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="GaussianValueLayer"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer">[docs]</a><span class="k">class</span> <span class="nc">GaussianValueLayer</span><span class="p">(</span><span class="n">OdorScape</span><span class="p">):</span>
+    <span class="n">odorscape</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Selector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;Gaussian&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">subclass_initialized</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GaussianValueLayer.get_value"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.get_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+
+        <span class="n">value</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+            <span class="n">rel_pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="n">value</span> <span class="o">+=</span> <span class="n">s</span><span class="o">.</span><span class="n">odor</span><span class="o">.</span><span class="n">gaussian_value</span><span class="p">(</span><span class="n">rel_pos</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="GaussianValueLayer.get_grid"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.get_grid">[docs]</a>    <span class="k">def</span> <span class="nf">get_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meshgrid</span>
+
+        <span class="nd">@np</span><span class="o">.</span><span class="n">vectorize</span>
+        <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_value</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">v</span>
+
+        <span class="n">V</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">V</span></div>
+
+<div class="viewcode-block" id="GaussianValueLayer.draw_isocontours"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.draw_isocontours">[docs]</a>    <span class="k">def</span> <span class="nf">draw_isocontours</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">rsign</span><span class="o">=</span><span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rsign</span><span class="o">=-</span><span class="mi">1</span>
+            <span class="n">w</span><span class="o">=</span><span class="mf">0.0005</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">r0</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.040</span><span class="p">,</span> <span class="mf">0.005</span><span class="p">)):</span>
+                <span class="n">pX</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">r0</span><span class="o">*</span><span class="n">rsign</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">vv</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">odor</span><span class="o">.</span><span class="n">gaussian_value</span><span class="p">((</span><span class="n">r0</span><span class="o">*</span><span class="n">rsign</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">draw_circle</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">r0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="p">,</span> <span class="n">filled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">w</span><span class="p">)</span>
+                <span class="n">text_box</span> <span class="o">=</span> <span class="n">ScreenTextBox</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span> <span class="n">default_color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="p">,</span> <span class="n">visible</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                    <span class="n">text_centre</span> <span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">space2screen_pos</span><span class="p">((</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">r0</span><span class="o">*</span><span class="n">rsign</span><span class="o">+</span><span class="mi">5</span><span class="o">*</span><span class="n">w</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]))))</span>
+                <span class="n">text_box</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div></div>
+
+
+
+<div class="viewcode-block" id="DiffusionValueLayer"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer">[docs]</a><span class="k">class</span> <span class="nc">DiffusionValueLayer</span><span class="p">(</span><span class="n">OdorScape</span><span class="p">):</span>
+    <span class="n">odorscape</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Selector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;Diffusion&#39;</span><span class="p">)</span>
+    <span class="n">evap_const</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">(</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The evaporation constant of the diffusion algorithm.&#39;</span><span class="p">)</span>
+    <span class="n">gaussian_sigma</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">NumericTuple</span><span class="p">((</span><span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The sigma of the gaussian difusion algorithm.&#39;</span><span class="p">)</span>
+
+
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        A typical diffusion coefficient for a molecule in the gas phase is in the range of 10-6 to 10-5 m2/sigma           </span>
+
+<span class="sd">        Yes, it does that automatically based on the sigma and truncate parameters.</span>
+<span class="sd">        Indeed, the function gaussian_filter is implemented by applying multiples 1D gaussian filters (you can see that here). </span>
+<span class="sd">        This function uses gaussian_filter1d which generate itself the kernel using _gaussian_kernel1d with a radius of </span>
+<span class="sd">        int(truncate * sigma + 0.5).</span>
+
+<span class="sd">        Doing the math, sigma ends up reeeeally small</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">subclass_initialized</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DiffusionValueLayer.update_values"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.update_values">[docs]</a>    <span class="k">def</span> <span class="nf">update_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">1000</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">windscape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">v</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">windscape</span><span class="o">.</span><span class="n">wind_speed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">windscape</span><span class="o">.</span><span class="n">wind_direction</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">dx</span> <span class="o">=</span> <span class="n">v</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">dt</span>
+                <span class="n">dy</span> <span class="o">=</span> <span class="n">v</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">dt</span>
+                <span class="n">Px</span><span class="p">,</span> <span class="n">Py</span> <span class="o">=</span> <span class="n">dx</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">/</span> <span class="n">k</span><span class="p">,</span> <span class="n">dy</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">/</span> <span class="n">k</span>
+
+                <span class="n">Pr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">Px</span> <span class="o">/</span> <span class="p">(</span><span class="n">Px</span> <span class="o">+</span> <span class="n">Py</span><span class="p">))</span>
+                <span class="n">Px</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">Px</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=-</span><span class="n">Pr</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="n">Pr</span><span class="p">)</span>
+                <span class="n">Py</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">Py</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=-</span><span class="mi">1</span> <span class="o">+</span> <span class="n">Pr</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="mi">1</span> <span class="o">-</span> <span class="n">Pr</span><span class="p">)</span>
+                <span class="n">Gx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">*</span> <span class="n">Px</span>
+                <span class="n">Gy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">*</span> <span class="n">Py</span>
+                <span class="n">Gx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">Gx</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">Gx</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">Gy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">Gy</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">Gy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">Px</span> <span class="o">-</span> <span class="n">Py</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">+=</span> <span class="p">(</span><span class="n">Gx</span> <span class="o">+</span> <span class="n">Gy</span><span class="p">)</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_value</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">get_position</span><span class="p">(),</span> <span class="n">s</span><span class="o">.</span><span class="n">odor</span><span class="o">.</span><span class="n">intensity</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">evap_const</span></div></div>
+
+
+
+
+
+<div class="viewcode-block" id="WindScape"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape">[docs]</a><span class="k">class</span> <span class="nc">WindScape</span><span class="p">(</span><span class="n">SpatialEntity</span><span class="p">):</span>
+    <span class="n">unique_id</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s1">&#39;WindScape&#39;</span><span class="p">)</span>
+    <span class="n">default_color</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Color</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+    <span class="n">wind_direction</span> <span class="o">=</span> <span class="n">Phase</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The absolute polar direction of the wind/air puff.&#39;</span><span class="p">)</span>
+    <span class="n">wind_speed</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="n">softmax</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The speed of the wind/air puff.&#39;</span><span class="p">)</span>
+    <span class="n">puffs</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">({},</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;air-puffs&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Repetitive or single air-puff stimuli.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_dim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">=</span> <span class="mi">40</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">draw_phi</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scapelines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_scapelines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_direction</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">puff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">puffs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_puff</span><span class="p">(</span><span class="o">**</span><span class="n">puff</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WindScape.get_value"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.get_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">agent</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">obstructed</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">pos</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">o</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">head</span><span class="o">.</span><span class="n">get_orientation</span><span class="p">())</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">angle_dif</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_direction</span><span class="p">))</span> <span class="o">/</span> <span class="mi">180</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_speed</span></div>
+
+<div class="viewcode-block" id="WindScape.obstructed"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.obstructed">[docs]</a>    <span class="k">def</span> <span class="nf">obstructed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+        <span class="n">p0</span> <span class="o">=</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="n">p1</span> <span class="o">=</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">p0</span><span class="o">.</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_dim</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wind_direction</span><span class="p">),</span>
+                            <span class="n">p0</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_dim</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wind_direction</span><span class="p">))</span>
+        <span class="n">ll</span> <span class="o">=</span> <span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="nb">any</span><span class="p">([</span><span class="n">l</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">ll</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">border_lines</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="WindScape.draw"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.draw">[docs]</a>    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_speed</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">p0</span><span class="p">,</span> <span class="n">p1</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scapelines</span><span class="p">:</span>
+                <span class="n">l</span> <span class="o">=</span> <span class="n">geometry</span><span class="o">.</span><span class="n">LineString</span><span class="p">([</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">])</span>
+                <span class="n">ps</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">border_lines</span> <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">b</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ps</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">p1</span> <span class="o">=</span> <span class="n">ps</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">([</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">p0</span><span class="p">)</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">p2</span><span class="p">)</span> <span class="k">for</span> <span class="n">p2</span> <span class="ow">in</span> <span class="n">ps</span><span class="p">])]</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">draw_arrow_line</span><span class="p">(</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_color</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+                                       <span class="n">phi</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">draw_phi</span> <span class="o">%</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">draw_phi</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_speed</span></div>
+
+<div class="viewcode-block" id="WindScape.generate_scapelines"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.generate_scapelines">[docs]</a>    <span class="k">def</span> <span class="nf">generate_scapelines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">D</span> <span class="o">/</span> <span class="n">N</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># R= aux.rotationMatrix(-A)</span>
+        <span class="c1"># [[(-D, (i - N / 2) * ds),(D, (i - N / 2) * ds)] for i in range(N)]</span>
+
+        <span class="n">p0s</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">rotate_points_around_point</span><span class="p">([(</span><span class="o">-</span><span class="n">D</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">N</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">ds</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">)],</span> <span class="o">-</span><span class="n">A</span><span class="p">)</span>
+        <span class="n">p1s</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">rotate_points_around_point</span><span class="p">([(</span><span class="n">D</span><span class="p">,</span> <span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="n">N</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">ds</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">)],</span> <span class="o">-</span><span class="n">A</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="n">p0</span><span class="p">,</span> <span class="n">p1</span><span class="p">)</span> <span class="k">for</span> <span class="n">p0</span><span class="p">,</span> <span class="n">p1</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">p0s</span><span class="p">,</span> <span class="n">p1s</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="WindScape.set_wind_direction"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.set_wind_direction">[docs]</a>    <span class="k">def</span> <span class="nf">set_wind_direction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wind_direction</span> <span class="o">=</span> <span class="n">A</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scapelines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_scapelines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_direction</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WindScape.add_puff"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.add_puff">[docs]</a>    <span class="k">def</span> <span class="nf">add_puff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">speed</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">start_time</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mf">10.0</span><span class="p">):</span>
+        <span class="n">m</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+
+        <span class="n">Nticks</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">duration</span> <span class="o">/</span> <span class="n">m</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">start_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">Nticks</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">start_time</span> <span class="o">/</span> <span class="n">m</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+        <span class="n">interval_ticks</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">interval</span> <span class="o">/</span> <span class="n">m</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">N</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">N</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Nsteps</span> <span class="o">/</span> <span class="n">interval_ticks</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+            <span class="n">t0</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">interval_ticks</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="n">t0</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;wind_speed&#39;</span><span class="p">:</span> <span class="n">speed</span><span class="p">,</span> <span class="s1">&#39;wind_direction&#39;</span><span class="p">:</span> <span class="n">direction</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="n">t0</span> <span class="o">+</span> <span class="n">Nticks</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;wind_speed&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_speed</span><span class="p">,</span> <span class="s1">&#39;wind_direction&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_direction</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="WindScape.update"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">args</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">==</span> <span class="n">t</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;wind_direction&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;wind_direction&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_direction</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">set_wind_direction</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;wind_direction&#39;</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">wind_speed</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;wind_speed&#39;</span><span class="p">]</span></div></div>
+
+
+<div class="viewcode-block" id="ThermoScape"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape">[docs]</a><span class="k">class</span> <span class="nc">ThermoScape</span><span class="p">(</span><span class="n">ValueGrid</span><span class="p">):</span>
+    <span class="n">unique_id</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s1">&#39;ThermoScape&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plate_temp</span><span class="o">=</span><span class="mi">22</span><span class="p">,</span> <span class="n">spread</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                 <span class="n">thermo_sources</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">thermo_source_dTemps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">thermo_source_dTemps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">thermo_source_dTemps</span> <span class="o">=</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="o">-</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="o">-</span><span class="mi">8</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">thermo_sources</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">thermo_sources</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plate_temp</span> <span class="o">=</span> <span class="n">plate_temp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thermo_sources</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="n">o</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">thermo_sources</span><span class="p">)}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thermo_source_dTemps</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="n">o</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">thermo_source_dTemps</span><span class="p">)}</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">thermo_sources</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">thermo_source_dTemps</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span>  <span class="c1"># need to raise a more informative error.</span>
+
+        <span class="k">if</span> <span class="n">spread</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">spread</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># just making it so spread is my default of 0.1, if None is given.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thermo_spread</span> <span class="o">=</span> <span class="n">spread</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generate_thermoscape</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="ThermoScape.generate_thermoscape"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape.generate_thermoscape">[docs]</a>    <span class="k">def</span> <span class="nf">generate_thermoscape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        size is the length of the square arena in mm.</span>
+<span class="sd">        rezo is the resolution with 1 being a mm, 0.1 being a 10th of a mm.</span>
+<span class="sd">        spread is the spread put into the multivariate_normal function.</span>
+<span class="sd">        pTem is the plate Temp i.e. the standard temperature of the plate - default is 22˚C.</span>
+<span class="sd">        origins are the coordinate locations on the size x size plate of the heat or cold sources. type: list</span>
+<span class="sd">        tempDiff needs to be a list the same length as origins, and determines if that source will be cold or hot and by how much.</span>
+<span class="sd">        In other words a &lt;ptemp&gt; of 22 and a &lt;origins&gt; of [[10,20], [30,40]] and &lt;tempDiff&gt; of [8,-8] would make a temperature source at</span>
+<span class="sd">        [10,20] that is ~30˚C and a source at [30,40] that is ~14˚C. The mean is taken where the temperatures of multiple sources overlap.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">multivariate_normal</span>
+
+        <span class="n">rv_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermo_sources</span><span class="p">:</span>
+            <span class="n">rv_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thermo_sources</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="p">[[</span><span class="bp">self</span><span class="o">.</span><span class="n">thermo_spread</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermo_spread</span><span class="p">]])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">thermoscape_layers</span> <span class="o">=</span> <span class="n">rv_dict</span></div>
+
+
+<div class="viewcode-block" id="ThermoScape.get_thermo_value"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape.get_thermo_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_thermo_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+
+        <span class="n">size</span><span class="p">,</span> <span class="n">size2</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">pos_ad</span> <span class="o">=</span> <span class="p">[</span><span class="n">size</span> <span class="o">*</span> <span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size2</span> <span class="o">*</span> <span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="n">pos_temp</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thermo_source_dTemps</span><span class="p">)</span>
+        <span class="n">thermo_gain</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;cool&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;warm&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermoscape_layers</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermoscape_layers</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="n">pos_temp</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">pos_ad</span><span class="p">)</span> <span class="o">/</span> <span class="n">v</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thermo_sources</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">thermo_source_dTemps</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="n">N</span><span class="p">)</span>  <span class="c1"># @todo need to check if this works</span>
+            <span class="n">dgain</span><span class="o">=</span><span class="nb">abs</span><span class="p">(</span><span class="n">pos_temp</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">/</span> <span class="n">N</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pos_temp</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">thermo_gain</span><span class="p">[</span><span class="s1">&#39;cool&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">dgain</span>
+            <span class="k">elif</span> <span class="n">pos_temp</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">thermo_gain</span><span class="p">[</span><span class="s1">&#39;warm&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">dgain</span>
+        <span class="k">return</span> <span class="n">thermo_gain</span></div>
+
+<div class="viewcode-block" id="ThermoScape.get_grid"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape.get_grid">[docs]</a>    <span class="k">def</span> <span class="nf">get_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meshgrid</span>
+
+        <span class="nd">@np</span><span class="o">.</span><span class="n">vectorize</span>
+        <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_value</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">v</span>
+
+        <span class="n">V</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">V</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">V</span></div>
+
+<div class="viewcode-block" id="ThermoScape.draw_isocontours"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape.draw_isocontours">[docs]</a>    <span class="k">def</span> <span class="nf">draw_isocontours</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>  <span class="c1"># @todo need to make a draw function for thermogrid.</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermo_sources</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermo_sources</span><span class="o">.</span><span class="n">k</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.050</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">):</span>
+                <span class="n">pX</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">r</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">vv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermo_source_dTemps</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">vv</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">color2use</span> <span class="o">=</span> <span class="s1">&#39;blue&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">color2use</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">draw_circle</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">color2use</span><span class="p">,</span> <span class="n">filled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.0005</span><span class="p">)</span>
+                <span class="n">text_box</span> <span class="o">=</span> <span class="n">ScreenTextBox</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span> <span class="n">default_color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">default_color</span><span class="p">,</span> <span class="n">visible</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">text_box</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="create_odor_layers"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.create_odor_layers">[docs]</a><span class="k">def</span> <span class="nf">create_odor_layers</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">sources</span><span class="p">,</span> <span class="n">pars</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">odor_layers</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">unique_list</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">odor</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sources</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">odor</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+        <span class="n">od_sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">sources</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">odor</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="nb">id</span><span class="p">]</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">unique_list</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">default_color</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">od_sources</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">c0</span> <span class="o">=</span> <span class="n">temp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">([</span><span class="nb">type</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">==</span> <span class="nb">float</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">temp</span><span class="p">):</span>
+            <span class="n">c0</span> <span class="o">=</span> <span class="n">temp</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">c0</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">random_colors</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="n">model</span><span class="p">,</span>
+            <span class="s1">&#39;unique_id&#39;</span><span class="p">:</span> <span class="nb">id</span><span class="p">,</span>
+            <span class="s1">&#39;sources&#39;</span><span class="p">:</span> <span class="n">od_sources</span><span class="p">,</span>
+            <span class="s1">&#39;default_color&#39;</span><span class="p">:</span> <span class="n">c0</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">pars</span><span class="o">.</span><span class="n">odorscape</span> <span class="o">==</span> <span class="s1">&#39;Diffusion&#39;</span><span class="p">:</span>
+            <span class="n">odor_layers</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">DiffusionValueLayer</span><span class="p">(</span><span class="n">grid_dims</span><span class="o">=</span><span class="n">pars</span><span class="p">[</span><span class="s1">&#39;grid_dims&#39;</span><span class="p">],</span>
+                                                        <span class="n">evap_const</span><span class="o">=</span><span class="n">pars</span><span class="p">[</span><span class="s1">&#39;evap_const&#39;</span><span class="p">],</span>
+                                                        <span class="n">gaussian_sigma</span><span class="o">=</span><span class="n">pars</span><span class="p">[</span><span class="s1">&#39;gaussian_sigma&#39;</span><span class="p">],</span>
+                                                        <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">pars</span><span class="o">.</span><span class="n">odorscape</span> <span class="o">==</span> <span class="s1">&#39;Gaussian&#39;</span><span class="p">:</span>
+            <span class="n">odor_layers</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">GaussianValueLayer</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">odor_layers</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sampling &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="reg" href="../reg.html" />
+    <link rel="prev" title="fitting" href="fitting.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">larvaworld.cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">larvaworld.gui</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">larvaworld.lib</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">larvaworld.lib.model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../param/index.html">larvaworld.lib.param</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plot/index.html">larvaworld.lib.plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../process/index.html">larvaworld.lib.process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../screen/index.html">larvaworld.lib.screen</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sim/index.html">larvaworld.lib.sim</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">larvaworld.lib.util</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="data_aux.html">data_aux</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fitting.html">fitting</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">sampling</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">reg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">larvaworld.lib</a></li>
+          <li class="breadcrumb-item"><a href="index.html">larvaworld.lib.util</a></li>
+      <li class="breadcrumb-item active">sampling</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/util/sampling.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.util.sampling">
+<span id="sampling"></span><h1>sampling<a class="headerlink" href="#module-larvaworld.lib.util.sampling" title="Permalink to this heading"></a></h1>
+<section id="generate-agentconfs">
+<h2>generate_agentConfs<a class="headerlink" href="#generate-agentconfs" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.sampling.generate_agentConfs">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.sampling.</span></span><span class="sig-name descname"><span class="pre">generate_agentConfs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">larva_groups</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/sampling.html#generate_agentConfs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.sampling.generate_agentConfs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="generate-agentgroup">
+<h2>generate_agentGroup<a class="headerlink" href="#generate-agentgroup" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.sampling.generate_agentGroup">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.sampling.</span></span><span class="sig-name descname"><span class="pre">generate_agentGroup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imitation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distribution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/sampling.html#generate_agentGroup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.sampling.generate_agentGroup" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="generate-larvae">
+<h2>generate_larvae<a class="headerlink" href="#generate-larvae" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.sampling.generate_larvae">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.sampling.</span></span><span class="sig-name descname"><span class="pre">generate_larvae</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/sampling.html#generate_larvae"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.sampling.generate_larvae" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="generate-sourceconfs">
+<h2>generate_sourceConfs<a class="headerlink" href="#generate-sourceconfs" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.sampling.generate_sourceConfs">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.sampling.</span></span><span class="sig-name descname"><span class="pre">generate_sourceConfs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/sampling.html#generate_sourceConfs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.sampling.generate_sourceConfs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="imitateref">
+<h2>imitateRef<a class="headerlink" href="#imitateref" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.sampling.imitateRef">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.sampling.</span></span><span class="sig-name descname"><span class="pre">imitateRef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refDataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_ks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/sampling.html#imitateRef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.sampling.imitateRef" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="sampleref">
+<h2>sampleRef<a class="headerlink" href="#sampleref" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.sampling.sampleRef">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.sampling.</span></span><span class="sig-name descname"><span class="pre">sampleRef</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refDataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_ks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameter_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/sampling.html#sampleRef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.sampling.sampleRef" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="sample-group">
+<h2>sample_group<a class="headerlink" href="#sample-group" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.sampling.sample_group">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.sampling.</span></span><span class="sig-name descname"><span class="pre">sample_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/sampling.html#sample_group"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.sampling.sample_group" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="sim-model">
+<h2>sim_model<a class="headerlink" href="#sim-model" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.sampling.sim_model">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.sampling.</span></span><span class="sig-name descname"><span class="pre">sim_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refDataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_ks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_LarvaConfDict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imitation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tor_durs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dsp_starts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dsp_stops</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[40]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enrichment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0625</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'blue'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/sampling.html#sim_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.sampling.sim_model" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="sim-models">
+<h2>sim_models<a class="headerlink" href="#sim-models" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.sampling.sim_models">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.sampling.</span></span><span class="sig-name descname"><span class="pre">sim_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mIDs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lgs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/sampling.html#sim_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.sampling.sim_models" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="fitting.html" class="btn btn-neutral float-left" title="fitting" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../reg.html" class="btn btn-neutral float-right" title="reg" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

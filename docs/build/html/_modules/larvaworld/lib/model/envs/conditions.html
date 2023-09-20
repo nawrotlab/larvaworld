@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.model.envs.conditions &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.model.envs.conditions</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.model.envs.conditions</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">shapely</span> <span class="kn">import</span> <span class="n">geometry</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib.process.spatial</span> <span class="kn">import</span> <span class="n">comp_PI</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;get_exp_condition&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="get_exp_condition"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/envs/conditions.html#larvaworld.lib.model.envs.conditions.get_exp_condition">[docs]</a><span class="k">def</span> <span class="nf">get_exp_condition</span><span class="p">(</span><span class="n">exp</span><span class="p">):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;PItrain_mini&#39;</span><span class="p">:</span> <span class="n">PrefTrainCondition</span><span class="p">,</span>
+        <span class="s1">&#39;PItrain&#39;</span><span class="p">:</span> <span class="n">PrefTrainCondition</span><span class="p">,</span>
+        <span class="s1">&#39;catch_me&#39;</span><span class="p">:</span> <span class="n">CatchMeCondition</span><span class="p">,</span>
+        <span class="s1">&#39;keep_the_flag&#39;</span><span class="p">:</span> <span class="n">KeepFlagCondition</span><span class="p">,</span>
+        <span class="s1">&#39;capture_the_flag&#39;</span><span class="p">:</span> <span class="n">CaptureFlagCondition</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">d</span><span class="p">[</span><span class="n">exp</span><span class="p">]</span> <span class="k">if</span> <span class="n">exp</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<span class="k">class</span> <span class="nc">PrefTrainCondition</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">peak_intensity</span><span class="o">=</span><span class="mf">2.0</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">CS_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">UCS_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">CS_sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">odor</span><span class="o">.</span><span class="n">id</span><span class="o">==</span><span class="s1">&#39;CS&#39;</span><span class="p">]</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">UCS_sources</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">sources</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">odor</span><span class="o">.</span><span class="n">id</span><span class="o">==</span><span class="s1">&#39;UCS&#39;</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">toggle_odors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">CS_intensity</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">UCS_intensity</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">CS_sources</span> <span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">odor</span><span class="o">.</span><span class="n">intensity</span><span class="o">=</span><span class="n">CS_intensity</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">visible</span><span class="o">=</span><span class="kc">True</span> <span class="k">if</span> <span class="n">CS_intensity</span><span class="o">&gt;</span><span class="mi">0</span> <span class="k">else</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">UCS_sources</span> <span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">odor</span><span class="o">.</span><span class="n">intensity</span><span class="o">=</span><span class="n">UCS_intensity</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">UCS_intensity</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">init_test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">env</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">CS_sources</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">unique_id</span><span class="o">==</span><span class="s1">&#39;CS_r&#39;</span><span class="p">:</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">CS_sources</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">delete_agent</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">UCS_sources</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">unique_id</span><span class="o">==</span><span class="s1">&#39;UCS_l&#39;</span><span class="p">:</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">UCS_sources</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">delete_agent</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">start_trial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">env</span><span class="p">,</span> <span class="n">on_food</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="c1"># m, s = env.sim_clock.minute, env.sim_clock.second</span>
+        <span class="n">c</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">peak_intensity</span>
+        <span class="k">if</span> <span class="n">on_food</span> <span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">CS_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">env</span><span class="o">.</span><span class="n">CS_counter</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">text</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;Training trial </span><span class="si">{</span><span class="n">env</span><span class="o">.</span><span class="n">CS_counter</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">toggle_odors</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span><span class="mf">0.0</span><span class="p">)</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">move_larvae_to_center</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">env</span><span class="o">.</span><span class="n">CS_counter</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Test trial on food&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">init_test</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">toggle_odors</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span><span class="n">c</span><span class="p">)</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">move_larvae_to_center</span><span class="p">()</span>
+
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">UCS_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">env</span><span class="o">.</span><span class="n">UCS_counter</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Starvation trial </span><span class="si">{</span><span class="n">env</span><span class="o">.</span><span class="n">UCS_counter</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">toggle_odors</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">move_larvae_to_center</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">env</span><span class="o">.</span><span class="n">UCS_counter</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+                <span class="n">PI</span> <span class="o">=</span> <span class="n">comp_PI</span><span class="p">(</span><span class="n">xs</span><span class="o">=</span><span class="p">[</span><span class="n">l</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">agents</span><span class="p">],</span> <span class="n">arena_xdim</span><span class="o">=</span><span class="n">env</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">sec</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">Nticks</span><span class="o">*</span><span class="n">env</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+                <span class="n">m</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">sec</span><span class="o">/</span><span class="mi">60</span><span class="p">),</span> <span class="n">sec</span><span class="o">%</span><span class="mi">60</span>
+                <span class="nb">print</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Test trial on food ended at </span><span class="si">{</span><span class="n">m</span><span class="si">}</span><span class="s1">:</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> with PI=</span><span class="si">{</span><span class="n">PI</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Test trial off food&#39;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">toggle_odors</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">move_larvae_to_center</span><span class="p">()</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">input_box</span><span class="o">.</span><span class="n">flash_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">sim_epochs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">env</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">==</span> <span class="n">ep</span><span class="p">[</span><span class="s1">&#39;start&#39;</span><span class="p">]:</span>
+                <span class="n">q</span><span class="o">=</span><span class="n">ep</span><span class="p">[</span><span class="s1">&#39;substrate&#39;</span><span class="p">][</span><span class="s1">&#39;quality&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">q</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+                    <span class="n">env</span><span class="o">.</span><span class="n">food_grid</span><span class="o">.</span><span class="n">empty_grid</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">start_trial</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">on_food</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">q</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">:</span>
+                    <span class="n">env</span><span class="o">.</span><span class="n">food_grid</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">start_trial</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">on_food</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">env</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">==</span> <span class="n">ep</span><span class="p">[</span><span class="s1">&#39;stop&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">i</span><span class="o">==</span><span class="nb">len</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">sim_epochs</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span> <span class="p">:</span>
+                <span class="n">PI</span> <span class="o">=</span> <span class="n">comp_PI</span><span class="p">(</span><span class="n">xs</span><span class="o">=</span><span class="p">[</span><span class="n">l</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">agents</span><span class="p">],</span> <span class="n">arena_xdim</span><span class="o">=</span><span class="n">env</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="nb">print</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Test trial off food ended with PI=</span><span class="si">{</span><span class="n">PI</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Test trial off food PI=</span><span class="si">{</span><span class="n">PI</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">input_box</span><span class="o">.</span><span class="n">flash_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+
+
+<span class="k">class</span> <span class="nc">CatchMeCondition</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">target_group</span> <span class="o">=</span> <span class="s1">&#39;Left&#39;</span> <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.5</span> <span class="k">else</span> <span class="s1">&#39;Right&#39;</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">follower_group</span> <span class="o">=</span> <span class="s1">&#39;Right&#39;</span> <span class="k">if</span> <span class="n">env</span><span class="o">.</span><span class="n">target_group</span> <span class="o">==</span> <span class="s1">&#39;Left&#39;</span> <span class="k">else</span> <span class="s1">&#39;Left&#39;</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">agents</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">group</span> <span class="o">==</span> <span class="n">env</span><span class="o">.</span><span class="n">target_group</span><span class="p">]</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">followers</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">agents</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">group</span> <span class="o">==</span> <span class="n">env</span><span class="o">.</span><span class="n">follower_group</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">olfactor</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">:</span> <span class="o">-</span><span class="n">v</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">olfactor</span><span class="o">.</span><span class="n">gain</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">score</span> <span class="o">=</span> <span class="p">{</span><span class="n">env</span><span class="o">.</span><span class="n">target_group</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+                      <span class="n">env</span><span class="o">.</span><span class="n">follower_group</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">env</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">input_box</span><span class="o">.</span><span class="n">flash_text</span><span class="p">(</span><span class="s1">&#39;Catch me&#39;</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">set_target_group</span><span class="p">(</span><span class="n">group</span><span class="p">):</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">target_group</span> <span class="o">=</span> <span class="n">group</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">follower_group</span> <span class="o">=</span> <span class="s1">&#39;Right&#39;</span> <span class="k">if</span> <span class="n">env</span><span class="o">.</span><span class="n">target_group</span> <span class="o">==</span> <span class="s1">&#39;Left&#39;</span> <span class="k">else</span> <span class="s1">&#39;Left&#39;</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">agents</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">group</span> <span class="o">==</span> <span class="n">env</span><span class="o">.</span><span class="n">target_group</span><span class="p">]</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">followers</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">agents</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">group</span> <span class="o">==</span> <span class="n">env</span><span class="o">.</span><span class="n">follower_group</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">agents</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">olfactor</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="p">{</span><span class="nb">id</span><span class="p">:</span> <span class="o">-</span><span class="n">v</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">olfactor</span><span class="o">.</span><span class="n">gain</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">targets_pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">targets</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">followers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">get_position</span><span class="p">())</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">p</span><span class="p">))</span><span class="o">&lt;</span><span class="n">f</span><span class="o">.</span><span class="n">radius</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">targets_pos</span><span class="p">]):</span>
+            <span class="c1"># if any([aux.eudis5(f.get_position(),p)&lt;f.radius for p in targets_pos]):</span>
+            <span class="c1"># if any([aux.eudis5(f.get_position(),p)&lt;f.radius for p in targets_pos]):</span>
+                <span class="n">set_target_group</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">group</span><span class="p">)</span>
+                <span class="k">break</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">score</span><span class="p">[</span><span class="n">env</span><span class="o">.</span><span class="n">target_group</span><span class="p">]</span> <span class="o">+=</span> <span class="n">env</span><span class="o">.</span><span class="n">dt</span>
+        <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">score</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;=</span> <span class="mf">20000.0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s1"> group wins&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">screen_manager</span><span class="o">.</span><span class="n">screen_items</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;L:</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">score</span><span class="p">[</span><span class="s2">&quot;Left&quot;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s1"> vs R:</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">score</span><span class="p">[</span><span class="s2">&quot;Right&quot;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+<span class="k">class</span> <span class="nc">KeepFlagCondition</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">unique_id</span> <span class="o">==</span> <span class="s1">&#39;Flag&#39;</span><span class="p">:</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">l_t</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">r_t</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">env</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">input_box</span><span class="o">.</span><span class="n">flash_text</span><span class="p">(</span><span class="s1">&#39;Keep the flag&#39;</span><span class="p">)</span>
+        <span class="n">dur</span> <span class="o">=</span> <span class="mi">180</span>
+        <span class="n">carrier</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">flag</span><span class="o">.</span><span class="n">is_carried_by</span>
+        <span class="k">if</span> <span class="n">carrier</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">l_t</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">r_t</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="n">carrier</span><span class="o">.</span><span class="n">group</span> <span class="o">==</span> <span class="s1">&#39;Left&#39;</span><span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">l_t</span> <span class="o">+=</span> <span class="n">env</span><span class="o">.</span><span class="n">dt</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">r_t</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="n">env</span><span class="o">.</span><span class="n">l_t</span> <span class="o">-</span> <span class="n">dur</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Left group wins&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">carrier</span><span class="o">.</span><span class="n">group</span> <span class="o">==</span> <span class="s1">&#39;Right&#39;</span><span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">r_t</span> <span class="o">+=</span> <span class="n">env</span><span class="o">.</span><span class="n">dt</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">l_t</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="n">env</span><span class="o">.</span><span class="n">r_t</span> <span class="o">-</span> <span class="n">dur</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Right group wins&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">try</span> <span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">screen_manager</span><span class="o">.</span><span class="n">screen_items</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;L:</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">dur</span> <span class="o">-</span> <span class="n">env</span><span class="o">.</span><span class="n">l_t</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1"> vs R:</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">dur</span> <span class="o">-</span> <span class="n">env</span><span class="o">.</span><span class="n">r_t</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+<span class="k">class</span> <span class="nc">CaptureFlagCondition</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">unique_id</span> <span class="o">==</span> <span class="s1">&#39;Flag&#39;</span><span class="p">:</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="n">f</span>
+            <span class="k">elif</span> <span class="n">f</span><span class="o">.</span><span class="n">unique_id</span> <span class="o">==</span> <span class="s1">&#39;Left_base&#39;</span><span class="p">:</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">l_base</span> <span class="o">=</span> <span class="n">f</span>
+            <span class="k">elif</span> <span class="n">f</span><span class="o">.</span><span class="n">unique_id</span> <span class="o">==</span> <span class="s1">&#39;Right_base&#39;</span><span class="p">:</span>
+                <span class="n">env</span><span class="o">.</span><span class="n">r_base</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">l_base_p</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">l_base</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">r_base_p</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">r_base</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">l_dst0</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">flag</span><span class="o">.</span><span class="n">radius</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">env</span><span class="o">.</span><span class="n">l_base</span><span class="o">.</span><span class="n">radius</span> <span class="o">*</span> <span class="mi">2</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">r_dst0</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">flag</span><span class="o">.</span><span class="n">radius</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">env</span><span class="o">.</span><span class="n">r_base</span><span class="o">.</span><span class="n">radius</span> <span class="o">*</span> <span class="mi">2</span>
+
+    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">compute_dst</span><span class="p">(</span><span class="n">point1</span><span class="p">,</span> <span class="n">point2</span><span class="p">):</span>
+            <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">point1</span>
+            <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">point2</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">x1</span> <span class="o">-</span> <span class="n">x2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y1</span> <span class="o">-</span> <span class="n">y2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">env</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">input_box</span><span class="o">.</span><span class="n">flash_text</span><span class="p">(</span><span class="s1">&#39;Capture the flag&#39;</span><span class="p">)</span>
+        <span class="n">flag_p</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">flag</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="n">l_dst</span> <span class="o">=</span> <span class="o">-</span><span class="n">env</span><span class="o">.</span><span class="n">l_dst0</span> <span class="o">+</span> <span class="n">compute_dst</span><span class="p">(</span><span class="n">flag_p</span><span class="p">,</span> <span class="n">env</span><span class="o">.</span><span class="n">l_base_p</span><span class="p">)</span>
+        <span class="n">r_dst</span> <span class="o">=</span> <span class="o">-</span><span class="n">env</span><span class="o">.</span><span class="n">r_dst0</span> <span class="o">+</span> <span class="n">compute_dst</span><span class="p">(</span><span class="n">flag_p</span><span class="p">,</span> <span class="n">env</span><span class="o">.</span><span class="n">r_base_p</span><span class="p">)</span>
+        <span class="n">l_dst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">l_dst</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">r_dst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">r_dst</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">l_dst</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Left group wins&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">r_dst</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Right group wins&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">env</span><span class="o">.</span><span class="n">screen_manager</span><span class="o">.</span><span class="n">screen_items</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;L:</span><span class="si">{</span><span class="n">l_dst</span><span class="si">}</span><span class="s1"> vs R:</span><span class="si">{</span><span class="n">r_dst</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="kc">False</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

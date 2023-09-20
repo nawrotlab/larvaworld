@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>composition &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="custom" href="custom.html" />
+    <link rel="prev" title="body_shape" href="body_shape.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">larvaworld.cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">larvaworld.gui</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">larvaworld.lib</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">larvaworld.lib.model</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">larvaworld.lib.param</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="body_shape.html">body_shape</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">composition</a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom.html">custom</a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawable.html">drawable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="grouped.html">grouped</a></li>
+<li class="toctree-l4"><a class="reference internal" href="named.html">named</a></li>
+<li class="toctree-l4"><a class="reference internal" href="param_aux.html">param_aux</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spatial.html">spatial</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html">tools</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xy_distro.html">xy_distro</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../plot/index.html">larvaworld.lib.plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../process/index.html">larvaworld.lib.process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../screen/index.html">larvaworld.lib.screen</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sim/index.html">larvaworld.lib.sim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../util/index.html">larvaworld.lib.util</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">reg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">larvaworld.lib</a></li>
+          <li class="breadcrumb-item"><a href="index.html">larvaworld.lib.param</a></li>
+      <li class="breadcrumb-item active">composition</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/param/composition.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.param.composition">
+<span id="composition"></span><h1>composition<a class="headerlink" href="#module-larvaworld.lib.param.composition" title="Permalink to this heading"></a></h1>
+<section id="compound">
+<h2>Compound<a class="headerlink" href="#compound" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Compound">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.composition.</span></span><span class="sig-name descname"><span class="pre">Compound</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Compound"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Compound" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="custom.html#larvaworld.lib.param.custom.NestedConf" title="larvaworld.lib.param.custom.NestedConf"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestedConf</span></code></a></p>
+<p>params(d=PositiveNumber, nC=PositiveInteger, nH=PositiveInteger, nN=PositiveInteger, nO=PositiveInteger, w=PositiveNumber, name=String)
+[1;32mParameters of 'Compound'
+========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mNameValue       Type          Bounds    Mode [0m</p>
+<p>d    0.0   PositiveNumber  (0.0, None)  V RW
+w    0.0   PositiveNumber  (0.0, None)  V RW
+nC    0   PositiveInteger   (0, None)   V RW
+nH    0   PositiveInteger   (0, None)   V RW
+nO    0   PositiveInteger   (0, None)   V RW
+nN    0   PositiveInteger   (0, None)   V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34md:  density in g/cm**3[0m
+[1;31mw:  molecular weight (g/mol)[0m
+[1;34mnC: number of carbon atoms[0m
+[1;31mnH: number of hydrogen atoms[0m
+[1;34mnO: number of oxygen atoms[0m
+[1;31mnN: number of nitrogen atoms[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Compound.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'d':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'nC':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'nH':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'nN':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'nO':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'w':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Compound.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Compound._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Compound._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Compound._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Compound._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Compound.d">
+<span class="sig-name descname"><span class="pre">d</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Compound.d" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Compound.nC">
+<span class="sig-name descname"><span class="pre">nC</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Compound.nC" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Compound.nH">
+<span class="sig-name descname"><span class="pre">nH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Compound.nH" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Compound.nN">
+<span class="sig-name descname"><span class="pre">nN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Compound.nN" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Compound.nO">
+<span class="sig-name descname"><span class="pre">nO</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Compound.nO" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Compound.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Compound'</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Compound.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Compound.w">
+<span class="sig-name descname"><span class="pre">w</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Compound.w" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="epoch">
+<h2>Epoch<a class="headerlink" href="#epoch" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Epoch">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.composition.</span></span><span class="sig-name descname"><span class="pre">Epoch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Epoch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Epoch" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="custom.html#larvaworld.lib.param.custom.NestedConf" title="larvaworld.lib.param.custom.NestedConf"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestedConf</span></code></a></p>
+<p>params(age_range=OptionalPositiveRange, substrate=ClassAttr, name=String)
+[1;32mParameters of 'Epoch'
+=====================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                         Value                             Type             Bounds       Mode  [0m</p>
+<p>age_range                 (0.0, None)                 OptionalPositiveRange  (0.0, 250.0)  V RW AN
+substrate   Substrate(composition={'glucose': 0.1...        ClassAttr                        V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mage_range: The beginning and end of the epoch in hours post-hatch.[0m
+[1;31msubstrate: The substrate of the epoch[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Epoch.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'age_range':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalPositiveRange</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'substrate':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Epoch.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Epoch._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Epoch._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Epoch._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Epoch._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Epoch.age_range">
+<span class="sig-name descname"><span class="pre">age_range</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.0,</span> <span class="pre">None)</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Epoch.age_range" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Epoch.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Epoch'</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Epoch.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Epoch.substrate">
+<span class="sig-name descname"><span class="pre">substrate</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Substrate(composition={'glucose':</span> <span class="pre">0.1,</span> <span class="pre">'dextrose':</span> <span class="pre">0.0,</span> <span class="pre">'saccharose':</span> <span class="pre">0.0,</span> <span class="pre">'yeast':</span> <span class="pre">0.05,</span> <span class="pre">'agar':</span> <span class="pre">0.016,</span> <span class="pre">'cornmeal':</span> <span class="pre">0.0},</span> <span class="pre">name='Substrate00017',</span> <span class="pre">quality=1.0)</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Epoch.substrate" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="life">
+<h2>Life<a class="headerlink" href="#life" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Life">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.composition.</span></span><span class="sig-name descname"><span class="pre">Life</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Life"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Life" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="custom.html#larvaworld.lib.param.custom.NestedConf" title="larvaworld.lib.param.custom.NestedConf"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestedConf</span></code></a></p>
+<p>params(age=OptionalPositiveNumber, epochs=ClassDict, name=String)
+[1;32mParameters of 'Life'
+====================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName    Value          Type              Bounds       Mode  [0m</p>
+<p>age      0.0  OptionalPositiveNumber  (0.0, 250.0)  V RW AN
+epochs    {}        ClassDict                         V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mage:    The larva age in hours post-hatch at the start of the behavioral simulation. The larva will grow to that age based on the DEB model. If age is None the larva will grow to pupation.[0m
+[1;31mepochs: The feeding epochs comprising life history.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Life.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'age':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalPositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'epochs':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassDict</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Life.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Life._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Life._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Life._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Life._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Life.age">
+<span class="sig-name descname"><span class="pre">age</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Life.age" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Life.epochs">
+<span class="sig-name descname"><span class="pre">epochs</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Life.epochs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Life.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Life'</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Life.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="odor">
+<h2>Odor<a class="headerlink" href="#odor" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Odor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.composition.</span></span><span class="sig-name descname"><span class="pre">Odor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Odor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Odor" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="custom.html#larvaworld.lib.param.custom.NestedConf" title="larvaworld.lib.param.custom.NestedConf"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestedConf</span></code></a></p>
+<p>params(id=StringRobust, intensity=OptionalPositiveNumber, spread=OptionalPositiveNumber, name=String)
+[1;32mParameters of 'Odor'
+====================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName       Value           Type              Bounds      Mode  [0m</p>
+<p>id          None       StringRobust                    V RW AN
+intensity   None  OptionalPositiveNumber  (0.0,[1;36m 10.0[0m)  V RW AN
+spread      None  OptionalPositiveNumber  (0.0,[1;36m 10.0[0m)  V RW AN</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mid:        The unique ID of the odorant[0m
+[1;31mintensity: The peak concentration of the odorant in micromoles[0m
+[1;34mspread:    The spread of the concentration gradient around the peak[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Odor.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'id':</span> <span class="pre">&lt;larvaworld.lib.param.custom.StringRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'intensity':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalPositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'spread':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalPositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Odor.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Odor._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Odor._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Odor._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Odor._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Odor._update_distro">
+<span class="sig-name descname"><span class="pre">_update_distro</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Odor._update_distro"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Odor._update_distro" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Odor.draw_dist">
+<span class="sig-name descname"><span class="pre">draw_dist</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Odor.draw_dist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Odor.draw_dist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Odor.gaussian_value">
+<span class="sig-name descname"><span class="pre">gaussian_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Odor.gaussian_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Odor.gaussian_value" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Odor.id">
+<span class="sig-name descname"><span class="pre">id</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Odor.id" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Odor.intensity">
+<span class="sig-name descname"><span class="pre">intensity</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Odor.intensity" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Odor.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Odor'</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Odor.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Odor.spread">
+<span class="sig-name descname"><span class="pre">spread</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Odor.spread" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="substrate">
+<h2>Substrate<a class="headerlink" href="#substrate" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.composition.</span></span><span class="sig-name descname"><span class="pre">Substrate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quality</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Substrate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="custom.html#larvaworld.lib.param.custom.NestedConf" title="larvaworld.lib.param.custom.NestedConf"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestedConf</span></code></a></p>
+<p>params(composition=Dict, quality=Magnitude, name=String)
+[1;32mParameters of 'Substrate'
+=========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                           Value                       Type      Bounds    Mode [0m</p>
+<p>composition   {'glucose': 0.0, 'dextrose': 0.0, 'sa...     Dict                V RW
+quality                         1.0                     Magnitude  (0.0, 1.0)  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mcomposition: The substrate composition[0m
+[1;31mquality:     The substrate quality as percentage of nutrients relative to the intact substrate type[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'composition':</span> <span class="pre">&lt;param.Dict</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'quality':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate.composition">
+<span class="sig-name descname"><span class="pre">composition</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'agar':</span> <span class="pre">0.0,</span> <span class="pre">'cornmeal':</span> <span class="pre">0.0,</span> <span class="pre">'dextrose':</span> <span class="pre">0.0,</span> <span class="pre">'glucose':</span> <span class="pre">0.0,</span> <span class="pre">'saccharose':</span> <span class="pre">0.0,</span> <span class="pre">'yeast':</span> <span class="pre">0.0}</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate.composition" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate.get_C">
+<span class="sig-name descname"><span class="pre">get_C</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quality</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Substrate.get_C"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate.get_C" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate.get_X">
+<span class="sig-name descname"><span class="pre">get_X</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quality</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Substrate.get_X"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate.get_X" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate.get_X_ratio">
+<span class="sig-name descname"><span class="pre">get_X_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Substrate.get_X_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate.get_X_ratio" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate.get_d_X">
+<span class="sig-name descname"><span class="pre">get_d_X</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quality</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Substrate.get_d_X"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate.get_d_X" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate.get_f">
+<span class="sig-name descname"><span class="pre">get_f</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Substrate.get_f"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate.get_f" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate.get_mol">
+<span class="sig-name descname"><span class="pre">get_mol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">V</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Substrate.get_mol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate.get_mol" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate.get_w_X">
+<span class="sig-name descname"><span class="pre">get_w_X</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">compounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/composition.html#Substrate.get_w_X"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate.get_w_X" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Substrate'</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.composition.Substrate.quality">
+<span class="sig-name descname"><span class="pre">quality</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.param.composition.Substrate.quality" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="body_shape.html" class="btn btn-neutral float-left" title="body_shape" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="custom.html" class="btn btn-neutral float-right" title="custom" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

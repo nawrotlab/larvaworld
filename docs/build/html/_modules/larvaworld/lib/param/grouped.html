@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.param.grouped &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.param.grouped</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.param.grouped</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">param</span>
+<span class="kn">from</span> <span class="nn">param</span> <span class="kn">import</span> <span class="n">Selector</span><span class="p">,</span><span class="n">String</span><span class="p">,</span> <span class="n">ListSelector</span><span class="p">,</span> <span class="n">Magnitude</span><span class="p">,</span> <span class="n">Boolean</span><span class="p">,</span> <span class="n">List</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">aux</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">OptionalPositiveNumber</span><span class="p">,</span> <span class="n">OptionalSelector</span><span class="p">,</span> <span class="n">PositiveInteger</span><span class="p">,</span> \
+    <span class="n">OptionalPositiveInteger</span><span class="p">,</span> <span class="n">ClassAttr</span><span class="p">,</span> <span class="n">NestedConf</span><span class="p">,</span> <span class="n">PositiveNumber</span><span class="p">,</span> <span class="n">IntegerRangeOrdered</span><span class="p">,</span> <span class="n">PositiveIntegerRangeOrdered</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;FramerateOps&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;XYops&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Resolution&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SimTimeOps&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SimSpatialOps&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SimOps&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;RuntimeGeneralOps&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;RuntimeDataOps&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;RuntimeOps&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Filesystem&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;TrackedPointIdx&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SimMetricOps&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;TrackerOps&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;PreprocessConf&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;EnrichConf&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="FramerateOps"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.FramerateOps">[docs]</a><span class="k">class</span> <span class="nc">FramerateOps</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">fr</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">softmax</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;framerate&#39;</span><span class="p">,</span>
+                            <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The tracking/simulation framerate (inverse of timestep) in Hz.&#39;</span><span class="p">)</span>
+    <span class="n">dt</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">softmax</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;timestep&#39;</span><span class="p">,</span>
+                        <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The tracking/simulation timestep (inverse of tracking framerate) in seconds.&#39;</span><span class="p">)</span>
+    <span class="n">constant_framerate</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether the tracking framerate is constant.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;dt&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_framerate</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="s1">&#39;fr&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_timestep</span><span class="p">()</span>
+
+<div class="viewcode-block" id="FramerateOps.update_framerate"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.FramerateOps.update_framerate">[docs]</a>    <span class="nd">@param</span><span class="o">.</span><span class="n">depends</span><span class="p">(</span><span class="s1">&#39;dt&#39;</span><span class="p">,</span> <span class="n">watch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">update_framerate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fr</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span></div>
+
+<div class="viewcode-block" id="FramerateOps.update_timestep"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.FramerateOps.update_timestep">[docs]</a>    <span class="nd">@param</span><span class="o">.</span><span class="n">depends</span><span class="p">(</span><span class="s1">&#39;fr&#39;</span><span class="p">,</span> <span class="n">watch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">update_timestep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fr</span></div></div>
+        <span class="c1"># raise</span>
+
+<div class="viewcode-block" id="XYops"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.XYops">[docs]</a><span class="k">class</span> <span class="nc">XYops</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">XY_unit</span> <span class="o">=</span> <span class="n">Selector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="s1">&#39;mm&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The spatial unit of the XY coordinate data&#39;</span><span class="p">)</span>
+    <span class="n">Npoints</span> <span class="o">=</span> <span class="n">PositiveInteger</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">softmax</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;# midline 2D points&#39;</span><span class="p">,</span>
+                              <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The number of points tracked along the larva midline.&#39;</span><span class="p">)</span>
+    <span class="n">Ncontour</span> <span class="o">=</span> <span class="n">PositiveInteger</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">softmax</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;# contour 2D points&#39;</span><span class="p">,</span>
+                               <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The number of points tracked around the larva contour.&#39;</span><span class="p">)</span>
+
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Nangles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Npoints</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Nsegs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Npoints</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">angles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">SuperList</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;angle</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nangles</span><span class="p">)])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">midline_points</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">midline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Npoints</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;point&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">midline_segs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">midline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nsegs</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;seg&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">midline_seg_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">midline_segs</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="n">flat</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">seg_orientations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">orient</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">midline_segs</span><span class="p">)</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">midline_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">midline_points</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="n">flat</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">contour_points</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Ncontour</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">contour_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contour_points</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="n">flat</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">centroid_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="s1">&#39;centroid&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">all_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">midline_points</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">contour_points</span><span class="o">+</span><span class="p">[</span><span class="s1">&#39;centroid&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">],</span> <span class="n">flat</span><span class="o">=</span><span class="n">flat</span><span class="p">)</span>
+
+<div class="viewcode-block" id="XYops.get_track_point"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.XYops.get_track_point">[docs]</a>    <span class="k">def</span> <span class="nf">get_track_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">idx</span><span class="o">==-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;centroid&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">midline_points</span><span class="p">[</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span></div></div>
+
+<div class="viewcode-block" id="Resolution"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.Resolution">[docs]</a><span class="k">class</span> <span class="nc">Resolution</span><span class="p">(</span><span class="n">FramerateOps</span><span class="p">,</span><span class="n">XYops</span><span class="p">):</span><span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="SimTimeOps"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.SimTimeOps">[docs]</a><span class="k">class</span> <span class="nc">SimTimeOps</span><span class="p">(</span><span class="n">FramerateOps</span><span class="p">):</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="n">OptionalPositiveNumber</span><span class="p">(</span><span class="n">softmax</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+                               <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The duration of the simulation in minutes.&#39;</span><span class="p">)</span>
+    <span class="n">Nsteps</span> <span class="o">=</span> <span class="n">OptionalPositiveInteger</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;# simulation timesteps&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The number of simulation timesteps.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_Nsteps</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SimTimeOps.update_Nsteps"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.SimTimeOps.update_Nsteps">[docs]</a>    <span class="nd">@param</span><span class="o">.</span><span class="n">depends</span><span class="p">(</span><span class="s1">&#39;duration&#39;</span><span class="p">,</span> <span class="s1">&#39;dt&#39;</span><span class="p">,</span> <span class="n">watch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">update_Nsteps</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Nsteps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">duration</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Nsteps</span><span class="o">=</span><span class="kc">None</span></div>
+
+<div class="viewcode-block" id="SimTimeOps.update_duration"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.SimTimeOps.update_duration">[docs]</a>    <span class="nd">@param</span><span class="o">.</span><span class="n">depends</span><span class="p">(</span><span class="s1">&#39;Nsteps&#39;</span><span class="p">,</span> <span class="n">watch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">update_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nsteps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nsteps</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">/</span> <span class="mi">60</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">duration</span><span class="o">=</span><span class="kc">None</span></div></div>
+
+
+<div class="viewcode-block" id="SimSpatialOps"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.SimSpatialOps">[docs]</a><span class="k">class</span> <span class="nc">SimSpatialOps</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">Box2D</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to use the Box2D physics engine or not.&#39;</span><span class="p">)</span>
+    <span class="n">larva_collisions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to allow overlap between larva bodies.&#39;</span><span class="p">)</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">scaling_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mf">1000.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Box2D</span> <span class="k">else</span> <span class="mf">1.0</span></div>
+
+<div class="viewcode-block" id="SimOps"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.SimOps">[docs]</a><span class="k">class</span> <span class="nc">SimOps</span><span class="p">(</span><span class="n">SimTimeOps</span><span class="p">,</span><span class="n">SimSpatialOps</span><span class="p">):</span><span class="k">pass</span></div>
+
+
+
+
+
+
+<span class="c1"># How to load existing</span>
+
+
+<span class="c1"># How to launch</span>
+
+<div class="viewcode-block" id="RuntimeGeneralOps"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.RuntimeGeneralOps">[docs]</a><span class="k">class</span> <span class="nc">RuntimeGeneralOps</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">offline</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to launch a full Larvaworld environment&#39;</span><span class="p">)</span>
+    <span class="n">multicore</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to use multiple cores&#39;</span><span class="p">)</span>
+    <span class="n">store_data</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to store the simulation data&#39;</span><span class="p">)</span></div>
+
+
+
+
+
+<div class="viewcode-block" id="RuntimeDataOps"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.RuntimeDataOps">[docs]</a><span class="k">class</span> <span class="nc">RuntimeDataOps</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="nb">id</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;ID of the simulation. If not specified,set according to runtype and experiment.&#39;</span><span class="p">)</span>
+    <span class="nb">dir</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;storage folder&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The directory to store data&#39;</span><span class="p">)</span>
+
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="si">}</span><span class="s1">/data&#39;</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">f</span>
+
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">plot_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="si">}</span><span class="s1">/plots&#39;</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">f</span></div>
+
+
+
+<span class="c1"># What minimum to store, of course will be used to launch as well</span>
+
+
+
+
+<div class="viewcode-block" id="RuntimeOps"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.RuntimeOps">[docs]</a><span class="k">class</span> <span class="nc">RuntimeOps</span><span class="p">(</span><span class="n">RuntimeGeneralOps</span><span class="p">,</span><span class="n">RuntimeDataOps</span><span class="p">):</span><span class="k">pass</span></div>
+
+
+
+
+
+<div class="viewcode-block" id="Filesystem"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.Filesystem">[docs]</a><span class="k">class</span> <span class="nc">Filesystem</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">read_sequence</span> <span class="o">=</span> <span class="n">List</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;data columns&#39;</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The sequence of columns in the tracker-exported files.&#39;</span><span class="p">)</span>
+    <span class="n">read_metadata</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether metadata files are available for the tracker-exported files/folders.&#39;</span><span class="p">)</span>
+    <span class="n">folder_pref</span> <span class="o">=</span> <span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;A prefix for detecting a raw-data folder.&#39;</span><span class="p">)</span>
+    <span class="n">folder_suff</span> <span class="o">=</span> <span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;A suffix for detecting a raw-data folder.&#39;</span><span class="p">)</span>
+    <span class="n">file_pref</span> <span class="o">=</span> <span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;A prefix for detecting a raw-data file.&#39;</span><span class="p">)</span>
+    <span class="n">file_suf</span> <span class="o">=</span> <span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;A suffix for detecting a raw-data file.&#39;</span><span class="p">)</span>
+    <span class="n">file_sep</span> <span class="o">=</span> <span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;A separator for detecting a raw-data file.&#39;</span><span class="p">)</span></div>
+
+
+
+
+
+
+<div class="viewcode-block" id="TrackedPointIdx"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.TrackedPointIdx">[docs]</a><span class="k">class</span> <span class="nc">TrackedPointIdx</span><span class="p">(</span><span class="n">XYops</span><span class="p">):</span>
+    <span class="n">point_idx</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span><span class="n">softbounds</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="mi">20</span><span class="p">),</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="kc">None</span><span class="p">),</span>
+                                        <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Index of midline point to use as the larva spatial position. Default is None meaning use the centroid.&#39;</span><span class="p">)</span>
+    <span class="n">point</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Midline point to use as the larva spatial position. Default is centroid.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_tracked_point</span><span class="p">()</span>
+
+<div class="viewcode-block" id="TrackedPointIdx.update_tracked_point"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.TrackedPointIdx.update_tracked_point">[docs]</a>    <span class="nd">@param</span><span class="o">.</span><span class="n">depends</span><span class="p">(</span><span class="s1">&#39;Npoints&#39;</span><span class="p">,</span><span class="s1">&#39;point_idx&#39;</span><span class="p">,</span> <span class="n">watch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">update_tracked_point</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">point_idx</span><span class="o">.</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="n">hardmin</span><span class="p">,</span> <span class="n">hardmax</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">Npoints</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">point_idx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">point_idx</span><span class="o">.</span><span class="n">crop_to_bounds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">point_idx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">point</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_track_point</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">point_idx</span><span class="p">)</span></div></div>
+
+
+
+
+
+<div class="viewcode-block" id="SimMetricOps"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.SimMetricOps">[docs]</a><span class="k">class</span> <span class="nc">SimMetricOps</span><span class="p">(</span><span class="n">TrackedPointIdx</span><span class="p">):</span>
+    <span class="n">bend</span> <span class="o">=</span> <span class="n">Selector</span><span class="p">(</span><span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;from_vectors&#39;</span><span class="p">,</span> <span class="s1">&#39;from_angles&#39;</span><span class="p">],</span>
+                    <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether bending angle is computed as a sum of sequential segmental angles or as the angle between front and rear body vectors.&#39;</span><span class="p">)</span>
+    <span class="n">front_vector</span> <span class="o">=</span> <span class="n">PositiveIntegerRangeOrdered</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">softmax</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+                                <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The initial &amp; final segment of the front body vector.&#39;</span><span class="p">)</span>
+    <span class="n">rear_vector</span> <span class="o">=</span> <span class="n">IntegerRangeOrdered</span><span class="p">((</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">softbounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span>
+                               <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The initial &amp; final segment of the rear body vector.&#39;</span><span class="p">)</span>
+    <span class="n">front_body_ratio</span> <span class="o">=</span> <span class="n">Magnitude</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span>
+                                 <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The fraction of the body considered front, relevant for bend computation from angles.&#39;</span><span class="p">)</span>
+
+    <span class="n">use_component_vel</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span>
+                                <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to use the component velocity ralative to the axis of forward motion.&#39;</span><span class="p">)</span>
+
+
+
+<div class="viewcode-block" id="SimMetricOps.update_vectors"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.SimMetricOps.update_vectors">[docs]</a>    <span class="nd">@param</span><span class="o">.</span><span class="n">depends</span><span class="p">(</span><span class="s1">&#39;Npoints&#39;</span><span class="p">,</span> <span class="n">watch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">update_vectors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">N</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">Npoints</span>
+        <span class="c1"># self.param.params(&#39;front_vector&#39;).softbounds = (-N,N)</span>
+        <span class="c1">#self.param.front_vector.bounds = (-N,N)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">params</span><span class="p">(</span><span class="s1">&#39;front_vector&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">params</span><span class="p">(</span><span class="s1">&#39;front_vector&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">front_vector</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">params</span><span class="p">(</span><span class="s1">&#39;rear_vector&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">params</span><span class="p">(</span><span class="s1">&#39;rear_vector&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rear_vector</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Nbend_angles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">front_body_ratio</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nangles</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TrackerOps"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.TrackerOps">[docs]</a><span class="k">class</span> <span class="nc">TrackerOps</span><span class="p">(</span><span class="n">SimMetricOps</span><span class="p">,</span><span class="n">FramerateOps</span><span class="p">):</span><span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="PreprocessConf"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.PreprocessConf">[docs]</a><span class="k">class</span> <span class="nc">PreprocessConf</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">rescale_by</span> <span class="o">=</span> <span class="n">OptionalPositiveNumber</span><span class="p">(</span><span class="n">softmax</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to rescale spatial coordinates by a scalar in meters.&#39;</span><span class="p">)</span>
+    <span class="n">filter_f</span> <span class="o">=</span> <span class="n">OptionalPositiveNumber</span><span class="p">(</span><span class="n">softmax</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to filter spatial coordinates by a grade-1 low-pass filter of the given cut-off frequency.&#39;</span><span class="p">)</span>
+    <span class="n">transposition</span> <span class="o">=</span> <span class="n">OptionalSelector</span><span class="p">([</span><span class="s1">&#39;origin&#39;</span><span class="p">,</span> <span class="s1">&#39;arena&#39;</span><span class="p">,</span> <span class="s1">&#39;center&#39;</span><span class="p">],</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to transpose spatial coordinates.&#39;</span><span class="p">)</span>
+    <span class="n">interpolate_nans</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to interpolate missing values.&#39;</span><span class="p">)</span>
+    <span class="n">drop_collisions</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to drop timepoints where larva collisions are detected.&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EnrichConf"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/grouped.html#larvaworld.lib.param.grouped.EnrichConf">[docs]</a><span class="k">class</span> <span class="nc">EnrichConf</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">pre_kws</span> <span class="o">=</span> <span class="n">ClassAttr</span><span class="p">(</span><span class="n">PreprocessConf</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The preprocessing pipelines&#39;</span><span class="p">)</span>
+    <span class="n">proc_keys</span> <span class="o">=</span> <span class="n">ListSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;angular&#39;</span><span class="p">,</span> <span class="s1">&#39;spatial&#39;</span><span class="p">,</span> <span class="s1">&#39;dispersion&#39;</span><span class="p">,</span> <span class="s1">&#39;tortuosity&#39;</span><span class="p">],</span><span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;angular&#39;</span><span class="p">,</span> <span class="s1">&#39;spatial&#39;</span><span class="p">,</span> <span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="s1">&#39;dispersion&#39;</span><span class="p">,</span> <span class="s1">&#39;tortuosity&#39;</span><span class="p">,</span> <span class="s1">&#39;PI&#39;</span><span class="p">,</span> <span class="s1">&#39;wind&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The processing pipelines&#39;</span><span class="p">)</span>
+    <span class="n">anot_keys</span> <span class="o">=</span> <span class="n">ListSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bout_detection&#39;</span><span class="p">,</span> <span class="s1">&#39;bout_distribution&#39;</span><span class="p">,</span> <span class="s1">&#39;interference&#39;</span><span class="p">],</span> <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bout_detection&#39;</span><span class="p">,</span> <span class="s1">&#39;bout_distribution&#39;</span><span class="p">,</span> <span class="s1">&#39;interference&#39;</span><span class="p">,</span> <span class="s1">&#39;source_attraction&#39;</span><span class="p">,</span> <span class="s1">&#39;patch_residency&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The annotation pipelines&#39;</span><span class="p">)</span>
+    <span class="n">recompute</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to recompute&#39;</span><span class="p">)</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">Selector</span><span class="p">(</span><span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;minimal&#39;</span><span class="p">,</span> <span class="s1">&#39;full&#39;</span><span class="p">],</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The processing mode&#39;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># class DataProcessOps(NestedConf):</span>
+<span class="c1">#     enrichment = aux.ClassAttr(EnrichConf, doc=&#39;The spatiotemporal resolution&#39;)</span>
+<span class="c1">#     metric_definition = ClassAttr(SimMetricOps,doc=&#39;The metric_definition&#39;)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

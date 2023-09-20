@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.model.modules.basic &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.model.modules.basic</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.model.modules.basic</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">aux</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.model.modules.oscillator</span> <span class="kn">import</span> <span class="n">Timer</span><span class="p">,</span> <span class="n">Oscillator</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">PositiveNumber</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;Effector&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;StepEffector&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;StepOscillator&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SinOscillator&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="Effector"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.Effector">[docs]</a><span class="k">class</span> <span class="nc">Effector</span><span class="p">(</span><span class="n">Timer</span><span class="p">):</span>
+    <span class="n">input_noise</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=-</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;input noise&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The noise applied at the input of the module.&#39;</span><span class="p">)</span>
+    <span class="n">output_noise</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">precedence</span><span class="o">=-</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;output noise&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The noise applied at the output of the module.&#39;</span><span class="p">)</span>
+    <span class="n">input_range</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Range</span><span class="p">(</span><span class="n">precedence</span><span class="o">=-</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;input range&#39;</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The input range of the module.&#39;</span><span class="p">)</span>
+    <span class="n">output_range</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Range</span><span class="p">(</span><span class="n">precedence</span><span class="o">=-</span><span class="mi">3</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;output range&#39;</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The output range of the module.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="mi">0</span>
+
+
+
+<div class="viewcode-block" id="Effector.update_output"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.Effector.update_output">[docs]</a>    <span class="k">def</span> <span class="nf">update_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_noise</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_noise</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_range</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Effector.update_input"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.Effector.update_input">[docs]</a>    <span class="k">def</span> <span class="nf">update_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="nb">input</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_noise</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_noise</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_range</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Effector.apply_noise"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.Effector.apply_noise">[docs]</a>    <span class="k">def</span> <span class="nf">apply_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span><span class="n">noise</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">int</span><span class="p">,</span><span class="nb">float</span><span class="p">]:</span>
+            <span class="n">value</span> <span class="o">*=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">noise</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="nb">range</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+                <span class="n">A0</span><span class="p">,</span> <span class="n">A1</span> <span class="o">=</span> <span class="nb">range</span>
+                <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="n">A1</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">A1</span>
+                <span class="k">elif</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="n">A0</span><span class="p">:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">A0</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="p">:</span>
+                <span class="n">value</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">apply_noise</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">noise</span><span class="p">)</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="Effector.get_output"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.Effector.get_output">[docs]</a>    <span class="k">def</span> <span class="nf">get_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span></div>
+
+<div class="viewcode-block" id="Effector.update"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.Effector.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Effector.act"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.Effector.act">[docs]</a>    <span class="k">def</span> <span class="nf">act</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Effector.inact"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.Effector.inact">[docs]</a>    <span class="k">def</span> <span class="nf">inact</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="Effector.step"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.Effector.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">A_in</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_input</span><span class="p">(</span><span class="n">A_in</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">act</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inact</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span></div></div>
+
+
+
+<div class="viewcode-block" id="StepEffector"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector">[docs]</a><span class="k">class</span> <span class="nc">StepEffector</span><span class="p">(</span><span class="n">Effector</span><span class="p">):</span>
+    <span class="n">initial_amp</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;oscillation amplitude&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The initial amplitude of the oscillation.&#39;</span><span class="p">)</span>
+    <span class="n">amp_range</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Range</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;oscillation amplitude range&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The amplitude range of the oscillator.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">amp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_amp</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Act_coef</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">amp</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Act_Phi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">1</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Act</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Act_coef</span>
+        <span class="n">Aphi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Act_Phi</span>
+        <span class="k">return</span> <span class="n">c</span><span class="o">*</span><span class="n">Aphi</span>
+
+
+<div class="viewcode-block" id="StepEffector.set_amp"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.set_amp">[docs]</a>    <span class="k">def</span> <span class="nf">set_amp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">amp</span> <span class="o">=</span> <span class="n">v</span></div>
+
+<div class="viewcode-block" id="StepEffector.get_amp"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.get_amp">[docs]</a>    <span class="k">def</span> <span class="nf">get_amp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">amp</span></div>
+
+
+
+<div class="viewcode-block" id="StepEffector.act"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.act">[docs]</a>    <span class="k">def</span> <span class="nf">act</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">Act</span></div>
+
+<div class="viewcode-block" id="StepEffector.inact"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.inact">[docs]</a>    <span class="k">def</span> <span class="nf">inact</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span><span class="mi">0</span></div></div>
+
+
+
+
+
+<div class="viewcode-block" id="StepOscillator"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.StepOscillator">[docs]</a><span class="k">class</span> <span class="nc">StepOscillator</span><span class="p">(</span><span class="n">Oscillator</span><span class="p">,</span> <span class="n">StepEffector</span><span class="p">):</span>
+
+
+<div class="viewcode-block" id="StepOscillator.act"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.StepOscillator.act">[docs]</a>    <span class="k">def</span> <span class="nf">act</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oscillate</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">Act</span></div></div>
+
+
+
+<div class="viewcode-block" id="SinOscillator"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/basic.html#larvaworld.lib.model.modules.basic.SinOscillator">[docs]</a><span class="k">class</span> <span class="nc">SinOscillator</span><span class="p">(</span><span class="n">StepOscillator</span><span class="p">):</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Act_Phi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phi</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

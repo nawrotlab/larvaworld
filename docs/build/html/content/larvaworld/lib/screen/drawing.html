@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>drawing &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="rendering" href="rendering.html" />
+    <link rel="prev" title="larvaworld.lib.screen" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">larvaworld.cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">larvaworld.gui</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">larvaworld.lib</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">larvaworld.lib.model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../param/index.html">larvaworld.lib.param</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plot/index.html">larvaworld.lib.plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../process/index.html">larvaworld.lib.process</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">larvaworld.lib.screen</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">drawing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rendering.html">rendering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="side_panel.html">side_panel</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sim/index.html">larvaworld.lib.sim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../util/index.html">larvaworld.lib.util</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">reg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">larvaworld.lib</a></li>
+          <li class="breadcrumb-item"><a href="index.html">larvaworld.lib.screen</a></li>
+      <li class="breadcrumb-item active">drawing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/screen/drawing.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.screen.drawing">
+<span id="drawing"></span><h1>drawing<a class="headerlink" href="#module-larvaworld.lib.screen.drawing" title="Permalink to this heading"></a></h1>
+<section id="basescreenmanager">
+<h2>BaseScreenManager<a class="headerlink" href="#basescreenmanager" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.screen.drawing.</span></span><span class="sig-name descname"><span class="pre">BaseScreenManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background_motion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vis_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">video</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#BaseScreenManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../param/spatial.html#larvaworld.lib.param.spatial.Area2DPixel" title="larvaworld.lib.param.spatial.Area2DPixel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Area2DPixel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ScreenOps</span></code></p>
+<p>params(centered=Boolean, dims=PositiveRange, allow_clicks=Boolean, black_background=Boolean, color_behavior=Boolean, intro_text=Boolean, odor_aura=Boolean, panel_width=PositiveInteger, random_colors=Boolean, draw_centroid=Boolean, draw_contour=Boolean, draw_head=Boolean, draw_midline=Boolean, draw_orientations=Boolean, draw_segs=Boolean, draw_sensors=Boolean, trail_color=Selector, trail_dt=PositiveNumber, visible_trails=Boolean, fps=PositiveInteger, image_file=String, image_mode=OptionalSelector, mode=OptionalSelector, save_video=Boolean, show_display=Boolean, snapshot_interval_in_sec=PositiveInteger, video_file=String, name=String)
+[1;32mParameters of 'BaseScreenManager'
+=================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                         Value             Type             Bounds      Mode  [0m</p>
+<p>image_mode                    None       OptionalSelector                 V RW AN
+image_file                    None            String                      V RW AN
+snapshot_interval_in_sec       60        PositiveInteger       (0,[1;36m 100[0m)     V RW
+video_file                    None            String                      V RW AN
+fps                            60        PositiveInteger       (0,[1;36m 100[0m)     V RW
+save_video                   False           Boolean            (0, 1)      V RW
+mode                          None       OptionalSelector                 V RW AN
+show_display                 False           Boolean            (0, 1)      V RW
+visible_trails                True           Boolean            (0, 1)      V RW
+trail_dt                       20         PositiveNumber     (0.0, None)    V RW
+trail_color                 'normal'         Selector                       V RW
+draw_sensors                 False           Boolean            (0, 1)      V RW
+draw_contour                  True           Boolean            (0, 1)      V RW
+draw_segs                     True           Boolean            (0, 1)      V RW
+draw_midline                  True           Boolean            (0, 1)      V RW
+draw_centroid                False           Boolean            (0, 1)      V RW
+draw_head                    False           Boolean            (0, 1)      V RW
+draw_orientations            False           Boolean            (0, 1)      V RW
+intro_text                    True           Boolean            (0, 1)      V RW
+odor_aura                    False           Boolean            (0, 1)      V RW
+allow_clicks                  True           Boolean            (0, 1)      V RW
+black_background             False           Boolean            (0, 1)      V RW
+random_colors                False           Boolean            (0, 1)      V RW
+color_behavior               False           Boolean            (0, 1)      V RW
+panel_width                    0         PositiveInteger      (0, None)     V RW
+dims                       (100, 100)  PositiveIntegerRange   (0,[1;36m 10000[0m)    V RW
+centered                      True           Boolean            (0, 1)      V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mimage_mode:               When to save images.[0m
+[1;31mimage_file:               Filename for the saved image. File extension png sutomatically added.[0m
+[1;34msnapshot_interval_in_sec: Sec between snapshots[0m
+[1;31mvideo_file:               Filename for the saved video. File extension mp4 sutomatically added.[0m
+[1;34mfps:                      Video speed[0m
+[1;31msave_video:               Whether to save a video.[0m
+[1;34mmode:                     Screen mode.[0m
+[1;31mshow_display:             Whether to launch the pygame-visualization.[0m
+[1;34mvisible_trails:           Draw the larva trajectories[0m
+[1;31mtrail_dt:                 Duration of the drawn trajectories[0m
+[1;34mtrail_color:              Whether to display larva tracks according to the instantaneous forward or angular velocity.[0m
+[1;31mdraw_sensors:             Draw the larva sensors[0m
+[1;34mdraw_contour:             Draw the larva contour[0m
+[1;31mdraw_segs:                Draw the larva body segments[0m
+[1;34mdraw_midline:             Draw the larva midline[0m
+[1;31mdraw_centroid:            Draw the larva centroid[0m
+[1;34mdraw_head:                Draw the larva head[0m
+[1;31mdraw_orientations:        Draw the larva body vector orientations[0m
+[1;34mintro_text:               Show the introductory configuration screen[0m
+[1;31modor_aura:                Draw the aura around odor sources[0m
+[1;34mallow_clicks:             Whether to allow input from display[0m
+[1;31mblack_background:         Set the background color to black[0m
+[1;34mrandom_colors:            Color each larva with a random color[0m
+[1;31mcolor_behavior:           Color the larvae according to their instantaneous behavior[0m
+[1;34mpanel_width:              The width of the side panel in pixels[0m
+[1;31mdims:                     The arena dimensions in pixels[0m
+[1;34mcentered:                 Whether area is centered to (0,0)[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'allow_clicks':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'black_background':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'centered':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'color_behavior':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_centroid':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_contour':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_head':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_midline':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_orientations':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_segs':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_sensors':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'fps':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'image_file':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'image_mode':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'intro_text':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'mode':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor_aura':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'panel_width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'random_colors':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'save_video':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'show_display':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'snapshot_interval_in_sec':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'trail_color':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'trail_dt':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'video_file':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible_trails':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.check">
+<span class="sig-name descname"><span class="pre">check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#BaseScreenManager.check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.check" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#BaseScreenManager.close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.close" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.draw_agents">
+<span class="sig-name descname"><span class="pre">draw_agents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#BaseScreenManager.draw_agents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.draw_agents" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.draw_arena">
+<span class="sig-name descname"><span class="pre">draw_arena</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#BaseScreenManager.draw_arena"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.draw_arena" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.draw_aux">
+<span class="sig-name descname"><span class="pre">draw_aux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#BaseScreenManager.draw_aux"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.draw_aux" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.evaluate_graphs">
+<span class="sig-name descname"><span class="pre">evaluate_graphs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#BaseScreenManager.evaluate_graphs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.evaluate_graphs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.evaluate_input">
+<span class="sig-name descname"><span class="pre">evaluate_input</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#BaseScreenManager.evaluate_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.evaluate_input" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.initialize">
+<span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#BaseScreenManager.initialize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.initialize" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BaseScreenManager'</span></em><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.render">
+<span class="sig-name descname"><span class="pre">render</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#BaseScreenManager.render"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.render" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.screen_color">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">screen_color</span></span><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.screen_color" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.snapshot_tick">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">snapshot_tick</span></span><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.snapshot_tick" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.BaseScreenManager.tank_color">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tank_color</span></span><a class="headerlink" href="#larvaworld.lib.screen.drawing.BaseScreenManager.tank_color" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="ga-screenmanager">
+<h2>GA_ScreenManager<a class="headerlink" href="#ga-screenmanager" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.GA_ScreenManager">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.screen.drawing.</span></span><span class="sig-name descname"><span class="pre">GA_ScreenManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">panel_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">600</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scene</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'no_boxes'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#GA_ScreenManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.GA_ScreenManager" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.screen.drawing.BaseScreenManager" title="larvaworld.lib.screen.drawing.BaseScreenManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseScreenManager</span></code></a></p>
+<p>params(centered=Boolean, dims=PositiveRange, allow_clicks=Boolean, black_background=Boolean, color_behavior=Boolean, intro_text=Boolean, odor_aura=Boolean, panel_width=PositiveInteger, random_colors=Boolean, draw_centroid=Boolean, draw_contour=Boolean, draw_head=Boolean, draw_midline=Boolean, draw_orientations=Boolean, draw_segs=Boolean, draw_sensors=Boolean, trail_color=Selector, trail_dt=PositiveNumber, visible_trails=Boolean, fps=PositiveInteger, image_file=String, image_mode=OptionalSelector, mode=OptionalSelector, save_video=Boolean, show_display=Boolean, snapshot_interval_in_sec=PositiveInteger, video_file=String, name=String)
+[1;32mParameters of 'GA_ScreenManager'
+================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                         Value             Type             Bounds      Mode  [0m</p>
+<p>image_mode                    None       OptionalSelector                 V RW AN
+image_file                    None            String                      V RW AN
+snapshot_interval_in_sec       60        PositiveInteger       (0,[1;36m 100[0m)     V RW
+video_file                    None            String                      V RW AN
+fps                            60        PositiveInteger       (0,[1;36m 100[0m)     V RW
+save_video                   False           Boolean            (0, 1)      V RW
+mode                          None       OptionalSelector                 V RW AN
+show_display                 False           Boolean            (0, 1)      V RW
+visible_trails                True           Boolean            (0, 1)      V RW
+trail_dt                       20         PositiveNumber     (0.0, None)    V RW
+trail_color                 'normal'         Selector                       V RW
+draw_sensors                 False           Boolean            (0, 1)      V RW
+draw_contour                  True           Boolean            (0, 1)      V RW
+draw_segs                     True           Boolean            (0, 1)      V RW
+draw_midline                  True           Boolean            (0, 1)      V RW
+draw_centroid                False           Boolean            (0, 1)      V RW
+draw_head                    False           Boolean            (0, 1)      V RW
+draw_orientations            False           Boolean            (0, 1)      V RW
+intro_text                    True           Boolean            (0, 1)      V RW
+odor_aura                    False           Boolean            (0, 1)      V RW
+allow_clicks                  True           Boolean            (0, 1)      V RW
+black_background             False           Boolean            (0, 1)      V RW
+random_colors                False           Boolean            (0, 1)      V RW
+color_behavior               False           Boolean            (0, 1)      V RW
+panel_width                    0         PositiveInteger      (0, None)     V RW
+dims                       (100, 100)  PositiveIntegerRange   (0,[1;36m 10000[0m)    V RW
+centered                      True           Boolean            (0, 1)      V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mimage_mode:               When to save images.[0m
+[1;31mimage_file:               Filename for the saved image. File extension png sutomatically added.[0m
+[1;34msnapshot_interval_in_sec: Sec between snapshots[0m
+[1;31mvideo_file:               Filename for the saved video. File extension mp4 sutomatically added.[0m
+[1;34mfps:                      Video speed[0m
+[1;31msave_video:               Whether to save a video.[0m
+[1;34mmode:                     Screen mode.[0m
+[1;31mshow_display:             Whether to launch the pygame-visualization.[0m
+[1;34mvisible_trails:           Draw the larva trajectories[0m
+[1;31mtrail_dt:                 Duration of the drawn trajectories[0m
+[1;34mtrail_color:              Whether to display larva tracks according to the instantaneous forward or angular velocity.[0m
+[1;31mdraw_sensors:             Draw the larva sensors[0m
+[1;34mdraw_contour:             Draw the larva contour[0m
+[1;31mdraw_segs:                Draw the larva body segments[0m
+[1;34mdraw_midline:             Draw the larva midline[0m
+[1;31mdraw_centroid:            Draw the larva centroid[0m
+[1;34mdraw_head:                Draw the larva head[0m
+[1;31mdraw_orientations:        Draw the larva body vector orientations[0m
+[1;34mintro_text:               Show the introductory configuration screen[0m
+[1;31modor_aura:                Draw the aura around odor sources[0m
+[1;34mallow_clicks:             Whether to allow input from display[0m
+[1;31mblack_background:         Set the background color to black[0m
+[1;34mrandom_colors:            Color each larva with a random color[0m
+[1;31mcolor_behavior:           Color the larvae according to their instantaneous behavior[0m
+[1;34mpanel_width:              The width of the side panel in pixels[0m
+[1;31mdims:                     The arena dimensions in pixels[0m
+[1;34mcentered:                 Whether area is centered to (0,0)[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.GA_ScreenManager.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'allow_clicks':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'black_background':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'centered':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'color_behavior':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_centroid':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_contour':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_head':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_midline':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_orientations':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_segs':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_sensors':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'fps':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'image_file':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'image_mode':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'intro_text':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'mode':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor_aura':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'panel_width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'random_colors':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'save_video':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'show_display':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'snapshot_interval_in_sec':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'trail_color':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'trail_dt':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'video_file':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible_trails':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.screen.drawing.GA_ScreenManager.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.GA_ScreenManager._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.screen.drawing.GA_ScreenManager._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.GA_ScreenManager._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.screen.drawing.GA_ScreenManager._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.GA_ScreenManager.draw_arena">
+<span class="sig-name descname"><span class="pre">draw_arena</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#GA_ScreenManager.draw_arena"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.GA_ScreenManager.draw_arena" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.GA_ScreenManager.draw_aux">
+<span class="sig-name descname"><span class="pre">draw_aux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#GA_ScreenManager.draw_aux"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.GA_ScreenManager.draw_aux" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.GA_ScreenManager.evaluate_input">
+<span class="sig-name descname"><span class="pre">evaluate_input</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#GA_ScreenManager.evaluate_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.GA_ScreenManager.evaluate_input" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.GA_ScreenManager.finalize">
+<span class="sig-name descname"><span class="pre">finalize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#GA_ScreenManager.finalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.GA_ScreenManager.finalize" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.GA_ScreenManager.initialize">
+<span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#GA_ScreenManager.initialize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.GA_ScreenManager.initialize" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.GA_ScreenManager.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'GA_ScreenManager'</span></em><a class="headerlink" href="#larvaworld.lib.screen.drawing.GA_ScreenManager.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="screenmanager">
+<h2>ScreenManager<a class="headerlink" href="#screenmanager" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.screen.drawing.</span></span><span class="sig-name descname"><span class="pre">ScreenManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.screen.drawing.BaseScreenManager" title="larvaworld.lib.screen.drawing.BaseScreenManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseScreenManager</span></code></a></p>
+<p>params(centered=Boolean, dims=PositiveRange, allow_clicks=Boolean, black_background=Boolean, color_behavior=Boolean, intro_text=Boolean, odor_aura=Boolean, panel_width=PositiveInteger, random_colors=Boolean, draw_centroid=Boolean, draw_contour=Boolean, draw_head=Boolean, draw_midline=Boolean, draw_orientations=Boolean, draw_segs=Boolean, draw_sensors=Boolean, trail_color=Selector, trail_dt=PositiveNumber, visible_trails=Boolean, fps=PositiveInteger, image_file=String, image_mode=OptionalSelector, mode=OptionalSelector, save_video=Boolean, show_display=Boolean, snapshot_interval_in_sec=PositiveInteger, video_file=String, name=String)
+[1;32mParameters of 'ScreenManager'
+=============================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                         Value             Type             Bounds      Mode  [0m</p>
+<p>image_mode                    None       OptionalSelector                 V RW AN
+image_file                    None            String                      V RW AN
+snapshot_interval_in_sec       60        PositiveInteger       (0,[1;36m 100[0m)     V RW
+video_file                    None            String                      V RW AN
+fps                            60        PositiveInteger       (0,[1;36m 100[0m)     V RW
+save_video                   False           Boolean            (0, 1)      V RW
+mode                          None       OptionalSelector                 V RW AN
+show_display                 False           Boolean            (0, 1)      V RW
+visible_trails                True           Boolean            (0, 1)      V RW
+trail_dt                       20         PositiveNumber     (0.0, None)    V RW
+trail_color                 'normal'         Selector                       V RW
+draw_sensors                 False           Boolean            (0, 1)      V RW
+draw_contour                  True           Boolean            (0, 1)      V RW
+draw_segs                     True           Boolean            (0, 1)      V RW
+draw_midline                  True           Boolean            (0, 1)      V RW
+draw_centroid                False           Boolean            (0, 1)      V RW
+draw_head                    False           Boolean            (0, 1)      V RW
+draw_orientations            False           Boolean            (0, 1)      V RW
+intro_text                    True           Boolean            (0, 1)      V RW
+odor_aura                    False           Boolean            (0, 1)      V RW
+allow_clicks                  True           Boolean            (0, 1)      V RW
+black_background             False           Boolean            (0, 1)      V RW
+random_colors                False           Boolean            (0, 1)      V RW
+color_behavior               False           Boolean            (0, 1)      V RW
+panel_width                    0         PositiveInteger      (0, None)     V RW
+dims                       (100, 100)  PositiveIntegerRange   (0,[1;36m 10000[0m)    V RW
+centered                      True           Boolean            (0, 1)      V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mimage_mode:               When to save images.[0m
+[1;31mimage_file:               Filename for the saved image. File extension png sutomatically added.[0m
+[1;34msnapshot_interval_in_sec: Sec between snapshots[0m
+[1;31mvideo_file:               Filename for the saved video. File extension mp4 sutomatically added.[0m
+[1;34mfps:                      Video speed[0m
+[1;31msave_video:               Whether to save a video.[0m
+[1;34mmode:                     Screen mode.[0m
+[1;31mshow_display:             Whether to launch the pygame-visualization.[0m
+[1;34mvisible_trails:           Draw the larva trajectories[0m
+[1;31mtrail_dt:                 Duration of the drawn trajectories[0m
+[1;34mtrail_color:              Whether to display larva tracks according to the instantaneous forward or angular velocity.[0m
+[1;31mdraw_sensors:             Draw the larva sensors[0m
+[1;34mdraw_contour:             Draw the larva contour[0m
+[1;31mdraw_segs:                Draw the larva body segments[0m
+[1;34mdraw_midline:             Draw the larva midline[0m
+[1;31mdraw_centroid:            Draw the larva centroid[0m
+[1;34mdraw_head:                Draw the larva head[0m
+[1;31mdraw_orientations:        Draw the larva body vector orientations[0m
+[1;34mintro_text:               Show the introductory configuration screen[0m
+[1;31modor_aura:                Draw the aura around odor sources[0m
+[1;34mallow_clicks:             Whether to allow input from display[0m
+[1;31mblack_background:         Set the background color to black[0m
+[1;34mrandom_colors:            Color each larva with a random color[0m
+[1;31mcolor_behavior:           Color the larvae according to their instantaneous behavior[0m
+[1;34mpanel_width:              The width of the side panel in pixels[0m
+[1;31mdims:                     The arena dimensions in pixels[0m
+[1;34mcentered:                 Whether area is centered to (0,0)[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'allow_clicks':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'black_background':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'centered':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'color_behavior':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_centroid':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_contour':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_head':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_midline':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_orientations':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_segs':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'draw_sensors':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'fps':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'image_file':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'image_mode':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'intro_text':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'mode':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor_aura':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'panel_width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'random_colors':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'save_video':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'show_display':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'snapshot_interval_in_sec':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'trail_color':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'trail_dt':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'video_file':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible_trails':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.build_aux">
+<span class="sig-name descname"><span class="pre">build_aux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager.build_aux"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.build_aux" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.capture_snapshot">
+<span class="sig-name descname"><span class="pre">capture_snapshot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager.capture_snapshot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.capture_snapshot" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.draw_arena">
+<span class="sig-name descname"><span class="pre">draw_arena</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager.draw_arena"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.draw_arena" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.draw_aux">
+<span class="sig-name descname"><span class="pre">draw_aux</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager.draw_aux"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.draw_aux" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.eval_keypress">
+<span class="sig-name descname"><span class="pre">eval_keypress</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager.eval_keypress"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.eval_keypress" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.eval_selection">
+<span class="sig-name descname"><span class="pre">eval_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ctrl</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager.eval_selection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.eval_selection" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.evaluate_graphs">
+<span class="sig-name descname"><span class="pre">evaluate_graphs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager.evaluate_graphs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.evaluate_graphs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.evaluate_input">
+<span class="sig-name descname"><span class="pre">evaluate_input</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager.evaluate_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.evaluate_input" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.finalize">
+<span class="sig-name descname"><span class="pre">finalize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager.finalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.finalize" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.initialize">
+<span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager.initialize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.initialize" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ScreenManager'</span></em><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.step" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.screen.drawing.ScreenManager.toggle">
+<span class="sig-name descname"><span class="pre">toggle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minus</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plus</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/screen/drawing.html#ScreenManager.toggle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.screen.drawing.ScreenManager.toggle" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="larvaworld.lib.screen" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rendering.html" class="btn btn-neutral float-right" title="rendering" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

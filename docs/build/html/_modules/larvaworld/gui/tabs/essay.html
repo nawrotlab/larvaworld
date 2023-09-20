@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.gui.tabs.essay &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.gui.tabs.essay</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.gui.tabs.essay</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span>
+<span class="kn">from</span> <span class="nn">larvaworld.gui</span> <span class="kn">import</span> <span class="n">gui_aux</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;EssayTab&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="EssayTab"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/essay.html#larvaworld.gui.tabs.essay.EssayTab">[docs]</a><span class="k">class</span> <span class="nc">EssayTab</span><span class="p">(</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">GuiTab</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">essay_exps_key</span> <span class="o">=</span> <span class="s1">&#39;Essay_experiments&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exp_figures_key</span> <span class="o">=</span> <span class="s1">&#39;Essay_exp_figures&#39;</span>
+
+<div class="viewcode-block" id="EssayTab.build"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/essay.html#larvaworld.gui.tabs.essay.EssayTab.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">kws</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;list_size&#39;</span> <span class="p">:</span> <span class="p">(</span><span class="mi">25</span><span class="p">,</span><span class="mi">15</span><span class="p">),</span> <span class="s1">&#39;canvas_size&#39;</span> <span class="p">:</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">col_size</span><span class="p">(</span><span class="n">x_frac</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y_frac</span><span class="o">=</span><span class="mf">0.4</span><span class="p">),</span> <span class="s1">&#39;tab&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="p">}</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">PadDict</span><span class="p">(</span><span class="s1">&#39;Essay&#39;</span><span class="p">,</span> <span class="n">disp_name</span><span class="o">=</span><span class="s1">&#39;Configuration&#39;</span><span class="p">,</span> <span class="n">background_color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">,</span> <span class="n">text_kws</span><span class="o">=</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">t_kws</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span>
+                             <span class="n">header_width</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+        <span class="n">sl1</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">SelectionList</span><span class="p">(</span><span class="n">tab</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">buttons</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;load&#39;</span><span class="p">,</span> <span class="s1">&#39;save&#39;</span><span class="p">,</span> <span class="s1">&#39;delete&#39;</span><span class="p">,</span> <span class="s1">&#39;exec&#39;</span><span class="p">])</span>
+        <span class="n">dl1</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">DataList</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">essay_exps_key</span><span class="p">,</span> <span class="n">tab</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">buttons</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;exec&#39;</span><span class="p">],</span> <span class="n">select_mode</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">24</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="n">g1</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">GraphList</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">list_header</span><span class="o">=</span><span class="s1">&#39;Simulated&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="n">g2</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">ButtonGraphList</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exp_figures_key</span><span class="p">,</span> <span class="n">list_header</span><span class="o">=</span><span class="s1">&#39;Observed&#39;</span><span class="p">,</span> <span class="n">fig_dict</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kws</span><span class="p">,</span>
+                                     <span class="n">buttons</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;browse_figs&#39;</span><span class="p">],</span> <span class="n">button_args</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;browse_figs&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;target&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)}}</span>
+                                     <span class="p">)</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">gui_cols</span><span class="p">(</span><span class="n">cols</span><span class="o">=</span><span class="p">[[</span><span class="n">sl1</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="n">dl1</span><span class="p">],</span> <span class="p">[</span><span class="n">g1</span><span class="o">.</span><span class="n">canvas</span><span class="p">,</span> <span class="n">g2</span><span class="o">.</span><span class="n">canvas</span><span class="p">],</span> <span class="p">[</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">]],</span> <span class="n">x_fracs</span><span class="o">=</span><span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">],</span>
+                             <span class="n">as_pane</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">l</span><span class="p">,</span> <span class="n">s1</span><span class="o">.</span><span class="n">get_subdicts</span><span class="p">(),</span> <span class="p">{</span><span class="n">g1</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">g2</span><span class="p">},</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;fig_dict&#39;</span><span class="p">:</span> <span class="p">{}}}</span></div>
+
+<div class="viewcode-block" id="EssayTab.run"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/essay.html#larvaworld.gui.tabs.essay.EssayTab.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="n">conf</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">conftype</span><span class="p">]</span><span class="o">.</span><span class="n">getID</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">essay_exp</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="s1">&#39;experiments&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="n">d</span><span class="p">,</span> <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_essay_exp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">essay_exp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span></div>
+
+<div class="viewcode-block" id="EssayTab.update"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/essay.html#larvaworld.gui.tabs.essay.EssayTab.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datalists</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">essay_exps_key</span><span class="p">]</span><span class="o">.</span><span class="n">dict</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="s1">&#39;experiments&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datalists</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">essay_exps_key</span><span class="p">]</span><span class="o">.</span><span class="n">update_window</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+        <span class="n">essay</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">get_null</span><span class="p">(</span><span class="s1">&#39;Essay&#39;</span><span class="p">,</span> <span class="n">essay_ID</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">reg</span><span class="o">.</span><span class="n">next_idx</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">conftype</span><span class="o">=</span><span class="s2">&quot;Essay&quot;</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;essays/</span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">c</span><span class="p">[</span><span class="s1">&#39;Essay&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">essay</span><span class="p">)</span>
+        <span class="n">fdir</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="s1">&#39;exp_fig_folder&#39;</span><span class="p">]</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">fdir</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">fdir</span><span class="p">)}</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="o">.</span><span class="n">graph_lists</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">exp_figures_key</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">temp</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EssayTab.get"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/essay.html#larvaworld.gui.tabs.essay.EssayTab.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">as_entry</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">conf</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="c1"># &#39;exp_types&#39; :</span>
+            <span class="c1"># # &#39;sim_params&#39;: sim,</span>
+            <span class="c1"># &#39;collections&#39;: [k for k in output_keys if c[&#39;Output&#39;].get_dict(v, w)[k]],</span>
+            <span class="c1"># # &#39;life_params&#39;: c[&#39;life&#39;].get_dict(v, w),</span>
+            <span class="c1"># &#39;enrichment&#39;: loadConf(v[self.selectionlists[0].k], &#39;Exp&#39;)[&#39;enrichment&#39;],</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">conf</span></div>
+
+<div class="viewcode-block" id="EssayTab.eval"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/essay.html#larvaworld.gui.tabs.essay.EssayTab.eval">[docs]</a>    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span><span class="p">):</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">essay_exps_key</span>
+        <span class="n">k0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datalists</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">key</span>
+        <span class="k">if</span> <span class="n">e</span> <span class="o">==</span> <span class="sa">f</span><span class="s1">&#39;RUN </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="n">essay_exp</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">k0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">essay_exp</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">]:</span>
+                <span class="n">d</span><span class="p">,</span> <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_essay_exp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">essay_exp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span></div>
+
+<div class="viewcode-block" id="EssayTab.run_essay_exp"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/essay.html#larvaworld.gui.tabs.essay.EssayTab.run_essay_exp">[docs]</a>    <span class="k">def</span> <span class="nf">run_essay_exp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">essay_exp</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">larvaworld.lib.reg.stored.essay_conf</span> <span class="kn">import</span> <span class="n">RvsS_Essay</span><span class="p">,</span> <span class="n">DoublePatch_Essay</span><span class="p">,</span> <span class="n">Chemotaxis_Essay</span>
+        <span class="nb">type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_ID</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="n">pars</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="s1">&#39;Essay&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get_dict</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+        <span class="n">kws</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;essay_id&#39;</span><span class="p">:</span> <span class="n">essay_exp</span><span class="p">,</span>
+            <span class="c1"># &#39;path&#39;: f&quot;{pars[&#39;path&#39;]}/{pars[&#39;essay_ID&#39;]}&quot;,</span>
+            <span class="c1"># &#39;vis_kwargs&#39;: self.gui.get_vis_kwargs(v),</span>
+            <span class="c1"># &#39;exp_types&#39;: essay[&#39;exp_types&#39;],</span>
+            <span class="c1"># &#39;durations&#39;: essay[&#39;durations&#39;],</span>
+            <span class="c1"># &#39;N&#39;: pars[&#39;N&#39;],</span>
+            <span class="o">**</span><span class="n">pars</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;RvsS&#39;</span><span class="p">:</span>
+            <span class="n">essay</span><span class="o">=</span><span class="n">RvsS_Essay</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;DoublePatch&#39;</span><span class="p">:</span>
+            <span class="n">essay</span><span class="o">=</span><span class="n">DoublePatch_Essay</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;Chemotaxis&#39;</span><span class="p">:</span>
+            <span class="n">essay</span><span class="o">=</span><span class="n">Chemotaxis_Essay</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Essay </span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s2"> not implemented&quot;</span><span class="p">)</span>
+
+        <span class="n">ds0</span> <span class="o">=</span> <span class="n">essay</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+        <span class="n">essay</span><span class="o">.</span><span class="n">anal</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_dict</span><span class="p">[</span><span class="n">essay_exp</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;exp_fig_dict&#39;</span><span class="p">:</span> <span class="n">essay</span><span class="o">.</span><span class="n">figs</span><span class="p">,</span> <span class="s1">&#39;results&#39;</span><span class="p">:</span> <span class="n">essay</span><span class="o">.</span><span class="n">results</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_dict</span><span class="p">[</span><span class="s1">&#39;fig_dict&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">essay</span><span class="o">.</span><span class="n">figs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph_list</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dict</span><span class="p">[</span><span class="s1">&#39;fig_dict&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">larvaworld.gui.tabs.larvaworld_gui</span> <span class="kn">import</span> <span class="n">LarvaworldGui</span>
+    <span class="n">larvaworld_gui</span> <span class="o">=</span> <span class="n">LarvaworldGui</span><span class="p">(</span><span class="n">tabs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;essay&#39;</span><span class="p">])</span>
+    <span class="n">larvaworld_gui</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.gui.tabs.body_draw &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.gui.tabs.body_draw</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.gui.tabs.body_draw</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">PySimpleGUI</span> <span class="k">as</span> <span class="nn">sg</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.gui</span> <span class="kn">import</span> <span class="n">gui_aux</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;DrawBodyTab&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="DrawBodyTab"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/body_draw.html#larvaworld.gui.tabs.body_draw.DrawBodyTab">[docs]</a><span class="k">class</span> <span class="nc">DrawBodyTab</span><span class="p">(</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">DrawTab</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">canvas_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1200</span><span class="p">,</span> <span class="mi">800</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">canvas_size</span><span class="o">=</span><span class="n">canvas_size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_radius</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">240</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c_key</span><span class="o">=</span><span class="s1">&#39;Body&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">O</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="o">=</span><span class="s1">&#39;points&#39;</span><span class="p">,</span><span class="s1">&#39;segs&#39;</span><span class="p">,</span><span class="s1">&#39;olfaction_sensors&#39;</span><span class="p">,</span><span class="s1">&#39;touch_sensors&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Cdict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">:</span> <span class="s1">&#39;black&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">:</span> <span class="s1">&#39;black&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">:</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">O</span><span class="p">:</span> <span class="s1">&#39;magenta&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+<div class="viewcode-block" id="DrawBodyTab.build"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/body_draw.html#larvaworld.gui.tabs.body_draw.DrawBodyTab.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">dic</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;s&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">0.7</span><span class="p">,</span>
+            <span class="s1">&#39;dragging&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;drag_figures&#39;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="s1">&#39;current&#39;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;last_xy&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="s1">&#39;start_point&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;end_point&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;prior_rect&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;P1&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s1">&#39;P2&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">sl</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">SelectionList</span><span class="p">(</span><span class="n">tab</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="s1">&#39;Body&#39;</span><span class="p">,</span> <span class="n">buttons</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;load&#39;</span><span class="p">,</span> <span class="s1">&#39;save&#39;</span><span class="p">,</span> <span class="s1">&#39;delete&#39;</span><span class="p">,</span> <span class="s1">&#39;exec&#39;</span><span class="p">],</span>
+                                   <span class="n">width</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">text_kws</span><span class="o">=</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">t_kws</span><span class="p">(</span><span class="mi">12</span><span class="p">))</span>
+
+        <span class="n">c1</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">PadDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">c_key</span><span class="p">,</span> <span class="n">disp_name</span><span class="o">=</span><span class="s1">&#39;Configuration&#39;</span><span class="p">,</span> <span class="n">text_kws</span><span class="o">=</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">t_kws</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span> <span class="n">header_width</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
+                             <span class="n">background_color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">,</span>
+                             <span class="n">subconfs</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;Nspins&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="s1">&#39;indexing&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;group_by_N&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;text_kws&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;text_color&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Cdict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">]}},</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;Nspins&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="s1">&#39;group_by_N&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;text_kws&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;text_color&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Cdict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">]}},</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">O</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;Nspins&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;text_kws&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;text_color&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Cdict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">O</span><span class="p">]}}</span>
+                               <span class="p">},</span>
+                             <span class="n">after_header</span><span class="o">=</span><span class="p">[</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">GraphButton</span><span class="p">(</span><span class="s1">&#39;Button_Burn&#39;</span><span class="p">,</span> <span class="s1">&#39;RESET_BODY&#39;</span><span class="p">,</span>
+                                                               <span class="n">tooltip</span><span class="o">=</span><span class="s1">&#39;Reset to the initial body.&#39;</span><span class="p">),</span>
+                                           <span class="n">gui_aux</span><span class="o">.</span><span class="n">GraphButton</span><span class="p">(</span><span class="s1">&#39;Globe_Active&#39;</span><span class="p">,</span> <span class="s1">&#39;NEW_BODY&#39;</span><span class="p">,</span>
+                                                               <span class="n">tooltip</span><span class="o">=</span><span class="s1">&#39;Create a new body.All drawn items will be erased.&#39;</span><span class="p">)])</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">c1</span><span class="o">.</span><span class="n">get_subdicts</span><span class="p">())</span>
+        <span class="n">col1</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">gui_col</span><span class="p">([</span><span class="n">sl</span><span class="p">,</span> <span class="n">c1</span><span class="p">],</span> <span class="n">x_frac</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">as_pane</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+        <span class="n">g1</span> <span class="o">=</span> <span class="n">gui_aux</span><span class="o">.</span><span class="n">GraphList</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">tab</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">canvas_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas_size</span><span class="p">,</span> <span class="n">canvas_kws</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;graph_bottom_left&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="s1">&#39;graph_top_right&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas_size</span><span class="p">,</span>
+            <span class="s1">&#39;change_submits&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s1">&#39;drag_submits&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s1">&#39;background_color&#39;</span><span class="p">:</span> <span class="s1">&#39;white&#39;</span><span class="p">,</span>
+        <span class="p">})</span>
+        <span class="n">col2</span> <span class="o">=</span> <span class="n">sg</span><span class="o">.</span><span class="n">Col</span><span class="p">([</span><span class="n">g1</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">get_layout</span><span class="p">(</span><span class="n">as_pane</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">))[</span><span class="mi">0</span><span class="p">]],</span> <span class="o">**</span><span class="n">gui_aux</span><span class="o">.</span><span class="n">col_kws</span><span class="p">)</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="p">[[</span><span class="n">col1</span><span class="p">,</span> <span class="n">col2</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="n">g1</span><span class="o">.</span><span class="n">canvas_element</span>
+
+        <span class="k">return</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="p">{</span><span class="n">g1</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">g1</span><span class="p">},</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">dic</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="DrawBodyTab.update"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/body_draw.html#larvaworld.gui.tabs.body_draw.DrawBodyTab.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">larvaworld.lib.aux.sim_aux</span> <span class="kn">import</span> <span class="n">rearrange_contour</span>
+
+        <span class="k">if</span> <span class="n">conf</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">conf</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">]</span> <span class="o">=</span> <span class="n">rearrange_contour</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">draw_body</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DrawBodyTab.get"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/body_draw.html#larvaworld.gui.tabs.body_draw.DrawBodyTab.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">as_entry</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">conf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">get_dict</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">conf</span></div>
+
+<div class="viewcode-block" id="DrawBodyTab.eval"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/body_draw.html#larvaworld.gui.tabs.body_draw.DrawBodyTab.eval">[docs]</a>    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span><span class="p">):</span>
+        <span class="n">gg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span>
+        <span class="n">gg</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="s1">&#39;&lt;Button-3&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;+RIGHT+&#39;</span><span class="p">)</span>
+        <span class="c1"># gg.Widget.config(cursor=&#39;fleur&#39;)</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dict</span>
+        <span class="k">if</span> <span class="n">e</span> <span class="o">==</span> <span class="s1">&#39;RESET_BODY&#39;</span><span class="p">:</span>
+            <span class="n">conf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">e</span> <span class="o">==</span> <span class="s1">&#39;NEW_BODY&#39;</span><span class="p">:</span>
+            <span class="n">gg</span><span class="o">.</span><span class="n">erase</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">e</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">canvas_k</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">canvas_k</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dic</span><span class="p">[</span><span class="s1">&#39;dragging&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_drag_ps</span><span class="p">(</span><span class="n">p1</span><span class="o">=</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+                <span class="n">dic</span><span class="p">[</span><span class="s1">&#39;dragging&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">dic</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">entry</span><span class="p">[</span><span class="s1">&#39;fig&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">gg</span><span class="o">.</span><span class="n">get_figures_at_location</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)):</span>
+                        <span class="n">dic</span><span class="p">[</span><span class="s1">&#39;drag_figures&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">entry</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="k">del</span> <span class="n">dic</span><span class="p">[</span><span class="s1">&#39;drag_figures&#39;</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span>
+                        <span class="k">except</span><span class="p">:</span>
+                            <span class="k">pass</span>
+                <span class="n">dic</span><span class="p">[</span><span class="s1">&#39;last_xy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_drag_ps</span><span class="p">(</span><span class="n">p2</span><span class="o">=</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+            <span class="n">delta_x</span><span class="p">,</span> <span class="n">delta_y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">dic</span><span class="p">[</span><span class="s1">&#39;last_xy&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">y</span> <span class="o">-</span> <span class="n">dic</span><span class="p">[</span><span class="s1">&#39;last_xy&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">dic</span><span class="p">[</span><span class="s1">&#39;last_xy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+            <span class="k">if</span> <span class="kc">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_drag_ps</span><span class="p">():</span>
+                <span class="n">delta_X</span><span class="p">,</span> <span class="n">delta_Y</span> <span class="o">=</span> <span class="n">delta_x</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="p">,</span> <span class="n">delta_y</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span>
+                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">dic</span><span class="p">[</span><span class="s1">&#39;drag_figures&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">X0</span><span class="p">,</span> <span class="n">Y0</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="s1">&#39;pos&#39;</span><span class="p">]</span>
+                    <span class="n">new_p</span> <span class="o">=</span> <span class="p">(</span><span class="n">X0</span> <span class="o">+</span> <span class="n">delta_X</span><span class="p">,</span> <span class="n">Y0</span> <span class="o">+</span> <span class="n">delta_Y</span><span class="p">)</span>
+                    <span class="n">conf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+                    <span class="n">conf</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_p</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;+UP&#39;</span><span class="p">):</span>  <span class="c1"># The drawing has ended because mouse up</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">aux_reset</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">d</span><span class="p">,</span> <span class="n">g</span></div>
+
+<div class="viewcode-block" id="DrawBodyTab.draw_body"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/body_draw.html#larvaworld.gui.tabs.body_draw.DrawBodyTab.draw_body">[docs]</a>    <span class="k">def</span> <span class="nf">draw_body</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">erase</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xy_reset</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">draw_segs</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">draw_points</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DrawBodyTab.draw_points"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/body_draw.html#larvaworld.gui.tabs.body_draw.DrawBodyTab.draw_points">[docs]</a>    <span class="k">def</span> <span class="nf">draw_points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">Cps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Cdict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">]</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dict</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_radius</span>
+        <span class="n">gg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">]</span>
+        <span class="n">os</span> <span class="o">=</span> <span class="n">conf</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">O</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p0</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">conf</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">]):</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_xy</span><span class="p">(</span><span class="n">p0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">gg</span><span class="o">.</span><span class="n">draw_circle</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">line_width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">line_color</span><span class="o">=</span><span class="n">Cps</span><span class="p">,</span> <span class="n">fill_color</span><span class="o">=</span><span class="n">Cps</span><span class="p">)</span>
+            <span class="n">dic</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;fig&#39;</span><span class="p">:</span> <span class="n">f</span><span class="p">,</span> <span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">ts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ts</span><span class="p">:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">gg</span><span class="o">.</span><span class="n">draw_circle</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span> <span class="mf">1.8</span><span class="p">,</span> <span class="n">line_width</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">line_color</span><span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Cdict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">])</span>
+                <span class="n">dic</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;fig&#39;</span><span class="p">:</span> <span class="n">f</span><span class="p">,</span> <span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">os</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">os</span><span class="p">:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">gg</span><span class="o">.</span><span class="n">draw_circle</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">r</span> <span class="o">*</span> <span class="mf">2.6</span><span class="p">,</span> <span class="n">line_width</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">line_color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">Cdict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">O</span><span class="p">])</span>
+                <span class="n">dic</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">O</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;fig&#39;</span><span class="p">:</span> <span class="n">f</span><span class="p">,</span> <span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="DrawBodyTab.draw_segs"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/body_draw.html#larvaworld.gui.tabs.body_draw.DrawBodyTab.draw_segs">[docs]</a>    <span class="k">def</span> <span class="nf">draw_segs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">larvaworld.lib.aux.sim_aux</span> <span class="kn">import</span> <span class="n">generate_seg_shapes</span>
+
+        <span class="n">dic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dict</span>
+        <span class="n">gg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">graph</span>
+        <span class="n">base_seg_vertices</span><span class="o">=</span><span class="n">generate_seg_shapes</span><span class="p">(</span><span class="n">centered</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">conf</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">base_seg_vertices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">ps</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">scale_xy</span><span class="p">(</span><span class="n">base_seg_vertices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">base_seg_vertices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+            <span class="n">ps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">gg</span><span class="o">.</span><span class="n">draw_lines</span><span class="p">(</span><span class="n">ps</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">Cdict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">])</span>
+            <span class="n">dic</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;fig&#39;</span><span class="p">:</span> <span class="n">f</span><span class="p">,</span> <span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="n">ps</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="DrawBodyTab.xy_reset"><a class="viewcode-back" href="../../../../content/larvaworld/gui/tabs/body_draw.html#larvaworld.gui.tabs.body_draw.DrawBodyTab.xy_reset">[docs]</a>    <span class="k">def</span> <span class="nf">xy_reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_dict</span>
+        <span class="n">dic</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">dic</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">dic</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">O</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">dic</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">c</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gui</span><span class="o">.</span><span class="n">collapsibles</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">c_key</span><span class="p">]</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.model.deb.deb_aux &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.model.deb.deb_aux</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.model.deb.deb_aux</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">math</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.lib</span> <span class="kn">import</span> <span class="n">scimath</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;get_lb&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;get_E0&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;get_E_Rm&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;run_embryo_stage&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">simplex</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">()):</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;nelder-mead&#39;</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;xatol&#39;</span><span class="p">:</span> <span class="mf">1e-8</span><span class="p">,</span> <span class="s1">&#39;disp&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span><span class="o">.</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">res</span>
+
+
+<span class="k">def</span> <span class="nf">beta0</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Beta function used in the DEB textbook (p.58)</span>
+<span class="sd">    Args:</span>
+<span class="sd">        x0:float</span>
+<span class="sd">        x1:float</span>
+
+<span class="sd">    Returns:float</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">x03</span> <span class="o">=</span> <span class="n">x0</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">x13</span> <span class="o">=</span> <span class="n">x1</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">a3</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+    <span class="n">f1</span> <span class="o">=</span> <span class="o">-</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">x13</span> <span class="o">+</span> <span class="n">a3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x13</span><span class="p">)</span> <span class="o">/</span> <span class="n">a3</span><span class="p">)</span> <span class="o">-</span> <span class="n">scimath</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x13</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">scimath</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x13</span> <span class="o">+</span> <span class="n">x13</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">f0</span> <span class="o">=</span> <span class="o">-</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">x03</span> <span class="o">+</span> <span class="n">a3</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan</span><span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x03</span><span class="p">)</span> <span class="o">/</span> <span class="n">a3</span><span class="p">)</span> <span class="o">-</span> <span class="n">scimath</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x03</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">scimath</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">x03</span> <span class="o">+</span> <span class="n">x03</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">f1</span> <span class="o">-</span> <span class="n">f0</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="c1"># return f</span>
+
+
+<div class="viewcode-block" id="get_lb"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/deb_aux.html#larvaworld.lib.model.deb.deb_aux.get_lb">[docs]</a><span class="k">def</span> <span class="nf">get_lb</span><span class="p">(</span><span class="n">kap</span><span class="p">,</span> <span class="n">E_Hb</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">p_Am</span><span class="p">,</span> <span class="n">E_G</span><span class="p">,</span> <span class="n">k_J</span><span class="p">,</span> <span class="n">p_M</span><span class="p">,</span> <span class="n">eb</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">E_m</span> <span class="o">=</span> <span class="n">p_Am</span> <span class="o">/</span> <span class="n">v</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">E_G</span> <span class="o">/</span> <span class="p">(</span><span class="n">kap</span> <span class="o">*</span> <span class="n">E_m</span><span class="p">)</span>
+    <span class="n">k_M</span> <span class="o">=</span> <span class="n">p_M</span> <span class="o">/</span> <span class="n">E_G</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">k_J</span> <span class="o">/</span> <span class="n">k_M</span>
+    <span class="n">vHb</span> <span class="o">=</span> <span class="n">E_Hb</span> <span class="o">*</span> <span class="n">g</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">k_M</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">kap</span><span class="p">)</span> <span class="o">*</span> <span class="n">p_Am</span> <span class="o">*</span> <span class="n">v</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">1000</span> <span class="o">+</span> <span class="nb">round</span><span class="p">(</span><span class="mi">1000</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">xb</span> <span class="o">=</span> <span class="n">g</span> <span class="o">/</span> <span class="p">(</span><span class="n">g</span> <span class="o">+</span> <span class="n">eb</span><span class="p">)</span>
+    <span class="n">xb3</span> <span class="o">=</span> <span class="n">xb</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="n">xb</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">xb</span> <span class="o">/</span> <span class="n">n</span>
+    <span class="n">x3</span> <span class="o">=</span> <span class="n">x</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="n">b</span> <span class="o">=</span> <span class="n">beta0</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">xb</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">g</span><span class="p">)</span>
+
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">xb</span> <span class="o">*</span> <span class="n">g</span> <span class="o">*</span> <span class="n">vHb</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">ni</span> <span class="o">=</span> <span class="mi">100</span>
+
+    <span class="n">lb</span> <span class="o">=</span> <span class="n">vHb</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">ni</span> <span class="ow">and</span> <span class="n">norm</span> <span class="o">&gt;</span> <span class="mf">1e-18</span><span class="p">:</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="n">x3</span> <span class="o">/</span> <span class="p">(</span><span class="n">xb3</span> <span class="o">/</span> <span class="n">lb</span> <span class="o">-</span> <span class="n">b</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">l</span> <span class="o">/</span> <span class="n">g</span> <span class="o">/</span> <span class="n">x</span>
+        <span class="n">vv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span> <span class="n">dx</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+        <span class="n">vb</span> <span class="o">=</span> <span class="n">vv</span><span class="p">[</span><span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">g</span> <span class="o">+</span> <span class="n">l</span><span class="p">)</span>
+        <span class="n">rv</span> <span class="o">=</span> <span class="n">r</span> <span class="o">/</span> <span class="n">vv</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">t0</span> <span class="o">/</span> <span class="n">lb</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">/</span> <span class="n">vb</span> <span class="o">-</span> <span class="n">dx</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">rv</span><span class="p">)</span>
+        <span class="n">dl</span> <span class="o">=</span> <span class="n">xb3</span> <span class="o">/</span> <span class="n">lb</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">l</span> <span class="o">**</span> <span class="mf">2.</span> <span class="o">/</span> <span class="n">x3</span>
+        <span class="n">dlnv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span> <span class="n">dx</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">s</span> <span class="o">*</span> <span class="n">dl</span> <span class="o">/</span> <span class="n">l</span><span class="p">))</span>
+        <span class="n">dlnvb</span> <span class="o">=</span> <span class="n">dlnv</span><span class="p">[</span><span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="o">-</span> <span class="n">t0</span> <span class="o">/</span> <span class="n">lb</span> <span class="o">**</span> <span class="mi">3</span> <span class="o">/</span> <span class="n">vb</span> <span class="o">*</span> <span class="p">(</span><span class="mi">3</span> <span class="o">/</span> <span class="n">lb</span> <span class="o">+</span> <span class="n">dlnvb</span><span class="p">)</span> <span class="o">-</span> <span class="n">dx</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">dl</span> <span class="o">/</span> <span class="n">r</span> <span class="o">-</span> <span class="n">dlnv</span><span class="p">)</span> <span class="o">*</span> <span class="n">rv</span><span class="p">)</span>
+        <span class="n">lb</span> <span class="o">-=</span> <span class="n">t</span> <span class="o">/</span> <span class="n">dt</span>  <span class="c1"># Newton Raphson step</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">t</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">lb</span></div>
+
+
+<div class="viewcode-block" id="get_E0"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/deb_aux.html#larvaworld.lib.model.deb.deb_aux.get_E0">[docs]</a><span class="k">def</span> <span class="nf">get_E0</span><span class="p">(</span><span class="n">kap</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">p_M</span><span class="p">,</span> <span class="n">p_Am</span><span class="p">,</span> <span class="n">E_G</span><span class="p">,</span> <span class="n">eb</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function calculates the maximum reserve density (E0) that an organism can achieve given its energy budget parameters.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            kap (float): Fraction of assimilated energy that is used for somatic maintenance.</span>
+<span class="sd">            v (float): Energy conductance.</span>
+<span class="sd">            p_M (float): Specific somatic maintenance costs.</span>
+<span class="sd">            p_Am (float): Maximum surface-specific assimilation rate.</span>
+<span class="sd">            E_G (float): Energy investment ratio.</span>
+<span class="sd">            eb (float, optional): Allocation fraction to reserve production. Defaults to 1.0.</span>
+<span class="sd">            lb (float, optional): Length at birth. If not provided, it is calculated from the other parameters. Defaults to None.</span>
+<span class="sd">            **kwargs: Additional keyword arguments that are not used in this function but may be used in other functions that this function calls.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Maximum reserve density that an organism can achieve.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">k_M</span> <span class="o">=</span> <span class="n">p_M</span> <span class="o">/</span> <span class="n">E_G</span>
+
+    <span class="c1"># If lb is not provided, calculate it using get_lb function</span>
+    <span class="k">if</span> <span class="n">lb</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">lb</span> <span class="o">=</span> <span class="n">get_lb</span><span class="p">(</span><span class="n">kap</span><span class="o">=</span><span class="n">kap</span><span class="p">,</span> <span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">,</span> <span class="n">p_Am</span><span class="o">=</span><span class="n">p_Am</span><span class="p">,</span> <span class="n">p_M</span><span class="o">=</span><span class="n">p_M</span><span class="p">,</span> <span class="n">E_G</span><span class="o">=</span><span class="n">E_G</span><span class="p">,</span> <span class="n">eb</span><span class="o">=</span><span class="n">eb</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">E_G</span> <span class="o">*</span> <span class="n">v</span> <span class="o">/</span> <span class="p">(</span><span class="n">kap</span> <span class="o">*</span> <span class="n">p_Am</span><span class="p">)</span>
+    <span class="n">xb</span> <span class="o">=</span> <span class="n">g</span> <span class="o">/</span> <span class="p">(</span><span class="n">g</span> <span class="o">+</span> <span class="n">eb</span><span class="p">)</span>
+
+    <span class="c1"># Calculate uE0 using the equation in the Dynamic Energy Budget textbook</span>
+    <span class="n">uE0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">((</span><span class="mi">3</span> <span class="o">*</span> <span class="n">g</span> <span class="o">/</span> <span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="n">g</span> <span class="o">*</span> <span class="n">xb</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="n">lb</span> <span class="o">-</span> <span class="n">beta0</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">xb</span><span class="p">)))</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="c1"># Calculate U0 and E0 using the equations in the Dynamic Energy Budget textbook</span>
+    <span class="n">U0</span> <span class="o">=</span> <span class="n">uE0</span> <span class="o">*</span> <span class="n">v</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">g</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">k_M</span> <span class="o">**</span> <span class="mi">3</span>
+    <span class="n">E0</span> <span class="o">=</span> <span class="n">U0</span> <span class="o">*</span> <span class="n">p_Am</span>
+    <span class="k">return</span> <span class="n">E0</span></div>
+
+<div class="viewcode-block" id="get_E_Rm"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/deb_aux.html#larvaworld.lib.model.deb.deb_aux.get_E_Rm">[docs]</a><span class="k">def</span> <span class="nf">get_E_Rm</span><span class="p">(</span><span class="n">kap</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">p_M</span><span class="p">,</span> <span class="n">p_Am</span><span class="p">,</span> <span class="n">E_G</span><span class="p">,</span> <span class="n">lb</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        The threshold for pupation is [E_Rj]¼sj[E_Rm], which is introduced with a new parameter sj and an expression</span>
+<span class="sd">        that gives the reference value, i.e., the maximum value for reproduction buffer density, for the onset of pupation</span>
+<span class="sd">        Args:</span>
+<span class="sd">            x0:float</span>
+<span class="sd">            x1:float</span>
+
+<span class="sd">        Returns:float E_Rm (J)</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+    <span class="k">if</span> <span class="n">lb</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">lb</span> <span class="o">=</span> <span class="n">get_lb</span><span class="p">(</span><span class="n">kap</span><span class="o">=</span><span class="n">kap</span><span class="p">,</span> <span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">,</span> <span class="n">p_Am</span><span class="o">=</span><span class="n">p_Am</span><span class="p">,</span> <span class="n">p_M</span><span class="o">=</span><span class="n">p_M</span><span class="p">,</span> <span class="n">E_G</span><span class="o">=</span><span class="n">E_G</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">k_M</span> <span class="o">=</span> <span class="n">p_M</span> <span class="o">/</span> <span class="n">E_G</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">E_G</span> <span class="o">*</span> <span class="n">v</span> <span class="o">/</span> <span class="p">(</span><span class="n">kap</span> <span class="o">*</span> <span class="n">p_Am</span><span class="p">)</span>
+    <span class="n">E_M</span> <span class="o">=</span> <span class="n">p_Am</span> <span class="o">/</span> <span class="n">v</span>
+    <span class="n">k_E</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">k_M</span><span class="o">/</span><span class="n">lb</span>
+    <span class="n">E_Rm</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">kap</span><span class="p">)</span> <span class="o">*</span> <span class="n">g</span> <span class="o">*</span> <span class="n">E_M</span> <span class="o">*</span> <span class="p">(</span><span class="n">k_E</span> <span class="o">+</span> <span class="n">k_M</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">k_E</span> <span class="o">-</span> <span class="n">g</span> <span class="o">*</span> <span class="n">k_M</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">E_Rm</span></div>
+
+
+<span class="k">def</span> <span class="nf">run_embryo_stage2</span><span class="p">(</span><span class="n">kap</span><span class="p">,</span> <span class="n">E_Hb</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">E_G</span><span class="p">,</span> <span class="n">k_J</span><span class="p">,</span> <span class="n">p_M</span><span class="p">,</span> <span class="n">p_Am</span><span class="p">,</span> <span class="n">p_T</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span> <span class="n">E_0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">E_G_per_kap</span> <span class="o">=</span> <span class="n">E_G</span> <span class="o">/</span> <span class="n">kap</span>
+    <span class="n">p_M_per_kap</span> <span class="o">=</span> <span class="n">p_M</span> <span class="o">/</span> <span class="n">kap</span>
+    <span class="n">p_T_per_kap</span> <span class="o">=</span> <span class="n">p_T</span> <span class="o">/</span> <span class="n">kap</span>
+    <span class="n">v_E_G_plus_P_T_per_kap</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span> <span class="o">*</span> <span class="n">E_G</span> <span class="o">+</span> <span class="n">p_T</span><span class="p">)</span> <span class="o">/</span> <span class="n">kap</span>
+
+    <span class="k">if</span> <span class="n">E_0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">E_0</span> <span class="o">=</span> <span class="n">get_E0</span><span class="p">(</span><span class="n">E_Hb</span><span class="o">=</span><span class="n">E_Hb</span><span class="p">,</span> <span class="n">k_J</span><span class="o">=</span><span class="n">k_J</span><span class="p">,</span> <span class="n">kap</span><span class="o">=</span><span class="n">kap</span><span class="p">,</span> <span class="n">p_Am</span><span class="o">=</span><span class="n">p_Am</span><span class="p">,</span> <span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">,</span> <span class="n">E_G</span><span class="o">=</span><span class="n">E_G</span><span class="p">,</span> <span class="n">p_M</span><span class="o">=</span><span class="n">p_M</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">t</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">E_H</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">E_0</span><span class="p">),</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span>
+    <span class="n">done</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="c1"># dic=dNl.AttrDict({&#39;t&#39; : [], &#39;E&#39;:[], &#39;L&#39; : [] , &#39;E_H&#39; : []})</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">done</span><span class="p">:</span>
+        <span class="n">L2</span> <span class="o">=</span> <span class="n">L</span> <span class="o">*</span> <span class="n">L</span>
+        <span class="n">L3</span> <span class="o">=</span> <span class="n">L</span> <span class="o">*</span> <span class="n">L2</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="n">E</span> <span class="o">+</span> <span class="n">E_G_per_kap</span> <span class="o">*</span> <span class="n">L3</span>
+        <span class="n">p_C</span> <span class="o">=</span> <span class="n">E</span> <span class="o">*</span> <span class="p">(</span><span class="n">v_E_G_plus_P_T_per_kap</span> <span class="o">*</span> <span class="n">L2</span> <span class="o">+</span> <span class="n">p_M_per_kap</span> <span class="o">*</span> <span class="n">L3</span><span class="p">)</span> <span class="o">/</span> <span class="n">denom</span>
+        <span class="n">dL</span> <span class="o">=</span> <span class="p">(</span><span class="n">E</span> <span class="o">*</span> <span class="n">v</span> <span class="o">-</span> <span class="p">(</span><span class="n">p_M_per_kap</span> <span class="o">*</span> <span class="n">L</span> <span class="o">+</span> <span class="n">p_T_per_kap</span><span class="p">)</span> <span class="o">*</span> <span class="n">L3</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span> <span class="o">/</span> <span class="n">denom</span>
+        <span class="n">dE</span> <span class="o">=</span> <span class="o">-</span><span class="n">p_C</span>
+        <span class="n">dE_H</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">kap</span><span class="p">)</span> <span class="o">*</span> <span class="n">p_C</span> <span class="o">-</span> <span class="n">k_J</span> <span class="o">*</span> <span class="n">E_H</span>
+        <span class="k">if</span> <span class="n">E_H</span> <span class="o">+</span> <span class="n">dt</span> <span class="o">*</span> <span class="n">dE_H</span> <span class="o">&gt;</span> <span class="n">E_Hb</span><span class="p">:</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="p">(</span><span class="n">E_Hb</span> <span class="o">-</span> <span class="n">E_H</span><span class="p">)</span> <span class="o">/</span> <span class="n">dE_H</span>
+            <span class="n">done</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">E</span> <span class="o">+=</span> <span class="n">dt</span> <span class="o">*</span> <span class="n">dE</span>
+        <span class="n">L</span> <span class="o">+=</span> <span class="n">dt</span> <span class="o">*</span> <span class="n">dL</span>
+        <span class="n">E_H</span> <span class="o">+=</span> <span class="n">dt</span> <span class="o">*</span> <span class="n">dE_H</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="n">dt</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">E_H</span><span class="p">,</span><span class="n">E_Hb</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">E</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">dL</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="n">t</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">L</span>
+
+
+<div class="viewcode-block" id="run_embryo_stage"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/deb/deb_aux.html#larvaworld.lib.model.deb.deb_aux.run_embryo_stage">[docs]</a><span class="k">def</span> <span class="nf">run_embryo_stage</span><span class="p">(</span><span class="n">kap</span><span class="p">,</span> <span class="n">E_Hb</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">E_G</span><span class="p">,</span> <span class="n">k_J</span><span class="p">,</span> <span class="n">p_M</span><span class="p">,</span> <span class="n">p_Am</span><span class="p">,</span> <span class="n">p_T</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span> <span class="n">E_0</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">E_m</span> <span class="o">=</span> <span class="n">p_Am</span> <span class="o">/</span> <span class="n">v</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">E_G</span> <span class="o">/</span> <span class="p">(</span><span class="n">kap</span> <span class="o">*</span> <span class="n">E_m</span><span class="p">)</span>
+    <span class="n">k_M</span> <span class="o">=</span> <span class="n">p_M</span> <span class="o">/</span> <span class="n">E_G</span>
+    <span class="n">L_T</span> <span class="o">=</span> <span class="n">p_T</span> <span class="o">/</span> <span class="n">p_M</span>
+
+    <span class="k">if</span> <span class="n">E_0</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">E_0</span> <span class="o">=</span> <span class="n">get_E0</span><span class="p">(</span><span class="n">E_Hb</span><span class="o">=</span><span class="n">E_Hb</span><span class="p">,</span> <span class="n">k_J</span><span class="o">=</span><span class="n">k_J</span><span class="p">,</span> <span class="n">kap</span><span class="o">=</span><span class="n">kap</span><span class="p">,</span> <span class="n">p_Am</span><span class="o">=</span><span class="n">p_Am</span><span class="p">,</span> <span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">,</span> <span class="n">E_G</span><span class="o">=</span><span class="n">E_G</span><span class="p">,</span> <span class="n">p_M</span><span class="o">=</span><span class="n">p_M</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="c1"># dic = dNl.AttrDict({&#39;t&#39;: [], &#39;E&#39;: [], &#39;L&#39;: [], &#39;E_H&#39;: []})</span>
+    <span class="c1"># t, E, V, E_H = 0., float(E_0), 10**-20, 0.</span>
+    <span class="n">t</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">E_H</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">E_0</span><span class="p">),</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span>
+    <span class="k">while</span> <span class="n">E_H</span> <span class="o">&lt;</span> <span class="n">E_Hb</span><span class="p">:</span>
+        <span class="n">L2</span> <span class="o">=</span> <span class="n">L</span> <span class="o">*</span> <span class="n">L</span>
+        <span class="n">L3</span> <span class="o">=</span> <span class="n">L</span> <span class="o">*</span> <span class="n">L2</span>
+
+        <span class="c1"># volume specific :</span>
+        <span class="n">e</span><span class="o">=</span><span class="n">E</span><span class="o">/</span><span class="n">E_m</span>
+        <span class="n">p_C</span> <span class="o">=</span> <span class="n">E_m</span> <span class="o">*</span> <span class="p">(</span><span class="n">v</span> <span class="o">/</span> <span class="n">L</span> <span class="o">+</span> <span class="n">k_M</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">L_T</span> <span class="o">/</span> <span class="n">L</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="n">e</span> <span class="o">*</span> <span class="n">g</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">e</span> <span class="o">+</span> <span class="n">g</span><span class="p">)</span>
+        <span class="n">p_S</span> <span class="o">=</span> <span class="n">p_M</span> <span class="o">+</span> <span class="n">p_T</span> <span class="o">/</span><span class="n">L</span>
+        <span class="n">p_G</span> <span class="o">=</span> <span class="n">kap</span> <span class="o">*</span> <span class="n">p_C</span> <span class="o">-</span> <span class="n">p_S</span>
+        <span class="n">dL</span><span class="o">=</span><span class="n">p_G</span> <span class="o">/</span> <span class="n">E_G</span>
+
+        <span class="n">E</span> <span class="o">-=</span> <span class="n">dt</span> <span class="o">*</span> <span class="n">p_C</span><span class="o">*</span><span class="n">L3</span>
+        <span class="n">L</span> <span class="o">+=</span> <span class="n">dt</span> <span class="o">*</span> <span class="n">dL</span>
+
+
+        <span class="n">p_J</span> <span class="o">=</span> <span class="n">k_J</span> <span class="o">*</span> <span class="n">E_H</span>
+        <span class="n">p_R</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">kap</span><span class="p">)</span> <span class="o">*</span> <span class="n">p_C</span> <span class="o">-</span> <span class="n">p_J</span>
+        <span class="c1"># dL = (p_G / E_G) ** (1 / 3)</span>
+
+        <span class="c1"># dL = E * v/ (3*kap* E +3*E_G * L3) - p_S * L/ (3 *E+ 3* E_G_per_kap * L3)</span>
+
+
+        <span class="c1"># L += dt *(p_G / E_G)**(1/3)</span>
+
+        <span class="n">E_H</span> <span class="o">+=</span> <span class="n">dt</span> <span class="o">*</span> <span class="n">p_R</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="n">dt</span>
+
+        <span class="c1"># L=V ** (1 / 3)</span>
+        <span class="c1"># dic.t.append(t)</span>
+        <span class="c1"># dic.E.append(E)</span>
+        <span class="c1"># dic.L.append(L)</span>
+        <span class="c1"># dic.E_H.append(E_H)</span>
+    <span class="k">return</span> <span class="n">t</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">L</span>  <span class="c1"># , dic</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">deb_pars</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;F_m&#39;</span><span class="p">:</span> <span class="mf">6.5</span><span class="p">,</span>
+                <span class="s1">&#39;kap_X&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span>
+                <span class="s1">&#39;v&#39;</span><span class="p">:</span> <span class="mf">0.12431941407809782</span><span class="p">,</span>
+                <span class="s1">&#39;kap&#39;</span><span class="p">:</span> <span class="mf">0.9999225767377389</span><span class="p">,</span>
+                <span class="s1">&#39;kap_R&#39;</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span>
+                <span class="s1">&#39;p_M&#39;</span><span class="p">:</span> <span class="mf">242.39201174618017</span><span class="p">,</span>
+                <span class="s1">&#39;p_T&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="s1">&#39;k_J&#39;</span><span class="p">:</span> <span class="mf">0.002</span><span class="p">,</span>
+                <span class="s1">&#39;E_G&#39;</span><span class="p">:</span> <span class="mf">4434.662379584172</span><span class="p">,</span>
+                <span class="s1">&#39;E_Hb&#39;</span><span class="p">:</span> <span class="mf">1.3595083084754352e-05</span><span class="p">,</span>
+                <span class="s1">&#39;E_He&#39;</span><span class="p">:</span> <span class="mf">0.005978262935519519</span><span class="p">,</span>
+                <span class="s1">&#39;z&#39;</span><span class="p">:</span> <span class="mf">0.9457146211594492</span><span class="p">,</span>
+                <span class="s1">&#39;T_ref&#39;</span><span class="p">:</span> <span class="mf">293.15</span><span class="p">,</span>
+                <span class="s1">&#39;T_A&#39;</span><span class="p">:</span> <span class="mi">8000</span><span class="p">,</span>
+                <span class="s1">&#39;kap_P&#39;</span><span class="p">:</span> <span class="mf">0.18</span><span class="p">,</span>
+                <span class="s1">&#39;kap_V&#39;</span><span class="p">:</span> <span class="mf">0.99148</span><span class="p">,</span>
+                <span class="s1">&#39;s_j&#39;</span><span class="p">:</span> <span class="mf">0.999</span><span class="p">,</span>
+                <span class="s1">&#39;h_a&#39;</span><span class="p">:</span> <span class="mf">0.0003374238984487218</span><span class="p">,</span>
+                <span class="s1">&#39;s_G&#39;</span><span class="p">:</span> <span class="mf">0.0001</span><span class="p">,</span>
+                <span class="s1">&#39;del_M&#39;</span><span class="p">:</span> <span class="mf">0.9013633740654738</span><span class="p">,</span>
+                <span class="s1">&#39;p_Am&#39;</span><span class="p">:</span> <span class="mf">229.251</span><span class="p">}</span>
+
+    <span class="n">E_0</span> <span class="o">=</span> <span class="n">get_E0</span><span class="p">(</span><span class="o">**</span><span class="n">deb_pars</span><span class="p">)</span>
+    <span class="c1"># print(E_0)</span>
+    <span class="c1"># t, E, L = run_embryo_stage(E_0=E_0, **deb_pars)</span>
+
+    <span class="n">t2</span><span class="p">,</span> <span class="n">E2</span><span class="p">,</span> <span class="n">L2</span> <span class="o">=</span> <span class="n">run_embryo_stage2</span><span class="p">(</span><span class="n">E_0</span><span class="o">=</span><span class="n">E_0</span><span class="p">,</span> <span class="o">**</span><span class="n">deb_pars</span><span class="p">)</span>
+
+    <span class="c1"># print(t, E, L)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">t2</span><span class="p">,</span> <span class="n">E2</span><span class="p">,</span> <span class="n">L2</span><span class="p">)</span>
+    <span class="k">pass</span>
+
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd"># Latex equations</span>
+<span class="sd">The equations used in the code are:</span>
+<span class="sd">- The beta function used in the DEB textbook (p.58):</span>
+<span class="sd">  $$f_1 = - 3 x_1^{1/3} + \sqrt{3}\arctan{\frac{1 + 2 x_1^{1/3}}{\sqrt{3}}} - \ln(x_1^{1/3} - 1) + \frac{1}{2}\ln(1 + x_1 + x_1^2)$$</span>
+<span class="sd">  $$f_0 = - 3 x_0^{1/3} + \sqrt{3}\arctan{\frac{1 + 2 x_0^{1/3}}{\sqrt{3}}} - \ln(x_0^{1/3} - 1) + \frac{1}{2}\ln(1 + x_0 + x_0^2)$$</span>
+<span class="sd">  $$f = f_1 - f_0$$</span>
+<span class="sd">- The scaled reserve density at birth:</span>
+<span class="sd">  $$\rho_{0} = \frac{E_{0}}{p_{Am}} = U_{0}k_{M}^{3} = u_{E0} \frac{v^{2}}{g^{2}}k_{M}^{-3}p_{Am}$$</span>
+<span class="sd">- The coefficient of investment in maturation:</span>
+<span class="sd">  $$\kappa = \frac{\hat{p}_{J}^{Am}}{\hat{p}_{C}^{Am}}$$</span>
+<span class="sd">- The ratio of mobilization and maintenance cost coefficients:</span>
+<span class="sd">  $$\frac{\hat{p}_{C}^{Am}}{\hat{p}_{M}^{Am}} = \frac{1}{w} + \frac{1}{\phi_{M} E_{G}} + \frac{1}{\phi_{J} E_{G}}$$</span>
+<span class="sd">- The maturity at birth:</span>
+<span class="sd">  $$\frac{1}{\hat{p}_{M}^{Am}} = \frac{1}{\hat{p}_{C}^{Am}} + \frac{1}{\hat{p}_{J}^{Am}}$$</span>
+<span class="sd">- The maturity maintenance rate:</span>
+<span class="sd">  $$p_{M} = \kappa \rho_{0} p_{Am}$$</span>
+<span class="sd">- The surface area-specific assimilation flux:</span>
+<span class="sd">  $$\hat{J}_{C}^{Am} = v g \rho$$</span>
+<span class="sd">- The scaled maturity at birth:</span>
+<span class="sd">  $$\hat{E}_{Hb} = \frac{\hat{p}_{M}^{Am}}{k_{M}} \rho_{0}$$</span>
+<span class="sd">- The scaled length at birth:</span>
+<span class="sd">  $$L_{b} = \frac{v}{g}k_{M}^{-1/3}$$</span>
+<span class="sd">- The scaled reserve density at birth:</span>
+<span class="sd">  $$\rho_{0} = \frac{\hat{E}_{Hb}}{\hat{p}_{Am}^{0}}$$</span>
+<span class="sd">- The ratio of surface area-specific assimilation and surface area-specific maintenance costs:</span>
+<span class="sd">  $$\frac{\hat{J}_{C}^{Am}}{\hat{J}_{C}^{m}} = \frac{1}{\phi_{M}} + \frac{1}{\phi_{J}}$$</span>
+<span class="sd">- The scaled reserve density at birth:</span>
+<span class="sd">  $$\rho_{0} = \frac{E_{0}}{p_{Am}}$$</span>
+<span class="sd">- The length at birth:</span>
+<span class="sd">  $$L_{b} = \frac{v}{g} k_{M}^{-1/3}$$</span>
+<span class="sd">- The ratio of mobilization and maintenance costs:</span>
+<span class="sd">  $$\frac{p_{C}^{</span>
+
+
+<span class="sd">&#39;&#39;&#39;</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

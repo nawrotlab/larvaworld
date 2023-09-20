@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.model &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="larvaworld.lib.model.deb" href="deb/index.html" />
+    <link rel="prev" title="ipc" href="../ipc/ipc.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">larvaworld.cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">larvaworld.gui</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">larvaworld.lib</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">larvaworld.lib.model</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deb/index.html">larvaworld.lib.model.deb</a></li>
+<li class="toctree-l4"><a class="reference internal" href="envs/index.html">larvaworld.lib.model.envs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="modules/index.html">larvaworld.lib.model.modules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html">object</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../param/index.html">larvaworld.lib.param</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plot/index.html">larvaworld.lib.plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../process/index.html">larvaworld.lib.process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../screen/index.html">larvaworld.lib.screen</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sim/index.html">larvaworld.lib.sim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../util/index.html">larvaworld.lib.util</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">reg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">larvaworld.lib</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/model/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="larvaworld-lib-model">
+<h1>larvaworld.lib.model<a class="headerlink" href="#larvaworld-lib-model" title="Permalink to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="deb/index.html">larvaworld.lib.model.deb</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="deb/deb.html">deb</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deb/deb.html#id1">DEB</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB"><code class="docutils literal notranslate"><span class="pre">DEB</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.EEB"><code class="docutils literal notranslate"><span class="pre">DEB.EEB</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.F"><code class="docutils literal notranslate"><span class="pre">DEB.F</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.J_X_A"><code class="docutils literal notranslate"><span class="pre">DEB.J_X_A</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.L"><code class="docutils literal notranslate"><span class="pre">DEB.L</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.Lw"><code class="docutils literal notranslate"><span class="pre">DEB.Lw</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.Vw"><code class="docutils literal notranslate"><span class="pre">DEB.Vw</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.Ww"><code class="docutils literal notranslate"><span class="pre">DEB.Ww</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.__params"><code class="docutils literal notranslate"><span class="pre">DEB.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB._param"><code class="docutils literal notranslate"><span class="pre">DEB._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB._parameters_state"><code class="docutils literal notranslate"><span class="pre">DEB._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.aging"><code class="docutils literal notranslate"><span class="pre">DEB.aging</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.amount_absorbed"><code class="docutils literal notranslate"><span class="pre">DEB.amount_absorbed</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.assimilation_mode"><code class="docutils literal notranslate"><span class="pre">DEB.assimilation_mode</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.compute_Ww"><code class="docutils literal notranslate"><span class="pre">DEB.compute_Ww()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.compute_hunger"><code class="docutils literal notranslate"><span class="pre">DEB.compute_hunger()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.deb_f_deviation"><code class="docutils literal notranslate"><span class="pre">DEB.deb_f_deviation</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.deb_f_deviation_mean"><code class="docutils literal notranslate"><span class="pre">DEB.deb_f_deviation_mean</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.deb_f_mean"><code class="docutils literal notranslate"><span class="pre">DEB.deb_f_mean</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.derived_pars"><code class="docutils literal notranslate"><span class="pre">DEB.derived_pars()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.die"><code class="docutils literal notranslate"><span class="pre">DEB.die()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.e"><code class="docutils literal notranslate"><span class="pre">DEB.e</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.finalize_dict"><code class="docutils literal notranslate"><span class="pre">DEB.finalize_dict()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.fr_feed"><code class="docutils literal notranslate"><span class="pre">DEB.fr_feed</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.get_p_A"><code class="docutils literal notranslate"><span class="pre">DEB.get_p_A()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.get_tau_b"><code class="docutils literal notranslate"><span class="pre">DEB.get_tau_b()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.grow_larva"><code class="docutils literal notranslate"><span class="pre">DEB.grow_larva()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.hex_model"><code class="docutils literal notranslate"><span class="pre">DEB.hex_model()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.hours_as_larva"><code class="docutils literal notranslate"><span class="pre">DEB.hours_as_larva</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.hunger_as_EEB"><code class="docutils literal notranslate"><span class="pre">DEB.hunger_as_EEB</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.hunger_gain"><code class="docutils literal notranslate"><span class="pre">DEB.hunger_gain</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.ingested_body_area_ratio"><code class="docutils literal notranslate"><span class="pre">DEB.ingested_body_area_ratio</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.ingested_body_mass_ratio"><code class="docutils literal notranslate"><span class="pre">DEB.ingested_body_mass_ratio</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.ingested_body_volume_ratio"><code class="docutils literal notranslate"><span class="pre">DEB.ingested_body_volume_ratio</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.ingested_gut_volume_ratio"><code class="docutils literal notranslate"><span class="pre">DEB.ingested_gut_volume_ratio</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.init_dict"><code class="docutils literal notranslate"><span class="pre">DEB.init_dict()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.name"><code class="docutils literal notranslate"><span class="pre">DEB.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.predict_imago_stage"><code class="docutils literal notranslate"><span class="pre">DEB.predict_imago_stage()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.predict_larva_stage"><code class="docutils literal notranslate"><span class="pre">DEB.predict_larva_stage()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.predict_pupa_stage"><code class="docutils literal notranslate"><span class="pre">DEB.predict_pupa_stage()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.pupation_buffer"><code class="docutils literal notranslate"><span class="pre">DEB.pupation_buffer</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.return_dict"><code class="docutils literal notranslate"><span class="pre">DEB.return_dict()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.run"><code class="docutils literal notranslate"><span class="pre">DEB.run()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.run_embryo_stage"><code class="docutils literal notranslate"><span class="pre">DEB.run_embryo_stage()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.run_larva_stage"><code class="docutils literal notranslate"><span class="pre">DEB.run_larva_stage()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.save_dict"><code class="docutils literal notranslate"><span class="pre">DEB.save_dict()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.scale_time"><code class="docutils literal notranslate"><span class="pre">DEB.scale_time()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.set_intermitter"><code class="docutils literal notranslate"><span class="pre">DEB.set_intermitter()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.set_steps_per_day"><code class="docutils literal notranslate"><span class="pre">DEB.set_steps_per_day()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.species"><code class="docutils literal notranslate"><span class="pre">DEB.species</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.starvation_strategy"><code class="docutils literal notranslate"><span class="pre">DEB.starvation_strategy</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.steps_per_day"><code class="docutils literal notranslate"><span class="pre">DEB.steps_per_day</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.substrate"><code class="docutils literal notranslate"><span class="pre">DEB.substrate</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.time_to_death_by_starvation"><code class="docutils literal notranslate"><span class="pre">DEB.time_to_death_by_starvation()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.update_dict"><code class="docutils literal notranslate"><span class="pre">DEB.update_dict()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.update_hunger"><code class="docutils literal notranslate"><span class="pre">DEB.update_hunger()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.use_gut"><code class="docutils literal notranslate"><span class="pre">DEB.use_gut</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.DEB.volume_ingested"><code class="docutils literal notranslate"><span class="pre">DEB.volume_ingested</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deb/deb.html#deb-default">deb_default</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.deb_default"><code class="docutils literal notranslate"><span class="pre">deb_default()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deb/deb.html#deb-sim">deb_sim</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.deb_sim"><code class="docutils literal notranslate"><span class="pre">deb_sim()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deb/deb.html#get-best-eeb">get_best_EEB</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deb/deb.html#larvaworld.lib.model.deb.deb.get_best_EEB"><code class="docutils literal notranslate"><span class="pre">get_best_EEB()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deb/deb_aux.html">deb_aux</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deb/deb_aux.html#get-e0">get_E0</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deb/deb_aux.html#larvaworld.lib.model.deb.deb_aux.get_E0"><code class="docutils literal notranslate"><span class="pre">get_E0()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deb/deb_aux.html#get-e-rm">get_E_Rm</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deb/deb_aux.html#larvaworld.lib.model.deb.deb_aux.get_E_Rm"><code class="docutils literal notranslate"><span class="pre">get_E_Rm()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deb/deb_aux.html#get-lb">get_lb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deb/deb_aux.html#larvaworld.lib.model.deb.deb_aux.get_lb"><code class="docutils literal notranslate"><span class="pre">get_lb()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="deb/deb_aux.html#run-embryo-stage">run_embryo_stage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deb/deb_aux.html#larvaworld.lib.model.deb.deb_aux.run_embryo_stage"><code class="docutils literal notranslate"><span class="pre">run_embryo_stage()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="deb/gut.html">gut</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="deb/gut.html#id1">Gut</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut"><code class="docutils literal notranslate"><span class="pre">Gut</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.Cmax"><code class="docutils literal notranslate"><span class="pre">Gut.Cmax</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.J_g_per_cm2"><code class="docutils literal notranslate"><span class="pre">Gut.J_g_per_cm2</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.M"><code class="docutils literal notranslate"><span class="pre">Gut.M</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.M_c_per_cm2"><code class="docutils literal notranslate"><span class="pre">Gut.M_c_per_cm2</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.M_faeces"><code class="docutils literal notranslate"><span class="pre">Gut.M_faeces</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.M_gm"><code class="docutils literal notranslate"><span class="pre">Gut.M_gm</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.M_ingested"><code class="docutils literal notranslate"><span class="pre">Gut.M_ingested</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.M_not_absorbed"><code class="docutils literal notranslate"><span class="pre">Gut.M_not_absorbed</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.M_not_digested"><code class="docutils literal notranslate"><span class="pre">Gut.M_not_digested</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.R_M_P"><code class="docutils literal notranslate"><span class="pre">Gut.R_M_P</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.R_M_X"><code class="docutils literal notranslate"><span class="pre">Gut.R_M_X</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.R_M_X_M_P"><code class="docutils literal notranslate"><span class="pre">Gut.R_M_X_M_P</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.R_M_c"><code class="docutils literal notranslate"><span class="pre">Gut.R_M_c</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.R_M_g"><code class="docutils literal notranslate"><span class="pre">Gut.R_M_g</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.R_absorbed"><code class="docutils literal notranslate"><span class="pre">Gut.R_absorbed</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.R_faeces"><code class="docutils literal notranslate"><span class="pre">Gut.R_faeces</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.R_not_digested"><code class="docutils literal notranslate"><span class="pre">Gut.R_not_digested</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.Vmax"><code class="docutils literal notranslate"><span class="pre">Gut.Vmax</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.__params"><code class="docutils literal notranslate"><span class="pre">Gut.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut._param"><code class="docutils literal notranslate"><span class="pre">Gut._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut._parameters_state"><code class="docutils literal notranslate"><span class="pre">Gut._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.absorbed_mass"><code class="docutils literal notranslate"><span class="pre">Gut.absorbed_mass()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.constant_M_c"><code class="docutils literal notranslate"><span class="pre">Gut.constant_M_c</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.digest"><code class="docutils literal notranslate"><span class="pre">Gut.digest()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.f_abs"><code class="docutils literal notranslate"><span class="pre">Gut.f_abs</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.f_dig"><code class="docutils literal notranslate"><span class="pre">Gut.f_dig</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.get_residence_ticks"><code class="docutils literal notranslate"><span class="pre">Gut.get_residence_ticks()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.get_residence_time"><code class="docutils literal notranslate"><span class="pre">Gut.get_residence_time()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.ingested_mass"><code class="docutils literal notranslate"><span class="pre">Gut.ingested_mass()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.ingested_volume"><code class="docutils literal notranslate"><span class="pre">Gut.ingested_volume</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.init_dict"><code class="docutils literal notranslate"><span class="pre">Gut.init_dict()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.k_abs"><code class="docutils literal notranslate"><span class="pre">Gut.k_abs</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.k_c"><code class="docutils literal notranslate"><span class="pre">Gut.k_c</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.k_dig"><code class="docutils literal notranslate"><span class="pre">Gut.k_dig</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.k_g"><code class="docutils literal notranslate"><span class="pre">Gut.k_g</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.name"><code class="docutils literal notranslate"><span class="pre">Gut.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.occupancy"><code class="docutils literal notranslate"><span class="pre">Gut.occupancy</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.r_gut_w"><code class="docutils literal notranslate"><span class="pre">Gut.r_gut_w</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.r_w2l"><code class="docutils literal notranslate"><span class="pre">Gut.r_w2l</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.resolve_occupancy"><code class="docutils literal notranslate"><span class="pre">Gut.resolve_occupancy()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.update"><code class="docutils literal notranslate"><span class="pre">Gut.update()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.update_dict"><code class="docutils literal notranslate"><span class="pre">Gut.update_dict()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="deb/gut.html#larvaworld.lib.model.deb.gut.Gut.y_P_X"><code class="docutils literal notranslate"><span class="pre">Gut.y_P_X</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="envs/index.html">larvaworld.lib.model.envs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="envs/arena.html">arena</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="envs/arena.html#id1">Arena</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena"><code class="docutils literal notranslate"><span class="pre">Arena</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena.__params"><code class="docutils literal notranslate"><span class="pre">Arena.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena._param"><code class="docutils literal notranslate"><span class="pre">Arena._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena._parameters_state"><code class="docutils literal notranslate"><span class="pre">Arena._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena.accesible_sources"><code class="docutils literal notranslate"><span class="pre">Arena.accesible_sources()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena.accessible_sources_multi"><code class="docutils literal notranslate"><span class="pre">Arena.accessible_sources_multi()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena.add_sources"><code class="docutils literal notranslate"><span class="pre">Arena.add_sources()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena.boundary_margin"><code class="docutils literal notranslate"><span class="pre">Arena.boundary_margin</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena.draw"><code class="docutils literal notranslate"><span class="pre">Arena.draw()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena.move_agent"><code class="docutils literal notranslate"><span class="pre">Arena.move_agent()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena.name"><code class="docutils literal notranslate"><span class="pre">Arena.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena.place_agent"><code class="docutils literal notranslate"><span class="pre">Arena.place_agent()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/arena.html#larvaworld.lib.model.envs.arena.Arena.source_positions_in_array"><code class="docutils literal notranslate"><span class="pre">Arena.source_positions_in_array()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="envs/conditions.html">conditions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="envs/conditions.html#get-exp-condition">get_exp_condition</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/conditions.html#larvaworld.lib.model.envs.conditions.get_exp_condition"><code class="docutils literal notranslate"><span class="pre">get_exp_condition()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="envs/maze.html">maze</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="envs/maze.html#cell">Cell</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/maze.html#larvaworld.lib.model.envs.maze.Cell"><code class="docutils literal notranslate"><span class="pre">Cell</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/maze.html#larvaworld.lib.model.envs.maze.Cell.has_all_walls"><code class="docutils literal notranslate"><span class="pre">Cell.has_all_walls()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/maze.html#larvaworld.lib.model.envs.maze.Cell.knock_down_wall"><code class="docutils literal notranslate"><span class="pre">Cell.knock_down_wall()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/maze.html#larvaworld.lib.model.envs.maze.Cell.wall_pairs"><code class="docutils literal notranslate"><span class="pre">Cell.wall_pairs</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="envs/maze.html#id1">Maze</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/maze.html#larvaworld.lib.model.envs.maze.Maze"><code class="docutils literal notranslate"><span class="pre">Maze</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/maze.html#larvaworld.lib.model.envs.maze.Maze.cell_at"><code class="docutils literal notranslate"><span class="pre">Maze.cell_at()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/maze.html#larvaworld.lib.model.envs.maze.Maze.find_valid_neighbours"><code class="docutils literal notranslate"><span class="pre">Maze.find_valid_neighbours()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/maze.html#larvaworld.lib.model.envs.maze.Maze.make_maze"><code class="docutils literal notranslate"><span class="pre">Maze.make_maze()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/maze.html#larvaworld.lib.model.envs.maze.Maze.maze_lines"><code class="docutils literal notranslate"><span class="pre">Maze.maze_lines()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/maze.html#larvaworld.lib.model.envs.maze.Maze.write_svg"><code class="docutils literal notranslate"><span class="pre">Maze.write_svg()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="envs/obstacle.html">obstacle</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="envs/obstacle.html#border">Border</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Border"><code class="docutils literal notranslate"><span class="pre">Border</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Border.__params"><code class="docutils literal notranslate"><span class="pre">Border.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Border._param"><code class="docutils literal notranslate"><span class="pre">Border._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Border._parameters_state"><code class="docutils literal notranslate"><span class="pre">Border._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Border.contained"><code class="docutils literal notranslate"><span class="pre">Border.contained()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Border.define_lines"><code class="docutils literal notranslate"><span class="pre">Border.define_lines()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Border.name"><code class="docutils literal notranslate"><span class="pre">Border.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="envs/obstacle.html#box">Box</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Box"><code class="docutils literal notranslate"><span class="pre">Box</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Box.__params"><code class="docutils literal notranslate"><span class="pre">Box.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Box._param"><code class="docutils literal notranslate"><span class="pre">Box._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Box._parameters_state"><code class="docutils literal notranslate"><span class="pre">Box._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Box.name"><code class="docutils literal notranslate"><span class="pre">Box.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="envs/obstacle.html#id1">Obstacle</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Obstacle"><code class="docutils literal notranslate"><span class="pre">Obstacle</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Obstacle.__params"><code class="docutils literal notranslate"><span class="pre">Obstacle.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Obstacle._param"><code class="docutils literal notranslate"><span class="pre">Obstacle._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Obstacle._parameters_state"><code class="docutils literal notranslate"><span class="pre">Obstacle._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Obstacle.name"><code class="docutils literal notranslate"><span class="pre">Obstacle.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="envs/obstacle.html#wall">Wall</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Wall"><code class="docutils literal notranslate"><span class="pre">Wall</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Wall.__params"><code class="docutils literal notranslate"><span class="pre">Wall.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Wall._param"><code class="docutils literal notranslate"><span class="pre">Wall._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Wall._parameters_state"><code class="docutils literal notranslate"><span class="pre">Wall._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/obstacle.html#larvaworld.lib.model.envs.obstacle.Wall.name"><code class="docutils literal notranslate"><span class="pre">Wall.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="envs/valuegrid.html">valuegrid</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="envs/valuegrid.html#diffusionvaluelayer">DiffusionValueLayer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer"><code class="docutils literal notranslate"><span class="pre">DiffusionValueLayer</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.__params"><code class="docutils literal notranslate"><span class="pre">DiffusionValueLayer.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer._param"><code class="docutils literal notranslate"><span class="pre">DiffusionValueLayer._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer._parameters_state"><code class="docutils literal notranslate"><span class="pre">DiffusionValueLayer._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.evap_const"><code class="docutils literal notranslate"><span class="pre">DiffusionValueLayer.evap_const</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.gaussian_sigma"><code class="docutils literal notranslate"><span class="pre">DiffusionValueLayer.gaussian_sigma</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.name"><code class="docutils literal notranslate"><span class="pre">DiffusionValueLayer.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.odorscape"><code class="docutils literal notranslate"><span class="pre">DiffusionValueLayer.odorscape</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.update_values"><code class="docutils literal notranslate"><span class="pre">DiffusionValueLayer.update_values()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="envs/valuegrid.html#foodgrid">FoodGrid</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid"><code class="docutils literal notranslate"><span class="pre">FoodGrid</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid.__params"><code class="docutils literal notranslate"><span class="pre">FoodGrid.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid._param"><code class="docutils literal notranslate"><span class="pre">FoodGrid._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid._parameters_state"><code class="docutils literal notranslate"><span class="pre">FoodGrid._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid.default_color"><code class="docutils literal notranslate"><span class="pre">FoodGrid.default_color</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid.draw"><code class="docutils literal notranslate"><span class="pre">FoodGrid.draw()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid.fixed_max"><code class="docutils literal notranslate"><span class="pre">FoodGrid.fixed_max</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid.get_color"><code class="docutils literal notranslate"><span class="pre">FoodGrid.get_color()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid.initial_value"><code class="docutils literal notranslate"><span class="pre">FoodGrid.initial_value</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid.name"><code class="docutils literal notranslate"><span class="pre">FoodGrid.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid.substrate"><code class="docutils literal notranslate"><span class="pre">FoodGrid.substrate</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.FoodGrid.unique_id"><code class="docutils literal notranslate"><span class="pre">FoodGrid.unique_id</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="envs/valuegrid.html#gaussianvaluelayer">GaussianValueLayer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer"><code class="docutils literal notranslate"><span class="pre">GaussianValueLayer</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.__params"><code class="docutils literal notranslate"><span class="pre">GaussianValueLayer.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer._param"><code class="docutils literal notranslate"><span class="pre">GaussianValueLayer._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer._parameters_state"><code class="docutils literal notranslate"><span class="pre">GaussianValueLayer._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.draw_isocontours"><code class="docutils literal notranslate"><span class="pre">GaussianValueLayer.draw_isocontours()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.get_grid"><code class="docutils literal notranslate"><span class="pre">GaussianValueLayer.get_grid()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.get_value"><code class="docutils literal notranslate"><span class="pre">GaussianValueLayer.get_value()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.name"><code class="docutils literal notranslate"><span class="pre">GaussianValueLayer.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.odorscape"><code class="docutils literal notranslate"><span class="pre">GaussianValueLayer.odorscape</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="envs/valuegrid.html#gridoverspace">GridOverSpace</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace"><code class="docutils literal notranslate"><span class="pre">GridOverSpace</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace.__params"><code class="docutils literal notranslate"><span class="pre">GridOverSpace.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace._param"><code class="docutils literal notranslate"><span class="pre">GridOverSpace._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace._parameters_state"><code class="docutils literal notranslate"><span class="pre">GridOverSpace._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace.cell_vertices"><code class="docutils literal notranslate"><span class="pre">GridOverSpace.cell_vertices()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace.default_color"><code class="docutils literal notranslate"><span class="pre">GridOverSpace.default_color</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace.generate_grid_vertices"><code class="docutils literal notranslate"><span class="pre">GridOverSpace.generate_grid_vertices()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace.get_grid_cell"><code class="docutils literal notranslate"><span class="pre">GridOverSpace.get_grid_cell()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace.name"><code class="docutils literal notranslate"><span class="pre">GridOverSpace.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace.space"><code class="docutils literal notranslate"><span class="pre">GridOverSpace.space</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace.unique_id"><code class="docutils literal notranslate"><span class="pre">GridOverSpace.unique_id</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.GridOverSpace.visible"><code class="docutils literal notranslate"><span class="pre">GridOverSpace.visible</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="envs/valuegrid.html#odorscape">OdorScape</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.OdorScape"><code class="docutils literal notranslate"><span class="pre">OdorScape</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.OdorScape.__params"><code class="docutils literal notranslate"><span class="pre">OdorScape.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.OdorScape._param"><code class="docutils literal notranslate"><span class="pre">OdorScape._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.OdorScape._parameters_state"><code class="docutils literal notranslate"><span class="pre">OdorScape._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.OdorScape.name"><code class="docutils literal notranslate"><span class="pre">OdorScape.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.OdorScape.odorscape"><code class="docutils literal notranslate"><span class="pre">OdorScape.odorscape</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.OdorScape.unique_id"><code class="docutils literal notranslate"><span class="pre">OdorScape.unique_id</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="envs/valuegrid.html#thermoscape">ThermoScape</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape"><code class="docutils literal notranslate"><span class="pre">ThermoScape</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape.__params"><code class="docutils literal notranslate"><span class="pre">ThermoScape.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape._param"><code class="docutils literal notranslate"><span class="pre">ThermoScape._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape._parameters_state"><code class="docutils literal notranslate"><span class="pre">ThermoScape._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape.draw_isocontours"><code class="docutils literal notranslate"><span class="pre">ThermoScape.draw_isocontours()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape.generate_thermoscape"><code class="docutils literal notranslate"><span class="pre">ThermoScape.generate_thermoscape()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape.get_grid"><code class="docutils literal notranslate"><span class="pre">ThermoScape.get_grid()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape.get_thermo_value"><code class="docutils literal notranslate"><span class="pre">ThermoScape.get_thermo_value()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape.name"><code class="docutils literal notranslate"><span class="pre">ThermoScape.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ThermoScape.unique_id"><code class="docutils literal notranslate"><span class="pre">ThermoScape.unique_id</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="envs/valuegrid.html#id1">ValueGrid</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid"><code class="docutils literal notranslate"><span class="pre">ValueGrid</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.__params"><code class="docutils literal notranslate"><span class="pre">ValueGrid.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid._param"><code class="docutils literal notranslate"><span class="pre">ValueGrid._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid._parameters_state"><code class="docutils literal notranslate"><span class="pre">ValueGrid._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.add_cell_value"><code class="docutils literal notranslate"><span class="pre">ValueGrid.add_cell_value()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.add_value"><code class="docutils literal notranslate"><span class="pre">ValueGrid.add_value()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.cel_pos"><code class="docutils literal notranslate"><span class="pre">ValueGrid.cel_pos()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.cell_vertices"><code class="docutils literal notranslate"><span class="pre">ValueGrid.cell_vertices()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.draw"><code class="docutils literal notranslate"><span class="pre">ValueGrid.draw()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.draw_isocontours"><code class="docutils literal notranslate"><span class="pre">ValueGrid.draw_isocontours()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.draw_peak"><code class="docutils literal notranslate"><span class="pre">ValueGrid.draw_peak()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.empty_grid"><code class="docutils literal notranslate"><span class="pre">ValueGrid.empty_grid()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.fixed_max"><code class="docutils literal notranslate"><span class="pre">ValueGrid.fixed_max</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.generate_grid_vertices"><code class="docutils literal notranslate"><span class="pre">ValueGrid.generate_grid_vertices()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.get_color_grid"><code class="docutils literal notranslate"><span class="pre">ValueGrid.get_color_grid()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.get_grid_cell"><code class="docutils literal notranslate"><span class="pre">ValueGrid.get_grid_cell()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.get_value"><code class="docutils literal notranslate"><span class="pre">ValueGrid.get_value()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.initial_value"><code class="docutils literal notranslate"><span class="pre">ValueGrid.initial_value</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.match_space"><code class="docutils literal notranslate"><span class="pre">ValueGrid.match_space()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.name"><code class="docutils literal notranslate"><span class="pre">ValueGrid.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.reset"><code class="docutils literal notranslate"><span class="pre">ValueGrid.reset()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.ValueGrid.update_values"><code class="docutils literal notranslate"><span class="pre">ValueGrid.update_values()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="envs/valuegrid.html#windscape">WindScape</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape"><code class="docutils literal notranslate"><span class="pre">WindScape</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.__params"><code class="docutils literal notranslate"><span class="pre">WindScape.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape._param"><code class="docutils literal notranslate"><span class="pre">WindScape._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape._parameters_state"><code class="docutils literal notranslate"><span class="pre">WindScape._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.add_puff"><code class="docutils literal notranslate"><span class="pre">WindScape.add_puff()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.default_color"><code class="docutils literal notranslate"><span class="pre">WindScape.default_color</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.draw"><code class="docutils literal notranslate"><span class="pre">WindScape.draw()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.generate_scapelines"><code class="docutils literal notranslate"><span class="pre">WindScape.generate_scapelines()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.get_value"><code class="docutils literal notranslate"><span class="pre">WindScape.get_value()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.name"><code class="docutils literal notranslate"><span class="pre">WindScape.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.obstructed"><code class="docutils literal notranslate"><span class="pre">WindScape.obstructed()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.puffs"><code class="docutils literal notranslate"><span class="pre">WindScape.puffs</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.set_wind_direction"><code class="docutils literal notranslate"><span class="pre">WindScape.set_wind_direction()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.unique_id"><code class="docutils literal notranslate"><span class="pre">WindScape.unique_id</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.update"><code class="docutils literal notranslate"><span class="pre">WindScape.update()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.wind_direction"><code class="docutils literal notranslate"><span class="pre">WindScape.wind_direction</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.WindScape.wind_speed"><code class="docutils literal notranslate"><span class="pre">WindScape.wind_speed</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="envs/valuegrid.html#create-odor-layers">create_odor_layers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="envs/valuegrid.html#larvaworld.lib.model.envs.valuegrid.create_odor_layers"><code class="docutils literal notranslate"><span class="pre">create_odor_layers()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules/index.html">larvaworld.lib.model.modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules/basic.html">basic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/basic.html#effector">Effector</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector"><code class="docutils literal notranslate"><span class="pre">Effector</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.__params"><code class="docutils literal notranslate"><span class="pre">Effector.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector._param"><code class="docutils literal notranslate"><span class="pre">Effector._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector._parameters_state"><code class="docutils literal notranslate"><span class="pre">Effector._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.act"><code class="docutils literal notranslate"><span class="pre">Effector.act()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.apply_noise"><code class="docutils literal notranslate"><span class="pre">Effector.apply_noise()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.get_output"><code class="docutils literal notranslate"><span class="pre">Effector.get_output()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.inact"><code class="docutils literal notranslate"><span class="pre">Effector.inact()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.input_noise"><code class="docutils literal notranslate"><span class="pre">Effector.input_noise</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.input_range"><code class="docutils literal notranslate"><span class="pre">Effector.input_range</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.name"><code class="docutils literal notranslate"><span class="pre">Effector.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.output_noise"><code class="docutils literal notranslate"><span class="pre">Effector.output_noise</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.output_range"><code class="docutils literal notranslate"><span class="pre">Effector.output_range</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.step"><code class="docutils literal notranslate"><span class="pre">Effector.step()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.update"><code class="docutils literal notranslate"><span class="pre">Effector.update()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.update_input"><code class="docutils literal notranslate"><span class="pre">Effector.update_input()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.Effector.update_output"><code class="docutils literal notranslate"><span class="pre">Effector.update_output()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/basic.html#sinoscillator">SinOscillator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.SinOscillator"><code class="docutils literal notranslate"><span class="pre">SinOscillator</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.SinOscillator.Act_Phi"><code class="docutils literal notranslate"><span class="pre">SinOscillator.Act_Phi</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.SinOscillator.__params"><code class="docutils literal notranslate"><span class="pre">SinOscillator.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.SinOscillator._param"><code class="docutils literal notranslate"><span class="pre">SinOscillator._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.SinOscillator._parameters_state"><code class="docutils literal notranslate"><span class="pre">SinOscillator._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.SinOscillator.name"><code class="docutils literal notranslate"><span class="pre">SinOscillator.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/basic.html#stepeffector">StepEffector</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector"><code class="docutils literal notranslate"><span class="pre">StepEffector</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.Act"><code class="docutils literal notranslate"><span class="pre">StepEffector.Act</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.Act_Phi"><code class="docutils literal notranslate"><span class="pre">StepEffector.Act_Phi</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.Act_coef"><code class="docutils literal notranslate"><span class="pre">StepEffector.Act_coef</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.__params"><code class="docutils literal notranslate"><span class="pre">StepEffector.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector._param"><code class="docutils literal notranslate"><span class="pre">StepEffector._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector._parameters_state"><code class="docutils literal notranslate"><span class="pre">StepEffector._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.act"><code class="docutils literal notranslate"><span class="pre">StepEffector.act()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.amp_range"><code class="docutils literal notranslate"><span class="pre">StepEffector.amp_range</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.get_amp"><code class="docutils literal notranslate"><span class="pre">StepEffector.get_amp()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.inact"><code class="docutils literal notranslate"><span class="pre">StepEffector.inact()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.initial_amp"><code class="docutils literal notranslate"><span class="pre">StepEffector.initial_amp</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.name"><code class="docutils literal notranslate"><span class="pre">StepEffector.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepEffector.set_amp"><code class="docutils literal notranslate"><span class="pre">StepEffector.set_amp()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/basic.html#steposcillator">StepOscillator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepOscillator"><code class="docutils literal notranslate"><span class="pre">StepOscillator</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepOscillator.__params"><code class="docutils literal notranslate"><span class="pre">StepOscillator.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepOscillator._param"><code class="docutils literal notranslate"><span class="pre">StepOscillator._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepOscillator._parameters_state"><code class="docutils literal notranslate"><span class="pre">StepOscillator._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepOscillator.act"><code class="docutils literal notranslate"><span class="pre">StepOscillator.act()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/basic.html#larvaworld.lib.model.modules.basic.StepOscillator.name"><code class="docutils literal notranslate"><span class="pre">StepOscillator.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/brain.html">brain</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/brain.html#id1">Brain</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/brain.html#larvaworld.lib.model.modules.brain.Brain"><code class="docutils literal notranslate"><span class="pre">Brain</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/brain.html#larvaworld.lib.model.modules.brain.Brain.A_in"><code class="docutils literal notranslate"><span class="pre">Brain.A_in</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/brain.html#larvaworld.lib.model.modules.brain.Brain.sense_food_multi"><code class="docutils literal notranslate"><span class="pre">Brain.sense_food_multi()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/brain.html#larvaworld.lib.model.modules.brain.Brain.sense_odors"><code class="docutils literal notranslate"><span class="pre">Brain.sense_odors()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/brain.html#larvaworld.lib.model.modules.brain.Brain.sense_thermo"><code class="docutils literal notranslate"><span class="pre">Brain.sense_thermo()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/brain.html#larvaworld.lib.model.modules.brain.Brain.sense_wind"><code class="docutils literal notranslate"><span class="pre">Brain.sense_wind()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/brain.html#defaultbrain">DefaultBrain</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/brain.html#larvaworld.lib.model.modules.brain.DefaultBrain"><code class="docutils literal notranslate"><span class="pre">DefaultBrain</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/brain.html#larvaworld.lib.model.modules.brain.DefaultBrain.sense"><code class="docutils literal notranslate"><span class="pre">DefaultBrain.sense()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/brain.html#larvaworld.lib.model.modules.brain.DefaultBrain.step"><code class="docutils literal notranslate"><span class="pre">DefaultBrain.step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/crawl_bend_interference.html">crawl_bend_interference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/crawl_bend_interference.html#defaultcoupling">DefaultCoupling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling"><code class="docutils literal notranslate"><span class="pre">DefaultCoupling</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.__params"><code class="docutils literal notranslate"><span class="pre">DefaultCoupling.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling._param"><code class="docutils literal notranslate"><span class="pre">DefaultCoupling._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling._parameters_state"><code class="docutils literal notranslate"><span class="pre">DefaultCoupling._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.apply_attenuation"><code class="docutils literal notranslate"><span class="pre">DefaultCoupling.apply_attenuation()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.attenuation"><code class="docutils literal notranslate"><span class="pre">DefaultCoupling.attenuation</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.attenuation_max"><code class="docutils literal notranslate"><span class="pre">DefaultCoupling.attenuation_max</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.check_crawler"><code class="docutils literal notranslate"><span class="pre">DefaultCoupling.check_crawler()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.check_feeder"><code class="docutils literal notranslate"><span class="pre">DefaultCoupling.check_feeder()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.name"><code class="docutils literal notranslate"><span class="pre">DefaultCoupling.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.suppression_mode"><code class="docutils literal notranslate"><span class="pre">DefaultCoupling.suppression_mode</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/crawl_bend_interference.html#phasiccoupling">PhasicCoupling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling"><code class="docutils literal notranslate"><span class="pre">PhasicCoupling</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.__params"><code class="docutils literal notranslate"><span class="pre">PhasicCoupling.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling._param"><code class="docutils literal notranslate"><span class="pre">PhasicCoupling._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling._parameters_state"><code class="docutils literal notranslate"><span class="pre">PhasicCoupling._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.check_crawler"><code class="docutils literal notranslate"><span class="pre">PhasicCoupling.check_crawler()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.check_feeder"><code class="docutils literal notranslate"><span class="pre">PhasicCoupling.check_feeder()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.get"><code class="docutils literal notranslate"><span class="pre">PhasicCoupling.get()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.max_attenuation_phase"><code class="docutils literal notranslate"><span class="pre">PhasicCoupling.max_attenuation_phase</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.name"><code class="docutils literal notranslate"><span class="pre">PhasicCoupling.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/crawl_bend_interference.html#squarecoupling">SquareCoupling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling"><code class="docutils literal notranslate"><span class="pre">SquareCoupling</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.__params"><code class="docutils literal notranslate"><span class="pre">SquareCoupling.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling._param"><code class="docutils literal notranslate"><span class="pre">SquareCoupling._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling._parameters_state"><code class="docutils literal notranslate"><span class="pre">SquareCoupling._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.check_crawler"><code class="docutils literal notranslate"><span class="pre">SquareCoupling.check_crawler()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.check_feeder"><code class="docutils literal notranslate"><span class="pre">SquareCoupling.check_feeder()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.crawler_phi_range"><code class="docutils literal notranslate"><span class="pre">SquareCoupling.crawler_phi_range</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.feeder_phi_range"><code class="docutils literal notranslate"><span class="pre">SquareCoupling.feeder_phi_range</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawl_bend_interference.html#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.name"><code class="docutils literal notranslate"><span class="pre">SquareCoupling.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/crawler.html">crawler</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/crawler.html#gaussoscillator">GaussOscillator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.GaussOscillator"><code class="docutils literal notranslate"><span class="pre">GaussOscillator</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.GaussOscillator.Act_Phi"><code class="docutils literal notranslate"><span class="pre">GaussOscillator.Act_Phi</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.GaussOscillator.__params"><code class="docutils literal notranslate"><span class="pre">GaussOscillator.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.GaussOscillator._param"><code class="docutils literal notranslate"><span class="pre">GaussOscillator._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.GaussOscillator._parameters_state"><code class="docutils literal notranslate"><span class="pre">GaussOscillator._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.GaussOscillator.name"><code class="docutils literal notranslate"><span class="pre">GaussOscillator.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.GaussOscillator.std"><code class="docutils literal notranslate"><span class="pre">GaussOscillator.std</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/crawler.html#phaseoscillator">PhaseOscillator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.PhaseOscillator"><code class="docutils literal notranslate"><span class="pre">PhaseOscillator</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.PhaseOscillator.Act_Phi"><code class="docutils literal notranslate"><span class="pre">PhaseOscillator.Act_Phi</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.PhaseOscillator.Act_coef"><code class="docutils literal notranslate"><span class="pre">PhaseOscillator.Act_coef</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.PhaseOscillator.__params"><code class="docutils literal notranslate"><span class="pre">PhaseOscillator.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.PhaseOscillator._param"><code class="docutils literal notranslate"><span class="pre">PhaseOscillator._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.PhaseOscillator._parameters_state"><code class="docutils literal notranslate"><span class="pre">PhaseOscillator._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.PhaseOscillator.max_scaled_vel"><code class="docutils literal notranslate"><span class="pre">PhaseOscillator.max_scaled_vel</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.PhaseOscillator.max_vel_phase"><code class="docutils literal notranslate"><span class="pre">PhaseOscillator.max_vel_phase</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.PhaseOscillator.name"><code class="docutils literal notranslate"><span class="pre">PhaseOscillator.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/crawler.html#squareoscillator">SquareOscillator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.SquareOscillator"><code class="docutils literal notranslate"><span class="pre">SquareOscillator</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.SquareOscillator.Act_Phi"><code class="docutils literal notranslate"><span class="pre">SquareOscillator.Act_Phi</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.SquareOscillator.__params"><code class="docutils literal notranslate"><span class="pre">SquareOscillator.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.SquareOscillator._param"><code class="docutils literal notranslate"><span class="pre">SquareOscillator._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.SquareOscillator._parameters_state"><code class="docutils literal notranslate"><span class="pre">SquareOscillator._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.SquareOscillator.duty"><code class="docutils literal notranslate"><span class="pre">SquareOscillator.duty</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.SquareOscillator.name"><code class="docutils literal notranslate"><span class="pre">SquareOscillator.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.SquareOscillator.suppresion_relief"><code class="docutils literal notranslate"><span class="pre">SquareOscillator.suppresion_relief()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/crawler.html#strideoscillator">StrideOscillator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.StrideOscillator"><code class="docutils literal notranslate"><span class="pre">StrideOscillator</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.StrideOscillator.Act"><code class="docutils literal notranslate"><span class="pre">StrideOscillator.Act</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.StrideOscillator.__params"><code class="docutils literal notranslate"><span class="pre">StrideOscillator.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.StrideOscillator._param"><code class="docutils literal notranslate"><span class="pre">StrideOscillator._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.StrideOscillator._parameters_state"><code class="docutils literal notranslate"><span class="pre">StrideOscillator._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.StrideOscillator.act_on_complete_iteration"><code class="docutils literal notranslate"><span class="pre">StrideOscillator.act_on_complete_iteration()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.StrideOscillator.name"><code class="docutils literal notranslate"><span class="pre">StrideOscillator.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.StrideOscillator.new_stride"><code class="docutils literal notranslate"><span class="pre">StrideOscillator.new_stride</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.StrideOscillator.stride_dst_mean"><code class="docutils literal notranslate"><span class="pre">StrideOscillator.stride_dst_mean</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.StrideOscillator.stride_dst_std"><code class="docutils literal notranslate"><span class="pre">StrideOscillator.stride_dst_std</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/crawler.html#larvaworld.lib.model.modules.crawler.StrideOscillator.suppresion_relief"><code class="docutils literal notranslate"><span class="pre">StrideOscillator.suppresion_relief()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/feeder.html">feeder</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/feeder.html#id1">Feeder</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/feeder.html#larvaworld.lib.model.modules.feeder.Feeder"><code class="docutils literal notranslate"><span class="pre">Feeder</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/feeder.html#larvaworld.lib.model.modules.feeder.Feeder.V_bite"><code class="docutils literal notranslate"><span class="pre">Feeder.V_bite</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/feeder.html#larvaworld.lib.model.modules.feeder.Feeder.__params"><code class="docutils literal notranslate"><span class="pre">Feeder.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/feeder.html#larvaworld.lib.model.modules.feeder.Feeder._param"><code class="docutils literal notranslate"><span class="pre">Feeder._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/feeder.html#larvaworld.lib.model.modules.feeder.Feeder._parameters_state"><code class="docutils literal notranslate"><span class="pre">Feeder._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/feeder.html#larvaworld.lib.model.modules.feeder.Feeder.feed_radius"><code class="docutils literal notranslate"><span class="pre">Feeder.feed_radius</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/feeder.html#larvaworld.lib.model.modules.feeder.Feeder.freq"><code class="docutils literal notranslate"><span class="pre">Feeder.freq</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/feeder.html#larvaworld.lib.model.modules.feeder.Feeder.name"><code class="docutils literal notranslate"><span class="pre">Feeder.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/feeder.html#larvaworld.lib.model.modules.feeder.Feeder.step"><code class="docutils literal notranslate"><span class="pre">Feeder.step()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/feeder.html#larvaworld.lib.model.modules.feeder.Feeder.suppresion_relief"><code class="docutils literal notranslate"><span class="pre">Feeder.suppresion_relief()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/intermitter.html">intermitter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/intermitter.html#branchintermitter">BranchIntermitter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.BranchIntermitter"><code class="docutils literal notranslate"><span class="pre">BranchIntermitter</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.BranchIntermitter.__params"><code class="docutils literal notranslate"><span class="pre">BranchIntermitter.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.BranchIntermitter._param"><code class="docutils literal notranslate"><span class="pre">BranchIntermitter._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.BranchIntermitter._parameters_state"><code class="docutils literal notranslate"><span class="pre">BranchIntermitter._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.BranchIntermitter.generate_pause"><code class="docutils literal notranslate"><span class="pre">BranchIntermitter.generate_pause()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.BranchIntermitter.generate_stridechain"><code class="docutils literal notranslate"><span class="pre">BranchIntermitter.generate_stridechain()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.BranchIntermitter.name"><code class="docutils literal notranslate"><span class="pre">BranchIntermitter.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/intermitter.html#fittedintermitter">FittedIntermitter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.FittedIntermitter"><code class="docutils literal notranslate"><span class="pre">FittedIntermitter</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.FittedIntermitter.__params"><code class="docutils literal notranslate"><span class="pre">FittedIntermitter.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.FittedIntermitter._param"><code class="docutils literal notranslate"><span class="pre">FittedIntermitter._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.FittedIntermitter._parameters_state"><code class="docutils literal notranslate"><span class="pre">FittedIntermitter._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.FittedIntermitter.name"><code class="docutils literal notranslate"><span class="pre">FittedIntermitter.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/intermitter.html#id1">Intermitter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter"><code class="docutils literal notranslate"><span class="pre">Intermitter</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.EEB"><code class="docutils literal notranslate"><span class="pre">Intermitter.EEB</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.EEB_decay"><code class="docutils literal notranslate"><span class="pre">Intermitter.EEB_decay</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.__params"><code class="docutils literal notranslate"><span class="pre">Intermitter.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter._param"><code class="docutils literal notranslate"><span class="pre">Intermitter._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter._parameters_state"><code class="docutils literal notranslate"><span class="pre">Intermitter._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.active_bouts"><code class="docutils literal notranslate"><span class="pre">Intermitter.active_bouts</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.alternate_crawlNpause"><code class="docutils literal notranslate"><span class="pre">Intermitter.alternate_crawlNpause()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.alternate_exploreNexploit"><code class="docutils literal notranslate"><span class="pre">Intermitter.alternate_exploreNexploit()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.build_dict"><code class="docutils literal notranslate"><span class="pre">Intermitter.build_dict()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.feed_bouts"><code class="docutils literal notranslate"><span class="pre">Intermitter.feed_bouts</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.feed_repeated"><code class="docutils literal notranslate"><span class="pre">Intermitter.feed_repeated</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.feeder_reoccurence_rate"><code class="docutils literal notranslate"><span class="pre">Intermitter.feeder_reoccurence_rate</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.generate_pause"><code class="docutils literal notranslate"><span class="pre">Intermitter.generate_pause()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.generate_run"><code class="docutils literal notranslate"><span class="pre">Intermitter.generate_run()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.generate_stridechain"><code class="docutils literal notranslate"><span class="pre">Intermitter.generate_stridechain()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.mean_feed_freq"><code class="docutils literal notranslate"><span class="pre">Intermitter.mean_feed_freq</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.name"><code class="docutils literal notranslate"><span class="pre">Intermitter.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.pause_completed"><code class="docutils literal notranslate"><span class="pre">Intermitter.pause_completed</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.register"><code class="docutils literal notranslate"><span class="pre">Intermitter.register()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.run_completed"><code class="docutils literal notranslate"><span class="pre">Intermitter.run_completed</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.run_initiation"><code class="docutils literal notranslate"><span class="pre">Intermitter.run_initiation()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.run_mode"><code class="docutils literal notranslate"><span class="pre">Intermitter.run_mode</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.save_dict"><code class="docutils literal notranslate"><span class="pre">Intermitter.save_dict()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.step"><code class="docutils literal notranslate"><span class="pre">Intermitter.step()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.stridechain_completed"><code class="docutils literal notranslate"><span class="pre">Intermitter.stridechain_completed</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.update_state"><code class="docutils literal notranslate"><span class="pre">Intermitter.update_state()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/intermitter.html#nengointermitter">NengoIntermitter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.NengoIntermitter"><code class="docutils literal notranslate"><span class="pre">NengoIntermitter</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.NengoIntermitter.__params"><code class="docutils literal notranslate"><span class="pre">NengoIntermitter.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.NengoIntermitter._param"><code class="docutils literal notranslate"><span class="pre">NengoIntermitter._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.NengoIntermitter._parameters_state"><code class="docutils literal notranslate"><span class="pre">NengoIntermitter._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.NengoIntermitter.name"><code class="docutils literal notranslate"><span class="pre">NengoIntermitter.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/intermitter.html#offlineintermitter">OfflineIntermitter</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.OfflineIntermitter"><code class="docutils literal notranslate"><span class="pre">OfflineIntermitter</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.OfflineIntermitter.__params"><code class="docutils literal notranslate"><span class="pre">OfflineIntermitter.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.OfflineIntermitter._param"><code class="docutils literal notranslate"><span class="pre">OfflineIntermitter._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.OfflineIntermitter._parameters_state"><code class="docutils literal notranslate"><span class="pre">OfflineIntermitter._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.OfflineIntermitter.name"><code class="docutils literal notranslate"><span class="pre">OfflineIntermitter.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.OfflineIntermitter.step"><code class="docutils literal notranslate"><span class="pre">OfflineIntermitter.step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/intermitter.html#get-eeb-poly1d">get_EEB_poly1d</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.get_EEB_poly1d"><code class="docutils literal notranslate"><span class="pre">get_EEB_poly1d()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/intermitter.html#get-eeb-time-fractions">get_EEB_time_fractions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/intermitter.html#larvaworld.lib.model.modules.intermitter.get_EEB_time_fractions"><code class="docutils literal notranslate"><span class="pre">get_EEB_time_fractions()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/locomotor.html">locomotor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/locomotor.html#defaultlocomotor">DefaultLocomotor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/locomotor.html#larvaworld.lib.model.modules.locomotor.DefaultLocomotor"><code class="docutils literal notranslate"><span class="pre">DefaultLocomotor</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/locomotor.html#larvaworld.lib.model.modules.locomotor.DefaultLocomotor.feed_motion"><code class="docutils literal notranslate"><span class="pre">DefaultLocomotor.feed_motion</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/locomotor.html#larvaworld.lib.model.modules.locomotor.DefaultLocomotor.step"><code class="docutils literal notranslate"><span class="pre">DefaultLocomotor.step()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/locomotor.html#larvaworld.lib.model.modules.locomotor.DefaultLocomotor.stride_completed"><code class="docutils literal notranslate"><span class="pre">DefaultLocomotor.stride_completed</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/locomotor.html#id1">Locomotor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/locomotor.html#larvaworld.lib.model.modules.locomotor.Locomotor"><code class="docutils literal notranslate"><span class="pre">Locomotor</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/locomotor.html#larvaworld.lib.model.modules.locomotor.Locomotor.on_new_feed"><code class="docutils literal notranslate"><span class="pre">Locomotor.on_new_feed()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/locomotor.html#larvaworld.lib.model.modules.locomotor.Locomotor.on_new_pause"><code class="docutils literal notranslate"><span class="pre">Locomotor.on_new_pause()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/locomotor.html#larvaworld.lib.model.modules.locomotor.Locomotor.on_new_run"><code class="docutils literal notranslate"><span class="pre">Locomotor.on_new_run()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/locomotor.html#larvaworld.lib.model.modules.locomotor.Locomotor.step_intermitter"><code class="docutils literal notranslate"><span class="pre">Locomotor.step_intermitter()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/memory.html">memory</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/memory.html#id1">Memory</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.Memory"><code class="docutils literal notranslate"><span class="pre">Memory</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.Memory.__params"><code class="docutils literal notranslate"><span class="pre">Memory.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.Memory._param"><code class="docutils literal notranslate"><span class="pre">Memory._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.Memory._parameters_state"><code class="docutils literal notranslate"><span class="pre">Memory._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.Memory.name"><code class="docutils literal notranslate"><span class="pre">Memory.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.Memory.step"><code class="docutils literal notranslate"><span class="pre">Memory.step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/memory.html#rlolfmemory">RLOlfMemory</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLOlfMemory"><code class="docutils literal notranslate"><span class="pre">RLOlfMemory</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLOlfMemory.__params"><code class="docutils literal notranslate"><span class="pre">RLOlfMemory.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLOlfMemory._param"><code class="docutils literal notranslate"><span class="pre">RLOlfMemory._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLOlfMemory._parameters_state"><code class="docutils literal notranslate"><span class="pre">RLOlfMemory._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLOlfMemory.first_odor_best_gain"><code class="docutils literal notranslate"><span class="pre">RLOlfMemory.first_odor_best_gain</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLOlfMemory.name"><code class="docutils literal notranslate"><span class="pre">RLOlfMemory.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLOlfMemory.second_odor_best_gain"><code class="docutils literal notranslate"><span class="pre">RLOlfMemory.second_odor_best_gain</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/memory.html#rltouchmemory">RLTouchMemory</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLTouchMemory"><code class="docutils literal notranslate"><span class="pre">RLTouchMemory</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLTouchMemory.__params"><code class="docutils literal notranslate"><span class="pre">RLTouchMemory.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLTouchMemory._param"><code class="docutils literal notranslate"><span class="pre">RLTouchMemory._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLTouchMemory._parameters_state"><code class="docutils literal notranslate"><span class="pre">RLTouchMemory._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLTouchMemory.condition"><code class="docutils literal notranslate"><span class="pre">RLTouchMemory.condition()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLTouchMemory.name"><code class="docutils literal notranslate"><span class="pre">RLTouchMemory.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/memory.html#rlmemory">RLmemory</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory"><code class="docutils literal notranslate"><span class="pre">RLmemory</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.__params"><code class="docutils literal notranslate"><span class="pre">RLmemory.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory._param"><code class="docutils literal notranslate"><span class="pre">RLmemory._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory._parameters_state"><code class="docutils literal notranslate"><span class="pre">RLmemory._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.add_reward"><code class="docutils literal notranslate"><span class="pre">RLmemory.add_reward()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.condition"><code class="docutils literal notranslate"><span class="pre">RLmemory.condition()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.get_best_combo"><code class="docutils literal notranslate"><span class="pre">RLmemory.get_best_combo()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.name"><code class="docutils literal notranslate"><span class="pre">RLmemory.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.select_action"><code class="docutils literal notranslate"><span class="pre">RLmemory.select_action()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.state_collapse"><code class="docutils literal notranslate"><span class="pre">RLmemory.state_collapse()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.step"><code class="docutils literal notranslate"><span class="pre">RLmemory.step()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.update_q_table"><code class="docutils literal notranslate"><span class="pre">RLmemory.update_q_table()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/memory.html#remotebrianmodelmemory">RemoteBrianModelMemory</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RemoteBrianModelMemory"><code class="docutils literal notranslate"><span class="pre">RemoteBrianModelMemory</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RemoteBrianModelMemory.__params"><code class="docutils literal notranslate"><span class="pre">RemoteBrianModelMemory.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RemoteBrianModelMemory._param"><code class="docutils literal notranslate"><span class="pre">RemoteBrianModelMemory._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RemoteBrianModelMemory._parameters_state"><code class="docutils literal notranslate"><span class="pre">RemoteBrianModelMemory._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RemoteBrianModelMemory.name"><code class="docutils literal notranslate"><span class="pre">RemoteBrianModelMemory.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RemoteBrianModelMemory.runRemoteModel"><code class="docutils literal notranslate"><span class="pre">RemoteBrianModelMemory.runRemoteModel()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/memory.html#larvaworld.lib.model.modules.memory.RemoteBrianModelMemory.step"><code class="docutils literal notranslate"><span class="pre">RemoteBrianModelMemory.step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/motor_controller.html">motor_controller</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/motor_controller.html#actuator">Actuator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/motor_controller.html#larvaworld.lib.model.modules.motor_controller.Actuator"><code class="docutils literal notranslate"><span class="pre">Actuator</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/motor_controller.html#motorcontroller">MotorController</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/motor_controller.html#larvaworld.lib.model.modules.motor_controller.MotorController"><code class="docutils literal notranslate"><span class="pre">MotorController</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/motor_controller.html#larvaworld.lib.model.modules.motor_controller.MotorController.get_actuator_value"><code class="docutils literal notranslate"><span class="pre">MotorController.get_actuator_value()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/motor_controller.html#larvaworld.lib.model.modules.motor_controller.MotorController.sense_and_act"><code class="docutils literal notranslate"><span class="pre">MotorController.sense_and_act()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/oscillator.html">oscillator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/oscillator.html#id1">Oscillator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator"><code class="docutils literal notranslate"><span class="pre">Oscillator</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator.Act_Phi"><code class="docutils literal notranslate"><span class="pre">Oscillator.Act_Phi</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator.__params"><code class="docutils literal notranslate"><span class="pre">Oscillator.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator._param"><code class="docutils literal notranslate"><span class="pre">Oscillator._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator._parameters_state"><code class="docutils literal notranslate"><span class="pre">Oscillator._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator.act_on_complete_iteration"><code class="docutils literal notranslate"><span class="pre">Oscillator.act_on_complete_iteration()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator.freq"><code class="docutils literal notranslate"><span class="pre">Oscillator.freq</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator.get_freq"><code class="docutils literal notranslate"><span class="pre">Oscillator.get_freq()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator.name"><code class="docutils literal notranslate"><span class="pre">Oscillator.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator.oscillate"><code class="docutils literal notranslate"><span class="pre">Oscillator.oscillate()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator.phi"><code class="docutils literal notranslate"><span class="pre">Oscillator.phi</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator.phi_in_range"><code class="docutils literal notranslate"><span class="pre">Oscillator.phi_in_range()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator.reset"><code class="docutils literal notranslate"><span class="pre">Oscillator.reset()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator.set_freq"><code class="docutils literal notranslate"><span class="pre">Oscillator.set_freq()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Oscillator.update"><code class="docutils literal notranslate"><span class="pre">Oscillator.update()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/oscillator.html#timer">Timer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Timer"><code class="docutils literal notranslate"><span class="pre">Timer</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Timer.__params"><code class="docutils literal notranslate"><span class="pre">Timer.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Timer._param"><code class="docutils literal notranslate"><span class="pre">Timer._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Timer._parameters_state"><code class="docutils literal notranslate"><span class="pre">Timer._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Timer.count_time"><code class="docutils literal notranslate"><span class="pre">Timer.count_time()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Timer.dt"><code class="docutils literal notranslate"><span class="pre">Timer.dt</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Timer.name"><code class="docutils literal notranslate"><span class="pre">Timer.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Timer.reset"><code class="docutils literal notranslate"><span class="pre">Timer.reset()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Timer.start_effector"><code class="docutils literal notranslate"><span class="pre">Timer.start_effector()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Timer.stop_effector"><code class="docutils literal notranslate"><span class="pre">Timer.stop_effector()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Timer.t"><code class="docutils literal notranslate"><span class="pre">Timer.t</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/oscillator.html#larvaworld.lib.model.modules.oscillator.Timer.total_t"><code class="docutils literal notranslate"><span class="pre">Timer.total_t</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/rot_surface.html">rot_surface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/rot_surface.html#lightsource">LightSource</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/rot_surface.html#larvaworld.lib.model.modules.rot_surface.LightSource"><code class="docutils literal notranslate"><span class="pre">LightSource</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/rot_surface.html#larvaworld.lib.model.modules.rot_surface.LightSource.get_saved_scene_repr"><code class="docutils literal notranslate"><span class="pre">LightSource.get_saved_scene_repr()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/rot_surface.html#rotsurface">RotSurface</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/rot_surface.html#larvaworld.lib.model.modules.rot_surface.RotSurface"><code class="docutils literal notranslate"><span class="pre">RotSurface</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/rot_surface.html#larvaworld.lib.model.modules.rot_surface.RotSurface.draw"><code class="docutils literal notranslate"><span class="pre">RotSurface.draw()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/rot_surface.html#larvaworld.lib.model.modules.rot_surface.RotSurface.step"><code class="docutils literal notranslate"><span class="pre">RotSurface.step()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/rot_surface.html#rottriangle">RotTriangle</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/rot_surface.html#larvaworld.lib.model.modules.rot_surface.RotTriangle"><code class="docutils literal notranslate"><span class="pre">RotTriangle</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/sensor.html">sensor</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/sensor.html#olfactor">Olfactor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Olfactor"><code class="docutils literal notranslate"><span class="pre">Olfactor</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Olfactor.__params"><code class="docutils literal notranslate"><span class="pre">Olfactor.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Olfactor._param"><code class="docutils literal notranslate"><span class="pre">Olfactor._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Olfactor._parameters_state"><code class="docutils literal notranslate"><span class="pre">Olfactor._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Olfactor.affect_locomotion"><code class="docutils literal notranslate"><span class="pre">Olfactor.affect_locomotion()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Olfactor.first_odor_concentration"><code class="docutils literal notranslate"><span class="pre">Olfactor.first_odor_concentration</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Olfactor.first_odor_concentration_change"><code class="docutils literal notranslate"><span class="pre">Olfactor.first_odor_concentration_change</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Olfactor.name"><code class="docutils literal notranslate"><span class="pre">Olfactor.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Olfactor.novel_odors"><code class="docutils literal notranslate"><span class="pre">Olfactor.novel_odors</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Olfactor.second_odor_concentration"><code class="docutils literal notranslate"><span class="pre">Olfactor.second_odor_concentration</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Olfactor.second_odor_concentration_change"><code class="docutils literal notranslate"><span class="pre">Olfactor.second_odor_concentration_change</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Olfactor.update_gain"><code class="docutils literal notranslate"><span class="pre">Olfactor.update_gain()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/sensor.html#id1">Sensor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor"><code class="docutils literal notranslate"><span class="pre">Sensor</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.__params"><code class="docutils literal notranslate"><span class="pre">Sensor.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor._param"><code class="docutils literal notranslate"><span class="pre">Sensor._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor._parameters_state"><code class="docutils literal notranslate"><span class="pre">Sensor._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.add_novel_gain"><code class="docutils literal notranslate"><span class="pre">Sensor.add_novel_gain()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.affect_locomotion"><code class="docutils literal notranslate"><span class="pre">Sensor.affect_locomotion()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.brute_force"><code class="docutils literal notranslate"><span class="pre">Sensor.brute_force</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.compute_dX"><code class="docutils literal notranslate"><span class="pre">Sensor.compute_dX()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.compute_dif"><code class="docutils literal notranslate"><span class="pre">Sensor.compute_dif()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.compute_single_dx"><code class="docutils literal notranslate"><span class="pre">Sensor.compute_single_dx()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.decay_coef"><code class="docutils literal notranslate"><span class="pre">Sensor.decay_coef</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.get_X_values"><code class="docutils literal notranslate"><span class="pre">Sensor.get_X_values()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.get_dX"><code class="docutils literal notranslate"><span class="pre">Sensor.get_dX()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.get_gain"><code class="docutils literal notranslate"><span class="pre">Sensor.get_gain()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.init_gain"><code class="docutils literal notranslate"><span class="pre">Sensor.init_gain()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.name"><code class="docutils literal notranslate"><span class="pre">Sensor.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.output_range"><code class="docutils literal notranslate"><span class="pre">Sensor.output_range</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.perception"><code class="docutils literal notranslate"><span class="pre">Sensor.perception</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.reset_all_gains"><code class="docutils literal notranslate"><span class="pre">Sensor.reset_all_gains()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.reset_gain"><code class="docutils literal notranslate"><span class="pre">Sensor.reset_gain()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.set_gain"><code class="docutils literal notranslate"><span class="pre">Sensor.set_gain()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.update"><code class="docutils literal notranslate"><span class="pre">Sensor.update()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Sensor.update_gain"><code class="docutils literal notranslate"><span class="pre">Sensor.update_gain()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/sensor.html#thermosensor">Thermosensor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Thermosensor"><code class="docutils literal notranslate"><span class="pre">Thermosensor</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Thermosensor.__params"><code class="docutils literal notranslate"><span class="pre">Thermosensor.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Thermosensor._param"><code class="docutils literal notranslate"><span class="pre">Thermosensor._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Thermosensor._parameters_state"><code class="docutils literal notranslate"><span class="pre">Thermosensor._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Thermosensor.cool_sensor_input"><code class="docutils literal notranslate"><span class="pre">Thermosensor.cool_sensor_input</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Thermosensor.cool_sensor_perception"><code class="docutils literal notranslate"><span class="pre">Thermosensor.cool_sensor_perception</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Thermosensor.name"><code class="docutils literal notranslate"><span class="pre">Thermosensor.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Thermosensor.warm_sensor_input"><code class="docutils literal notranslate"><span class="pre">Thermosensor.warm_sensor_input</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Thermosensor.warm_sensor_perception"><code class="docutils literal notranslate"><span class="pre">Thermosensor.warm_sensor_perception</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/sensor.html#toucher">Toucher</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Toucher"><code class="docutils literal notranslate"><span class="pre">Toucher</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Toucher.__params"><code class="docutils literal notranslate"><span class="pre">Toucher.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Toucher._param"><code class="docutils literal notranslate"><span class="pre">Toucher._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Toucher._parameters_state"><code class="docutils literal notranslate"><span class="pre">Toucher._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Toucher.affect_locomotion"><code class="docutils literal notranslate"><span class="pre">Toucher.affect_locomotion()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Toucher.init_sensors"><code class="docutils literal notranslate"><span class="pre">Toucher.init_sensors()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.Toucher.name"><code class="docutils literal notranslate"><span class="pre">Toucher.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/sensor.html#windsensor">WindSensor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.WindSensor"><code class="docutils literal notranslate"><span class="pre">WindSensor</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.WindSensor.__params"><code class="docutils literal notranslate"><span class="pre">WindSensor.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.WindSensor._param"><code class="docutils literal notranslate"><span class="pre">WindSensor._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.WindSensor._parameters_state"><code class="docutils literal notranslate"><span class="pre">WindSensor._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor.html#larvaworld.lib.model.modules.sensor.WindSensor.name"><code class="docutils literal notranslate"><span class="pre">WindSensor.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/sensor2.html">sensor2</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/sensor2.html#lightsensor">LightSensor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/sensor2.html#larvaworld.lib.model.modules.sensor2.LightSensor"><code class="docutils literal notranslate"><span class="pre">LightSensor</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor2.html#larvaworld.lib.model.modules.sensor2.LightSensor.LENGTH_SENSOR_LINE"><code class="docutils literal notranslate"><span class="pre">LightSensor.LENGTH_SENSOR_LINE</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor2.html#larvaworld.lib.model.modules.sensor2.LightSensor.draw"><code class="docutils literal notranslate"><span class="pre">LightSensor.draw()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor2.html#larvaworld.lib.model.modules.sensor2.LightSensor.get_value"><code class="docutils literal notranslate"><span class="pre">LightSensor.get_value()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/sensor2.html#proximitysensor">ProximitySensor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/sensor2.html#larvaworld.lib.model.modules.sensor2.ProximitySensor"><code class="docutils literal notranslate"><span class="pre">ProximitySensor</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor2.html#larvaworld.lib.model.modules.sensor2.ProximitySensor.draw"><code class="docutils literal notranslate"><span class="pre">ProximitySensor.draw()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor2.html#larvaworld.lib.model.modules.sensor2.ProximitySensor.get_value"><code class="docutils literal notranslate"><span class="pre">ProximitySensor.get_value()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="modules/sensor2.html#id1">Sensor2</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/sensor2.html#larvaworld.lib.model.modules.sensor2.Sensor2"><code class="docutils literal notranslate"><span class="pre">Sensor2</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor2.html#larvaworld.lib.model.modules.sensor2.Sensor2.draw"><code class="docutils literal notranslate"><span class="pre">Sensor2.draw()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/sensor2.html#larvaworld.lib.model.modules.sensor2.Sensor2.get_value"><code class="docutils literal notranslate"><span class="pre">Sensor2.get_value()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="modules/turner.html">turner</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="modules/turner.html#neuraloscillator">NeuralOscillator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator</span></code></a><ul>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.__params"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.__params</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator._param"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator._param</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator._parameters_state"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator._parameters_state</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.act"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.act()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.activation_range"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.activation_range</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.base_activation"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.base_activation</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.compute_R"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.compute_R()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.get_state"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.get_state()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.inact"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.inact()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.input_range"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.input_range</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.m"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.m</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.n"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.n</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.name"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.name</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.oscillate"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.oscillate()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.tau"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.tau</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.update"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.update()</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.w_cc"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.w_cc</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.w_ce"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.w_ce</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.w_ec"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.w_ec</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.w_ee"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.w_ee</span></code></a></li>
+<li class="toctree-l5"><a class="reference internal" href="modules/turner.html#larvaworld.lib.model.modules.turner.NeuralOscillator.warm_up"><code class="docutils literal notranslate"><span class="pre">NeuralOscillator.warm_up()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="object.html">object</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="object.html#groupedobject">GroupedObject</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="object.html#larvaworld.lib.model.object.GroupedObject"><code class="docutils literal notranslate"><span class="pre">GroupedObject</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.GroupedObject.__params"><code class="docutils literal notranslate"><span class="pre">GroupedObject.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.GroupedObject._param"><code class="docutils literal notranslate"><span class="pre">GroupedObject._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.GroupedObject._parameters_state"><code class="docutils literal notranslate"><span class="pre">GroupedObject._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.GroupedObject.group"><code class="docutils literal notranslate"><span class="pre">GroupedObject.group</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.GroupedObject.name"><code class="docutils literal notranslate"><span class="pre">GroupedObject.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="object.html#namedobject">NamedObject</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="object.html#larvaworld.lib.model.object.NamedObject"><code class="docutils literal notranslate"><span class="pre">NamedObject</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.NamedObject.__params"><code class="docutils literal notranslate"><span class="pre">NamedObject.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.NamedObject._param"><code class="docutils literal notranslate"><span class="pre">NamedObject._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.NamedObject._parameters_state"><code class="docutils literal notranslate"><span class="pre">NamedObject._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.NamedObject.name"><code class="docutils literal notranslate"><span class="pre">NamedObject.name</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="object.html#id1">Object</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="object.html#larvaworld.lib.model.object.Object"><code class="docutils literal notranslate"><span class="pre">Object</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.Object._log"><code class="docutils literal notranslate"><span class="pre">Object._log</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.Object._set_var_ignore"><code class="docutils literal notranslate"><span class="pre">Object._set_var_ignore()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.Object.connect_log"><code class="docutils literal notranslate"><span class="pre">Object.connect_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.Object.extend_log"><code class="docutils literal notranslate"><span class="pre">Object.extend_log()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.Object.nest_record"><code class="docutils literal notranslate"><span class="pre">Object.nest_record()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.Object.setup"><code class="docutils literal notranslate"><span class="pre">Object.setup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html#larvaworld.lib.model.object.Object.vars"><code class="docutils literal notranslate"><span class="pre">Object.vars</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../ipc/ipc.html" class="btn btn-neutral float-left" title="ipc" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="deb/index.html" class="btn btn-neutral float-right" title="larvaworld.lib.model.deb" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

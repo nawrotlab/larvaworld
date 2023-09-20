@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>_agent &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">_agent</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/content/larvaworld/lib/model/agents/_agent.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.model.agents._agent">
+<span id="agent"></span><h1>_agent<a class="headerlink" href="#module-larvaworld.lib.model.agents._agent" title="Permalink to this heading"></a></h1>
+<section id="mobileagent">
+<h2>MobileAgent<a class="headerlink" href="#mobileagent" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobileAgent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.agents._agent.</span></span><span class="sig-name descname"><span class="pre">MobileAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_agent.html#MobileAgent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobileAgent" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../../param/spatial.html#larvaworld.lib.param.spatial.MobileVector" title="larvaworld.lib.param.spatial.MobileVector"><code class="xref py py-class docutils literal notranslate"><span class="pre">MobileVector</span></code></a>, <a class="reference internal" href="#larvaworld.lib.model.agents._agent.PointAgent" title="larvaworld.lib.model.agents._agent.PointAgent"><code class="xref py py-class docutils literal notranslate"><span class="pre">PointAgent</span></code></a></p>
+<p>params(length=PositiveNumber, orientation=RandomizedPhase, radius=PositiveNumber, pos=NumericTuple2DRobust, odor=ClassAttr, default_color=RandomizedColor, selected=Boolean, visible=Boolean, group=String, unique_id=String, name=String)
+[1;32mParameters of 'MobileAgent'
+===========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                             Value                            Type                   Bounds             Mode  [0m</p>
+<p>unique_id                         None                           String                                   V RW AN
+group                             None                           String                                   V RW AN
+default_color                   'black'                     RandomizedColor                                 V RW
+visible                           True                          Boolean                  (0, 1)             V RW
+selected                         False                          Boolean                  (0, 1)             V RW
+odor            Odor(id=None, intensity=None, name='O...       ClassAttr                                    V RW
+pos                            (0.0, 0.0)                 NumericTuple2DRobust                              V RW
+radius                           0.003                       PositiveNumber            (0.0,[1;36m 0.1[0m)           V RW
+orientation                 0.64665126131922                RandomizedPhase     (0.0, 6.283185307179586)  V RW AN
+length                             1                         PositiveNumber           (0.0, None)           V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34munique_id:     The unique ID of the entity[0m
+[1;31mgroup:         The unique ID of the entity&quot;s group[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m
+[1;31modor:          The odor of the agent[0m
+[1;34mpos:           The xy spatial position coordinates[0m
+[1;31mradius:        The spatial radius of the source in meters[0m
+[1;34morientation:   The absolute orientation in space.[0m
+[1;31mlength:        The initial length of the body in meters[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobileAgent.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'group':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'length':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'orientation':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedPhase</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'radius':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobileAgent.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobileAgent._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobileAgent._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobileAgent._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobileAgent._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobileAgent.last_orientation_vel">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">last_orientation_vel</span></span><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobileAgent.last_orientation_vel" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobileAgent.last_pos_vel">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">last_pos_vel</span></span><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobileAgent.last_pos_vel" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobileAgent.last_scaled_pos_vel">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">last_scaled_pos_vel</span></span><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobileAgent.last_scaled_pos_vel" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobileAgent.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MobileAgent'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobileAgent.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="mobilepointagent">
+<h2>MobilePointAgent<a class="headerlink" href="#mobilepointagent" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobilePointAgent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.agents._agent.</span></span><span class="sig-name descname"><span class="pre">MobilePointAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_agent.html#MobilePointAgent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobilePointAgent" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../../param/spatial.html#larvaworld.lib.param.spatial.MobilePoint" title="larvaworld.lib.param.spatial.MobilePoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">MobilePoint</span></code></a>, <a class="reference internal" href="#larvaworld.lib.model.agents._agent.PointAgent" title="larvaworld.lib.model.agents._agent.PointAgent"><code class="xref py py-class docutils literal notranslate"><span class="pre">PointAgent</span></code></a></p>
+<p>params(orientation=RandomizedPhase, radius=PositiveNumber, pos=NumericTuple2DRobust, odor=ClassAttr, default_color=RandomizedColor, selected=Boolean, visible=Boolean, group=String, unique_id=String, name=String)
+[1;32mParameters of 'MobilePointAgent'
+================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                             Value                            Type                   Bounds             Mode  [0m</p>
+<p>unique_id                         None                           String                                   V RW AN
+group                             None                           String                                   V RW AN
+default_color                   'black'                     RandomizedColor                                 V RW
+visible                           True                          Boolean                  (0, 1)             V RW
+selected                         False                          Boolean                  (0, 1)             V RW
+odor            Odor(id=None, intensity=None, name='O...       ClassAttr                                    V RW
+pos                            (0.0, 0.0)                 NumericTuple2DRobust                              V RW
+radius                           0.003                       PositiveNumber            (0.0,[1;36m 0.1[0m)           V RW
+orientation                 0.64665126131922                RandomizedPhase     (0.0, 6.283185307179586)  V RW AN</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34munique_id:     The unique ID of the entity[0m
+[1;31mgroup:         The unique ID of the entity&quot;s group[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m
+[1;31modor:          The odor of the agent[0m
+[1;34mpos:           The xy spatial position coordinates[0m
+[1;31mradius:        The spatial radius of the source in meters[0m
+[1;34morientation:   The absolute orientation in space.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobilePointAgent.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'group':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'orientation':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedPhase</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'radius':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobilePointAgent.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobilePointAgent._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobilePointAgent._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobilePointAgent._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobilePointAgent._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.MobilePointAgent.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MobilePointAgent'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.MobilePointAgent.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="nonspatialagent">
+<h2>NonSpatialAgent<a class="headerlink" href="#nonspatialagent" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.NonSpatialAgent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.agents._agent.</span></span><span class="sig-name descname"><span class="pre">NonSpatialAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_agent.html#NonSpatialAgent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._agent.NonSpatialAgent" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../../screen/rendering.html#larvaworld.lib.screen.rendering.LabelledGroupedObject" title="larvaworld.lib.screen.rendering.LabelledGroupedObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">LabelledGroupedObject</span></code></a></p>
+<p>params(odor=ClassAttr, default_color=RandomizedColor, selected=Boolean, visible=Boolean, group=String, unique_id=String, name=String)</p>
+<blockquote>
+<div><p>LarvaworldAgent base class for all agent types</p>
+<p>Note that the setup() method is called right after initialization as in the agentpy.Agent class
+This is contrary to the parent class</p>
+<p>Args:
+- odor: optional dictionary containing odor information of the agent.</p>
+</div></blockquote>
+<section id="mparameters-of-nonspatialagent">
+<h3>[1;32mParameters of 'NonSpatialAgent'<a class="headerlink" href="#mparameters-of-nonspatialagent" title="Permalink to this heading"></a></h3>
+<p>[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                             Value                          Type       Bounds    Mode  [0m</p>
+<p>unique_id                         None                         String              V RW AN
+group                             None                         String              V RW AN
+default_color                   'black'                   RandomizedColor            V RW
+visible                           True                        Boolean      (0, 1)    V RW
+selected                         False                        Boolean      (0, 1)    V RW
+odor            Odor(id=None, intensity=None, name='O...     ClassAttr               V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34munique_id:     The unique ID of the entity[0m
+[1;31mgroup:         The unique ID of the entity&quot;s group[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m
+[1;31modor:          The odor of the agent[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.NonSpatialAgent.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'group':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.NonSpatialAgent.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.NonSpatialAgent._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.NonSpatialAgent._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.NonSpatialAgent._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.NonSpatialAgent._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.NonSpatialAgent.dt">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dt</span></span><a class="headerlink" href="#larvaworld.lib.model.agents._agent.NonSpatialAgent.dt" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.NonSpatialAgent.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'NonSpatialAgent'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.NonSpatialAgent.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.NonSpatialAgent.odor">
+<span class="sig-name descname"><span class="pre">odor</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Odor(id=None,</span> <span class="pre">intensity=None,</span> <span class="pre">name='Odor00345',</span> <span class="pre">spread=None)</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.NonSpatialAgent.odor" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.NonSpatialAgent.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_agent.html#NonSpatialAgent.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._agent.NonSpatialAgent.step" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+<section id="orientedagent">
+<h2>OrientedAgent<a class="headerlink" href="#orientedagent" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.OrientedAgent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.agents._agent.</span></span><span class="sig-name descname"><span class="pre">OrientedAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_agent.html#OrientedAgent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._agent.OrientedAgent" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../../param/spatial.html#larvaworld.lib.param.spatial.OrientedPoint" title="larvaworld.lib.param.spatial.OrientedPoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrientedPoint</span></code></a>, <a class="reference internal" href="#larvaworld.lib.model.agents._agent.PointAgent" title="larvaworld.lib.model.agents._agent.PointAgent"><code class="xref py py-class docutils literal notranslate"><span class="pre">PointAgent</span></code></a></p>
+<p>params(orientation=RandomizedPhase, radius=PositiveNumber, pos=NumericTuple2DRobust, odor=ClassAttr, default_color=RandomizedColor, selected=Boolean, visible=Boolean, group=String, unique_id=String, name=String)
+[1;32mParameters of 'OrientedAgent'
+=============================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                             Value                            Type                   Bounds             Mode  [0m</p>
+<p>unique_id                         None                           String                                   V RW AN
+group                             None                           String                                   V RW AN
+default_color                   'black'                     RandomizedColor                                 V RW
+visible                           True                          Boolean                  (0, 1)             V RW
+selected                         False                          Boolean                  (0, 1)             V RW
+odor            Odor(id=None, intensity=None, name='O...       ClassAttr                                    V RW
+pos                            (0.0, 0.0)                 NumericTuple2DRobust                              V RW
+radius                           0.003                       PositiveNumber            (0.0,[1;36m 0.1[0m)           V RW
+orientation                 0.64665126131922                RandomizedPhase     (0.0, 6.283185307179586)  V RW AN</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34munique_id:     The unique ID of the entity[0m
+[1;31mgroup:         The unique ID of the entity&quot;s group[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m
+[1;31modor:          The odor of the agent[0m
+[1;34mpos:           The xy spatial position coordinates[0m
+[1;31mradius:        The spatial radius of the source in meters[0m
+[1;34morientation:   The absolute orientation in space.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.OrientedAgent.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'group':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'orientation':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedPhase</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'radius':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.OrientedAgent.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.OrientedAgent._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.OrientedAgent._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.OrientedAgent._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.OrientedAgent._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.OrientedAgent.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'OrientedAgent'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.OrientedAgent.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="pointagent">
+<h2>PointAgent<a class="headerlink" href="#pointagent" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.PointAgent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.agents._agent.</span></span><span class="sig-name descname"><span class="pre">PointAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_agent.html#PointAgent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._agent.PointAgent" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../../param/spatial.html#larvaworld.lib.param.spatial.RadiallyExtended" title="larvaworld.lib.param.spatial.RadiallyExtended"><code class="xref py py-class docutils literal notranslate"><span class="pre">RadiallyExtended</span></code></a>, <a class="reference internal" href="#larvaworld.lib.model.agents._agent.NonSpatialAgent" title="larvaworld.lib.model.agents._agent.NonSpatialAgent"><code class="xref py py-class docutils literal notranslate"><span class="pre">NonSpatialAgent</span></code></a></p>
+<p>params(radius=PositiveNumber, pos=NumericTuple2DRobust, odor=ClassAttr, default_color=RandomizedColor, selected=Boolean, visible=Boolean, group=String, unique_id=String, name=String)
+[1;32mParameters of 'PointAgent'
+==========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                             Value                            Type            Bounds      Mode  [0m</p>
+<p>unique_id                         None                           String                     V RW AN
+group                             None                           String                     V RW AN
+default_color                   'black'                     RandomizedColor                   V RW
+visible                           True                          Boolean           (0, 1)      V RW
+selected                         False                          Boolean           (0, 1)      V RW
+odor            Odor(id=None, intensity=None, name='O...       ClassAttr                      V RW
+pos                            (0.0, 0.0)                 NumericTuple2DRobust                V RW
+radius                           0.003                       PositiveNumber     (0.0,[1;36m 0.1[0m)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34munique_id:     The unique ID of the entity[0m
+[1;31mgroup:         The unique ID of the entity&quot;s group[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m
+[1;31modor:          The odor of the agent[0m
+[1;34mpos:           The xy spatial position coordinates[0m
+[1;31mradius:        The spatial radius of the source in meters[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.PointAgent.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'group':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'radius':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.PointAgent.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.PointAgent._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.PointAgent._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.PointAgent._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.PointAgent._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.PointAgent.draw">
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_agent.html#PointAgent.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._agent.PointAgent.draw" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.PointAgent.draw_selected">
+<span class="sig-name descname"><span class="pre">draw_selected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_agent.html#PointAgent.draw_selected"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._agent.PointAgent.draw_selected" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._agent.PointAgent.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PointAgent'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._agent.PointAgent.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

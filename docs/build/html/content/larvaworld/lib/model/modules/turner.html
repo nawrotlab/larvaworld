@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>turner &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+    <link rel="next" title="object" href="../object.html" />
+    <link rel="prev" title="sensor2" href="sensor2.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../cli/index.html">larvaworld.cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gui/index.html">larvaworld.gui</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">larvaworld.lib</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html">larvaworld.lib.model</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../deb/index.html">larvaworld.lib.model.deb</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../envs/index.html">larvaworld.lib.model.envs</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="index.html">larvaworld.lib.model.modules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../object.html">object</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../param/index.html">larvaworld.lib.param</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../plot/index.html">larvaworld.lib.plot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../process/index.html">larvaworld.lib.process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../screen/index.html">larvaworld.lib.screen</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sim/index.html">larvaworld.lib.sim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../util/index.html">larvaworld.lib.util</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reg.html">reg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">larvaworld.lib</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">larvaworld.lib.model</a></li>
+          <li class="breadcrumb-item"><a href="index.html">larvaworld.lib.model.modules</a></li>
+      <li class="breadcrumb-item active">turner</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/content/larvaworld/lib/model/modules/turner.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.model.modules.turner">
+<span id="turner"></span><h1>turner<a class="headerlink" href="#module-larvaworld.lib.model.modules.turner" title="Permalink to this heading"></a></h1>
+<section id="neuraloscillator">
+<h2>NeuralOscillator<a class="headerlink" href="#neuraloscillator" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.modules.turner.</span></span><span class="sig-name descname"><span class="pre">NeuralOscillator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/turner.html#NeuralOscillator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="basic.html#larvaworld.lib.model.modules.basic.Effector" title="larvaworld.lib.model.modules.basic.Effector"><code class="xref py py-class docutils literal notranslate"><span class="pre">Effector</span></code></a></p>
+<p>params(activation_range=Range, base_activation=PositiveNumber, m=PositiveInteger, n=PositiveNumber, tau=Number, w_cc=Number, w_ce=Number, w_ec=Number, w_ee=Number, input_noise=Magnitude, input_range=Range, output_noise=Magnitude, output_range=Range, dt=PositiveNumber, name=String)
+[1;32mParameters of 'NeuralOscillator'
+================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                  Value            Type          Bounds       Mode  [0m</p>
+<p>input_noise            0.0          Magnitude      (0.0, 1.0)     V RW
+output_noise           0.0          Magnitude      (0.0, 1.0)     V RW
+output_range           None           Range                     V RW AN
+input_range          (-1, 1)          Range         (-1, 1)       V RW
+w_ee                   3.0            Number                      V RW
+w_ce                   0.1            Number                      V RW
+w_ec                   4.0            Number                      V RW
+w_cc                   4.0            Number                      V RW
+m                      100       PositiveInteger   (0,[1;36m 1000[0m)      V RW
+n                      2.0        PositiveNumber  (0.0,[1;36m 10.0[0m)     V RW
+base_activation        20.0       PositiveNumber  (10.0, 40.0)    V RW
+activation_range   (10.0, 40.0)       Range       (0.0, 100.0)    V RW
+dt                     0.1        PositiveNumber   (0.0,[1;36m 1.0[0m)     V RW
+tau                    0.1            Number                      V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34minput_noise:      The noise applied at the input of the module.[0m
+[1;31moutput_noise:     The noise applied at the output of the module.[0m
+[1;34moutput_range:     The output range of the module.[0m
+[1;31minput_range:      The input range of the oscillator.[0m
+[1;34mw_ee:             The E-&gt;E synapse connection weights.[0m
+[1;31mw_ce:             The C-&gt;E synapse connection weights.[0m
+[1;34mw_ec:             The E-&gt;C synapse connection weights.[0m
+[1;31mw_cc:             The C-&gt;C synapse connection weights.[0m
+[1;34mm:                The maximum allowed spike rate.[0m
+[1;31mn:                The neuron spike-rate response steepness coefficient.[0m
+[1;34mbase_activation:  The baseline activation of the oscillator.[0m
+[1;31mactivation_range: The activation range of the oscillator.[0m
+[1;34mdt:               The timestep of the simulation in seconds.[0m
+[1;31mtau:              The time constant of the oscillator.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'activation_range':</span> <span class="pre">&lt;param.Range</span> <span class="pre">object&gt;,</span> <span class="pre">'base_activation':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'dt':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'input_noise':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'input_range':</span> <span class="pre">&lt;param.Range</span> <span class="pre">object&gt;,</span> <span class="pre">'m':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'n':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'output_noise':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'output_range':</span> <span class="pre">&lt;param.Range</span> <span class="pre">object&gt;,</span> <span class="pre">'tau':</span> <span class="pre">&lt;param.Number</span> <span class="pre">object&gt;,</span> <span class="pre">'w_cc':</span> <span class="pre">&lt;param.Number</span> <span class="pre">object&gt;,</span> <span class="pre">'w_ce':</span> <span class="pre">&lt;param.Number</span> <span class="pre">object&gt;,</span> <span class="pre">'w_ec':</span> <span class="pre">&lt;param.Number</span> <span class="pre">object&gt;,</span> <span class="pre">'w_ee':</span> <span class="pre">&lt;param.Number</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.act">
+<span class="sig-name descname"><span class="pre">act</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/turner.html#NeuralOscillator.act"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.act" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.activation_range">
+<span class="sig-name descname"><span class="pre">activation_range</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(10.0,</span> <span class="pre">40.0)</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.activation_range" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.base_activation">
+<span class="sig-name descname"><span class="pre">base_activation</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">20.0</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.base_activation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.compute_R">
+<span class="sig-name descname"><span class="pre">compute_R</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/turner.html#NeuralOscillator.compute_R"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.compute_R" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.get_state">
+<span class="sig-name descname"><span class="pre">get_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/turner.html#NeuralOscillator.get_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.get_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.inact">
+<span class="sig-name descname"><span class="pre">inact</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/turner.html#NeuralOscillator.inact"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.inact" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.input_range">
+<span class="sig-name descname"><span class="pre">input_range</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(-1,</span> <span class="pre">1)</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.input_range" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.m">
+<span class="sig-name descname"><span class="pre">m</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.m" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.n">
+<span class="sig-name descname"><span class="pre">n</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2.0</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.n" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'NeuralOscillator'</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.oscillate">
+<span class="sig-name descname"><span class="pre">oscillate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/turner.html#NeuralOscillator.oscillate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.oscillate" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.tau">
+<span class="sig-name descname"><span class="pre">tau</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.tau" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/turner.html#NeuralOscillator.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.update" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.w_cc">
+<span class="sig-name descname"><span class="pre">w_cc</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4.0</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.w_cc" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.w_ce">
+<span class="sig-name descname"><span class="pre">w_ce</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.1</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.w_ce" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.w_ec">
+<span class="sig-name descname"><span class="pre">w_ec</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">4.0</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.w_ec" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.w_ee">
+<span class="sig-name descname"><span class="pre">w_ee</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3.0</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.w_ee" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.turner.NeuralOscillator.warm_up">
+<span class="sig-name descname"><span class="pre">warm_up</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/turner.html#NeuralOscillator.warm_up"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.turner.NeuralOscillator.warm_up" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sensor2.html" class="btn btn-neutral float-left" title="sensor2" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../object.html" class="btn btn-neutral float-right" title="object" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

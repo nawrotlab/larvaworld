@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.aux.naming &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.aux.naming</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.aux.naming</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">aux</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;NamingRegistry&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">join</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;_&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">loc</span> <span class="o">==</span> <span class="s1">&#39;suf&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">p</span><span class="si">}{</span><span class="n">c</span><span class="si">}{</span><span class="n">s</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="k">elif</span> <span class="n">loc</span> <span class="o">==</span> <span class="s1">&#39;pref&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">s</span><span class="si">}{</span><span class="n">c</span><span class="si">}{</span><span class="n">p</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">ps</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;suf&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;_&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ps</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ps</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">s</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">ps</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ps</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">SuperList</span><span class="p">([</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span> <span class="k">else</span> <span class="n">s</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ps</span><span class="p">])</span>
+
+
+
+<div class="viewcode-block" id="NamingRegistry"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/naming.html#larvaworld.lib.aux.naming.NamingRegistry">[docs]</a><span class="k">class</span> <span class="nc">NamingRegistry</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ks</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="s1">&#39;std&#39;</span><span class="p">,</span> <span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;min&#39;</span><span class="p">,</span> <span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="s1">&#39;final&#39;</span><span class="p">,</span> <span class="s1">&#39;initial&#39;</span><span class="p">,</span> <span class="s1">&#39;cum&#39;</span><span class="p">,</span> <span class="s1">&#39;freq&#39;</span><span class="p">,</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="s1">&#39;scal&#39;</span><span class="p">,</span> <span class="s1">&#39;abs&#39;</span><span class="p">,</span> <span class="s1">&#39;non&#39;</span><span class="p">,</span>
+                  <span class="s1">&#39;chain&#39;</span><span class="p">,</span><span class="s1">&#39;dur&#39;</span><span class="p">,</span> <span class="s1">&#39;unwrap&#39;</span><span class="p">,</span> <span class="s1">&#39;dst&#39;</span><span class="p">,</span> <span class="s1">&#39;dst_to&#39;</span><span class="p">,</span> <span class="s1">&#39;bearing_to&#39;</span><span class="p">,</span> <span class="s1">&#39;vel&#39;</span><span class="p">,</span> <span class="s1">&#39;acc&#39;</span><span class="p">,</span> <span class="s1">&#39;orient&#39;</span><span class="p">,</span> <span class="s1">&#39;scal&#39;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="NamingRegistry.get_kws"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/naming.html#larvaworld.lib.aux.naming.NamingRegistry.get_kws">[docs]</a>    <span class="k">def</span> <span class="nf">get_kws</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="n">loc_pref</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;final&#39;</span><span class="p">,</span> <span class="s1">&#39;initial&#39;</span><span class="p">,</span> <span class="s1">&#39;cum&#39;</span><span class="p">,</span> <span class="s1">&#39;lin&#39;</span><span class="p">,</span> <span class="s1">&#39;scal&#39;</span><span class="p">,</span> <span class="s1">&#39;abs&#39;</span><span class="p">,</span><span class="s1">&#39;dst_to&#39;</span><span class="p">,</span> <span class="s1">&#39;bearing_to&#39;</span><span class="p">,</span> <span class="s1">&#39;non&#39;</span><span class="p">]</span>
+
+        <span class="n">noseparator</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;chain&#39;</span><span class="p">]</span>
+
+        <span class="n">key_pairs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;vel&#39;</span><span class="p">:</span> <span class="s1">&#39;velocity&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;acc&#39;</span><span class="p">:</span> <span class="s1">&#39;acceleration&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;scal&#39;</span><span class="p">:</span> <span class="s1">&#39;scaled&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;orient&#39;</span><span class="p">:</span> <span class="s1">&#39;orientation&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;unwrap&#39;</span><span class="p">:</span> <span class="s1">&#39;unwrapped&#39;</span><span class="p">,</span>
+            <span class="c1"># &#39;scal&#39;: &#39;scaled&#39;,</span>
+        <span class="p">}</span>
+
+        <span class="n">kws</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">loc_pref</span><span class="p">:</span>
+            <span class="n">kws</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;pref&#39;</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">key_pairs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">kws</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">key_pairs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kws</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">noseparator</span><span class="p">:</span>
+            <span class="n">kws</span><span class="p">[</span><span class="s1">&#39;c&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">kws</span></div>
+
+
+<div class="viewcode-block" id="NamingRegistry.get_func"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/naming.html#larvaworld.lib.aux.naming.NamingRegistry.get_func">[docs]</a>    <span class="k">def</span> <span class="nf">get_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="n">kws</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_kws</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">ps</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">kws</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">name</span><span class="p">(</span><span class="n">ps</span><span class="o">=</span><span class="n">ps</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">func</span></div>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_func</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NamingRegistry.num"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/naming.html#larvaworld.lib.aux.naming.NamingRegistry.num">[docs]</a>    <span class="k">def</span> <span class="nf">num</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">chunk</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;num&#39;</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">name</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">chunk</span><span class="p">,</span> <span class="s1">&#39;pref&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">name</span><span class="p">(</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="n">temp</span><span class="p">,</span> <span class="s1">&#39;suf&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NamingRegistry.xy"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/naming.html#larvaworld.lib.aux.naming.NamingRegistry.xy">[docs]</a>    <span class="k">def</span> <span class="nf">xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">points</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">xsNys</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">points</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="n">t</span><span class="o">=</span> <span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">t</span><span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">points</span><span class="si">}</span><span class="s1">_x&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">points</span><span class="si">}</span><span class="s1">_y&#39;</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">==</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">points</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">xsNys</span><span class="p">:</span>
+                <span class="n">t</span><span class="o">=</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">t</span><span class="p">)[:,</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="n">flat</span> <span class="p">:</span>
+                <span class="n">t</span><span class="o">=</span><span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">t</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">SuperList</span><span class="p">(</span><span class="n">t</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NamingRegistry.chunk_track"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/naming.html#larvaworld.lib.aux.naming.NamingRegistry.chunk_track">[docs]</a>    <span class="k">def</span> <span class="nf">chunk_track</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunk_name</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">chunk_name</span><span class="p">](</span><span class="n">params</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;pref&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NamingRegistry.contour"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/naming.html#larvaworld.lib.aux.naming.NamingRegistry.contour">[docs]</a>    <span class="k">def</span> <span class="nf">contour</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Nc</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;contour</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nc</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="NamingRegistry.midline"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/naming.html#larvaworld.lib.aux.naming.NamingRegistry.midline">[docs]</a>    <span class="k">def</span> <span class="nf">midline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;point&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">N</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">points</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;head&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">type</span><span class="si">}{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;tail&#39;</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">N</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">points</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;body&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">points</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="n">points</span></div>
+
+<div class="viewcode-block" id="NamingRegistry.contour_xy"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/naming.html#larvaworld.lib.aux.naming.NamingRegistry.contour_xy">[docs]</a>    <span class="k">def</span> <span class="nf">contour_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Nc</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">Nc</span><span class="p">),</span> <span class="n">flat</span><span class="o">=</span><span class="n">flat</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NamingRegistry.midline_xy"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/naming.html#larvaworld.lib.aux.naming.NamingRegistry.midline_xy">[docs]</a>    <span class="k">def</span> <span class="nf">midline_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">N</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">midline</span><span class="p">(</span><span class="n">N</span><span class="p">),</span> <span class="n">flat</span><span class="o">=</span><span class="n">flat</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NamingRegistry.at"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/naming.html#larvaworld.lib.aux.naming.NamingRegistry.at">[docs]</a>    <span class="k">def</span> <span class="nf">at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s1">_at&#39;</span><span class="p">](</span><span class="n">t</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;pref&#39;</span><span class="p">)</span></div>
+        <span class="c1"># return f&#39;{p}_at_{t}&#39;</span>
+
+<div class="viewcode-block" id="NamingRegistry.atStartStopChunk"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/naming.html#larvaworld.lib.aux.naming.NamingRegistry.atStartStopChunk">[docs]</a>    <span class="k">def</span> <span class="nf">atStartStopChunk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">p</span><span class="p">,</span><span class="n">chunk</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">chunk</span><span class="p">)),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">at</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="n">chunk</span><span class="p">)),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">chunk_track</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="p">]</span></div></div>
+
+
+
+<span class="n">nam</span><span class="o">=</span><span class="n">NamingRegistry</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

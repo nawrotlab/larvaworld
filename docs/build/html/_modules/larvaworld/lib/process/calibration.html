@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.process.calibration &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.process.calibration</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.process.calibration</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">heapq</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LinearRegression</span>
+
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.process.spatial</span> <span class="kn">import</span> <span class="n">comp_centroid</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.process.annotation</span> <span class="kn">import</span> <span class="n">detect_strides</span><span class="p">,</span> <span class="n">process_epochs</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;vel_definition&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;comp_stride_variation&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;fit_metric_definition&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;comp_segmentation&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="vel_definition"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/calibration.html#larvaworld.lib.process.calibration.vel_definition">[docs]</a><span class="k">def</span> <span class="nf">vel_definition</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="p">:</span>
+    <span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">data</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">reg</span><span class="o">.</span><span class="n">DatasetConfig</span><span class="p">)</span>
+    <span class="n">res_v</span> <span class="o">=</span> <span class="n">comp_stride_variation</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+    <span class="n">res_fov</span> <span class="o">=</span> <span class="n">comp_segmentation</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+    <span class="n">fit_metric_definition</span><span class="p">(</span><span class="n">str_var</span><span class="o">=</span><span class="n">res_v</span><span class="p">[</span><span class="s1">&#39;stride_variability&#39;</span><span class="p">],</span> <span class="n">df_corr</span><span class="o">=</span><span class="n">res_fov</span><span class="p">[</span><span class="s1">&#39;bend2or_correlation&#39;</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">)</span>
+    <span class="n">dic</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">res_v</span><span class="p">,</span> <span class="o">**</span><span class="n">res_fov</span><span class="p">}</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">vel_definition</span><span class="o">=</span><span class="n">dic</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">save_config</span><span class="p">()</span>
+    <span class="n">aux</span><span class="o">.</span><span class="n">storeH5</span><span class="p">(</span><span class="n">dic</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">data_dir</span><span class="si">}</span><span class="s1">/vel_definition.h5&#39;</span><span class="p">)</span>
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Velocity definition dataset stored.&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dic</span></div>
+
+<div class="viewcode-block" id="comp_stride_variation"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/calibration.html#larvaworld.lib.process.calibration.comp_stride_variation">[docs]</a><span class="k">def</span> <span class="nf">comp_stride_variation</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+
+
+    <span class="n">N</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">Npoints</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">midline_points</span>
+    <span class="n">vels</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+    <span class="n">cvel</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="s1">&#39;centroid&#39;</span><span class="p">)</span>
+    <span class="n">lvels</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">lin</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
+
+    <span class="n">all_point_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="n">all_points</span> <span class="o">=</span> <span class="n">points</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;centroid&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="n">lin_flag</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="n">N</span> <span class="o">+</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">all_vels0</span> <span class="o">=</span> <span class="n">vels</span> <span class="o">+</span> <span class="p">[</span><span class="n">cvel</span><span class="p">]</span> <span class="o">+</span> <span class="n">lvels</span>
+    <span class="n">all_vels</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">all_vels0</span><span class="p">)</span>
+
+    <span class="n">vel_num_strings</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;{&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;}&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">)]</span>
+    <span class="n">lvel_num_strings</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;{&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;}&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">symbols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">rf</span><span class="s1">&#39;$v_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">$&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">vel_num_strings</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="sa">r</span><span class="s1">&#39;$v_</span><span class="si">{cen}</span><span class="s1">$&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="sa">rf</span><span class="s1">&#39;$v^</span><span class="si">{</span><span class="s2">&quot;c&quot;</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">$&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span>
+                                                                         <span class="n">lvel_num_strings</span><span class="p">]</span>
+
+    <span class="n">markers</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;o&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vels</span><span class="p">))]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;v&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lvels</span><span class="p">))]</span>
+    <span class="n">cnum</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">N</span>
+    <span class="n">cmap0</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s1">&#39;hsv&#39;</span><span class="p">)</span>
+    <span class="n">cmap0</span> <span class="o">=</span> <span class="p">[</span><span class="n">cmap0</span><span class="p">(</span><span class="mf">1.</span> <span class="o">*</span> <span class="n">i</span> <span class="o">/</span> <span class="n">cnum</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cnum</span><span class="p">)]</span>
+    <span class="n">cmap0</span> <span class="o">=</span> <span class="n">cmap0</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">+</span> <span class="p">[</span><span class="n">cmap0</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> <span class="n">cmap0</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+
+    <span class="n">dic</span> <span class="o">=</span> <span class="p">{</span><span class="n">all_vels</span><span class="p">[</span><span class="n">ii</span><span class="p">]:</span> <span class="p">{</span><span class="s1">&#39;symbol&#39;</span><span class="p">:</span> <span class="n">symbols</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="s1">&#39;marker&#39;</span><span class="p">:</span> <span class="n">markers</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="n">cmap0</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span>
+                          <span class="s1">&#39;idx&#39;</span><span class="p">:</span> <span class="n">ii</span><span class="p">,</span> <span class="s1">&#39;par&#39;</span><span class="p">:</span> <span class="n">all_vels0</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="s1">&#39;point&#39;</span><span class="p">:</span> <span class="n">all_points</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="s1">&#39;point_idx&#39;</span><span class="p">:</span> <span class="n">all_point_idx</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span>
+                          <span class="s1">&#39;use_component_vel&#39;</span><span class="p">:</span> <span class="n">lin_flag</span><span class="p">[</span><span class="n">ii</span><span class="p">]}</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span>
+           <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_vels</span><span class="p">))}</span>
+
+
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">aux</span><span class="o">.</span><span class="n">cols_exist</span><span class="p">(</span><span class="n">vels</span> <span class="o">+</span> <span class="p">[</span><span class="n">cvel</span><span class="p">],</span><span class="n">s</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">larvaworld.lib.process.spatial</span> <span class="kn">import</span> <span class="n">comp_spatial</span>
+        <span class="n">comp_centroid</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">recompute</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">comp_spatial</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">aux</span><span class="o">.</span><span class="n">cols_exist</span><span class="p">(</span><span class="n">lvels</span><span class="p">,</span><span class="n">s</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">larvaworld.lib.process.spatial</span> <span class="kn">import</span> <span class="n">comp_linear</span>
+        <span class="kn">from</span> <span class="nn">larvaworld.lib.process.angular</span> <span class="kn">import</span> <span class="n">comp_orientations</span>
+        <span class="n">comp_orientations</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)</span>
+        <span class="n">comp_linear</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">aux</span><span class="o">.</span><span class="n">cols_exist</span><span class="p">(</span><span class="n">all_vels</span><span class="p">,</span><span class="n">s</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">larvaworld.lib.process.spatial</span> <span class="kn">import</span> <span class="n">scale_to_length</span>
+        <span class="n">scale_to_length</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">pars</span><span class="o">=</span><span class="n">all_vels0</span><span class="p">)</span>
+
+    <span class="n">svels</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">existing_cols</span><span class="p">(</span><span class="n">all_vels</span><span class="p">,</span><span class="n">s</span><span class="p">)</span>
+
+    <span class="n">shorts</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;fsv&#39;</span><span class="p">,</span> <span class="s1">&#39;str_N&#39;</span><span class="p">,</span> <span class="s1">&#39;str_tr&#39;</span><span class="p">,</span> <span class="s1">&#39;str_t_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;str_t_std&#39;</span><span class="p">,</span> <span class="s1">&#39;str_sd_mu&#39;</span><span class="p">,</span> <span class="s1">&#39;str_sd_std&#39;</span><span class="p">,</span> <span class="s1">&#39;str_t_var&#39;</span><span class="p">,</span> <span class="s1">&#39;str_sd_var&#39;</span><span class="p">]</span>
+
+    <span class="n">my_index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([</span><span class="n">svels</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">],</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VelPar&#39;</span><span class="p">,</span> <span class="s1">&#39;AgentID&#39;</span><span class="p">])</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">my_index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="n">shorts</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">N</span><span class="p">):</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+        <span class="n">ss</span><span class="p">,</span> <span class="n">ee</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;AgentID&#39;</span><span class="p">),</span> <span class="n">e</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">vv</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">svels</span><span class="p">):</span>
+            <span class="n">cum_dur</span> <span class="o">=</span> <span class="n">ss</span><span class="p">[</span><span class="n">vv</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">dt</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">ss</span><span class="p">[</span><span class="n">vv</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">fr</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">fft_max</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">fr_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">))</span>
+            <span class="n">strides</span> <span class="o">=</span> <span class="n">detect_strides</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">fr</span><span class="o">=</span><span class="n">fr</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">return_extrema</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_runs</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">strides</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="n">fr</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
+                       <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">strides</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">strides</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="n">durs</span><span class="p">,</span> <span class="n">amps</span><span class="p">,</span> <span class="n">maxs</span> <span class="o">=</span> <span class="n">process_epochs</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">strides</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">return_idx</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">Nstr</span> <span class="o">=</span> <span class="n">strides</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="n">t_cv</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">variation</span><span class="p">(</span><span class="n">durs</span><span class="p">)</span>
+                <span class="n">s_cv</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">variation</span><span class="p">(</span><span class="n">amps</span><span class="p">)</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="n">fr</span><span class="p">,</span> <span class="n">Nstr</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">durs</span><span class="p">)</span> <span class="o">/</span> <span class="n">cum_dur</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">durs</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">durs</span><span class="p">),</span>
+                       <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">amps</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">amps</span><span class="p">),</span> <span class="n">t_cv</span><span class="p">,</span> <span class="n">s_cv</span><span class="p">]</span>
+
+            <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">vv</span><span class="p">,</span> <span class="nb">id</span><span class="p">)]</span> <span class="o">=</span> <span class="n">row</span>
+    <span class="n">str_var</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">([</span><span class="s1">&#39;str_sd_var&#39;</span><span class="p">,</span> <span class="s1">&#39;str_t_var&#39;</span><span class="p">,</span> <span class="s1">&#39;str_tr&#39;</span><span class="p">])]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;VelPar&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;symbol&#39;</span><span class="p">,</span> <span class="s1">&#39;color&#39;</span><span class="p">,</span> <span class="s1">&#39;marker&#39;</span><span class="p">,</span><span class="s1">&#39;par&#39;</span><span class="p">,</span> <span class="s1">&#39;idx&#39;</span><span class="p">,</span> <span class="s1">&#39;point&#39;</span><span class="p">,</span> <span class="s1">&#39;point_idx&#39;</span><span class="p">,</span> <span class="s1">&#39;use_component_vel&#39;</span><span class="p">]</span> <span class="p">:</span>
+        <span class="n">str_var</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">=</span> <span class="p">[</span><span class="n">dic</span><span class="p">[</span><span class="n">jj</span><span class="p">][</span><span class="n">ii</span><span class="p">]</span> <span class="k">for</span> <span class="n">jj</span> <span class="ow">in</span> <span class="n">str_var</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+    <span class="n">dic</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;stride_data&#39;</span><span class="p">:</span> <span class="n">df</span><span class="p">,</span> <span class="s1">&#39;stride_variability&#39;</span><span class="p">:</span> <span class="n">str_var</span><span class="p">}</span>
+
+
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Stride variability analysis complete!&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dic</span></div>
+
+<div class="viewcode-block" id="fit_metric_definition"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/calibration.html#larvaworld.lib.process.calibration.fit_metric_definition">[docs]</a><span class="k">def</span> <span class="nf">fit_metric_definition</span><span class="p">(</span><span class="n">str_var</span><span class="p">,</span> <span class="n">df_corr</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="p">:</span>
+    <span class="n">Nangles</span><span class="o">=</span><span class="mi">0</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">Npoints</span><span class="o">&lt;</span><span class="mi">3</span> <span class="k">else</span> <span class="n">c</span><span class="o">.</span><span class="n">Npoints</span><span class="o">-</span><span class="mi">2</span>
+    <span class="n">sNt_cv</span> <span class="o">=</span> <span class="n">str_var</span><span class="p">[</span><span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">([</span><span class="s1">&#39;str_sd_var&#39;</span><span class="p">,</span> <span class="s1">&#39;str_t_var&#39;</span><span class="p">])]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">best_idx</span> <span class="o">=</span> <span class="n">sNt_cv</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+
+    <span class="n">best_combo</span> <span class="o">=</span> <span class="n">df_corr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">best_combo_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">best_combo</span><span class="p">)</span>
+
+    <span class="n">md</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">metric_definition</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;spatial&#39;</span> <span class="ow">in</span> <span class="n">md</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">md</span><span class="o">.</span><span class="n">spatial</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+    <span class="n">idx</span><span class="o">=</span><span class="n">md</span><span class="o">.</span><span class="n">spatial</span><span class="o">.</span><span class="n">point_idx</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">str_var</span><span class="p">[</span><span class="s1">&#39;point_idx&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">best_idx</span><span class="p">])</span>
+    <span class="n">md</span><span class="o">.</span><span class="n">spatial</span><span class="o">.</span><span class="n">use_component_vel</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">str_var</span><span class="p">[</span><span class="s1">&#39;use_component_vel&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">best_idx</span><span class="p">])</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">midline</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">Npoints</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;point&#39;</span><span class="p">)[</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="s1">&#39;centroid&#39;</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">point</span> <span class="o">=</span> <span class="n">p</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;angular&#39;</span> <span class="ow">in</span> <span class="n">md</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">md</span><span class="o">.</span><span class="n">angular</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+    <span class="n">md</span><span class="o">.</span><span class="n">angular</span><span class="o">.</span><span class="n">best_combo</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">best_combo</span><span class="p">)</span>
+    <span class="n">md</span><span class="o">.</span><span class="n">angular</span><span class="o">.</span><span class="n">front_body_ratio</span> <span class="o">=</span> <span class="n">best_combo_max</span> <span class="o">/</span> <span class="n">Nangles</span>
+    <span class="n">md</span><span class="o">.</span><span class="n">angular</span><span class="o">.</span><span class="n">bend</span> <span class="o">=</span> <span class="s1">&#39;from_vectors&#39;</span></div>
+
+
+
+<div class="viewcode-block" id="comp_segmentation"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/calibration.html#larvaworld.lib.process.calibration.comp_segmentation">[docs]</a><span class="k">def</span> <span class="nf">comp_segmentation</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">Npoints</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">angles</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;angle</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">)]</span>
+    <span class="n">avels</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="n">angles</span><span class="p">)</span>
+    <span class="n">hov</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">orient</span><span class="p">(</span><span class="s1">&#39;front&#39;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">aux</span><span class="o">.</span><span class="n">cols_exist</span><span class="p">(</span><span class="n">avels</span><span class="p">,</span><span class="n">s</span><span class="p">):</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">processing</span><span class="p">[</span><span class="s1">&#39;angular&#39;</span><span class="p">](</span><span class="n">s</span><span class="o">=</span><span class="n">s</span><span class="p">,</span><span class="n">e</span><span class="o">=</span><span class="n">e</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>  <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;full&#39;</span><span class="p">,</span> <span class="n">recompute</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">aux</span><span class="o">.</span><span class="n">cols_exist</span><span class="p">(</span><span class="n">avels</span><span class="p">,</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Spineangle angular velocities do not exist in step&#39;</span><span class="p">)</span>
+
+    <span class="n">ss</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="n">hov</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">ss</span><span class="p">[</span><span class="n">hov</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Computing linear regression of angular velocity based on segmental bending velocities&#39;</span><span class="p">)</span>
+    <span class="n">df_reg</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="n">p0</span> <span class="o">=</span> <span class="n">avels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">X0</span> <span class="o">=</span> <span class="n">ss</span><span class="p">[[</span><span class="n">p0</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">reg0</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X0</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">sc0</span> <span class="o">=</span> <span class="n">reg0</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X0</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">c0</span> <span class="o">=</span> <span class="n">reg0</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">p1</span> <span class="o">=</span> <span class="n">avels</span><span class="p">[:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">X1</span> <span class="o">=</span> <span class="n">ss</span><span class="p">[</span><span class="n">p1</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">reg1</span> <span class="o">=</span> <span class="n">LinearRegression</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">sc1</span> <span class="o">=</span> <span class="n">reg1</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="n">c1</span> <span class="o">=</span> <span class="n">reg1</span><span class="o">.</span><span class="n">coef_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">df_reg</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;idx&#39;</span><span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                       <span class="s1">&#39;single_par&#39;</span><span class="p">:</span> <span class="n">p0</span><span class="p">,</span> <span class="s1">&#39;single_score&#39;</span><span class="p">:</span> <span class="n">sc0</span><span class="p">,</span> <span class="s1">&#39;single_coef&#39;</span><span class="p">:</span> <span class="n">c0</span><span class="p">,</span>
+                       <span class="s1">&#39;cum_pars&#39;</span><span class="p">:</span> <span class="n">p1</span><span class="p">,</span> <span class="s1">&#39;cum_score&#39;</span><span class="p">:</span> <span class="n">sc1</span><span class="p">,</span> <span class="s1">&#39;cum_coef&#39;</span><span class="p">:</span> <span class="n">c1</span><span class="p">,</span>
+                       <span class="p">})</span>
+    <span class="n">df_reg</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">df_reg</span><span class="p">)</span>
+    <span class="n">df_reg</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;idx&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Computing correlation of angular velocity with combinations of segmental bending velocities&#39;</span><span class="p">)</span>
+    <span class="n">df_corr</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">N</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">/</span> <span class="mi">7</span><span class="p">)):</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">),</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">idx0</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">ps</span> <span class="o">=</span> <span class="n">avels</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">ss</span><span class="p">[</span><span class="n">ps</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                <span class="n">idx0</span> <span class="o">=</span> <span class="p">[</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">]</span>
+                <span class="n">ps</span> <span class="o">=</span> <span class="p">[</span><span class="n">avels</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">]</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">ss</span><span class="p">[</span><span class="n">ps</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">r</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">pearsonr</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">X</span><span class="p">)</span>
+
+            <span class="n">df_corr</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;idx&#39;</span><span class="p">:</span> <span class="n">idx0</span><span class="p">,</span> <span class="s1">&#39;pars&#39;</span><span class="p">:</span> <span class="n">ps</span><span class="p">,</span> <span class="s1">&#39;corr&#39;</span><span class="p">:</span> <span class="n">r</span><span class="p">,</span> <span class="s1">&#39;p-value&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">})</span>
+
+    <span class="n">df_corr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">df_corr</span><span class="p">)</span>
+    <span class="n">df_corr</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;idx&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">df_corr</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;corr&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">dic</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;bend2or_regression&#39;</span><span class="p">:</span> <span class="n">df_reg</span><span class="p">,</span> <span class="s1">&#39;bend2or_correlation&#39;</span><span class="p">:</span> <span class="n">df_corr</span><span class="p">}</span>
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Angular velocity definition analysis complete!&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dic</span></div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

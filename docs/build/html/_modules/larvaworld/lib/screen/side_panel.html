@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.screen.side_panel &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.screen.side_panel</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.screen.side_panel</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PYGAME_HIDE_SUPPORT_PROMPT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;hide&quot;</span>
+<span class="kn">import</span> <span class="nn">pygame</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">aux</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;SidePanel&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="SidePanel"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/side_panel.html#larvaworld.lib.screen.side_panel.SidePanel">[docs]</a><span class="k">class</span> <span class="nc">SidePanel</span><span class="p">:</span>
+    <span class="n">FONT_SIZE</span> <span class="o">=</span> <span class="mi">30</span>
+    <span class="n">LINE_SPACING_MIN</span> <span class="o">=</span> <span class="mi">25</span>
+    <span class="n">LINE_SPACING_MAX</span> <span class="o">=</span> <span class="mi">35</span>
+    <span class="n">SCENE_HEIGHT_THRESHOLD</span> <span class="o">=</span> <span class="mi">700</span>
+    <span class="n">DEFAULT_MARGIN</span> <span class="o">=</span> <span class="mi">35</span>
+    <span class="n">LEFT_MARGIN</span> <span class="o">=</span> <span class="mi">30</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">viewer</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">viewer</span> <span class="o">=</span> <span class="n">viewer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_num</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_spacing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">LINE_SPACING_MAX</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">viewer</span><span class="o">.</span><span class="n">h</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">SCENE_HEIGHT_THRESHOLD</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">LINE_SPACING_MIN</span>
+        <span class="k">if</span> <span class="n">pygame</span><span class="o">.</span><span class="n">font</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">font</span> <span class="o">=</span> <span class="n">pygame</span><span class="o">.</span><span class="n">font</span><span class="o">.</span><span class="n">Font</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">FONT_SIZE</span><span class="p">)</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">font</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">panel_rect</span> <span class="o">=</span> <span class="n">pygame</span><span class="o">.</span><span class="n">Rect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">viewer</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">viewer</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">panel_width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">viewer</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+
+
+
+    <span class="c1">#@ property</span>
+<div class="viewcode-block" id="SidePanel.render_intro"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.render_intro">[docs]</a>    <span class="k">def</span> <span class="nf">render_intro</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">viewer</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">cur_t</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">TimeUtil</span><span class="o">.</span><span class="n">current_time_millis</span><span class="p">()</span>
+        <span class="n">cum_t</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="n">cur_t</span> <span class="o">-</span> <span class="n">m</span><span class="o">.</span><span class="n">start_total_time</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;Total time: &#39;</span> <span class="o">+</span> <span class="n">aux</span><span class="o">.</span><span class="n">TimeUtil</span><span class="o">.</span><span class="n">format_time_seconds</span><span class="p">(</span><span class="n">cum_t</span><span class="p">),</span>
+            <span class="s1">&#39;Generation: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">generation_num</span><span class="p">),</span>
+            <span class="s1">&#39;Population: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">agents</span><span class="p">))</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Nagents</span><span class="p">),</span>
+            <span class="s1">&#39;Generation real-time: &#39;</span> <span class="o">+</span> <span class="n">aux</span><span class="o">.</span><span class="n">TimeUtil</span><span class="o">.</span><span class="n">format_time_seconds</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">generation_step_num</span><span class="o">*</span><span class="n">m</span><span class="o">.</span><span class="n">dt</span><span class="p">),</span>
+            <span class="s1">&#39;&#39;</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">render_line</span><span class="p">(</span><span class="n">line</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SidePanel.render_controls"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.render_controls">[docs]</a>    <span class="k">def</span> <span class="nf">render_controls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;+ : increase scene speed&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;- : decrase scene speed&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;R : restart&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;ESC : quit&#39;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">render_line</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">render_line</span><span class="p">(</span><span class="s1">&#39;Controls:&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">render_line</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">LEFT_MARGIN</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SidePanel.render_results"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.render_results">[docs]</a>    <span class="k">def</span> <span class="nf">render_results</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">viewer</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">best_gen</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">best_genome</span>
+        <span class="k">if</span> <span class="n">best_gen</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">render_line</span><span class="p">(</span><span class="s1">&#39;Max fitness: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">best_gen</span><span class="o">.</span><span class="n">fitness</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+            <span class="k">if</span> <span class="n">best_gen</span><span class="o">.</span><span class="n">fitness_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">dic</span> <span class="ow">in</span> <span class="n">best_gen</span><span class="o">.</span><span class="n">fitness_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">render_line</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1"> error: &#39;</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">short</span><span class="p">,</span> <span class="n">ks</span> <span class="ow">in</span> <span class="n">dic</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">render_line</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">short</span><span class="si">}</span><span class="s1">: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">ks</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">LEFT_MARGIN</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">render_line</span><span class="p">(</span><span class="s1">&#39;Best genome: &#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">space_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">render_line</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">best_gen</span><span class="o">.</span><span class="n">gConf</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">LEFT_MARGIN</span><span class="p">)</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">render_line</span><span class="p">(</span><span class="s1">&#39;No best genome yet!&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SidePanel.display_ga_info"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.display_ga_info">[docs]</a>    <span class="k">def</span> <span class="nf">display_ga_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_num</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">render_intro</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">render_results</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">render_controls</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="SidePanel.render_line"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.render_line">[docs]</a>    <span class="k">def</span> <span class="nf">render_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">extra_margin</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">font</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">aux</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">WHITE</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">viewer</span><span class="o">.</span><span class="n">w</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_MARGIN</span> <span class="o">+</span> <span class="n">extra_margin</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_num</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">line_spacing</span>
+        <span class="n">lint_pos</span> <span class="o">=</span> <span class="n">pygame</span><span class="o">.</span><span class="n">Rect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">viewer</span><span class="o">.</span><span class="n">draw_text_box</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">lint_pos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_num</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="SidePanel.draw"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/side_panel.html#larvaworld.lib.screen.side_panel.SidePanel.draw">[docs]</a>    <span class="k">def</span> <span class="nf">draw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># draw a black background for the side panel</span>
+        <span class="n">pygame</span><span class="o">.</span><span class="n">draw</span><span class="o">.</span><span class="n">rect</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">_window</span><span class="p">,</span> <span class="n">aux</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">BLACK</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">panel_rect</span><span class="p">)</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">draw_line</span><span class="p">((</span><span class="n">v</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">h</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">WHITE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">display_ga_info</span><span class="p">()</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

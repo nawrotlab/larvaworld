@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.aux.ang &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.aux.ang</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.aux.ang</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;wrap_angle_to_0&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;angles_between_vectors&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;angle_dif&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;rotationMatrix&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;rotate_points_around_point&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="wrap_angle_to_0"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/ang.html#larvaworld.lib.aux.ang.wrap_angle_to_0">[docs]</a><span class="k">def</span> <span class="nf">wrap_angle_to_0</span><span class="p">(</span><span class="n">angle</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">in_deg</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wraps an angle within an absolute range of pi if in radians,</span>
+<span class="sd">    or 180 if in degrees around 0.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">    - angle (float): The angle to wrap.</span>
+<span class="sd">    - in_deg (bool): If True, the angle is assumed to be in degrees.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    - float: The wrapped angle.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">in_deg</span><span class="p">:</span>
+        <span class="n">angle</span> <span class="o">=</span> <span class="n">angle</span> <span class="o">%</span> <span class="mf">360.0</span>
+        <span class="k">if</span> <span class="n">angle</span> <span class="o">&gt;</span> <span class="mf">180.0</span><span class="p">:</span>
+            <span class="n">angle</span> <span class="o">-=</span> <span class="mf">360.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">angle</span> <span class="o">=</span> <span class="n">angle</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">angle</span> <span class="o">&gt;</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">:</span>
+            <span class="n">angle</span> <span class="o">-=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span>
+
+    <span class="k">return</span> <span class="n">angle</span></div>
+
+
+
+<div class="viewcode-block" id="angles_between_vectors"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/ang.html#larvaworld.lib.aux.ang.angles_between_vectors">[docs]</a><span class="k">def</span> <span class="nf">angles_between_vectors</span><span class="p">(</span><span class="n">xy_front</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">xy_mid</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">xy_rear</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="n">in_deg</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">wrap_to_0</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate the angles defined by 3 arrays of 2D points.</span>
+<span class="sd">    Each line of the 3 arrays defines a pair of vectors :</span>
+<span class="sd">        - front vector starting at the midpoint and ending at the frontpoint.</span>
+<span class="sd">        - rear vector starting at the rearpoint and ending at the midpoint.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        xy_front (np.ndarray):</span>
+<span class="sd">            The coordinates of the frontpoints as an array of shape (N,2).</span>
+<span class="sd">        xy_mid (np.ndarray):</span>
+<span class="sd">            The coordinates of the midpoints as an array of shape (N,2). Defaults to array of (0,0) if not provided.</span>
+<span class="sd">        xy_rear (np.ndarray):</span>
+<span class="sd">            The coordinates of the rearpoints as an array of shape (N,2). Default to rear vectors parallel to the x-axis if not provided.</span>
+<span class="sd">        in_deg (bool):</span>
+<span class="sd">            If True, the angle is returned in degrees.</span>
+<span class="sd">        wrap_to_0 (bool):</span>
+<span class="sd">            If True, the angle is normalized within a range (-lim,lim) where lim=π (180 if in_deg is True).</span>
+<span class="sd">            Otherwise, the angle is normalized within a range (0,2*lim)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: The array of pairwise angles of the front and rear vectors. Range [-π, π).</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">xy_front</span> <span class="o">=</span> <span class="n">xy_front</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">xy_mid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">xy_mid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">xy_front</span><span class="p">)</span>
+
+    <span class="n">xy_mid</span> <span class="o">=</span> <span class="n">xy_mid</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">xy_front</span> <span class="o">-=</span> <span class="n">xy_mid</span>
+    <span class="n">a1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">xy_front</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">xy_front</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">xy_rear</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">xy_rear</span> <span class="o">=</span> <span class="n">xy_rear</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">xy_rear</span> <span class="o">=</span> <span class="n">xy_mid</span> <span class="o">-</span> <span class="n">xy_rear</span>
+        <span class="n">a2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">xy_rear</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">xy_rear</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">a1</span> <span class="o">-</span> <span class="n">a2</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">a1</span>
+
+    <span class="k">if</span> <span class="n">wrap_to_0</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">remainder</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="n">a</span><span class="p">[</span><span class="n">a</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">a</span><span class="p">[</span><span class="n">a</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+    <span class="k">if</span> <span class="n">in_deg</span><span class="p">:</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">a</span></div>
+
+
+<div class="viewcode-block" id="angle_dif"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/ang.html#larvaworld.lib.aux.ang.angle_dif">[docs]</a><span class="k">def</span> <span class="nf">angle_dif</span><span class="p">(</span><span class="n">angle_1</span><span class="p">,</span> <span class="n">angle_2</span><span class="p">,</span> <span class="n">in_deg</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes the difference between two angles</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        angle_1, angle_2 : float</span>
+<span class="sd">            The angles</span>
+<span class="sd">        in_deg : bool, optional</span>
+<span class="sd">            Whether angles are in degrees (default is True)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        a</span>
+<span class="sd">            the angle</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="n">a</span> <span class="o">=</span> <span class="n">angle_1</span> <span class="o">-</span> <span class="n">angle_2</span>
+    <span class="k">if</span> <span class="n">in_deg</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+    <span class="k">else</span> <span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span></div>
+
+<div class="viewcode-block" id="rotationMatrix"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/ang.html#larvaworld.lib.aux.ang.rotationMatrix">[docs]</a><span class="k">def</span> <span class="nf">rotationMatrix</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">)],</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">)]])</span></div>
+
+
+<div class="viewcode-block" id="rotate_points_around_point"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/ang.html#larvaworld.lib.aux.ang.rotate_points_around_point">[docs]</a><span class="k">def</span> <span class="nf">rotate_points_around_point</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">radians</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Rotate multiple points around a given point clockwise</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        points : List[Tuple[float]]</span>
+<span class="sd">            The XY coordinates of the points to be rotated</span>
+<span class="sd">        radians : float</span>
+<span class="sd">            The rotation angle</span>
+<span class="sd">        origin : Tuple[float], optional</span>
+<span class="sd">            The XY coordinates of the rotation point (default is [0, 0])</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ps : List[Tuple[float]]</span>
+<span class="sd">            The XY coordinates of the rotated points</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">origin</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">origin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">origin</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">points</span> <span class="o">-</span> <span class="n">origin</span><span class="p">)</span> <span class="o">@</span> <span class="n">rotationMatrix</span><span class="p">(</span><span class="n">radians</span><span class="p">)</span> <span class="o">+</span> <span class="n">origin</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

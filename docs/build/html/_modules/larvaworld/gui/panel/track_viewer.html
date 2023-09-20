@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.gui.panel.track_viewer &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.gui.panel.track_viewer</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.gui.panel.track_viewer</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">panel</span> <span class="k">as</span> <span class="nn">pn</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">holoviews</span> <span class="k">as</span> <span class="nn">hv</span>
+
+<span class="n">pn</span><span class="o">.</span><span class="n">extension</span><span class="p">()</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.process.dataset</span> <span class="kn">import</span> <span class="n">LarvaDatasetCollection</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;TrackViewer&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="TrackViewer"><a class="viewcode-back" href="../../../../content/larvaworld/gui/panel/track_viewer.html#larvaworld.gui.panel.track_viewer.TrackViewer">[docs]</a><span class="k">class</span> <span class="nc">TrackViewer</span><span class="p">(</span><span class="n">LarvaDatasetCollection</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">size</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">xy_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_data</span><span class="p">()</span>
+
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">arena_dims</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image_kws</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;Trajectory viewer&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;xlim&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="n">x</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">x</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="s1">&#39;ylim&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="n">y</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">y</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+            <span class="s1">&#39;width&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+            <span class="s1">&#39;height&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+            <span class="s1">&#39;xlabel&#39;</span><span class="p">:</span> <span class="s1">&#39;X (m)&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;ylabel&#39;</span><span class="p">:</span> <span class="s1">&#39;Y (m)&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_app</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="TrackViewer.build_data"><a class="viewcode-back" href="../../../../content/larvaworld/gui/panel/track_viewer.html#larvaworld.gui.panel.track_viewer.TrackViewer.build_data">[docs]</a>    <span class="k">def</span> <span class="nf">build_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">l</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">xy</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">load_traj</span><span class="p">()</span>
+            <span class="n">xy_origin</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">g</span> <span class="o">-</span> <span class="n">g</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">xy</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)])</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+            <span class="n">dsp_mu</span><span class="o">=</span><span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="p">((</span><span class="n">ttt</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ttt</span> <span class="ow">in</span> <span class="n">xy_origin</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;Step&#39;</span><span class="p">)}</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="n">xy</span><span class="p">,</span> <span class="s1">&#39;origin&#39;</span><span class="p">:</span> <span class="n">xy_origin</span><span class="p">,</span> <span class="s1">&#39;dispersal&#39;</span><span class="p">:</span> <span class="n">dsp_mu</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+
+<div class="viewcode-block" id="TrackViewer.get_app"><a class="viewcode-back" href="../../../../content/larvaworld/gui/panel/track_viewer.html#larvaworld.gui.panel.track_viewer.TrackViewer.get_app">[docs]</a>    <span class="k">def</span> <span class="nf">get_app</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="n">cb_IDs</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">CheckBoxGroup</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">)</span>
+        <span class="n">cb_vis</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">CheckBoxGroup</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Positions&#39;</span><span class="p">,</span> <span class="s1">&#39;Disperal circle&#39;</span><span class="p">],</span>
+                                          <span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Positions&#39;</span><span class="p">,</span> <span class="s1">&#39;IDs&#39;</span><span class="p">,</span> <span class="s1">&#39;Tracks&#39;</span><span class="p">,</span> <span class="s1">&#39;Disperal circle&#39;</span><span class="p">])</span>
+        <span class="n">cb_rnd_col</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">Checkbox</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Random colors&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">disabled</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">cb_dispersal</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">Checkbox</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Align tracks to origin&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">slider_kws</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;width&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+            <span class="s1">&#39;start&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;end&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s1">&#39;interval&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="mi">1000</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">),</span>
+            <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;step&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+            <span class="s1">&#39;loop_policy&#39;</span><span class="p">:</span> <span class="s1">&#39;loop&#39;</span><span class="p">,</span>
+
+        <span class="p">}</span>
+        <span class="n">time_slider</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">widgets</span><span class="o">.</span><span class="n">Player</span><span class="p">(</span><span class="o">**</span><span class="n">slider_kws</span><span class="p">)</span>
+
+        <span class="nd">@pn</span><span class="o">.</span><span class="n">depends</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="n">time_slider</span><span class="p">,</span> <span class="n">valid_gIDs</span><span class="o">=</span><span class="n">cb_IDs</span><span class="p">,</span> <span class="n">dispersal_on</span><span class="o">=</span><span class="n">cb_dispersal</span><span class="p">,</span> <span class="n">vis_ops</span><span class="o">=</span><span class="n">cb_vis</span><span class="p">,</span> <span class="n">rnd_cols</span><span class="o">=</span><span class="n">cb_rnd_col</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">get_image</span><span class="p">(</span><span class="n">valid_gIDs</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">dispersal_on</span><span class="p">,</span> <span class="n">vis_ops</span><span class="p">,</span> <span class="n">rnd_cols</span><span class="p">):</span>
+            <span class="n">pos_on</span> <span class="o">=</span> <span class="s1">&#39;Positions&#39;</span> <span class="ow">in</span> <span class="n">vis_ops</span>
+            <span class="n">ids_on</span> <span class="o">=</span> <span class="s1">&#39;IDs&#39;</span> <span class="ow">in</span> <span class="n">vis_ops</span>
+            <span class="n">paths_on</span> <span class="o">=</span> <span class="s1">&#39;Tracks&#39;</span> <span class="ow">in</span> <span class="n">vis_ops</span>
+            <span class="n">circle_on</span> <span class="o">=</span> <span class="s1">&#39;Disperal circle&#39;</span> <span class="ow">in</span> <span class="n">vis_ops</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;origin&#39;</span> <span class="k">if</span> <span class="n">dispersal_on</span> <span class="k">else</span> <span class="s1">&#39;default&#39;</span>
+
+            <span class="n">goverlay</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">gID</span> <span class="ow">in</span> <span class="n">valid_gIDs</span><span class="p">:</span>
+                <span class="n">gdata</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">xy_data</span><span class="p">[</span><span class="n">gID</span><span class="p">]</span>
+                <span class="n">grouped_xy</span><span class="o">=</span><span class="n">gdata</span><span class="p">[</span><span class="n">mode</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span>
+
+                <span class="n">track_kws</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">rnd_cols</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">color_palette</span><span class="p">[</span><span class="n">gID</span><span class="p">],</span>
+                <span class="p">}</span>
+                <span class="n">_points</span> <span class="o">=</span> <span class="n">grouped_xy</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+
+                <span class="n">points</span> <span class="o">=</span> <span class="n">hv</span><span class="o">.</span><span class="n">Points</span><span class="p">(</span><span class="n">_points</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">gID</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="o">**</span><span class="n">track_kws</span><span class="p">)</span>
+                <span class="n">overlay</span> <span class="o">=</span> <span class="n">points</span>
+
+                <span class="k">if</span> <span class="n">ids_on</span><span class="p">:</span>
+                    <span class="n">labels</span> <span class="o">=</span> <span class="n">hv</span><span class="o">.</span><span class="n">Labels</span><span class="p">(</span><span class="n">_points</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(),</span> <span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="n">text_font_size</span><span class="o">=</span><span class="s1">&#39;8pt&#39;</span><span class="p">,</span> <span class="n">xoffset</span><span class="o">=</span><span class="mf">0.015</span><span class="p">,</span>
+                                                                               <span class="n">visible</span><span class="o">=</span><span class="n">ids_on</span><span class="p">)</span>
+                    <span class="n">overlay</span> <span class="o">*=</span> <span class="n">labels</span>
+                <span class="k">if</span> <span class="n">paths_on</span><span class="p">:</span>
+                    <span class="n">_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">xyi</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">xyi</span> <span class="ow">in</span> <span class="n">grouped_xy</span><span class="p">]</span>
+                    <span class="n">paths</span> <span class="o">=</span> <span class="n">hv</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">_paths</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="o">**</span><span class="n">track_kws</span><span class="p">)</span>
+                    <span class="n">overlay</span> <span class="o">*=</span> <span class="n">paths</span>
+                <span class="k">if</span> <span class="n">circle_on</span> <span class="ow">and</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;origin&#39;</span><span class="p">:</span>
+                    <span class="n">r</span> <span class="o">=</span> <span class="n">gdata</span><span class="p">[</span><span class="s1">&#39;dispersal&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">circle</span> <span class="o">=</span> <span class="n">hv</span><span class="o">.</span><span class="n">Ellipse</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="n">line_width</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>  <span class="o">**</span><span class="n">track_kws</span><span class="p">)</span>
+                    <span class="n">overlay</span> <span class="o">*=</span> <span class="n">circle</span>
+                    <span class="c1"># r = ((_points.dropna() ** 2).sum(axis=1) ** 0.5).mean()</span>
+                    <span class="c1"># circle2 = hv.Ellipse(0, 0, r).opts(line_width=4,line_dash=&#39;dotted&#39;, **track_kws)</span>
+                    <span class="c1"># overlay *= circle2</span>
+                <span class="n">goverlay</span> <span class="o">=</span> <span class="n">overlay</span> <span class="k">if</span> <span class="n">goverlay</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">goverlay</span> <span class="o">*</span> <span class="n">overlay</span>
+
+            <span class="n">goverlay</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span>
+                <span class="n">hv</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">Points</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">visible</span><span class="o">=</span><span class="n">pos_on</span><span class="p">),</span>
+                <span class="c1"># hv.opts.Labels(text_font_size=&#39;8pt&#39;, xoffset=0.015,visible=ids_on),</span>
+            <span class="p">)</span>
+
+            <span class="n">goverlay</span><span class="o">.</span><span class="n">opts</span><span class="p">(</span><span class="n">responsive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">image_kws</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">goverlay</span>
+
+        <span class="n">img_dmap</span> <span class="o">=</span> <span class="n">hv</span><span class="o">.</span><span class="n">DynamicMap</span><span class="p">(</span><span class="n">get_image</span><span class="p">)</span>
+        <span class="n">app</span> <span class="o">=</span> <span class="n">pn</span><span class="o">.</span><span class="n">Row</span><span class="p">(</span><span class="n">img_dmap</span><span class="p">,</span> <span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span>
+            <span class="n">pn</span><span class="o">.</span><span class="n">Row</span><span class="p">(</span>
+                <span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="s1">&#39;Datasets&#39;</span><span class="p">,</span> <span class="n">cb_IDs</span><span class="p">,</span> <span class="n">sizing_mode</span><span class="o">=</span><span class="s1">&#39;stretch_width&#39;</span><span class="p">),</span>
+                <span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="s1">&#39;Visibility&#39;</span><span class="p">,</span> <span class="n">cb_vis</span><span class="p">,</span> <span class="n">sizing_mode</span><span class="o">=</span><span class="s1">&#39;stretch_width&#39;</span><span class="p">),</span>
+                <span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="s1">&#39;Settings&#39;</span><span class="p">,</span> <span class="n">cb_rnd_col</span><span class="p">,</span> <span class="n">cb_dispersal</span><span class="p">,</span> <span class="n">sizing_mode</span><span class="o">=</span><span class="s1">&#39;stretch_width&#39;</span><span class="p">),</span>
+                <span class="n">width</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">),</span>
+            <span class="n">pn</span><span class="o">.</span><span class="n">Row</span><span class="p">(</span><span class="n">pn</span><span class="o">.</span><span class="n">Column</span><span class="p">(</span><span class="s1">&#39;Tick&#39;</span><span class="p">,</span> <span class="n">time_slider</span><span class="p">))</span>
+        <span class="p">))</span>
+        <span class="k">return</span> <span class="n">app</span></div></div>
+
+
+<span class="c1"># if __name__ == &quot;__main__&quot;:</span>
+<span class="c1">#     refIDs = reg.conf.Ref.confIDs[10:13]</span>
+<span class="c1">#     # d=reg.loadRef(refID)</span>
+<span class="c1">#     v = TrackViewer(refIDs=refIDs)</span>
+<span class="c1">#     # from larvaworld.gui.tabs.larvaworld_gui import LarvaworldGui</span>
+<span class="c1">#     # larvaworld_gui = LarvaworldGui()</span>
+<span class="c1">#     # v=TrackViewer()</span>
+<span class="c1">#     app = v.get_app()</span>
+<span class="c1">#     # v.get_app()</span>
+<span class="c1">#     # app = v.get_app()</span>
+<span class="c1">#     app.servable()</span>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.model.modules.memory &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.model.modules.memory</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.model.modules.memory</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib.ipc</span> <span class="kn">import</span> <span class="n">LarvaMessage</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.ipc.ipc</span> <span class="kn">import</span> <span class="n">Client</span>
+
+
+
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib.model.modules.oscillator</span> <span class="kn">import</span> <span class="n">Timer</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;Memory&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;RLmemory&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;RLOlfMemory&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;RLTouchMemory&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;RemoteBrianModelMemory&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="Memory"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.Memory">[docs]</a><span class="k">class</span> <span class="nc">Memory</span><span class="p">(</span><span class="n">Timer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">brain</span><span class="p">,</span> <span class="n">gain</span><span class="p">,</span> <span class="n">update_dt</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">train_dur</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">brain</span> <span class="o">=</span> <span class="n">brain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">gain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_gain</span> <span class="o">=</span> <span class="n">gain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">gain</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Ngains</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain_ids</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_dur</span> <span class="o">=</span> <span class="n">train_dur</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Niters</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">update_dt</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iterator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Niters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rewardSum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="Memory.step"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.Memory.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">dx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">count_time</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span></div></div>
+
+
+<div class="viewcode-block" id="RLmemory"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory">[docs]</a><span class="k">class</span> <span class="nc">RLmemory</span><span class="p">(</span><span class="n">Memory</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gain_space</span><span class="p">,</span> <span class="n">Delta</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">state_spacePerSide</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+                 <span class="n">gamma</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">state_specific_best</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_specific_best</span> <span class="o">=</span> <span class="n">state_specific_best</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">gamma</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Delta</span> <span class="o">=</span> <span class="n">Delta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain_space</span> <span class="o">=</span> <span class="n">gain_space</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_spacePerSide</span> <span class="o">=</span> <span class="n">state_spacePerSide</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_space</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">ii</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_spacePerSide</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">repeat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">Ngains</span><span class="p">)])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">actions</span> <span class="o">=</span> <span class="p">[</span><span class="n">ii</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain_space</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">Ngains</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">state_space</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">)))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">lastAction</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lastState</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="RLmemory.state_collapse"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.state_collapse">[docs]</a>    <span class="k">def</span> <span class="nf">state_collapse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dx</span><span class="p">):</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_spacePerSide</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="p">[</span><span class="n">dx</span><span class="p">]</span>
+        <span class="n">stateV</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dx</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dx</span><span class="p">[</span><span class="n">index</span><span class="p">]:</span>
+
+                <span class="n">dxI</span> <span class="o">=</span> <span class="n">dx</span><span class="p">[</span><span class="n">index</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">stateIntermitt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+                    <span class="n">stateIntermitt</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dxI</span><span class="p">)</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">ii</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Delta</span>
+            <span class="n">stateV</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">dxI</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">stateIntermitt</span><span class="p">))</span> <span class="o">+</span> <span class="n">k</span><span class="p">))</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">state_space</span> <span class="o">==</span> <span class="n">stateV</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">state</span></div>
+
+<div class="viewcode-block" id="RLmemory.step"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">dx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">agent</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">table_collector</span>
+            <span class="k">if</span> <span class="n">temp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">temp</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="s1">&#39;best_gains&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s1">&#39;best_gains&#39;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">tables</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">count_time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_t</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_dur</span> <span class="o">*</span> <span class="mi">60</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Best gain : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_gain</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_table</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_reward</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="p">(</span><span class="n">dx</span><span class="p">):</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_collapse</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span>
+                <span class="n">actionID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_action</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">update_q_table</span><span class="p">(</span><span class="n">actionID</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rewardSum</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">best_gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_best_combo</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">agent</span><span class="p">,</span> <span class="n">col</span><span class="p">))</span>
+                        <span class="k">except</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rewardSum</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">iterator</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">iterator</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_specific_best</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_gain</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_collapse</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span>
+                <span class="n">actionID</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="n">state</span><span class="p">])</span>
+                <span class="n">action</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">[</span><span class="n">actionID</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="nb">id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain_ids</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+                <span class="c1"># print(self.gain, self.best_gain, self.q_table)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span></div>
+
+<div class="viewcode-block" id="RLmemory.add_reward"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.add_reward">[docs]</a>    <span class="k">def</span> <span class="nf">add_reward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reward</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rewardSum</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.01</span></div>
+
+<div class="viewcode-block" id="RLmemory.get_best_combo"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.get_best_combo">[docs]</a>    <span class="k">def</span> <span class="nf">get_best_combo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain_ids</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))]))</span></div>
+
+<div class="viewcode-block" id="RLmemory.condition"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.condition">[docs]</a>    <span class="k">def</span> <span class="nf">condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterator</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Niters</span></div>
+
+<div class="viewcode-block" id="RLmemory.update_q_table"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.update_q_table">[docs]</a>    <span class="k">def</span> <span class="nf">update_q_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actionID</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">reward</span><span class="p">):</span>
+        <span class="n">old_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lastState</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lastAction</span><span class="p">]</span>
+        <span class="n">new_value</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">old_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">reward</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="n">state</span><span class="p">]))</span>
+        <span class="c1"># print(old_value, new_value, self.rewardSum, next_max)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lastState</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lastAction</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lastAction</span> <span class="o">=</span> <span class="n">actionID</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lastState</span> <span class="o">=</span> <span class="n">state</span></div>
+
+<div class="viewcode-block" id="RLmemory.select_action"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RLmemory.select_action">[docs]</a>    <span class="k">def</span> <span class="nf">select_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">:</span>
+            <span class="n">actionID</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">actionID</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_table</span><span class="p">[</span><span class="n">state</span><span class="p">])</span>  <span class="c1"># Exploit learned values</span>
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="nb">id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gain_ids</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">actions</span><span class="p">[</span><span class="n">actionID</span><span class="p">][</span><span class="n">ii</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">actionID</span></div></div>
+
+
+<div class="viewcode-block" id="RLOlfMemory"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RLOlfMemory">[docs]</a><span class="k">class</span> <span class="nc">RLOlfMemory</span><span class="p">(</span><span class="n">RLmemory</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;olf&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">first_odor_best_gain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">best_gain</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">second_odor_best_gain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">best_gain</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="RLTouchMemory"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RLTouchMemory">[docs]</a><span class="k">class</span> <span class="nc">RLTouchMemory</span><span class="p">(</span><span class="n">RLmemory</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;touch&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># gain = {s: 0.0 for s in brain.agent.get_sensors()}</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RLTouchMemory.condition"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RLTouchMemory.condition">[docs]</a>    <span class="k">def</span> <span class="nf">condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="mi">1</span> <span class="ow">in</span> <span class="n">dx</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="ow">or</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">in</span> <span class="n">dx</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="mi">1</span> <span class="ow">in</span> <span class="n">dx</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rewardSum</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterator</span>
+            <span class="k">elif</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">in</span> <span class="n">dx</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rewardSum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iterator</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div></div>
+
+
+<div class="viewcode-block" id="RemoteBrianModelMemory"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RemoteBrianModelMemory">[docs]</a><span class="k">class</span> <span class="nc">RemoteBrianModelMemory</span><span class="p">(</span><span class="n">Memory</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">brain</span><span class="p">,</span> <span class="n">gain</span><span class="p">,</span><span class="n">G</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">server_host</span><span class="o">=</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">server_port</span><span class="o">=</span><span class="mi">5795</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">brain</span><span class="p">,</span> <span class="n">gain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server_host</span> <span class="o">=</span> <span class="n">server_host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server_port</span> <span class="o">=</span> <span class="n">server_port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sim_id</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">agent</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">G</span> <span class="o">=</span> <span class="n">G</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_sim</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step_id</span> <span class="o">=</span> <span class="mi">0</span>
+
+
+<div class="viewcode-block" id="RemoteBrianModelMemory.runRemoteModel"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RemoteBrianModelMemory.runRemoteModel">[docs]</a>    <span class="k">def</span> <span class="nf">runRemoteModel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_instance_id</span><span class="p">,</span> <span class="n">odor_id</span><span class="p">,</span> <span class="n">t_sim</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">t_warmup</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">concentration</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># T: duration of remote model simulation in ms</span>
+        <span class="c1"># warmup: duration of remote model warmup in ms</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">LarvaMessage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sim_id</span><span class="p">,</span> <span class="n">model_instance_id</span><span class="p">,</span> <span class="n">odor_id</span><span class="o">=</span><span class="n">odor_id</span><span class="p">,</span> <span class="n">odor_concentration</span><span class="o">=</span><span class="n">concentration</span><span class="p">,</span>
+                           <span class="n">T</span><span class="o">=</span><span class="n">t_sim</span><span class="p">,</span> <span class="n">warmup</span><span class="o">=</span><span class="n">t_warmup</span><span class="p">,</span> <span class="n">step_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">step_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># send model parameters to remote model server &amp; wait for result response</span>
+        <span class="k">with</span> <span class="n">Client</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">server_host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_port</span><span class="p">))</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+            <span class="p">[</span><span class="n">response</span><span class="p">]</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">send</span><span class="p">([</span><span class="n">msg</span><span class="p">])</span>  <span class="c1"># this is a LarvaMessage object again</span>
+            <span class="c1"># extract returned model results</span>
+            <span class="n">mbon_p</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="s1">&#39;MBONp&#39;</span><span class="p">)</span>
+            <span class="n">mbon_n</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="s1">&#39;MBONn&#39;</span><span class="p">)</span>
+            <span class="n">mbon_dif</span> <span class="o">=</span> <span class="n">mbon_p</span> <span class="o">-</span> <span class="n">mbon_n</span>
+            <span class="k">return</span> <span class="n">mbon_dif</span></div>
+            <span class="c1"># return response.param(&#39;preference_index&#39;)</span>
+
+<div class="viewcode-block" id="RemoteBrianModelMemory.step"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/memory.html#larvaworld.lib.model.modules.memory.RemoteBrianModelMemory.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reward</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">t_warmup</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="c1"># Default message arguments</span>
+        <span class="k">if</span> <span class="n">dx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">msg_kws0</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;model_instance_id&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">agent</span><span class="o">.</span><span class="n">unique_id</span><span class="p">,</span>
+            <span class="s1">&#39;t_sim&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_sim</span><span class="p">,</span>
+            <span class="s1">&#39;t_warmup&#39;</span> <span class="p">:</span> <span class="n">t_warmup</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Let&#39;s focus on the CS odor only :</span>
+        <span class="n">msg_kws</span><span class="o">=</span><span class="p">{</span>
+            <span class="c1"># Default :</span>
+            <span class="s1">&#39;odor_id&#39;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="c1"># The concentration change :</span>
+            <span class="s1">&#39;concentration&#39;</span> <span class="p">:</span> <span class="n">dx</span><span class="p">[</span><span class="s1">&#39;Odor&#39;</span><span class="p">],</span>
+            <span class="c1"># reward as 0 or 1</span>
+            <span class="s1">&#39;reward&#39;</span> <span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+
+        <span class="p">}</span>
+
+        <span class="n">mbon_dif</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runRemoteModel</span><span class="p">(</span><span class="o">**</span><span class="n">msg_kws0</span><span class="p">,</span> <span class="o">**</span><span class="n">msg_kws</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gain</span><span class="p">[</span><span class="s1">&#39;Odor&#39;</span><span class="p">]</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">G</span> <span class="o">*</span> <span class="n">mbon_dif</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step_id</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">gain</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

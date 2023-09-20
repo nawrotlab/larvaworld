@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="python" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.process &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="angular" href="angular.html" />
+    <link rel="prev" title="traj" href="../plot/traj.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to the docs!</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">larvaworld.cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">larvaworld.gui</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">larvaworld.lib</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">larvaworld.lib.model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../param/index.html">larvaworld.lib.param</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plot/index.html">larvaworld.lib.plot</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">larvaworld.lib.process</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="angular.html">angular</a></li>
+<li class="toctree-l4"><a class="reference internal" href="annotation.html">annotation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="calibration.html">calibration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html">dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html">evaluation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="patch.html">patch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocess.html">preprocess</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spatial.html">spatial</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../screen/index.html">larvaworld.lib.screen</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sim/index.html">larvaworld.lib.sim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../util/index.html">larvaworld.lib.util</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">reg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">larvaworld.lib</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.process</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/process/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="larvaworld-lib-process">
+<h1>larvaworld.lib.process<a class="headerlink" href="#larvaworld-lib-process" title="Permalink to this heading"></a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="angular.html">angular</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="angular.html#angular-processing">angular_processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="angular.html#larvaworld.lib.process.angular.angular_processing"><code class="docutils literal notranslate"><span class="pre">angular_processing()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="angular.html#comp-angular">comp_angular</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="angular.html#larvaworld.lib.process.angular.comp_angular"><code class="docutils literal notranslate"><span class="pre">comp_angular()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="angular.html#comp-extrema-multi">comp_extrema_multi</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="angular.html#larvaworld.lib.process.angular.comp_extrema_multi"><code class="docutils literal notranslate"><span class="pre">comp_extrema_multi()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="angular.html#comp-extrema-solo">comp_extrema_solo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="angular.html#larvaworld.lib.process.angular.comp_extrema_solo"><code class="docutils literal notranslate"><span class="pre">comp_extrema_solo()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="annotation.html">annotation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#bout-detection">bout_detection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.bout_detection"><code class="docutils literal notranslate"><span class="pre">bout_detection()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#bout-distribution">bout_distribution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.bout_distribution"><code class="docutils literal notranslate"><span class="pre">bout_distribution()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#comp-chunk-dicts">comp_chunk_dicts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.comp_chunk_dicts"><code class="docutils literal notranslate"><span class="pre">comp_chunk_dicts()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#compute-interference-data">compute_interference_data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.compute_interference_data"><code class="docutils literal notranslate"><span class="pre">compute_interference_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#crawl-annotation">crawl_annotation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.crawl_annotation"><code class="docutils literal notranslate"><span class="pre">crawl_annotation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#detect-epochs">detect_epochs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.detect_epochs"><code class="docutils literal notranslate"><span class="pre">detect_epochs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#detect-pauses">detect_pauses</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.detect_pauses"><code class="docutils literal notranslate"><span class="pre">detect_pauses()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#detect-runs">detect_runs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.detect_runs"><code class="docutils literal notranslate"><span class="pre">detect_runs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#detect-strides">detect_strides</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.detect_strides"><code class="docutils literal notranslate"><span class="pre">detect_strides()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#detect-turns">detect_turns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.detect_turns"><code class="docutils literal notranslate"><span class="pre">detect_turns()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#register-bout-distros">register_bout_distros</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.register_bout_distros"><code class="docutils literal notranslate"><span class="pre">register_bout_distros()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#turn-annotation">turn_annotation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.turn_annotation"><code class="docutils literal notranslate"><span class="pre">turn_annotation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#turn-mode-annotation">turn_mode_annotation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.turn_mode_annotation"><code class="docutils literal notranslate"><span class="pre">turn_mode_annotation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="annotation.html#weathervanesnheadcasts">weathervanesNheadcasts</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="annotation.html#larvaworld.lib.process.annotation.weathervanesNheadcasts"><code class="docutils literal notranslate"><span class="pre">weathervanesNheadcasts()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="calibration.html">calibration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="calibration.html#comp-segmentation">comp_segmentation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="calibration.html#larvaworld.lib.process.calibration.comp_segmentation"><code class="docutils literal notranslate"><span class="pre">comp_segmentation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="calibration.html#comp-stride-variation">comp_stride_variation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="calibration.html#larvaworld.lib.process.calibration.comp_stride_variation"><code class="docutils literal notranslate"><span class="pre">comp_stride_variation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="calibration.html#fit-metric-definition">fit_metric_definition</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="calibration.html#larvaworld.lib.process.calibration.fit_metric_definition"><code class="docutils literal notranslate"><span class="pre">fit_metric_definition()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="calibration.html#vel-definition">vel_definition</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="calibration.html#larvaworld.lib.process.calibration.vel_definition"><code class="docutils literal notranslate"><span class="pre">vel_definition()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">dataset</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#baselarvadataset">BaseLarvaDataset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset"><code class="docutils literal notranslate"><span class="pre">BaseLarvaDataset</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset.__params"><code class="docutils literal notranslate"><span class="pre">BaseLarvaDataset.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset._param"><code class="docutils literal notranslate"><span class="pre">BaseLarvaDataset._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset._parameters_state"><code class="docutils literal notranslate"><span class="pre">BaseLarvaDataset._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset.delete"><code class="docutils literal notranslate"><span class="pre">BaseLarvaDataset.delete()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset.generate_config"><code class="docutils literal notranslate"><span class="pre">BaseLarvaDataset.generate_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset.initGeo"><code class="docutils literal notranslate"><span class="pre">BaseLarvaDataset.initGeo()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset.name"><code class="docutils literal notranslate"><span class="pre">BaseLarvaDataset.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset.set_id"><code class="docutils literal notranslate"><span class="pre">BaseLarvaDataset.set_id()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#larvadataset">LarvaDataset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDataset"><code class="docutils literal notranslate"><span class="pre">LarvaDataset</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDataset.__params"><code class="docutils literal notranslate"><span class="pre">LarvaDataset.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDataset._param"><code class="docutils literal notranslate"><span class="pre">LarvaDataset._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDataset._parameters_state"><code class="docutils literal notranslate"><span class="pre">LarvaDataset._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDataset.enrich"><code class="docutils literal notranslate"><span class="pre">LarvaDataset.enrich()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDataset.get_chunk_par"><code class="docutils literal notranslate"><span class="pre">LarvaDataset.get_chunk_par()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDataset.name"><code class="docutils literal notranslate"><span class="pre">LarvaDataset.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDataset.visualize"><code class="docutils literal notranslate"><span class="pre">LarvaDataset.visualize()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#larvadatasetcollection">LarvaDatasetCollection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.N"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.N</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.Nticks"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.Nticks</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.arena_dims"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.arena_dims</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.arena_geometry"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.arena_geometry</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.color_palette"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.color_palette</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.concat_data"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.concat_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.data_dict"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.data_dict</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.data_palette"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.data_palette</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.data_palette_with_N"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.data_palette_with_N</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.dt"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.dt</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.duration"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.duration</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.fr"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.fr</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.from_agentpy_output"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.from_agentpy_output()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.get_colors"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.get_colors()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.get_datasets"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.get_datasets()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.labels_with_N"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.labels_with_N</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.plot"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.plot_dir"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.plot_dir</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.set_dir"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.set_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.tlim"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.tlim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.trange"><code class="docutils literal notranslate"><span class="pre">LarvaDatasetCollection.trange()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#paramlarvadataset">ParamLarvaDataset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.__params"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset._load_step"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset._load_step()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset._param"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset._parameters_state"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset._save_step"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset._save_step()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.c"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.c</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.comp_centroid"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.comp_centroid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.comp_length"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.comp_length()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.config"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.config2"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.config2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.contour_xy_data"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.contour_xy_data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.contour_xy_data_byID"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.contour_xy_data_byID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.data"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.e"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.e</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.endpoint_data"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.endpoint_data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.get_par"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.get_par()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.load"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.load_dicts"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.load_dicts()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.load_traj"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.load_traj()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.merge_configs"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.merge_configs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.midline_seg_orients_data_byID"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.midline_seg_orients_data_byID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.midline_seg_orients_from_mid"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.midline_seg_orients_from_mid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.midline_seg_xy_data_byID"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.midline_seg_xy_data_byID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.midline_xy_1less"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.midline_xy_1less()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.midline_xy_data"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.midline_xy_data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.midline_xy_data_byID"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.midline_xy_data_byID</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.name"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.path_to_config"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.path_to_config</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.path_to_file"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.path_to_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.read"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.read()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.s"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.s</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.save"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.save()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.save_config"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.save_config()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.set_data"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.set_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.step_data"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.step_data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.store"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.store()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.update_Nticks"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.update_Nticks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.update_ids_in_data"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.update_ids_in_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.validate_IDs"><code class="docutils literal notranslate"><span class="pre">ParamLarvaDataset.validate_IDs()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html#convert-group-output-to-dataset">convert_group_output_to_dataset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="dataset.html#larvaworld.lib.process.dataset.convert_group_output_to_dataset"><code class="docutils literal notranslate"><span class="pre">convert_group_output_to_dataset()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="evaluation.html">evaluation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="evaluation.html#dataevaluation">DataEvaluation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.DataEvaluation"><code class="docutils literal notranslate"><span class="pre">DataEvaluation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.DataEvaluation.__params"><code class="docutils literal notranslate"><span class="pre">DataEvaluation.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.DataEvaluation._param"><code class="docutils literal notranslate"><span class="pre">DataEvaluation._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.DataEvaluation._parameters_state"><code class="docutils literal notranslate"><span class="pre">DataEvaluation._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.DataEvaluation.eval_modes"><code class="docutils literal notranslate"><span class="pre">DataEvaluation.eval_modes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.DataEvaluation.name"><code class="docutils literal notranslate"><span class="pre">DataEvaluation.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.DataEvaluation.norm_error_dict"><code class="docutils literal notranslate"><span class="pre">DataEvaluation.norm_error_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.DataEvaluation.norm_modes"><code class="docutils literal notranslate"><span class="pre">DataEvaluation.norm_modes</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="evaluation.html#id1">Evaluation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation"><code class="docutils literal notranslate"><span class="pre">Evaluation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.__params"><code class="docutils literal notranslate"><span class="pre">Evaluation.__params</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation._param"><code class="docutils literal notranslate"><span class="pre">Evaluation._param</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation._parameters_state"><code class="docutils literal notranslate"><span class="pre">Evaluation._parameters_state</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.arrange_evaluation"><code class="docutils literal notranslate"><span class="pre">Evaluation.arrange_evaluation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.build"><code class="docutils literal notranslate"><span class="pre">Evaluation.build()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.cycle_curve_metrics"><code class="docutils literal notranslate"><span class="pre">Evaluation.cycle_curve_metrics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.eval_datasets"><code class="docutils literal notranslate"><span class="pre">Evaluation.eval_datasets()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.eval_metrics"><code class="docutils literal notranslate"><span class="pre">Evaluation.eval_metrics</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.fit_func_multi"><code class="docutils literal notranslate"><span class="pre">Evaluation.fit_func_multi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.fit_func_solo"><code class="docutils literal notranslate"><span class="pre">Evaluation.fit_func_solo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.func_cycle_curve_multi"><code class="docutils literal notranslate"><span class="pre">Evaluation.func_cycle_curve_multi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.func_cycle_curve_solo"><code class="docutils literal notranslate"><span class="pre">Evaluation.func_cycle_curve_solo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.func_eval_metric_multi"><code class="docutils literal notranslate"><span class="pre">Evaluation.func_eval_metric_multi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.func_eval_metric_solo"><code class="docutils literal notranslate"><span class="pre">Evaluation.func_eval_metric_solo</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.name"><code class="docutils literal notranslate"><span class="pre">Evaluation.name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.Evaluation.refID"><code class="docutils literal notranslate"><span class="pre">Evaluation.refID</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="evaluation.html#rss">RSS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.RSS"><code class="docutils literal notranslate"><span class="pre">RSS()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="evaluation.html#rss-dic">RSS_dic</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.RSS_dic"><code class="docutils literal notranslate"><span class="pre">RSS_dic()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="evaluation.html#col-df">col_df</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.col_df"><code class="docutils literal notranslate"><span class="pre">col_df()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="evaluation.html#eval-rss">eval_RSS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.eval_RSS"><code class="docutils literal notranslate"><span class="pre">eval_RSS()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="evaluation.html#eval-distro-fast">eval_distro_fast</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.eval_distro_fast"><code class="docutils literal notranslate"><span class="pre">eval_distro_fast()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="evaluation.html#eval-end-fast">eval_end_fast</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.eval_end_fast"><code class="docutils literal notranslate"><span class="pre">eval_end_fast()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="evaluation.html#eval-fast">eval_fast</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="evaluation.html#larvaworld.lib.process.evaluation.eval_fast"><code class="docutils literal notranslate"><span class="pre">eval_fast()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="patch.html">patch</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="patch.html#comp-bearing-to-source">comp_bearing_to_source</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="patch.html#larvaworld.lib.process.patch.comp_bearing_to_source"><code class="docutils literal notranslate"><span class="pre">comp_bearing_to_source()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="patch.html#comp-chunk-bearing">comp_chunk_bearing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="patch.html#larvaworld.lib.process.patch.comp_chunk_bearing"><code class="docutils literal notranslate"><span class="pre">comp_chunk_bearing()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="patch.html#comp-patch-metrics">comp_patch_metrics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="patch.html#larvaworld.lib.process.patch.comp_patch_metrics"><code class="docutils literal notranslate"><span class="pre">comp_patch_metrics()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="patch.html#comp-time-on-patch">comp_time_on_patch</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="patch.html#larvaworld.lib.process.patch.comp_time_on_patch"><code class="docutils literal notranslate"><span class="pre">comp_time_on_patch()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="preprocess.html">preprocess</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="preprocess.html#exclude-rows">exclude_rows</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="preprocess.html#larvaworld.lib.process.preprocess.exclude_rows"><code class="docutils literal notranslate"><span class="pre">exclude_rows()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="preprocess.html#filter">filter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="preprocess.html#larvaworld.lib.process.preprocess.filter"><code class="docutils literal notranslate"><span class="pre">filter()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="preprocess.html#interpolate-nan-values">interpolate_nan_values</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="preprocess.html#larvaworld.lib.process.preprocess.interpolate_nan_values"><code class="docutils literal notranslate"><span class="pre">interpolate_nan_values()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="preprocess.html#rescale">rescale</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="preprocess.html#larvaworld.lib.process.preprocess.rescale"><code class="docutils literal notranslate"><span class="pre">rescale()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spatial.html">spatial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#align-trajectories">align_trajectories</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.align_trajectories"><code class="docutils literal notranslate"><span class="pre">align_trajectories()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#comp-pi">comp_PI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.comp_PI"><code class="docutils literal notranslate"><span class="pre">comp_PI()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#comp-centroid">comp_centroid</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.comp_centroid"><code class="docutils literal notranslate"><span class="pre">comp_centroid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#comp-datapi">comp_dataPI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.comp_dataPI"><code class="docutils literal notranslate"><span class="pre">comp_dataPI()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#comp-dispersion">comp_dispersion</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.comp_dispersion"><code class="docutils literal notranslate"><span class="pre">comp_dispersion()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#comp-length">comp_length</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.comp_length"><code class="docutils literal notranslate"><span class="pre">comp_length()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#comp-source-metrics">comp_source_metrics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.comp_source_metrics"><code class="docutils literal notranslate"><span class="pre">comp_source_metrics()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#comp-spatial">comp_spatial</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.comp_spatial"><code class="docutils literal notranslate"><span class="pre">comp_spatial()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#comp-straightness-index">comp_straightness_index</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.comp_straightness_index"><code class="docutils literal notranslate"><span class="pre">comp_straightness_index()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#comp-wind">comp_wind</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.comp_wind"><code class="docutils literal notranslate"><span class="pre">comp_wind()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#fixate-larva">fixate_larva</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.fixate_larva"><code class="docutils literal notranslate"><span class="pre">fixate_larva()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#scale-to-length">scale_to_length</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.scale_to_length"><code class="docutils literal notranslate"><span class="pre">scale_to_length()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#spatial-processing">spatial_processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.spatial_processing"><code class="docutils literal notranslate"><span class="pre">spatial_processing()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#store-spatial">store_spatial</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.store_spatial"><code class="docutils literal notranslate"><span class="pre">store_spatial()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spatial.html#straightness-index">straightness_index</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="spatial.html#larvaworld.lib.process.spatial.straightness_index"><code class="docutils literal notranslate"><span class="pre">straightness_index()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../plot/traj.html" class="btn btn-neutral float-left" title="traj" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="angular.html" class="btn btn-neutral float-right" title="angular" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
