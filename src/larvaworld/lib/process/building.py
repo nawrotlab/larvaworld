@@ -338,7 +338,7 @@ def import_datasets(source_ids, ids=None, colors=None, refIDs=None, **kwargs):
     return ds
 
 
-def import_dataset(labID, parent_dir=None, group_id=None,source_dir=None,target_dir=None, N=None, id=None, merged=False,
+def import_dataset(labID, parent_dir=None, group_id=None,raw_folder=None,proc_folder=None, N=None, id=None, merged=False,
                    refID=None, enrich_conf=None, **kwargs):
     print()
     print(f'----- Initializing {labID} format-specific dataset import. -----')
@@ -349,14 +349,14 @@ def import_dataset(labID, parent_dir=None, group_id=None,source_dir=None,target_
         group_id = parent_dir
 
     g = reg.conf.LabFormat.get(labID)
-    if source_dir is None:
+    if raw_folder is None:
         group_dir = g.path
         raw_folder = f'{group_dir}/raw'
-        source_dir = f'{raw_folder}/{parent_dir}'
-    if target_dir is None:
+    source_dir = f'{raw_folder}/{parent_dir}'
+    if proc_folder is None:
         group_dir = g.path
         proc_folder = f'{group_dir}/processed'
-        target_dir = f'{proc_folder}/{group_id}/{id}'
+    target_dir = f'{proc_folder}/{group_id}/{id}'
 
     if merged:
         source_dir = [f'{source_dir}/{f}' for f in os.listdir(source_dir)]
