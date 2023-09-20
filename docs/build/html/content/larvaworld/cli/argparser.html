@@ -97,27 +97,63 @@
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.ParserArgumentDict">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.cli.argparser.</span></span><span class="sig-name descname"><span class="pre">ParserArgumentDict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parsargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#ParserArgumentDict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.ParserArgumentDict" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Create a dictionary of parser arguments
-This can be instantiated either by a dictionary of param.Parameters or by a dictionary existing in the registry parameter Database</p>
+<p>Create a dictionary of parser arguments.</p>
+<p>This class can be instantiated either by a dictionary of param.Parameters or by a dictionary existing in the registry parameter Database.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.ParserArgumentDict.add">
 <span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parser</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#ParserArgumentDict.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.ParserArgumentDict.add" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Add parser arguments to an ArgumentParser.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parser</strong> -- The ArgumentParser to add the arguments to.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The modified ArgumentParser.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.ParserArgumentDict.from_dict">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#ParserArgumentDict.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.ParserArgumentDict.from_dict" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Create a ParserArgumentDict from a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>d0</strong> -- A dictionary of parser arguments.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A ParserArgumentDict instance.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.ParserArgumentDict.from_param">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#ParserArgumentDict.from_param"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.ParserArgumentDict.from_param" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Create a ParserArgumentDict from a parameter dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>d0</strong> -- A dictionary of parameters.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A ParserArgumentDict instance.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.ParserArgumentDict.get">
 <span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#ParserArgumentDict.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.ParserArgumentDict.get" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Get parser argument values from parsed input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input</strong> -- The parsed input.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary of argument values.</p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -128,55 +164,120 @@ This can be instantiated either by a dictionary of param.Parameters or by a dict
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SimModeParser">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.cli.argparser.</span></span><span class="sig-name descname"><span class="pre">SimModeParser</span></span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SimModeParser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SimModeParser" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Parser for simulation modes and arguments.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SimModeParser.build_cli_parser">
 <span class="sig-name descname"><span class="pre">build_cli_parser</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SimModeParser.build_cli_parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SimModeParser.build_cli_parser" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Build the command line argument parser.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SimModeParser.configure">
 <span class="sig-name descname"><span class="pre">configure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SimModeParser.configure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SimModeParser.configure" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Configure the simulation run based on parsed arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>show_args</strong> -- Whether to show parsed arguments.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The configured simulation run.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SimModeParser.eval_parser">
 <span class="sig-name descname"><span class="pre">eval_parser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SimModeParser.eval_parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SimModeParser.eval_parser" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Evaluate a parser argument.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>p_key</strong> -- The argument key.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The parsed value of the argument.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SimModeParser.eval_parsers">
 <span class="sig-name descname"><span class="pre">eval_parsers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SimModeParser.eval_parsers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SimModeParser.eval_parsers" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Evaluate all parser arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary of parsed values.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SimModeParser.init_mode_subparser">
 <span class="sig-name descname"><span class="pre">init_mode_subparser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SimModeParser.init_mode_subparser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SimModeParser.init_mode_subparser" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Initialize a subparser with common arguments for a specific simulation mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sp</strong> -- The subparser.</p></li>
+<li><p><strong>m</strong> -- The simulation mode.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The modified subparser.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SimModeParser.init_parsers">
 <span class="sig-name descname"><span class="pre">init_parsers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SimModeParser.init_parsers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SimModeParser.init_parsers" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Initialize parsers for different simulation modes.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SimModeParser.launch">
 <span class="sig-name descname"><span class="pre">launch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SimModeParser.launch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SimModeParser.launch" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Launch the simulation run.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SimModeParser.parse_args">
 <span class="sig-name descname"><span class="pre">parse_args</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SimModeParser.parse_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SimModeParser.parse_args" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Parse command line arguments.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SimModeParser.populate_mode_subparser">
 <span class="sig-name descname"><span class="pre">populate_mode_subparser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SimModeParser.populate_mode_subparser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SimModeParser.populate_mode_subparser" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Populate a subparser with arguments for a specific simulation mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sp</strong> -- The subparser.</p></li>
+<li><p><strong>m</strong> -- The simulation mode.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The modified subparser.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SimModeParser.show_args">
 <span class="sig-name descname"><span class="pre">show_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nested</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flat_nested</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SimModeParser.show_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SimModeParser.show_args" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Show parsed arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nested</strong> -- Whether to show arguments as a nested dictionary.</p></li>
+<li><p><strong>flat_nested</strong> -- Whether to show arguments as a flattened nested dictionary.</p></li>
+<li><p><strong>input</strong> -- Whether to show input arguments.</p></li>
+<li><p><strong>default</strong> -- Whether to show default arguments.</p></li>
+<li><p><strong>run_args</strong> -- Whether to show run arguments.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -187,27 +288,80 @@ This can be instantiated either by a dictionary of param.Parameters or by a dict
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SingleParserArgument">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.cli.argparser.</span></span><span class="sig-name descname"><span class="pre">SingleParserArgument</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">short</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SingleParserArgument"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SingleParserArgument" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Create a single parser argument
-This is a class used to populate a parser with arguments and get their values.</p>
+<p>Create a single parser argument.</p>
+<p>This class is used to populate a parser with arguments and get their values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>short</strong> -- The short argument name.</p></li>
+<li><p><strong>key</strong> -- The argument key.</p></li>
+<li><p><strong>**kwargs</strong> -- <p>Additional keyword arguments.</p>
+</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SingleParserArgument.add">
 <span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SingleParserArgument.add"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SingleParserArgument.add" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Add the argument to a parser.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>p</strong> -- The argument parser.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The modified parser.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SingleParserArgument.from_dict">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SingleParserArgument.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SingleParserArgument.from_dict" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Create a SingleParserArgument from a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> -- The argument name.</p></li>
+<li><p><strong>**kwargs</strong> -- <p>Additional keyword arguments.</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A SingleParserArgument instance.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SingleParserArgument.from_param">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_param</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SingleParserArgument.from_param"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SingleParserArgument.from_param" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Create a SingleParserArgument from a parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> -- The parameter key.</p></li>
+<li><p><strong>p</strong> -- The parameter instance.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A SingleParserArgument instance.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.SingleParserArgument.get">
 <span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#SingleParserArgument.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.SingleParserArgument.get" title="Permalink to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Get the value of the argument from parsed input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input</strong> -- The parsed input.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value of the argument.</p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -217,15 +371,19 @@ This is a class used to populate a parser with arguments and get their values.</
 <dl class="py function">
 <dt class="sig sig-object py" id="larvaworld.cli.argparser.update_larva_groups">
 <span class="sig-prename descclassname"><span class="pre">larvaworld.cli.argparser.</span></span><span class="sig-name descname"><span class="pre">update_larva_groups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lgs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/larvaworld/cli/argparser.html#update_larva_groups"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.cli.argparser.update_larva_groups" title="Permalink to this definition"></a></dt>
-<dd><p>Modifies the experiment's configuration larvagroups
-:param sample: The reference dataset
-:param lgs: The existing larvagroups in the experiment configuration
-:param N: Overwrite the number of agents per larva group
-:param mIDs: Overwrite the larva models used in the experiment.If not None a larva group per model ID will be simulated.
-:param dIDs: The displayed ids of the groups. If None the model IDs (mIDs) are used</p>
+<dd><p>Modifies the experiment's configuration larvagroups.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>The experiment's configuration larvagroups</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lgs</strong> -- The existing larvagroups in the experiment configuration.</p></li>
+<li><p><strong>N</strong> -- Overwrite the number of agents per larva group.</p></li>
+<li><p><strong>mIDs</strong> -- Overwrite the larva models used in the experiment. If not None, a larva group per model ID will be simulated.</p></li>
+<li><p><strong>dIDs</strong> -- The displayed IDs of the groups. If None, the model IDs (mIDs) are used.</p></li>
+<li><p><strong>sample</strong> -- The reference dataset.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The experiment's configuration larvagroups.</p>
 </dd>
 </dl>
 </dd></dl>
