@@ -98,7 +98,7 @@ def build_Jovanic(dataset,  source_id,source_dir,
         e = init_endpoint_data(df=df, dt=d.dt)
 
     s = interpolate_step_data(df=df, dt=d.dt)
-    print(f'----- Timeseries data for group "{d.id}" of experiment "{d.group_id}" generated in full mode ')
+    print(f'----- Timeseries data for group "{d.id}" of experiment "{d.group_id}" generated ')
 
     return s, e
 
@@ -381,6 +381,8 @@ def import_dataset(labID, parent_dir=None, group_id=None,raw_folder=None,proc_fo
             d.save(refID=refID)
             if refID is not None :
                 print(f'***** Dataset stored under the reference ID : {refID} -----')
+            else:
+                print(f'***** Dataset stored -----')
     else:
         print(f'xxxxx Failed to create dataset {id}! -----')
     return d

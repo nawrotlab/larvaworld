@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name='larvaworld'
-version = "0.0.18"
+version = "0.0.19"
 description='Drosophila larva behavioral analysis and simulation platform'
 authors=[
     {name='Panagiotis Sakagiannis', email='bagjohn0@gmail.com'}
@@ -70,7 +70,8 @@ nengo = [
 # Remember to also  :
 #    - update the version number in pyproject.toml
 #    - clear the data folder keeping only minimal samples
-#    - delete the li.reg.confDicts contents
+#    - delete the lib.reg.confDicts contents
+#    - delete old versions from dist
 
 # python -m build
 # python -m twine upload dist/* --verbose
