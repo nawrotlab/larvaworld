@@ -77,8 +77,8 @@ from .stored import *
 
 
 vprint("Initializing parameter registry")
-from .parDB import output_keys, ParamRegistry
-par = ParamRegistry()
+from . import parDB
+par = parDB.ParamRegistry()
 
 vprint("Initializing configuration registry")
 from .config import Path, lgs, lg, next_idx, imitation_exp, StoredConfRegistry
@@ -86,12 +86,7 @@ stored=StoredConfRegistry()
 from .generators import gen,GTRvsS,full_lg,ConfType, conf, resetConfs,LarvaGroup, ExpConf, FoodConf, DatasetConfig,SimConfiguration,SimConfigurationParams
 
 from . import models, graph
-# vprint("Initializing model registry")
-# from .models import ModelRegistry
 model = models.ModelRegistry()
-
-# vprint("Initializing graph registry")
-# from .graph import GraphRegistry
 graphs = graph.GraphRegistry()
 
 

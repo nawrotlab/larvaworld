@@ -493,7 +493,7 @@ class ExpConf(SimOps):
     # env_params = conf.Env.confID_selector()
     experiment = conf.Exp.confID_selector()
     trials = conf.Trial.confID_selector('default')
-    collections = param.ListSelector(default=['pose'],objects=reg.output_keys, doc='The data to collect as output')
+    collections = param.ListSelector(default=['pose'],objects=reg.parDB.output_keys, doc='The data to collect as output')
     larva_groups = ClassDict(item_type=LarvaGroup, doc='The larva groups')
     parameter_dict = param.Dict(default={},doc='Dictionary of parameters to pass to the agents')
     # sim_params = aux.ClassAttr(SimOps,doc='The simulation configuration')
