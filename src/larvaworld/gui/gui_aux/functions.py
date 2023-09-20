@@ -3,6 +3,14 @@ import PySimpleGUI as sg
 __all__ = [
     'window_size',
     'col_size',
+    'w_list',
+    'w_kws',
+    'get_disp_name',
+    'retrieve_value',
+    'gui_col',
+    'gui_cols',
+    'gui_row',
+    'gui_rowNcol',
     'col_kws',
     'b6_kws',
     't_kws',
@@ -17,7 +25,7 @@ def col_size(x_frac=1.0, y_frac=1.0, win_size=None):
         win_size = window_size
     return int(win_size[0] * x_frac), int(win_size[1] * y_frac)
 
-'''
+
 w_list = 25
 w_kws = {
     'finalize': True,
@@ -186,7 +194,7 @@ def gui_rowNcol(element_list, x_fracs, y_fracs, as_pane=False):
             l.append(e)
     return l
 
-'''
+
 
 col_kws = {'vertical_alignment': 't', 'expand_x': False, 'expand_y': False}
 # b_kws = {'font': ('size', 6)}
