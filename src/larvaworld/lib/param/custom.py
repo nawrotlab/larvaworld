@@ -41,6 +41,8 @@ __all__ = [
     'NestedConf',
 ]
 
+__displayname__ = 'Custom parameters'
+
 class StringRobust(String):
     """Any input turned to string"""
 

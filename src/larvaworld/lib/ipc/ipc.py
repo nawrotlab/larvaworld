@@ -23,6 +23,8 @@ __all__ = [
     'Server',
 ]
 
+__displayname__ = 'Client-Server remote messaging'
+
 
 class IPCError(Exception):
     pass

@@ -13,7 +13,51 @@ __all__ = [
     'LarvaBox2D',
 ]
 
+__displayname__ = 'Box2D larva'
+
 class BaseSegment:
+    """
+    Base segment of a larva.
+
+    Parameters
+    ----------
+    pos : tuple
+        The position of the segment.
+    orientation : float
+        The orientation of the segment.
+    color : tuple
+        The color of the segment.
+    base_seg_vertices : numpy.ndarray
+        The base segment vertices.
+    base_seg_ratio : float
+        The base segment ratio.
+    body_length : float
+        The length of the larva's body.
+
+    Attributes
+    ----------
+    color : tuple
+        The color of the segment.
+    pos : tuple
+        The position of the segment.
+    orientation : float
+        The orientation of the segment.
+    base_seg_vertices : numpy.ndarray
+        The base segment vertices.
+    base_local_rear_end : numpy.ndarray
+        The base local rear end of the segment.
+    base_local_front_end : numpy.ndarray
+        The base local front end of the segment.
+    base_seg_ratio : float
+        The base segment ratio.
+    body_length : float
+        The length of the larva's body.
+
+    Methods
+    -------
+    seg_vertices
+        Get the vertices of the segment.
+    """
     def __init__(self, pos, orientation,color, base_seg_vertices,base_seg_ratio, body_length):
         self.color = color
         self.pos = pos
@@ -26,12 +70,67 @@ class BaseSegment:
 
     @property
     def seg_vertices(self):
-        return self.body_length*self.base_seg_vertices
+        """
+        Get the vertices of the segment.
+
+        Returns
+        -------
+        numpy.ndarray
+            The vertices of the segment.
+        """
+        return self.body_length * self.base_seg_vertices
+
 
 class Box2DSegment(BaseSegment):
+    """
+    Box2D-based segment of a larva.
+
+    Parameters
+    ----------
+    space : Box2D.b2World
+        The Box2D world space.
+    physics_pars : dict
+        Parameters related to the physics simulation.
+    **kwargs : dict
+        Additional keyword arguments.
+
+    Attributes
+    ----------
+    _body : Box2D.b2Body
+        The Box2D body associated with the segment.
+
+    Methods
+    -------
+    vertices
+        Get the world coordinates of the segment's vertices.
+    get_position
+        Get the world position of the segment.
+    set_position(position)
+        Set the world position of the segment.
+    get_orientation
+        Get the orientation of the segment.
+    set_orientation(orientation)
+        Set the orientation of the segment.
+    get_pose
+        Get the pose (position and orientation) of the segment.
+    set_linearvelocity(lin_vel, local=False)
+        Set the linear velocity of the segment.
+    get_angularvelocity
+        Get the angular velocity of the segment.
+    set_angularvelocity(ang_vel)
+        Set the angular velocity of the segment.
+    set_mass(mass)
+        Set the mass of the segment.
+    get_mass
+        Get the mass of the segment.
+    get_world_point(point)
+        Transform a local point to world coordinates.
+    get_world_facing_axis
+        Get the world-facing axis of the segment.
+
+    """
 
     def __init__(self, space, physics_pars, **kwargs):
-
         super().__init__(**kwargs)
         self._body: Box2D.b2Body = space.CreateDynamicBody(
             position=Box2D.b2Vec2(*self.pos),
@@ -48,130 +147,240 @@ class Box2DSegment(BaseSegment):
                 density=physics_pars['density'],
                 friction=10,
                 restitution=0,
-                # radius=.00000001
             )
 
         self._fixtures = self._body.fixtures
 
-        # FIXME for some reason this produces error
-        # self._body.inertia = self.physics_pars['inertia']
-
     @property
     def vertices(self):
+        """
+        Get the world coordinates of the segment's vertices.
+
+        Returns
+        -------
+        numpy.ndarray
+            The world coordinates of the segment's vertices.
+        """
         return np.array([[self.get_world_point(v) for v in vertices] for vertices in self.seg_vertices])
 
     def get_position(self):
-        # CAUTION CAUTION This took me a whole day.
-        # worldCenter gets the point where the torque is applied
-        # pos gets a point (tried to identify whether it is center of mass or origin, no luck) unknown how
+        """
+        Get the world position of the segment.
+
+        Returns
+        -------
+        numpy.ndarray
+            The world position of the segment.
+        """
         pos = self._body.worldCenter
         return np.asarray(pos)
 
     def set_position(self, position):
+        """
+        Set the world position of the segment.
+
+        Parameters
+        ----------
+        position : tuple
+            The new world position.
+        """
         self._body.position = position
 
     def get_orientation(self):
+        """
+        Get the orientation of the segment.
+
+        Returns
+        -------
+        float
+            The orientation of the segment.
+        """
         return self._body.angle
 
-
-
     def set_orientation(self, orientation):
-        # orientation %= 2 * np.pi
+        """
+        Set the orientation of the segment.
+
+        Parameters
+        ----------
+        orientation : float
+            The new orientation of the segment.
+        """
         self._body.angle = orientation % (np.pi * 2)
 
-
-
     def get_pose(self):
+        """
+        Get the pose (position and orientation) of the segment.
+
+        Returns
+        -------
+        tuple
+            The pose of the segment, including position and orientation.
+        """
         pos = np.asarray(self._body.position)
         return tuple((*pos, self._body.angle))
 
     def set_linearvelocity(self, lin_vel, local=False):
+        """
+        Set the linear velocity of the segment.
+
+        Parameters
+        ----------
+        lin_vel : tuple
+            The new linear velocity.
+        local : bool, optional
+            Whether the linear velocity is in local coordinates. Defaults to False.
+        """
         if local:
             lin_vel = self._body.GetWorldVector(np.asarray(lin_vel))
         self._body.linearVelocity = Box2D.b2Vec2(lin_vel)
 
     def get_angularvelocity(self):
+        """
+        Get the angular velocity of the segment.
+
+        Returns
+        -------
+        float
+            The angular velocity of the segment.
+        """
         return self._body.angularVelocity
 
     def set_angularvelocity(self, ang_vel):
+        """
+        Set the angular velocity of the segment.
+
+        Parameters
+        ----------
+        ang_vel : float
+            The new angular velocity of the segment.
+        """
         self._body.angularVelocity = ang_vel
 
     def set_mass(self, mass):
+        """
+        Set the mass of the segment.
+
+        Parameters
+        ----------
+        mass : float
+            The new mass of the segment.
+        """
         self._body.mass = mass
 
     def get_mass(self):
+        """
+        Get the mass of the segment.
+
+        Returns
+        -------
+        float
+            The mass of the segment.
+        """
         return self._body.mass
 
-
-
-
-
-
-
-
     def get_world_point(self, point):
+        """
+        Transform a local point to world coordinates.
+
+        Parameters
+        ----------
+        point : tuple
+            The local point coordinates.
+
+        Returns
+        -------
+        numpy.ndarray
+            The world coordinates of the point.
+        """
         return self._body.GetWorldPoint(np.asarray(point))
 
-
-
     def get_world_facing_axis(self):
+        """
+        Get the world-facing axis of the segment.
+
+        Returns
+        -------
+        numpy.ndarray
+            The world-facing axis of the segment.
+        """
         return np.asarray(self._body.GetWorldVector(Box2D.b2Vec2(1.0, 0.0)))
 
 
-
-
-
 class LarvaBox2D(LarvaSim):
+    """
+    Box2D-based larva simulation.
+
+    Parameters
+    ----------
+    Box2D_params : dict
+        Parameters related to the Box2D simulation.
+    **kwargs : dict
+        Additional keyword arguments.
+
+    Attributes
+    ----------
+    segs : param.List
+        List of Box2DSegment objects.
+
+    Methods
+    -------
+    generate_segs
+        Generate the segments of the larva.
+    prepare_motion(lin, ang)
+        Prepare the larva for motion with given linear and angular velocities.
+    updated_by_Box2D
+        Update the larva simulation based on Box2D physics.
+    """
     segs = param.List(item_type=Box2DSegment, doc='The body segments.')
 
-
-    def __init__(self, Box2D_params,**kwargs):
-        self.Box2D_params=Box2D_params
+    def __init__(self, Box2D_params, **kwargs):
+        self.Box2D_params = Box2D_params
         super().__init__(**kwargs)
 
-        # BaseController.__init__(self, **physics)
-
-        # joint_types=Box2D_params['joint_types']
-
-    # def __init__(self, joint_types,physics,**kwargs):
-    #     super().__init__(**physics)
-
-
-
-
     def generate_segs(self):
-        # segs = []
-        kws= {
-            'physics_pars' : {'density': self.density,
-                              'lin_damping': self.lin_damping,
-                              'ang_damping': self.ang_damping,
-                              'inertia': 0.0},
-            'space' : self.model.space,
+        """
+        Generate the segments of the larva.
+        """
+        kws = {
+            'physics_pars': {
+                'density': self.density,
+                'lin_damping': self.lin_damping,
+                'ang_damping': self.ang_damping,
+                'inertia': 0.0
+            },
+            'space': self.model.space,
         }
 
-        # segs=aux.generate_segs(self.Nsegs, self.pos, self.orientation,
-        #                         self.sim_length, self.seg_ratio,self.default_color,self.body_plan,
-        #                         segment_class=Box2DSegment, **kws)
+        self.segs = [self.param.segs.item_type(
+            pos=self.seg_positions[i],
+            orientation=self.orientation,
+            base_vertices=self.base_seg_vertices[i],
+            length=self.length * self.segment_ratio[i],
+            **kws
+        ) for i in range(self.Nsegs)]
 
-        self.segs = [self.param.segs.item_type(pos=self.seg_positions[i], orientation=self.orientation,
-                                                   base_vertices=self.base_seg_vertices[i],
-                                                   length=self.length * self.segment_ratio[i], **kws) for i in
-                         range(self.Nsegs)]
-
-
-        # put all agents into same group (negative so that no collisions are detected)
         if self.model.larva_collisions:
-            for seg in self.segs :
+            for seg in self.segs:
                 for fixture in seg._fixtures:
                     fixture.filterData.groupIndex = -1
 
         self.joints = []
-        # self.generate_segs()
+
         if self.Nsegs > 1:
             self.create_joints(self.Nsegs, self.segs, joint_types=self.Box2D_params['joint_types'])
 
-
     def prepare_motion(self, lin, ang):
+        """
+        Prepare the larva for motion with given linear and angular velocities.
+
+        Parameters
+        ----------
+        lin : float
+            Linear velocity.
+        ang : float
+            Angular velocity.
+        """
 
         if self.ang_mode == 'velocity':
             ang_vel = ang * self.ang_vel_coef
@@ -215,6 +424,10 @@ class LarvaBox2D(LarvaSim):
 
 
     def updated_by_Box2D(self):
+        """
+        Update the larva simulation based on Box2D physics.
+        """
+
         self.set_position(tuple(self.global_midspine_of_body))
         self.trajectory.append(self.get_position())
 
@@ -263,6 +476,30 @@ class LarvaBox2D(LarvaSim):
     #     return seg_starts, seg_stops
 
     def create_joints(self, Nsegs, segs, joint_types=None):
+        """
+        Create joints to connect the segments of the larva.
+
+        Parameters
+        ----------
+        Nsegs : int
+            The number of segments in the larva.
+        segs : list of Box2DSegment
+            The list of Box2DSegment objects representing the larva segments.
+        joint_types : dict, optional
+            A dictionary specifying the types of joints to create. The dictionary should contain keys for different
+            joint types ('distance', 'revolute', 'friction') and values specifying the number of joints of each type
+            to create ('N') and the joint parameters ('args') for each type.
+
+        Notes
+        -----
+        The `joint_types` parameter is optional and, if not provided, it will use the joint types and parameters
+        defined in the `Box2D_params` attribute of the larva simulation.
+
+        This method creates various types of joints (distance, revolute, and friction) to connect the segments of the
+        larva together in a physically realistic way.
+
+        """
+
         if joint_types is None:
             joint_types = reg.get_null('Box2D_params').joint_types
         space = self.model.space

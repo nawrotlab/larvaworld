@@ -9,6 +9,7 @@ __all__ = [
     'Grouped',
 ]
 
+__displayname__ = 'Named elements'
 
 class Named(NestedConf) :
     unique_id = param.String(None, doc='The unique ID of the entity')

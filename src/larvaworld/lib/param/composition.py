@@ -16,6 +16,8 @@ __all__ = [
     'Life',
 ]
 
+__displayname__ = 'Nutrition & Olfaction'
+
 class Compound(NestedConf):
     d=PositiveNumber(doc=f'density in g/cm**3')
     w=PositiveNumber(doc=f'molecular weight (g/mol)')

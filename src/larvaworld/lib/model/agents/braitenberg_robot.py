@@ -11,6 +11,8 @@ __all__ = [
     'SensorDrivenRobot',
 ]
 
+__displayname__ = 'Braitenberg agent'
+
 class DifferentialDriveRobot(RotTriangle):
 
     def __init__(self,  unique_id, model,x, y, length, wheel_radius):

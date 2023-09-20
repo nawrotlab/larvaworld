@@ -16,6 +16,8 @@ __all__ = [
     'color_pick_layout',
 ]
 
+__displayname__ = 'GUI buttons'
+
 sg.theme('LightGreen')
 b_kws = {
     'button_color': (sg.theme_background_color(), sg.theme_background_color()),

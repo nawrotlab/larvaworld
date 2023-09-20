@@ -16,6 +16,8 @@ __all__ = [
     'ViewableCircle',
 ]
 
+__displayname__ = 'Viewable elements'
+
 class Viewable(NestedConf) :
     '''
         Basic Parameterized Class for all visible Objects in simulation

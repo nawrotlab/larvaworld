@@ -11,6 +11,8 @@ __all__ = [
     'ObstacleLarvaRobot',
 ]
 
+__displayname__ = 'Braitenberg-like larva'
+
 class LarvaRobot(LarvaSim):
     default_color = RandomizedColor(doc='The default color of the entity', instantiate=True)
 

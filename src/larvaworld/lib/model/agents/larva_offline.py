@@ -10,6 +10,7 @@ __all__ = [
     'LarvaOffline',
 ]
 
+__displayname__ = 'Offline larva'
 
 class LarvaOffline(LarvaRobot):
 

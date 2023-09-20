@@ -13,7 +13,41 @@ __all__ = [
     'LarvaSim',
 ]
 
+__displayname__ = 'Simulation larva'
+
 class BaseController(param.Parameterized):
+    """
+    Base controller for larva motion simulation.
+
+    Parameters:
+    ----------
+    lin_vel_coef : float, positive
+        Coefficient for translational velocity.
+    ang_vel_coef : float, positive
+        Coefficient for angular velocity.
+    lin_force_coef : float, positive
+        Coefficient for force.
+    torque_coef : float, positive
+        Coefficient for torque.
+    body_spring_k : float, positive
+        Torsional spring constant for body bending.
+    bend_correction_coef : float, positive
+        Bend correction coefficient.
+    lin_damping : float, positive
+        Translational damping coefficient.
+    ang_damping : float, positive
+        Angular damping coefficient.
+    lin_mode : str
+        Mode of translational motion generation ('velocity', 'force', 'impulse').
+    ang_mode : str
+        Mode of angular motion generation ('torque', 'velocity').
+
+    Methods:
+    --------
+    compute_delta_rear_angle(bend, dst, length)
+        Compute the change in rear angle based on bend, distance, and length.
+    """
+
     lin_vel_coef = PositiveNumber(1.0, doc='Coefficient for translational velocity')
     ang_vel_coef = PositiveNumber(1.0, doc='Coefficient for angular velocity')
     lin_force_coef = PositiveNumber(1.0, doc='Coefficient for force')
@@ -28,6 +62,23 @@ class BaseController(param.Parameterized):
 
 
     def compute_delta_rear_angle(self, bend, dst, length):
+        """
+        Compute the change in rear angle based on bend, distance, and length.
+
+        Parameters:
+        ----------
+        bend : float
+            Bend angle.
+        dst : float
+            Distance.
+        length : float
+            Length of the larva.
+
+        Returns:
+        -------
+        float
+            Change in rear angle.
+        """
         k0 = 2 * dst * self.bend_correction_coef / length
         if 0 <= k0 < 1:
             return bend * k0
@@ -160,6 +211,34 @@ class BaseController(param.Parameterized):
 
 
 class LarvaSim(agents.LarvaMotile, BaseController):
+    """
+    Simulated larva agent.
+
+    Parameters:
+    ----------
+    physics : dict
+        Dictionary containing physical parameters for the larva simulation.
+    Box2D_params : dict
+        Dictionary containing Box2D parameters for the larva simulation.
+    **kwargs
+        Additional keyword arguments.
+
+    Methods:
+    --------
+    compute_ang_vel(amp)
+        Compute angular velocity based on torque amplitude.
+    prepare_motion(lin, ang)
+        Prepare translational and angular motion.
+    border_collision : bool
+        Check for collisions with borders.
+    larva_collision : bool
+        Check for collisions with other larvae.
+    position_head_in_tank(hr0, ho0, l0, fov0, fov1, ang_vel, lin_vel)
+        Position the larva's head in the simulated tank.
+    position_body(lin_vel, ang_vel)
+        Position the larva's body based on translational and angular motion.
+    """
+
     def __init__(self, physics, Box2D_params, **kwargs):
         BaseController.__init__(self, **physics)
         agents.LarvaMotile.__init__(self,**kwargs)
@@ -168,15 +247,37 @@ class LarvaSim(agents.LarvaMotile, BaseController):
         self.collision_with_object = False
 
     def compute_ang_vel(self, amp):
+        """
+       Compute angular velocity based on torque amplitude.
+
+       Parameters:
+       ----------
+       amp : float
+           Torque amplitude.
+
+       Returns:
+       -------
+       float
+           Angular velocity.
+       """
+
         torque = amp * self.torque_coef
         ang_vel = self.get_angularvelocity()
         return ang_vel + (-self.ang_damping * ang_vel - self.body_spring_k * self.body_bend + torque) * self.dt
 
 
-    # def compute_ang_vel(self, torque, v):
-    #     return v + (-self.ang_damping * v - self.body_spring_k * self.body_bend + torque) * self.model.dt
-
     def prepare_motion(self, lin, ang):
+        """
+       Prepare translational and angular motion.
+
+       Parameters:
+       ----------
+       lin : float
+           Linear motion parameter.
+       ang : float
+           Angular motion parameter.
+       """
+
         lin_vel = lin * self.lin_vel_coef
         if self.ang_mode == 'torque':
             ang_vel = self.compute_ang_vel(ang)
@@ -192,6 +293,14 @@ class LarvaSim(agents.LarvaMotile, BaseController):
 
     @property
     def border_collision(self):
+        """
+        Check for collisions with borders.
+
+        Returns:
+        -------
+        bool
+            True if there is a border collision, False otherwise.
+        """
         if len(self.model.borders) == 0:
             return False
         else:
@@ -214,6 +323,14 @@ class LarvaSim(agents.LarvaMotile, BaseController):
 
     @property
     def larva_collision(self):
+        """
+        Check for collisions with other larvae.
+
+        Returns:
+        -------
+        bool
+            True if there is a collision, False otherwise.
+        """
         if not self.model.larva_collisions:
             ids = self.model.detect_collisions(self.unique_id)
             return False if len(ids) == 0 else True
@@ -221,6 +338,32 @@ class LarvaSim(agents.LarvaMotile, BaseController):
             return False
 
     def position_head_in_tank(self, hr0, ho0, l0, fov0, fov1, ang_vel, lin_vel):
+        """
+        Position the larva's head in the simulated tank.
+
+        Parameters:
+        ----------
+        hr0 : tuple
+            Initial position of the rear end of the larva.
+        ho0 : float
+            Initial orientation of the larva.
+        l0 : float
+            Length of the larva.
+        fov0 : float
+            Minimum allowed angular velocity.
+        fov1 : float
+            Maximum allowed angular velocity.
+        ang_vel : float
+            Angular velocity.
+        lin_vel : float
+            Linear velocity.
+
+        Returns:
+        -------
+        tuple
+            New angular velocity and linear velocity.
+        """
+
         dt = self.model.dt
         sf = self.model.scaling_factor
 
@@ -273,6 +416,17 @@ class LarvaSim(agents.LarvaMotile, BaseController):
 
     # @profile
     def position_body(self, lin_vel, ang_vel):
+        """
+        Position the larva's body based on translational and angular motion.
+
+        Parameters:
+        ----------
+        lin_vel : float
+            Linear velocity.
+        ang_vel : float
+            Angular velocity.
+        """
+
         dt=self.model.dt
         sf = self.model.scaling_factor
         hp0, ho0 = self.head.get_pose()

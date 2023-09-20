@@ -46,6 +46,7 @@ __all__ = [
     'detect_dataset_in_subdirs',
 ]
 
+__displayname__ = 'GUI elements'
 
 SYMBOL_UP = '▲'
 SYMBOL_DOWN = '▼'

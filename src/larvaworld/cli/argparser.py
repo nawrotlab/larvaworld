@@ -10,6 +10,7 @@ __all__ = [
     'update_larva_groups',
 ]
 
+__displayname__ = 'CLI argument parsing classes'
 
 class SingleParserArgument:
     """
@@ -17,9 +18,23 @@ class SingleParserArgument:
 
     This class is used to populate a parser with arguments and get their values.
 
-    :param short: The short argument name.
-    :param key: The argument key.
-    :param **kwargs: Additional keyword arguments.
+    Parameters
+    ----------
+    short : str
+        The short argument name.
+    key : str
+        The argument key.
+    **kwargs : dict
+        Additional keyword arguments.
+
+    Attributes
+    ----------
+    key : str
+        The argument key.
+    args : list of str
+        A list containing the short and long argument names.
+    kwargs : dict
+        Additional keyword arguments.
     """
 
     def __init__(self, short, key, **kwargs):
@@ -31,8 +46,15 @@ class SingleParserArgument:
         """
         Add the argument to a parser.
 
-        :param p: The argument parser.
-        :return: The modified parser.
+        Parameters
+        ----------
+        p : argparse.ArgumentParser
+            The argument parser.
+
+        Returns
+        -------
+        argparse.ArgumentParser
+            The modified parser.
         """
         p.add_argument(*self.args, **self.kwargs)
         return p
@@ -41,8 +63,15 @@ class SingleParserArgument:
         """
         Get the value of the argument from parsed input.
 
-        :param input: The parsed input.
-        :return: The value of the argument.
+        Parameters
+        ----------
+        input : argparse.Namespace
+            The parsed input.
+
+        Returns
+        -------
+        Any
+            The value of the argument.
         """
         return getattr(input, self.key)
 
@@ -51,9 +80,17 @@ class SingleParserArgument:
         """
         Create a SingleParserArgument from a dictionary.
 
-        :param name: The argument name.
-        :param **kwargs: Additional keyword arguments.
-        :return: A SingleParserArgument instance.
+        Parameters
+        ----------
+        name : str
+            The argument name.
+        **kwargs : dict
+            Additional keyword arguments.
+
+        Returns
+        -------
+        SingleParserArgument
+            A SingleParserArgument instance.
         """
         return cls(**parser_entry_from_dict(name, **kwargs))
 
@@ -62,9 +99,17 @@ class SingleParserArgument:
         """
         Create a SingleParserArgument from a parameter.
 
-        :param k: The parameter key.
-        :param p: The parameter instance.
-        :return: A SingleParserArgument instance.
+        Parameters
+        ----------
+        k : str
+            The parameter key.
+        p : param.Parameter
+            The parameter instance.
+
+        Returns
+        -------
+        SingleParserArgument
+            A SingleParserArgument instance.
         """
         return cls(**parser_entry_from_param(k, p))
 
@@ -73,9 +118,17 @@ def parser_entry_from_param(k, p):
     """
     Create a dictionary entry for a parser argument from a parameter.
 
-    :param k: The parameter key.
-    :param p: The parameter instance.
-    :return: A dictionary entry for the parser argument.
+    Parameters
+    ----------
+    k : str
+        The parameter key.
+    p : param.Parameter
+        The parameter instance.
+
+    Returns
+    -------
+    dict
+        A dictionary entry for the parser argument.
     """
     c = p.__class__
     v = p.default
@@ -110,14 +163,27 @@ def parser_entry_from_dict(name, k=None, h='', dtype=float, v=None, vs=None, **k
     """
     Create a dictionary entry for a parser argument from a dictionary.
 
-    :param name: The argument name.
-    :param k: The argument key.
-    :param h: The help text.
-    :param dtype: The data type.
-    :param v: The default value.
-    :param vs: List of choices.
-    :param **kwargs: Additional keyword arguments.
-    :return: A dictionary entry for the parser argument.
+    Parameters
+    ----------
+    name : str
+        The argument name.
+    k : str, optional
+        The argument key. If not provided, it defaults to the name.
+    h : str, optional
+        The help text.
+    dtype : type, optional
+        The data type.
+    v : Any, optional
+        The default value.
+    vs : list of Any, optional
+        List of choices.
+    **kwargs : dict
+        Additional keyword arguments.
+
+    Returns
+    -------
+    dict
+        A dictionary entry for the parser argument.
     """
     if k is None:
         k = name
@@ -159,7 +225,10 @@ class ParserArgumentDict:
         """
         Initialize a ParserArgumentDict.
 
-        :param parsargs: A dictionary of parser arguments.
+        Parameters
+        ----------
+        parsargs : dict
+            A dictionary of parser arguments.
         """
         self.parsargs = parsargs
 
@@ -168,8 +237,15 @@ class ParserArgumentDict:
         """
         Create a ParserArgumentDict from a parameter dictionary.
 
-        :param d0: A dictionary of parameters.
-        :return: A ParserArgumentDict instance.
+        Parameters
+        ----------
+        d0 : dict
+            A dictionary of parameters.
+
+        Returns
+        -------
+        ParserArgumentDict
+            A ParserArgumentDict instance.
         """
         return cls(parser_dict_from_param(d0))
 
@@ -178,8 +254,15 @@ class ParserArgumentDict:
         """
         Create a ParserArgumentDict from a dictionary.
 
-        :param d0: A dictionary of parser arguments.
-        :return: A ParserArgumentDict instance.
+        Parameters
+        ----------
+        d0 : dict
+            A dictionary of parser arguments.
+
+        Returns
+        -------
+        ParserArgumentDict
+            A ParserArgumentDict instance.
         """
         return cls(parser_dict_from_dict(d0))
 
@@ -187,8 +270,15 @@ class ParserArgumentDict:
         """
         Add parser arguments to an ArgumentParser.
 
-        :param parser: The ArgumentParser to add the arguments to.
-        :return: The modified ArgumentParser.
+        Parameters
+        ----------
+        parser : argparse.ArgumentParser, optional
+            The ArgumentParser to add the arguments to.
+
+        Returns
+        -------
+        argparse.ArgumentParser
+            The modified ArgumentParser.
         """
         if parser is None:
             parser = ArgumentParser()
@@ -200,8 +290,15 @@ class ParserArgumentDict:
         """
         Get parser argument values from parsed input.
 
-        :param input: The parsed input.
-        :return: A dictionary of argument values.
+        Parameters
+        ----------
+        input : argparse.Namespace
+            The parsed input.
+
+        Returns
+        -------
+        dict
+            A dictionary of argument values.
         """
         dic = aux.AttrDict({k: v.get(input) for k, v in self.parsargs.items()})
         return dic.unflatten()
@@ -211,8 +308,15 @@ def parser_dict_from_param(d0):
     """
     Create a dictionary of parser arguments from a parameter dictionary.
 
-    :param d0: A dictionary of parameters.
-    :return: A dictionary of parser arguments.
+    Parameters
+    ----------
+    d0 : dict
+        A dictionary of parameters.
+
+    Returns
+    -------
+    dict
+        A dictionary of parser arguments.
     """
     d = aux.AttrDict()
     for k, p in d0.param.objects().items():
@@ -227,8 +331,15 @@ def parser_dict_from_dict(d0):
     """
     Create a dictionary of parser arguments from a dictionary.
 
-    :param d0: A dictionary of parser arguments.
-    :return: A dictionary of parser arguments.
+    Parameters
+    ----------
+    d0 : dict
+        A dictionary of parser arguments.
+
+    Returns
+    -------
+    dict
+        A dictionary of parser arguments.
     """
     p = aux.AttrDict()
     for n, v in d0.items():
@@ -245,6 +356,9 @@ class SimModeParser:
     """
 
     def __init__(self):
+        """
+        Initialize the SimModeParser.
+        """
         self.dict = aux.AttrDict({
             'Batch': [],
             'Eval': ['Eval'],
@@ -452,15 +566,16 @@ class SimModeParser:
             r.run()
 
 
+
 def update_larva_groups(lgs, N=None, mIDs=None, dIDs=None, sample=None):
     """
     Modifies the experiment's configuration larvagroups.
 
     Args:
-        lgs: The existing larvagroups in the experiment configuration.
-        N: Overwrite the number of agents per larva group.
-        mIDs: Overwrite the larva models used in the experiment. If not None, a larva group per model ID will be simulated.
-        dIDs: The displayed IDs of the groups. If None, the model IDs (mIDs) are used.
+        lgs (dict): The existing larvagroups in the experiment configuration.
+        N (int):: Overwrite the number of agents per larva group.
+        mIDs (list): Overwrite the larva models used in the experiment. If not None, a larva group per model ID will be simulated.
+        dIDs (list): The displayed IDs of the groups. If None, the model IDs (mIDs) are used.
         sample: The reference dataset.
 
     Returns:

@@ -7,6 +7,8 @@ __all__ = [
     'DrawTab'
 ]
 
+__displayname__ = 'GUI tab templates'
+
 class GuiTab(GuiElement):
     def __init__(self, name, gui, conftype=None, dtype=None):
         super().__init__(name)

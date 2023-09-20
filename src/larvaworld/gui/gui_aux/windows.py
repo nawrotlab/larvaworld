@@ -20,6 +20,8 @@ __all__ = [
     'entry_window',
 ]
 
+__displayname__ = 'GUI pop-up windows'
+
 
 def table_window(data, pars_dict, title, return_layout=False):
     d = pars_dict

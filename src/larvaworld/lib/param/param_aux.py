@@ -19,6 +19,9 @@ __all__ = [
     'param_to_arg',
 ]
 
+__displayname__ = 'Parameterization helper methods'
+
+
 
 def param_dtype(parclass):
     func_dic = {

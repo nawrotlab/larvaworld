@@ -15,6 +15,8 @@ __all__ = [
     'SegmentedBodySensored',
 ]
 
+__displayname__ = 'Virtual body'
+
 
 body_plans=aux.AttrDict({
 'drosophila_larva': [(0.9, 0.1), (0.05, 0.1)],

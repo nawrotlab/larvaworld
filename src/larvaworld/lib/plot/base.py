@@ -19,6 +19,8 @@ __all__ = [
     'GridPlot',
 ]
 
+__displayname__ = 'Plotting template classes'
+
 plt_conf = {'axes.labelsize': 20,
             'axes.titlesize': 25,
             'figure.titlesize': 25,

@@ -28,6 +28,8 @@ __all__ = [
     'EnrichConf',
 ]
 
+__displayname__ = 'Configuration parameter groups'
+
 class FramerateOps(NestedConf):
     fr = PositiveNumber(10, softmax=100, step=0.1, label='framerate',
                             doc='The tracking/simulation framerate (inverse of timestep) in Hz.')

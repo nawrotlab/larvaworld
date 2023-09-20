@@ -16,6 +16,9 @@ __all__ = [
     'generate_xyNor_distro',
 ]
 
+__displayname__ = '2D spatial distributions'
+
+
 class Spatial_Distro(NestedConf):
     shape = param.Selector(objects=['circle', 'rect', 'oval', 'rectangular'], doc='The shape of the spatial distribution')
     mode = param.Selector(objects=['uniform', 'normal', 'periphery', 'grid'],

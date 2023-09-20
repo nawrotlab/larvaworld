@@ -29,6 +29,8 @@ __all__ = [
     'PosPixelRel2Area',
 ]
 
+__displayname__ = 'Spatial elements'
+
 class Pos2D(NestedConf):
     pos = NumericTuple2DRobust(doc='The xy spatial position coordinates')
 

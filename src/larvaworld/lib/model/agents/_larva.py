@@ -16,8 +16,37 @@ __all__ = [
     'LarvaMotile',
 ]
 
+__displayname__ = 'Larva agent'
 
 class Larva(MobileAgent):
+    """
+    Larva agent.
+
+    This class represents a larva agent with mobility.
+
+    Parameters
+    ----------
+    model : larvaworld.lib.model.Model
+        The model containing this agent.
+    unique_id : int, optional
+        The unique identifier for this agent.
+    **kwargs : dict
+        Additional keyword arguments.
+
+    Attributes
+    ----------
+    trajectory : list
+        List of positions representing the agent's trajectory.
+    orientation_trajectory : list
+        List of orientations representing the agent's orientation trajectory.
+    cum_dur : float
+        Cumulative duration since agent creation.
+
+    Methods
+    -------
+    draw(v, **kwargs)
+        Draw the larva agent.
+    """
     def __init__(self, model,unique_id=None, **kwargs):
         if unique_id is None:
             unique_id = model.next_id(type='Larva')
@@ -97,6 +126,24 @@ class Larva(MobileAgent):
 
 
 class LarvaContoured(Larva, Contour):
+    """
+    Contoured larva agent.
+
+    This class represents a contoured larva agent.
+
+    Parameters
+    ----------
+    **kwargs : dict
+        Additional keyword arguments.
+
+    Methods
+    -------
+    draw(v, **kwargs)
+        Draw the contoured larva agent.
+    draw_selected(v, **kwargs)
+        Draw the selected contoured larva agent.
+    """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -112,7 +159,26 @@ class LarvaContoured(Larva, Contour):
                            filled=False, width=0.0002)
 
 
-class LarvaSegmented(Larva,SegmentedBodySensored):
+class LarvaSegmented(Larva, SegmentedBodySensored):
+    """
+    Segmented larva agent.
+
+    This class represents a segmented larva agent with sensors.
+
+    Parameters
+    ----------
+    **kwargs : dict
+        Additional keyword arguments.
+
+    Methods
+    -------
+    draw(v, **kwargs)
+        Draw the segmented larva agent.
+    set_default_color(color)
+        Set the default color of the larva segments.
+    draw_selected(v, **kwargs)
+        Draw the selected segmented larva agent.
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
@@ -133,6 +199,66 @@ class LarvaSegmented(Larva,SegmentedBodySensored):
                        filled=False, width=0.0002)
 
 class LarvaMotile(LarvaSegmented):
+    """
+    Motile larva agent.
+
+    This class represents a motile larva agent with a brain, energetics, and life history.
+
+    Parameters
+    ----------
+    brain : larvaworld.lib.model.modules.brain.BrainConfiguration
+        The configuration for the larva's brain.
+    energetics : larvaworld.lib.model.deb.deb.EnergeticsParameters, optional
+        The energetics parameters for the larva. Defaults to None.
+    life_history : dict, optional
+        The life history of the larva. Defaults to None.
+    **kwargs : dict
+        Additional keyword arguments.
+
+    Attributes
+    ----------
+    carried_objects : list
+        List of objects carried by the larva.
+    brain : larvaworld.lib.model.modules.brain.Brain
+        The brain of the larva.
+    food_detected : larvaworld.lib.model.agents.Source
+        The detected food source.
+    feeder_motion : bool
+        Flag indicating whether the larva is in feeder motion.
+    cum_food_detected : int
+        Cumulative count of detected food sources.
+    amount_eaten : float
+        Amount of food eaten.
+
+    Methods
+    -------
+    build_brain(conf)
+        Build the brain for the larva agent.
+    feed(source, motion)
+        Feed the larva agent.
+    build_energetics(energetic_pars, life_history)
+        Build the energetics model for the larva agent.
+    run_energetics(V_eaten)
+        Run the energetics model for the larva agent.
+    get_feed_success(t)
+        Get the feed success of the larva agent.
+    on_food_dur_ratio
+        Get the ratio of time spent on food.
+    on_food
+        Check if the larva agent is on food.
+    scaled_amount_eaten
+        Get the scaled amount of food eaten.
+    resolve_carrying(food)
+        Resolve carrying of objects by the larva agent.
+    update_behavior_dict(mode='lin')
+        Update the behavior dictionary of the larva agent.
+    sense()
+        Sense the environment.
+    step()
+        Perform a step in the larva agent's behavior.
+    prepare_motion(lin, ang)
+        Prepare motion based on linear and angular velocities.
+    """
     def __init__(self, brain, energetics, life_history,body, **kwargs):
         super().__init__(**body,**kwargs)
         self.carried_objects = []
