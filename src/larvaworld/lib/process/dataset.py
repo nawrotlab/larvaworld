@@ -419,7 +419,7 @@ class BaseLarvaDataset(ParamLarvaDataset):
         if c0.metric_definition is None:
             c0.metric_definition = reg.get_null('metric_definition')
 
-        points = aux.aux.nam.midline(c0.Npoints, type='point')
+        points = aux.nam.midline(c0.Npoints, type='point')
 
         try:
             c0.point = points[c0.metric_definition.spatial.point_idx - 1]

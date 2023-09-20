@@ -350,7 +350,6 @@ def import_dataset(labID, parent_dir=None, group_id=None,source_dir=None,target_
 
     g = reg.conf.LabFormat.get(labID)
     if source_dir is None:
-
         group_dir = g.path
         raw_folder = f'{group_dir}/raw'
         source_dir = f'{raw_folder}/{parent_dir}'
