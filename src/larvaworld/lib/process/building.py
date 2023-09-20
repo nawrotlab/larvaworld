@@ -339,7 +339,7 @@ def import_datasets(source_ids, ids=None, colors=None, refIDs=None, **kwargs):
 
 
 def import_dataset(labID, parent_dir=None, group_id=None,raw_folder=None,proc_folder=None, N=None, id=None, merged=False,
-                   refID=None, enrich_conf=None, **kwargs):
+                   refID=None, enrich_conf=None,save_dataset=True, **kwargs):
     print()
     print(f'----- Initializing {labID} format-specific dataset import. -----')
 
@@ -374,13 +374,13 @@ def import_dataset(labID, parent_dir=None, group_id=None,raw_folder=None,proc_fo
         print(f'***-- Dataset {d.id} created with {len(d.config.agent_ids)} larvae! -----')
         print(f'****- Processing dataset {d.id} to derive secondary metrics -----')
         if enrich_conf is None:
-            enrich_conf=reg.gen.EnrichConf(proc_keys =[], anot_keys =[])
-        enrich_conf.pre_kws = g.preprocess
-        d = d.enrich(**enrich_conf.nestedConf, is_last=False)
-
-        d.save(refID=refID)
-        if refID is not None :
-            print(f'***** Dataset stored under the reference ID : {refID} -----')
+            enrich_conf=reg.gen.EnrichConf(proc_keys =[], anot_keys =[]).nestedConf
+        enrich_conf['pre_kws'] = g.preprocess
+        d = d.enrich(**enrich_conf, is_last=False)
+        if save_dataset:
+            d.save(refID=refID)
+            if refID is not None :
+                print(f'***** Dataset stored under the reference ID : {refID} -----')
     else:
         print(f'xxxxx Failed to create dataset {id}! -----')
     return d
