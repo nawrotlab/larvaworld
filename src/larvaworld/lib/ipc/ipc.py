@@ -62,6 +62,7 @@ def _recursive_subclasses(cls):
 
 
 class Message(object):
+
     @classmethod
     def deserialize(cls, objects):
         classmap = _recursive_subclasses(cls)

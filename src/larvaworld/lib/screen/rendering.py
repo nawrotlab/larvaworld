@@ -38,6 +38,7 @@ class ScreenWindowAreaPygame(ScreenWindowArea):
 
     @property
     def mouse_position(self):
+
         p = np.array(pygame.mouse.get_pos()) - self._translation
         return np.linalg.inv(self._scale).dot(p)
 

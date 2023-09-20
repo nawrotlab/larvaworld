@@ -281,6 +281,21 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', **kwargs):
 
 
 def dataset_legend(labels, colors, ax=None, anchor=None, handlelength=0.5, handleheight=0.5, **kwargs):
+    """
+    Create a legend for all datasets with their specified labels and colors.
+
+    Parameters:
+        labels (list): List of labels for each dataset.
+        colors (list): List of colors corresponding to each dataset.
+        ax (matplotlib.axes._axes.Axes, optional): The axes to which the legend should be added. If None, use the current axes.
+        anchor (tuple, optional): Bounding box anchor coordinates for the legend. Default is None.
+        handlelength (float, optional): The length of legend handles. Default is 0.5.
+        handleheight (float, optional): The height of legend handles. Default is 0.5.
+        **kwargs: Additional keyword arguments to be passed to the legend.
+
+    Returns:
+        matplotlib.legend.Legend: The created legend.
+    """
     kws = {
         'handles': [patches.Patch(facecolor=c, label=l, edgecolor='black') for c, l in zip(colors, labels)],
         'handlelength': handlelength,
@@ -297,8 +312,21 @@ def dataset_legend(labels, colors, ax=None, anchor=None, handlelength=0.5, handl
         ax.add_artist(leg)
     return leg
 
-
 def label_diff(i, j, text, X, Y, ax):
+    """
+    Label the difference between two data points with an annotation and an arrow.
+
+    Parameters:
+        i (int): Index of the first data point.
+        j (int): Index of the second data point.
+        text (str): The text label for the difference annotation.
+        X (list): List of x-coordinates for data points.
+        Y (list): List of y-coordinates for data points.
+        ax (matplotlib.axes._axes.Axes): The axes on which to annotate the difference.
+
+    Returns:
+        None
+    """
     x = (X[i] + X[j]) / 2
     y = 1.5 * max(Y[i], Y[j])
     dx = abs(X[i] - X[j])
@@ -306,16 +334,25 @@ def label_diff(i, j, text, X, Y, ax):
     props = {'connectionstyle': 'bar', 'arrowstyle': '-', \
              'shrinkA': 20, 'shrinkB': 20, 'linewidth': 2}
     ax.annotate(text, xy=(X[i], y), zorder=10)
-    # ax.annotate(text, xy=(X[i], y), zorder=10)
     ax.annotate('', xy=(X[i], y), xytext=(X[j], y), arrowprops=props)
 
 def pvalue_star(pv):
+    """
+    Convert a p-value to a star annotation for significance.
+
+    Parameters:
+        pv (float): The p-value to be converted.
+
+    Returns:
+        str: Star annotation representing the significance level.
+    """
     a = {1e-4: "****", 1e-3: "***",
          1e-2: "**", 0.05: "*", 1: "ns"}
     for k, v in a.items():
         if pv < k:
             return v
     return "ns"
+
 
 
 
@@ -414,18 +451,18 @@ def dual_half_circle(center, radius=0.04, angle=90, ax=None, colors=('W', 'k'), 
 
 def save_plot(fig, filepath, filename):
     """
-        Save a Matplotlib figure to a specified file path.
+    Save a Matplotlib figure to a specified file path.
 
-        Parameters:
-        - fig: matplotlib.figure.Figure
-            The figure to save.
-        - filepath: str
-            The full file path where the figure should be saved.
-        - filename: str
-            The name of the file to save.
+    Parameters:
+    - fig: matplotlib.figure.Figure
+        The figure to save.
+    - filepath: str
+        The full file path where the figure should be saved.
+    - filename: str
+        The name of the file to save.
 
-        Returns:
-        None
+    Returns:
+    None
     """
     fig.savefig(filepath, dpi=300, facecolor=None)
     try:
@@ -437,25 +474,25 @@ def save_plot(fig, filepath, filename):
 
 def process_plot(fig, save_to, filename, return_fig=False, show=False):
     """
-        Process and optionally save or show a Matplotlib figure.
+    Process and optionally save or show a Matplotlib figure.
 
-        Parameters:
-        - fig: matplotlib.figure.Figure
-            The figure to process.
-        - save_to: str or None
-            The directory where the figure should be saved. If None, the figure won't be saved.
-        - filename: str
-            The name of the file to save.
-        - return_fig: bool
-            Whether to return the figure in the result.
-        - show: bool
-            Whether to display the figure.
+    Parameters:
+    - fig: matplotlib.figure.Figure
+        The figure to process.
+    - save_to: str or None
+        The directory where the figure should be saved. If None, the figure won't be saved.
+    - filename: str
+        The name of the file to save.
+    - return_fig: bool
+        Whether to return the figure in the result.
+    - show: bool
+        Whether to display the figure.
 
-        Returns:
-        - fig: matplotlib.figure.Figure (if return_fig=False)
-            The processed figure.
-        - save_to (if return_fig=True)
-        - filename (if return_fig=True)
+    Returns:
+    - fig: matplotlib.figure.Figure (if return_fig=False)
+        The processed figure.
+    - save_to (if return_fig=True)
+    - filename (if return_fig=True)
     """
     if show:
         plt.show()
