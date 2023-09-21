@@ -37,7 +37,8 @@ dependencies = [
     #'libgeos-dev',
     'movingpandas',
     'geopandas',
-    'panel'
+    'panel',
+    'holoviews'
 ]
 
 [project.urls]

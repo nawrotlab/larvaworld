@@ -5,6 +5,7 @@ Sphinx
 sphinx-autobuild
 sphinx-rtd-theme
 panel
+holoviews
 larvaworld
 #libgeos-dev
 # sphinxcontrib-napoleon
