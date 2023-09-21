@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.cli.argparser &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.cli.argparser</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.cli.argparser</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">argparse</span> <span class="kn">import</span> <span class="n">ArgumentParser</span>
+<span class="kn">import</span> <span class="nn">param</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span><span class="p">,</span> <span class="n">sim</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;SingleParserArgument&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ParserArgumentDict&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SimModeParser&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;update_larva_groups&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">__displayname__</span> <span class="o">=</span> <span class="s1">&#39;CLI argument parsing classes&#39;</span>
+
+<div class="viewcode-block" id="SingleParserArgument"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SingleParserArgument">[docs]</a><span class="k">class</span> <span class="nc">SingleParserArgument</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a single parser argument.</span>
+
+<span class="sd">    This class is used to populate a parser with arguments and get their values.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    short : str</span>
+<span class="sd">        The short argument name.</span>
+<span class="sd">    key : str</span>
+<span class="sd">        The argument key.</span>
+<span class="sd">    **kwargs : dict</span>
+<span class="sd">        Additional keyword arguments.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    key : str</span>
+<span class="sd">        The argument key.</span>
+<span class="sd">    args : list of str</span>
+<span class="sd">        A list containing the short and long argument names.</span>
+<span class="sd">    kwargs : dict</span>
+<span class="sd">        Additional keyword arguments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">short</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;-</span><span class="si">{</span><span class="n">short</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;--</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+<div class="viewcode-block" id="SingleParserArgument.add"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SingleParserArgument.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add the argument to a parser.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        p : argparse.ArgumentParser</span>
+<span class="sd">            The argument parser.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        argparse.ArgumentParser</span>
+<span class="sd">            The modified parser.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">p</span></div>
+
+<div class="viewcode-block" id="SingleParserArgument.get"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SingleParserArgument.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the value of the argument from parsed input.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input : argparse.Namespace</span>
+<span class="sd">            The parsed input.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Any</span>
+<span class="sd">            The value of the argument.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SingleParserArgument.from_dict"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SingleParserArgument.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a SingleParserArgument from a dictionary.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str</span>
+<span class="sd">            The argument name.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Additional keyword arguments.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        SingleParserArgument</span>
+<span class="sd">            A SingleParserArgument instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">parser_entry_from_dict</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SingleParserArgument.from_param"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SingleParserArgument.from_param">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_param</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a SingleParserArgument from a parameter.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        k : str</span>
+<span class="sd">            The parameter key.</span>
+<span class="sd">        p : param.Parameter</span>
+<span class="sd">            The parameter instance.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        SingleParserArgument</span>
+<span class="sd">            A SingleParserArgument instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">parser_entry_from_param</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">p</span><span class="p">))</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">parser_entry_from_param</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a dictionary entry for a parser argument from a parameter.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    k : str</span>
+<span class="sd">        The parameter key.</span>
+<span class="sd">    p : param.Parameter</span>
+<span class="sd">        The parameter instance.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        A dictionary entry for the parser argument.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="vm">__class__</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">default</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span>
+        <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="n">k</span><span class="p">,</span>
+        <span class="s1">&#39;short&#39;</span><span class="p">:</span> <span class="n">k</span><span class="p">,</span>
+        <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">doc</span><span class="p">,</span>
+    <span class="p">})</span>
+    <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">:</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">action</span> <span class="o">=</span> <span class="s1">&#39;store_true&#39;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span> <span class="k">else</span> <span class="s1">&#39;store_false&#39;</span>
+    <span class="k">elif</span> <span class="n">c</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">:</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">str</span>
+    <span class="k">elif</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">():</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="k">elif</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">():</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">float</span>
+    <span class="k">elif</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">param</span><span class="o">.</span><span class="n">Tuple</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">():</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">tuple</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s1">&#39;objects&#39;</span><span class="p">):</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">objects</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">():</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">nargs</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="s1">&#39;item_type&#39;</span><span class="p">):</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">item_type</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span> <span class="nf">parser_entry_from_dict</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">v</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a dictionary entry for a parser argument from a dictionary.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        The argument name.</span>
+<span class="sd">    k : str, optional</span>
+<span class="sd">        The argument key. If not provided, it defaults to the name.</span>
+<span class="sd">    h : str, optional</span>
+<span class="sd">        The help text.</span>
+<span class="sd">    dtype : type, optional</span>
+<span class="sd">        The data type.</span>
+<span class="sd">    v : Any, optional</span>
+<span class="sd">        The default value.</span>
+<span class="sd">    vs : list of Any, optional</span>
+<span class="sd">        List of choices.</span>
+<span class="sd">    **kwargs : dict</span>
+<span class="sd">        Additional keyword arguments.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        A dictionary entry for the parser argument.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;key&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
+        <span class="s1">&#39;short&#39;</span><span class="p">:</span> <span class="n">k</span><span class="p">,</span>
+        <span class="s1">&#39;help&#39;</span><span class="p">:</span> <span class="n">h</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">dtype</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">d</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;store_true&#39;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span> <span class="k">else</span> <span class="s1">&#39;store_false&#39;</span>
+    <span class="k">elif</span> <span class="n">dtype</span> <span class="o">==</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="n">d</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span>
+        <span class="n">d</span><span class="p">[</span><span class="s1">&#39;nargs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span>
+        <span class="k">if</span> <span class="n">vs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s1">&#39;choices&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vs</span>
+    <span class="k">elif</span> <span class="n">dtype</span> <span class="o">==</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+        <span class="n">d</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span>
+        <span class="n">d</span><span class="p">[</span><span class="s1">&#39;nargs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;+&#39;</span>
+        <span class="k">if</span> <span class="n">vs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s1">&#39;choices&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vs</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">d</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dtype</span>
+        <span class="k">if</span> <span class="n">vs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s1">&#39;choices&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vs</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s1">&#39;default&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="n">d</span><span class="p">[</span><span class="s1">&#39;nargs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;?&#39;</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<div class="viewcode-block" id="ParserArgumentDict"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.ParserArgumentDict">[docs]</a><span class="k">class</span> <span class="nc">ParserArgumentDict</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a dictionary of parser arguments.</span>
+
+<span class="sd">    This class can be instantiated either by a dictionary of param.Parameters or by a dictionary existing in the registry parameter Database.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parsargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a ParserArgumentDict.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        parsargs : dict</span>
+<span class="sd">            A dictionary of parser arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parsargs</span> <span class="o">=</span> <span class="n">parsargs</span>
+
+<div class="viewcode-block" id="ParserArgumentDict.from_param"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.ParserArgumentDict.from_param">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_param</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a ParserArgumentDict from a parameter dictionary.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        d0 : dict</span>
+<span class="sd">            A dictionary of parameters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ParserArgumentDict</span>
+<span class="sd">            A ParserArgumentDict instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">parser_dict_from_param</span><span class="p">(</span><span class="n">d0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="ParserArgumentDict.from_dict"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.ParserArgumentDict.from_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a ParserArgumentDict from a dictionary.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        d0 : dict</span>
+<span class="sd">            A dictionary of parser arguments.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ParserArgumentDict</span>
+<span class="sd">            A ParserArgumentDict instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">parser_dict_from_dict</span><span class="p">(</span><span class="n">d0</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="ParserArgumentDict.add"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.ParserArgumentDict.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add parser arguments to an ArgumentParser.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        parser : argparse.ArgumentParser, optional</span>
+<span class="sd">            The ArgumentParser to add the arguments to.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        argparse.ArgumentParser</span>
+<span class="sd">            The modified ArgumentParser.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">parser</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">parser</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">parser</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parser</span></div>
+
+<div class="viewcode-block" id="ParserArgumentDict.get"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.ParserArgumentDict.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get parser argument values from parsed input.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input : argparse.Namespace</span>
+<span class="sd">            The parsed input.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            A dictionary of argument values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsargs</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+        <span class="k">return</span> <span class="n">dic</span><span class="o">.</span><span class="n">unflatten</span><span class="p">()</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">parser_dict_from_param</span><span class="p">(</span><span class="n">d0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a dictionary of parser arguments from a parameter dictionary.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    d0 : dict</span>
+<span class="sd">        A dictionary of parameters.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        A dictionary of parser arguments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">d0</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">objects</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="vm">__class__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">():</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">SingleParserArgument</span><span class="o">.</span><span class="n">from_param</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">parser_dict_from_param</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">parser_dict_from_dict</span><span class="p">(</span><span class="n">d0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a dictionary of parser arguments from a dictionary.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    d0 : dict</span>
+<span class="sd">        A dictionary of parser arguments.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        A dictionary of parser arguments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d0</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="s1">&#39;v&#39;</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="s1">&#39;k&#39;</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">or</span> <span class="s1">&#39;h&#39;</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">p</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">SingleParserArgument</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">**</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">p</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">parser_dict_from_dict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="SimModeParser"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SimModeParser">[docs]</a><span class="k">class</span> <span class="nc">SimModeParser</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parser for simulation modes and arguments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the SimModeParser.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dict</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span>
+            <span class="s1">&#39;Batch&#39;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s1">&#39;Eval&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Eval&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;Exp&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;visualization&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;Ga&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;ga_select_kws&#39;</span><span class="p">,</span> <span class="s1">&#39;ga_eval_kws&#39;</span><span class="p">,</span> <span class="s1">&#39;reference_dataset&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;Replay&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;Replay&#39;</span><span class="p">]</span>
+        <span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parser_keys</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">unique_list</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">flatten_list</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dict</span><span class="o">.</span><span class="n">values</span><span class="p">())))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parsers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_parsers</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cli_parser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_cli_parser</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parser_args</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_kws</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SimModeParser.parse_args"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SimModeParser.parse_args">[docs]</a>    <span class="k">def</span> <span class="nf">parse_args</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse command line arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cli_parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()))</span></div>
+
+<div class="viewcode-block" id="SimModeParser.init_parsers"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SimModeParser.init_parsers">[docs]</a>    <span class="k">def</span> <span class="nf">init_parsers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize parsers for different simulation modes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">sim_params</span> <span class="o">=</span> <span class="n">ParserArgumentDict</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">par</span><span class="o">.</span><span class="n">PI</span><span class="p">[</span><span class="s1">&#39;sim_params&#39;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser_keys</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">ParserArgumentDict</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">par</span><span class="o">.</span><span class="n">PI</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">d</span></div>
+
+<div class="viewcode-block" id="SimModeParser.populate_mode_subparser"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SimModeParser.populate_mode_subparser">[docs]</a>    <span class="k">def</span> <span class="nf">populate_mode_subparser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sp</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Populate a subparser with arguments for a specific simulation mode.</span>
+
+<span class="sd">        :param sp: The subparser.</span>
+<span class="sd">        :param m: The simulation mode.</span>
+<span class="sd">        :return: The modified subparser.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">m</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Replay&#39;</span><span class="p">,</span> <span class="s1">&#39;Eval&#39;</span><span class="p">]:</span>
+            <span class="n">sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsers</span><span class="o">.</span><span class="n">sim_params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dict</span><span class="p">[</span><span class="n">m</span><span class="p">]:</span>
+            <span class="n">sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsers</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">sp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sp</span></div>
+
+<div class="viewcode-block" id="SimModeParser.init_mode_subparser"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SimModeParser.init_mode_subparser">[docs]</a>    <span class="k">def</span> <span class="nf">init_mode_subparser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sp</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a subparser with common arguments for a specific simulation mode.</span>
+
+<span class="sd">        :param sp: The subparser.</span>
+<span class="sd">        :param m: The simulation mode.</span>
+<span class="sd">        :return: The modified subparser.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-id&#39;</span><span class="p">,</span> <span class="s1">&#39;--id&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The simulation ID. If not provided a default is generated&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Exp&#39;</span><span class="p">,</span> <span class="s1">&#39;Batch&#39;</span><span class="p">,</span> <span class="s1">&#39;Ga&#39;</span><span class="p">]:</span>
+            <span class="n">sp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;experiment&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">confIDs</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The experiment mode&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">m</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Exp&#39;</span><span class="p">,</span> <span class="s1">&#39;Batch&#39;</span><span class="p">]:</span>
+            <span class="n">sp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-N&#39;</span><span class="p">,</span> <span class="s1">&#39;--Nagents&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The number of simulated larvae in each larva group&#39;</span><span class="p">)</span>
+            <span class="n">sp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-mIDs&#39;</span><span class="p">,</span> <span class="s1">&#39;--group_model_ids&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span>
+                            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The larva models to use for creating the simulation larva groups&#39;</span><span class="p">)</span>
+            <span class="n">sp</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-dIDs&#39;</span><span class="p">,</span> <span class="s1">&#39;--group_disp_ids&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span>
+                            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The displayed IDs of the simulation larva groups&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sp</span></div>
+
+<div class="viewcode-block" id="SimModeParser.build_cli_parser"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SimModeParser.build_cli_parser">[docs]</a>    <span class="k">def</span> <span class="nf">build_cli_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Build the command line argument parser.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">()</span>
+        <span class="n">subparsers</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s1">&#39;sim_mode&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The simulation mode to launch&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">reg</span><span class="o">.</span><span class="n">SIMTYPES</span><span class="p">:</span>
+            <span class="n">sp</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+            <span class="n">sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_mode_subparser</span><span class="p">(</span><span class="n">sp</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+            <span class="n">sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">populate_mode_subparser</span><span class="p">(</span><span class="n">sp</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">p</span></div>
+
+<div class="viewcode-block" id="SimModeParser.eval_parser"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SimModeParser.eval_parser">[docs]</a>    <span class="k">def</span> <span class="nf">eval_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate a parser argument.</span>
+
+<span class="sd">        :param p_key: The argument key.</span>
+<span class="sd">        :return: The parsed value of the argument.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsers</span><span class="p">[</span><span class="n">p_key</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimModeParser.eval_parsers"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SimModeParser.eval_parsers">[docs]</a>    <span class="k">def</span> <span class="nf">eval_parsers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate all parser arguments.</span>
+
+<span class="sd">        :return: A dictionary of parsed values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Replay&#39;</span><span class="p">,</span> <span class="s1">&#39;Eval&#39;</span><span class="p">]:</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">sim_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_parser</span><span class="p">(</span><span class="s1">&#39;sim_params&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">]:</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_parser</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">d</span></div>
+
+<div class="viewcode-block" id="SimModeParser.configure"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SimModeParser.configure">[docs]</a>    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">show_args</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Configure the simulation run based on parsed arguments.</span>
+
+<span class="sd">        :param show_args: Whether to show parsed arguments.</span>
+<span class="sd">        :return: The configured simulation run.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">m</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">sim_mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parser_args</span> <span class="o">=</span> <span class="n">sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_parsers</span><span class="p">()</span>
+        <span class="n">kw</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">id</span><span class="p">})</span>
+
+        <span class="k">if</span> <span class="n">m</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Replay&#39;</span><span class="p">,</span> <span class="s1">&#39;Eval&#39;</span><span class="p">]:</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">sp</span><span class="o">.</span><span class="n">sim_params</span><span class="p">)</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">experiment</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">experiment</span>
+        <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="s1">&#39;Batch&#39;</span><span class="p">:</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;batch&#39;</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">run_externally</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">conf</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Batch</span><span class="o">.</span><span class="n">getID</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">exp</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Exp</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">kw</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">exp</span><span class="p">)</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">exp</span><span class="o">.</span><span class="n">experiment</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">exp</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">exp</span><span class="o">.</span><span class="n">larva_groups</span> <span class="o">=</span> <span class="n">update_larva_groups</span><span class="p">(</span>
+                <span class="n">kw</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">exp</span><span class="o">.</span><span class="n">larva_groups</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">Nagents</span><span class="p">,</span> <span class="n">mIDs</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">group_model_ids</span><span class="p">,</span> <span class="n">dIDs</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">group_disp_ids</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">kw</span><span class="o">.</span><span class="n">duration</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">kw</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">exp</span><span class="o">.</span><span class="n">sim_params</span><span class="o">.</span><span class="n">duration</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">Exec</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">m</span> <span class="o">==</span> <span class="s1">&#39;Exp&#39;</span><span class="p">:</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Exp</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">kw</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">experiment</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">experiment</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">larva_groups</span> <span class="o">=</span> <span class="n">update_larva_groups</span><span class="p">(</span>
+                <span class="n">kw</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">larva_groups</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">Nagents</span><span class="p">,</span> <span class="n">mIDs</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">group_model_ids</span><span class="p">,</span> <span class="n">dIDs</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">group_disp_ids</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">kw</span><span class="o">.</span><span class="n">duration</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">kw</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">sim_params</span><span class="o">.</span><span class="n">duration</span>
+
+            <span class="n">kw</span><span class="o">.</span><span class="n">screen_kws</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;vis_kwargs&#39;</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">visualization</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">ExpRun</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">m</span> <span class="o">==</span> <span class="s1">&#39;Ga&#39;</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Ga</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">kw</span><span class="o">.</span><span class="n">experiment</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;base_model&#39;</span><span class="p">,</span> <span class="s1">&#39;bestConfID&#39;</span><span class="p">,</span> <span class="s1">&#39;space_mkeys&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">sp</span><span class="o">.</span><span class="n">ga_select_kws</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">sp</span><span class="o">.</span><span class="n">ga_select_kws</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">ga_select_kws</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">sp</span><span class="o">.</span><span class="n">ga_select_kws</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">sp</span><span class="o">.</span><span class="n">reference_dataset</span><span class="o">.</span><span class="n">refID</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">refID</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">reference_dataset</span><span class="o">.</span><span class="n">refID</span>
+
+            <span class="k">if</span> <span class="n">kw</span><span class="o">.</span><span class="n">duration</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">kw</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">sim_params</span><span class="o">.</span><span class="n">duration</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">p</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">GAlauncher</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">m</span> <span class="o">==</span> <span class="s1">&#39;Eval&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">EvalRun</span><span class="p">(</span><span class="o">**</span><span class="n">sp</span><span class="o">.</span><span class="n">Eval</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">m</span> <span class="o">==</span> <span class="s1">&#39;Replay&#39;</span><span class="p">:</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">Replay</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">ReplayRun</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_kws</span> <span class="o">=</span> <span class="n">kw</span>
+        <span class="k">if</span> <span class="n">show_args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">show_args</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span></div>
+
+<div class="viewcode-block" id="SimModeParser.show_args"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SimModeParser.show_args">[docs]</a>    <span class="k">def</span> <span class="nf">show_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nested</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">flat_nested</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">input</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">run_args</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Show parsed arguments.</span>
+
+<span class="sd">        :param nested: Whether to show arguments as a nested dictionary.</span>
+<span class="sd">        :param flat_nested: Whether to show arguments as a flattened nested dictionary.</span>
+<span class="sd">        :param input: Whether to show input arguments.</span>
+<span class="sd">        :param default: Whether to show default arguments.</span>
+<span class="sd">        :param run_args: Whether to show run arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simulation mode : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nested</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simulation args as nested dictionary: &#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_kws</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="n">flat</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">flat_nested</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simulation args as flattened nested dictionary: &#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_kws</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">input</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Input args : &#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">print</span><span class="p">(</span><span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">run_args</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">,</span> <span class="s1">&#39;configuration_text&#39;</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="o">.</span><span class="n">configuration_text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SimModeParser.launch"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.SimModeParser.launch">[docs]</a>    <span class="k">def</span> <span class="nf">launch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Launch the simulation run.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span>
+        <span class="k">if</span> <span class="n">m</span> <span class="o">==</span> <span class="s1">&#39;Batch&#39;</span><span class="p">:</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">m</span> <span class="o">==</span> <span class="s1">&#39;Exp&#39;</span><span class="p">:</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">simulate</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">analysis</span><span class="p">:</span>
+                <span class="n">r</span><span class="o">.</span><span class="n">analyze</span><span class="p">(</span><span class="n">show</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">show</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">m</span> <span class="o">==</span> <span class="s1">&#39;Ga&#39;</span><span class="p">:</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">simulate</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">m</span> <span class="o">==</span> <span class="s1">&#39;Eval&#39;</span><span class="p">:</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">simulate</span><span class="p">()</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">plot_results</span><span class="p">()</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">plot_models</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">m</span> <span class="o">==</span> <span class="s1">&#39;Replay&#39;</span><span class="p">:</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div></div>
+
+
+
+<div class="viewcode-block" id="update_larva_groups"><a class="viewcode-back" href="../../../content/larvaworld/cli/argparser.html#larvaworld.cli.argparser.update_larva_groups">[docs]</a><span class="k">def</span> <span class="nf">update_larva_groups</span><span class="p">(</span><span class="n">lgs</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mIDs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dIDs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Modifies the experiment&#39;s configuration larvagroups.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        lgs (dict): The existing larvagroups in the experiment configuration.</span>
+<span class="sd">        N (int):: Overwrite the number of agents per larva group.</span>
+<span class="sd">        mIDs (list): Overwrite the larva models used in the experiment. If not None, a larva group per model ID will be simulated.</span>
+<span class="sd">        dIDs (list): The displayed IDs of the groups. If None, the model IDs (mIDs) are used.</span>
+<span class="sd">        sample: The reference dataset.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The experiment&#39;s configuration larvagroups.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">mIDs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dIDs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dIDs</span> <span class="o">=</span> <span class="n">mIDs</span>
+        <span class="n">Nm</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mIDs</span><span class="p">)</span>
+        <span class="n">gConfs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">lgs</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lgs</span><span class="p">)</span> <span class="o">!=</span> <span class="n">Nm</span><span class="p">:</span>
+            <span class="n">gConfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">gConfs</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="n">Nm</span>
+            <span class="k">for</span> <span class="n">gConf</span><span class="p">,</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gConfs</span><span class="p">,</span> <span class="n">aux</span><span class="o">.</span><span class="n">N_colors</span><span class="p">(</span><span class="n">Nm</span><span class="p">)):</span>
+                <span class="n">gConf</span><span class="o">.</span><span class="n">default_color</span> <span class="o">=</span> <span class="n">col</span>
+        <span class="n">lgs</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="n">dID</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">dID</span> <span class="ow">in</span> <span class="n">dIDs</span><span class="p">})</span>
+        <span class="k">for</span> <span class="n">dID</span><span class="p">,</span> <span class="n">mID</span><span class="p">,</span> <span class="n">gConf</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">dIDs</span><span class="p">,</span> <span class="n">mIDs</span><span class="p">,</span> <span class="n">gConfs</span><span class="p">):</span>
+            <span class="n">lgs</span><span class="p">[</span><span class="n">dID</span><span class="p">]</span> <span class="o">=</span> <span class="n">gConf</span>
+            <span class="n">lgs</span><span class="p">[</span><span class="n">dID</span><span class="p">]</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">getID</span><span class="p">(</span><span class="n">mID</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">N</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">gID</span><span class="p">,</span> <span class="n">gConf</span> <span class="ow">in</span> <span class="n">lgs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">gConf</span><span class="o">.</span><span class="n">distribution</span><span class="o">.</span><span class="n">N</span> <span class="o">=</span> <span class="n">N</span>
+
+    <span class="k">if</span> <span class="n">sample</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">gID</span><span class="p">,</span> <span class="n">gConf</span> <span class="ow">in</span> <span class="n">lgs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">gConf</span><span class="o">.</span><span class="n">sample</span> <span class="o">=</span> <span class="n">sample</span>
+
+    <span class="k">return</span> <span class="n">lgs</span></div>
+
+
+
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># class SingleParserArgument:</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     Create a single parser argument</span>
+<span class="c1">#     This is a class used to populate a parser with arguments and get their values.</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#</span>
+<span class="c1">#     def __init__(self, short, key, **kwargs):</span>
+<span class="c1">#         self.key = key</span>
+<span class="c1">#         self.args = [f&#39;-{short}&#39;, f&#39;--{key}&#39;]</span>
+<span class="c1">#         self.kwargs = kwargs</span>
+<span class="c1">#</span>
+<span class="c1">#     def add(self, p):</span>
+<span class="c1">#         p.add_argument(*self.args, **self.kwargs)</span>
+<span class="c1">#         return p</span>
+<span class="c1">#</span>
+<span class="c1">#     def get(self, input):</span>
+<span class="c1">#         return getattr(input, self.key)</span>
+<span class="c1">#</span>
+<span class="c1">#     @ classmethod</span>
+<span class="c1">#     def from_dict(cls, name, **kwargs):</span>
+<span class="c1">#         return cls(**parser_entry_from_dict(name, **kwargs))</span>
+<span class="c1">#</span>
+<span class="c1">#     @classmethod</span>
+<span class="c1">#     def from_param(cls, k, p):</span>
+<span class="c1">#         return cls(**parser_entry_from_param(k, p))</span>
+<span class="c1">#</span>
+<span class="c1"># def parser_entry_from_param(k, p):</span>
+<span class="c1">#     c = p.__class__</span>
+<span class="c1">#     v = p.default</span>
+<span class="c1">#     d = aux.AttrDict({</span>
+<span class="c1">#         &#39;key&#39;: k,</span>
+<span class="c1">#         &#39;short&#39;: k,</span>
+<span class="c1">#         &#39;help&#39;: p.doc,</span>
+<span class="c1">#     })</span>
+<span class="c1">#     if v is not None:</span>
+<span class="c1">#         d.default = v</span>
+<span class="c1">#     if c == param.Boolean:</span>
+<span class="c1">#         d.action = &#39;store_true&#39; if not v else &#39;store_false&#39;</span>
+<span class="c1">#     elif c == param.String:</span>
+<span class="c1">#         d.type = str</span>
+<span class="c1">#     elif c in param.Integer.__subclasses__():</span>
+<span class="c1">#         d.type = int</span>
+<span class="c1">#     elif c in param.Number.__subclasses__():</span>
+<span class="c1">#         d.type = float</span>
+<span class="c1">#     elif c in param.Tuple.__subclasses__():</span>
+<span class="c1">#         d.type = tuple</span>
+<span class="c1">#</span>
+<span class="c1">#     if hasattr(p, &#39;objects&#39;):</span>
+<span class="c1">#         d.choices = p.objects</span>
+<span class="c1">#         if c in param.List.__subclasses__():</span>
+<span class="c1">#             d.nargs = &#39;+&#39;</span>
+<span class="c1">#         if hasattr(p, &#39;item_type&#39;):</span>
+<span class="c1">#             d.type = p.item_type</span>
+<span class="c1">#     return d</span>
+<span class="c1">#</span>
+<span class="c1"># def parser_entry_from_dict(name, k=None, h=&#39;&#39;, dtype=float, v=None, vs=None, **kwargs):</span>
+<span class="c1">#     if k is None:</span>
+<span class="c1">#         k = name</span>
+<span class="c1">#     d = {</span>
+<span class="c1">#         &#39;key&#39;: name,</span>
+<span class="c1">#         &#39;short&#39;: k,</span>
+<span class="c1">#         &#39;help&#39;: h,</span>
+<span class="c1">#     }</span>
+<span class="c1">#     if dtype == bool:</span>
+<span class="c1">#         d[&#39;action&#39;] = &#39;store_true&#39; if not v else &#39;store_false&#39;</span>
+<span class="c1">#     elif dtype == List[str]:</span>
+<span class="c1">#         d[&#39;type&#39;] = str</span>
+<span class="c1">#         d[&#39;nargs&#39;] = &#39;+&#39;</span>
+<span class="c1">#         if vs is not None:</span>
+<span class="c1">#             d[&#39;choices&#39;] = vs</span>
+<span class="c1">#     elif dtype == List[int]:</span>
+<span class="c1">#         d[&#39;type&#39;] = int</span>
+<span class="c1">#         d[&#39;nargs&#39;] = &#39;+&#39;</span>
+<span class="c1">#         if vs is not None:</span>
+<span class="c1">#             d[&#39;choices&#39;] = vs</span>
+<span class="c1">#     else:</span>
+<span class="c1">#         d[&#39;type&#39;] = dtype</span>
+<span class="c1">#         if vs is not None:</span>
+<span class="c1">#             d[&#39;choices&#39;] = vs</span>
+<span class="c1">#         if v is not None:</span>
+<span class="c1">#             d[&#39;default&#39;] = v</span>
+<span class="c1">#             d[&#39;nargs&#39;] = &#39;?&#39;</span>
+<span class="c1">#     return d</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># class ParserArgumentDict:</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#         Create a dictionary of parser arguments</span>
+<span class="c1">#         This can be instantiated either by a dictionary of param.Parameters or by a dictionary existing in the registry parameter Database</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#     def __init__(self, parsargs):</span>
+<span class="c1">#         self.parsargs = parsargs</span>
+<span class="c1">#</span>
+<span class="c1">#     @classmethod</span>
+<span class="c1">#     def from_param(cls, d0):</span>
+<span class="c1">#         return cls(parser_dict_from_param(d0))</span>
+<span class="c1">#</span>
+<span class="c1">#     @classmethod</span>
+<span class="c1">#     def from_dict(cls, d0):</span>
+<span class="c1">#         return cls(parser_dict_from_dict(d0))</span>
+<span class="c1">#</span>
+<span class="c1">#     def add(self, parser=None):</span>
+<span class="c1">#         if parser is None:</span>
+<span class="c1">#             parser = ArgumentParser()</span>
+<span class="c1">#         for k, v in self.parsargs.items():</span>
+<span class="c1">#             parser = v.add(parser)</span>
+<span class="c1">#         return parser</span>
+<span class="c1">#</span>
+<span class="c1">#     def get(self, input):</span>
+<span class="c1">#         dic = aux.AttrDict({k: v.get(input) for k, v in self.parsargs.items()})</span>
+<span class="c1">#         return dic.unflatten()</span>
+<span class="c1">#</span>
+<span class="c1"># def parser_dict_from_param(d0):</span>
+<span class="c1">#     d = aux.AttrDict()</span>
+<span class="c1">#     for k, p in d0.param.objects().items():</span>
+<span class="c1">#         if p.__class__ not in param.Parameterized.__subclasses__():</span>
+<span class="c1">#             d[k] = SingleParserArgument.from_param(k, p)</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             d[k] = parser_dict_from_param(p)</span>
+<span class="c1">#     return d.flatten()</span>
+<span class="c1">#</span>
+<span class="c1"># def parser_dict_from_dict(d0):</span>
+<span class="c1">#     p = aux.AttrDict()</span>
+<span class="c1">#     for n, v in d0.items():</span>
+<span class="c1">#         if &#39;v&#39; in v.keys() or &#39;k&#39; in v.keys() or &#39;h&#39; in v.keys():</span>
+<span class="c1">#             p[n] = SingleParserArgument.from_dict(n, **v)</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             p[n] = parser_dict_from_dict(v)</span>
+<span class="c1">#     return p.flatten()</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># class SimModeParser :</span>
+<span class="c1">#     def __init__(self):</span>
+<span class="c1">#         self.dict = aux.AttrDict({</span>
+<span class="c1">#         &#39;Batch&#39;: [],</span>
+<span class="c1">#         &#39;Eval&#39;: [&#39;Eval&#39;],</span>
+<span class="c1">#         &#39;Exp&#39;: [&#39;visualization&#39;],</span>
+<span class="c1">#         &#39;Ga&#39;: [&#39;ga_select_kws&#39;, &#39;ga_eval_kws&#39;, &#39;reference_dataset&#39;],</span>
+<span class="c1">#         &#39;Replay&#39;: [&#39;Replay&#39;]</span>
+<span class="c1">#     })</span>
+<span class="c1">#         self.parser_keys=aux.unique_list(aux.flatten_list(list(self.dict.values())))</span>
+<span class="c1">#         self.parsers =self.init_parsers()</span>
+<span class="c1">#         self.cli_parser = self.build_cli_parser()</span>
+<span class="c1">#         self.mode=None</span>
+<span class="c1">#         self.run=None</span>
+<span class="c1">#         self.args = aux.AttrDict()</span>
+<span class="c1">#         self.parser_args = aux.AttrDict()</span>
+<span class="c1">#         self.run_kws = aux.AttrDict()</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#     def parse_args(self):</span>
+<span class="c1">#</span>
+<span class="c1">#         self.args = aux.AttrDict(vars(self.cli_parser.parse_args()))</span>
+<span class="c1">#</span>
+<span class="c1">#     def init_parsers(self):</span>
+<span class="c1">#         d = aux.AttrDict()</span>
+<span class="c1">#         d.sim_params = ParserArgumentDict.from_dict(reg.par.PI[&#39;sim_params&#39;])</span>
+<span class="c1">#         # d.sim_params = Parser(&#39;sim_params&#39;)</span>
+<span class="c1">#         for k in self.parser_keys:</span>
+<span class="c1">#             d[k] = ParserArgumentDict.from_dict(reg.par.PI[k])</span>
+<span class="c1">#             # d[p_key] = Parser(p_key)</span>
+<span class="c1">#         return d</span>
+<span class="c1">#</span>
+<span class="c1">#     def populate_mode_subparser(self, sp, m):</span>
+<span class="c1">#         if m not in [&#39;Replay&#39;, &#39;Eval&#39;]:</span>
+<span class="c1">#             sp = self.parsers.sim_params.add(sp)</span>
+<span class="c1">#         for k in self.dict[m]:</span>
+<span class="c1">#             sp = self.parsers[k].add(sp)</span>
+<span class="c1">#         return sp</span>
+<span class="c1">#</span>
+<span class="c1">#     def init_mode_subparser(self, sp, m):</span>
+<span class="c1">#         sp.add_argument(&#39;-id&#39;, &#39;--id&#39;, type=str, help=&#39;The simulation ID. If not provided a default is generated&#39;)</span>
+<span class="c1">#         if m in [&#39;Exp&#39;, &#39;Batch&#39;, &#39;Ga&#39;]:</span>
+<span class="c1">#             sp.add_argument(&#39;experiment&#39;, choices=reg.conf[m].confIDs, help=&#39;The experiment mode&#39;)</span>
+<span class="c1">#             # p.add_argument(&#39;experiment&#39;, choices=reg.stored.confIDs(sim_mode), help=&#39;The experiment mode&#39;)</span>
+<span class="c1">#         # elif k == &#39;t&#39;:</span>
+<span class="c1">#         #     p.add_argument(&#39;-t&#39;, &#39;--duration&#39;, type=float, help=&#39;The duration of the simulation in minutes&#39;)</span>
+<span class="c1">#         # elif k == &#39;Box2D&#39;:</span>
+<span class="c1">#         #     p.add_argument(&#39;-Box2D&#39;, &#39;--Box2D&#39;, action=&quot;store_true&quot;, help=&#39;Whether to use the Box2D physics engine or not&#39;)</span>
+<span class="c1">#         if m in [&#39;Exp&#39;, &#39;Batch&#39;]:</span>
+<span class="c1">#             sp.add_argument(&#39;-N&#39;, &#39;--Nagents&#39;, type=int, help=&#39;The number of simulated larvae in each larva group&#39;)</span>
+<span class="c1">#             sp.add_argument(&#39;-mIDs&#39;, &#39;--group_model_ids&#39;, type=str, nargs=&#39;+&#39;, help=&#39;The larva models to use for creating the simulation larva groups&#39;)</span>
+<span class="c1">#             sp.add_argument(&#39;-dIDs&#39;, &#39;--group_disp_ids&#39;, type=str, nargs=&#39;+&#39;, help=&#39;The displayed IDs of the simulation larva groups&#39;)</span>
+<span class="c1">#         # elif k == &#39;mID0&#39;:</span>
+<span class="c1">#         #     p.add_argument(&#39;-mID0&#39;, &#39;--base_model&#39;, choices=reg.storedConf(&#39;Model&#39;),</span>
+<span class="c1">#         #                    help=&#39;The model configuration to optimize&#39;)</span>
+<span class="c1">#         # elif k == &#39;mID1&#39;:</span>
+<span class="c1">#         #     p.add_argument(&#39;-mID1&#39;, &#39;--bestConfID&#39;, type=str,</span>
+<span class="c1">#         #                    help=&#39;The model configuration ID to store the best genome&#39;)</span>
+<span class="c1">#         if m in [&#39;Exp&#39;]:</span>
+<span class="c1">#             sp.add_argument(&#39;-a&#39;, &#39;--analysis&#39;, action=&quot;store_true&quot;, help=&#39;Whether to exec analysis&#39;)</span>
+<span class="c1">#             sp.add_argument(&#39;-show&#39;, &#39;--show&#39;, action=&quot;store_true&quot;, help=&#39;Whether to show the analysis plots&#39;)</span>
+<span class="c1">#         # elif k == &#39;offline&#39;:</span>
+<span class="c1">#         #     p.add_argument(&#39;-offline&#39;, &#39;--offline&#39;, action=&quot;store_true&quot;,</span>
+<span class="c1">#         #                    help=&#39;Whether to exec a full LarvaworldSim environment&#39;)</span>
+<span class="c1">#         # elif k == &#39;hide&#39;:</span>
+<span class="c1">#         #     p.add_argument(&#39;-hide&#39;, &#39;--show_display&#39;, action=&quot;store_false&quot;,</span>
+<span class="c1">#</span>
+<span class="c1">#         #                    help=&#39;Whether to render the screen visualization&#39;)</span>
+<span class="c1">#         return sp</span>
+<span class="c1">#</span>
+<span class="c1">#     def build_cli_parser(self):</span>
+<span class="c1">#         p = ArgumentParser()</span>
+<span class="c1">#         subparsers = p.add_subparsers(dest=&#39;sim_mode&#39;, help=&#39;The simulation mode to launch&#39;)</span>
+<span class="c1">#         for m in reg.SIMTYPES:</span>
+<span class="c1">#             sp = subparsers.add_parser(m)</span>
+<span class="c1">#             sp = self.init_mode_subparser(sp, m)</span>
+<span class="c1">#             sp = self.populate_mode_subparser(sp, m)</span>
+<span class="c1">#         return p</span>
+<span class="c1">#</span>
+<span class="c1">#     def eval_parser(self,p_key):</span>
+<span class="c1">#         return self.parsers[p_key].get(self.args)</span>
+<span class="c1">#</span>
+<span class="c1">#     def eval_parsers(self):</span>
+<span class="c1">#         d = aux.AttrDict()</span>
+<span class="c1">#         if self.mode not in [&#39;Replay&#39;, &#39;Eval&#39;]:</span>
+<span class="c1">#             d.sim_params = self.eval_parser(&#39;sim_params&#39;)</span>
+<span class="c1">#         for k in self.dict[self.mode]:</span>
+<span class="c1">#             d[k] = self.eval_parser(k)</span>
+<span class="c1">#         return d</span>
+<span class="c1">#</span>
+<span class="c1">#     def configure(self, show_args=False):</span>
+<span class="c1">#         a=self.args</span>
+<span class="c1">#         self.mode= m =a.sim_mode</span>
+<span class="c1">#         self.parser_args=sp=self.eval_parsers()</span>
+<span class="c1">#         kw = aux.AttrDict({&#39;id&#39;: a.id})</span>
+<span class="c1">#</span>
+<span class="c1">#         if m not in [&#39;Replay&#39;, &#39;Eval&#39;]:</span>
+<span class="c1">#             kw.update(**sp.sim_params)</span>
+<span class="c1">#             kw.experiment = a.experiment</span>
+<span class="c1">#         if m == &#39;Batch&#39;:</span>
+<span class="c1">#             kw.mode=&#39;batch&#39;</span>
+<span class="c1">#             kw.run_externally=False</span>
+<span class="c1">#             kw.conf = reg.conf.Batch.getID(a.experiment)</span>
+<span class="c1">#             kw.conf.exp = reg.conf.Exp.expand(kw.conf.exp)</span>
+<span class="c1">#             kw.conf.exp.experiment = kw.conf.exp</span>
+<span class="c1">#             kw.conf.exp.larva_groups = update_larva_groups(kw.conf.exp.larva_groups, N=a.Nagents, mIDs=a.group_model_ids, dIDs=a.group_disp_ids)</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#             if kw.duration is None:</span>
+<span class="c1">#                 kw.duration = kw.conf.exp.sim_params.duration</span>
+<span class="c1">#             self.run = sim.Exec(**kw)</span>
+<span class="c1">#         elif m == &#39;Exp&#39;:</span>
+<span class="c1">#             kw.parameters = reg.conf.Exp.expand(kw.experiment)</span>
+<span class="c1">#             kw.parameters.experiment = kw.experiment</span>
+<span class="c1">#             kw.parameters.larva_groups = update_larva_groups(kw.parameters.larva_groups, N=a.Nagents, mIDs=a.group_model_ids, dIDs=a.group_disp_ids)</span>
+<span class="c1">#             if kw.duration is None:</span>
+<span class="c1">#                 kw.duration = kw.parameters.sim_params.duration</span>
+<span class="c1">#</span>
+<span class="c1">#             kw.screen_kws = {&#39;vis_kwargs&#39;: sp.visualization}</span>
+<span class="c1">#             self.run = sim.ExpRun(**kw)</span>
+<span class="c1">#         elif m == &#39;Ga&#39;:</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#             p = reg.conf.Ga.expand(kw.experiment)</span>
+<span class="c1">#</span>
+<span class="c1">#             # p.ga_space_kws.init_mode = sp.ga_space_kws.init_mode</span>
+<span class="c1">#             for k in [&#39;base_model&#39;,&#39;bestConfID&#39;, &#39;space_mkeys&#39;]:</span>
+<span class="c1">#                 if sp.ga_select_kws[k] is None:</span>
+<span class="c1">#                     sp.ga_select_kws.pop(k)</span>
+<span class="c1">#             p.ga_select_kws.update(**sp.ga_select_kws)</span>
+<span class="c1">#</span>
+<span class="c1">#             if sp.reference_dataset.refID is not None:</span>
+<span class="c1">#                 # print(sp.reference_dataset.refID,p.refID)</span>
+<span class="c1">#                 # raise</span>
+<span class="c1">#                 p.refID = sp.reference_dataset.refID</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#             if kw.duration is None:</span>
+<span class="c1">#                 kw.duration = p.sim_params.duration</span>
+<span class="c1">#             kw.parameters = p</span>
+<span class="c1">#             self.run = sim.GAlauncher(**kw)</span>
+<span class="c1">#         elif m == &#39;Eval&#39;:</span>
+<span class="c1">#             # kw.parameters = sp.Eval</span>
+<span class="c1">#             self.run = sim.EvalRun(**sp.Eval)</span>
+<span class="c1">#         elif m == &#39;Replay&#39;:</span>
+<span class="c1">#             kw.parameters = sp.Replay</span>
+<span class="c1">#             self.run = sim.ReplayRun(**kw)</span>
+<span class="c1">#         self.run_kws=kw</span>
+<span class="c1">#         if show_args:</span>
+<span class="c1">#             self.show_args()</span>
+<span class="c1">#         return self.run</span>
+<span class="c1">#</span>
+<span class="c1">#     def show_args(self, nested=True, flat_nested=False,input=False, default=False, run_args=True):</span>
+<span class="c1">#         print(f&#39;Simulation mode : {self.mode}&#39;)</span>
+<span class="c1">#         if nested :</span>
+<span class="c1">#             print(f&#39;Simulation args as nested dictionary: &#39;)</span>
+<span class="c1">#             self.run_kws.print(flat=False)</span>
+<span class="c1">#         if flat_nested :</span>
+<span class="c1">#             print(f&#39;Simulation args as flattened nested dictionary: &#39;)</span>
+<span class="c1">#             self.run_kws.print(flat=True)</span>
+<span class="c1">#         if input:</span>
+<span class="c1">#             print(f&#39;Input args : &#39;)</span>
+<span class="c1">#             self.args.print(flat=True)</span>
+<span class="c1">#         # if default:</span>
+<span class="c1">#         #     print(f&#39;Default args : &#39;)</span>
+<span class="c1">#         #     self.default_args.print(flat=True)</span>
+<span class="c1">#         if run_args:</span>
+<span class="c1">#             if hasattr(self.run, &#39;configuration_text&#39;):</span>
+<span class="c1">#                 print(self.run.configuration_text)</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#     def launch(self):</span>
+<span class="c1">#         m=self.mode</span>
+<span class="c1">#         r=self.run</span>
+<span class="c1">#         if m == &#39;Batch&#39;:</span>
+<span class="c1">#             r.run()</span>
+<span class="c1">#         elif m == &#39;Exp&#39;:</span>
+<span class="c1">#             _ = r.simulate()</span>
+<span class="c1">#             if self.args.analysis:</span>
+<span class="c1">#                 r.analyze(show=self.args.show)</span>
+<span class="c1">#         elif m == &#39;Ga&#39;:</span>
+<span class="c1">#             _ = r.simulate()</span>
+<span class="c1">#         elif m == &#39;Eval&#39;:</span>
+<span class="c1">#             r.simulate()</span>
+<span class="c1">#             r.plot_results()</span>
+<span class="c1">#             r.plot_models()</span>
+<span class="c1">#         elif m == &#39;Replay&#39;:</span>
+<span class="c1">#             r.run()</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># def update_larva_groups(lgs, N=None, mIDs=None, dIDs=None,sample=None):</span>
+<span class="c1">#     &#39;&#39;&#39;</span>
+<span class="c1">#     Modifies the experiment&#39;s configuration larvagroups</span>
+<span class="c1">#     Args:</span>
+<span class="c1">#         sample : The reference dataset</span>
+<span class="c1">#         lgs: The existing larvagroups in the experiment configuration</span>
+<span class="c1">#         N: Overwrite the number of agents per larva group</span>
+<span class="c1">#         mIDs: Overwrite the larva models used in the experiment.If not None a larva group per model ID will be simulated.</span>
+<span class="c1">#         dIDs: The displayed ids of the groups. If None the model IDs (mIDs) are used</span>
+<span class="c1">#</span>
+<span class="c1">#     Returns:</span>
+<span class="c1">#         The experiment&#39;s configuration larvagroups</span>
+<span class="c1">#     &#39;&#39;&#39;</span>
+<span class="c1">#</span>
+<span class="c1">#     if mIDs is not None:</span>
+<span class="c1">#         if dIDs is None:</span>
+<span class="c1">#             dIDs=mIDs</span>
+<span class="c1">#         Nm = len(mIDs)</span>
+<span class="c1">#         gConfs = list(lgs.values())</span>
+<span class="c1">#         if len(lgs) != Nm:</span>
+<span class="c1">#             gConfs = [gConfs[0]] * Nm</span>
+<span class="c1">#             for gConf, col in zip(gConfs, aux.N_colors(Nm)):</span>
+<span class="c1">#                 gConf.default_color = col</span>
+<span class="c1">#         lgs = aux.AttrDict({dID: {} for dID in dIDs})</span>
+<span class="c1">#         for dID, mID, gConf in zip(dIDs, mIDs, gConfs):</span>
+<span class="c1">#             lgs[dID] = gConf</span>
+<span class="c1">#             lgs[dID].model = reg.conf.Model.getID(mID)</span>
+<span class="c1">#</span>
+<span class="c1">#     if N is not None:</span>
+<span class="c1">#         for gID, gConf in lgs.items():</span>
+<span class="c1">#             gConf.distribution.N = N</span>
+<span class="c1">#</span>
+<span class="c1">#     if sample is not None:</span>
+<span class="c1">#         for gID, gConf in lgs.items():</span>
+<span class="c1">#             gConf.sample = sample</span>
+<span class="c1">#</span>
+<span class="c1">#     return lgs</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

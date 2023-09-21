@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>data_aux &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="fitting" href="fitting.html" />
+    <link rel="prev" title="Dataset fitting &amp; sampling" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">Modeling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../param/index.html">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plot/index.html">Plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../process/index.html">Data management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../screen/index.html">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sim/index.html">Simulation</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Dataset fitting &amp; sampling</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">data_aux</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fitting.html">fitting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sampling.html">sampling</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Dataset fitting &amp; sampling</a></li>
+      <li class="breadcrumb-item active">data_aux</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/util/data_aux.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.util.data_aux">
+<span id="data-aux"></span><h1>data_aux<a class="headerlink" href="#module-larvaworld.lib.util.data_aux" title="Permalink to this heading"></a></h1>
+<section id="larvaworldparam">
+<h2>LarvaworldParam<a class="headerlink" href="#larvaworldparam" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.data_aux.</span></span><span class="sig-name descname"><span class="pre">LarvaworldParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">holomap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widgets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_frames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">css</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widget_location</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/data_aux.html#LarvaworldParam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameterized</span></code></p>
+<p>params(codename=String, d=String, disp=String, dtype=Parameter, func=Callable, k=String, mdict=Dict, p=String, required_ks=List, sym=String, name=String)
+[1;32mParameters of ‘LarvaworldParam’
+===============================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName               Value          Type      Bounds     Mode  [0m</p>
+<p>p                    ‘’          String                V RW
+d                    ‘’          String                V RW
+disp                 ‘’          String                V RW
+k                    ‘’          String                V RW
+sym                  ‘’          String                V RW
+codename             ‘’          String                V RW
+dtype         &lt;class ‘float’&gt;  Parameter               V RW
+mdict               None          Dict               V RW AN
+func                None        Callable             V RW AN
+required_ks          []           List    (0, None)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mp:           Name of the parameter[0m
+[1;31md:           Dataset name of the parameter[0m
+[1;34mdisp:        Displayed name of the parameter[0m
+[1;31mk:           Key of the parameter[0m
+[1;34msym:         Symbol of the parameter[0m
+[1;31mcodename:    Name of the parameter in code[0m
+[1;34mdtype:       Data type of the parameter value[0m
+[1;31mmdict:       The parameter dict in case of a dict header[0m
+[1;34mfunc:        Function to get the parameter from a dataset[0m
+[1;31mrequired_ks: Keys of prerequired parameters for computation in a dataset[0m</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.Ndec">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Ndec</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.Ndec" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'codename':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'d':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'disp':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'dtype':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'func':</span> <span class="pre">&lt;param.Callable</span> <span class="pre">object&gt;,</span> <span class="pre">'k':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'mdict':</span> <span class="pre">&lt;param.Dict</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'p':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'required_ks':</span> <span class="pre">&lt;param.List</span> <span class="pre">object&gt;,</span> <span class="pre">'sym':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.codename">
+<span class="sig-name descname"><span class="pre">codename</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.codename" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.compute">
+<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/data_aux.html#LarvaworldParam.compute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.compute" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.d">
+<span class="sig-name descname"><span class="pre">d</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.d" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.description">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">description</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.description" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.disp">
+<span class="sig-name descname"><span class="pre">disp</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.disp" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.dtype">
+<span class="sig-name descname"><span class="pre">dtype</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.dtype" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.exists">
+<span class="sig-name descname"><span class="pre">exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/data_aux.html#LarvaworldParam.exists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.exists" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.func">
+<span class="sig-name descname"><span class="pre">func</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.func" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.gConf">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gConf</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.gConf" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/data_aux.html#LarvaworldParam.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.get" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.help">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">help</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.help" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.initial_value">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">initial_value</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.initial_value" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.k">
+<span class="sig-name descname"><span class="pre">k</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.k" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.l">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">l</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.l" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.label">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">label</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.label" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.lim">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">lim</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.lim" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.max">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">max</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.max" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.mdict">
+<span class="sig-name descname"><span class="pre">mdict</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.mdict" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.min">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">min</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.min" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.mutate">
+<span class="sig-name descname"><span class="pre">mutate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Pmut</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Cmut</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/data_aux.html#LarvaworldParam.mutate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.mutate" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LarvaworldParam'</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.p">
+<span class="sig-name descname"><span class="pre">p</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.p" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.parameter">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parameter</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.parameter" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.parclass">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parclass</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.parclass" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.randomize">
+<span class="sig-name descname"><span class="pre">randomize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/data_aux.html#LarvaworldParam.randomize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.randomize" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.required_ks">
+<span class="sig-name descname"><span class="pre">required_ks</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.required_ks" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.s">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">s</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.s" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.short">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">short</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.short" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.step">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">step</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.step" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.sym">
+<span class="sig-name descname"><span class="pre">sym</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.sym" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.symbol">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">symbol</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.symbol" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.symunit">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">symunit</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.symunit" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.tooltip">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tooltip</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.tooltip" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.ulabel">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ulabel</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.ulabel" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.unit">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">unit</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.unit" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.upint">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">upint</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.upint" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.v0">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">v0</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.v0" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.LarvaworldParam.value">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">value</span></span><a class="headerlink" href="#larvaworld.lib.util.data_aux.LarvaworldParam.value" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="build-larvaworldparam">
+<h2>build_LarvaworldParam<a class="headerlink" href="#build-larvaworldparam" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.build_LarvaworldParam">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.data_aux.</span></span><span class="sig-name descname"><span class="pre">build_LarvaworldParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/data_aux.html#build_LarvaworldParam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.data_aux.build_LarvaworldParam" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="gconf">
+<h2>gConf<a class="headerlink" href="#gconf" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.gConf">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.data_aux.</span></span><span class="sig-name descname"><span class="pre">gConf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mdict</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/data_aux.html#gConf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.data_aux.gConf" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="get-larvaworldparam">
+<h2>get_LarvaworldParam<a class="headerlink" href="#get-larvaworldparam" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.get_LarvaworldParam">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.data_aux.</span></span><span class="sig-name descname"><span class="pre">get_LarvaworldParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vparfunc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kws</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/data_aux.html#get_LarvaworldParam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.data_aux.get_LarvaworldParam" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="get-ks">
+<h2>get_ks<a class="headerlink" href="#get-ks" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.get_ks">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.data_aux.</span></span><span class="sig-name descname"><span class="pre">get_ks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['model',</span> <span class="pre">'sample',</span> <span class="pre">'default_color',</span> <span class="pre">'imitation',</span> <span class="pre">'distribution.mode',</span> <span class="pre">'distribution.shape',</span> <span class="pre">'distribution.N',</span> <span class="pre">'distribution.loc',</span> <span class="pre">'distribution.scale',</span> <span class="pre">'distribution.orientation_range',</span> <span class="pre">'life_history.age',</span> <span class="pre">'life_history.epochs',</span> <span class="pre">'odor.id',</span> <span class="pre">'odor.intensity',</span> <span class="pre">'odor.spread',</span> <span class="pre">'distribution.mode',</span> <span class="pre">'distribution.shape',</span> <span class="pre">'distribution.N',</span> <span class="pre">'distribution.loc',</span> <span class="pre">'distribution.scale',</span> <span class="pre">'amount',</span> <span class="pre">'odor.id',</span> <span class="pre">'odor.intensity',</span> <span class="pre">'odor.spread',</span> <span class="pre">'default_color',</span> <span class="pre">'radius',</span> <span class="pre">'regeneration',</span> <span class="pre">'regeneration_pos.loc',</span> <span class="pre">'regeneration_pos.scale',</span> <span class="pre">'can_be_carried',</span> <span class="pre">'can_be_displaced',</span> <span class="pre">'substrate.type',</span> <span class="pre">'substrate.quality',</span> <span class="pre">'start',</span> <span class="pre">'stop',</span> <span class="pre">'substrate.type',</span> <span class="pre">'substrate.quality',</span> <span class="pre">'brain.modules.crawler',</span> <span class="pre">'brain.modules.turner',</span> <span class="pre">'brain.modules.interference',</span> <span class="pre">'brain.modules.intermitter',</span> <span class="pre">'brain.modules.feeder',</span> <span class="pre">'brain.modules.olfactor',</span> <span class="pre">'brain.modules.windsensor',</span> <span class="pre">'brain.modules.toucher',</span> <span class="pre">'brain.modules.thermosensor',</span> <span class="pre">'brain.modules.memory',</span> <span class="pre">'brain.crawler_params.mode',</span> <span class="pre">'brain.crawler_params.freq',</span> <span class="pre">'brain.crawler_params.max_scaled_vel',</span> <span class="pre">'brain.crawler_params.stride_dst_mean',</span> <span class="pre">'brain.crawler_params.stride_dst_std',</span> <span class="pre">'brain.crawler_params.initial_amp',</span> <span class="pre">'brain.crawler_params.noise',</span> <span class="pre">'brain.crawler_params.max_vel_phase',</span> <span class="pre">'brain.turner_params.mode',</span> <span class="pre">'brain.turner_params.noise',</span> <span class="pre">'brain.turner_params.activation_noise',</span> <span class="pre">'brain.turner_params.base_activation',</span> <span class="pre">'brain.turner_params.activation_range',</span> <span class="pre">'brain.turner_params.tau',</span> <span class="pre">'brain.turner_params.m',</span> <span class="pre">'brain.turner_params.n',</span> <span class="pre">'brain.turner_params.initial_amp',</span> <span class="pre">'brain.turner_params.amp_range',</span> <span class="pre">'brain.turner_params.freq',</span> <span class="pre">'brain.turner_params.freq_range',</span> <span class="pre">'brain.interference_params.mode',</span> <span class="pre">'brain.interference_params.suppression_mode',</span> <span class="pre">'brain.interference_params.attenuation',</span> <span class="pre">'brain.interference_params.attenuation_max',</span> <span class="pre">'brain.interference_params.crawler_phi_range',</span> <span class="pre">'brain.interference_params.feeder_phi_range',</span> <span class="pre">'brain.interference_params.max_attenuation_phase',</span> <span class="pre">'brain.intermitter_params.mode',</span> <span class="pre">'brain.intermitter_params.run_mode',</span> <span class="pre">'brain.intermitter_params.stridechain_dist.fit',</span> <span class="pre">'brain.intermitter_params.stridechain_dist.range',</span> <span class="pre">'brain.intermitter_params.stridechain_dist.name',</span> <span class="pre">'brain.intermitter_params.stridechain_dist.mu',</span> <span class="pre">'brain.intermitter_params.stridechain_dist.sigma',</span> <span class="pre">'brain.intermitter_params.stridechain_dist.alpha',</span> <span class="pre">'brain.intermitter_params.stridechain_dist.beta',</span> <span class="pre">'brain.intermitter_params.run_dist.fit',</span> <span class="pre">'brain.intermitter_params.run_dist.range',</span> <span class="pre">'brain.intermitter_params.run_dist.name',</span> <span class="pre">'brain.intermitter_params.run_dist.mu',</span> <span class="pre">'brain.intermitter_params.run_dist.sigma',</span> <span class="pre">'brain.intermitter_params.run_dist.alpha',</span> <span class="pre">'brain.intermitter_params.run_dist.beta',</span> <span class="pre">'brain.intermitter_params.pause_dist.fit',</span> <span class="pre">'brain.intermitter_params.pause_dist.range',</span> <span class="pre">'brain.intermitter_params.pause_dist.name',</span> <span class="pre">'brain.intermitter_params.pause_dist.mu',</span> <span class="pre">'brain.intermitter_params.pause_dist.sigma',</span> <span class="pre">'brain.intermitter_params.pause_dist.alpha',</span> <span class="pre">'brain.intermitter_params.pause_dist.beta',</span> <span class="pre">'brain.intermitter_params.EEB',</span> <span class="pre">'brain.intermitter_params.EEB_decay',</span> <span class="pre">'brain.intermitter_params.feed_bouts',</span> <span class="pre">'brain.intermitter_params.crawl_freq',</span> <span class="pre">'brain.intermitter_params.feed_freq',</span> <span class="pre">'brain.intermitter_params.feeder_reoccurence_rate',</span> <span class="pre">'brain.feeder_params.freq_range',</span> <span class="pre">'brain.feeder_params.freq',</span> <span class="pre">'brain.feeder_params.feed_radius',</span> <span class="pre">'brain.feeder_params.V_bite',</span> <span class="pre">'brain.olfactor_params.perception',</span> <span class="pre">'brain.olfactor_params.input_noise',</span> <span class="pre">'brain.olfactor_params.decay_coef',</span> <span class="pre">'brain.olfactor_params.brute_force',</span> <span class="pre">'brain.windsensor_params.weights.hunch_lin',</span> <span class="pre">'brain.windsensor_params.weights.hunch_ang',</span> <span class="pre">'brain.windsensor_params.weights.bend_lin',</span> <span class="pre">'brain.windsensor_params.weights.bend_ang',</span> <span class="pre">'brain.toucher_params.perception',</span> <span class="pre">'brain.toucher_params.input_noise',</span> <span class="pre">'brain.toucher_params.decay_coef',</span> <span class="pre">'brain.toucher_params.state_specific_best',</span> <span class="pre">'brain.toucher_params.brute_force',</span> <span class="pre">'brain.toucher_params.initial_gain',</span> <span class="pre">'brain.toucher_params.touch_sensors',</span> <span class="pre">'brain.thermosensor_params.perception',</span> <span class="pre">'brain.thermosensor_params.input_noise',</span> <span class="pre">'brain.thermosensor_params.decay_coef',</span> <span class="pre">'brain.thermosensor_params.brute_force',</span> <span class="pre">'brain.thermosensor_params.cool_gain',</span> <span class="pre">'brain.thermosensor_params.warm_gain',</span> <span class="pre">'brain.memory_params.modality',</span> <span class="pre">'brain.memory_params.Delta',</span> <span class="pre">'brain.memory_params.state_spacePerSide',</span> <span class="pre">'brain.memory_params.gain_space',</span> <span class="pre">'brain.memory_params.update_dt',</span> <span class="pre">'brain.memory_params.alpha',</span> <span class="pre">'brain.memory_params.gamma',</span> <span class="pre">'brain.memory_params.epsilon',</span> <span class="pre">'brain.memory_params.train_dur',</span> <span class="pre">'brain.nengo',</span> <span class="pre">'body.length',</span> <span class="pre">'body.length_std',</span> <span class="pre">'body.Nsegs',</span> <span class="pre">'body.seg_ratio',</span> <span class="pre">'body.shape',</span> <span class="pre">'energetics.DEB.species',</span> <span class="pre">'energetics.DEB.f_decay',</span> <span class="pre">'energetics.DEB.V_bite',</span> <span class="pre">'energetics.DEB.hunger_as_EEB',</span> <span class="pre">'energetics.DEB.hunger_gain',</span> <span class="pre">'energetics.DEB.assimilation_mode',</span> <span class="pre">'energetics.DEB.DEB_dt',</span> <span class="pre">'energetics.gut.M_gm',</span> <span class="pre">'energetics.gut.y_P_X',</span> <span class="pre">'energetics.gut.J_g_per_cm2',</span> <span class="pre">'energetics.gut.k_g',</span> <span class="pre">'energetics.gut.k_dig',</span> <span class="pre">'energetics.gut.f_dig',</span> <span class="pre">'energetics.gut.M_c_per_cm2',</span> <span class="pre">'energetics.gut.constant_M_c',</span> <span class="pre">'energetics.gut.k_c',</span> <span class="pre">'energetics.gut.k_abs',</span> <span class="pre">'energetics.gut.f_abs',</span> <span class="pre">'physics.torque_coef',</span> <span class="pre">'physics.ang_vel_coef',</span> <span class="pre">'physics.ang_damping',</span> <span class="pre">'physics.lin_damping',</span> <span class="pre">'physics.body_spring_k',</span> <span class="pre">'physics.bend_correction_coef',</span> <span class="pre">'physics.ang_mode',</span> <span class="pre">'ModelGroupID',</span> <span class="pre">'model</span> <span class="pre">families',</span> <span class="pre">'arena.dims',</span> <span class="pre">'arena.geometry',</span> <span class="pre">'arena.torus',</span> <span class="pre">'border_list',</span> <span class="pre">'food_params.source_groups',</span> <span class="pre">'food_params.food_grid',</span> <span class="pre">'food_params.source_units',</span> <span class="pre">'odorscape',</span> <span class="pre">'windscape',</span> <span class="pre">'thermoscape',</span> <span class="pre">'env_params',</span> <span class="pre">'larva_groups',</span> <span class="pre">'sim_params.duration',</span> <span class="pre">'sim_params.dt',</span> <span class="pre">'sim_params.Box2D',</span> <span class="pre">'sim_params.store_data',</span> <span class="pre">'sim_params.offline',</span> <span class="pre">'trials',</span> <span class="pre">'enrichment.metric_definition.angular.bend',</span> <span class="pre">'enrichment.metric_definition.angular.front_vector',</span> <span class="pre">'enrichment.metric_definition.angular.rear_vector',</span> <span class="pre">'enrichment.metric_definition.angular.front_body_ratio',</span> <span class="pre">'enrichment.metric_definition.spatial.point_idx',</span> <span class="pre">'enrichment.metric_definition.spatial.use_component_vel',</span> <span class="pre">'enrichment.metric_definition.dispersion.dsp_starts',</span> <span class="pre">'enrichment.metric_definition.dispersion.dsp_stops',</span> <span class="pre">'enrichment.metric_definition.tortuosity.tor_durs',</span> <span class="pre">'enrichment.metric_definition.stride.track_point',</span> <span class="pre">'enrichment.metric_definition.stride.use_scaled_vel',</span> <span class="pre">'enrichment.metric_definition.stride.vel_threshold',</span> <span class="pre">'enrichment.metric_definition.turn.min_ang',</span> <span class="pre">'enrichment.metric_definition.turn.min_ang_vel',</span> <span class="pre">'enrichment.metric_definition.turn.chunk_only',</span> <span class="pre">'enrichment.preprocessing.rescale_by',</span> <span class="pre">'enrichment.preprocessing.drop_collisions',</span> <span class="pre">'enrichment.preprocessing.interpolate_nans',</span> <span class="pre">'enrichment.preprocessing.filter_f',</span> <span class="pre">'enrichment.preprocessing.transposition',</span> <span class="pre">'enrichment.processing.angular',</span> <span class="pre">'enrichment.processing.spatial',</span> <span class="pre">'enrichment.processing.source',</span> <span class="pre">'enrichment.processing.dispersion',</span> <span class="pre">'enrichment.processing.tortuosity',</span> <span class="pre">'enrichment.processing.PI',</span> <span class="pre">'enrichment.processing.wind',</span> <span class="pre">'enrichment.annotation.bout_detection',</span> <span class="pre">'enrichment.annotation.bout_distribution',</span> <span class="pre">'enrichment.annotation.interference',</span> <span class="pre">'enrichment.annotation.source_attraction',</span> <span class="pre">'enrichment.annotation.patch_residency',</span> <span class="pre">'enrichment.recompute',</span> <span class="pre">'enrichment.mode',</span> <span class="pre">'experiment',</span> <span class="pre">'ExpGroupID',</span> <span class="pre">'simulations',</span> <span class="pre">'space_search.pars',</span> <span class="pre">'space_search.ranges',</span> <span class="pre">'space_search.Ngrid',</span> <span class="pre">'optimization.fit_par',</span> <span class="pre">'optimization.minimize',</span> <span class="pre">'optimization.threshold',</span> <span class="pre">'optimization.max_Nsims',</span> <span class="pre">'optimization.Nbest',</span> <span class="pre">'optimization.operations.mean',</span> <span class="pre">'optimization.operations.std',</span> <span class="pre">'optimization.operations.abs',</span> <span class="pre">'exp_kws',</span> <span class="pre">'scene',</span> <span class="pre">'multicore',</span> <span class="pre">'env_params',</span> <span class="pre">'sim_params.duration',</span> <span class="pre">'sim_params.dt',</span> <span class="pre">'sim_params.Box2D',</span> <span class="pre">'sim_params.store_data',</span> <span class="pre">'sim_params.offline',</span> <span class="pre">'experiment',</span> <span class="pre">'ga_eval_kws.exclusion_mode',</span> <span class="pre">'ga_eval_kws.fitness_target_kws',</span> <span class="pre">'ga_eval_kws.fitness_func_name',</span> <span class="pre">'ga_eval_kws.exclude_func_name',</span> <span class="pre">'ga_select_kws.Nagents',</span> <span class="pre">'ga_select_kws.Nelits',</span> <span class="pre">'ga_select_kws.Ngenerations',</span> <span class="pre">'ga_select_kws.Pmutation',</span> <span class="pre">'ga_select_kws.Cmutation',</span> <span class="pre">'ga_select_kws.selection_ratio',</span> <span class="pre">'ga_select_kws.space_mkeys',</span> <span class="pre">'ga_select_kws.base_model',</span> <span class="pre">'ga_select_kws.bestConfID',</span> <span class="pre">'ga_select_kws.init_mode',</span> <span class="pre">'refID',</span> <span class="pre">'dataset_dir',</span> <span class="pre">'age',</span> <span class="pre">'epochs',</span> <span class="pre">'amount',</span> <span class="pre">'group',</span> <span class="pre">'odor.id',</span> <span class="pre">'odor.intensity',</span> <span class="pre">'odor.spread',</span> <span class="pre">'pos',</span> <span class="pre">'default_color',</span> <span class="pre">'radius',</span> <span class="pre">'regeneration',</span> <span class="pre">'regeneration_pos.loc',</span> <span class="pre">'regeneration_pos.scale',</span> <span class="pre">'can_be_carried',</span> <span class="pre">'can_be_displaced',</span> <span class="pre">'substrate.type',</span> <span class="pre">'substrate.quality']</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/data_aux.html#get_ks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.data_aux.get_ks" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="init2mdict">
+<h2>init2mdict<a class="headerlink" href="#init2mdict" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.init2mdict">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.data_aux.</span></span><span class="sig-name descname"><span class="pre">init2mdict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/data_aux.html#init2mdict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.data_aux.init2mdict" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="prepare-larvaworldparam">
+<h2>prepare_LarvaworldParam<a class="headerlink" href="#prepare-larvaworldparam" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.util.data_aux.prepare_LarvaworldParam">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.util.data_aux.</span></span><span class="sig-name descname"><span class="pre">prepare_LarvaworldParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype=&lt;class</span> <span class="pre">'float'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disp=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sym=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbol=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">codename=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lab=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mdict=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">required_ks=[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">u=&lt;Unit('dimensionless')&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v0=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lim=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dv=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vs=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vfunc=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vparfunc=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/util/data_aux.html#prepare_LarvaworldParam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.util.data_aux.prepare_LarvaworldParam" title="Permalink to this definition"></a></dt>
+<dd><p>Method that formats the dictionary of attributes for a parameter in order to create a LarvaworldParam instance</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Dataset fitting &amp; sampling" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fitting.html" class="btn btn-neutral float-right" title="fitting" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

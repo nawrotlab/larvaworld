@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.model.agents._larva_replay &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.model.agents._larva_replay</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.model.agents._larva_replay</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">aux</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.aux</span> <span class="kn">import</span> <span class="n">nam</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.model.agents._larva</span> <span class="kn">import</span> <span class="n">Larva</span><span class="p">,</span> <span class="n">LarvaContoured</span><span class="p">,</span> <span class="n">LarvaSegmented</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;LarvaReplay&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;LarvaReplayContoured&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;LarvaReplaySegmented&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">__displayname__</span> <span class="o">=</span> <span class="s1">&#39;Experimental replay larva&#39;</span>
+
+<div class="viewcode-block" id="LarvaReplay"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/agents/_larva_replay.html#larvaworld.lib.model.agents._larva_replay.LarvaReplay">[docs]</a><span class="k">class</span> <span class="nc">LarvaReplay</span><span class="p">(</span><span class="n">Larva</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class representing a larva used to replay recorded data.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : ReplayData</span>
+<span class="sd">        The recorded data for the replay larva.</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        Additional keyword arguments to pass to the base `Larva` class constructor.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This class extends the base `Larva` class to create a replay larva using recorded data. It initializes the replay</span>
+<span class="sd">    larva&#39;s position and orientation based on the provided data.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__displayname__</span> <span class="o">=</span> <span class="s1">&#39;Replay larva&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">=</span><span class="n">data</span>
+        <span class="n">fo0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">front_orientation</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">fo0</span><span class="p">):</span>
+            <span class="n">fo0</span><span class="o">=</span><span class="mi">0</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">orientation</span><span class="o">=</span><span class="n">fo0</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+
+
+
+<div class="viewcode-block" id="LarvaReplay.step"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/agents/_larva_replay.html#larvaworld.lib.model.agents._larva_replay.LarvaReplay.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the replay larva&#39;s position and orientation based on recorded data.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        This method updates the replay larva&#39;s position and orientation for each time step based on recorded data.</span>
+<span class="sd">        It also updates the trajectory and orientation_trajectory attributes.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">t</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trajectory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orientation_trajectory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">front_orientation</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">move_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">))</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">midline_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the xy coordinates of the midline points based on recorded data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list of tuple</span>
+<span class="sd">            A list of tuples representing the xy coordinates of the midline points.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">np2Dtotuples</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">midline</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">t</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">front_orientation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the front orientation of the replay larva based on recorded data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            The front orientation in radians.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">front_orientation</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">t</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rear_orientation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the rear orientation of the replay larva based on recorded data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            The rear orientation in radians.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">rear_orientation</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">t</span><span class="p">]</span></div>
+
+
+
+
+<div class="viewcode-block" id="LarvaReplayContoured"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/agents/_larva_replay.html#larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured">[docs]</a><span class="k">class</span> <span class="nc">LarvaReplayContoured</span><span class="p">(</span><span class="n">LarvaReplay</span><span class="p">,</span> <span class="n">LarvaContoured</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class representing a replay larva with contour data based on recorded data.</span>
+
+<span class="sd">    This class extends the `LarvaReplay` class and adds contour data to the replay larva based on recorded data.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__displayname__</span> <span class="o">=</span> <span class="s1">&#39;Contoured replay larva&#39;</span>
+
+<div class="viewcode-block" id="LarvaReplayContoured.step"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/agents/_larva_replay.html#larvaworld.lib.model.agents._larva_replay.LarvaReplayContoured.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the replay larva&#39;s position, orientation, and contour based on recorded data.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        This method updates the replay larva&#39;s position and orientation using the base class `LarvaReplay` and adds</span>
+<span class="sd">        contour data to the replay larva.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vertices</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">contour_xy</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">contour_xy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the xy coordinates of the contour points based on recorded data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list of tuple</span>
+<span class="sd">            A list of tuples representing the xy coordinates of the contour points.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">contour</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">t</span><span class="p">]</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">a</span><span class="p">)]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">np2Dtotuples</span><span class="p">(</span><span class="n">a</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="LarvaReplaySegmented"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/agents/_larva_replay.html#larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented">[docs]</a><span class="k">class</span> <span class="nc">LarvaReplaySegmented</span><span class="p">(</span><span class="n">LarvaReplay</span><span class="p">,</span> <span class="n">LarvaSegmented</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class representing a segmented replay larva based on recorded data.</span>
+
+<span class="sd">    This class extends the `LarvaReplay` class and creates a segmented replay larva with multiple body segments based on</span>
+<span class="sd">    recorded data.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">__displayname__</span> <span class="o">=</span> <span class="s1">&#39;Segmented replay larva&#39;</span>
+
+<div class="viewcode-block" id="LarvaReplaySegmented.step"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/agents/_larva_replay.html#larvaworld.lib.model.agents._larva_replay.LarvaReplaySegmented.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the replay larva&#39;s position, orientation, and body segments based on recorded data.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        This method updates the replay larva&#39;s position and orientation using the base class `LarvaReplay` and creates</span>
+<span class="sd">        and positions multiple body segments based on recorded data.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">mid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">midline_xy</span>
+        <span class="n">ors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">seg_orientations</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">t</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">seg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segs</span><span class="p">):</span>
+            <span class="n">seg</span><span class="o">.</span><span class="n">set_position</span><span class="p">(</span><span class="n">mid</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">seg</span><span class="o">.</span><span class="n">set_orientation</span><span class="p">(</span><span class="n">ors</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

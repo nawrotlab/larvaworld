@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.aux.dictsNlists &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.aux.dictsNlists</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.aux.dictsNlists</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">typing</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;AttrDict&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;load_dict&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;save_dict&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;merge_dicts&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;load_dicts&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;loadSoloDics&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;storeSoloDics&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;group_epoch_dicts&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;bidict&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SuperList&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;existing_cols&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;nonexisting_cols&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;cols_exist&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;flatten_list&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;unique_list&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;np2Dtotuples&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="AttrDict"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict">[docs]</a><span class="k">class</span> <span class="nc">AttrDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Dictionary subclass whose entries can be accessed as attributes (as well as normally).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AttrDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">autonest</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AttrDict.autonest"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.autonest">[docs]</a>    <span class="k">def</span> <span class="nf">autonest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_nested_dicts</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">d</span></div>
+
+<div class="viewcode-block" id="AttrDict.from_nested_dicts"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.from_nested_dicts">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_nested_dicts</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Construct nested NestDicts from nested dictionaries. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AttrDict.replace_keys"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.replace_keys">[docs]</a>    <span class="k">def</span> <span class="nf">replace_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pairs</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">pairs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="n">dic</span><span class="p">[</span><span class="n">pairs</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">dic</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="n">AttrDict</span><span class="p">(</span><span class="n">dic</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AttrDict.get_copy"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.get_copy">[docs]</a>    <span class="k">def</span> <span class="nf">get_copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">AttrDict</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AttrDict.flatten"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.flatten">[docs]</a>    <span class="k">def</span> <span class="nf">flatten</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_key</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">new_key</span> <span class="o">=</span> <span class="n">parent_key</span> <span class="o">+</span> <span class="n">sep</span> <span class="o">+</span> <span class="n">k</span> <span class="k">if</span> <span class="n">parent_key</span> <span class="k">else</span> <span class="n">k</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">typing</span><span class="o">.</span><span class="n">MutableMapping</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">items</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">AttrDict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">new_key</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="n">sep</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+                    <span class="c1"># items.extend(flatten_dict(v, new_key, sep=sep).items())</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_key</span><span class="p">,</span> <span class="s1">&#39;empty_dict&#39;</span><span class="p">))</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_key</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">AttrDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">items</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AttrDict.unflatten"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.unflatten">[docs]</a>    <span class="k">def</span> <span class="nf">unflatten</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="s1">&#39;empty_dict&#39;</span><span class="p">:</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">parts</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">sep</span><span class="p">)</span>
+            <span class="n">dd</span> <span class="o">=</span> <span class="n">dic</span>
+            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">part</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dd</span><span class="p">:</span>
+                    <span class="n">dd</span><span class="p">[</span><span class="n">part</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">dd</span> <span class="o">=</span> <span class="n">dd</span><span class="p">[</span><span class="n">part</span><span class="p">]</span>
+            <span class="n">dd</span><span class="p">[</span><span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="n">AttrDict</span><span class="p">(</span><span class="n">dic</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AttrDict.update_existingdict"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.update_existingdict">[docs]</a>    <span class="k">def</span> <span class="nf">update_existingdict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dic</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dic</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span></div>
+
+<div class="viewcode-block" id="AttrDict.update_existingdict_by_suffix"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.update_existingdict_by_suffix">[docs]</a>    <span class="k">def</span> <span class="nf">update_existingdict_by_suffix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dic</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dic</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">k1s</span><span class="o">=</span><span class="p">[</span><span class="n">k0</span> <span class="k">for</span> <span class="n">k0</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keylist</span> <span class="k">if</span> <span class="n">k0</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">k1s</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">k1</span><span class="o">=</span><span class="n">k1s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">k1</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">k1s</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Non unique suffix : </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AttrDict.update_nestdict"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.update_nestdict">[docs]</a>    <span class="k">def</span> <span class="nf">update_nestdict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dic</span><span class="p">):</span>
+        <span class="n">dic0_f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">dic0_f</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">dic</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dic0_f</span><span class="o">.</span><span class="n">unflatten</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="AttrDict.update_existingnestdict"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.update_existingnestdict">[docs]</a>    <span class="k">def</span> <span class="nf">update_existingnestdict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dic</span><span class="p">):</span>
+        <span class="n">dic0_f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">dic0_f</span><span class="o">.</span><span class="n">update_existingdict</span><span class="p">(</span><span class="n">dic</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dic0_f</span><span class="o">.</span><span class="n">unflatten</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="AttrDict.update_existingnestdict_by_suffix"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.update_existingnestdict_by_suffix">[docs]</a>    <span class="k">def</span> <span class="nf">update_existingnestdict_by_suffix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dic</span><span class="p">):</span>
+        <span class="n">dic0_f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">dic0_f</span><span class="o">.</span><span class="n">update_existingdict_by_suffix</span><span class="p">(</span><span class="n">dic</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dic0_f</span><span class="o">.</span><span class="n">unflatten</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="AttrDict.save"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+        <span class="n">save_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">file</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AttrDict.load"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.load">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">load_dict</span><span class="p">(</span><span class="n">file</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AttrDict.print"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.AttrDict.print">[docs]</a>    <span class="k">def</span> <span class="nf">print</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">flat</span> <span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;      </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1"> : </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pref0</span><span class="o">=</span><span class="s1">&#39;     &#39;</span>
+            <span class="k">def</span> <span class="nf">print_nested_level</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">pref</span><span class="o">=</span><span class="n">pref0</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">pref</span><span class="si">}{</span><span class="n">k</span><span class="si">}</span><span class="s1"> : </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">pref</span><span class="si">}{</span><span class="n">k</span><span class="si">}</span><span class="s1"> : &#39;</span><span class="p">)</span>
+                        <span class="n">print_nested_level</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">pref</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">pref</span><span class="si">}{</span><span class="n">pref0</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="n">print_nested_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pref</span><span class="o">=</span><span class="n">pref0</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">keylist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SuperList</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+
+<span class="c1"># class StoreDict(AttrDict):</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#     def __new__(cls,path=None):</span>
+<span class="c1">#         cls.path = path</span>
+<span class="c1">#         if path is not None :</span>
+<span class="c1">#             return cls.retrieve(path)</span>
+<span class="c1">#         else :</span>
+<span class="c1">#             return super().__new__(cls)</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#     # def __init__(self,*args, **kwargs):</span>
+<span class="c1">#     #     super().__init__(*args, **kwargs)</span>
+<span class="c1">#</span>
+<span class="c1">#     def store(self):</span>
+<span class="c1">#         super().save(self.path)</span>
+<span class="c1">#</span>
+<span class="c1">#     @classmethod</span>
+<span class="c1">#     def retrieve(cls,path):</span>
+<span class="c1">#         d=super().load(path)</span>
+<span class="c1">#         return super().__new__(cls,**d)</span>
+
+
+
+
+<div class="viewcode-block" id="load_dict"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.load_dict">[docs]</a><span class="k">def</span> <span class="nf">load_dict</span><span class="p">(</span><span class="n">file</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tfp</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">tfp</span><span class="p">)</span>
+            <span class="c1"># print(&#39;pickle load&#39;)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span> <span class="k">as</span> <span class="n">tfp</span><span class="p">:</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">tfp</span><span class="p">)</span>
+                <span class="c1"># print(&#39;json load&#39;)</span>
+        <span class="k">except</span><span class="p">:</span>
+
+            <span class="n">d</span><span class="o">=</span> <span class="p">{}</span>
+    <span class="k">return</span> <span class="n">AttrDict</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="save_dict"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.save_dict">[docs]</a><span class="k">def</span> <span class="nf">save_dict</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+                <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="n">pickle</span><span class="o">.</span><span class="n">HIGHEST_PROTOCOL</span><span class="p">)</span>
+                <span class="c1"># print(&#39;pickle save&#39;)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+                    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">fp</span><span class="p">)</span>
+                    <span class="c1"># print(&#39;json save&#39;)</span>
+            <span class="k">except</span><span class="p">:</span>
+
+                <span class="k">raise</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">else</span> <span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="merge_dicts"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.merge_dicts">[docs]</a><span class="k">def</span> <span class="nf">merge_dicts</span><span class="p">(</span><span class="n">dict_list</span><span class="p">):</span>
+    <span class="n">super_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dict_list</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">super_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">super_dict</span></div>
+
+
+<div class="viewcode-block" id="load_dicts"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.load_dicts">[docs]</a><span class="k">def</span> <span class="nf">load_dicts</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pref</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">suf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">folder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">extension</span><span class="o">=</span><span class="s1">&#39;txt&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">files</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">folder</span><span class="p">)</span>
+        <span class="n">suf</span> <span class="o">=</span> <span class="n">extension</span> <span class="k">if</span> <span class="n">suf</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">suf</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">extension</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="nb">str</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">suf</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">pref</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="nb">str</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">pref</span><span class="p">)]</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">folder</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="n">folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">f</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">load_dict</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">ds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ds</span></div>
+
+<div class="viewcode-block" id="loadSoloDics"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.loadSoloDics">[docs]</a><span class="k">def</span> <span class="nf">loadSoloDics</span><span class="p">(</span><span class="n">agent_ids</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="p">:</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s1">.txt&#39;</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">agent_ids</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">load_dicts</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span> <span class="n">folder</span><span class="o">=</span><span class="n">path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="storeSoloDics"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.storeSoloDics">[docs]</a><span class="k">def</span> <span class="nf">storeSoloDics</span><span class="p">(</span><span class="n">agent_dics</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">dic</span> <span class="ow">in</span> <span class="n">agent_dics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">save_dict</span><span class="p">(</span><span class="n">dic</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s1">.txt&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="group_epoch_dicts"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.group_epoch_dicts">[docs]</a><span class="k">def</span> <span class="nf">group_epoch_dicts</span><span class="p">(</span><span class="n">individual_epochs</span><span class="p">):</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;turn_dur&#39;</span><span class="p">,</span> <span class="s1">&#39;turn_amp&#39;</span><span class="p">,</span> <span class="s1">&#39;turn_vel_max&#39;</span><span class="p">,</span> <span class="s1">&#39;run_dur&#39;</span><span class="p">,</span> <span class="s1">&#39;run_dst&#39;</span><span class="p">,</span> <span class="s1">&#39;pause_dur&#39;</span><span class="p">,</span> <span class="s1">&#39;run_count&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">flatten_list</span><span class="p">([</span><span class="n">dic</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span><span class="n">dic</span> <span class="ow">in</span> <span class="n">individual_epochs</span><span class="o">.</span><span class="n">items</span><span class="p">()]))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="bidict"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.bidict">[docs]</a><span class="k">class</span> <span class="nc">bidict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">bidict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inverse</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inverse</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">value</span><span class="p">,[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inverse</span><span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">bidict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inverse</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">value</span><span class="p">,[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inverse</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">],[])</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse</span><span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]]:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">inverse</span><span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">bidict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__delitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SuperList"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.SuperList">[docs]</a><span class="k">class</span> <span class="nc">SuperList</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span> <span class="p">:</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">N</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sorted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">flatten</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SuperList</span><span class="p">([</span><span class="n">item</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="bp">self</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">unique</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SuperList</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="n">seen_add</span> <span class="o">=</span> <span class="n">seen</span><span class="o">.</span><span class="n">add</span>
+            <span class="k">return</span> <span class="n">SuperList</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span> <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">seen</span> <span class="ow">or</span> <span class="n">seen_add</span><span class="p">(</span><span class="n">x</span><span class="p">))])</span>
+
+<div class="viewcode-block" id="SuperList.group_by_n"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.SuperList.group_by_n">[docs]</a>    <span class="k">def</span> <span class="nf">group_by_n</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="n">Nmore</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">%</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="n">Nmore</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">n</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">Nmore</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="o">-</span><span class="n">Nmore</span><span class="p">:])</span>
+        <span class="k">return</span> <span class="n">SuperList</span><span class="p">(</span><span class="n">g</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">in_pairs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_by_n</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SuperList.existing"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.SuperList.existing">[docs]</a>    <span class="k">def</span> <span class="nf">existing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SuperList</span><span class="p">(</span><span class="n">existing_cols</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">df</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SuperList.nonexisting"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.SuperList.nonexisting">[docs]</a>    <span class="k">def</span> <span class="nf">nonexisting</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SuperList</span><span class="p">(</span><span class="n">nonexisting_cols</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">df</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SuperList.exist_in"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.SuperList.exist_in">[docs]</a>    <span class="k">def</span> <span class="nf">exist_in</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cols_exist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">df</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span> <span class="c1"># real signature unknown</span>
+        <span class="sd">&quot;&quot;&quot; Return self+value. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SuperList</span><span class="p">(</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__add__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="existing_cols"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.existing_cols">[docs]</a><span class="k">def</span> <span class="nf">existing_cols</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span><span class="n">df</span><span class="p">)</span> <span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="nonexisting_cols"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.nonexisting_cols">[docs]</a><span class="k">def</span> <span class="nf">nonexisting_cols</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span><span class="n">df</span><span class="p">)</span> <span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span> <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="cols_exist"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.cols_exist">[docs]</a><span class="k">def</span> <span class="nf">cols_exist</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span><span class="n">df</span><span class="p">)</span> <span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">df</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="flatten_list"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.flatten_list">[docs]</a><span class="k">def</span> <span class="nf">flatten_list</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">l</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="unique_list"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.unique_list">[docs]</a><span class="k">def</span> <span class="nf">unique_list</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SuperList</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">l</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">seen_add</span> <span class="o">=</span> <span class="n">seen</span><span class="o">.</span><span class="n">add</span>
+        <span class="k">return</span> <span class="n">SuperList</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">l</span> <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="n">seen</span> <span class="ow">or</span> <span class="n">seen_add</span><span class="p">(</span><span class="n">x</span><span class="p">))])</span></div>
+
+
+
+<div class="viewcode-block" id="np2Dtotuples"><a class="viewcode-back" href="../../../../content/larvaworld/lib/aux/dictsNlists.html#larvaworld.lib.aux.dictsNlists.np2Dtotuples">[docs]</a><span class="k">def</span> <span class="nf">np2Dtotuples</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">aa</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">a</span><span class="p">]):</span>
+        <span class="k">return</span> <span class="n">a</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">a</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">a</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]))</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

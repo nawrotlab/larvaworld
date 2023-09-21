@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>model_evaluation &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="single_run" href="single_run.html" />
+    <link rel="prev" title="genetic_algorithm" href="genetic_algorithm.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">Modeling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../param/index.html">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plot/index.html">Plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../process/index.html">Data management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../screen/index.html">Visualization</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Simulation</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="ABM_model.html">ABM_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base_run.html">base_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="batch_run.html">batch_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset_replay.html">dataset_replay</a></li>
+<li class="toctree-l4"><a class="reference internal" href="genetic_algorithm.html">genetic_algorithm</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">model_evaluation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="single_run.html">single_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="subprocess_run.html">subprocess_run</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../util/index.html">Dataset fitting &amp; sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Simulation</a></li>
+      <li class="breadcrumb-item active">model_evaluation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/sim/model_evaluation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.sim.model_evaluation">
+<span id="model-evaluation"></span><h1>model_evaluation<a class="headerlink" href="#module-larvaworld.lib.sim.model_evaluation" title="Permalink to this heading"></a></h1>
+<section id="evalrun">
+<h2>EvalRun<a class="headerlink" href="#evalrun" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.EvalRun">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.sim.model_evaluation.</span></span><span class="sig-name descname"><span class="pre">EvalRun</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enrichment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/model_evaluation.html#EvalRun"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.EvalRun" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">EvalConf</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SimConfiguration</span></code></p>
+<p>params(N=PositiveInteger, dataset_ids=List, modelIDs=ListSelector, eval_modes=ListSelector, norm_modes=ListSelector, cycle_curve_metrics=List, eval_metrics=Dict, refID=OptionalSelector, runtype=Selector, multicore=Boolean, offline=Boolean, store_data=Boolean, dir=String, id=Parameter, bend=Selector, front_body_ratio=Magnitude, front_vector=PositiveIntegerRangeOrdered, rear_vector=IntegerRangeOrdered, use_component_vel=Boolean, point=String, point_idx=Integer, Ncontour=PositiveInteger, Npoints=PositiveInteger, XY_unit=Selector, Nsteps=OptionalPositiveInteger, duration=OptionalPositiveNumber, constant_framerate=Boolean, dt=PositiveNumber, fr=PositiveNumber, Box2D=Boolean, larva_collisions=Boolean, name=String)
+[1;32mParameters of ‘EvalRun’
+=======================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                                   Value                                Type                Bounds       Mode  [0m</p>
+<p>Box2D                                  False                              Boolean               (0, 1)       V RW
+larva_collisions                        True                              Boolean               (0, 1)       V RW
+fr                                       10                            PositiveNumber         (0.0,[1;36m 100[0m)     V RW
+dt                                      0.1                            PositiveNumber         (0.0,[1;36m 1.0[0m)     V RW
+constant_framerate                      True                              Boolean               (0, 1)       V RW
+duration                                None                       OptionalPositiveNumber    (0.0,[1;36m 100.0[0m)  V RW AN
+Nsteps                                  None                      OptionalPositiveInteger     (0, None)    V RW AN
+XY_unit                                 ‘m’                               Selector                           V RW
+Npoints                                  3                            PositiveInteger          (0,[1;36m 20[0m)       V RW
+Ncontour                                 0                            PositiveInteger          (0,[1;36m 100[0m)      V RW
+point_idx                                -1                               Integer              (-1,[1;36m 20[0m)      V RW
+point                                    ‘’                                String                            V RW
+bend                               ‘from_vectors’                         Selector                           V RW
+front_vector                           (1, 2)                   PositiveIntegerRangeOrdered    (0,[1;36m 12[0m)       V RW
+rear_vector                           (-2, -1)                      IntegerRangeOrdered       ([1;36m-12[0m,[1;36m 12[0m)      V RW
+front_body_ratio                        0.5                              Magnitude            (0.0, 1.0)     V RW
+use_component_vel                      False                              Boolean               (0, 1)       V RW
+id                                      None                             Parameter                         V RW AN
+dir                                     None                               String                          V RW AN
+offline                                False                              Boolean               (0, 1)       V RW
+multicore                              False                              Boolean               (0, 1)       V RW
+store_data                              True                              Boolean               (0, 1)       V RW
+runtype                                ‘Exp’                              Selector                           V RW
+refID                                   None                          OptionalSelector                     V RW AN
+eval_metrics          {‘angular kinematics’: [‘run_fov_mu’,…              Dict                             V RW
+cycle_curve_metrics                      []                                 List              (0, None)      V RW
+norm_modes                       [‘raw’, ‘minmax’]                      ListSelector                         V RW
+eval_modes                           [‘pooled’]                         ListSelector                         V RW
+modelIDs                                None                            ListSelector                         V RW
+dataset_ids                              []                                 List              (0, None)      V RW
+N                                        5                            PositiveInteger         (0, None)      V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mBox2D:               Whether to use the Box2D physics engine or not.[0m
+[1;31mlarva_collisions:    Whether to allow overlap between larva bodies.[0m
+[1;34mfr:                  The tracking/simulation framerate (inverse of timestep) in Hz.[0m
+[1;31mdt:                  The tracking/simulation timestep (inverse of tracking framerate) in seconds.[0m
+[1;34mconstant_framerate:  Whether the tracking framerate is constant.[0m
+[1;31mduration:            The duration of the simulation in minutes.[0m
+[1;34mNsteps:              The number of simulation timesteps.[0m
+[1;31mXY_unit:             The spatial unit of the XY coordinate data[0m
+[1;34mNpoints:             The number of points tracked along the larva midline.[0m
+[1;31mNcontour:            The number of points tracked around the larva contour.[0m
+[1;34mpoint_idx:           Index of midline point to use as the larva spatial position. Default is None meaning use the centroid.[0m
+[1;31mpoint:               Midline point to use as the larva spatial position. Default is centroid.[0m
+[1;34mbend:                Whether bending angle is computed as a sum of sequential segmental angles or as the angle between front and rear body vectors.[0m
+[1;31mfront_vector:        The initial &amp; final segment of the front body vector.[0m
+[1;34mrear_vector:         The initial &amp; final segment of the rear body vector.[0m
+[1;31mfront_body_ratio:    The fraction of the body considered front, relevant for bend computation from angles.[0m
+[1;34muse_component_vel:   Whether to use the component velocity ralative to the axis of forward motion.[0m
+[1;31mid:                  ID of the simulation. If not specified,set according to runtype and experiment.[0m
+[1;34mdir:                 The directory to store data[0m
+[1;31moffline:             Whether to launch a full Larvaworld environment[0m
+[1;34mmulticore:           Whether to use multiple cores[0m
+[1;31mstore_data:          Whether to store the simulation data[0m
+[1;34mruntype:             The simulation mode[0m
+[1;31mrefID:               Selection among stored Ref configurations by ID[0m
+[1;34meval_metrics:        Evaluation metrics to use[0m
+[1;31mcycle_curve_metrics: &lt; No docstring available &gt;[0m
+[1;34mnorm_modes:          Normalization modes to use[0m
+[1;31meval_modes:          Evaluation modes to use[0m
+[1;34mmodelIDs:            Selection among stored Model configurations by ID[0m
+[1;31mdataset_ids:         The ids for the generated datasets[0m
+[1;34mN:                   Number of agents per model ID[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.EvalRun.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'Box2D':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'N':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'Ncontour':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'Npoints':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'Nsteps':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalPositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'XY_unit':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'bend':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'constant_framerate':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'cycle_curve_metrics':</span> <span class="pre">&lt;param.List</span> <span class="pre">object&gt;,</span> <span class="pre">'dataset_ids':</span> <span class="pre">&lt;param.List</span> <span class="pre">object&gt;,</span> <span class="pre">'dir':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'dt':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'duration':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalPositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'eval_metrics':</span> <span class="pre">&lt;param.Dict</span> <span class="pre">object&gt;,</span> <span class="pre">'eval_modes':</span> <span class="pre">&lt;param.ListSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'fr':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'front_body_ratio':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'front_vector':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRangeOrdered</span> <span class="pre">object&gt;,</span> <span class="pre">'id':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'larva_collisions':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'modelIDs':</span> <span class="pre">&lt;param.ListSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'multicore':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'norm_modes':</span> <span class="pre">&lt;param.ListSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'offline':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'point':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'point_idx':</span> <span class="pre">&lt;param.Integer</span> <span class="pre">object&gt;,</span> <span class="pre">'rear_vector':</span> <span class="pre">&lt;larvaworld.lib.param.custom.IntegerRangeOrdered</span> <span class="pre">object&gt;,</span> <span class="pre">'refID':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'runtype':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'store_data':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'use_component_vel':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.EvalRun.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.EvalRun._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.EvalRun._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.EvalRun._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.EvalRun._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.EvalRun.analyze">
+<span class="sig-name descname"><span class="pre">analyze</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/model_evaluation.html#EvalRun.analyze"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.EvalRun.analyze" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.EvalRun.get_error_plots">
+<span class="sig-name descname"><span class="pre">get_error_plots</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">error_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pooled'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/model_evaluation.html#EvalRun.get_error_plots"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.EvalRun.get_error_plots" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.EvalRun.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'EvalRun'</span></em><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.EvalRun.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.EvalRun.plot_models">
+<span class="sig-name descname"><span class="pre">plot_models</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/model_evaluation.html#EvalRun.plot_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.EvalRun.plot_models" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.EvalRun.plot_results">
+<span class="sig-name descname"><span class="pre">plot_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plots</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['hists',</span> <span class="pre">'trajectories',</span> <span class="pre">'dispersion',</span> <span class="pre">'bouts',</span> <span class="pre">'fft',</span> <span class="pre">'boxplots']</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/model_evaluation.html#EvalRun.plot_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.EvalRun.plot_results" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.EvalRun.simulate">
+<span class="sig-name descname"><span class="pre">simulate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/model_evaluation.html#EvalRun.simulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.EvalRun.simulate" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.EvalRun.store">
+<span class="sig-name descname"><span class="pre">store</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/model_evaluation.html#EvalRun.store"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.EvalRun.store" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="adapt-3modules">
+<h2>adapt_3modules<a class="headerlink" href="#adapt-3modules" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.adapt_3modules">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.sim.model_evaluation.</span></span><span class="sig-name descname"><span class="pre">adapt_3modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">refID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/model_evaluation.html#adapt_3modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.adapt_3modules" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="adapt-6mids">
+<h2>adapt_6mIDs<a class="headerlink" href="#adapt-6mids" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.adapt_6mIDs">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.sim.model_evaluation.</span></span><span class="sig-name descname"><span class="pre">adapt_6mIDs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">refID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/model_evaluation.html#adapt_6mIDs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.adapt_6mIDs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="add-var-mids">
+<h2>add_var_mIDs<a class="headerlink" href="#add-var-mids" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.add_var_mIDs">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.sim.model_evaluation.</span></span><span class="sig-name descname"><span class="pre">add_var_mIDs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">refID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mID0s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_ks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/model_evaluation.html#add_var_mIDs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.add_var_mIDs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="eval-model-graphs">
+<h2>eval_model_graphs<a class="headerlink" href="#eval-model-graphs" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.eval_model_graphs">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.sim.model_evaluation.</span></span><span class="sig-name descname"><span class="pre">eval_model_graphs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">refID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mIDs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dIDs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/model_evaluation.html#eval_model_graphs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.eval_model_graphs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="modelconf-analysis">
+<h2>modelConf_analysis<a class="headerlink" href="#modelconf-analysis" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.model_evaluation.modelConf_analysis">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.sim.model_evaluation.</span></span><span class="sig-name descname"><span class="pre">modelConf_analysis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avgVSvar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mods3</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/model_evaluation.html#modelConf_analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.model_evaluation.modelConf_analysis" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="genetic_algorithm.html" class="btn btn-neutral float-left" title="genetic_algorithm" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="single_run.html" class="btn btn-neutral float-right" title="single_run" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

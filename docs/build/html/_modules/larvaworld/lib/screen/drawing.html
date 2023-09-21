@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.screen.drawing &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.screen.drawing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.screen.drawing</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">param</span>
+<span class="kn">from</span> <span class="nn">param</span> <span class="kn">import</span> <span class="n">Boolean</span><span class="p">,</span> <span class="n">String</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">NestedConf</span><span class="p">,</span> <span class="n">PositiveNumber</span><span class="p">,</span> <span class="n">OptionalSelector</span><span class="p">,</span> <span class="n">PositiveInteger</span><span class="p">,</span> <span class="n">Area2DPixel</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PYGAME_HIDE_SUPPORT_PROMPT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;hide&quot;</span>
+<span class="kn">import</span> <span class="nn">pygame</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span><span class="p">,</span> <span class="n">screen</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.screen</span> <span class="kn">import</span> <span class="n">Viewer</span><span class="p">,</span> <span class="n">SidePanel</span><span class="p">,</span> <span class="n">ScreenMsgText</span><span class="p">,</span> <span class="n">SimulationClock</span><span class="p">,</span> <span class="n">SimulationScale</span><span class="p">,</span> \
+    <span class="n">SimulationState</span><span class="p">,</span> <span class="n">ScreenTextBoxRect</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;BaseScreenManager&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;GA_ScreenManager&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ScreenManager&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">MediaDrawOps</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">image_mode</span> <span class="o">=</span> <span class="n">OptionalSelector</span><span class="p">(</span><span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;final&#39;</span><span class="p">,</span> <span class="s1">&#39;snapshots&#39;</span><span class="p">,</span> <span class="s1">&#39;overlap&#39;</span><span class="p">],</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;When to save images.&#39;</span><span class="p">)</span>
+    <span class="n">image_file</span> <span class="o">=</span> <span class="n">String</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Filename for the saved image. File extension png sutomatically added.&#39;</span><span class="p">)</span>
+    <span class="n">snapshot_interval_in_sec</span><span class="o">=</span> <span class="n">PositiveInteger</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="n">softmax</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Sec between snapshots&#39;</span><span class="p">)</span>
+    <span class="n">video_file</span> <span class="o">=</span> <span class="n">String</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Filename for the saved video. File extension mp4 sutomatically added.&#39;</span><span class="p">)</span>
+    <span class="n">fps</span> <span class="o">=</span> <span class="n">PositiveInteger</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="n">softmax</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Video speed&#39;</span><span class="p">)</span>
+    <span class="n">save_video</span><span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to save a video.&#39;</span><span class="p">)</span>
+    <span class="n">mode</span><span class="o">=</span><span class="n">OptionalSelector</span><span class="p">(</span><span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;video&#39;</span><span class="p">,</span> <span class="s1">&#39;image&#39;</span><span class="p">],</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Screen mode.&#39;</span><span class="p">)</span>
+    <span class="n">show_display</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to launch the pygame-visualization.&#39;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">AgentDrawOps</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">visible_trails</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Draw the larva trajectories&#39;</span><span class="p">)</span>
+    <span class="n">trail_dt</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="n">step</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Duration of the drawn trajectories&#39;</span><span class="p">)</span>
+    <span class="n">trail_color</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Selector</span><span class="p">(</span><span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;normal&#39;</span><span class="p">,</span> <span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="s1">&#39;angular&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to display larva tracks according to the instantaneous forward or angular velocity.&#39;</span><span class="p">)</span>
+    <span class="n">draw_sensors</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Draw the larva sensors&#39;</span><span class="p">)</span>
+    <span class="n">draw_contour</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Draw the larva contour&#39;</span><span class="p">)</span>
+    <span class="n">draw_segs</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Draw the larva body segments&#39;</span><span class="p">)</span>
+    <span class="n">draw_midline</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Draw the larva midline&#39;</span><span class="p">)</span>
+    <span class="n">draw_centroid</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Draw the larva centroid&#39;</span><span class="p">)</span>
+    <span class="n">draw_head</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Draw the larva head&#39;</span><span class="p">)</span>
+    <span class="n">draw_orientations</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Draw the larva body vector orientations&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ColorDrawOps</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">intro_text</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Show the introductory configuration screen&#39;</span><span class="p">)</span>
+    <span class="n">odor_aura</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Draw the aura around odor sources&#39;</span><span class="p">)</span>
+    <span class="n">allow_clicks</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to allow input from display&#39;</span><span class="p">)</span>
+    <span class="n">black_background</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Set the background color to black&#39;</span><span class="p">)</span>
+    <span class="n">random_colors</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Color each larva with a random color&#39;</span><span class="p">)</span>
+    <span class="n">color_behavior</span> <span class="o">=</span> <span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Color the larvae according to their instantaneous behavior&#39;</span><span class="p">)</span>
+    <span class="n">panel_width</span> <span class="o">=</span> <span class="n">PositiveInteger</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The width of the side panel in pixels&#39;</span><span class="p">)</span>
+
+<span class="c1"># class VisOps(NestedConf):</span>
+    <span class="c1"># visible_clock = Boolean(True, doc=&#39;Whether clock is visible&#39;)</span>
+    <span class="c1"># visible_scale = Boolean(True, doc=&#39;Whether scale is visible&#39;)</span>
+    <span class="c1"># visible_state = Boolean(False, doc=&#39;Whether state is visible&#39;)</span>
+    <span class="c1"># visible_ids = Boolean(False, doc=&#39;Whether the agent IDs are visible&#39;)</span>
+
+<span class="k">class</span> <span class="nc">ScreenOps</span><span class="p">(</span><span class="n">ColorDrawOps</span><span class="p">,</span> <span class="n">AgentDrawOps</span><span class="p">,</span> <span class="n">MediaDrawOps</span><span class="p">):</span><span class="k">pass</span>
+
+<div class="viewcode-block" id="BaseScreenManager"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager">[docs]</a><span class="k">class</span> <span class="nc">BaseScreenManager</span><span class="p">(</span><span class="n">Area2DPixel</span><span class="p">,</span><span class="n">ScreenOps</span><span class="p">)</span> <span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">background_motion</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">vis_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">video</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">get_window_dims</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">dims</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">offline</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">show_display</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">video_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">video_file</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">image_file</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fps</span><span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fps</span> <span class="o">/</span> <span class="n">m</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">vis_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">=</span><span class="n">vis_kwargs</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">mode</span>
+            <span class="c1"># self.__dict__.update(vis_kwargs.aux)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="o">==</span><span class="s1">&#39;video&#39;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_video</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">show_display</span><span class="o">=</span><span class="kc">True</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bg</span> <span class="o">=</span> <span class="n">background_motion</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_video</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_mode</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_display</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">selected_type</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selection_color</span> <span class="o">=</span> <span class="s1">&#39;red&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_graphs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">focus_mode</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_interval</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snapshot_interval_in_sec</span> <span class="o">/</span> <span class="n">m</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">odorscape_counter</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pygame_keys</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_kws</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span>
+            <span class="s1">&#39;manager&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="p">,</span>
+
+
+        <span class="p">})</span>
+
+
+
+<div class="viewcode-block" id="BaseScreenManager.draw_agents"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.draw_agents">[docs]</a>    <span class="k">def</span> <span class="nf">draw_agents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+
+        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+            <span class="n">o</span><span class="o">.</span><span class="n">_draw</span><span class="p">(</span><span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">agents</span><span class="p">:</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">_draw</span><span class="p">(</span><span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="BaseScreenManager.check"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">close_requested</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="BaseScreenManager.close"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.close">[docs]</a>    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Terminated by the user&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="BaseScreenManager.render"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.render">[docs]</a>    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_mode</span> <span class="o">!=</span> <span class="s1">&#39;overlap&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">draw_arena</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">draw_agents</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_display</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_input</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_graphs</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_mode</span> <span class="o">!=</span> <span class="s1">&#39;overlap&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">draw_aux</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">render</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BaseScreenManager.initialize"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="BaseScreenManager.evaluate_input"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.evaluate_input">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_input</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="BaseScreenManager.evaluate_graphs"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.evaluate_graphs">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_graphs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="BaseScreenManager.draw_arena"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.draw_arena">[docs]</a>    <span class="k">def</span> <span class="nf">draw_arena</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="BaseScreenManager.draw_aux"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.BaseScreenManager.draw_aux">[docs]</a>    <span class="k">def</span> <span class="nf">draw_aux</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">screen_color</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">black_background</span> <span class="k">else</span> <span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tank_color</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">WHITE</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">black_background</span> <span class="k">else</span> <span class="n">aux</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">BLACK</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">snapshot_tick</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_interval</span> <span class="o">==</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="GA_ScreenManager"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager">[docs]</a><span class="k">class</span> <span class="nc">GA_ScreenManager</span><span class="p">(</span><span class="n">BaseScreenManager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">panel_width</span><span class="o">=</span><span class="mi">600</span><span class="p">,</span><span class="n">scene</span><span class="o">=</span><span class="s1">&#39;no_boxes&#39;</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">black_background</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">panel_width</span><span class="o">=</span><span class="n">panel_width</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_kws</span><span class="o">.</span><span class="n">caption</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;GA </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">experiment</span><span class="si">}</span><span class="s1"> : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_kws</span><span class="o">.</span><span class="n">file_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">reg</span><span class="o">.</span><span class="n">ROOT_DIR</span><span class="si">}</span><span class="s1">/lib/sim/ga_scenes/</span><span class="si">{</span><span class="n">scene</span><span class="si">}</span><span class="s1">.txt&#39;</span>
+
+
+<div class="viewcode-block" id="GA_ScreenManager.evaluate_input"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager.evaluate_input">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_input</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">pygame</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">pygame</span><span class="o">.</span><span class="n">QUIT</span> <span class="ow">or</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">pygame</span><span class="o">.</span><span class="n">KEYDOWN</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">pygame</span><span class="o">.</span><span class="n">K_ESCAPE</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">pygame</span><span class="o">.</span><span class="n">KEYDOWN</span> <span class="ow">and</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">pygame</span><span class="o">.</span><span class="n">K_PLUS</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="mi">93</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="mi">270</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">increase_fps</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">pygame</span><span class="o">.</span><span class="n">KEYDOWN</span> <span class="ow">and</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">pygame</span><span class="o">.</span><span class="n">K_MINUS</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="mi">47</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="mi">269</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">decrease_fps</span><span class="p">()</span></div>
+
+
+
+
+<div class="viewcode-block" id="GA_ScreenManager.initialize"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">Viewer</span><span class="o">.</span><span class="n">load_from_file</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">screen_kws</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">side_panel</span> <span class="o">=</span> <span class="n">SidePanel</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Screen opened&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+<div class="viewcode-block" id="GA_ScreenManager.draw_arena"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager.draw_arena">[docs]</a>    <span class="k">def</span> <span class="nf">draw_arena</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">_window</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">Color</span><span class="o">.</span><span class="n">BLACK</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GA_ScreenManager.draw_aux"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager.draw_aux">[docs]</a>    <span class="k">def</span> <span class="nf">draw_aux</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">side_panel</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GA_ScreenManager.finalize"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.GA_ScreenManager.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div></div>
+
+
+
+
+<div class="viewcode-block" id="ScreenManager"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager">[docs]</a><span class="k">class</span> <span class="nc">ScreenManager</span><span class="p">(</span><span class="n">BaseScreenManager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_kws</span><span class="o">.</span><span class="n">caption</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+
+
+
+<div class="viewcode-block" id="ScreenManager.initialize"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="n">v</span> <span class="o">=</span> <span class="n">Viewer</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">screen_kws</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_aux</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">draw_arena</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Screen opened&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+
+
+
+
+<div class="viewcode-block" id="ScreenManager.build_aux"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager.build_aux">[docs]</a>    <span class="k">def</span> <span class="nf">build_aux</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">v</span><span class="p">):</span>
+        <span class="n">m</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_box</span> <span class="o">=</span> <span class="n">ScreenTextBoxRect</span><span class="p">(</span><span class="n">text_color</span><span class="o">=</span><span class="s1">&#39;lightgreen&#39;</span><span class="p">,</span> <span class="n">default_color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span>
+                                              <span class="n">frame_rect</span><span class="o">=</span><span class="n">v</span><span class="o">.</span><span class="n">get_rect_at_pos</span><span class="p">(),</span>
+                                         <span class="n">font_type</span> <span class="o">=</span> <span class="s2">&quot;comicsansms&quot;</span><span class="p">,</span><span class="n">font_size</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">intro_text</span><span class="p">:</span>
+            <span class="n">box</span> <span class="o">=</span> <span class="n">ScreenTextBoxRect</span><span class="p">(</span>
+                <span class="n">text</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">configuration_text</span><span class="p">,</span>
+                <span class="n">text_color</span><span class="o">=</span><span class="s1">&#39;lightgreen&#39;</span><span class="p">,</span> <span class="n">default_color</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span>
+                <span class="n">visible</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">frame_rect</span><span class="o">=</span><span class="n">v</span><span class="o">.</span><span class="n">get_rect_at_pos</span><span class="p">(),</span>
+                <span class="n">font_type</span><span class="o">=</span><span class="s2">&quot;comicsansms&quot;</span><span class="p">,</span> <span class="n">font_size</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+            <span class="n">box</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+            <span class="n">pygame</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="mi">2000</span><span class="p">)</span>
+            <span class="n">box</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+        <span class="n">kws</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;reference_area&#39;</span><span class="p">:</span><span class="n">v</span><span class="p">,</span>
+            <span class="s1">&#39;default_color&#39;</span><span class="p">:</span><span class="s1">&#39;black&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_items</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span>
+            <span class="s1">&#39;clock&#39;</span><span class="p">:</span> <span class="n">SimulationClock</span><span class="p">(</span><span class="n">sim_step_in_sec</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">),</span>
+            <span class="s1">&#39;scale&#39;</span><span class="p">:</span> <span class="n">SimulationScale</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">),</span>
+            <span class="s1">&#39;state&#39;</span><span class="p">:</span> <span class="n">SimulationState</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">m</span><span class="p">,</span><span class="o">**</span><span class="n">kws</span><span class="p">),</span>
+        <span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_texts</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="n">ScreenMsgText</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s1">&#39;trail_dt&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;trail_color&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;visible_trails&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;focus_mode&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;draw_centroid&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;draw_head&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;draw_midline&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;draw_contour&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;draw_sensors&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;draw_orientations&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;draw_segs&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;visible_clock&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;visible_ids&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;visible_state&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;visible_scale&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;odor_aura&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;color_behavior&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;random_colors&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;black_background&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;larva_collisions&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;zoom&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;snapshot #&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;odorscape #&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;windscape&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;is_paused&#39;</span><span class="p">,</span>
+        <span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">odor_layers</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                              <span class="p">})</span></div>
+
+
+
+
+<div class="viewcode-block" id="ScreenManager.step"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="p">:</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">screen_items</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">tick_clock</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;video&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_mode</span> <span class="o">!=</span> <span class="s1">&#39;snapshots&#39;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_tick</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;image&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_mode</span> <span class="o">==</span> <span class="s1">&#39;overlap&#39;</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_mode</span> <span class="o">==</span> <span class="s1">&#39;snapshots&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_tick</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">capture_snapshot</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ScreenManager.finalize"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_mode</span> <span class="o">==</span> <span class="s1">&#39;overlap&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+                <span class="n">pygame</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
+                <span class="c1"># raise</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_mode</span> <span class="o">==</span> <span class="s1">&#39;final&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">capture_snapshot</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ScreenManager.capture_snapshot"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager.capture_snapshot">[docs]</a>    <span class="k">def</span> <span class="nf">capture_snapshot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="s1">&#39;snapshot #&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">render</span><span class="p">()</span></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="viewcode-block" id="ScreenManager.draw_aux"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager.draw_aux">[docs]</a>    <span class="k">def</span> <span class="nf">draw_aux</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">v</span><span class="o">.</span><span class="n">draw_arena</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tank_color</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">screen_color</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">screen_items</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">_draw</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">screen_texts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">+</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">input_box</span><span class="p">]:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">visible</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">start_time</span> <span class="o">&lt;</span> <span class="n">pygame</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">get_ticks</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">t</span><span class="o">.</span><span class="n">end_time</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">_draw</span><span class="p">(</span><span class="n">v</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ScreenManager.draw_arena"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager.draw_arena">[docs]</a>    <span class="k">def</span> <span class="nf">draw_arena</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">arena_drawn</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">odor_layers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="n">visible</span><span class="p">:</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                <span class="n">arena_drawn</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">arena_drawn</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">food_grid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">food_grid</span><span class="o">.</span><span class="n">_draw</span><span class="p">(</span><span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
+            <span class="c1"># print(self.model.food_grid.visible)</span>
+            <span class="n">arena_drawn</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">arena_drawn</span><span class="p">:</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">draw_polygon</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">vertices</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tank_color</span><span class="p">)</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">draw_background</span><span class="p">()</span>
+
+
+
+        <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">windscape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">windscape</span><span class="o">.</span><span class="n">_draw</span><span class="p">(</span><span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">borders</span><span class="p">:</span>
+            <span class="n">b</span><span class="o">.</span><span class="n">_draw</span><span class="p">(</span><span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">)</span></div>
+        <span class="c1"># self.model.borders._draw(v=v)</span>
+
+
+
+
+<div class="viewcode-block" id="ScreenManager.toggle"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager.toggle">[docs]</a>    <span class="k">def</span> <span class="nf">toggle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">minus</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plus</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">m</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+        <span class="k">if</span> <span class="n">disp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">disp</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;snapshot #&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">snapshot_requested</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">*</span> <span class="n">m</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_counter</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;odorscape #&#39;</span><span class="p">:</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">graphs</span><span class="o">.</span><span class="n">dict</span><span class="p">[</span><span class="s1">&#39;odorscape&#39;</span><span class="p">](</span><span class="n">odor_layers</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">odor_layers</span><span class="p">,</span><span class="n">save_to</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">plot_dir</span><span class="p">,</span>
+                                         <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">scaling_factor</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">odorscape_counter</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">odorscape_counter</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">odorscape_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;trail_dt&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">minus</span><span class="p">:</span>
+                <span class="n">dt</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">plus</span><span class="p">:</span>
+                <span class="n">dt</span> <span class="o">=</span> <span class="o">+</span><span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trail_dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trail_dt</span> <span class="o">+</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">dt</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trail_dt</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;trail_color&#39;</span><span class="p">:</span>
+            <span class="n">obs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">trail_color</span><span class="o">.</span><span class="n">objects</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trail_color</span> <span class="o">=</span> <span class="n">obs</span><span class="p">[(</span><span class="n">obs</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trail_color</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">obs</span><span class="p">)]</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trail_color</span>
+
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s1">&#39;ON&#39;</span> <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;OFF&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_texts</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">flash_text</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">disp</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+        <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;random_colors&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">agents</span><span class="p">:</span>
+                <span class="n">color</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">random_colors</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_colors</span> <span class="k">else</span> <span class="n">f</span><span class="o">.</span><span class="n">default_color</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">set_default_color</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;black_background&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_all_objects</span><span class="p">()</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">screen_items</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">screen_texts</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+                <span class="n">a</span><span class="o">.</span><span class="n">invert_default_color</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;larva_collisions&#39;</span><span class="p">:</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eliminate_overlap</span><span class="p">()</span></div>
+
+
+
+
+
+
+
+
+
+<div class="viewcode-block" id="ScreenManager.evaluate_input"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager.evaluate_input">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_input</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pygame_keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pygame_keys</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">controls</span><span class="o">.</span><span class="n">load</span><span class="p">()[</span><span class="s1">&#39;pygame_keys&#39;</span><span class="p">]</span>
+
+        <span class="n">ev</span> <span class="o">=</span> <span class="n">pygame</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">ev</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">pygame</span><span class="o">.</span><span class="n">QUIT</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">pygame</span><span class="o">.</span><span class="n">KEYDOWN</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pygame_keys</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pygame</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">eval_keypress</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_clicks</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">pygame</span><span class="o">.</span><span class="n">MOUSEWHEEL</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">zoom_screen</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">mouse_position</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;zoom&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">zoom</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">pygame</span><span class="o">.</span><span class="n">MOUSEBUTTONUP</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">button</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_selection</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">mouse_position</span><span class="p">,</span> <span class="n">ctrl</span><span class="o">=</span><span class="n">pygame</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">get_mods</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">pygame</span><span class="o">.</span><span class="n">KMOD_CTRL</span><span class="p">):</span>
+                        <span class="c1">#     self.model.add_agent(agent_class=self.selected_type, p0=tuple(p),</span>
+                        <span class="c1">#                 p1=tuple(self.mousebuttondown_pos))</span>
+                            <span class="k">pass</span>
+
+                    <span class="k">elif</span> <span class="n">e</span><span class="o">.</span><span class="n">button</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                        <span class="kn">from</span> <span class="nn">larvaworld.gui.gui_aux.windows</span> <span class="kn">import</span> <span class="n">set_agent_kwargs</span><span class="p">,</span> <span class="n">object_menu</span>
+                        <span class="n">loc</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;SDL_VIDEO_WINDOW_POS&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)])</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pygame</span><span class="o">.</span><span class="n">mouse</span><span class="o">.</span><span class="n">get_pos</span><span class="p">()))</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                            <span class="k">for</span> <span class="n">sel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="p">:</span>
+                                <span class="n">sel</span> <span class="o">=</span> <span class="n">set_agent_kwargs</span><span class="p">(</span><span class="n">sel</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">loc</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">selected_type</span> <span class="o">=</span> <span class="n">object_menu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_type</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">loc</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">focus_mode</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">sel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">move_center</span><span class="p">(</span><span class="n">pos</span><span class="o">=</span><span class="n">sel</span><span class="o">.</span><span class="n">get_position</span><span class="p">())</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span></div>
+        <span class="c1"># print(self.selected_agents)</span>
+
+<div class="viewcode-block" id="ScreenManager.eval_keypress"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager.eval_keypress">[docs]</a>    <span class="k">def</span> <span class="nf">eval_keypress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+
+        <span class="c1"># print(k)</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;visible_ids&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">agents</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+                <span class="n">a</span><span class="o">.</span><span class="n">id_box</span><span class="o">.</span><span class="n">toggle_vis</span><span class="p">()</span>
+                <span class="n">temp</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">id_box</span><span class="o">.</span><span class="n">visible</span>
+        <span class="c1"># elif name == &#39;color_behavior&#39;:</span>
+            <span class="c1"># if not self.color_behavior:</span>
+            <span class="c1">#     for f in self.model.agents:</span>
+            <span class="c1">#         f.set_color(f.default_color)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">&#39;ON&#39;</span> <span class="k">if</span> <span class="n">temp</span> <span class="k">else</span> <span class="s1">&#39;OFF&#39;</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="s1">&#39;IDs&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;visible_clock&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">screen_items</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">toggle_vis</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="s1">&#39;ON&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">screen_items</span><span class="o">.</span><span class="n">clock</span><span class="o">.</span><span class="n">visible</span> <span class="k">else</span> <span class="s1">&#39;OFF&#39;</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="s1">&#39;clock&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;visible_scale&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">screen_items</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">toggle_vis</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">&#39;ON&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">screen_items</span><span class="o">.</span><span class="n">scale</span><span class="o">.</span><span class="n">visible</span> <span class="k">else</span> <span class="s1">&#39;OFF&#39;</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="s1">&#39;scale&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;visible_state&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">screen_items</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">toggle_vis</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">&#39;ON&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">screen_items</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">visible</span> <span class="k">else</span> <span class="s1">&#39;OFF&#39;</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="s1">&#39;state&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;▲ trail duration&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="s1">&#39;trail_dt&#39;</span><span class="p">,</span> <span class="n">plus</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="s1">&#39;trail duration&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;▼ trail duration&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="s1">&#39;trail_dt&#39;</span><span class="p">,</span> <span class="n">minus</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="s1">&#39;trail duration&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;visible_trails&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">disp</span><span class="o">=</span><span class="s1">&#39;trails&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;pause&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="s1">&#39;is_paused&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;move left&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">move_center</span><span class="p">(</span><span class="o">-</span><span class="mf">0.05</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;move right&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">move_center</span><span class="p">(</span><span class="o">+</span><span class="mf">0.05</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;move up&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">move_center</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">+</span><span class="mf">0.05</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;move down&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">move_center</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.05</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;plot odorscapes&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="s1">&#39;odorscape #&#39;</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="n">pygame</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">get_mods</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">pygame</span><span class="o">.</span><span class="n">KMOD_CTRL</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s1">&#39;odorscape&#39;</span> <span class="ow">in</span> <span class="n">k</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">layer_id</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">odor_layers</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="n">idx</span><span class="p">]</span>
+                <span class="n">layer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">odor_layers</span><span class="p">[</span><span class="n">layer_id</span><span class="p">]</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">toggle_vis</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="n">layer_id</span><span class="p">,</span> <span class="s1">&#39;ON&#39;</span> <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="n">visible</span> <span class="k">else</span> <span class="s1">&#39;OFF&#39;</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;snapshot&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="s1">&#39;snapshot #&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;windscape&#39;</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">windscape</span><span class="o">.</span><span class="n">toggle_vis</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="s1">&#39;windscape&#39;</span><span class="p">,</span> <span class="s1">&#39;ON&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">windscape</span><span class="o">.</span><span class="n">visible</span> <span class="k">else</span> <span class="s1">&#39;OFF&#39;</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;delete item&#39;</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">larvaworld.gui.gui_aux.windows</span> <span class="kn">import</span> <span class="n">delete_objects_window</span>
+            <span class="k">if</span> <span class="n">delete_objects_window</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">delete_agent</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;dynamic graph&#39;</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">larvaworld.lib.model.agents._larva</span> <span class="kn">import</span> <span class="n">Larva</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">sel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sel</span><span class="p">,</span> <span class="n">Larva</span><span class="p">):</span>
+                    <span class="kn">from</span> <span class="nn">larvaworld.gui.gui_aux</span> <span class="kn">import</span> <span class="n">DynamicGraph</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_graphs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">DynamicGraph</span><span class="p">(</span><span class="n">agent</span><span class="o">=</span><span class="n">sel</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s1">&#39;odor gains&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">sel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="kn">from</span> <span class="nn">larvaworld.lib.model.agents._larva_sim</span> <span class="kn">import</span> <span class="n">LarvaSim</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sel</span><span class="p">,</span> <span class="n">LarvaSim</span><span class="p">)</span> <span class="ow">and</span> <span class="n">sel</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">olfactor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="kn">from</span> <span class="nn">larvaworld.gui.gui_aux.windows</span> <span class="kn">import</span> <span class="n">set_kwargs</span>
+                    <span class="n">sel</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">olfactor</span><span class="o">.</span><span class="n">gain</span> <span class="o">=</span> <span class="n">set_kwargs</span><span class="p">(</span><span class="n">sel</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">olfactor</span><span class="o">.</span><span class="n">gain</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Odor gains&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">(</span><span class="n">k</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ScreenManager.evaluate_graphs"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager.evaluate_graphs">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_graphs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_graphs</span><span class="p">:</span>
+            <span class="n">running</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">running</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_graphs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+                <span class="k">del</span> <span class="n">g</span></div>
+
+
+<div class="viewcode-block" id="ScreenManager.eval_selection"><a class="viewcode-back" href="../../../../content/larvaworld/lib/screen/drawing.html#larvaworld.lib.screen.drawing.ScreenManager.eval_selection">[docs]</a>    <span class="k">def</span> <span class="nf">eval_selection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">ctrl</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="kc">False</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">True</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_all_objects</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">contained</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">selected</span><span class="p">:</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">selected</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">ctrl</span><span class="p">:</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">selected</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">f</span><span class="o">.</span><span class="n">selected</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctrl</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">selected</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">selected_agents</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div></div>
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

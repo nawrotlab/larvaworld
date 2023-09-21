@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.process.dataset &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.process.dataset</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.process.dataset</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">ClassAttr</span><span class="p">,</span> <span class="n">StepDataFrame</span><span class="p">,</span> <span class="n">EndpointDataFrame</span><span class="p">,</span> <span class="n">ClassDict</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;ParamLarvaDataset&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;BaseLarvaDataset&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;LarvaDataset&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;LarvaDatasetCollection&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;convert_group_output_to_dataset&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="ParamLarvaDataset"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset">[docs]</a><span class="k">class</span> <span class="nc">ParamLarvaDataset</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">ClassAttr</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">DatasetConfig</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The dataset metadata&#39;</span><span class="p">)</span>
+    <span class="n">step_data</span> <span class="o">=</span> <span class="n">StepDataFrame</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The timeseries data&#39;</span><span class="p">)</span>
+    <span class="n">endpoint_data</span> <span class="o">=</span> <span class="n">EndpointDataFrame</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The endpoint data&#39;</span><span class="p">)</span>
+    <span class="n">config2</span> <span class="o">=</span> <span class="n">ClassDict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(),</span> <span class="n">item_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Additional dataset metadata&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;config&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">kws</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">reg</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">DatasetConfig</span><span class="p">()</span><span class="o">.</span><span class="n">param_keys</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">kws</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                    <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">DatasetConfig</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="s1">&#39;config2&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+        <span class="n">ks</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">kws2</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">objects</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">kws2</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;config2&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(</span><span class="n">kws2</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">merge_configs</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epoch_dict</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;pause&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;run&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">larva_dicts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">nestedConf</span><span class="p">)</span>
+
+    <span class="c1">#@param.depends(&#39;step_data&#39;, &#39;endpoint_data&#39;, watch=True)</span>
+<div class="viewcode-block" id="ParamLarvaDataset.validate_IDs"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.validate_IDs">[docs]</a>    <span class="k">def</span> <span class="nf">validate_IDs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s1</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">s2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">s1</span><span class="p">),</span><span class="nb">len</span><span class="p">(</span><span class="n">s2</span><span class="p">))</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span><span class="o">==</span><span class="nb">len</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span><span class="o">==</span><span class="nb">set</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="n">s1</span><span class="o">==</span><span class="n">s2</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">agent_ids</span><span class="o">=</span><span class="n">s1</span></div>
+
+    <span class="c1">#@param.depends(&#39;config.agent_ids&#39;, watch=True)</span>
+<div class="viewcode-block" id="ParamLarvaDataset.update_ids_in_data"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.update_ids_in_data">[docs]</a>    <span class="k">def</span> <span class="nf">update_ids_in_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span><span class="p">,</span><span class="n">e</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="n">s</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">),</span> <span class="p">:]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">e</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">endpoint_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="n">s</span><span class="p">,</span><span class="n">end</span><span class="o">=</span><span class="n">e</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ParamLarvaDataset.update_Nticks"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.update_Nticks">[docs]</a>    <span class="nd">@param</span><span class="o">.</span><span class="n">depends</span><span class="p">(</span><span class="s1">&#39;step_data&#39;</span><span class="p">,</span> <span class="n">watch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">update_Nticks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="s1">&#39;Step&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dt</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">/</span> <span class="mi">60</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">s</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">e</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">c</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
+
+
+<div class="viewcode-block" id="ParamLarvaDataset.merge_configs"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.merge_configs">[docs]</a>    <span class="k">def</span> <span class="nf">merge_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">guess_param_types</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config2</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span><span class="p">,</span><span class="n">p</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">add_parameter</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">p</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ParamLarvaDataset.set_data"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.set_data">[docs]</a>    <span class="k">def</span> <span class="nf">set_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">agents</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span> <span class="o">=</span> <span class="n">step</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">step_data</span><span class="o">.</span><span class="n">levels</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_data</span> <span class="o">=</span> <span class="n">end</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">agents</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">larva_dicts</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">get_larva_dicts</span><span class="p">(</span><span class="n">agents</span><span class="p">,</span> <span class="n">validIDs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_IDs</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span>
+
+
+<div class="viewcode-block" id="ParamLarvaDataset.path_to_file"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.path_to_file">[docs]</a>    <span class="k">def</span> <span class="nf">path_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_dir</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s1">.h5&#39;</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">path_to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_dir</span><span class="si">}</span><span class="s1">/conf.txt&#39;</span>
+
+<div class="viewcode-block" id="ParamLarvaDataset.store"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.store">[docs]</a>    <span class="k">def</span> <span class="nf">store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">):</span>
+        <span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path_to_file</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="n">to_hdf</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">to_hdf</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ParamLarvaDataset.read"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="s1">&#39;data&#39;</span><span class="p">):</span>
+        <span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">path_to_file</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="k">try</span> <span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_hdf</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="ParamLarvaDataset.load"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">h5_ks</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_step</span><span class="p">(</span><span class="n">h5_ks</span><span class="o">=</span><span class="n">h5_ks</span><span class="p">)</span> <span class="k">if</span> <span class="n">step</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">e</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ParamLarvaDataset._load_step"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset._load_step">[docs]</a>    <span class="k">def</span> <span class="nf">_load_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h5_ks</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;step&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">h5_ks</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="n">h5_ks</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">h5_kdic</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">h5_k</span> <span class="ow">in</span> <span class="n">h5_ks</span><span class="p">:</span>
+            <span class="n">ss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">h5_k</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ss</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+                <span class="n">ps</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nonexisting_cols</span><span class="p">(</span><span class="n">ss</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">,</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ss</span><span class="p">[</span><span class="n">ps</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">s</span></div>
+
+
+<div class="viewcode-block" id="ParamLarvaDataset._save_step"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset._save_step">[docs]</a>    <span class="k">def</span> <span class="nf">_save_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="o">~</span><span class="n">s</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">duplicated</span><span class="p">()]</span>
+        <span class="n">stored_ps</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">h5_k</span><span class="p">,</span><span class="n">ps</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">h5_kdic</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">pps</span> <span class="o">=</span><span class="n">ps</span><span class="o">.</span><span class="n">unique</span><span class="o">.</span><span class="n">existing</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">pps</span><span class="p">],</span> <span class="n">h5_k</span><span class="p">)</span>
+                <span class="n">stored_ps</span> <span class="o">+=</span> <span class="n">pps</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">stored_ps</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">),</span> <span class="s1">&#39;step&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ParamLarvaDataset.save"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">refID</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_step</span><span class="p">(</span><span class="n">s</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">endpoint_data</span><span class="p">,</span> <span class="s1">&#39;end&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_config</span><span class="p">(</span><span class="n">refID</span><span class="o">=</span><span class="n">refID</span><span class="p">)</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;***** Dataset </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s1"> stored.-----&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ParamLarvaDataset.save_config"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.save_config">[docs]</a>    <span class="k">def</span> <span class="nf">save_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">refID</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">c</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span>
+        <span class="k">if</span> <span class="n">refID</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">refID</span> <span class="o">=</span> <span class="n">refID</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">refID</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Ref</span><span class="o">.</span><span class="n">setID</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">refID</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dir</span><span class="p">)</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Saved reference dataset under : </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">refID</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">aux</span><span class="o">.</span><span class="n">save_dict</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">nestedConf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_to_config</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ParamLarvaDataset.load_traj"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.load_traj">[docs]</a>    <span class="k">def</span> <span class="nf">load_traj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">):</span>
+        <span class="n">key</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;traj.</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">df</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="n">mode</span><span class="o">==</span><span class="s1">&#39;default&#39;</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_step</span><span class="p">(</span><span class="n">h5_ks</span><span class="o">=</span><span class="p">[])[[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]]</span>
+            <span class="k">elif</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;origin&#39;</span><span class="p">,</span> <span class="s1">&#39;center&#39;</span><span class="p">]:</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_step</span><span class="p">(</span><span class="n">h5_ks</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;contour&#39;</span><span class="p">,</span> <span class="s1">&#39;midline&#39;</span><span class="p">])</span>
+                <span class="n">df</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">preprocessing</span><span class="p">[</span><span class="s2">&quot;transposition&quot;</span><span class="p">](</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">transposition</span><span class="o">=</span><span class="n">mode</span><span class="p">)[[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]]</span>
+            <span class="k">else</span> <span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Not implemented&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+
+<div class="viewcode-block" id="ParamLarvaDataset.load_dicts"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.load_dicts">[docs]</a>    <span class="k">def</span> <span class="nf">load_dicts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">agent_ids</span>
+        <span class="n">ds0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">larva_dicts</span>
+        <span class="k">if</span> <span class="nb">type</span> <span class="ow">in</span> <span class="n">ds0</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">([</span><span class="nb">id</span> <span class="ow">in</span> <span class="n">ds0</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]):</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds0</span><span class="p">[</span><span class="nb">type</span><span class="p">][</span><span class="nb">id</span><span class="p">]</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ds</span><span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">loadSoloDics</span><span class="p">(</span><span class="n">agent_ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">data_dir</span><span class="si">}</span><span class="s1">/individuals/</span><span class="si">{</span><span class="nb">type</span><span class="si">}</span><span class="s1">.txt&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ds</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">contour_xy_data_byID</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">xy</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">contour_xy</span>
+        <span class="k">assert</span> <span class="n">xy</span><span class="o">.</span><span class="n">exist_in</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">)</span>
+        <span class="n">grouped</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">contour_xy</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="nb">id</span><span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Ncontour</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">grouped</span><span class="p">})</span>
+
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">midline_xy_data_byID</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">xy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">midline_xy</span>
+        <span class="k">assert</span> <span class="n">xy</span><span class="o">.</span><span class="n">exist_in</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">)</span>
+        <span class="n">grouped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">[</span><span class="n">xy</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="nb">id</span><span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Npoints</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">grouped</span><span class="p">})</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">midline_xy_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">midline_xy</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Npoints</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">contour_xy_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">contour_xy</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Ncontour</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+    <span class="c1"># def centroid_xy_data(self):</span>
+    <span class="c1">#     xy=self.contour_xy_data</span>
+    <span class="c1">#     return np.sum(xy, axis=1) / self.config.Ncontour</span>
+
+
+<div class="viewcode-block" id="ParamLarvaDataset.midline_xy_1less"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.midline_xy_1less">[docs]</a>    <span class="k">def</span> <span class="nf">midline_xy_1less</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mid</span><span class="p">):</span>
+        <span class="n">mid2</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">mid</span><span class="p">[:,:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mid</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">mid2</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">mid</span><span class="p">[:,</span> <span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">mid</span><span class="p">[:,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,:])</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="n">mid2</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">midline_seg_xy_data_byID</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">g</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">midline_xy_data_byID</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="nb">id</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">midline_xy_1less</span><span class="p">(</span><span class="n">mid</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">mid</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">midline_seg_orients_data_byID</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">midline_xy_data_byID</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="nb">id</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">midline_seg_orients_from_mid</span><span class="p">(</span><span class="n">mid</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">mid</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+
+
+<div class="viewcode-block" id="ParamLarvaDataset.midline_seg_orients_from_mid"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.midline_seg_orients_from_mid">[docs]</a>    <span class="k">def</span> <span class="nf">midline_seg_orients_from_mid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">mid</span><span class="p">):</span>
+        <span class="n">Ax</span><span class="p">,</span> <span class="n">Ay</span> <span class="o">=</span> <span class="n">mid</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">mid</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">Adx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">Ax</span><span class="p">)</span>
+        <span class="n">Ady</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">Ay</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">Ady</span><span class="p">,</span> <span class="n">Adx</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ParamLarvaDataset.comp_centroid"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.comp_centroid">[docs]</a>    <span class="k">def</span> <span class="nf">comp_centroid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">centroid_xy</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">contour_xy</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">Ncontour</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">Ncontour</span></div>
+
+<div class="viewcode-block" id="ParamLarvaDataset.comp_length"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.comp_length">[docs]</a>    <span class="k">def</span> <span class="nf">comp_length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">midline_xy_data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_data</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ParamLarvaDataset.get_par"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.ParamLarvaDataset.get_par">[docs]</a>    <span class="k">def</span> <span class="nf">get_par</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">par</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;step&#39;</span><span class="p">):</span>
+        <span class="n">s</span><span class="p">,</span><span class="n">e</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">endpoint_data</span>
+        <span class="k">if</span> <span class="n">par</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">k</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">par</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">read_key</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">par</span><span class="p">):</span>
+            <span class="n">res</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="n">par</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">res</span>
+
+
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;end&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">e</span><span class="p">[</span><span class="n">par</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;step&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">s</span><span class="p">[</span><span class="n">par</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">h5_k</span><span class="p">,</span><span class="n">ps</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">h5_kdic</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">par</span> <span class="ow">in</span> <span class="n">ps</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="n">read_key</span><span class="p">(</span><span class="n">h5_k</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span>
+                        <span class="k">except</span><span class="p">:</span>
+                            <span class="k">pass</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">read_key</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">par</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+                <span class="n">k</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">par</span><span class="p">,</span> <span class="n">to_return</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">reg</span><span class="o">.</span><span class="n">par</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">compute</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div></div>
+
+
+
+<div class="viewcode-block" id="BaseLarvaDataset"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset">[docs]</a><span class="k">class</span> <span class="nc">BaseLarvaDataset</span><span class="p">(</span><span class="n">ParamLarvaDataset</span><span class="p">):</span>
+
+<div class="viewcode-block" id="BaseLarvaDataset.initGeo"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset.initGeo">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">initGeo</span><span class="p">(</span><span class="n">to_Geo</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">to_Geo</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="kn">from</span> <span class="nn">larvaworld.lib.process.dataset_geo</span> <span class="kn">import</span> <span class="n">GeoLarvaDataset</span>
+                <span class="k">return</span> <span class="n">GeoLarvaDataset</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="c1"># from larvaworld.lib.process.dataset import LarvaDataset</span>
+        <span class="k">return</span> <span class="n">LarvaDataset</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">refID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">load_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">agents</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="c1"># def __init__(self, dir=None, config=None, refID=None, load_data=True, step=None, end=None, agents=None, **kwargs):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Dataset class that stores a single experiment, real or simulated.</span>
+<span class="sd">        Metadata and configuration parameters are stored in the &#39;config&#39; dictionary.</span>
+<span class="sd">        This can be provided as an argument, retrieved from a stored experiment or generated for a new experiment.</span>
+
+<span class="sd">        The default pipeline goes as follows :</span>
+<span class="sd">        The dataset needs the config file to be initialized. If it is not provided as an argument there are two ways to retrieve it.</span>
+<span class="sd">        First if &quot;dir&quot; is an existing directory of a stored dataset the config file will be loaded from the default location</span>
+<span class="sd">        within the dataset&#39;s file structure, specifically from a &quot;conf.txt&quot; in the &quot;data&quot; directory under the root &quot;dir&quot;.</span>
+<span class="sd">        As it is not handy to provide an absolute directory as an argument, the root &quot;dir&quot; locations of a number of stored &quot;reference&quot; datasets</span>
+<span class="sd">        are stored in a file and loaded as a dictionary where the keys are unique &quot;refID&quot; strings holding the root &quot;dir&quot; value.</span>
+
+<span class="sd">        Accessing the reference path dictionary is extremely easy through the &quot;reg.stored&quot; registry class with the following methods :</span>
+<span class="sd">        -   getRefDir(id) returns the &quot;root&quot; directory stored in the &quot;larvaworld/lib/reg/confDicts/Ref.txt&quot; under the unique id</span>
+<span class="sd">        -   getRef(id=None, dir=None) returns the config dictionary stored at the &quot;root&quot; directory. Accepts either the &quot;dir&quot; path or the &quot;refID&quot; id</span>
+<span class="sd">        -   loadRef(id) first retrieves the config dictionary and then initializes the dataset.</span>
+<span class="sd">            By setting load_data=True there is an attempt to load the data from the disc if found at the provided root directory.</span>
+<span class="sd">            This last method can be accessed directly via &quot;reg.loadRef(id)&quot;</span>
+
+<span class="sd">        In the case that none of the above attempts yielded a config dictionary, a novel one is generated using any additional keyword arguments are provided.</span>
+<span class="sd">        This is the default way that a new dataset is initialized. The data content is set after initialization via the &quot;set_data(step, end)&quot;</span>
+<span class="sd">        method with which we provide the both the step-wise timeseries and the endpoint single-per-agent measurements</span>
+
+<span class="sd">        Endpoint measurements are loaded always as a pd.Dataframe &#39;endpoint_data&#39; with &#39;AgentID&#39; indexing</span>
+
+<span class="sd">        The timeseries data though can be initialized and processed in two ways :</span>
+<span class="sd">        -   in the default mode  a pd.Dataframe &#39;step_data&#39; with a 2-level index : &#39;Step&#39; for the timestep index and &#39;AgentID&#39; for the agent unique ID.</span>
+<span class="sd">            Data is stored as a single HDF5 file or as nested dictionaries. The core file is &#39;data.h5&#39; with keys like &#39;step&#39; for timeseries and &#39;end&#39; for endpoint metrics.</span>
+<span class="sd">        -   in the trajectory mode a &quot;movingpandas.TrajectoryCollection&quot; is adjusted to the needs of the larva-tracking data format via the</span>
+<span class="sd">            &quot;lib.process.GeoLarvaDataset&quot; class</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dir: Path to stored data. Ignored if &#39;config&#39; is provided. Defaults to None for no storage to disc</span>
+<span class="sd">            load_data: Whether to load stored data</span>
+<span class="sd">            config: The metadata dictionary. Defaults to None for attempting to load it from disc or generate a new.</span>
+<span class="sd">            **kwargs: Any arguments to store in a novel configuration dictionary</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+
+        <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">config</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getRef</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="nb">dir</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">refID</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_config</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="nb">dir</span><span class="p">,</span> <span class="n">refID</span><span class="o">=</span><span class="n">refID</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">config</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">load_data</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">,</span> <span class="n">agents</span><span class="o">=</span><span class="n">agents</span><span class="p">)</span>
+
+
+
+    <span class="c1"># def set_data(self, step=None, end=None,**kwargs):</span>
+    <span class="c1">#     pass</span>
+
+<div class="viewcode-block" id="BaseLarvaDataset.generate_config"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset.generate_config">[docs]</a>    <span class="k">def</span> <span class="nf">generate_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">c0</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="s1">&#39;unnamed&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="s1">&#39;refID&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="s1">&#39;dir&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="s1">&#39;fr&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="s1">&#39;dt&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="s1">&#39;duration&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="s1">&#39;Nsteps&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="s1">&#39;Npoints&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+                           <span class="s1">&#39;Ncontour&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+                           <span class="s1">&#39;u&#39;</span> <span class="p">:</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;sample&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="s1">&#39;metric_definition&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="s1">&#39;env_params&#39;</span><span class="p">:</span> <span class="p">{},</span>
+                           <span class="s1">&#39;larva_groups&#39;</span><span class="p">:</span> <span class="p">{},</span>
+                           <span class="s1">&#39;source_xy&#39;</span><span class="p">:</span> <span class="p">{},</span>
+                           <span class="s1">&#39;life_history&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                           <span class="p">})</span>
+
+        <span class="n">c0</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c0</span><span class="o">.</span><span class="n">dt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="n">c0</span><span class="o">.</span><span class="n">fr</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">c0</span><span class="o">.</span><span class="n">dt</span>
+        <span class="k">if</span> <span class="n">c0</span><span class="o">.</span><span class="n">fr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="n">c0</span><span class="o">.</span><span class="n">dt</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="n">c0</span><span class="o">.</span><span class="n">fr</span>
+        <span class="k">if</span> <span class="n">c0</span><span class="o">.</span><span class="n">metric_definition</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">c0</span><span class="o">.</span><span class="n">metric_definition</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">get_null</span><span class="p">(</span><span class="s1">&#39;metric_definition&#39;</span><span class="p">)</span>
+
+        <span class="n">points</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">midline</span><span class="p">(</span><span class="n">c0</span><span class="o">.</span><span class="n">Npoints</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;point&#39;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">c0</span><span class="o">.</span><span class="n">point</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="n">c0</span><span class="o">.</span><span class="n">metric_definition</span><span class="o">.</span><span class="n">spatial</span><span class="o">.</span><span class="n">point_idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">c0</span><span class="o">.</span><span class="n">point</span> <span class="o">=</span> <span class="s1">&#39;centroid&#39;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">c0</span><span class="o">.</span><span class="n">larva_groups</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">c0</span><span class="o">.</span><span class="n">group_id</span><span class="p">,</span> <span class="n">gConf</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">c0</span><span class="o">.</span><span class="n">larva_groups</span><span class="o">.</span><span class="n">items</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">c0</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">gConf</span><span class="p">[</span><span class="s1">&#39;default_color&#39;</span><span class="p">]</span>
+            <span class="n">c0</span><span class="o">.</span><span class="n">sample</span> <span class="o">=</span> <span class="n">gConf</span><span class="p">[</span><span class="s1">&#39;sample&#39;</span><span class="p">]</span>
+            <span class="n">c0</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">gConf</span><span class="p">[</span><span class="s1">&#39;model&#39;</span><span class="p">]</span>
+            <span class="n">c0</span><span class="o">.</span><span class="n">life_history</span> <span class="o">=</span> <span class="n">gConf</span><span class="p">[</span><span class="s1">&#39;life_history&#39;</span><span class="p">]</span>
+
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Generated new conf </span><span class="si">{</span><span class="n">c0</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">c0</span></div>
+
+    <span class="c1"># @property</span>
+    <span class="c1"># def data_dir(self):</span>
+    <span class="c1">#     return f&#39;{self.config.dir}/data&#39;</span>
+    <span class="c1">#</span>
+    <span class="c1"># @property</span>
+    <span class="c1"># def plot_dir(self):</span>
+    <span class="c1">#     return f&#39;{self.config.dir}/plots&#39;</span>
+
+    <span class="c1"># def save_config(self, refID=None):</span>
+    <span class="c1">#     c = self.config</span>
+    <span class="c1">#     if refID is not None:</span>
+    <span class="c1">#         c.refID = refID</span>
+    <span class="c1">#     if c.refID is not None:</span>
+    <span class="c1">#         reg.conf.Ref.setID(c.refID, c.dir)</span>
+    <span class="c1">#         reg.vprint(f&#39;Saved reference dataset under : {c.refID}&#39;, 1)</span>
+    <span class="c1">#     try:</span>
+    <span class="c1">#         for k, v in c.items():</span>
+    <span class="c1">#             if isinstance(v, np.ndarray):</span>
+    <span class="c1">#                 c[k] = v.tolist()</span>
+    <span class="c1">#     except:</span>
+    <span class="c1">#         pass</span>
+    <span class="c1">#     try:</span>
+    <span class="c1">#         aux.save_dict(c, f&#39;{self.data_dir}/conf.txt&#39;)</span>
+    <span class="c1">#     except:</span>
+    <span class="c1">#         aux.save_dict(c.nestedConf, f&#39;{self.data_dir}/conf.txt&#39;)</span>
+
+    <span class="c1"># @property</span>
+    <span class="c1"># def Nangles(self):</span>
+    <span class="c1">#     return np.clip(self.config.Npoints - 2, a_min=0, a_max=None)</span>
+
+    <span class="c1"># @property</span>
+    <span class="c1"># def points(self):</span>
+    <span class="c1">#     return aux.aux.nam.midline(self.config.Npoints, type=&#39;point&#39;)</span>
+
+    <span class="c1"># @property</span>
+    <span class="c1"># def contour(self):</span>
+    <span class="c1">#     return aux.aux.nam.contour(self.config.Ncontour)</span>
+
+<div class="viewcode-block" id="BaseLarvaDataset.delete"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dir</span><span class="p">)</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Dataset </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s1"> deleted&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseLarvaDataset.set_id"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.BaseLarvaDataset.set_id">[docs]</a>    <span class="k">def</span> <span class="nf">set_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_config</span><span class="p">()</span></div></div>
+
+    <span class="c1"># def set_endpoint_data(self,end):</span>
+    <span class="c1">#     self.endpoint_data = end.sort_index()</span>
+    <span class="c1">#     self.agent_ids = self.endpoint_data.index.values</span>
+    <span class="c1">#     self.config.agent_ids = list(self.agent_ids)</span>
+    <span class="c1">#     self.config.N = len(self.agent_ids)</span>
+
+    <span class="c1"># def load(self, **kwargs):</span>
+    <span class="c1">#     pass</span>
+
+<div class="viewcode-block" id="LarvaDataset"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.LarvaDataset">[docs]</a><span class="k">class</span> <span class="nc">LarvaDataset</span><span class="p">(</span><span class="n">BaseLarvaDataset</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This is the default dataset class. Timeseries are stored as a pd.Dataframe &#39;step_data&#39; with a 2-level index : &#39;Step&#39; for the timestep index and &#39;AgentID&#39; for the agent unique ID.</span>
+<span class="sd">        Data is stored as a single HDF5 file or as nested dictionaries. The core file is &#39;data.h5&#39; with keys like &#39;step&#39; for timeseries and &#39;end&#39; for endpoint metrics.</span>
+<span class="sd">        To lesser the burdain of loading and saving all timeseries parameters as columns in a single pd.Dataframe, the most common parameters have been split in a set of groupings,</span>
+<span class="sd">         available via keys that access specific entries of the &quot;data.h5&quot;. The keys of &quot;self.h5_kdic&quot; dictionary store the parameters that every &quot;h5key&quot; keeps :</span>
+<span class="sd">        -   &#39;contour&#39;: The contour xy coordinates,</span>
+<span class="sd">        -   &#39;midline&#39;: The midline xy coordinates,</span>
+<span class="sd">        -   &#39;epochs&#39;: The behavioral epoch detection and annotation,</span>
+<span class="sd">        -   &#39;base_spatial&#39;: The most basic spatial parameters,</span>
+<span class="sd">        -   &#39;angular&#39;: The angular parameters,</span>
+<span class="sd">        -   &#39;dspNtor&#39;:  Dispersal and tortuosity,</span>
+
+<span class="sd">        All parameters not included in any of these groups stays with the original &quot;step&quot; key that is always saved and loaded</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+
+
+
+
+    <span class="c1"># def set_data(self, step=None, end=None, agents=None):</span>
+    <span class="c1">#     c=self.config</span>
+    <span class="c1">#     if step is not None:</span>
+    <span class="c1">#         assert step.index.names == [&#39;Step&#39;, &#39;AgentID&#39;]</span>
+    <span class="c1">#         s = step.sort_index(level=[&#39;Step&#39;, &#39;AgentID&#39;])</span>
+    <span class="c1">#         self.Nticks = s.index.unique(&#39;Step&#39;).size</span>
+    <span class="c1">#         # c.t0 = int(s.index.unique(&#39;Step&#39;)[0])</span>
+    <span class="c1">#         c.Nticks = self.Nticks</span>
+    <span class="c1">#         c.duration = c.dt * c.Nticks/60</span>
+    <span class="c1">#         # if &#39;quality&#39; not in c.keys():</span>
+    <span class="c1">#         #     try:</span>
+    <span class="c1">#         #         df = s[aux.aux.nam.xy(c.point)[0]].values.flatten()</span>
+    <span class="c1">#         #         valid = np.count_nonzero(~np.isnan(df))</span>
+    <span class="c1">#         #         c.quality = np.round(valid / df.shape[0], 2)</span>
+    <span class="c1">#         #     except:</span>
+    <span class="c1">#         #         pass</span>
+    <span class="c1">#</span>
+    <span class="c1">#         self.step_data = s</span>
+    <span class="c1">#</span>
+    <span class="c1">#     if end is not None:</span>
+    <span class="c1">#         self.set_endpoint_data(end)</span>
+    <span class="c1">#</span>
+    <span class="c1">#     if agents is not None :</span>
+    <span class="c1">#         self.larva_dicts = aux.get_larva_dicts(agents, validIDs=self.agent_ids)</span>
+
+
+    <span class="c1"># def _load_step(self, h5_ks=None):</span>
+    <span class="c1">#     s = self.read(&#39;step&#39;)</span>
+    <span class="c1">#     if h5_ks is None :</span>
+    <span class="c1">#         h5_ks=list(self.h5_kdic.keys())</span>
+    <span class="c1">#     for h5_k in h5_ks:</span>
+    <span class="c1">#         ss = self.read(h5_k)</span>
+    <span class="c1">#         if ss is not None :</span>
+    <span class="c1">#             ps = aux.nonexisting_cols(ss.columns.values,s)</span>
+    <span class="c1">#             if len(ps) &gt; 0:</span>
+    <span class="c1">#                 s = s.join(ss[ps])</span>
+    <span class="c1">#     return s</span>
+    <span class="c1">#</span>
+    <span class="c1">#</span>
+    <span class="c1"># def load(self, step=True, h5_ks=None):</span>
+    <span class="c1">#     s = self._load_step(h5_ks=h5_ks) if step else None</span>
+    <span class="c1">#     e = self.read(&#39;end&#39;)</span>
+    <span class="c1">#     self.set_data(step=s, end=e)</span>
+    <span class="c1">#</span>
+    <span class="c1">#</span>
+    <span class="c1"># def _save_step(self, s):</span>
+    <span class="c1">#     s = s.loc[:, ~s.columns.duplicated()]</span>
+    <span class="c1">#     stored_ps = []</span>
+    <span class="c1">#     for h5_k,ps in self.h5_kdic.items():</span>
+    <span class="c1">#         pps = aux.unique_list(aux.existing_cols(ps,s))</span>
+    <span class="c1">#         if len(pps) &gt; 0:</span>
+    <span class="c1">#             self.store(s[pps], h5_k)</span>
+    <span class="c1">#             stored_ps += pps</span>
+    <span class="c1">#</span>
+    <span class="c1">#     self.store(s.drop(stored_ps, axis=1, errors=&#39;ignore&#39;), &#39;step&#39;)</span>
+    <span class="c1">#</span>
+    <span class="c1"># def save(self, refID=None):</span>
+    <span class="c1">#     if hasattr(self, &#39;step_data&#39;):</span>
+    <span class="c1">#         self._save_step(s=self.step_data)</span>
+    <span class="c1">#     if hasattr(self, &#39;endpoint_data&#39;):</span>
+    <span class="c1">#         self.store(self.endpoint_data, &#39;end&#39;)</span>
+    <span class="c1">#     self.save_config(refID=refID)</span>
+    <span class="c1">#     reg.vprint(f&#39;***** Dataset {self.id} stored.-----&#39;, 1)</span>
+    <span class="c1">#</span>
+    <span class="c1"># def store(self, df, key, file=&#39;data&#39;):</span>
+    <span class="c1">#     path=f&#39;{self.data_dir}/{file}.h5&#39;</span>
+    <span class="c1">#     if not isinstance(df, pd.DataFrame):</span>
+    <span class="c1">#         pd.DataFrame(df).to_hdf(path, key)</span>
+    <span class="c1">#     else :</span>
+    <span class="c1">#         df.to_hdf(path, key)</span>
+    <span class="c1">#</span>
+    <span class="c1">#</span>
+    <span class="c1"># def read(self, key, file=&#39;data&#39;):</span>
+    <span class="c1">#     path=f&#39;{self.data_dir}/{file}.h5&#39;</span>
+    <span class="c1">#     try :</span>
+    <span class="c1">#         return pd.read_hdf(path, key)</span>
+    <span class="c1">#     except:</span>
+    <span class="c1">#         return None</span>
+    <span class="c1">#</span>
+    <span class="c1">#</span>
+    <span class="c1">#</span>
+    <span class="c1">#</span>
+    <span class="c1"># def load_traj(self, mode=&#39;default&#39;):</span>
+    <span class="c1">#     key=f&#39;traj.{mode}&#39;</span>
+    <span class="c1">#     df = self.read(key)</span>
+    <span class="c1">#     if df is None :</span>
+    <span class="c1">#         if mode==&#39;default&#39;:</span>
+    <span class="c1">#             df = self._load_step(h5_ks=[])[[&#39;x&#39;, &#39;y&#39;]]</span>
+    <span class="c1">#         elif mode in [&#39;origin&#39;, &#39;center&#39;]:</span>
+    <span class="c1">#             s = self._load_step(h5_ks=[&#39;contour&#39;, &#39;midline&#39;])</span>
+    <span class="c1">#             df=reg.funcs.preprocessing[&quot;transposition&quot;](s, c=self.config, replace=False, transposition=mode)[[&#39;x&#39;, &#39;y&#39;]]</span>
+    <span class="c1">#         else :</span>
+    <span class="c1">#             raise ValueError(&#39;Not implemented&#39;)</span>
+    <span class="c1">#         self.store(df,key)</span>
+    <span class="c1">#     return df</span>
+    <span class="c1">#</span>
+    <span class="c1">#</span>
+    <span class="c1">#</span>
+    <span class="c1"># def load_dicts(self, type, ids=None):</span>
+    <span class="c1">#     if ids is None:</span>
+    <span class="c1">#         ids = self.agent_ids</span>
+    <span class="c1">#     ds0 = self.larva_dicts</span>
+    <span class="c1">#     if type in ds0 and all([id in ds0[type].keys() for id in ids]):</span>
+    <span class="c1">#         ds = [ds0[type][id] for id in ids]</span>
+    <span class="c1">#     else:</span>
+    <span class="c1">#         ds= aux.loadSoloDics(agent_ids=ids, path=f&#39;{self.data_dir}/individuals/{type}.txt&#39;)</span>
+    <span class="c1">#     return ds</span>
+
+<div class="viewcode-block" id="LarvaDataset.visualize"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.LarvaDataset.visualize">[docs]</a>    <span class="k">def</span> <span class="nf">visualize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">parameters</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">larvaworld.lib.sim.dataset_replay</span> <span class="kn">import</span> <span class="n">ReplayRun</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;dataset&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">rep</span> <span class="o">=</span> <span class="n">ReplayRun</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">rep</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div>
+
+
+
+
+
+
+
+
+    <span class="c1"># @property</span>
+    <span class="c1"># def data_path(self):</span>
+    <span class="c1">#     return f&#39;{self.data_dir}/data.h5&#39;</span>
+
+
+
+<div class="viewcode-block" id="LarvaDataset.enrich"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.LarvaDataset.enrich">[docs]</a>    <span class="k">def</span> <span class="nf">enrich</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">pre_kws</span><span class="o">=</span><span class="p">{},</span> <span class="n">proc_keys</span><span class="o">=</span><span class="p">[],</span><span class="n">anot_keys</span><span class="o">=</span><span class="p">[],</span> <span class="n">is_last</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">cc</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;d&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="p">,</span>
+            <span class="s1">&#39;s&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">,</span>
+            <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint_data</span><span class="p">,</span>
+            <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">}</span>
+
+        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">pre_kws</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">v</span><span class="p">:</span>
+                <span class="n">ccc</span><span class="o">=</span><span class="n">cc</span>
+                <span class="n">ccc</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">=</span><span class="n">v</span>
+                <span class="n">reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">preprocessing</span><span class="p">[</span><span class="n">k</span><span class="p">](</span><span class="o">**</span><span class="n">ccc</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">proc_keys</span><span class="p">:</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">processing</span><span class="p">[</span><span class="n">k</span><span class="p">](</span><span class="o">**</span><span class="n">cc</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">anot_keys</span><span class="p">:</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">annotating</span><span class="p">[</span><span class="n">k</span><span class="p">](</span><span class="o">**</span><span class="n">cc</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">is_last</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+
+
+
+
+
+
+    <span class="c1"># def get_par(self, par=None, k=None, key=&#39;step&#39;):</span>
+    <span class="c1">#     if par is None and k is not None:</span>
+    <span class="c1">#         par=reg.getPar(k)</span>
+    <span class="c1">#</span>
+    <span class="c1">#     if key == &#39;end&#39;:</span>
+    <span class="c1">#         if not hasattr(self, &#39;endpoint_data&#39;):</span>
+    <span class="c1">#             self.load(step=False)</span>
+    <span class="c1">#         df=self.endpoint_data</span>
+    <span class="c1">#</span>
+    <span class="c1">#     elif key == &#39;step&#39;:</span>
+    <span class="c1">#         if not hasattr(self, &#39;step_data&#39;):</span>
+    <span class="c1">#             self.load()</span>
+    <span class="c1">#         df=self.step_data</span>
+    <span class="c1">#     else :</span>
+    <span class="c1">#         raise</span>
+    <span class="c1">#</span>
+    <span class="c1">#     if par in df.columns :</span>
+    <span class="c1">#         return df[par]</span>
+    <span class="c1">#     else :</span>
+    <span class="c1">#         if k is None :</span>
+    <span class="c1">#             k = reg.getPar(p=par, to_return=&#39;k&#39;)</span>
+    <span class="c1">#         return reg.par.get(k=k, d=self, compute=True)</span>
+
+
+
+
+
+
+<div class="viewcode-block" id="LarvaDataset.get_chunk_par"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.LarvaDataset.get_chunk_par">[docs]</a>    <span class="k">def</span> <span class="nf">get_chunk_par</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">par</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_dur</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;distro&#39;</span><span class="p">):</span>
+        <span class="n">chunk_idx</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">chunk</span><span class="si">}</span><span class="s1">_idx&#39;</span>
+        <span class="n">chunk_dur</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">chunk</span><span class="si">}</span><span class="s1">_dur&#39;</span>
+        <span class="k">if</span> <span class="n">par</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">par</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            
+        <span class="n">dic0</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;chunk_dicts&#39;</span><span class="p">))</span>
+
+        <span class="n">dics</span> <span class="o">=</span> <span class="p">[</span><span class="n">dic0</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">]</span>
+        <span class="n">sss</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">step_data</span><span class="p">[</span><span class="n">par</span><span class="p">]</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;distro&#39;</span><span class="p">:</span>
+
+            <span class="n">vs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">ss</span><span class="p">,</span> <span class="n">dic</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sss</span><span class="p">,</span> <span class="n">dics</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">min_dur</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="n">dic</span><span class="p">[</span><span class="n">chunk_idx</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">epochs</span> <span class="o">=</span> <span class="n">dic</span><span class="p">[</span><span class="n">chunk</span><span class="p">][</span><span class="n">dic</span><span class="p">[</span><span class="n">chunk_dur</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">min_dur</span><span class="p">]</span>
+                    <span class="n">Nepochs</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">Nepochs</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">idx</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">elif</span> <span class="n">Nepochs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">epochs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">epochs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">slices</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">r0</span><span class="p">,</span> <span class="n">r1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">r0</span><span class="p">,</span> <span class="n">r1</span> <span class="ow">in</span> <span class="n">epochs</span><span class="p">]</span>
+                        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">slices</span><span class="p">)</span>
+                <span class="n">vs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ss</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">vs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">vs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">vs</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;extrema&#39;</span><span class="p">:</span>
+            <span class="n">cc0s</span><span class="p">,</span> <span class="n">cc1s</span><span class="p">,</span> <span class="n">cc01s</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">ss</span><span class="p">,</span> <span class="n">dic</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sss</span><span class="p">,</span> <span class="n">dics</span><span class="p">):</span>
+                <span class="n">epochs</span> <span class="o">=</span> <span class="n">dic</span><span class="p">[</span><span class="n">chunk</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">min_dur</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">epochs</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="n">dic</span><span class="p">[</span><span class="n">chunk_dur</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">min_dur</span><span class="p">]</span>
+                <span class="n">Nepochs</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">Nepochs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">c0s</span> <span class="o">=</span> <span class="n">ss</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">epochs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
+                    <span class="n">c1s</span> <span class="o">=</span> <span class="n">ss</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">epochs</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
+                    <span class="n">cc0s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c0s</span><span class="p">)</span>
+                    <span class="n">cc1s</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c1s</span><span class="p">)</span>
+            <span class="n">cc0s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">cc0s</span><span class="p">)</span>
+            <span class="n">cc1s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">cc1s</span><span class="p">)</span>
+            <span class="n">cc01s</span> <span class="o">=</span> <span class="n">cc1s</span> <span class="o">-</span> <span class="n">cc0s</span>
+            <span class="k">return</span> <span class="n">cc0s</span><span class="p">,</span> <span class="n">cc1s</span><span class="p">,</span> <span class="n">cc01s</span></div></div>
+
+
+
+
+    <span class="c1"># @property</span>
+    <span class="c1"># def data(self):</span>
+    <span class="c1">#     s=self.step_data if hasattr(self, &#39;step_data&#39;) else None</span>
+    <span class="c1">#     e=self.endpoint_data if hasattr(self, &#39;endpoint_data&#39;) else None</span>
+    <span class="c1">#     return s, e, self.config</span>
+
+
+
+
+
+<div class="viewcode-block" id="LarvaDatasetCollection"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection">[docs]</a><span class="k">class</span> <span class="nc">LarvaDatasetCollection</span> <span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">add_samples</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">datasets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_datasets</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">BaseLarvaDataset</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">add_samples</span><span class="p">:</span>
+            <span class="n">targetIDs</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">unique_list</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">sample</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">datasets</span><span class="p">])</span>
+            <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">reg</span><span class="o">.</span><span class="n">loadRef</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">targetIDs</span> <span class="k">if</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Ref</span><span class="o">.</span><span class="n">confIDs</span><span class="p">]</span>
+            <span class="n">datasets</span> <span class="o">+=</span> <span class="n">targets</span>
+            <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">labels</span> <span class="o">+=</span> <span class="n">targetIDs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span> <span class="o">=</span> <span class="n">datasets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Ndatasets</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">datasets</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_colors</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ndatasets</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_ids</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">unique_list</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">group_id</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Ngroups</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_ids</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">set_dir</span><span class="p">()</span>
+
+<div class="viewcode-block" id="LarvaDatasetCollection.set_dir"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.set_dir">[docs]</a>    <span class="k">def</span> <span class="nf">set_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dir</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="ow">and</span> <span class="s1">&#39;dir&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">dir</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ndatasets</span><span class="o">&gt;</span><span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ngroups</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">dir0</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">unique_list</span><span class="p">([</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">dir</span><span class="p">))</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dir0</span><span class="p">)</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">dir0</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span> <span class="p">:</span>
+                <span class="k">raise</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">plot_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="si">}</span><span class="s1">/group_plots&#39;</span>
+
+<div class="viewcode-block" id="LarvaDatasetCollection.plot"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">ids</span><span class="o">=</span><span class="p">[],</span> <span class="n">gIDs</span><span class="o">=</span><span class="p">[],</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">kws</span><span class="o">=</span><span class="p">{</span>
+            <span class="s1">&#39;datasets&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">,</span>
+            <span class="s1">&#39;save_to&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_dir</span><span class="p">,</span>
+            <span class="s1">&#39;show&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span>
+            <span class="s1">&#39;subfolder&#39;</span><span class="p">:</span><span class="kc">None</span>
+        <span class="p">}</span>
+        <span class="n">kws</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">plots</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span> <span class="p">:</span>
+            <span class="n">plots</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">graphs</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">gID</span> <span class="ow">in</span> <span class="n">gIDs</span> <span class="p">:</span>
+            <span class="n">plots</span><span class="p">[</span><span class="n">gID</span><span class="p">]</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">graphs</span><span class="o">.</span><span class="n">run_group</span><span class="p">(</span><span class="n">gID</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">plots</span></div>
+
+
+<div class="viewcode-block" id="LarvaDatasetCollection.get_datasets"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.get_datasets">[docs]</a>    <span class="k">def</span> <span class="nf">get_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">datasets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">refIDs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dirs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">group_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">datasets</span> <span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">elif</span> <span class="n">refIDs</span><span class="p">:</span>
+            <span class="n">datasets</span><span class="o">=</span> <span class="p">[</span><span class="n">reg</span><span class="o">.</span><span class="n">loadRef</span><span class="p">(</span><span class="n">refID</span><span class="p">)</span> <span class="k">for</span> <span class="n">refID</span> <span class="ow">in</span> <span class="n">refIDs</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">dirs</span> <span class="p">:</span>
+            <span class="n">datasets</span><span class="o">=</span> <span class="p">[</span><span class="n">LarvaDataset</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">reg</span><span class="o">.</span><span class="n">DATA_DIR</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="nb">dir</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">load_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">for</span> <span class="nb">dir</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">group_id</span> <span class="p">:</span>
+            <span class="n">datasets</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Ref</span><span class="o">.</span><span class="n">loadRefGroup</span><span class="p">(</span><span class="n">group_id</span><span class="p">,</span> <span class="n">to_return</span><span class="o">=</span><span class="s1">&#39;list&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">datasets</span></div>
+
+<div class="viewcode-block" id="LarvaDatasetCollection.get_colors"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.get_colors">[docs]</a>    <span class="k">def</span> <span class="nf">get_colors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">colors</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span> <span class="p">:</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">color</span>
+            <span class="k">while</span> <span class="n">color</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">color</span> <span class="ow">in</span> <span class="n">colors</span> <span class="p">:</span>
+                <span class="n">color</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">random_colors</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">colors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">color</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">colors</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data_palette</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data_palette_with_N</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels_with_N</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">color_palette</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">colors</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Nticks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Nticks_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">Nticks</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">unique_list</span><span class="p">(</span><span class="n">Nticks_list</span><span class="p">)))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">N</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">N_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">N</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">unique_list</span><span class="p">(</span><span class="n">N_list</span><span class="p">)))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">labels_with_N</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s1"> (N=</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">N</span><span class="si">}</span><span class="s1">)&#39;</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span><span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fr_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">fr</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">unique_list</span><span class="p">(</span><span class="n">fr_list</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dt_list</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">unique_list</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">dt</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dt_list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration</span>
+
+<div class="viewcode-block" id="LarvaDatasetCollection.trange"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.trange">[docs]</a>    <span class="k">def</span> <span class="nf">trange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;min&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;min&#39;</span><span class="p">:</span>
+            <span class="n">T</span> <span class="o">=</span> <span class="mi">60</span>
+        <span class="k">elif</span> <span class="n">unit</span> <span class="o">==</span> <span class="s1">&#39;sec&#39;</span><span class="p">:</span>
+            <span class="n">T</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tlim</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">t0</span> <span class="o">/</span> <span class="n">T</span><span class="p">,</span> <span class="n">t1</span> <span class="o">/</span> <span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nticks</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">arena_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dims</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">env_params</span><span class="o">.</span><span class="n">arena</span><span class="o">.</span><span class="n">dims</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ndatasets</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">dims</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dims</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="n">dims</span><span class="o">=</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">arena_geometry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">geos</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">unique_list</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">env_params</span><span class="o">.</span><span class="n">arena</span><span class="o">.</span><span class="n">geometry</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">geos</span><span class="p">)</span> <span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">geos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="LarvaDatasetCollection.concat_data"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.concat_data">[docs]</a>    <span class="k">def</span> <span class="nf">concat_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">concat_datasets</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">datasets</span><span class="p">)),</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="LarvaDatasetCollection.from_agentpy_output"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.LarvaDatasetCollection.from_agentpy_output">[docs]</a>    <span class="o">@</span> <span class="nb">classmethod</span>
+    <span class="k">def</span> <span class="nf">from_agentpy_output</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">agents</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">to_Geo</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">config0</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">parameters</span><span class="p">[</span><span class="s1">&#39;constants&#39;</span><span class="p">])</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">gID</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">output</span><span class="o">.</span><span class="n">variables</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">assert</span> <span class="s1">&#39;sample_id&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span>
+            <span class="n">step</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="n">convert_group_output_to_dataset</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">config0</span><span class="p">[</span><span class="s1">&#39;collectors&#39;</span><span class="p">])</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="n">config0</span><span class="o">.</span><span class="n">get_copy</span><span class="p">()</span>
+            <span class="n">kws</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="c1"># &#39;larva_groups&#39;: {gID: gConf},</span>
+                <span class="c1"># &#39;df&#39;: df,</span>
+                <span class="s1">&#39;group_id&#39;</span><span class="p">:</span> <span class="n">config0</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">gID</span><span class="p">,</span>
+                <span class="s1">&#39;refID&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="c1"># &#39;refID&#39;: f&#39;{config0.id}/{gID}&#39;,</span>
+                <span class="s1">&#39;dir&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="c1"># &#39;color&#39;: None,</span>
+                <span class="c1"># &#39;sample&#39;: gConf.sample,</span>
+                <span class="c1"># &#39;life_history&#39;: gConf.life_history,</span>
+                <span class="c1"># &#39;model&#39;: gConf.model,</span>
+
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="s1">&#39;larva_groups&#39;</span> <span class="ow">in</span> <span class="n">config0</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">gConf</span> <span class="o">=</span> <span class="n">config0</span><span class="o">.</span><span class="n">larva_groups</span><span class="p">[</span><span class="n">gID</span><span class="p">]</span>
+                <span class="n">kws</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="p">{</span>
+                    <span class="s1">&#39;larva_groups&#39;</span><span class="p">:</span> <span class="p">{</span><span class="n">gID</span><span class="p">:</span> <span class="n">gConf</span><span class="p">},</span>
+                    <span class="c1"># &#39;df&#39;: df,</span>
+                    <span class="c1"># &#39;group_id&#39;: config0.id,</span>
+                    <span class="c1"># &#39;id&#39;: gID,</span>
+                    <span class="c1"># &#39;refID&#39;: None,</span>
+                    <span class="c1"># &#39;refID&#39;: f&#39;{config0.id}/{gID}&#39;,</span>
+                    <span class="s1">&#39;dir&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">config0</span><span class="o">.</span><span class="n">dir</span><span class="si">}</span><span class="s1">/data/</span><span class="si">{</span><span class="n">gID</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="n">gConf</span><span class="o">.</span><span class="n">default_color</span><span class="p">,</span>
+                    <span class="c1"># &#39;sample&#39;: gConf.sample,</span>
+                    <span class="c1"># &#39;life_history&#39;: gConf.life_history,</span>
+                    <span class="c1"># &#39;model&#39;: gConf.model,</span>
+
+                <span class="p">})</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+            <span class="n">d</span><span class="o">=</span><span class="n">BaseLarvaDataset</span><span class="o">.</span><span class="n">initGeo</span><span class="p">(</span><span class="n">to_Geo</span><span class="o">=</span><span class="n">to_Geo</span><span class="p">,</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span><span class="n">load_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span><span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">,</span><span class="n">agents</span><span class="o">=</span><span class="n">agents</span><span class="p">)</span>
+
+            <span class="n">ds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">datasets</span><span class="o">=</span><span class="n">ds</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config0</span><span class="p">)</span></div></div>
+
+
+
+<div class="viewcode-block" id="convert_group_output_to_dataset"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/dataset.html#larvaworld.lib.process.dataset.convert_group_output_to_dataset">[docs]</a><span class="k">def</span> <span class="nf">convert_group_output_to_dataset</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">collectors</span><span class="p">):</span>
+
+
+    <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">set_names</span><span class="p">([</span><span class="s1">&#39;AgentID&#39;</span><span class="p">,</span> <span class="s1">&#39;Step&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reorder_levels</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Step&#39;</span><span class="p">,</span> <span class="s1">&#39;AgentID&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Step&#39;</span><span class="p">,</span> <span class="s1">&#39;AgentID&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">end</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">collectors</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="s1">&#39;Step&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;Step&#39;</span><span class="p">)</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">collectors</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">]]</span>
+
+    <span class="k">return</span> <span class="n">step</span><span class="p">,</span> <span class="n">end</span></div>
+
+
+<span class="k">def</span> <span class="nf">h5_kdic</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">Nc</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">epochs_ps</span><span class="p">():</span>
+        <span class="n">cs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;turn&#39;</span><span class="p">,</span> <span class="s1">&#39;Lturn&#39;</span><span class="p">,</span> <span class="s1">&#39;Rturn&#39;</span><span class="p">,</span> <span class="s1">&#39;pause&#39;</span><span class="p">,</span> <span class="s1">&#39;exec&#39;</span><span class="p">,</span> <span class="s1">&#39;stride&#39;</span><span class="p">,</span> <span class="s1">&#39;stridechain&#39;</span><span class="p">,</span> <span class="s1">&#39;run&#39;</span><span class="p">]</span>
+        <span class="n">pars</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;start&#39;</span><span class="p">,</span> <span class="s1">&#39;stop&#39;</span><span class="p">,</span> <span class="s1">&#39;dur&#39;</span><span class="p">,</span> <span class="s1">&#39;dst&#39;</span><span class="p">,</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="s1">&#39;dst&#39;</span><span class="p">),</span> <span class="s1">&#39;length&#39;</span><span class="p">,</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s1">&#39;vel&#39;</span><span class="p">),</span> <span class="s1">&#39;count&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">SuperList</span><span class="p">([</span><span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">chunk_track</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">pars</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cs</span><span class="p">])</span><span class="o">.</span><span class="n">flatten</span>
+
+    <span class="k">def</span> <span class="nf">dspNtor_ps</span><span class="p">():</span>
+        <span class="n">tor_ps</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;tortuosity_</span><span class="si">{</span><span class="n">dur</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">dur</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="mi">300</span><span class="p">]]</span>
+        <span class="n">dsp_ps</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;dispersion_</span><span class="si">{</span><span class="n">t0</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">t1</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="p">(</span><span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span> <span class="ow">in</span>
+                  <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">60</span><span class="p">],</span> <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="mi">300</span><span class="p">])]</span>
+        <span class="n">pars</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">SuperList</span><span class="p">(</span><span class="n">tor_ps</span> <span class="o">+</span> <span class="n">dsp_ps</span> <span class="o">+</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">dsp_ps</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">pars</span>
+
+    <span class="k">def</span> <span class="nf">base_spatial_ps</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">ps</span> <span class="o">=</span> <span class="p">[</span><span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">dst</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">acc</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span>
+        <span class="n">ld</span><span class="p">,</span> <span class="n">lv</span><span class="p">,</span> <span class="n">la</span> <span class="o">=</span> <span class="n">lps</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">lin</span><span class="p">(</span><span class="n">ps</span><span class="p">)</span>
+        <span class="n">ps0</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">+</span> <span class="n">ps</span> <span class="o">+</span> <span class="n">lps</span> <span class="o">+</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">cum</span><span class="p">([</span><span class="n">d</span><span class="p">,</span> <span class="n">ld</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">SuperList</span><span class="p">(</span><span class="n">ps0</span> <span class="o">+</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">ps0</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">ang_pars</span><span class="p">(</span><span class="n">angs</span><span class="p">):</span>
+        <span class="n">avels</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="n">angs</span><span class="p">)</span>
+        <span class="n">aaccs</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">acc</span><span class="p">(</span><span class="n">angs</span><span class="p">)</span>
+        <span class="n">uangs</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">unwrap</span><span class="p">(</span><span class="n">angs</span><span class="p">)</span>
+        <span class="n">avels_min</span><span class="p">,</span> <span class="n">avels_max</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">avels</span><span class="p">),</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">avels</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">SuperList</span><span class="p">(</span><span class="n">avels</span> <span class="o">+</span> <span class="n">aaccs</span> <span class="o">+</span> <span class="n">uangs</span> <span class="o">+</span> <span class="n">avels_min</span> <span class="o">+</span> <span class="n">avels_max</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">angular</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="n">Nangles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">Nsegs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">ors</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">orient</span><span class="p">([</span><span class="s1">&#39;front&#39;</span><span class="p">,</span> <span class="s1">&#39;rear&#39;</span><span class="p">,</span> <span class="s1">&#39;head&#39;</span><span class="p">,</span> <span class="s1">&#39;tail&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">midline</span><span class="p">(</span><span class="n">Nsegs</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;seg&#39;</span><span class="p">))</span>
+        <span class="n">ang</span> <span class="o">=</span> <span class="n">ors</span> <span class="o">+</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;angle</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nangles</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;bend&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">SuperList</span><span class="p">(</span><span class="n">ang</span> <span class="o">+</span> <span class="n">ang_pars</span><span class="p">(</span><span class="n">ang</span><span class="p">))</span><span class="o">.</span><span class="n">unique</span>
+
+    <span class="n">dic</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span>
+        <span class="s1">&#39;contour&#39;</span><span class="p">:</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">contour_xy</span><span class="p">(</span><span class="n">Nc</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="s1">&#39;midline&#39;</span><span class="p">:</span> <span class="n">aux</span><span class="o">.</span><span class="n">nam</span><span class="o">.</span><span class="n">midline_xy</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="n">epochs_ps</span><span class="p">(),</span>
+        <span class="s1">&#39;base_spatial&#39;</span><span class="p">:</span> <span class="n">base_spatial_ps</span><span class="p">(</span><span class="n">p</span><span class="p">),</span>
+        <span class="s1">&#39;angular&#39;</span><span class="p">:</span> <span class="n">angular</span><span class="p">(</span><span class="n">N</span><span class="p">),</span>
+        <span class="s1">&#39;dspNtor&#39;</span><span class="p">:</span> <span class="n">dspNtor_ps</span><span class="p">(),</span>
+    <span class="p">})</span>
+    <span class="k">return</span> <span class="n">dic</span>
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

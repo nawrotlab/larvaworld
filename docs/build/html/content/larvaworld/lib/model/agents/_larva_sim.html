@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulation larva &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Simulation larva</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/content/larvaworld/lib/model/agents/_larva_sim.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.model.agents._larva_sim">
+<span id="simulation-larva"></span><h1>Simulation larva<a class="headerlink" href="#module-larvaworld.lib.model.agents._larva_sim" title="Permalink to this heading"></a></h1>
+<section id="basecontroller">
+<h2>BaseController<a class="headerlink" href="#basecontroller" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.agents._larva_sim.</span></span><span class="sig-name descname"><span class="pre">BaseController</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">holomap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widgets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_frames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dpi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">css</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widget_location</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_sim.html#BaseController"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameterized</span></code></p>
+<p>params(ang_damping=PositiveNumber, ang_mode=Selector, ang_vel_coef=PositiveNumber, bend_correction_coef=PositiveNumber, body_spring_k=PositiveNumber, lin_damping=PositiveNumber, lin_force_coef=PositiveNumber, lin_mode=Selector, lin_vel_coef=PositiveNumber, torque_coef=PositiveNumber, name=String)</p>
+<blockquote>
+<div><p>Base controller for larva motion simulation.</p>
+<dl class="simple">
+<dt>lin_vel_coef<span class="classifier">float, positive</span></dt><dd><p>Coefficient for translational velocity.</p>
+</dd>
+<dt>ang_vel_coef<span class="classifier">float, positive</span></dt><dd><p>Coefficient for angular velocity.</p>
+</dd>
+<dt>lin_force_coef<span class="classifier">float, positive</span></dt><dd><p>Coefficient for force.</p>
+</dd>
+<dt>torque_coef<span class="classifier">float, positive</span></dt><dd><p>Coefficient for torque.</p>
+</dd>
+<dt>body_spring_k<span class="classifier">float, positive</span></dt><dd><p>Torsional spring constant for body bending.</p>
+</dd>
+<dt>bend_correction_coef<span class="classifier">float, positive</span></dt><dd><p>Bend correction coefficient.</p>
+</dd>
+<dt>lin_damping<span class="classifier">float, positive</span></dt><dd><p>Translational damping coefficient.</p>
+</dd>
+<dt>ang_damping<span class="classifier">float, positive</span></dt><dd><p>Angular damping coefficient.</p>
+</dd>
+<dt>lin_mode<span class="classifier">str</span></dt><dd><p>Mode of translational motion generation (‘velocity’, ‘force’, ‘impulse’).</p>
+</dd>
+<dt>ang_mode<span class="classifier">str</span></dt><dd><p>Mode of angular motion generation (‘torque’, ‘velocity’).</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>compute_delta_rear_angle(bend, dst, length)</dt><dd><p>Compute the change in rear angle based on bend, distance, and length.</p>
+</dd>
+</dl>
+</div></blockquote>
+<section id="mparameters-of-basecontroller">
+<h3>[1;32mParameters of ‘BaseController’<a class="headerlink" href="#mparameters-of-basecontroller" title="Permalink to this heading"></a></h3>
+<p>[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                     Value          Type          Bounds    Mode [0m</p>
+<p>lin_vel_coef              1.0      PositiveNumber  (0.0, None)  V RW
+ang_vel_coef              1.0      PositiveNumber  (0.0, None)  V RW
+lin_force_coef            1.0      PositiveNumber  (0.0, None)  V RW
+torque_coef               0.5      PositiveNumber  (0.0, None)  V RW
+body_spring_k             1.0      PositiveNumber  (0.0, None)  V RW
+bend_correction_coef      1.0      PositiveNumber  (0.0, None)  V RW
+lin_damping               1.0      PositiveNumber  (0.0, None)  V RW
+ang_damping               1.0      PositiveNumber  (0.0, None)  V RW
+lin_mode               ‘velocity’     Selector                  V RW
+ang_mode                ‘torque’      Selector                  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mlin_vel_coef:         Coefficient for translational velocity[0m
+[1;31mang_vel_coef:         Coefficient for angular velocity[0m
+[1;34mlin_force_coef:       Coefficient for force[0m
+[1;31mtorque_coef:          Coefficient for torque[0m
+[1;34mbody_spring_k:        Torsional spring constant for body bending[0m
+[1;31mbend_correction_coef: Bend correction coefficient[0m
+[1;34mlin_damping:          Translational damping coefficient[0m
+[1;31mang_damping:          Angular damping coefficient[0m
+[1;34mlin_mode:             Mode of translational motion generation[0m
+[1;31mang_mode:             Mode of angular motion generation[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'ang_damping':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'ang_mode':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'ang_vel_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'bend_correction_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'body_spring_k':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'lin_damping':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'lin_force_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'lin_mode':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'lin_vel_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'torque_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.ang_damping">
+<span class="sig-name descname"><span class="pre">ang_damping</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.ang_damping" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.ang_mode">
+<span class="sig-name descname"><span class="pre">ang_mode</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'torque'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.ang_mode" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.ang_vel_coef">
+<span class="sig-name descname"><span class="pre">ang_vel_coef</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.ang_vel_coef" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.bend_correction_coef">
+<span class="sig-name descname"><span class="pre">bend_correction_coef</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.bend_correction_coef" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.body_spring_k">
+<span class="sig-name descname"><span class="pre">body_spring_k</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.body_spring_k" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.compute_delta_rear_angle">
+<span class="sig-name descname"><span class="pre">compute_delta_rear_angle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_sim.html#BaseController.compute_delta_rear_angle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.compute_delta_rear_angle" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the change in rear angle based on bend, distance, and length.</p>
+<section id="parameters">
+<h4>Parameters:<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>bend<span class="classifier">float</span></dt><dd><p>Bend angle.</p>
+</dd>
+<dt>dst<span class="classifier">float</span></dt><dd><p>Distance.</p>
+</dd>
+<dt>length<span class="classifier">float</span></dt><dd><p>Length of the larva.</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h4>Returns:<a class="headerlink" href="#returns" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>float</dt><dd><p>Change in rear angle.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.lin_damping">
+<span class="sig-name descname"><span class="pre">lin_damping</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.lin_damping" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.lin_force_coef">
+<span class="sig-name descname"><span class="pre">lin_force_coef</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.lin_force_coef" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.lin_mode">
+<span class="sig-name descname"><span class="pre">lin_mode</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'velocity'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.lin_mode" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.lin_vel_coef">
+<span class="sig-name descname"><span class="pre">lin_vel_coef</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.lin_vel_coef" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BaseController'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.BaseController.torque_coef">
+<span class="sig-name descname"><span class="pre">torque_coef</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.BaseController.torque_coef" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+<section id="simulated-larva">
+<h2>Simulated larva<a class="headerlink" href="#simulated-larva" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.LarvaSim">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.agents._larva_sim.</span></span><span class="sig-name descname"><span class="pre">LarvaSim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">physics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Box2D_params</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_sim.html#LarvaSim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.LarvaSim" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="_larva.html#larvaworld.lib.model.agents._larva.LarvaMotile" title="larvaworld.lib.model.agents._larva.LarvaMotile"><code class="xref py py-class docutils literal notranslate"><span class="pre">LarvaMotile</span></code></a>, <a class="reference internal" href="#larvaworld.lib.model.agents._larva_sim.BaseController" title="larvaworld.lib.model.agents._larva_sim.BaseController"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseController</span></code></a></p>
+<p>params(Nsegs=PositiveInteger, segment_ratio=Parameter, segs=List, density=PositiveNumber, base_vertices=XYLine, body_plan=Selector, guide_points=XYLine, symmetry=Selector, closed=Boolean, vertices=XYLine, width=PositiveNumber, length=PositiveNumber, orientation=RandomizedPhase, radius=PositiveNumber, pos=NumericTuple2DRobust, odor=ClassAttr, default_color=RandomizedColor, selected=Boolean, visible=Boolean, group=String, unique_id=String, ang_damping=PositiveNumber, ang_mode=Selector, ang_vel_coef=PositiveNumber, bend_correction_coef=PositiveNumber, body_spring_k=PositiveNumber, lin_damping=PositiveNumber, lin_force_coef=PositiveNumber, lin_mode=Selector, lin_vel_coef=PositiveNumber, torque_coef=PositiveNumber, name=String)</p>
+<blockquote>
+<div><p>Simulated larva agent.</p>
+<dl class="simple">
+<dt>physics<span class="classifier">dict</span></dt><dd><p>Dictionary containing physical parameters for the larva simulation.</p>
+</dd>
+<dt>Box2D_params<span class="classifier">dict</span></dt><dd><p>Dictionary containing Box2D parameters for the larva simulation.</p>
+</dd>
+<dt><a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs</dt><dd><p>Additional keyword arguments.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>compute_ang_vel(amp)</dt><dd><p>Compute angular velocity based on torque amplitude.</p>
+</dd>
+<dt>prepare_motion(lin, ang)</dt><dd><p>Prepare translational and angular motion.</p>
+</dd>
+<dt>border_collision<span class="classifier">bool</span></dt><dd><p>Check for collisions with borders.</p>
+</dd>
+<dt>larva_collision<span class="classifier">bool</span></dt><dd><p>Check for collisions with other larvae.</p>
+</dd>
+<dt>position_head_in_tank(hr0, ho0, l0, fov0, fov1, ang_vel, lin_vel)</dt><dd><p>Position the larva’s head in the simulated tank.</p>
+</dd>
+<dt>position_body(lin_vel, ang_vel)</dt><dd><p>Position the larva’s body based on translational and angular motion.</p>
+</dd>
+</dl>
+</div></blockquote>
+<section id="mparameters-of-larvasim">
+<h3>[1;32mParameters of ‘LarvaSim’<a class="headerlink" href="#mparameters-of-larvasim" title="Permalink to this heading"></a></h3>
+<p>[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                                    Value                            Type                   Bounds             Mode  [0m</p>
+<p>lin_vel_coef                             1.0                        PositiveNumber           (0.0, None)           V RW
+ang_vel_coef                             1.0                        PositiveNumber           (0.0, None)           V RW
+lin_force_coef                           1.0                        PositiveNumber           (0.0, None)           V RW
+torque_coef                              0.5                        PositiveNumber           (0.0, None)           V RW
+body_spring_k                            1.0                        PositiveNumber           (0.0, None)           V RW
+bend_correction_coef                     1.0                        PositiveNumber           (0.0, None)           V RW
+lin_damping                              1.0                        PositiveNumber           (0.0, None)           V RW
+ang_damping                              1.0                        PositiveNumber           (0.0, None)           V RW
+lin_mode                              ‘velocity’                       Selector                                    V RW
+ang_mode                               ‘torque’                        Selector                                    V RW
+unique_id                                None                           String                                   V RW AN
+group                                    None                           String                                   V RW AN
+default_color                          ‘black’                     RandomizedColor                                 V RW
+visible                                  True                          Boolean                  (0, 1)             V RW
+selected                                False                          Boolean                  (0, 1)             V RW
+odor                   Odor(id=None, intensity=None, name=’O…       ClassAttr                                    V RW
+pos                                   (0.0, 0.0)                 NumericTuple2DRobust                              V RW
+radius                                  0.003                       PositiveNumber            (0.0,[1;36m 0.1[0m)           V RW
+orientation                       1.9406819622153144               RandomizedPhase     (0.0, 6.283185307179586)  V RW AN
+length                                    1                         PositiveNumber           (0.0, None)           V RW
+width                                   0.001                       PositiveNumber           (0.0,[1;36m 10.0[0m)           V RW
+vertices                                  []                            XYLine                (0, None)            V RW
+closed                                  False                          Boolean                  (0, 1)             V RW
+symmetry                             ‘bilateral’                       Selector                                    V RW
+guide_points                              []                            XYLine                (0, None)            V RW
+base_vertices                             []                            XYLine                (0, None)            V RW
+body_plan                         ‘drosophila_larva’                   Selector                                    V RW
+density                                 300.0                       PositiveNumber          (0.0,[1;36m 10000.0[0m)         V RW
+Nsegs                                     2                        PositiveInteger             (0,[1;36m 20[0m)             V RW
+segment_ratio                            None                         Parameter                                  V RW AN
+segs                                      []                             List                 (0, None)            V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mlin_vel_coef:         Coefficient for translational velocity[0m
+[1;31mang_vel_coef:         Coefficient for angular velocity[0m
+[1;34mlin_force_coef:       Coefficient for force[0m
+[1;31mtorque_coef:          Coefficient for torque[0m
+[1;34mbody_spring_k:        Torsional spring constant for body bending[0m
+[1;31mbend_correction_coef: Bend correction coefficient[0m
+[1;34mlin_damping:          Translational damping coefficient[0m
+[1;31mang_damping:          Angular damping coefficient[0m
+[1;34mlin_mode:             Mode of translational motion generation[0m
+[1;31mang_mode:             Mode of angular motion generation[0m
+[1;34munique_id:            The unique ID of the entity[0m
+[1;31mgroup:                The unique ID of the entity’s group[0m
+[1;34mdefault_color:        The default color of the entity[0m
+[1;31mvisible:              Whether the entity is visible or not[0m
+[1;34mselected:             Whether the entity is selected or not[0m
+[1;31modor:                 The odor of the agent[0m
+[1;34mpos:                  The xy spatial position coordinates[0m
+[1;31mradius:               The spatial radius of the source in meters[0m
+[1;34morientation:          The absolute orientation in space.[0m
+[1;31mlength:               The initial length of the body in meters[0m
+[1;34mwidth:                The width of the line vertices[0m
+[1;31mvertices:             The list of 2d points[0m
+[1;34mclosed:               Whether the line is closed[0m
+[1;31msymmetry:             The body symmetry.[0m
+[1;34mguide_points:         A list of 2d points outside the midline in order to generate the vertices[0m
+[1;31mbase_vertices:        The list of 2d points[0m
+[1;34mbody_plan:            The body plan.[0m
+[1;31mdensity:              The density of the larva body in kg/m**2[0m
+[1;34mNsegs:                The number of segments comprising the segmented larva body.[0m
+[1;31msegment_ratio:        The number of segments comprising the segmented larva body.[0m
+[1;34msegs:                 The body segments.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.LarvaSim.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'Nsegs':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'ang_damping':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'ang_mode':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'ang_vel_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'base_vertices':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'bend_correction_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'body_plan':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'body_spring_k':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'closed':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'density':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'group':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'guide_points':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'length':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'lin_damping':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'lin_force_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'lin_mode':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'lin_vel_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'orientation':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedPhase</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'radius':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'segment_ratio':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'segs':</span> <span class="pre">&lt;param.List</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'symmetry':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'torque_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'vertices':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.LarvaSim.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.LarvaSim._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.LarvaSim._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.LarvaSim._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.LarvaSim._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.LarvaSim.border_collision">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">border_collision</span></span><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.LarvaSim.border_collision" title="Permalink to this definition"></a></dt>
+<dd><p>Check for collisions with borders.</p>
+<section id="id3">
+<h4>Returns:<a class="headerlink" href="#id3" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>bool</dt><dd><p>True if there is a border collision, False otherwise.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.LarvaSim.compute_ang_vel">
+<span class="sig-name descname"><span class="pre">compute_ang_vel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_sim.html#LarvaSim.compute_ang_vel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.LarvaSim.compute_ang_vel" title="Permalink to this definition"></a></dt>
+<dd><p>Compute angular velocity based on torque amplitude.</p>
+<section id="id4">
+<h4>Parameters:<a class="headerlink" href="#id4" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>amp<span class="classifier">float</span></dt><dd><p>Torque amplitude.</p>
+</dd>
+</dl>
+</section>
+<section id="id5">
+<h4>Returns:<a class="headerlink" href="#id5" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>float</dt><dd><p>Angular velocity.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.LarvaSim.larva_collision">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">larva_collision</span></span><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.LarvaSim.larva_collision" title="Permalink to this definition"></a></dt>
+<dd><p>Check for collisions with other larvae.</p>
+<section id="id6">
+<h4>Returns:<a class="headerlink" href="#id6" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>bool</dt><dd><p>True if there is a collision, False otherwise.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.LarvaSim.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LarvaSim'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.LarvaSim.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.LarvaSim.position_body">
+<span class="sig-name descname"><span class="pre">position_body</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lin_vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang_vel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_sim.html#LarvaSim.position_body"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.LarvaSim.position_body" title="Permalink to this definition"></a></dt>
+<dd><p>Position the larva’s body based on translational and angular motion.</p>
+<section id="id7">
+<h4>Parameters:<a class="headerlink" href="#id7" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>lin_vel<span class="classifier">float</span></dt><dd><p>Linear velocity.</p>
+</dd>
+<dt>ang_vel<span class="classifier">float</span></dt><dd><p>Angular velocity.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.LarvaSim.position_head_in_tank">
+<span class="sig-name descname"><span class="pre">position_head_in_tank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hr0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ho0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fov0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fov1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang_vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lin_vel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_sim.html#LarvaSim.position_head_in_tank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.LarvaSim.position_head_in_tank" title="Permalink to this definition"></a></dt>
+<dd><p>Position the larva’s head in the simulated tank.</p>
+<section id="id8">
+<h4>Parameters:<a class="headerlink" href="#id8" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>hr0<span class="classifier">tuple</span></dt><dd><p>Initial position of the rear end of the larva.</p>
+</dd>
+<dt>ho0<span class="classifier">float</span></dt><dd><p>Initial orientation of the larva.</p>
+</dd>
+<dt>l0<span class="classifier">float</span></dt><dd><p>Length of the larva.</p>
+</dd>
+<dt>fov0<span class="classifier">float</span></dt><dd><p>Minimum allowed angular velocity.</p>
+</dd>
+<dt>fov1<span class="classifier">float</span></dt><dd><p>Maximum allowed angular velocity.</p>
+</dd>
+<dt>ang_vel<span class="classifier">float</span></dt><dd><p>Angular velocity.</p>
+</dd>
+<dt>lin_vel<span class="classifier">float</span></dt><dd><p>Linear velocity.</p>
+</dd>
+</dl>
+</section>
+<section id="id9">
+<h4>Returns:<a class="headerlink" href="#id9" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>tuple</dt><dd><p>New angular velocity and linear velocity.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._larva_sim.LarvaSim.prepare_motion">
+<span class="sig-name descname"><span class="pre">prepare_motion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_larva_sim.html#LarvaSim.prepare_motion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._larva_sim.LarvaSim.prepare_motion" title="Permalink to this definition"></a></dt>
+<dd><p>Prepare translational and angular motion.</p>
+<section id="id10">
+<h4>Parameters:<a class="headerlink" href="#id10" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>lin<span class="classifier">float</span></dt><dd><p>Linear motion parameter.</p>
+</dd>
+<dt>ang<span class="classifier">float</span></dt><dd><p>Angular motion parameter.</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

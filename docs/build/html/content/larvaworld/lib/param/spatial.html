@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spatial elements &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="tools" href="tools.html" />
+    <link rel="prev" title="Parameterization helper methods" href="param_aux.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">Modeling</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Parameters</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="body_shape.html">Virtual body</a></li>
+<li class="toctree-l4"><a class="reference internal" href="composition.html">Nutrition &amp; Olfaction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom.html">Custom parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="drawable.html">Viewable elements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="grouped.html">Configuration parameter groups</a></li>
+<li class="toctree-l4"><a class="reference internal" href="named.html">Named elements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="param_aux.html">Parameterization helper methods</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Spatial elements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tools.html">tools</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xy_distro.html">2D spatial distributions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../plot/index.html">Plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../process/index.html">Data management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../screen/index.html">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sim/index.html">Simulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../util/index.html">Dataset fitting &amp; sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Parameters</a></li>
+      <li class="breadcrumb-item active">Spatial elements</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/param/spatial.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.param.spatial">
+<span id="spatial-elements"></span><h1>Spatial elements<a class="headerlink" href="#module-larvaworld.lib.param.spatial" title="Permalink to this heading"></a></h1>
+<section id="area">
+<h2>Area<a class="headerlink" href="#area" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">Area</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#Area"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.Area" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.Area2D" title="larvaworld.lib.param.spatial.Area2D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Area2D</span></code></a></p>
+<p>params(geometry=Selector, torus=Boolean, centered=Boolean, dims=PositiveRange, name=String)
+[1;32mParameters of ‘Area’
+====================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName         Value          Type        Bounds    Mode [0m</p>
+<p>dims       (0.1, 0.1)  PositiveRange  (0.0,[1;36m 1.0[0m)  V RW
+centered      True        Boolean       (0, 1)    V RW
+geometry   ‘circular’     Selector                V RW
+torus        False        Boolean       (0, 1)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mdims:     The arena dimensions in meters[0m
+[1;31mcentered: Whether area is centered to (0,0)[0m
+[1;34mgeometry: The arena shape[0m
+[1;31mtorus:    Whether to allow a toroidal space[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'centered':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveRange</span> <span class="pre">object&gt;,</span> <span class="pre">'geometry':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'torus':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area.dims">
+<span class="sig-name descname"><span class="pre">dims</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.1,</span> <span class="pre">0.1)</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area.dims" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area.geometry">
+<span class="sig-name descname"><span class="pre">geometry</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'circular'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area.geometry" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Area'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area.torus">
+<span class="sig-name descname"><span class="pre">torus</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area.torus" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="area2d">
+<h2>Area2D<a class="headerlink" href="#area2d" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">Area2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#Area2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2D" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="custom.html#larvaworld.lib.param.custom.NestedConf" title="larvaworld.lib.param.custom.NestedConf"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestedConf</span></code></a></p>
+<p>params(centered=Boolean, dims=PositiveRange, name=String)
+[1;32mParameters of ‘Area2D’
+======================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName         Value          Type         Bounds    Mode [0m</p>
+<p>dims       (0.0, 0.0)  PositiveRange  (0.0, None)  V RW
+centered      True        Boolean        (0, 1)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mdims:     The arena dimensions[0m
+[1;31mcentered: Whether area is centered to (0,0)[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2D.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'centered':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveRange</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2D.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2D._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2D._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2D._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2D._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2D.centered">
+<span class="sig-name descname"><span class="pre">centered</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2D.centered" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2D.dims">
+<span class="sig-name descname"><span class="pre">dims</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.0,</span> <span class="pre">0.0)</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2D.dims" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2D.h">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">h</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2D.h" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2D.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Area2D'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2D.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2D.range">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">range</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2D.range" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2D.w">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">w</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2D.w" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="area2dpixel">
+<h2>Area2DPixel<a class="headerlink" href="#area2dpixel" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2DPixel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">Area2DPixel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#Area2DPixel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2DPixel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.Area2D" title="larvaworld.lib.param.spatial.Area2D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Area2D</span></code></a></p>
+<p>params(centered=Boolean, dims=PositiveRange, name=String)
+[1;32mParameters of ‘Area2DPixel’
+===========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName         Value             Type            Bounds    Mode [0m</p>
+<p>dims       (100, 100)  PositiveIntegerRange  (0,[1;36m 10000[0m)  V RW
+centered      True           Boolean           (0, 1)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mdims:     The arena dimensions in pixels[0m
+[1;31mcentered: Whether area is centered to (0,0)[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2DPixel.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'centered':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2DPixel.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2DPixel._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2DPixel._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2DPixel._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2DPixel._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2DPixel.dims">
+<span class="sig-name descname"><span class="pre">dims</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(100,</span> <span class="pre">100)</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2DPixel.dims" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2DPixel.get_rect_at_pos">
+<span class="sig-name descname"><span class="pre">get_rect_at_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#Area2DPixel.get_rect_at_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2DPixel.get_rect_at_pos" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Area2DPixel.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Area2DPixel'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Area2DPixel.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="boundedarea">
+<h2>BoundedArea<a class="headerlink" href="#boundedarea" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.BoundedArea">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">BoundedArea</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#BoundedArea"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.BoundedArea" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.Area" title="larvaworld.lib.param.spatial.Area"><code class="xref py py-class docutils literal notranslate"><span class="pre">Area</span></code></a>, <a class="reference internal" href="#larvaworld.lib.param.spatial.LineClosed" title="larvaworld.lib.param.spatial.LineClosed"><code class="xref py py-class docutils literal notranslate"><span class="pre">LineClosed</span></code></a></p>
+<p>params(boundary_margin=Magnitude, geometry=Selector, torus=Boolean, centered=Boolean, dims=PositiveRange, closed=Boolean, vertices=XYLine, width=PositiveNumber, name=String)
+[1;32mParameters of ‘BoundedArea’
+===========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                Value          Type          Bounds    Mode [0m</p>
+<p>width               0.001     PositiveNumber  (0.0,[1;36m 10.0[0m)  V RW
+vertices              []          XYLine       (0, None)   V RW
+closed              False        Boolean         (0, 1)    V RW
+dims              (0.1, 0.1)  PositiveRange    (0.0,[1;36m 1.0[0m)  V RW
+centered             True        Boolean         (0, 1)    V RW
+geometry          ‘circular’     Selector                  V RW
+torus               False        Boolean         (0, 1)    V RW
+boundary_margin      1.0        Magnitude      (0.0, 1.0)  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mwidth:           The width of the line vertices[0m
+[1;31mvertices:        The list of 2d points[0m
+[1;34mclosed:          Whether the line is closed[0m
+[1;31mdims:            The arena dimensions in meters[0m
+[1;34mcentered:        Whether area is centered to (0,0)[0m
+[1;31mgeometry:        The arena shape[0m
+[1;34mtorus:           Whether to allow a toroidal space[0m
+[1;31mboundary_margin: The boundary margin width relative to the area vertices[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.BoundedArea.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'boundary_margin':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'centered':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'closed':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveRange</span> <span class="pre">object&gt;,</span> <span class="pre">'geometry':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'torus':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'vertices':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.BoundedArea.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.BoundedArea._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.BoundedArea._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.BoundedArea._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.BoundedArea._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.BoundedArea.boundary_margin">
+<span class="sig-name descname"><span class="pre">boundary_margin</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.BoundedArea.boundary_margin" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.BoundedArea.in_area">
+<span class="sig-name descname"><span class="pre">in_area</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#BoundedArea.in_area"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.BoundedArea.in_area" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.BoundedArea.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BoundedArea'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.BoundedArea.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.BoundedArea.polygon">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">polygon</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.BoundedArea.polygon" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="grid">
+<h2>Grid<a class="headerlink" href="#grid" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Grid">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">Grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#Grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.Grid" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="custom.html#larvaworld.lib.param.custom.NestedConf" title="larvaworld.lib.param.custom.NestedConf"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestedConf</span></code></a></p>
+<p>params(grid_dims=PositiveIntegerRange, name=String)
+[1;32mParameters of ‘Grid’
+====================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName         Value            Type           Bounds   Mode [0m</p>
+<p>grid_dims   (51, 51)  PositiveIntegerRange  (0,[1;36m 500[0m)  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mgrid_dims: The spatial resolution of the food grid.[0m</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Grid.X">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">X</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.Grid.X" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Grid.Y">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Y</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.Grid.Y" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Grid.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'grid_dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Grid.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Grid._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Grid._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Grid._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Grid._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Grid.grid_dims">
+<span class="sig-name descname"><span class="pre">grid_dims</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(51,</span> <span class="pre">51)</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Grid.grid_dims" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Grid.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Grid'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Grid.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="lineclosed">
+<h2>LineClosed<a class="headerlink" href="#lineclosed" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineClosed">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">LineClosed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#LineClosed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.LineClosed" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.LineExtended" title="larvaworld.lib.param.spatial.LineExtended"><code class="xref py py-class docutils literal notranslate"><span class="pre">LineExtended</span></code></a></p>
+<p>params(closed=Boolean, vertices=XYLine, width=PositiveNumber, name=String)
+[1;32mParameters of ‘LineClosed’
+==========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName       Value       Type          Bounds    Mode [0m</p>
+<p>width      0.001  PositiveNumber  (0.0,[1;36m 10.0[0m)  V RW
+vertices     []       XYLine       (0, None)   V RW
+closed     False     Boolean         (0, 1)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mwidth:    The width of the line vertices[0m
+[1;31mvertices: The list of 2d points[0m
+[1;34mclosed:   Whether the line is closed[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineClosed.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'closed':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'vertices':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.LineClosed.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineClosed._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.LineClosed._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineClosed._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.LineClosed._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineClosed.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LineClosed'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.LineClosed.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="lineextended">
+<h2>LineExtended<a class="headerlink" href="#lineextended" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineExtended">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">LineExtended</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#LineExtended"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.LineExtended" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="custom.html#larvaworld.lib.param.custom.NestedConf" title="larvaworld.lib.param.custom.NestedConf"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestedConf</span></code></a></p>
+<p>params(closed=Boolean, vertices=XYLine, width=PositiveNumber, name=String)
+[1;32mParameters of ‘LineExtended’
+============================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName       Value       Type          Bounds    Mode [0m</p>
+<p>width      0.001  PositiveNumber  (0.0,[1;36m 10.0[0m)  V RW
+vertices     []       XYLine       (0, None)   V RW
+closed     False     Boolean         (0, 1)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mwidth:    The width of the line vertices[0m
+[1;31mvertices: The list of 2d points[0m
+[1;34mclosed:   Whether the line is closed[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineExtended.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'closed':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'vertices':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.LineExtended.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineExtended._edges">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_edges</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.LineExtended._edges" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineExtended._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.LineExtended._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineExtended._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.LineExtended._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineExtended.closed">
+<span class="sig-name descname"><span class="pre">closed</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.LineExtended.closed" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineExtended.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'LineExtended'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.LineExtended.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineExtended.vertices">
+<span class="sig-name descname"><span class="pre">vertices</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.LineExtended.vertices" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.LineExtended.width">
+<span class="sig-name descname"><span class="pre">width</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.001</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.LineExtended.width" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="mobilepoint">
+<h2>MobilePoint<a class="headerlink" href="#mobilepoint" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobilePoint">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">MobilePoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#MobilePoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.MobilePoint" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.OrientedPoint" title="larvaworld.lib.param.spatial.OrientedPoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">OrientedPoint</span></code></a></p>
+<p>params(orientation=RandomizedPhase, pos=NumericTuple2DRobust, name=String)
+[1;32mParameters of ‘MobilePoint’
+===========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                Value                 Type                   Bounds             Mode  [0m</p>
+<p>pos               (0.0, 0.0)      NumericTuple2DRobust                              V RW
+orientation   1.9406819622153144    RandomizedPhase     (0.0, 6.283185307179586)  V RW AN</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mpos:         The xy spatial position coordinates[0m
+[1;31morientation: The absolute orientation in space.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobilePoint.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'orientation':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedPhase</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.MobilePoint.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobilePoint._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.MobilePoint._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobilePoint._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.MobilePoint._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobilePoint.get_angularvelocity">
+<span class="sig-name descname"><span class="pre">get_angularvelocity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#MobilePoint.get_angularvelocity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.MobilePoint.get_angularvelocity" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobilePoint.get_linearvelocity">
+<span class="sig-name descname"><span class="pre">get_linearvelocity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#MobilePoint.get_linearvelocity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.MobilePoint.get_linearvelocity" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobilePoint.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MobilePoint'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.MobilePoint.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobilePoint.set_angularvelocity">
+<span class="sig-name descname"><span class="pre">set_angularvelocity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ang_vel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#MobilePoint.set_angularvelocity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.MobilePoint.set_angularvelocity" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobilePoint.set_linearvelocity">
+<span class="sig-name descname"><span class="pre">set_linearvelocity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lin_vel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#MobilePoint.set_linearvelocity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.MobilePoint.set_linearvelocity" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobilePoint.update_all">
+<span class="sig-name descname"><span class="pre">update_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lin_vel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang_vel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#MobilePoint.update_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.MobilePoint.update_all" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="mobilevector">
+<h2>MobileVector<a class="headerlink" href="#mobilevector" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobileVector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">MobileVector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#MobileVector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.MobileVector" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.MobilePoint" title="larvaworld.lib.param.spatial.MobilePoint"><code class="xref py py-class docutils literal notranslate"><span class="pre">MobilePoint</span></code></a></p>
+<p>params(length=PositiveNumber, orientation=RandomizedPhase, pos=NumericTuple2DRobust, name=String)
+[1;32mParameters of ‘MobileVector’
+============================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                Value                 Type                   Bounds             Mode  [0m</p>
+<p>pos               (0.0, 0.0)      NumericTuple2DRobust                              V RW
+orientation   1.9406819622153144    RandomizedPhase     (0.0, 6.283185307179586)  V RW AN
+length                1              PositiveNumber           (0.0, None)           V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mpos:         The xy spatial position coordinates[0m
+[1;31morientation: The absolute orientation in space.[0m
+[1;34mlength:      The initial length of the body in meters[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobileVector.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'length':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'orientation':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedPhase</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.MobileVector.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobileVector._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.MobileVector._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobileVector._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.MobileVector._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobileVector.front_end">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">front_end</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.MobileVector.front_end" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobileVector.length">
+<span class="sig-name descname"><span class="pre">length</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.MobileVector.length" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobileVector.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MobileVector'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.MobileVector.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.MobileVector.rear_end">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rear_end</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.MobileVector.rear_end" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="orientedpoint">
+<h2>OrientedPoint<a class="headerlink" href="#orientedpoint" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">OrientedPoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#OrientedPoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.Pos2D" title="larvaworld.lib.param.spatial.Pos2D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pos2D</span></code></a></p>
+<p>params(orientation=RandomizedPhase, pos=NumericTuple2DRobust, name=String)
+[1;32mParameters of ‘OrientedPoint’
+=============================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                Value                 Type                   Bounds             Mode  [0m</p>
+<p>pos               (0.0, 0.0)      NumericTuple2DRobust                              V RW
+orientation   1.9406819622153144    RandomizedPhase     (0.0, 6.283185307179586)  V RW AN</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mpos:         The xy spatial position coordinates[0m
+[1;31morientation: The absolute orientation in space.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'orientation':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedPhase</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint.get_orientation">
+<span class="sig-name descname"><span class="pre">get_orientation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#OrientedPoint.get_orientation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint.get_orientation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint.get_pose">
+<span class="sig-name descname"><span class="pre">get_pose</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#OrientedPoint.get_pose"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint.get_pose" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint.last_delta_orientation">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">last_delta_orientation</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint.last_delta_orientation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'OrientedPoint'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint.orientation">
+<span class="sig-name descname"><span class="pre">orientation</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.9406819622153144</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint.orientation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint.rotationMatrix">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rotationMatrix</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint.rotationMatrix" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint.set_orientation">
+<span class="sig-name descname"><span class="pre">set_orientation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orientation</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#OrientedPoint.set_orientation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint.set_orientation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint.translate">
+<span class="sig-name descname"><span class="pre">translate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#OrientedPoint.translate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint.translate" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.OrientedPoint.update_pose">
+<span class="sig-name descname"><span class="pre">update_pose</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#OrientedPoint.update_pose"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.OrientedPoint.update_pose" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="pos2d">
+<h2>Pos2D<a class="headerlink" href="#pos2d" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2D">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">Pos2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#Pos2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2D" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="custom.html#larvaworld.lib.param.custom.NestedConf" title="larvaworld.lib.param.custom.NestedConf"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestedConf</span></code></a></p>
+<p>params(pos=NumericTuple2DRobust, name=String)
+[1;32mParameters of ‘Pos2D’
+=====================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName    Value             Type          Mode [0m</p>
+<p>pos   (0.0, 0.0)  NumericTuple2DRobust  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mpos: The xy spatial position coordinates[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2D.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2D.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2D._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2D._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2D._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2D._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2D.get_position">
+<span class="sig-name descname"><span class="pre">get_position</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#Pos2D.get_position"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2D.get_position" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2D.last_delta_pos">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">last_delta_pos</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2D.last_delta_pos" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2D.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Pos2D'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2D.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2D.pos">
+<span class="sig-name descname"><span class="pre">pos</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.0,</span> <span class="pre">0.0)</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2D.pos" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2D.set_position">
+<span class="sig-name descname"><span class="pre">set_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#Pos2D.set_position"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2D.set_position" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2D.x">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">x</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2D.x" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2D.y">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">y</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2D.y" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="pos2dpixel">
+<h2>Pos2DPixel<a class="headerlink" href="#pos2dpixel" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2DPixel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">Pos2DPixel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#Pos2DPixel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2DPixel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.Pos2D" title="larvaworld.lib.param.spatial.Pos2D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pos2D</span></code></a></p>
+<p>params(pos=NumericTuple2DRobust, name=String)
+[1;32mParameters of ‘Pos2DPixel’
+==========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName  Value           Type          Mode [0m</p>
+<p>pos   (0, 0)  IntegerTuple2DRobust  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mpos: The xy spatial position coordinates[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2DPixel.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.IntegerTuple2DRobust</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2DPixel.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2DPixel._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2DPixel._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2DPixel._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2DPixel._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2DPixel.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Pos2DPixel'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2DPixel.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.Pos2DPixel.pos">
+<span class="sig-name descname"><span class="pre">pos</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0,</span> <span class="pre">0)</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.Pos2DPixel.pos" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="pospixelrel2area">
+<h2>PosPixelRel2Area<a class="headerlink" href="#pospixelrel2area" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Area">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">PosPixelRel2Area</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#PosPixelRel2Area"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Area" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.Pos2DPixel" title="larvaworld.lib.param.spatial.Pos2DPixel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pos2DPixel</span></code></a></p>
+<p>params(pos_scale=PositiveRange, reference_area=ClassSelector, pos=NumericTuple2DRobust, name=String)
+[1;32mParameters of ‘PosPixelRel2Area’
+================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName               Value             Type            Bounds      Mode  [0m</p>
+<p>pos                (0, 0)    IntegerTuple2DRobust                V RW
+reference_area      None        ClassSelector                  V RW AN
+pos_scale        (0.5, 0.5)     PositiveRange      (0.0,[1;36m 1.0[0m)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mpos:            The xy spatial position coordinates[0m
+[1;31mreference_area: The reference position instance[0m
+[1;34mpos_scale:      The position relative to reference position[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Area.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.IntegerTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'pos_scale':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveRange</span> <span class="pre">object&gt;,</span> <span class="pre">'reference_area':</span> <span class="pre">&lt;param.ClassSelector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Area.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Area._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Area._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Area._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Area._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Area.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PosPixelRel2Area'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Area.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Area.pos_scale">
+<span class="sig-name descname"><span class="pre">pos_scale</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.5,</span> <span class="pre">0.5)</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Area.pos_scale" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Area.reference_area">
+<span class="sig-name descname"><span class="pre">reference_area</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Area.reference_area" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Area.update_pos">
+<span class="sig-name descname"><span class="pre">update_pos</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#PosPixelRel2Area.update_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Area.update_pos" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="pospixelrel2point">
+<h2>PosPixelRel2Point<a class="headerlink" href="#pospixelrel2point" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Point">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">PosPixelRel2Point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#PosPixelRel2Point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Point" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.Pos2DPixel" title="larvaworld.lib.param.spatial.Pos2DPixel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pos2DPixel</span></code></a></p>
+<p>params(pos_scale=PositiveRange, reference_point=ClassSelector, pos=NumericTuple2DRobust, name=String)
+[1;32mParameters of ‘PosPixelRel2Point’
+=================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                Value             Type            Bounds      Mode  [0m</p>
+<p>pos                 (0, 0)    IntegerTuple2DRobust                V RW
+reference_point      None        ClassSelector                  V RW AN
+pos_scale         (0.5, 0.5)     PositiveRange      (0.0,[1;36m 1.0[0m)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mpos:             The xy spatial position coordinates[0m
+[1;31mreference_point: The reference position instance[0m
+[1;34mpos_scale:       The position relative to reference position[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Point.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.IntegerTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'pos_scale':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveRange</span> <span class="pre">object&gt;,</span> <span class="pre">'reference_point':</span> <span class="pre">&lt;param.ClassSelector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Point.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Point._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Point._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Point._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Point._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Point.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PosPixelRel2Point'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Point.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Point.pos_scale">
+<span class="sig-name descname"><span class="pre">pos_scale</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.5,</span> <span class="pre">0.5)</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Point.pos_scale" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Point.reference_point">
+<span class="sig-name descname"><span class="pre">reference_point</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Point.reference_point" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.PosPixelRel2Point.update_pos">
+<span class="sig-name descname"><span class="pre">update_pos</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#PosPixelRel2Point.update_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.PosPixelRel2Point.update_pos" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="radiallyextended">
+<h2>RadiallyExtended<a class="headerlink" href="#radiallyextended" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.RadiallyExtended">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">RadiallyExtended</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#RadiallyExtended"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.RadiallyExtended" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.Pos2D" title="larvaworld.lib.param.spatial.Pos2D"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pos2D</span></code></a></p>
+<p>params(radius=PositiveNumber, pos=NumericTuple2DRobust, name=String)
+[1;32mParameters of ‘RadiallyExtended’
+================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName       Value             Type            Bounds    Mode [0m</p>
+<p>pos      (0.0, 0.0)  NumericTuple2DRobust              V RW
+radius     0.003        PositiveNumber     (0.0,[1;36m 0.1[0m)  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mpos:    The xy spatial position coordinates[0m
+[1;31mradius: The spatial radius of the source in meters[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.RadiallyExtended.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'radius':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.RadiallyExtended.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.RadiallyExtended._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.RadiallyExtended._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.RadiallyExtended._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.RadiallyExtended._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.RadiallyExtended.contained">
+<span class="sig-name descname"><span class="pre">contained</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#RadiallyExtended.contained"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.RadiallyExtended.contained" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.RadiallyExtended.get_shape">
+<span class="sig-name descname"><span class="pre">get_shape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#RadiallyExtended.get_shape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.RadiallyExtended.get_shape" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.RadiallyExtended.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'RadiallyExtended'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.RadiallyExtended.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.RadiallyExtended.radius">
+<span class="sig-name descname"><span class="pre">radius</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.003</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.RadiallyExtended.radius" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="screenwindowarea">
+<h2>ScreenWindowArea<a class="headerlink" href="#screenwindowarea" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowArea">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">ScreenWindowArea</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#ScreenWindowArea"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowArea" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable" title="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScreenWindowAreaZoomable</span></code></a></p>
+<p>params(_scale=Parameter, _translation=Parameter, center=Parameter, center_lim=Parameter, zoom=PositiveNumber, scaling_factor=PositiveNumber, space=ClassSelector, centered=Boolean, dims=PositiveRange, name=String)
+[1;32mParameters of ‘ScreenWindowArea’
+================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                              Value                            Type             Bounds    Mode [0m</p>
+<p>dims                            (100, 100)                 PositiveIntegerRange   (0,[1;36m 10000[0m)  V RW
+centered                           True                          Boolean            (0, 1)    V RW
+scaling_factor                     1.0                        PositiveNumber     (0.0, None)  V RW
+space            Area(centered=True, dims=(0.1, 0.1), …     ClassSelector                   V RW
+zoom                               1.0                        PositiveNumber     (0.0, None)  V RW
+center                       array([0., 0.])                    Parameter                     V RW
+center_lim                   array([0., 0.])                    Parameter                     V RW
+_scale           array([[ 1.,  0.],</p>
+<blockquote>
+<div><p>[ 0., -1.]]…       Parameter                     V RW</p>
+</div></blockquote>
+<p>_translation                 array([0., 0.])                    Parameter                     V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mdims:           The arena dimensions in pixels[0m
+[1;31mcentered:       Whether area is centered to (0,0)[0m
+[1;34mscaling_factor: Scaling factor[0m
+[1;31mspace:          Arena[0m
+[1;34mzoom:           Zoom factor[0m
+[1;31mcenter:         Center xy[0m
+[1;34mcenter_lim:     Center xy lim[0m
+[1;31m_scale:         Scale of xy[0m
+[1;34m_translation:   Translation of xy[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowArea.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'_scale':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'_translation':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'center':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'center_lim':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'centered':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'scaling_factor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'space':</span> <span class="pre">&lt;param.ClassSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'zoom':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowArea.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowArea._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowArea._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowArea._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowArea._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowArea.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ScreenWindowArea'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowArea.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="screenwindowareabasic">
+<h2>ScreenWindowAreaBasic<a class="headerlink" href="#screenwindowareabasic" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaBasic">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">ScreenWindowAreaBasic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#ScreenWindowAreaBasic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaBasic" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.Area2DPixel" title="larvaworld.lib.param.spatial.Area2DPixel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Area2DPixel</span></code></a></p>
+<p>params(scaling_factor=PositiveNumber, space=ClassSelector, centered=Boolean, dims=PositiveRange, name=String)
+[1;32mParameters of ‘ScreenWindowAreaBasic’
+=====================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                              Value                            Type             Bounds    Mode [0m</p>
+<p>dims                            (100, 100)                 PositiveIntegerRange   (0,[1;36m 10000[0m)  V RW
+centered                           True                          Boolean            (0, 1)    V RW
+scaling_factor                     1.0                        PositiveNumber     (0.0, None)  V RW
+space            Area(centered=True, dims=(0.1, 0.1), …     ClassSelector                   V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mdims:           The arena dimensions in pixels[0m
+[1;31mcentered:       Whether area is centered to (0,0)[0m
+[1;34mscaling_factor: Scaling factor[0m
+[1;31mspace:          Arena[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaBasic.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'centered':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'scaling_factor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'space':</span> <span class="pre">&lt;param.ClassSelector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaBasic.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaBasic._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaBasic._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaBasic._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaBasic._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaBasic.get_rect_at_pos">
+<span class="sig-name descname"><span class="pre">get_rect_at_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">convert2screen_pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#ScreenWindowAreaBasic.get_rect_at_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaBasic.get_rect_at_pos" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaBasic.get_relative_font_size">
+<span class="sig-name descname"><span class="pre">get_relative_font_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">font_size_scale</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#ScreenWindowAreaBasic.get_relative_font_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaBasic.get_relative_font_size" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaBasic.get_relative_pos">
+<span class="sig-name descname"><span class="pre">get_relative_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos_scale</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#ScreenWindowAreaBasic.get_relative_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaBasic.get_relative_pos" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaBasic.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ScreenWindowAreaBasic'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaBasic.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaBasic.scaling_factor">
+<span class="sig-name descname"><span class="pre">scaling_factor</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaBasic.scaling_factor" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaBasic.space">
+<span class="sig-name descname"><span class="pre">space</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Area(centered=True,</span> <span class="pre">dims=(0.1,</span> <span class="pre">0.1),</span> <span class="pre">geometry='circular',</span> <span class="pre">name='Area00002',</span> <span class="pre">torus=False)</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaBasic.space" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaBasic.space2screen_pos">
+<span class="sig-name descname"><span class="pre">space2screen_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#ScreenWindowAreaBasic.space2screen_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaBasic.space2screen_pos" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="screenwindowareazoomable">
+<h2>ScreenWindowAreaZoomable<a class="headerlink" href="#screenwindowareazoomable" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.param.spatial.</span></span><span class="sig-name descname"><span class="pre">ScreenWindowAreaZoomable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#ScreenWindowAreaZoomable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.param.spatial.ScreenWindowAreaBasic" title="larvaworld.lib.param.spatial.ScreenWindowAreaBasic"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScreenWindowAreaBasic</span></code></a></p>
+<p>params(_scale=Parameter, _translation=Parameter, center=Parameter, center_lim=Parameter, zoom=PositiveNumber, scaling_factor=PositiveNumber, space=ClassSelector, centered=Boolean, dims=PositiveRange, name=String)
+[1;32mParameters of ‘ScreenWindowAreaZoomable’
+========================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                              Value                            Type             Bounds    Mode [0m</p>
+<p>dims                            (100, 100)                 PositiveIntegerRange   (0,[1;36m 10000[0m)  V RW
+centered                           True                          Boolean            (0, 1)    V RW
+scaling_factor                     1.0                        PositiveNumber     (0.0, None)  V RW
+space            Area(centered=True, dims=(0.1, 0.1), …     ClassSelector                   V RW
+zoom                               1.0                        PositiveNumber     (0.0, None)  V RW
+center                       array([0., 0.])                    Parameter                     V RW
+center_lim                   array([0., 0.])                    Parameter                     V RW
+_scale           array([[ 1.,  0.],</p>
+<blockquote>
+<div><p>[ 0., -1.]]…       Parameter                     V RW</p>
+</div></blockquote>
+<p>_translation                 array([0., 0.])                    Parameter                     V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mdims:           The arena dimensions in pixels[0m
+[1;31mcentered:       Whether area is centered to (0,0)[0m
+[1;34mscaling_factor: Scaling factor[0m
+[1;31mspace:          Arena[0m
+[1;34mzoom:           Zoom factor[0m
+[1;31mcenter:         Center xy[0m
+[1;34mcenter_lim:     Center xy lim[0m
+[1;31m_scale:         Scale of xy[0m
+[1;34m_translation:   Translation of xy[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'_scale':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'_translation':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'center':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'center_lim':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'centered':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'scaling_factor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'space':</span> <span class="pre">&lt;param.ClassSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'zoom':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable._scale">
+<span class="sig-name descname"><span class="pre">_scale</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">array([[</span> <span class="pre">1.,</span>&#160; <span class="pre">0.],</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">[</span> <span class="pre">0.,</span> <span class="pre">-1.]])</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable._scale" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable._transform">
+<span class="sig-name descname"><span class="pre">_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#ScreenWindowAreaZoomable._transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable._transform" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable._translation">
+<span class="sig-name descname"><span class="pre">_translation</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">array([0.,</span> <span class="pre">0.])</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable._translation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.center">
+<span class="sig-name descname"><span class="pre">center</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">array([0.,</span> <span class="pre">0.])</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.center" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.center_lim">
+<span class="sig-name descname"><span class="pre">center_lim</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">array([0.,</span> <span class="pre">0.])</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.center_lim" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.display_size">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">display_size</span></span><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.display_size" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.move_center">
+<span class="sig-name descname"><span class="pre">move_center</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#ScreenWindowAreaZoomable.move_center"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.move_center" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ScreenWindowAreaZoomable'</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.set_bounds">
+<span class="sig-name descname"><span class="pre">set_bounds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#ScreenWindowAreaZoomable.set_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.set_bounds" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.zoom">
+<span class="sig-name descname"><span class="pre">zoom</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.zoom" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.zoom_screen">
+<span class="sig-name descname"><span class="pre">zoom_screen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sign</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/param/spatial.html#ScreenWindowAreaZoomable.zoom_screen"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.zoom_screen" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="param_aux.html" class="btn btn-neutral float-left" title="Parameterization helper methods" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tools.html" class="btn btn-neutral float-right" title="tools" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

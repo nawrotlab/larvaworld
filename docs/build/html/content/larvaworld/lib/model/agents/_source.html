@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Food source &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Food source</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/content/larvaworld/lib/model/agents/_source.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.model.agents._source">
+<span id="food-source"></span><h1>Food source<a class="headerlink" href="#module-larvaworld.lib.model.agents._source" title="Permalink to this heading"></a></h1>
+<section id="point-agent">
+<h2>Point agent<a class="headerlink" href="#point-agent" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Food">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.agents._source.</span></span><span class="sig-name descname"><span class="pre">Food</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_source.html#Food"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._source.Food" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.agents._source.Source" title="larvaworld.lib.model.agents._source.Source"><code class="xref py py-class docutils literal notranslate"><span class="pre">Source</span></code></a></p>
+<p>params(amount=PositiveNumber, substrate=ClassAttr, can_be_carried=Boolean, can_be_displaced=Boolean, regeneration=Boolean, regeneration_pos=Parameter, radius=PositiveNumber, pos=NumericTuple2DRobust, odor=ClassAttr, default_color=RandomizedColor, selected=Boolean, visible=Boolean, group=String, unique_id=String, name=String)</p>
+<blockquote>
+<div><p>Class for representing a source of food in the environment.</p>
+<dl class="simple">
+<dt>amount<span class="classifier">float, default 10.0</span></dt><dd><p>The initial amount of food in the source.</p>
+</dd>
+<dt>substrate<span class="classifier">Substrate, default None</span></dt><dd><p>The substrate where the agent feeds.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>default_color<span class="classifier">str</span></dt><dd><p>Default color of the food source.</p>
+</dd>
+<dt>initial_amount<span class="classifier">float</span></dt><dd><p>Initial amount of food in the source.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>subtract_amount(amount)</dt><dd><p>Subtract a given amount of food from the source.</p>
+</dd>
+<dt>draw(v, filled=None)</dt><dd><p>Draw the food source on the visualization canvas.</p>
+</dd>
+</dl>
+<p>This class extends the <cite>Source</cite> class to represent food sources specifically.</p>
+</div></blockquote>
+<section id="mparameters-of-food">
+<h3>[1;32mParameters of ‘Food’<a class="headerlink" href="#mparameters-of-food" title="Permalink to this heading"></a></h3>
+<p>[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                                Value                            Type             Bounds      Mode  [0m</p>
+<p>unique_id                            None                           String                      V RW AN
+group                                None                           String                      V RW AN
+default_color                      ‘green’                          Color                         V RW
+visible                              True                          Boolean            (0, 1)      V RW
+selected                            False                          Boolean            (0, 1)      V RW
+odor               Odor(id=None, intensity=None, name=’O…       ClassAttr                       V RW
+pos                               (0.0, 0.0)                 NumericTuple2DRobust                 V RW
+radius                              0.003                       PositiveNumber      (0.0,[1;36m 0.1[0m)    V RW
+can_be_carried                      False                          Boolean            (0, 1)      V RW
+can_be_displaced                    False                          Boolean            (0, 1)      V RW
+regeneration                        False                          Boolean            (0, 1)      V RW
+regeneration_pos                     None                         Parameter                     V RW AN
+amount                               0.0                        PositiveNumber     (0.0,[1;36m 10.0[0m)    V RW
+substrate          Substrate(composition={‘glucose’: 0.0…       ClassAttr                       V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34munique_id:        The unique ID of the entity[0m
+[1;31mgroup:            The unique ID of the entity’s group[0m
+[1;34mdefault_color:    The default color of the entity[0m
+[1;31mvisible:          Whether the entity is visible or not[0m
+[1;34mselected:         Whether the entity is selected or not[0m
+[1;31modor:             The odor of the agent[0m
+[1;34mpos:              The xy spatial position coordinates[0m
+[1;31mradius:           The spatial radius of the source in meters[0m
+[1;34mcan_be_carried:   Whether the source can be carried around.[0m
+[1;31mcan_be_displaced: Whether the source can be displaced by wind/water.[0m
+[1;34mregeneration:     Whether the agent can be regenerated[0m
+[1;31mregeneration_pos: Where the agent appears if regenerated[0m
+[1;34mamount:           The food amount in the source[0m
+[1;31msubstrate:        The substrate where the agent feeds[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Food.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'amount':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'can_be_carried':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'can_be_displaced':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'default_color':</span> <span class="pre">&lt;param.Color</span> <span class="pre">object&gt;,</span> <span class="pre">'group':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'radius':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'regeneration':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'regeneration_pos':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'substrate':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Food.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Food._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Food._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Food._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Food._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Food.amount">
+<span class="sig-name descname"><span class="pre">amount</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Food.amount" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Food.default_color">
+<span class="sig-name descname"><span class="pre">default_color</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'green'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Food.default_color" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Food.draw">
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_source.html#Food.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._source.Food.draw" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Food.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Food'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Food.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Food.substrate">
+<span class="sig-name descname"><span class="pre">substrate</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Substrate(composition={'glucose':</span> <span class="pre">0.0,</span> <span class="pre">'dextrose':</span> <span class="pre">0.0,</span> <span class="pre">'saccharose':</span> <span class="pre">0.0,</span> <span class="pre">'yeast':</span> <span class="pre">0.0,</span> <span class="pre">'agar':</span> <span class="pre">0.0,</span> <span class="pre">'cornmeal':</span> <span class="pre">0.0},</span> <span class="pre">name='Substrate00346',</span> <span class="pre">quality=1.0)</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Food.substrate" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Food.subtract_amount">
+<span class="sig-name descname"><span class="pre">subtract_amount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amount</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_source.html#Food.subtract_amount"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._source.Food.subtract_amount" title="Permalink to this definition"></a></dt>
+<dd><p>Subtract a given amount of food from the source.</p>
+<section id="parameters">
+<h4>Parameters:<a class="headerlink" href="#parameters" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>amount<span class="classifier">float</span></dt><dd><p>Amount of food to subtract.</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h4>Returns:<a class="headerlink" href="#returns" title="Permalink to this heading"></a></h4>
+<dl class="simple">
+<dt>float</dt><dd><p>The actual amount subtracted, which may be less than the requested amount.</p>
+</dd>
+</dl>
+</section>
+<section id="notes">
+<h4>Notes:<a class="headerlink" href="#notes" title="Permalink to this heading"></a></h4>
+<p>If the source runs out of food, it is deleted from the simulation.</p>
+</section>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+<section id="id1">
+<h2>Point agent<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Source">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.agents._source.</span></span><span class="sig-name descname"><span class="pre">Source</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_source.html#Source"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._source.Source" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="_agent.html#larvaworld.lib.model.agents._agent.PointAgent" title="larvaworld.lib.model.agents._agent.PointAgent"><code class="xref py py-class docutils literal notranslate"><span class="pre">PointAgent</span></code></a></p>
+<p>params(can_be_carried=Boolean, can_be_displaced=Boolean, regeneration=Boolean, regeneration_pos=Parameter, radius=PositiveNumber, pos=NumericTuple2DRobust, odor=ClassAttr, default_color=RandomizedColor, selected=Boolean, visible=Boolean, group=String, unique_id=String, name=String)</p>
+<blockquote>
+<div><p>Base class for representing a source of something in the environment.</p>
+<dl class="simple">
+<dt>can_be_carried<span class="classifier">bool, default False</span></dt><dd><p>Whether the source can be carried around.</p>
+</dd>
+<dt>can_be_displaced<span class="classifier">bool, default False</span></dt><dd><p>Whether the source can be displaced by wind or water.</p>
+</dd>
+<dt>regeneration<span class="classifier">bool, default False</span></dt><dd><p>Whether the agent can be regenerated.</p>
+</dd>
+<dt>regeneration_pos<span class="classifier">tuple or None, default None</span></dt><dd><p>Where the agent appears if regenerated.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>is_carried_by<span class="classifier">object or None</span></dt><dd><p>Reference to the agent that is currently carrying this source.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>step()</dt><dd><p>Perform a step in the simulation, possibly updating the source’s position.</p>
+</dd>
+</dl>
+<p>This class is a base class for representing various types of sources in the environment.</p>
+</div></blockquote>
+<section id="mparameters-of-source">
+<h3>[1;32mParameters of ‘Source’<a class="headerlink" href="#mparameters-of-source" title="Permalink to this heading"></a></h3>
+<p>[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                                Value                            Type            Bounds      Mode  [0m</p>
+<p>unique_id                            None                           String                     V RW AN
+group                                None                           String                     V RW AN
+default_color                      ‘black’                     RandomizedColor                   V RW
+visible                              True                          Boolean           (0, 1)      V RW
+selected                            False                          Boolean           (0, 1)      V RW
+odor               Odor(id=None, intensity=None, name=’O…       ClassAttr                      V RW
+pos                               (0.0, 0.0)                 NumericTuple2DRobust                V RW
+radius                              0.003                       PositiveNumber     (0.0,[1;36m 0.1[0m)    V RW
+can_be_carried                      False                          Boolean           (0, 1)      V RW
+can_be_displaced                    False                          Boolean           (0, 1)      V RW
+regeneration                        False                          Boolean           (0, 1)      V RW
+regeneration_pos                     None                         Parameter                    V RW AN</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34munique_id:        The unique ID of the entity[0m
+[1;31mgroup:            The unique ID of the entity’s group[0m
+[1;34mdefault_color:    The default color of the entity[0m
+[1;31mvisible:          Whether the entity is visible or not[0m
+[1;34mselected:         Whether the entity is selected or not[0m
+[1;31modor:             The odor of the agent[0m
+[1;34mpos:              The xy spatial position coordinates[0m
+[1;31mradius:           The spatial radius of the source in meters[0m
+[1;34mcan_be_carried:   Whether the source can be carried around.[0m
+[1;31mcan_be_displaced: Whether the source can be displaced by wind/water.[0m
+[1;34mregeneration:     Whether the agent can be regenerated[0m
+[1;31mregeneration_pos: Where the agent appears if regenerated[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Source.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'can_be_carried':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'can_be_displaced':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'group':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odor':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'pos':</span> <span class="pre">&lt;larvaworld.lib.param.custom.NumericTuple2DRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'radius':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'regeneration':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'regeneration_pos':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Source.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Source._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Source._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Source._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Source._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Source.can_be_carried">
+<span class="sig-name descname"><span class="pre">can_be_carried</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Source.can_be_carried" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Source.can_be_displaced">
+<span class="sig-name descname"><span class="pre">can_be_displaced</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Source.can_be_displaced" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Source.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Source'</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Source.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Source.regeneration">
+<span class="sig-name descname"><span class="pre">regeneration</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Source.regeneration" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Source.regeneration_pos">
+<span class="sig-name descname"><span class="pre">regeneration_pos</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#larvaworld.lib.model.agents._source.Source.regeneration_pos" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.agents._source.Source.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/agents/_source.html#Source.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.agents._source.Source.step" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

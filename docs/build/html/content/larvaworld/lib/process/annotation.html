@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>annotation &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="calibration" href="calibration.html" />
+    <link rel="prev" title="angular" href="angular.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">Modeling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../param/index.html">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plot/index.html">Plotting</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Data management</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="angular.html">angular</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">annotation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="calibration.html">calibration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html">dataset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="evaluation.html">evaluation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="patch.html">patch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocess.html">preprocess</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spatial.html">spatial</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../screen/index.html">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sim/index.html">Simulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../util/index.html">Dataset fitting &amp; sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Data management</a></li>
+      <li class="breadcrumb-item active">annotation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/process/annotation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.process.annotation">
+<span id="annotation"></span><h1>annotation<a class="headerlink" href="#module-larvaworld.lib.process.annotation" title="Permalink to this heading"></a></h1>
+<section id="bout-detection">
+<h2>bout_detection<a class="headerlink" href="#bout-detection" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.bout_detection">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">bout_detection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#bout_detection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.bout_detection" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="bout-distribution">
+<h2>bout_distribution<a class="headerlink" href="#bout-distribution" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.bout_distribution">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">bout_distribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#bout_distribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.bout_distribution" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="comp-chunk-dicts">
+<h2>comp_chunk_dicts<a class="headerlink" href="#comp-chunk-dicts" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.comp_chunk_dicts">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">comp_chunk_dicts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strides_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">turns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">castsNweathervanes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#comp_chunk_dicts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.comp_chunk_dicts" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="compute-interference-data">
+<h2>compute_interference_data<a class="headerlink" href="#compute-interference-data" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.compute_interference_data">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">compute_interference_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nbins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">64</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#compute_interference_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.compute_interference_data" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="crawl-annotation">
+<h2>crawl_annotation<a class="headerlink" href="#crawl-annotation" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.crawl_annotation">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">crawl_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strides_enabled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#crawl_annotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.crawl_annotation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="detect-epochs">
+<h2>detect_epochs<a class="headerlink" href="#detect-epochs" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.detect_epochs">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">detect_epochs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#detect_epochs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.detect_epochs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="detect-pauses">
+<h2>detect_pauses<a class="headerlink" href="#detect-pauses" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.detect_pauses">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">detect_pauses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#detect_pauses"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.detect_pauses" title="Permalink to this definition"></a></dt>
+<dd><p>Annotates crawl-pauses in timeseries.</p>
+<p>Extended description of function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>array</em>) – 1D np.array : forward velocity timeseries</p></li>
+<li><p><strong>dt</strong> (<em>float</em>) – Timestep of the timeseries</p></li>
+<li><p><strong>vel_thr</strong> (<em>float</em>) – Maximum velocity threshold</p></li>
+<li><p><strong>runs</strong> (<em>list</em>) – A list of pairs of the start-end indices of the runs.
+If provided pauses that overlap with runs will be excluded.</p></li>
+<li><p><strong>min_dur</strong> (<em>float</em><em>, </em><em>optional</em>) – The minimum required duration for a turn</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>pauses</strong> – A list of pairs of the start-end indices of the pauses.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="detect-runs">
+<h2>detect_runs<a class="headerlink" href="#detect-runs" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.detect_runs">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">detect_runs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#detect_runs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.detect_runs" title="Permalink to this definition"></a></dt>
+<dd><p>Annotates crawl-runs in timeseries.</p>
+<p>Extended description of function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>array</em>) – 1D np.array : forward velocity timeseries</p></li>
+<li><p><strong>dt</strong> (<em>float</em>) – Timestep of the timeseries</p></li>
+<li><p><strong>vel_thr</strong> (<em>float</em>) – <p>Maximum velocity threshold
+min_dur : float, optional</p>
+<blockquote>
+<div><p>The minimum required duration for a turn</p>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>runs</strong> – A list of pairs of the start-end indices of the runs.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="detect-strides">
+<h2>detect_strides<a class="headerlink" href="#detect-strides" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.detect_strides">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">detect_strides</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vel_thr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stretch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.75,</span> <span class="pre">2.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_extrema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_runs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#detect_strides"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.detect_strides" title="Permalink to this definition"></a></dt>
+<dd><p>Annotates strides-runs and pauses in timeseries.</p>
+<p>Extended description of function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>array</em>) – 1D np.array : forward velocity timeseries</p></li>
+<li><p><strong>dt</strong> (<em>float</em>) – Timestep of the timeseries</p></li>
+<li><p><strong>vel_thr</strong> (<em>float</em>) – Maximum velocity threshold</p></li>
+<li><p><strong>stretch</strong> (<em>Tuple</em><em>[</em><em>float</em><em>,</em><em>float</em><em>]</em>) – The min-max stretch of a stride relative to the default derived from the dominnt frequency</p></li>
+<li><p><strong>fr</strong> (<em>float</em><em>, </em><em>optional</em>) – The dominant crawling frequency.</p></li>
+<li><p><strong>return_extrema</strong> (<em>boolean</em>) – Whether to additionally return the stride extrema</p></li>
+<li><p><strong>return_runs</strong> (<em>boolean</em>) – Whether to additionally return the runs (stridechains)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>strides</strong> (<em>list</em>) – A list of pairs of the start-end indices of the strides.</p></li>
+<li><p><strong>i_min</strong> (<em>array</em>) – Indices of the local minima.</p></li>
+<li><p><strong>i_max</strong> (<em>array</em>) – Indices of the local maxima</p></li>
+<li><p><strong>runs</strong> (<em>list</em>) – A list of pairs of the start-end indices of the runs/stridechains.</p></li>
+<li><p><strong>run_counts</strong> (<em>list</em>) – Stride-counts of the runs/stridechains.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="detect-turns">
+<h2>detect_turns<a class="headerlink" href="#detect-turns" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.detect_turns">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">detect_turns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_dur</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#detect_turns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.detect_turns" title="Permalink to this definition"></a></dt>
+<dd><p>Annotates turns in timeseries.</p>
+<p>Extended description of function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>array</em>) – 1D np.array : angular velocity timeseries</p></li>
+<li><p><strong>dt</strong> (<em>float</em>) – Timestep of the timeseries</p></li>
+<li><p><strong>min_dur</strong> (<em>float</em><em>, </em><em>optional</em>) – The minimum required duration for a turn</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>Lturns</strong> (<em>list</em>) – A list of pairs of the start-end indices of the Left turns.</p></li>
+<li><p><strong>Rturns</strong> (<em>list</em>) – A list of pairs of the start-end indices of the Right turns.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="register-bout-distros">
+<h2>register_bout_distros<a class="headerlink" href="#register-bout-distros" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.register_bout_distros">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">register_bout_distros</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#register_bout_distros"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.register_bout_distros" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="turn-annotation">
+<h2>turn_annotation<a class="headerlink" href="#turn-annotation" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.turn_annotation">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">turn_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#turn_annotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.turn_annotation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="turn-mode-annotation">
+<h2>turn_mode_annotation<a class="headerlink" href="#turn-mode-annotation" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.turn_mode_annotation">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">turn_mode_annotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_dicts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#turn_mode_annotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.turn_mode_annotation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="weathervanesnheadcasts">
+<h2>weathervanesNheadcasts<a class="headerlink" href="#weathervanesnheadcasts" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.annotation.weathervanesNheadcasts">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.annotation.</span></span><span class="sig-name descname"><span class="pre">weathervanesNheadcasts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">run_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pause_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">turn_slices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Tamps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/annotation.html#weathervanesNheadcasts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.annotation.weathervanesNheadcasts" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="angular.html" class="btn btn-neutral float-left" title="angular" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="calibration.html" class="btn btn-neutral float-right" title="calibration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

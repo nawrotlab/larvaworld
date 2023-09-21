@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.sim.genetic_algorithm &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.sim.genetic_algorithm</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.sim.genetic_algorithm</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">param</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">progressbar</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">larvaworld</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span><span class="p">,</span> <span class="n">util</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">NestedConf</span><span class="p">,</span> <span class="n">ClassAttr</span><span class="p">,</span> <span class="n">class_generator</span><span class="p">,</span> <span class="n">SimOps</span><span class="p">,</span> <span class="n">OptionalSelector</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.process.evaluation</span> <span class="kn">import</span> <span class="n">Evaluation</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.screen</span> <span class="kn">import</span> <span class="n">GA_ScreenManager</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.sim.base_run</span> <span class="kn">import</span> <span class="n">BaseRun</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;GAevaluation&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;GAselector&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;GAlauncher&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;optimize_mID&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">dst2source_evaluation</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span> <span class="n">source_xy</span><span class="p">):</span>
+    <span class="n">traj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">robot</span><span class="o">.</span><span class="n">trajectory</span><span class="p">)</span>
+    <span class="n">dst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">traj</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">traj</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">cum_dst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+    <span class="n">l</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">source_xy</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">eudi5x</span><span class="p">(</span><span class="n">traj</span><span class="p">,</span> <span class="n">pos</span><span class="p">))</span>
+    <span class="n">fitness</span><span class="o">=</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">l</span><span class="p">),</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span><span class="o">/</span> <span class="n">cum_dst</span>
+    <span class="k">return</span> <span class="n">fitness</span>
+
+<span class="k">def</span> <span class="nf">cum_dst</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">robot</span><span class="o">.</span><span class="n">cum_dst</span> <span class="o">/</span> <span class="n">robot</span><span class="o">.</span><span class="n">real_length</span>
+
+
+<span class="k">def</span> <span class="nf">bend_error_exclusion</span><span class="p">(</span><span class="n">robot</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">robot</span><span class="o">.</span><span class="n">body_bend_errors</span> <span class="o">&gt;=</span> <span class="mi">20</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="n">fitness_funcs</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span>
+    <span class="s1">&#39;dst2source&#39;</span><span class="p">:</span> <span class="n">dst2source_evaluation</span><span class="p">,</span>
+    <span class="s1">&#39;cum_dst&#39;</span><span class="p">:</span> <span class="n">cum_dst</span><span class="p">,</span>
+<span class="p">})</span>
+
+
+
+<span class="n">exclusion_funcs</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span>
+    <span class="s1">&#39;bend_errors&#39;</span><span class="p">:</span> <span class="n">bend_error_exclusion</span>
+<span class="p">})</span>
+
+
+
+
+<div class="viewcode-block" id="GAevaluation"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAevaluation">[docs]</a><span class="k">class</span> <span class="nc">GAevaluation</span><span class="p">(</span><span class="n">Evaluation</span><span class="p">):</span>
+    <span class="n">exclusion_mode</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;exclusion mode&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to apply exclusion mode&#39;</span><span class="p">)</span>
+    <span class="n">exclude_func_name</span> <span class="o">=</span> <span class="n">OptionalSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">objects</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">exclusion_funcs</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                                       <span class="n">label</span><span class="o">=</span><span class="s1">&#39;name of exclusion function&#39;</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The function that evaluates exclusion&#39;</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">fitness_func_name</span> <span class="o">=</span> <span class="n">OptionalSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">objects</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">fitness_funcs</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+                                       <span class="n">label</span><span class="o">=</span><span class="s1">&#39;name of fitness function&#39;</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The function that evaluates fitness&#39;</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">fit_kws</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{},</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;fitness metrics to evaluate&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The target metrics to optimize against&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">exclude_func</span> <span class="o">=</span> <span class="n">exclusion_funcs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">exclude_func_name</span><span class="p">]</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exclude_func_name</span><span class="p">)</span><span class="o">==</span><span class="nb">str</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclusion_mode</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_func</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">fitness_func_name</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fitness_func_name</span> <span class="ow">in</span> <span class="n">fitness_funcs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="p">:</span>
+
+            <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">robot</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">fitness_funcs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">fitness_func_name</span><span class="p">](</span><span class="n">robot</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_kws</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_func_arg</span> <span class="o">=</span> <span class="s1">&#39;robot&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_func</span> <span class="o">=</span> <span class="n">func</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_func_arg</span> <span class="o">=</span> <span class="s1">&#39;s&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fit_func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_func_solo</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="GAselector"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAselector">[docs]</a><span class="k">class</span> <span class="nc">GAselector</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">Ngenerations</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;# generations&#39;</span><span class="p">,</span>
+                                 <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Number of generations to run for the genetic algorithm engine&#39;</span><span class="p">)</span>
+    <span class="n">Nagents</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;# agents per generation&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Number of agents per generation&#39;</span><span class="p">)</span>
+    <span class="n">Nelits</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;# best agents for next generation&#39;</span><span class="p">,</span>
+                           <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Number of best agents to include in the next generation&#39;</span><span class="p">)</span>
+
+    <span class="n">selection_ratio</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;selection ratio&#39;</span><span class="p">,</span>
+                                      <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Fraction of agent population to include in the next generation&#39;</span><span class="p">)</span>
+    <span class="n">Pmutation</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;mutation probability&#39;</span><span class="p">,</span>
+                                <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Probability of mutation for each agent in the next generation&#39;</span><span class="p">)</span>
+    <span class="n">Cmutation</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;mutation coeficient&#39;</span><span class="p">,</span>
+                             <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Fraction of allowed parameter range to mutate within&#39;</span><span class="p">)</span>
+    <span class="n">bestConfID</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;best_model&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;model ID for optimized model&#39;</span><span class="p">,</span>
+                              <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;ID for the optimized model&#39;</span><span class="p">)</span>
+
+    <span class="n">init_mode</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Selector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;random&#39;</span><span class="p">,</span> <span class="s1">&#39;model&#39;</span><span class="p">,</span> <span class="s1">&#39;default&#39;</span><span class="p">],</span>
+                               <span class="n">label</span><span class="o">=</span><span class="s1">&#39;mode of initial generation&#39;</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Mode of initial generation&#39;</span><span class="p">)</span>
+    <span class="n">base_model</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">confID_selector</span><span class="p">(</span><span class="s1">&#39;loco_default&#39;</span><span class="p">)</span>
+
+    <span class="n">space_mkeys</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ListSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">objects</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">mkeys</span><span class="p">,</span>
+                                     <span class="n">label</span><span class="o">=</span><span class="s1">&#39;keys of modules to include in space search&#39;</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Keys of the modules where the optimization parameters are&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nagents_min</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nagents</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">selection_ratio</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nagents_min</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;The number of parents selected to breed a new generation is &lt; 2. &#39;</span> <span class="o">+</span>
+                             <span class="s1">&#39;Please increase population (&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nagents</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;) or selection ratio (&#39;</span> <span class="o">+</span>
+                             <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selection_ratio</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span><span class="p">)</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mConf0</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">getID</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">space_dict</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">space_dict</span><span class="p">(</span><span class="n">mkeys</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">space_mkeys</span><span class="p">,</span> <span class="n">mConf0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mConf0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">space_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">space_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gConf0</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">conf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">space_dict</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GAselector.create_first_generation"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAselector.create_first_generation">[docs]</a>    <span class="k">def</span> <span class="nf">create_first_generation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mode</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">init_mode</span>
+        <span class="n">N</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">Nagents</span>
+        <span class="n">d</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">space_dict</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span>
+            <span class="n">gConf</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">conf</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="n">gConfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">gConf</span><span class="p">]</span> <span class="o">*</span> <span class="n">N</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;model&#39;</span><span class="p">:</span>
+            <span class="n">gConf</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mConf0</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="n">gConfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">gConf</span><span class="p">]</span> <span class="o">*</span> <span class="n">N</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;random&#39;</span><span class="p">:</span>
+            <span class="n">gConfs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+                <span class="n">reg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">randomize</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                <span class="n">gConf</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">conf</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                <span class="n">gConfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gConf</span><span class="p">)</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Not implemented&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">gConfs</span></div>
+
+<div class="viewcode-block" id="GAselector.new_genome"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAselector.new_genome">[docs]</a>    <span class="k">def</span> <span class="nf">new_genome</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gConf</span><span class="p">,</span> <span class="n">mConf0</span><span class="p">):</span>
+        <span class="n">mConf</span> <span class="o">=</span> <span class="n">mConf0</span><span class="o">.</span><span class="n">update_nestdict</span><span class="p">(</span><span class="n">gConf</span><span class="p">)</span>
+        <span class="n">mConf</span><span class="o">.</span><span class="n">life_history</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;age&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;epochs&#39;</span><span class="p">:</span> <span class="p">{}}</span>
+        <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;fitness&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;fitness_dict&#39;</span><span class="p">:</span> <span class="p">{},</span> <span class="s1">&#39;gConf&#39;</span><span class="p">:</span> <span class="n">gConf</span><span class="p">,</span> <span class="s1">&#39;mConf&#39;</span><span class="p">:</span> <span class="n">mConf</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="GAselector.create_new_generation"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAselector.create_new_generation">[docs]</a>    <span class="k">def</span> <span class="nf">create_new_generation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sorted_gs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_gs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nagents_min</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;The number of genomes (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_gs</span><span class="p">)</span><span class="si">}</span><span class="s1">) is lower than the minimum number required to breed a new generation (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">Nagents_min</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">)</span>
+        <span class="n">gs0</span> <span class="o">=</span> <span class="p">[</span><span class="n">sorted_gs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">gConf</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nagents_min</span><span class="p">)]</span>
+
+        <span class="c1"># elitism: keep the best genomes in the new generation</span>
+        <span class="n">gs</span> <span class="o">=</span> <span class="p">[</span><span class="n">gs0</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nelits</span><span class="p">)]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Nagents</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nelits</span><span class="p">):</span>
+            <span class="n">g1</span><span class="p">,</span> <span class="n">g2</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">gs0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">g0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">crossover</span><span class="p">(</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">)</span>
+            <span class="n">space_dict</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update_mdict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">space_dict</span><span class="p">,</span> <span class="n">g0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">space_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">mutate</span><span class="p">(</span><span class="n">Pmut</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">Pmutation</span><span class="p">,</span> <span class="n">Cmut</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">Cmutation</span><span class="p">)</span>
+
+            <span class="n">g</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">generate_configuration</span><span class="p">(</span><span class="n">space_dict</span><span class="p">)</span>
+            <span class="n">gs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">gs</span></div>
+
+<div class="viewcode-block" id="GAselector.create_generation"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAselector.create_generation">[docs]</a>    <span class="k">def</span> <span class="nf">create_generation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sorted_gs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">sorted_gs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gConfs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_first_generation</span><span class="p">()</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gConfs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_new_generation</span><span class="p">(</span><span class="n">sorted_gs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">genome_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">i</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_genome</span><span class="p">(</span><span class="n">gConf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mConf0</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">gConf</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gConfs</span><span class="p">)}</span></div>
+
+<div class="viewcode-block" id="GAselector.crossover"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAselector.crossover">[docs]</a>    <span class="k">def</span> <span class="nf">crossover</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">):</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">g1</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="p">:</span>
+                <span class="n">g</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">g1</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">g</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">g2</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">g</span></div></div>
+
+
+
+
+
+
+
+
+
+
+
+<span class="c1"># class GAlauncher2(BaseRun):</span>
+<span class="c1">#     def __init__(self, parameters, **kwargs):</span>
+<span class="c1">#         super().__init__(runtype=&#39;Ga&#39;, parameters=parameters, **kwargs)</span>
+
+
+<div class="viewcode-block" id="GAlauncher"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher">[docs]</a><span class="k">class</span> <span class="nc">GAlauncher</span><span class="p">(</span><span class="n">BaseRun</span><span class="p">,</span><span class="n">GAselector</span><span class="p">,</span><span class="n">GAevaluation</span><span class="p">):</span>
+
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Simulation mode &#39;Ga&#39; launches a genetic algorith optimization simulation of a specified agent model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            **kwargs: Arguments passed to the setup method</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">BaseRun</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtype</span><span class="o">=</span><span class="s1">&#39;Ga&#39;</span><span class="p">,</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># raise</span>
+        <span class="n">GAevaluation</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">ga_eval_kws</span><span class="p">)</span>
+        <span class="c1"># GAselector.__init__(self,**self.p.ga_select_kws,dataset=dataset,**self.p.ga_eval_kws)</span>
+        <span class="n">GAselector</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">ga_select_kws</span><span class="p">)</span>
+
+
+
+    <span class="c1"># def initialize_superclasses(self, parameters,dataset=None):</span>
+    <span class="c1">#     # print(&#39;DD&#39;)</span>
+    <span class="c1">#     GAevaluation.__init__(self, dataset=dataset, **parameters.ga_eval_kws)</span>
+    <span class="c1">#     # print(&#39;DDD&#39;)</span>
+    <span class="c1">#     GAselector.__init__(self, **parameters.ga_select_kws,dataset=dataset, **parameters.ga_eval_kws)</span>
+    <span class="c1">#     # print(&#39;DDDD&#39;)</span>
+
+
+<div class="viewcode-block" id="GAlauncher.setup"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_genome</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_fitness</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sorted_genomes</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_genomes_dic</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_cpu</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generation_num</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_total_time</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">TimeUtil</span><span class="o">.</span><span class="n">current_time_millis</span><span class="p">()</span>
+
+
+
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;--- Genetic Algorithm  &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s1">&quot; initialized!--- &#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ngenerations</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ngenerations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;unlimited&#39;</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Launching </span><span class="si">{</span><span class="n">temp</span><span class="si">}</span><span class="s1"> generations of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">duration</span><span class="si">}</span><span class="s1"> minutes, with </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">Nagents</span><span class="si">}</span><span class="s1"> agents each!&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ngenerations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar</span> <span class="o">=</span> <span class="n">progressbar</span><span class="o">.</span><span class="n">ProgressBar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Ngenerations</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">collections</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;pose&#39;</span><span class="p">]</span>
+        <span class="c1"># self.odor_ids = self.get_all_odors()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_env</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">env_params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_manager</span> <span class="o">=</span> <span class="n">GA_ScreenManager</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_generation</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="GAlauncher.simulate"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher.simulate">[docs]</a>    <span class="k">def</span> <span class="nf">simulate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sim_setup</span><span class="p">()</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_step</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_genome</span></div>
+
+<div class="viewcode-block" id="GAlauncher.build_generation"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher.build_generation">[docs]</a>    <span class="k">def</span> <span class="nf">build_generation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sorted_genomes</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_generation</span><span class="p">(</span><span class="n">sorted_genomes</span><span class="p">)</span>
+        <span class="n">confs</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;larva_pars&#39;</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">mConf</span><span class="p">,</span> <span class="s1">&#39;unique_id&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">),</span> <span class="s1">&#39;genome&#39;</span><span class="p">:</span> <span class="n">g</span><span class="p">}</span> <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">place_agents</span><span class="p">(</span><span class="n">confs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_collectors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">collections</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">multicore</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">threads</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_threads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">threads</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generation_num</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generation_step_num</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_generation_time</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">TimeUtil</span><span class="o">.</span><span class="n">current_time_millis</span><span class="p">()</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Generation </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">generation_num</span><span class="si">}</span><span class="s1"> started&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generation_num</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="GAlauncher.eval_robots"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher.eval_robots">[docs]</a>    <span class="k">def</span> <span class="nf">eval_robots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Ngen</span><span class="p">,</span> <span class="n">genome_dict</span><span class="p">):</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Evaluating generation </span><span class="si">{</span><span class="n">Ngen</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_func_arg</span> <span class="o">==</span><span class="s1">&#39;s&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_collection</span> <span class="o">=</span> <span class="n">larvaworld</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">LarvaDatasetCollection</span><span class="o">.</span><span class="n">from_agentpy_output</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_collection</span><span class="o">.</span><span class="n">datasets</span><span class="p">:</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">enrich</span><span class="p">(</span><span class="n">proc_keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;angular&#39;</span><span class="p">,</span> <span class="s1">&#39;spatial&#39;</span><span class="p">],</span> <span class="n">is_last</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">valid_gs</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">genome_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># for id in d.config.agent_ids:</span>
+                <span class="n">ss</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">step_data</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span>
+                <span class="n">g</span><span class="o">.</span><span class="n">fitness_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit_func</span><span class="p">(</span><span class="n">ss</span><span class="p">)</span>
+
+
+            <span class="c1"># fit_dicts = self.fit_func(s=d.step_data)</span>
+
+            <span class="c1"># for i, g in genome_dict.items():</span>
+            <span class="c1">#     g.fitness_dict = aux.AttrDict({k: dic[str(i)] for k, dic in fit_dicts.items()})</span>
+                <span class="n">mus</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">dic</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">dic</span> <span class="ow">in</span> <span class="n">g</span><span class="o">.</span><span class="n">fitness_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mus</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">g</span><span class="o">.</span><span class="n">fitness</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">mus</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">coef_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;KS&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">&#39;RSS&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+                    <span class="n">g</span><span class="o">.</span><span class="n">fitness</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">coef_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="n">mean</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">mean</span> <span class="ow">in</span> <span class="n">mus</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">fitness</span><span class="p">):</span>
+                    <span class="n">valid_gs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">g</span>
+            <span class="n">sorted_gs</span> <span class="o">=</span> <span class="p">[</span><span class="n">valid_gs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span>
+                         <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">valid_gs</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">valid_gs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">fitness</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">sorted_gs</span><span class="p">,</span> <span class="n">Ngen</span><span class="p">)</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Generation </span><span class="si">{</span><span class="n">Ngen</span><span class="si">}</span><span class="s1"> evaluated&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">sorted_gs</span></div>
+
+<div class="viewcode-block" id="GAlauncher.store"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher.store">[docs]</a>    <span class="k">def</span> <span class="nf">store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sorted_gs</span><span class="p">,</span> <span class="n">Ngen</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_genome</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">sorted_gs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">fitness</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_genome</span><span class="o">.</span><span class="n">fitness</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">best_genome</span> <span class="o">=</span> <span class="n">sorted_gs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">best_fitness</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_genome</span><span class="o">.</span><span class="n">fitness</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bestConfID</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">setID</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bestConfID</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_genome</span><span class="o">.</span><span class="n">mConf</span><span class="p">)</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Generation </span><span class="si">{</span><span class="n">Ngen</span><span class="si">}</span><span class="s1"> best_fitness : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_fitness</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_genomes_dic</span> <span class="o">+=</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s1">&#39;generation&#39;</span><span class="p">:</span> <span class="n">Ngen</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">gConf</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">space_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+             <span class="s1">&#39;fitness&#39;</span><span class="p">:</span> <span class="n">g</span><span class="o">.</span><span class="n">fitness</span><span class="p">,</span> <span class="o">**</span><span class="n">g</span><span class="o">.</span><span class="n">fitness_dict</span><span class="o">.</span><span class="n">flatten</span><span class="p">()}</span>
+            <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">sorted_gs</span> <span class="k">if</span> <span class="n">g</span><span class="o">.</span><span class="n">fitness_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">generation_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generation_step_num</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nsteps</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nagents_min</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">max_generation_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ngenerations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">generation_num</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Ngenerations</span>
+
+<div class="viewcode-block" id="GAlauncher.sim_step"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher.sim_step">[docs]</a>    <span class="k">def</span> <span class="nf">sim_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">generation_step_num</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">generation_completed</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_generation_completed</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">build_generation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sorted_genomes</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="GAlauncher.step"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">threads</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">thr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">threads</span><span class="p">:</span>
+                <span class="n">thr</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">robot</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude_func</span><span class="p">(</span><span class="n">robot</span><span class="p">):</span>
+                    <span class="n">robot</span><span class="o">.</span><span class="n">genome</span><span class="o">.</span><span class="n">fitness</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+                    <span class="c1"># self.delete_agent(robot)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_manager</span><span class="o">.</span><span class="n">render</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="GAlauncher.end"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">nest_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collectors</span><span class="p">[</span><span class="s1">&#39;end&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_output</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sorted_genomes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_robots</span><span class="p">(</span><span class="n">Ngen</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">generation_num</span><span class="p">,</span> <span class="n">genome_dict</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">genome_dict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delete_agents</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="GAlauncher.update"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">nest_record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collectors</span><span class="p">[</span><span class="s1">&#39;step&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="GAlauncher.finalize"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screen_manager</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Best fittness: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_genome</span><span class="o">.</span><span class="n">fitness</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_data</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">store_genomes</span><span class="p">(</span><span class="n">dic</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">all_genomes_dic</span><span class="p">,</span> <span class="n">save_to</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GAlauncher.store_genomes"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher.store_genomes">[docs]</a>    <span class="k">def</span> <span class="nf">store_genomes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dic</span><span class="p">,</span> <span class="n">save_to</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">dic</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;fitness&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">graphs</span><span class="o">.</span><span class="n">dict</span><span class="p">[</span><span class="s1">&#39;mpl&#39;</span><span class="p">](</span><span class="n">data</span><span class="o">=</span><span class="n">df</span><span class="p">,</span> <span class="n">font_size</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">save_to</span><span class="o">=</span><span class="n">save_to</span><span class="p">,</span>
+                               <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bestConfID</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">save_to</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bestConfID</span><span class="si">}</span><span class="s1">.csv&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">corr_df</span><span class="o">=</span><span class="n">df</span><span class="p">[[</span><span class="s1">&#39;fitness&#39;</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">space_columns</span><span class="p">]</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diff_df</span><span class="p">,</span> <span class="n">row_colors</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">diff_df</span><span class="p">(</span><span class="n">mIDs</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">base_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bestConfID</span><span class="p">],</span> <span class="n">ms</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">mConf0</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">best_genome</span><span class="o">.</span><span class="n">mConf</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="GAlauncher.build_threads"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.GAlauncher.build_threads">[docs]</a>    <span class="k">def</span> <span class="nf">build_threads</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">robots</span><span class="p">):</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_cpu</span>
+        <span class="n">threads</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">num_robots</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">robots</span><span class="p">)</span>
+        <span class="n">num_robots_per_cpu</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">num_robots</span> <span class="o">/</span> <span class="n">N</span><span class="p">)</span>
+
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;num_robots_per_cpu: </span><span class="si">{</span><span class="n">num_robots_per_cpu</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">start_pos</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">num_robots_per_cpu</span>
+            <span class="n">end_pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_robots_per_cpu</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;core: </span><span class="si">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s1"> positions: </span><span class="si">{</span><span class="n">start_pos</span><span class="si">}</span><span class="s1"> : </span><span class="si">{</span><span class="n">end_pos</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">robot_list</span> <span class="o">=</span> <span class="n">robots</span><span class="p">[</span><span class="n">start_pos</span><span class="p">:</span><span class="n">end_pos</span><span class="p">]</span>
+
+            <span class="n">thread</span> <span class="o">=</span> <span class="n">GA_thread</span><span class="p">(</span><span class="n">robot_list</span><span class="p">)</span>
+            <span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;thread </span><span class="si">{</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s1"> started&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">threads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thread</span><span class="p">)</span>
+
+        <span class="c1"># last sublist of robots</span>
+        <span class="n">start_pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">num_robots_per_cpu</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;last core, start_pos </span><span class="si">{</span><span class="n">start_pos</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">robot_list</span> <span class="o">=</span> <span class="n">robots</span><span class="p">[</span><span class="n">start_pos</span><span class="p">:]</span>
+
+        <span class="n">thread</span> <span class="o">=</span> <span class="n">GA_thread</span><span class="p">(</span><span class="n">robot_list</span><span class="p">)</span>
+        <span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;last thread started&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">threads</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">thread</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">threads</span><span class="p">:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">threads</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">GA_thread</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">robots</span><span class="p">):</span>
+        <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">robots</span> <span class="o">=</span> <span class="n">robots</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">robot</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">robots</span><span class="p">:</span>
+            <span class="n">robot</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="optimize_mID"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/genetic_algorithm.html#larvaworld.lib.sim.genetic_algorithm.optimize_mID">[docs]</a><span class="k">def</span> <span class="nf">optimize_mID</span><span class="p">(</span><span class="n">mID0</span><span class="p">,</span> <span class="n">mID1</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">refID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">space_mkeys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;turner&#39;</span><span class="p">,</span> <span class="s1">&#39;interference&#39;</span><span class="p">],</span> <span class="n">init</span><span class="o">=</span><span class="s1">&#39;model&#39;</span><span class="p">,</span>
+               <span class="n">exclusion_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">experiment</span><span class="o">=</span><span class="s1">&#39;exploration&#39;</span><span class="p">,</span>
+                 <span class="nb">id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">16</span><span class="p">,</span> <span class="n">dur</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="n">Nagents</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">Nelits</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">Ngenerations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+    <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mID1</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">mID1</span> <span class="o">=</span> <span class="n">mID0</span>
+
+    <span class="n">gaconf</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">Ga</span><span class="p">(</span><span class="n">ga_select_kws</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">GAselector</span><span class="p">(</span><span class="n">Nagents</span><span class="o">=</span><span class="n">Nagents</span><span class="p">,</span> <span class="n">Nelits</span><span class="o">=</span><span class="n">Nelits</span><span class="p">,</span> <span class="n">Ngenerations</span><span class="o">=</span><span class="n">Ngenerations</span><span class="p">,</span>
+                                      <span class="n">selection_ratio</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span><span class="n">init_mode</span><span class="o">=</span><span class="n">init</span><span class="p">,</span> <span class="n">space_mkeys</span><span class="o">=</span><span class="n">space_mkeys</span><span class="p">,</span>
+                                      <span class="n">base_model</span><span class="o">=</span><span class="n">mID0</span><span class="p">,</span><span class="n">bestConfID</span><span class="o">=</span><span class="n">mID1</span><span class="p">),</span>
+                      <span class="n">ga_eval_kws</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">GAevaluation</span><span class="p">(</span><span class="n">refID</span><span class="o">=</span><span class="n">refID</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+                      <span class="n">env_params</span><span class="o">=</span><span class="s1">&#39;arena_200mm&#39;</span><span class="p">,</span>
+                      <span class="n">experiment</span><span class="o">=</span><span class="n">experiment</span><span class="p">)</span><span class="o">.</span><span class="n">nestedConf</span>
+
+
+    <span class="n">gaconf</span><span class="o">.</span><span class="n">env_params</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Env</span><span class="o">.</span><span class="n">getID</span><span class="p">(</span><span class="n">gaconf</span><span class="o">.</span><span class="n">env_params</span><span class="p">)</span>
+
+    <span class="c1"># conf.ga_build_kws.</span>
+
+    <span class="n">GA</span> <span class="o">=</span> <span class="n">GAlauncher</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="n">gaconf</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="nb">dir</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">dur</span><span class="p">,</span><span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">)</span>
+    <span class="n">best_genome</span> <span class="o">=</span> <span class="n">GA</span><span class="o">.</span><span class="n">simulate</span><span class="p">()</span>
+    <span class="n">entry</span> <span class="o">=</span> <span class="p">{</span><span class="n">mID1</span><span class="p">:</span> <span class="n">best_genome</span><span class="o">.</span><span class="n">mConf</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">entry</span></div>
+
+
+<span class="n">reg</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">GAselector</span><span class="o">=</span><span class="n">class_generator</span><span class="p">(</span><span class="n">GAselector</span><span class="p">)</span>
+<span class="n">reg</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">GAevaluation</span><span class="o">=</span><span class="n">class_generator</span><span class="p">(</span><span class="n">GAevaluation</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">GAconf</span><span class="p">(</span><span class="n">SimOps</span><span class="p">):</span>
+    <span class="n">env_params</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Env</span><span class="o">.</span><span class="n">confID_selector</span><span class="p">()</span>
+    <span class="n">experiment</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Ga</span><span class="o">.</span><span class="n">confID_selector</span><span class="p">()</span>
+    <span class="n">ga_eval_kws</span> <span class="o">=</span> <span class="n">ClassAttr</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">GAevaluation</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The GA evaluation configuration&#39;</span><span class="p">)</span>
+    <span class="n">ga_select_kws</span> <span class="o">=</span> <span class="n">ClassAttr</span><span class="p">(</span><span class="n">reg</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">GAselector</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The GA selection configuration&#39;</span><span class="p">)</span>
+
+    <span class="n">scene</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s1">&#39;no_boxes&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The name of the scene to load&#39;</span><span class="p">)</span>
+
+<span class="c1"># reg.gen.Ga=class_generator(GAlauncher)</span>
+<span class="n">reg</span><span class="o">.</span><span class="n">gen</span><span class="o">.</span><span class="n">Ga</span><span class="o">=</span><span class="n">class_generator</span><span class="p">(</span><span class="n">GAconf</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

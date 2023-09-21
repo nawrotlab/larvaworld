@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.util.sampling &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.util.sampling</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.util.sampling</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">import</span> <span class="nn">larvaworld</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.aux</span> <span class="kn">import</span> <span class="n">nam</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;generate_larvae&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sample_group&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sampleRef&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;imitateRef&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;generate_agentGroup&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;generate_agentConfs&#39;</span><span class="p">,</span>
+    <span class="c1"># &#39;generate_sourceConfs&#39;,</span>
+    <span class="s1">&#39;sim_model&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;sim_models&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="n">SAMPLING_PARS</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">bidict</span><span class="p">(</span>
+    <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s1">&#39;length&#39;</span><span class="p">:</span> <span class="s1">&#39;body.length&#39;</span><span class="p">,</span>
+            <span class="n">nam</span><span class="o">.</span><span class="n">freq</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">))):</span> <span class="s1">&#39;brain.crawler_params.freq&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;stride_reoccurence_rate&#39;</span><span class="p">:</span> <span class="s1">&#39;brain.intermitter_params.crawler_reoccurence_rate&#39;</span><span class="p">,</span>
+            <span class="n">nam</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">chunk_track</span><span class="p">(</span><span class="s1">&#39;stride&#39;</span><span class="p">,</span> <span class="n">nam</span><span class="o">.</span><span class="n">dst</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)))):</span> <span class="s1">&#39;brain.crawler_params.stride_dst_mean&#39;</span><span class="p">,</span>
+            <span class="n">nam</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">chunk_track</span><span class="p">(</span><span class="s1">&#39;stride&#39;</span><span class="p">,</span> <span class="n">nam</span><span class="o">.</span><span class="n">dst</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)))):</span> <span class="s1">&#39;brain.crawler_params.stride_dst_std&#39;</span><span class="p">,</span>
+            <span class="n">nam</span><span class="o">.</span><span class="n">freq</span><span class="p">(</span><span class="s1">&#39;feed&#39;</span><span class="p">):</span> <span class="s1">&#39;brain.feeder_params.freq&#39;</span><span class="p">,</span>
+            <span class="n">nam</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">chunk_track</span><span class="p">(</span><span class="s1">&#39;stride&#39;</span><span class="p">,</span> <span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)))):</span> <span class="s1">&#39;brain.crawler_params.max_scaled_vel&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;phi_scaled_velocity_max&#39;</span><span class="p">:</span> <span class="s1">&#39;brain.crawler_params.max_vel_phase&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;attenuation&#39;</span><span class="p">:</span> <span class="s1">&#39;brain.interference_params.attenuation&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;attenuation_max&#39;</span><span class="p">:</span> <span class="s1">&#39;brain.interference_params.attenuation_max&#39;</span><span class="p">,</span>
+            <span class="n">nam</span><span class="o">.</span><span class="n">freq</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">orient</span><span class="p">((</span><span class="s1">&#39;front&#39;</span><span class="p">)))):</span> <span class="s1">&#39;brain.turner_params.freq&#39;</span><span class="p">,</span>
+            <span class="n">nam</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="s1">&#39;phi_attenuation&#39;</span><span class="p">):</span> <span class="s1">&#39;brain.interference_params.max_attenuation_phase&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+
+
+
+
+
+<span class="k">def</span> <span class="nf">get_sample_bout_distros</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">sample</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_sample_bout_distros0</span><span class="p">(</span><span class="n">Im</span><span class="p">,</span> <span class="n">bout_distros</span><span class="p">):</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;pause_dist&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;pause&#39;</span><span class="p">,</span> <span class="s1">&#39;pause_dur&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;stridechain_dist&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;stride&#39;</span><span class="p">,</span> <span class="s1">&#39;run_count&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;run_dist&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;exec&#39;</span><span class="p">,</span> <span class="s1">&#39;run_dur&#39;</span><span class="p">],</span>
+        <span class="p">}</span>
+
+        <span class="n">ds</span> <span class="o">=</span> <span class="p">[</span><span class="n">ii</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;pause_dist&#39;</span><span class="p">,</span> <span class="s1">&#39;stridechain_dist&#39;</span><span class="p">,</span> <span class="s1">&#39;run_dist&#39;</span><span class="p">]</span> <span class="k">if</span>
+              <span class="p">(</span><span class="n">ii</span> <span class="ow">in</span> <span class="n">Im</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="ow">and</span> <span class="p">(</span><span class="n">Im</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s1">&#39;fit&#39;</span> <span class="ow">in</span> <span class="n">Im</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="ow">and</span> <span class="p">(</span><span class="n">Im</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="s1">&#39;fit&#39;</span><span class="p">])]</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">sample_d</span> <span class="ow">in</span> <span class="n">dic</span><span class="p">[</span><span class="n">d</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">sample_d</span> <span class="ow">in</span> <span class="n">bout_distros</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="n">bout_distros</span><span class="p">[</span><span class="n">sample_d</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">Im</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">bout_distros</span><span class="p">[</span><span class="n">sample_d</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">Im</span>
+
+    <span class="k">if</span> <span class="n">sample</span> <span class="ow">in</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">{}]:</span>
+        <span class="k">return</span> <span class="n">model</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">intermitter_params</span><span class="p">:</span>
+        <span class="n">m</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">intermitter_params</span> <span class="o">=</span> <span class="n">get_sample_bout_distros0</span><span class="p">(</span><span class="n">Im</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">brain</span><span class="o">.</span><span class="n">intermitter_params</span><span class="p">,</span>
+                                                              <span class="n">bout_distros</span><span class="o">=</span><span class="n">sample</span><span class="o">.</span><span class="n">bout_distros</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">m</span>
+
+
+<div class="viewcode-block" id="generate_larvae"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/sampling.html#larvaworld.lib.util.sampling.generate_larvae">[docs]</a><span class="k">def</span> <span class="nf">generate_larvae</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">sample_dict</span><span class="p">,</span> <span class="n">base_model</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_dict</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">all_pars</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+            <span class="n">dic</span><span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="n">p</span><span class="p">:</span> <span class="n">vs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">vs</span> <span class="ow">in</span> <span class="n">sample_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+            <span class="n">all_pars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">base_model</span><span class="o">.</span><span class="n">get_copy</span><span class="p">()</span><span class="o">.</span><span class="n">update_nestdict</span><span class="p">(</span><span class="n">dic</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">all_pars</span> <span class="o">=</span> <span class="p">[</span><span class="n">base_model</span><span class="p">]</span> <span class="o">*</span> <span class="n">N</span>
+    <span class="k">return</span> <span class="n">all_pars</span></div>
+
+
+<div class="viewcode-block" id="sample_group"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/sampling.html#larvaworld.lib.util.sampling.sample_group">[docs]</a><span class="k">def</span> <span class="nf">sample_group</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ps</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="n">means</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ps</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ps</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="n">ps</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+        <span class="n">vs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">ps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="n">ps</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">vs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">means</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">std</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="n">dic</span> <span class="o">=</span> <span class="p">{</span><span class="n">p</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ps</span><span class="p">,</span> <span class="n">vs</span><span class="p">)}</span>
+    <span class="k">return</span> <span class="n">dic</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_sample_ks</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">sample_ks</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">sample_ks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sample_ks</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">modF</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">sample_ks</span> <span class="o">+=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">modF</span> <span class="k">if</span> <span class="n">modF</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;sample&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">sample_ks</span>
+
+
+<div class="viewcode-block" id="sampleRef"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/sampling.html#larvaworld.lib.util.sampling.sampleRef">[docs]</a><span class="k">def</span> <span class="nf">sampleRef</span><span class="p">(</span><span class="n">mID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">refID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">refDataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample_ks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Nids</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">parameter_dict</span><span class="o">=</span><span class="p">{}):</span>
+    <span class="n">sample_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">getID</span><span class="p">(</span><span class="n">mID</span><span class="p">)</span>
+    <span class="n">ks</span> <span class="o">=</span> <span class="n">get_sample_ks</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">sample_ks</span><span class="o">=</span><span class="n">sample_ks</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ks</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">refDataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">refID</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">refDataset</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">loadRef</span><span class="p">(</span><span class="n">refID</span><span class="p">,</span> <span class="n">load</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">refDataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">get_sample_bout_distros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">refDataset</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">refDataset</span><span class="o">.</span><span class="n">endpoint_data</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">refDataset</span><span class="p">,</span> <span class="s1">&#39;endpoint_data&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">refDataset</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">)</span>
+            <span class="n">Sinv</span><span class="o">=</span><span class="n">SAMPLING_PARS</span><span class="o">.</span><span class="n">inverse</span>
+            <span class="n">sample_ps</span><span class="o">=</span><span class="p">[]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">Sinv</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">p</span><span class="o">=</span><span class="n">Sinv</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">columns</span> <span class="p">:</span>
+                        <span class="n">sample_ps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_ps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">sample_dict_p</span> <span class="o">=</span> <span class="n">sample_group</span><span class="p">(</span><span class="n">N</span><span class="o">=</span><span class="n">Nids</span><span class="p">,</span> <span class="n">ps</span><span class="o">=</span><span class="n">sample_ps</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="n">e</span><span class="p">)</span>
+                <span class="n">sample_dict</span><span class="o">=</span><span class="p">{</span><span class="n">SAMPLING_PARS</span><span class="p">[</span><span class="n">p</span><span class="p">]:</span><span class="n">vs</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span><span class="n">vs</span> <span class="ow">in</span> <span class="n">sample_dict_p</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                <span class="n">refID</span> <span class="o">=</span> <span class="n">refDataset</span><span class="o">.</span><span class="n">refID</span>
+    <span class="n">sample_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">parameter_dict</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">generate_larvae</span><span class="p">(</span><span class="n">Nids</span><span class="p">,</span> <span class="n">sample_dict</span><span class="p">,</span> <span class="n">m</span><span class="p">),</span> <span class="n">refID</span></div>
+
+
+<div class="viewcode-block" id="imitateRef"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/sampling.html#larvaworld.lib.util.sampling.imitateRef">[docs]</a><span class="k">def</span> <span class="nf">imitateRef</span><span class="p">(</span><span class="n">mID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">m</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">refID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">refDataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">sample_ks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Nids</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">parameter_dict</span><span class="o">=</span><span class="p">{}):</span>
+    <span class="k">if</span> <span class="n">refDataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">refID</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">refDataset</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">loadRef</span><span class="p">(</span><span class="n">refID</span><span class="p">,</span> <span class="n">load</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">refID</span> <span class="o">=</span> <span class="n">refDataset</span><span class="o">.</span><span class="n">refID</span>
+    <span class="k">if</span> <span class="n">Nids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">Nids</span> <span class="o">=</span> <span class="n">refDataset</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">N</span>
+
+    <span class="n">e</span> <span class="o">=</span> <span class="n">refDataset</span><span class="o">.</span><span class="n">endpoint_data</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">refDataset</span><span class="p">,</span> <span class="s1">&#39;endpoint_data&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">refDataset</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s1">&#39;end&#39;</span><span class="p">)</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">Nids</span><span class="p">)</span>
+    <span class="n">sample_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">p</span><span class="p">,</span><span class="n">k</span> <span class="ow">in</span> <span class="n">SAMPLING_PARS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">pmu</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">vs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="n">pmu</span>
+                <span class="n">vs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="n">sample_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">vs</span>
+
+
+    <span class="n">sample_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">parameter_dict</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">conf</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">getID</span><span class="p">(</span><span class="n">mID</span><span class="p">)</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">get_sample_bout_distros</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">refDataset</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+    <span class="n">ms</span> <span class="o">=</span> <span class="n">generate_larvae</span><span class="p">(</span><span class="n">Nids</span><span class="p">,</span> <span class="n">sample_dict</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+    <span class="n">ps</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">e</span><span class="p">[[</span><span class="s1">&#39;initial_x&#39;</span><span class="p">,</span> <span class="s1">&#39;initial_y&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ors</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="s1">&#39;initial_front_orientation&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">ors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">high</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">ids</span><span class="p">,</span> <span class="n">ps</span><span class="p">,</span> <span class="n">ors</span><span class="p">,</span> <span class="n">ms</span></div>
+
+
+<div class="viewcode-block" id="generate_agentGroup"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/sampling.html#larvaworld.lib.util.sampling.generate_agentGroup">[docs]</a><span class="k">def</span> <span class="nf">generate_agentGroup</span><span class="p">(</span><span class="n">gID</span><span class="p">,</span> <span class="n">Nids</span><span class="p">,</span><span class="n">imitation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">generate_xyNor_distro</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">imitation</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="n">ps</span><span class="p">,</span> <span class="n">ors</span> <span class="o">=</span> <span class="n">generate_xyNor_distro</span><span class="p">(</span><span class="n">distribution</span><span class="p">)</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="n">ps</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nids</span><span class="p">)]</span>
+            <span class="n">ors</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nids</span><span class="p">)]</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">gID</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nids</span><span class="p">)]</span>
+        <span class="n">all_pars</span><span class="p">,</span> <span class="n">refID</span> <span class="o">=</span> <span class="n">sampleRef</span><span class="p">(</span><span class="n">Nids</span><span class="o">=</span><span class="n">Nids</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ids</span><span class="p">,</span> <span class="n">ps</span><span class="p">,</span> <span class="n">ors</span><span class="p">,</span> <span class="n">all_pars</span> <span class="o">=</span> <span class="n">imitateRef</span><span class="p">(</span><span class="n">Nids</span><span class="o">=</span><span class="n">Nids</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ids</span><span class="p">,</span> <span class="n">ps</span><span class="p">,</span> <span class="n">ors</span><span class="p">,</span> <span class="n">all_pars</span></div>
+
+
+
+
+<div class="viewcode-block" id="generate_agentConfs"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/sampling.html#larvaworld.lib.util.sampling.generate_agentConfs">[docs]</a><span class="k">def</span> <span class="nf">generate_agentConfs</span><span class="p">(</span><span class="n">larva_groups</span><span class="p">,</span> <span class="n">parameter_dict</span><span class="o">=</span><span class="p">{}):</span>
+    <span class="n">agent_confs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">gID</span><span class="p">,</span> <span class="n">gConf</span> <span class="ow">in</span> <span class="n">larva_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">gConf</span><span class="o">.</span><span class="n">distribution</span>
+        <span class="n">ids</span><span class="p">,</span> <span class="n">ps</span><span class="p">,</span> <span class="n">ors</span><span class="p">,</span> <span class="n">all_pars</span> <span class="o">=</span> <span class="n">generate_agentGroup</span><span class="p">(</span><span class="n">gID</span><span class="o">=</span><span class="n">gID</span><span class="p">,</span> <span class="n">Nids</span><span class="o">=</span><span class="n">d</span><span class="o">.</span><span class="n">N</span><span class="p">,</span>
+                                                     <span class="n">m</span><span class="o">=</span><span class="n">gConf</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">refID</span><span class="o">=</span><span class="n">gConf</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span>
+                                                     <span class="n">imitation</span><span class="o">=</span><span class="n">gConf</span><span class="o">.</span><span class="n">imitation</span><span class="p">,</span>
+                                                     <span class="n">distribution</span> <span class="o">=</span> <span class="n">d</span><span class="p">,</span>
+                                                     <span class="n">parameter_dict</span><span class="o">=</span><span class="n">parameter_dict</span><span class="p">)</span>
+
+        <span class="n">gConf</span><span class="o">.</span><span class="n">ids</span> <span class="o">=</span> <span class="n">ids</span>
+        <span class="k">for</span> <span class="nb">id</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">pars</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">ps</span><span class="p">,</span> <span class="n">ors</span><span class="p">,</span> <span class="n">all_pars</span><span class="p">):</span>
+            <span class="n">conf</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;pos&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">,</span>
+                <span class="s1">&#39;orientation&#39;</span><span class="p">:</span> <span class="n">o</span><span class="p">,</span>
+                <span class="s1">&#39;default_color&#39;</span><span class="p">:</span> <span class="n">gConf</span><span class="o">.</span><span class="n">default_color</span><span class="p">,</span>
+                <span class="s1">&#39;unique_id&#39;</span><span class="p">:</span> <span class="nb">id</span><span class="p">,</span>
+                <span class="c1"># &#39;larva_pars&#39;: pars,</span>
+                <span class="s1">&#39;group&#39;</span><span class="p">:</span> <span class="n">gID</span><span class="p">,</span>
+                <span class="s1">&#39;odor&#39;</span><span class="p">:</span> <span class="n">gConf</span><span class="o">.</span><span class="n">odor</span><span class="p">,</span>
+
+                <span class="s1">&#39;life_history&#39;</span><span class="p">:</span> <span class="n">gConf</span><span class="o">.</span><span class="n">life_history</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">pars</span>
+            <span class="p">}</span>
+
+            <span class="n">agent_confs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">conf</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">agent_confs</span></div>
+
+
+<span class="c1"># def generate_sourceConfs(groups={}, units={}) :</span>
+<span class="c1">#     from larvaworld.lib.param import generate_xy_distro</span>
+<span class="c1">#</span>
+<span class="c1">#     confs = []</span>
+<span class="c1">#     for gID, gConf in groups.items():</span>
+<span class="c1">#         ps = generate_xy_distro(**gConf.distribution)</span>
+<span class="c1">#         gConf.pop(&#39;distribution&#39;)</span>
+<span class="c1">#         for i, p in enumerate(ps):</span>
+<span class="c1">#             conf = {&#39;unique_id&#39;: f&#39;{gID}_{i}&#39;, &#39;pos&#39;: p, &#39;group&#39;: gID, **gConf}</span>
+<span class="c1">#             confs.append(conf)</span>
+<span class="c1">#     for uID, uConf in units.items():</span>
+<span class="c1">#         conf = {&#39;unique_id&#39;: uID, **uConf}</span>
+<span class="c1">#         confs.append(conf)</span>
+<span class="c1">#     return confs</span>
+
+
+<div class="viewcode-block" id="sim_models"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/sampling.html#larvaworld.lib.util.sampling.sim_models">[docs]</a><span class="k">def</span> <span class="nf">sim_models</span><span class="p">(</span><span class="n">mIDs</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dataset_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">lgs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mIDs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">colors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="n">colors</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">N_colors</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dataset_ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dataset_ids</span> <span class="o">=</span> <span class="n">mIDs</span>
+    <span class="k">if</span> <span class="n">lgs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">lgs</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">N</span>
+    <span class="k">if</span> <span class="n">data_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dirs</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">N</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dirs</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">data_dir</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">dID</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">dID</span> <span class="ow">in</span> <span class="n">dataset_ids</span><span class="p">]</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="p">[</span><span class="n">sim_model</span><span class="p">(</span><span class="n">mID</span><span class="o">=</span><span class="n">mIDs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">dataset_id</span><span class="o">=</span><span class="n">dataset_ids</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">lg</span><span class="o">=</span><span class="n">lgs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">dir</span><span class="o">=</span><span class="n">dirs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">ds</span></div>
+
+
+<div class="viewcode-block" id="sim_model"><a class="viewcode-back" href="../../../../content/larvaworld/lib/util/sampling.html#larvaworld.lib.util.sampling.sim_model">[docs]</a><span class="k">def</span> <span class="nf">sim_model</span><span class="p">(</span><span class="n">mID</span><span class="p">,</span> <span class="n">Nids</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">refID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">refDataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sample_ks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_LarvaConfDict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">imitation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="n">tor_durs</span><span class="o">=</span><span class="p">[],</span><span class="n">dsp_starts</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dsp_stops</span><span class="o">=</span><span class="p">[</span><span class="mi">40</span><span class="p">],</span> <span class="n">enrichment</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="n">lg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">env_params</span><span class="o">=</span><span class="p">{},</span> <span class="nb">dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">16</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;blue&#39;</span><span class="p">,</span> <span class="n">dataset_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">use_LarvaConfDict</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">if</span> <span class="n">refID</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">refID</span> <span class="o">=</span> <span class="n">refDataset</span><span class="o">.</span><span class="n">refID</span>
+    <span class="k">if</span> <span class="n">dataset_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dataset_id</span> <span class="o">=</span> <span class="n">mID</span>
+    <span class="k">if</span> <span class="n">lg</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+
+        <span class="n">lg</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">lg</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">refID</span><span class="p">,</span> <span class="n">mID</span><span class="o">=</span><span class="n">mID</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="n">Nids</span><span class="p">,</span> <span class="n">expand</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="c1"># confs=generate_agentConfs(lg)</span>
+
+
+    <span class="n">Nticks</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">duration</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">/</span> <span class="n">dt</span><span class="p">)</span>
+    <span class="n">ids</span><span class="p">,</span> <span class="n">p0s</span><span class="p">,</span> <span class="n">fo0s</span><span class="p">,</span> <span class="n">ms</span> <span class="o">=</span> <span class="n">generate_agentGroup</span><span class="p">(</span><span class="n">gID</span><span class="o">=</span><span class="n">mID</span><span class="p">,</span> <span class="n">mID</span><span class="o">=</span><span class="n">mID</span><span class="p">,</span> <span class="n">refID</span><span class="o">=</span><span class="n">refID</span><span class="p">,</span> <span class="n">Nids</span><span class="o">=</span><span class="n">Nids</span><span class="p">,</span>
+                                                 <span class="n">refDataset</span><span class="o">=</span><span class="n">refDataset</span><span class="p">,</span> <span class="n">sample_ks</span><span class="o">=</span><span class="n">sample_ks</span><span class="p">,</span>
+                                                 <span class="n">imitation</span><span class="o">=</span><span class="n">imitation</span><span class="p">)</span>
+    <span class="c1"># ids, p0s, fo0s, ms = generate_agentGroup(gID=mID, mID=mID, Nids=d.N,</span>
+    <span class="c1">#                                              m=gConf.model, refID=gConf.sample,</span>
+    <span class="c1">#                                              imitation=gConf.imitation,</span>
+    <span class="c1">#                                              distribution=d,</span>
+    <span class="c1">#                                              parameter_dict=parameter_dict)</span>
+
+
+    <span class="n">s</span><span class="p">,</span> <span class="n">e</span> <span class="o">=</span> <span class="n">sim_multi_agents</span><span class="p">(</span><span class="n">Nticks</span><span class="p">,</span> <span class="n">Nids</span><span class="p">,</span> <span class="n">ms</span><span class="p">,</span> <span class="n">dataset_id</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">,</span> <span class="n">p0s</span><span class="o">=</span><span class="n">p0s</span><span class="p">,</span> <span class="n">fo0s</span><span class="o">=</span><span class="n">fo0s</span><span class="p">)</span>
+    <span class="c1"># d = sim_model_dataset(ms, mID=mID, Nids=Nids, refID=refID, ids=ids, p0s=p0s, fo0s=fo0s, **kwargs)</span>
+    <span class="c1"># return d</span>
+
+
+
+
+
+<span class="c1"># def sim_model_dataset(ms, mID=None, env_params={}, dir=None, duration=3, dt=1 / 16, color=&#39;blue&#39;, dataset_id=None,</span>
+<span class="c1">#                       tor_durs=[],dsp_starts=[0], dsp_stops=[40], enrichment=True,</span>
+<span class="c1">#                       refID=None,Nids=1,lg=None,  ids=None, p0s=None, fo0s=None,</span>
+<span class="c1">#                       **kwargs):</span>
+
+
+
+    <span class="n">c_kws</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1"># &#39;load_data&#39;: False,</span>
+        <span class="s1">&#39;dir&#39;</span><span class="p">:</span> <span class="nb">dir</span><span class="p">,</span>
+        <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">dataset_id</span><span class="p">,</span>
+        <span class="c1"># &#39;metric_definition&#39;: g.enrichment.metric_definition,</span>
+        <span class="s1">&#39;larva_groups&#39;</span><span class="p">:</span> <span class="n">lg</span><span class="p">,</span>
+        <span class="s1">&#39;env_params&#39;</span><span class="p">:</span> <span class="n">env_params</span><span class="p">,</span>
+        <span class="s1">&#39;Npoints&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+        <span class="s1">&#39;Ncontour&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s1">&#39;fr&#39;</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">dt</span><span class="p">,</span>
+        <span class="c1"># &#39;mID&#39;: mID,</span>
+    <span class="p">}</span>
+
+
+    <span class="n">d</span> <span class="o">=</span> <span class="n">larvaworld</span><span class="o">.</span><span class="n">lib</span><span class="o">.</span><span class="n">LarvaDataset</span><span class="p">(</span><span class="o">**</span><span class="n">c_kws</span><span class="p">,</span> <span class="n">load_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+
+    <span class="n">d</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">e</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">enrichment</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">enrich</span><span class="p">(</span><span class="n">proc_keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;spatial&#39;</span><span class="p">,</span> <span class="s1">&#39;angular&#39;</span><span class="p">,</span> <span class="s1">&#39;dispersion&#39;</span><span class="p">,</span> <span class="s1">&#39;tortuosity&#39;</span><span class="p">],</span>
+                      <span class="n">anot_keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bout_detection&#39;</span><span class="p">,</span> <span class="s1">&#39;bout_distribution&#39;</span><span class="p">,</span> <span class="s1">&#39;interference&#39;</span><span class="p">],</span>
+                      <span class="n">dsp_starts</span><span class="o">=</span><span class="n">dsp_starts</span><span class="p">,</span> <span class="n">dsp_stops</span><span class="o">=</span><span class="n">dsp_stops</span><span class="p">,</span> <span class="n">tor_durs</span><span class="o">=</span><span class="n">tor_durs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">d</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">sim_single_agent</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">Nticks</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">df_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">p0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fo0</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">larvaworld.lib.model.modules.locomotor</span> <span class="kn">import</span> <span class="n">DefaultLocomotor</span>
+    <span class="kn">from</span> <span class="nn">larvaworld.lib.model.agents._larva_sim</span> <span class="kn">import</span> <span class="n">BaseController</span>
+    <span class="k">if</span> <span class="n">fo0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+        <span class="n">fo0</span><span class="o">=</span><span class="mf">0.0</span>
+    <span class="k">if</span> <span class="n">p0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+        <span class="n">p0</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">x0</span><span class="p">,</span><span class="n">y0</span><span class="o">=</span><span class="n">p0</span>
+    <span class="k">if</span> <span class="n">df_columns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">df_columns</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">([</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;fo&#39;</span><span class="p">,</span> <span class="s1">&#39;ro&#39;</span><span class="p">,</span> <span class="s1">&#39;fov&#39;</span><span class="p">,</span> <span class="s1">&#39;I_T&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="s1">&#39;A_T&#39;</span><span class="p">])</span>
+    <span class="n">AA</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="n">Nticks</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_columns</span><span class="p">)])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">controller</span> <span class="o">=</span> <span class="n">BaseController</span><span class="p">(</span><span class="o">**</span><span class="n">m</span><span class="o">.</span><span class="n">physics</span><span class="p">)</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">length</span>
+    <span class="n">bend_errors</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">DL</span> <span class="o">=</span> <span class="n">DefaultLocomotor</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">m</span><span class="o">.</span><span class="n">brain</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">qq</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="n">DL</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">A_in</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="n">l</span><span class="p">)</span>
+    <span class="n">b</span><span class="p">,</span> <span class="n">fo</span><span class="p">,</span> <span class="n">ro</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">fo0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nticks</span><span class="p">):</span>
+        <span class="n">lin</span><span class="p">,</span> <span class="n">ang</span><span class="p">,</span> <span class="n">feed</span> <span class="o">=</span> <span class="n">DL</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">A_in</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="n">l</span><span class="p">)</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">lin</span> <span class="o">*</span> <span class="n">controller</span><span class="o">.</span><span class="n">lin_vel_coef</span>
+        <span class="n">fov</span> <span class="o">+=</span> <span class="p">(</span><span class="o">-</span><span class="n">controller</span><span class="o">.</span><span class="n">ang_damping</span> <span class="o">*</span> <span class="n">fov</span> <span class="o">-</span> <span class="n">controller</span><span class="o">.</span><span class="n">body_spring_k</span> <span class="o">*</span> <span class="n">b</span> <span class="o">+</span> <span class="n">ang</span> <span class="o">*</span> <span class="n">controller</span><span class="o">.</span><span class="n">torque_coef</span><span class="p">)</span> <span class="o">*</span> <span class="n">dt</span>
+
+        <span class="n">d_or</span> <span class="o">=</span> <span class="n">fov</span> <span class="o">*</span> <span class="n">dt</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">d_or</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">:</span>
+            <span class="n">bend_errors</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">v</span> <span class="o">*</span> <span class="n">dt</span>
+        <span class="n">d_ro</span> <span class="o">=</span> <span class="n">controller</span><span class="o">.</span><span class="n">compute_delta_rear_angle</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">wrap_angle_to_0</span><span class="p">(</span><span class="n">b</span> <span class="o">+</span> <span class="n">d_or</span> <span class="o">-</span> <span class="n">d_ro</span><span class="p">)</span>
+        <span class="n">fo</span> <span class="o">=</span> <span class="p">(</span><span class="n">fo</span> <span class="o">+</span> <span class="n">d_or</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="n">ro</span> <span class="o">=</span> <span class="p">(</span><span class="n">ro</span> <span class="o">+</span> <span class="n">d_ro</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">+=</span> <span class="n">dst</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">fo</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">+=</span> <span class="n">dst</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">fo</span><span class="p">)</span>
+
+        <span class="n">AA</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="n">fo</span><span class="p">,</span> <span class="n">ro</span><span class="p">,</span> <span class="n">fov</span><span class="p">,</span> <span class="n">DL</span><span class="o">.</span><span class="n">turner</span><span class="o">.</span><span class="n">input</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">DL</span><span class="o">.</span><span class="n">turner</span><span class="o">.</span><span class="n">output</span><span class="p">]</span>
+
+    <span class="n">AA</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">AA</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">AA</span>
+
+
+<span class="k">def</span> <span class="nf">sim_multi_agents</span><span class="p">(</span><span class="n">Nticks</span><span class="p">,</span> <span class="n">Nids</span><span class="p">,</span> <span class="n">ms</span><span class="p">,</span> <span class="n">group_id</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">p0s</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fo0s</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">df_columns</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">([</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;fo&#39;</span><span class="p">,</span> <span class="s1">&#39;ro&#39;</span><span class="p">,</span> <span class="s1">&#39;fov&#39;</span><span class="p">,</span> <span class="s1">&#39;I_T&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="s1">&#39;A_T&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">group_id</span><span class="si">}{</span><span class="n">j</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nids</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">p0s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">p0s</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nids</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">fo0s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fo0s</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Nids</span><span class="p">)]</span>
+    <span class="n">my_index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">Nticks</span><span class="p">),</span> <span class="n">ids</span><span class="p">],</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Step&#39;</span><span class="p">,</span> <span class="s1">&#39;AgentID&#39;</span><span class="p">])</span>
+    <span class="n">AA</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="n">Nticks</span><span class="p">,</span> <span class="n">Nids</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_columns</span><span class="p">)])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="nb">id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ids</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">ms</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+        <span class="n">AA</span><span class="p">[:,</span> <span class="n">j</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">sim_single_agent</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">Nticks</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">dt</span><span class="p">,</span> <span class="n">df_columns</span><span class="o">=</span><span class="n">df_columns</span><span class="p">,</span> <span class="n">p0</span><span class="o">=</span><span class="n">p0s</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">fo0</span><span class="o">=</span><span class="n">fo0s</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+
+    <span class="n">AA</span> <span class="o">=</span> <span class="n">AA</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">Nticks</span> <span class="o">*</span> <span class="n">Nids</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_columns</span><span class="p">))</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">AA</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">my_index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">df_columns</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="n">e</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">ids</span><span class="p">)</span>
+    <span class="n">e</span><span class="p">[</span><span class="s1">&#39;cum_dur&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Nticks</span> <span class="o">*</span> <span class="n">dt</span>
+    <span class="n">e</span><span class="p">[</span><span class="s1">&#39;num_ticks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Nticks</span>
+    <span class="n">e</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">body</span><span class="o">.</span><span class="n">initial_length</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ms</span><span class="p">]</span>
+
+    <span class="kn">from</span> <span class="nn">larvaworld.lib.process.spatial</span> <span class="kn">import</span> <span class="n">scale_to_length</span>
+    <span class="n">scale_to_length</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">s</span><span class="p">,</span> <span class="n">e</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

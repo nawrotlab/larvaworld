@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ABM_model &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="base_run" href="base_run.html" />
+    <link rel="prev" title="Simulation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">Modeling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../param/index.html">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plot/index.html">Plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../process/index.html">Data management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../screen/index.html">Visualization</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Simulation</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">ABM_model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base_run.html">base_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="batch_run.html">batch_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset_replay.html">dataset_replay</a></li>
+<li class="toctree-l4"><a class="reference internal" href="genetic_algorithm.html">genetic_algorithm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="model_evaluation.html">model_evaluation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="single_run.html">single_run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="subprocess_run.html">subprocess_run</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../util/index.html">Dataset fitting &amp; sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Simulation</a></li>
+      <li class="breadcrumb-item active">ABM_model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/sim/ABM_model.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.sim.ABM_model">
+<span id="abm-model"></span><h1>ABM_model<a class="headerlink" href="#module-larvaworld.lib.sim.ABM_model" title="Permalink to this heading"></a></h1>
+<section id="abmodel">
+<h2>ABModel<a class="headerlink" href="#abmodel" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.ABModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.sim.ABM_model.</span></span><span class="sig-name descname"><span class="pre">ABModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#ABModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.ABModel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.sim.ABM_model.BasicABModel" title="larvaworld.lib.sim.ABM_model.BasicABModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicABModel</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">SimConfigurationParams</span></code></p>
+<p>params(parameters=Parameter, runtype=Selector, multicore=Boolean, offline=Boolean, store_data=Boolean, dir=String, id=Parameter, bend=Selector, front_body_ratio=Magnitude, front_vector=PositiveIntegerRangeOrdered, rear_vector=IntegerRangeOrdered, use_component_vel=Boolean, point=String, point_idx=Integer, Ncontour=PositiveInteger, Npoints=PositiveInteger, XY_unit=Selector, Nsteps=OptionalPositiveInteger, duration=OptionalPositiveNumber, constant_framerate=Boolean, dt=PositiveNumber, fr=PositiveNumber, Box2D=Boolean, larva_collisions=Boolean, name=String)
+[1;32mParameters of ‘ABModel’
+=======================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                     Value                   Type                Bounds       Mode  [0m</p>
+<p>Box2D                    False                 Boolean               (0, 1)       V RW
+larva_collisions          True                 Boolean               (0, 1)       V RW
+fr                         10               PositiveNumber         (0.0,[1;36m 100[0m)     V RW
+dt                        0.1               PositiveNumber         (0.0,[1;36m 1.0[0m)     V RW
+constant_framerate        True                 Boolean               (0, 1)       V RW
+duration                  None          OptionalPositiveNumber    (0.0,[1;36m 100.0[0m)  V RW AN
+Nsteps                    None         OptionalPositiveInteger     (0, None)    V RW AN
+XY_unit                   ‘m’                  Selector                           V RW
+Npoints                    3               PositiveInteger          (0,[1;36m 20[0m)       V RW
+Ncontour                   0               PositiveInteger          (0,[1;36m 100[0m)      V RW
+point_idx                  -1                  Integer              (-1,[1;36m 20[0m)      V RW
+point                      ‘’                   String                            V RW
+bend                 ‘from_vectors’            Selector                           V RW
+front_vector             (1, 2)      PositiveIntegerRangeOrdered    (0,[1;36m 12[0m)       V RW
+rear_vector             (-2, -1)         IntegerRangeOrdered       ([1;36m-12[0m,[1;36m 12[0m)      V RW
+front_body_ratio          0.5                 Magnitude            (0.0, 1.0)     V RW
+use_component_vel        False                 Boolean               (0, 1)       V RW
+id                        None                Parameter                         V RW AN
+dir                       None                  String                          V RW AN
+offline                  False                 Boolean               (0, 1)       V RW
+multicore                False                 Boolean               (0, 1)       V RW
+store_data                True                 Boolean               (0, 1)       V RW
+runtype                  ‘Exp’                 Selector                           V RW
+parameters                None                Parameter                         V RW AN</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mBox2D:              Whether to use the Box2D physics engine or not.[0m
+[1;31mlarva_collisions:   Whether to allow overlap between larva bodies.[0m
+[1;34mfr:                 The tracking/simulation framerate (inverse of timestep) in Hz.[0m
+[1;31mdt:                 The tracking/simulation timestep (inverse of tracking framerate) in seconds.[0m
+[1;34mconstant_framerate: Whether the tracking framerate is constant.[0m
+[1;31mduration:           The duration of the simulation in minutes.[0m
+[1;34mNsteps:             The number of simulation timesteps.[0m
+[1;31mXY_unit:            The spatial unit of the XY coordinate data[0m
+[1;34mNpoints:            The number of points tracked along the larva midline.[0m
+[1;31mNcontour:           The number of points tracked around the larva contour.[0m
+[1;34mpoint_idx:          Index of midline point to use as the larva spatial position. Default is None meaning use the centroid.[0m
+[1;31mpoint:              Midline point to use as the larva spatial position. Default is centroid.[0m
+[1;34mbend:               Whether bending angle is computed as a sum of sequential segmental angles or as the angle between front and rear body vectors.[0m
+[1;31mfront_vector:       The initial &amp; final segment of the front body vector.[0m
+[1;34mrear_vector:        The initial &amp; final segment of the rear body vector.[0m
+[1;31mfront_body_ratio:   The fraction of the body considered front, relevant for bend computation from angles.[0m
+[1;34muse_component_vel:  Whether to use the component velocity ralative to the axis of forward motion.[0m
+[1;31mid:                 ID of the simulation. If not specified,set according to runtype and experiment.[0m
+[1;34mdir:                The directory to store data[0m
+[1;31moffline:            Whether to launch a full Larvaworld environment[0m
+[1;34mmulticore:          Whether to use multiple cores[0m
+[1;31mstore_data:         Whether to store the simulation data[0m
+[1;34mruntype:            The simulation mode[0m
+[1;31mparameters:         &lt; No docstring available &gt;[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.ABModel.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'Box2D':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'Ncontour':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'Npoints':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'Nsteps':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalPositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'XY_unit':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'bend':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'constant_framerate':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'dir':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'dt':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'duration':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalPositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'fr':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'front_body_ratio':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'front_vector':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRangeOrdered</span> <span class="pre">object&gt;,</span> <span class="pre">'id':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'larva_collisions':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'multicore':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'offline':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'parameters':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'point':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'point_idx':</span> <span class="pre">&lt;param.Integer</span> <span class="pre">object&gt;,</span> <span class="pre">'rear_vector':</span> <span class="pre">&lt;larvaworld.lib.param.custom.IntegerRangeOrdered</span> <span class="pre">object&gt;,</span> <span class="pre">'runtype':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'store_data':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'use_component_vel':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.ABModel.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.ABModel._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.ABModel._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.ABModel._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.ABModel._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.ABModel.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ABModel'</span></em><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.ABModel.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="basicabmodel">
+<h2>BasicABModel<a class="headerlink" href="#basicabmodel" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.sim.ABM_model.</span></span><span class="sig-name descname"><span class="pre">BasicABModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ABModel'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_run_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../model/object.html#larvaworld.lib.model.object.Object" title="larvaworld.lib.model.object.Object"><code class="xref py py-class docutils literal notranslate"><span class="pre">Object</span></code></a></p>
+<p>Basic Class for the Agent-based model
+Extends the agentpy Model class</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel._new_id">
+<span class="sig-name descname"><span class="pre">_new_id</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel._new_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel._new_id" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a new unique object id (int).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.as_function">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">as_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.as_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.as_function" title="Permalink to this definition"></a></dt>
+<dd><p>Converts the model into a function that can be used with the
+<a class="reference external" href="https://emaworkbench.readthedocs.io/">ema_workbench</a> library.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>**kwargs</strong> – Additional keyword arguments that will passed
+to the model in addition to the parameters.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The model as a function that takes
+parameter values as keyword arguments and
+returns a dictionary of reporters.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>function</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.create_output">
+<span class="sig-name descname"><span class="pre">create_output</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.create_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.create_output" title="Permalink to this definition"></a></dt>
+<dd><p>Generates a <code class="xref py py-class docutils literal notranslate"><span class="pre">DataDict</span></code> with dataframes of all recorded
+variables and reporters, which will be stored in <code class="xref py py-obj docutils literal notranslate"><span class="pre">Model.output</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.end">
+<span class="sig-name descname"><span class="pre">end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.end"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.end" title="Permalink to this definition"></a></dt>
+<dd><p>Defines the model’s actions after the last simulation step.
+Can be overwritten for final calculations and reporting.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.info">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">info</span></span><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.info" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.report">
+<span class="sig-name descname"><span class="pre">report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rep_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.report" title="Permalink to this definition"></a></dt>
+<dd><p>Reports a new simulation result.
+Reporters are meant to be ‘summary statistics’ or ‘evaluation measures’
+of the simulation as a whole, and only one value can be stored per run.
+In comparison, variables that are recorded with <code class="xref py py-func docutils literal notranslate"><span class="pre">Model.record()</span></code>
+can be recorded multiple times for each time-step and object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rep_keys</strong> (<em>str</em><em> or </em><em>list</em><em> of </em><em>str</em>) – Name(s) of the reporter(s) to be documented.</p></li>
+<li><p><strong>value</strong> (<em>int</em><em> or </em><em>float</em><em>, </em><em>optional</em>) – Value to be reported.
+The same value will be used for all <cite>rep_keys</cite>.
+If none is given, the values of object attributes
+with the same name as each rep_key will be used.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Store a reporter <cite>x</cite> with a value <cite>42</cite>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="mi">42</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Define a custom model that stores a reporter <cite>sum_id</cite>
+with the sum of all agent ids at the end of the simulation:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">ap</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">agents</span> <span class="o">=</span> <span class="n">ap</span><span class="o">.</span><span class="n">AgentList</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">agents</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s1">&#39;sum_id&#39;</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Running an experiment over different numbers of agents for this
+model yields the following datadict of reporters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sample</span> <span class="o">=</span> <span class="n">ap</span><span class="o">.</span><span class="n">sample</span><span class="p">({</span><span class="s1">&#39;agents&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)},</span> <span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">exp</span> <span class="o">=</span> <span class="n">ap</span><span class="o">.</span><span class="n">Experiment</span><span class="p">(</span><span class="n">MyModel</span><span class="p">,</span> <span class="n">sample</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span> <span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">results</span><span class="o">.</span><span class="n">reporters</span>
+<span class="go">        sum_id</span>
+<span class="go">run_id</span>
+<span class="go">0            1</span>
+<span class="go">1            3</span>
+<span class="go">2            6</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.run" title="Permalink to this definition"></a></dt>
+<dd><p>Executes the simulation of the model.
+Can also be used to continue a partly-run simulation
+for a given number of additional steps.</p>
+<p>It starts by calling <code class="xref py py-func docutils literal notranslate"><span class="pre">Model.run_setup()</span></code> and then calls
+<code class="xref py py-func docutils literal notranslate"><span class="pre">Model.run_step()</span></code> until the method <code class="xref py py-func docutils literal notranslate"><span class="pre">Model.stop()</span></code> is called
+or <cite>steps</cite> is reached. After that, <code class="xref py py-func docutils literal notranslate"><span class="pre">Model.end()</span></code> and
+<code class="xref py py-func docutils literal notranslate"><span class="pre">Model.create_output()</span></code> are called. The simulation results can
+be found in <code class="xref py py-attr docutils literal notranslate"><span class="pre">Model.output</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>steps</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of (additional) steps for the simulation to run.
+If passed, the parameter ‘Model.p.steps’ will be ignored.
+The simulation can still be stopped with :func:’Model.stop’.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em>, </em><em>optional</em>) – Seed to initialize the model’s random number generators.
+If none is given, the parameter ‘Model.p.seed’ is used.
+If there is no such parameter, a random seed will be used.
+For a partly-run simulation, this argument will be ignored.</p></li>
+<li><p><strong>display</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display simulation progress (default True).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Recorded variables and reporters.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>DataDict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.set_parameters">
+<span class="sig-name descname"><span class="pre">set_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.set_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.set_parameters" title="Permalink to this definition"></a></dt>
+<dd><p>Adds and/or updates the parameters of the model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.setup">
+<span class="sig-name descname"><span class="pre">setup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.setup" title="Permalink to this definition"></a></dt>
+<dd><p>Defines the model’s actions before the first simulation step.
+Can be overwritten to initiate agents and environments.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.sim_reset">
+<span class="sig-name descname"><span class="pre">sim_reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.sim_reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.sim_reset" title="Permalink to this definition"></a></dt>
+<dd><p>Reset model to initial conditions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.sim_setup">
+<span class="sig-name descname"><span class="pre">sim_setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.sim_setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.sim_setup" title="Permalink to this definition"></a></dt>
+<dd><p>Prepares time-step 0 of the simulation.
+Initiates (additional) steps and the two random number generators,
+and then calls <code class="xref py py-func docutils literal notranslate"><span class="pre">Model.setup()</span></code> and <code class="xref py py-func docutils literal notranslate"><span class="pre">Model.update()</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.sim_step">
+<span class="sig-name descname"><span class="pre">sim_step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.sim_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.sim_step" title="Permalink to this definition"></a></dt>
+<dd><p>Proceeds the simulation by one step, incrementing <cite>Model.t</cite> by 1
+and then calling <code class="xref py py-func docutils literal notranslate"><span class="pre">Model.step()</span></code> and <code class="xref py py-func docutils literal notranslate"><span class="pre">Model.update()</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.step" title="Permalink to this definition"></a></dt>
+<dd><p>Defines the model’s actions
+during each simulation step (excluding <cite>t==0</cite>).
+Can be overwritten to define the models’ main dynamics.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.stop">
+<span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.stop" title="Permalink to this definition"></a></dt>
+<dd><p>Stops <code class="xref py py-meth docutils literal notranslate"><span class="pre">Model.run()</span></code> during an active simulation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.sim.ABM_model.BasicABModel.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/sim/ABM_model.html#BasicABModel.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.sim.ABM_model.BasicABModel.update" title="Permalink to this definition"></a></dt>
+<dd><p>Defines the model’s actions
+after each simulation step (including <cite>t==0</cite>).
+Can be overwritten for the recording of dynamic variables.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Simulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="base_run.html" class="btn btn-neutral float-right" title="base_run" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aux &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="bar" href="bar.html" />
+    <link rel="prev" title="Plotting" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">Modeling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../param/index.html">Parameters</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Plotting</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">aux</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bar.html">bar</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html">Plotting template classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bearing.html">bearing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="box.html">box</a></li>
+<li class="toctree-l4"><a class="reference internal" href="deb.html">deb</a></li>
+<li class="toctree-l4"><a class="reference internal" href="epochs.html">epochs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="freq.html">freq</a></li>
+<li class="toctree-l4"><a class="reference internal" href="grid.html">grid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hist.html">hist</a></li>
+<li class="toctree-l4"><a class="reference internal" href="metric.html">metric</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scape.html">scape</a></li>
+<li class="toctree-l4"><a class="reference internal" href="stridecycle.html">stridecycle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="table.html">table</a></li>
+<li class="toctree-l4"><a class="reference internal" href="time.html">time</a></li>
+<li class="toctree-l4"><a class="reference internal" href="traj.html">traj</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../process/index.html">Data management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../screen/index.html">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sim/index.html">Simulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../util/index.html">Dataset fitting &amp; sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Plotting</a></li>
+      <li class="breadcrumb-item active">aux</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/plot/aux.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.plot.aux">
+<span id="aux"></span><h1>aux<a class="headerlink" href="#module-larvaworld.lib.plot.aux" title="Permalink to this heading"></a></h1>
+<section id="annotate-plot">
+<h2>annotate_plot<a class="headerlink" href="#annotate-plot" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.annotate_plot">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">annotate_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_ns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#annotate_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.annotate_plot" title="Permalink to this definition"></a></dt>
+<dd><p>Annotate a plot with Mann-Whitney U test p-values.</p>
+<p>Parameters:
+- data: DataFrame</p>
+<blockquote>
+<div><p>The input data.</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>x: str</dt><dd><p>The column name for the x-axis variable.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>y: str</dt><dd><p>The column name for the y-axis variable.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>hue: str or None</dt><dd><p>The column name for grouping data by hue (optional).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>show_ns: bool</dt><dd><p>Whether to display annotations for non-significant comparisons (default: True).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>target_only: Any or None</dt><dd><p>Specify a target value for comparisons (optional).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs: keyword arguments</dt><dd><p>Additional arguments for annotation customization.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Returns:
+- None</p>
+</dd></dl>
+
+</section>
+<section id="circnarrow">
+<h2>circNarrow<a class="headerlink" href="#circnarrow" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.circNarrow">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">circNarrow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nbins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#circNarrow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.circNarrow" title="Permalink to this definition"></a></dt>
+<dd><p>Create a circular histogram with an arrow indicator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ax</strong> (<em>matplotlib.axes._subplots.PolarAxesSubplot</em>) – Axis instance created with subplot_kw=dict(projection=’polar’).</p></li>
+<li><p><strong>data</strong> (<em>array</em>) – Angles to plot, expected in units of radians.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – The transparency of the circular histogram and arrow.</p></li>
+<li><p><strong>label</strong> (<em>str</em>) – The label for the circular histogram.</p></li>
+<li><p><strong>color</strong> (<em>str</em>) – The color of the circular histogram and arrow.</p></li>
+<li><p><strong>Nbins</strong> (<em>int</em><em>, </em><em>optional</em>) – Defines the number of equal-width bins in the range. The default is 16.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="circular-hist">
+<h2>circular_hist<a class="headerlink" href="#circular-hist" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.circular_hist">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">circular_hist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">density</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gaps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#circular_hist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.circular_hist" title="Permalink to this definition"></a></dt>
+<dd><p>Produce a circular histogram of angles on ax.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ax</strong> (<em>matplotlib.axes._subplots.PolarAxesSubplot</em>) – axis instance created with subplot_kw=dict(projection=’polar’).</p></li>
+<li><p><strong>x</strong> (<em>array</em>) – Angles to plot, expected in units of radians.</p></li>
+<li><p><strong>bins</strong> (<em>int</em><em>, </em><em>optional</em>) – Defines the number of equal-width bins in the range. The default is 16.</p></li>
+<li><p><strong>density</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True plot frequency proportional to area. If False plot frequency
+proportional to radius. The default is True.</p></li>
+<li><p><strong>offset</strong> (<em>float</em><em>, </em><em>optional</em>) – Sets the offset for the location of the 0 direction in units of
+radians. The default is 0.</p></li>
+<li><p><strong>gaps</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to allow gaps between bins. When gaps = False the bins are
+forced to partition the entire [-pi, pi] range. The default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>n</strong> (<em>array or list of arrays</em>) – The number of values in each bin.</p></li>
+<li><p><strong>bins</strong> (<em>array</em>) – The edges of the bins.</p></li>
+<li><p><strong>patches</strong> (<cite>.BarContainer</cite> or list of a single <cite>.Polygon</cite>) – Container of individual artists used to create the histogram
+or list of such containers if there are multiple input datasets.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="confidence-ellipse">
+<h2>confidence_ellipse<a class="headerlink" href="#confidence-ellipse" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.confidence_ellipse">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">confidence_ellipse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_std</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">facecolor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'none'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#confidence_ellipse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.confidence_ellipse" title="Permalink to this definition"></a></dt>
+<dd><p>Create a plot of the covariance confidence ellipse of <em>x</em> and <em>y</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n</em><em>, </em><em>)</em>) – Input data.</p></li>
+<li><p><strong>y</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>n</em><em>, </em><em>)</em>) – Input data.</p></li>
+<li><p><strong>ax</strong> (<em>matplotlib.axes.Axes</em>) – The axes object_class to draw the ellipse into.</p></li>
+<li><p><strong>n_std</strong> (<em>float</em>) – The number of standard deviations to determine the ellipse’sigma radiuses.</p></li>
+<li><p><strong>**kwargs</strong> – Forwarded to <cite>~matplotlib.patches.Ellipse</cite></p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>matplotlib.patches.Ellipse</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="configure-subplot-grid">
+<h2>configure_subplot_grid<a class="headerlink" href="#configure-subplot-grid" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.configure_subplot_grid">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">configure_subplot_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">h</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sharex</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sharey</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ncols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nrows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nrows_coef</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#configure_subplot_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.configure_subplot_grid" title="Permalink to this definition"></a></dt>
+<dd><p>Calculate the number of rows and columns for arranging N elements in a grid and configure subplot grid parameters.</p>
+<p>Parameters:
+- N: int or None</p>
+<blockquote>
+<div><p>Total number of elements (optional).</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>wh: float or None</dt><dd><p>Width and height for each subplot (optional).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>w: float</dt><dd><p>Width for each subplot when wh is not specified (default: 8).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>h: float</dt><dd><p>Height for each subplot when wh is not specified (default: 8).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>sharex: bool</dt><dd><p>Share the x-axis among subplots (default: False).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>sharey: bool</dt><dd><p>Share the y-axis among subplots (default: False).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Ncols: int or None</dt><dd><p>Number of columns for the subplot grid (optional).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Nrows: int or None</dt><dd><p>Number of rows for the subplot grid (optional).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Nrows_coef: int</dt><dd><p>Coefficient to adjust the number of rows (default: 1).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>figsize: tuple or None</dt><dd><p>Figure size (optional).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs: keyword arguments</dt><dd><p>Additional keyword arguments to be passed to the subplot creation function.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Returns:
+- kws: dict</p>
+<blockquote>
+<div><p>A dictionary of keyword arguments for configuring subplots.</p>
+</div></blockquote>
+</dd></dl>
+
+</section>
+<section id="dataset-legend">
+<h2>dataset_legend<a class="headerlink" href="#dataset-legend" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.dataset_legend">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">dataset_legend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">anchor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handlelength</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">handleheight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#dataset_legend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.dataset_legend" title="Permalink to this definition"></a></dt>
+<dd><p>Create a legend for all datasets with their specified labels and colors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>labels</strong> (<em>list</em>) – List of labels for each dataset.</p></li>
+<li><p><strong>colors</strong> (<em>list</em>) – List of colors corresponding to each dataset.</p></li>
+<li><p><strong>ax</strong> (<em>matplotlib.axes._axes.Axes</em><em>, </em><em>optional</em>) – The axes to which the legend should be added. If None, use the current axes.</p></li>
+<li><p><strong>anchor</strong> (<em>tuple</em><em>, </em><em>optional</em>) – Bounding box anchor coordinates for the legend. Default is None.</p></li>
+<li><p><strong>handlelength</strong> (<em>float</em><em>, </em><em>optional</em>) – The length of legend handles. Default is 0.5.</p></li>
+<li><p><strong>handleheight</strong> (<em>float</em><em>, </em><em>optional</em>) – The height of legend handles. Default is 0.5.</p></li>
+<li><p><strong>**kwargs</strong> – Additional keyword arguments to be passed to the legend.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The created legend.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib.legend.Legend</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="define-end-ks">
+<h2>define_end_ks<a class="headerlink" href="#define-end-ks" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.define_end_ks">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">define_end_ks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'basic'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#define_end_ks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.define_end_ks" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="dual-half-circle">
+<h2>dual_half_circle<a class="headerlink" href="#dual-half-circle" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.dual_half_circle">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">dual_half_circle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">center</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.04</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">angle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">90</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('W',</span> <span class="pre">'k')</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#dual_half_circle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.dual_half_circle" title="Permalink to this definition"></a></dt>
+<dd><p>Add two half circles to the axes ‘ax’ (or the current axes) with the specified face colors ‘colors’ rotated at ‘angle’ (in degrees).</p>
+<p>Parameters:
+- center: tuple</p>
+<blockquote>
+<div><p>Center coordinates of the half circles.</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>radius: float, optional (default: 0.04)</dt><dd><p>Radius of the half circles.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>angle: float, optional (default: 90)</dt><dd><p>Angle by which the half circles are rotated (in degrees).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>ax: matplotlib.axes.Axes, optional (default: None)</dt><dd><p>The axes to which the half circles will be added. If None, the current axes are used.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>colors: tuple, optional (default: (‘W’, ‘k’))</dt><dd><p>Face colors of the two half circles. The first color is for the left half, and the second color is for the right half.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs: keyword arguments</dt><dd><p>Additional keyword arguments to customize the appearance of the half circles.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Returns:
+- wedge_list: list</p>
+<blockquote>
+<div><p>A list containing the two half circle patches.</p>
+</div></blockquote>
+</dd></dl>
+
+</section>
+<section id="get-vs">
+<h2>get_vs<a class="headerlink" href="#get-vs" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.get_vs">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">get_vs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">par</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'step'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rad2deg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#get_vs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.get_vs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="label-diff">
+<h2>label_diff<a class="headerlink" href="#label-diff" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.label_diff">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">label_diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#label_diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.label_diff" title="Permalink to this definition"></a></dt>
+<dd><p>Label the difference between two data points with an annotation and an arrow.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> (<em>int</em>) – Index of the first data point.</p></li>
+<li><p><strong>j</strong> (<em>int</em>) – Index of the second data point.</p></li>
+<li><p><strong>text</strong> (<em>str</em>) – The text label for the difference annotation.</p></li>
+<li><p><strong>X</strong> (<em>list</em>) – List of x-coordinates for data points.</p></li>
+<li><p><strong>Y</strong> (<em>list</em>) – List of y-coordinates for data points.</p></li>
+<li><p><strong>ax</strong> (<em>matplotlib.axes._axes.Axes</em>) – The axes on which to annotate the difference.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="plot-mean-and-range">
+<h2>plot_mean_and_range<a class="headerlink" href="#plot-mean-and-range" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.plot_mean_and_range">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">plot_mean_and_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_shading</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linestyle</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'solid'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linewidth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#plot_mean_and_range"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.plot_mean_and_range" title="Permalink to this definition"></a></dt>
+<dd><p>Plot the mean and a shaded range (quantiles or confidence intervals).</p>
+<p>Parameters:
+- x: numpy.ndarray</p>
+<blockquote>
+<div><p>The x-axis values for the plot.</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>mean: numpy.ndarray or pandas.Series</dt><dd><p>The mean values to be plotted.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>lb: numpy.ndarray or pandas.Series</dt><dd><p>The lower bound of the range.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>ub: numpy.ndarray or pandas.Series</dt><dd><p>The upper bound of the range.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>axis: matplotlib.axes.Axes</dt><dd><p>The axis where the plot will be drawn.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>color_shading: str</dt><dd><p>The color of the shaded range.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>color_mean: str, optional</dt><dd><p>The color of the mean line. If None, it will be set to color_shading.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>label: str, optional</dt><dd><p>The label for the legend.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>linestyle: str, optional</dt><dd><p>The line style for the mean line (e.g., ‘solid’, ‘dashed’).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>linewidth: int, optional</dt><dd><p>The line width for the mean line.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Example usage:
+plot_mean_and_range(x_values, mean_values, lower_bound, upper_bound, plt.gca(), color_shading=’blue’, label=’Mean and Range’)</p>
+</dd></dl>
+
+</section>
+<section id="plot-quantiles">
+<h2>plot_quantiles<a class="headerlink" href="#plot-quantiles" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.plot_quantiles">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">plot_quantiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#plot_quantiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.plot_quantiles" title="Permalink to this definition"></a></dt>
+<dd><p>Plot quantiles or confidence intervals along with the mean.</p>
+<p>Parameters:
+- df: numpy.ndarray, pandas.DataFrame, or pandas.Series</p>
+<blockquote>
+<div><p>The data to compute quantiles from. If it’s a numpy.ndarray,
+quantiles are computed along the first axis (columns).
+If it’s a pandas.DataFrame or pandas.Series, quantiles are
+computed grouped by the ‘Step’ level.</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>x: numpy.ndarray, optional</dt><dd><p>The x-axis values for the plot. If None, a default range is used.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs: keyword arguments</dt><dd><p>Additional keyword arguments to be passed to the plot_mean_and_range function.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Raises:
+- Exception if the input data type is not recognized.</p>
+<p>Example usage:
+plot_quantiles(data_array, x_values, axis=plt.gca(), color_shading=’blue’, label=’Data’)</p>
+</dd></dl>
+
+</section>
+<section id="prob-hist">
+<h2>prob_hist<a class="headerlink" href="#prob-hist" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.prob_hist">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">prob_hist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hist_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'plt.hist'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kde</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sns_kws</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_fit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#prob_hist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.prob_hist" title="Permalink to this definition"></a></dt>
+<dd><p>Create a probability histogram or distribution plot for multiple datasets.</p>
+<p>Parameters:
+- vs: list of arrays</p>
+<blockquote>
+<div><p>List of datasets to plot.</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>colors: list of str</dt><dd><p>List of colors for each dataset.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>labels: list of str</dt><dd><p>List of labels for the legend.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>bins: int or list</dt><dd><p>Number of bins or bin edges for the histogram.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>ax: Matplotlib axis object</dt><dd><p>The axis to plot on.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>hist_type: str (‘plt.hist’ or ‘sns.hist’)</dt><dd><p>Type of histogram to create (default: ‘plt.hist’).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>kde: bool</dt><dd><p>Whether to overlay a kernel density estimate (default: False).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>sns_kws: dict</dt><dd><p>Additional keyword arguments for Seaborn (default: {}).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>plot_fit: bool</dt><dd><p>Whether to plot a smoothed fit curve (default: True).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a href="#id9"><span class="problematic" id="id10">**</span></a>kwargs: keyword arguments</dt><dd><p>Additional keyword arguments for the histogram.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Returns:
+None</p>
+<p>Example usage:
+fig, ax = plt.subplots()
+prob_hist([data1, data2], [‘blue’, ‘green’], [‘Dataset 1’, ‘Dataset 2’], bins=20, ax=ax)
+plt.show()</p>
+</dd></dl>
+
+</section>
+<section id="process-plot">
+<h2>process_plot<a class="headerlink" href="#process-plot" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.process_plot">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">process_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_fig</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#process_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.process_plot" title="Permalink to this definition"></a></dt>
+<dd><p>Process and optionally save or show a Matplotlib figure.</p>
+<p>Parameters:
+- fig: matplotlib.figure.Figure</p>
+<blockquote>
+<div><p>The figure to process.</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>save_to: str or None</dt><dd><p>The directory where the figure should be saved. If None, the figure won’t be saved.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>filename: str</dt><dd><p>The name of the file to save.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>return_fig: bool</dt><dd><p>Whether to return the figure in the result.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>show: bool</dt><dd><p>Whether to display the figure.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Returns:
+- fig: matplotlib.figure.Figure (if return_fig=False)</p>
+<blockquote>
+<div><p>The processed figure.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>save_to (if return_fig=True)</p></li>
+<li><p>filename (if return_fig=True)</p></li>
+</ul>
+</dd></dl>
+
+</section>
+<section id="save-plot">
+<h2>save_plot<a class="headerlink" href="#save-plot" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.save_plot">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">save_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fig</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#save_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.save_plot" title="Permalink to this definition"></a></dt>
+<dd><p>Save a Matplotlib figure to a specified file path.</p>
+<p>Parameters:
+- fig: matplotlib.figure.Figure</p>
+<blockquote>
+<div><p>The figure to save.</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>filepath: str</dt><dd><p>The full file path where the figure should be saved.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>filename: str</dt><dd><p>The name of the file to save.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Returns:
+None</p>
+</dd></dl>
+
+</section>
+<section id="single-boxplot">
+<h2>single_boxplot<a class="headerlink" href="#single-boxplot" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.aux.single_boxplot">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.aux.</span></span><span class="sig-name descname"><span class="pre">single_boxplot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hue</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">palette</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_ns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripplot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/aux.html#single_boxplot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.aux.single_boxplot" title="Permalink to this definition"></a></dt>
+<dd><p>Create a single boxplot with optional annotations and stripplot.</p>
+<p>Parameters:
+- x: str</p>
+<blockquote>
+<div><p>Column name for the x-axis.</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>y: str</dt><dd><p>Column name for the y-axis.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>ax: matplotlib.axes.Axes</dt><dd><p>The axes where the boxplot will be drawn.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>data: pandas.DataFrame</dt><dd><p>The data source.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>hue: str, optional</dt><dd><p>Grouping variable that will produce boxes with different colors.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>palette: str or dict, optional</dt><dd><p>Color palette to use for coloring the boxes.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>color: str, optional</dt><dd><p>Color for the boxes.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>annotation: bool, optional</dt><dd><p>Whether to annotate the plot with additional information.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>show_ns: bool, optional</dt><dd><p>Show notches on the boxes.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>target_only: str, optional</dt><dd><p>Filter the data to include only a specific target.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>stripplot: bool, optional</dt><dd><p>Whether to include a stripplot alongside the boxplot.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a href="#id11"><span class="problematic" id="id12">**</span></a>kwargs: keyword arguments</dt><dd><p>Additional keyword arguments to customize the boxplot.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Returns:
+- None</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Plotting" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="bar.html" class="btn btn-neutral float-right" title="bar" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.plot.freq &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.plot.freq</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.plot.freq</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">ticker</span><span class="p">,</span> <span class="n">cm</span>
+<span class="kn">from</span> <span class="nn">scipy.fft</span> <span class="kn">import</span> <span class="n">fft</span><span class="p">,</span> <span class="n">fftfreq</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span><span class="p">,</span> <span class="n">plot</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;plot_fft_multi&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1"># @reg.funcs.graph(&#39;fft&#39;, required={&#39;ks&#39;:[&#39;v&#39;, &#39;fov&#39;]})</span>
+<span class="c1"># def plot_fft(dkdict, c, name=f&#39;fft_powerspectrum&#39;,palette=None, axx=None,**kwargs):</span>
+<span class="c1">#     if palette is None:</span>
+<span class="c1">#         palette = {&#39;v&#39;: &#39;red&#39;, &#39;fov&#39;: &#39;blue&#39;}</span>
+<span class="c1">#     P = plot.AutoBasePlot(name=name,build_kws={&#39;w&#39;: 15, &#39;h&#39;: 12}, **kwargs)</span>
+<span class="c1">#     if axx is None:</span>
+<span class="c1">#         axx = P.axs[0].inset_axes([0.64, 0.65, 0.35, 0.34])</span>
+<span class="c1">#     xf = fftfreq(c.Nticks, c.dt)[:c.Nticks // 2]</span>
+<span class="c1">#</span>
+<span class="c1">#     # fvs = np.zeros(c.N) * np.nan</span>
+<span class="c1">#     # ffovs = np.zeros(c.N) * np.nan</span>
+<span class="c1">#     # v_ys = np.zeros([c.N, c.Nticks // 2])</span>
+<span class="c1">#     # fov_ys = np.zeros([c.N, c.Nticks // 2])</span>
+<span class="c1">#</span>
+<span class="c1">#     res_v=dkdict[&#39;v&#39;].groupby(&#39;AgentID&#39;).apply(aux.fft_max,dt=c.dt, fr_range=(1.0, 2.5), return_amps=True)</span>
+<span class="c1">#     res_fov=dkdict[&#39;fov&#39;].groupby(&#39;AgentID&#39;).apply(aux.fft_max,dt=c.dt, fr_range=(0.1, 0.8), return_amps=True)</span>
+<span class="c1">#</span>
+<span class="c1">#     fvs = [r[0] for r in res_v.values]</span>
+<span class="c1">#     ffovs = [r[0] for r in res_fov.values]</span>
+<span class="c1">#     v_ys = np.array([r[1] for r in res_v.values])</span>
+<span class="c1">#     fov_ys = np.array([r[1] for r in res_fov.values])</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#     plot.plot_quantiles(v_ys, x=xf, axis=P.axs[0], label=&#39;forward speed&#39;, color_shading=palette[&#39;v&#39;])</span>
+<span class="c1">#     plot.plot_quantiles(fov_ys, x=xf, axis=P.axs[0], label=&#39;angular speed&#39;, color_shading=palette[&#39;fov&#39;])</span>
+<span class="c1">#     P.conf_ax(0, ylim=(0, 8), xlim=(0, 3.5), ylab=&#39;Amplitude (a.u.)&#39;, xlab=&#39;Frequency (Hz)&#39;,</span>
+<span class="c1">#               title=&#39;Fourier analysis&#39;,titlefontsize=25, leg_loc=&#39;lower left&#39;, yMaxN=5)</span>
+<span class="c1">#</span>
+<span class="c1">#     bins = np.linspace(0, 2, 40)</span>
+<span class="c1">#</span>
+<span class="c1">#     v_weights = np.ones_like(fvs) / float(len(fvs))</span>
+<span class="c1">#     fov_weights = np.ones_like(ffovs) / float(len(ffovs))</span>
+<span class="c1">#     axx.hist(fvs, color=palette[&#39;v&#39;], bins=bins, weights=v_weights)</span>
+<span class="c1">#     axx.hist(ffovs, color=palette[&#39;fov&#39;], bins=bins, weights=fov_weights)</span>
+<span class="c1">#     P.conf_ax(ax=axx, ylab=&#39;Probability&#39;, xlab=&#39;Dominant frequency (Hz)&#39;,yMaxN=2,</span>
+<span class="c1">#               major_ticklabelsize=10,minor_ticklabelsize=10)</span>
+<span class="c1">#</span>
+<span class="c1">#     return P.get()</span>
+
+<div class="viewcode-block" id="plot_fft_multi"><a class="viewcode-back" href="../../../../content/larvaworld/lib/plot/freq.html#larvaworld.lib.plot.freq.plot_fft_multi">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">graph</span><span class="p">(</span><span class="s1">&#39;fft multi&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ks&#39;</span><span class="p">:[</span> <span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="s1">&#39;fov&#39;</span><span class="p">]})</span>
+<span class="k">def</span> <span class="nf">plot_fft_multi</span><span class="p">(</span><span class="n">ks</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="s1">&#39;fov&#39;</span><span class="p">],</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;fft_powerspectrum&#39;</span><span class="p">,</span><span class="n">axx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dataset_colors</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">P</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">AutoPlot</span><span class="p">(</span><span class="n">ks</span><span class="o">=</span><span class="n">ks</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">build_kws</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span> <span class="s1">&#39;h&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="p">},</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">axx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">axx</span> <span class="o">=</span> <span class="n">P</span><span class="o">.</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">inset_axes</span><span class="p">([</span><span class="mf">0.64</span><span class="p">,</span> <span class="mf">0.65</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">])</span>
+
+    <span class="n">palette</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;v&#39;</span><span class="p">:</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="s1">&#39;fov&#39;</span><span class="p">:</span> <span class="s1">&#39;blue&#39;</span><span class="p">}</span>
+    <span class="n">data_palette_new</span><span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:[</span><span class="n">aux</span><span class="o">.</span><span class="n">mix2colors</span><span class="p">(</span><span class="n">c</span><span class="p">,</span><span class="n">palette</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">P</span><span class="o">.</span><span class="n">colors</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">}</span>
+
+    <span class="n">fvs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ffovs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">v_ys</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">fov_ys</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,(</span><span class="n">l</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">data_palette</span><span class="p">)</span> <span class="p">:</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">config</span>
+        <span class="n">res_v</span> <span class="o">=</span> <span class="n">P</span><span class="o">.</span><span class="n">dkdict</span><span class="p">[</span><span class="n">l</span><span class="p">][</span><span class="s1">&#39;v&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">fft_max</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">fr_range</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">),</span> <span class="n">return_amps</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">res_fov</span> <span class="o">=</span> <span class="n">P</span><span class="o">.</span><span class="n">dkdict</span><span class="p">[</span><span class="n">l</span><span class="p">][</span><span class="s1">&#39;fov&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">fft_max</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">fr_range</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">),</span> <span class="n">return_amps</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">fvs</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">res_v</span><span class="o">.</span><span class="n">values</span><span class="p">])</span>
+        <span class="n">ffovs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">res_fov</span><span class="o">.</span><span class="n">values</span><span class="p">])</span>
+        <span class="n">v_ys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">res_v</span><span class="o">.</span><span class="n">values</span><span class="p">]))</span>
+        <span class="n">fov_ys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">res_fov</span><span class="o">.</span><span class="n">values</span><span class="p">]))</span>
+
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,(</span><span class="n">l</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">data_palette</span><span class="p">)</span> <span class="p">:</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">config</span>
+        <span class="n">xf</span> <span class="o">=</span> <span class="n">fftfreq</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">Nticks</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dt</span><span class="p">)[:</span><span class="n">c</span><span class="o">.</span><span class="n">Nticks</span> <span class="o">//</span> <span class="mi">2</span><span class="p">]</span>
+
+
+        <span class="n">plot</span><span class="o">.</span><span class="n">plot_quantiles</span><span class="p">(</span><span class="n">v_ys</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">x</span><span class="o">=</span><span class="n">xf</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">P</span><span class="o">.</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;forward speed&#39;</span><span class="p">,</span> <span class="n">color_shading</span><span class="o">=</span><span class="n">data_palette_new</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">plot</span><span class="o">.</span><span class="n">plot_quantiles</span><span class="p">(</span><span class="n">fov_ys</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">x</span><span class="o">=</span><span class="n">xf</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">P</span><span class="o">.</span><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;angular speed&#39;</span><span class="p">,</span> <span class="n">color_shading</span><span class="o">=</span><span class="n">data_palette_new</span><span class="p">[</span><span class="s1">&#39;fov&#39;</span><span class="p">][</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">P</span><span class="o">.</span><span class="n">conf_ax</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span> <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">),</span> <span class="n">ylab</span><span class="o">=</span><span class="s1">&#39;Amplitude (a.u.)&#39;</span><span class="p">,</span> <span class="n">xlab</span><span class="o">=</span><span class="s1">&#39;Frequency (Hz)&#39;</span><span class="p">,</span>
+                  <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Fourier analysis&#39;</span><span class="p">,</span> <span class="n">titlefontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">yMaxN</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">P</span><span class="o">.</span><span class="n">data_leg</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">&#39;lower left&#39;</span><span class="p">,</span><span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;forward speed&#39;</span><span class="p">,</span><span class="s1">&#39;angular speed&#39;</span><span class="p">],</span><span class="n">colors</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">palette</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+
+    <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+
+    <span class="n">plot</span><span class="o">.</span><span class="n">prob_hist</span><span class="p">(</span><span class="n">vs</span><span class="o">=</span><span class="n">fvs</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">data_palette_new</span><span class="p">[</span><span class="s1">&#39;v&#39;</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="n">P</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axx</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">prob_hist</span><span class="p">(</span><span class="n">vs</span><span class="o">=</span><span class="n">ffovs</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="n">data_palette_new</span><span class="p">[</span><span class="s1">&#39;fov&#39;</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="n">P</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axx</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+
+    <span class="n">P</span><span class="o">.</span><span class="n">conf_ax</span><span class="p">(</span><span class="n">ax</span><span class="o">=</span><span class="n">axx</span><span class="p">,</span> <span class="n">ylab</span><span class="o">=</span><span class="s1">&#39;Probability&#39;</span><span class="p">,</span> <span class="n">xlab</span><span class="o">=</span><span class="s1">&#39;Dominant frequency (Hz)&#39;</span><span class="p">,</span> <span class="n">yMaxN</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                  <span class="n">major_ticklabelsize</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">minor_ticklabelsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">P</span><span class="o">.</span><span class="n">Ndatasets</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">P</span><span class="o">.</span><span class="n">data_leg</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;lower right&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">P</span><span class="o">.</span><span class="n">get</span><span class="p">()</span></div>
+
+
+<span class="c1">#</span>
+<span class="c1"># @reg.funcs.graph(&#39;powerspectrum&#39;, required={&#39;ks&#39;:[&#39;v&#39;, &#39;fov&#39;]})</span>
+<span class="c1"># def powerspectrum(ks=[&#39;v&#39;, &#39;fov&#39;],name=None, thr=0.2, subfolder=&#39;powerspectrums&#39;, **kwargs):</span>
+<span class="c1">#     if name is None :</span>
+<span class="c1">#         name=f&#39;fft_powerspectrum_x{len(ks)}&#39;</span>
+<span class="c1">#     P = plot.AutoPlot(ks=ks, name=name, subfolder=subfolder, build_kws={&#39;w&#39;: 10, &#39;h&#39;: 8}, **kwargs)</span>
+<span class="c1">#     P.conf_ax(xlab=&#39;Frequency in Hertz [Hz]&#39;, ylab=&#39;Frequency Domain (Spectrum) Magnitude&#39;, xlim=(0, 3.5),ylim=(0, 5))</span>
+<span class="c1">#     from scipy.fft import fft, fftfreq</span>
+<span class="c1">#     def proc(df, ids,ax, d_col, label) :</span>
+<span class="c1">#         N = len(df.index.get_level_values(&#39;Step&#39;).unique())</span>
+<span class="c1">#         xf = fftfreq(N, 1 / P.fr)[:N // 2]</span>
+<span class="c1">#         yf0 = np.zeros(N // 2)</span>
+<span class="c1">#         for id in ids:</span>
+<span class="c1">#             dc_single = np.nan_to_num(df.xs(id, level=&#39;AgentID&#39;).values)</span>
+<span class="c1">#             yf = fft(dc_single)</span>
+<span class="c1">#             yf = 2.0 / N * np.abs(yf[0:N // 2])</span>
+<span class="c1">#             yf = 1000 * yf / np.sum(yf)</span>
+<span class="c1">#             yf = aux.moving_average(yf, n=21)</span>
+<span class="c1">#             ax.plot(xf, yf, color=d_col, alpha=0.2)</span>
+<span class="c1">#             yf0 += yf</span>
+<span class="c1">#         yf0 = 1000 * yf0 / np.sum(yf0)</span>
+<span class="c1">#         ax.plot(xf, yf0, color=d_col, label=label)</span>
+<span class="c1">#         ymax = np.max(yf0[xf &gt; thr])</span>
+<span class="c1">#         xpos = np.argmax(yf0[xf &gt; thr])</span>
+<span class="c1">#         xmax = xf[xf &gt; thr][xpos]</span>
+<span class="c1">#         ax.plot(xmax, ymax, color=d_col, marker=&#39;o&#39;)</span>
+<span class="c1">#         ax.annotate(np.round(xmax, 2), xy=(xmax, ymax), xytext=(xmax + 0.2, ymax + 0.1), color=d_col, fontsize=25)</span>
+<span class="c1">#</span>
+<span class="c1">#     if P.Nks!=2 :</span>
+<span class="c1">#         raise</span>
+<span class="c1">#     for k, cmapID in zip(P.ks, [&#39;Greens&#39;,&#39;Reds&#39;]) :</span>
+<span class="c1">#         cmap=cm.get_cmap(cmapID)</span>
+<span class="c1">#         dic = P.kkdict[k]</span>
+<span class="c1">#         p = P.pdict[k]</span>
+<span class="c1">#         cols=[cmap(i) for i in np.linspace(0.6, 0.9, P.Ndatasets)]</span>
+<span class="c1">#         for l, d, c in zip(P.labels, P.datasets, cols):</span>
+<span class="c1">#             proc(df=dic[l], ids=d.config.agent_ids, ax=P.axs[0], d_col=c, label=p.disp)</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#     if P.Ndatasets &gt; 1:</span>
+<span class="c1">#         P.data_leg(0,loc=&#39;upper left&#39;, fontsize=15)</span>
+<span class="c1">#     P.adjust((0.2, 0.95), (0.15, 0.95))</span>
+<span class="c1">#     return P.get()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

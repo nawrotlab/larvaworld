@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>crawl_bend_interference &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+    <link rel="next" title="crawler" href="crawler.html" />
+    <link rel="prev" title="brain" href="brain.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html">Modeling</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../deb/index.html">Dynamic Energy Budget</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../envs/index.html">Environment</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="index.html">Modular behavioral architecture</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../object.html">Basic ABM class</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../param/index.html">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../plot/index.html">Plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../process/index.html">Data management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../screen/index.html">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sim/index.html">Simulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../util/index.html">Dataset fitting &amp; sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Modeling</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Modular behavioral architecture</a></li>
+      <li class="breadcrumb-item active">crawl_bend_interference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/content/larvaworld/lib/model/modules/crawl_bend_interference.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.model.modules.crawl_bend_interference">
+<span id="crawl-bend-interference"></span><h1>crawl_bend_interference<a class="headerlink" href="#module-larvaworld.lib.model.modules.crawl_bend_interference" title="Permalink to this heading"></a></h1>
+<section id="defaultcoupling">
+<h2>DefaultCoupling<a class="headerlink" href="#defaultcoupling" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.modules.crawl_bend_interference.</span></span><span class="sig-name descname"><span class="pre">DefaultCoupling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/crawl_bend_interference.html#DefaultCoupling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Parameterized</span></code></p>
+<p>params(attenuation=Magnitude, attenuation_max=Magnitude, suppression_mode=Selector, name=String)
+[1;32mParameters of ‘DefaultCoupling’
+===============================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                  Value        Type      Bounds    Mode [0m</p>
+<p>attenuation            0.0      Magnitude  (0.0, 1.0)  V RW
+attenuation_max        1.0      Magnitude  (0.0, 1.0)  V RW
+suppression_mode   ‘amplitude’   Selector              V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mattenuation:      The attenuation coefficient for the crawl-interference to the angular motion.[0m
+[1;31mattenuation_max:  The suppression relief coefficient for the crawl-interference to the angular motion.[0m
+[1;34msuppression_mode: The suppression mode for the crawl-interference to the angular motion.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'attenuation':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'attenuation_max':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'suppression_mode':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.apply_attenuation">
+<span class="sig-name descname"><span class="pre">apply_attenuation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cur_att</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/crawl_bend_interference.html#DefaultCoupling.apply_attenuation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.apply_attenuation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.attenuation">
+<span class="sig-name descname"><span class="pre">attenuation</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.attenuation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.attenuation_max">
+<span class="sig-name descname"><span class="pre">attenuation_max</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.attenuation_max" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.check_crawler">
+<span class="sig-name descname"><span class="pre">check_crawler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crawler</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/crawl_bend_interference.html#DefaultCoupling.check_crawler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.check_crawler" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.check_feeder">
+<span class="sig-name descname"><span class="pre">check_feeder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feeder</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/crawl_bend_interference.html#DefaultCoupling.check_feeder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.check_feeder" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'DefaultCoupling'</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.suppression_mode">
+<span class="sig-name descname"><span class="pre">suppression_mode</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'amplitude'</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling.suppression_mode" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="phasiccoupling">
+<h2>PhasicCoupling<a class="headerlink" href="#phasiccoupling" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.modules.crawl_bend_interference.</span></span><span class="sig-name descname"><span class="pre">PhasicCoupling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/crawl_bend_interference.html#PhasicCoupling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling" title="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultCoupling</span></code></a></p>
+<p>params(max_attenuation_phase=Phase, attenuation=Magnitude, attenuation_max=Magnitude, suppression_mode=Selector, name=String)
+[1;32mParameters of ‘PhasicCoupling’
+==============================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                       Value        Type             Bounds           Mode [0m</p>
+<p>attenuation                 0.0      Magnitude         (0.0, 1.0)         V RW
+attenuation_max             1.0      Magnitude         (0.0, 1.0)         V RW
+suppression_mode        ‘amplitude’   Selector                            V RW
+max_attenuation_phase       3.4        Phase    (0.0, 6.283185307179586)  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mattenuation:           The attenuation coefficient for the crawl-interference to the angular motion.[0m
+[1;31mattenuation_max:       The suppression relief coefficient for the crawl-interference to the angular motion.[0m
+[1;34msuppression_mode:      The suppression mode for the crawl-interference to the angular motion.[0m
+[1;31mmax_attenuation_phase: CRAWLER phase of minimum TURNER suppression.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'attenuation':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'attenuation_max':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'max_attenuation_phase':</span> <span class="pre">&lt;larvaworld.lib.param.custom.Phase</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'suppression_mode':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.check_crawler">
+<span class="sig-name descname"><span class="pre">check_crawler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crawler</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/crawl_bend_interference.html#PhasicCoupling.check_crawler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.check_crawler" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.check_feeder">
+<span class="sig-name descname"><span class="pre">check_feeder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feeder</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/crawl_bend_interference.html#PhasicCoupling.check_feeder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.check_feeder" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/crawl_bend_interference.html#PhasicCoupling.get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.get" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.max_attenuation_phase">
+<span class="sig-name descname"><span class="pre">max_attenuation_phase</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3.4</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.max_attenuation_phase" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'PhasicCoupling'</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.PhasicCoupling.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="squarecoupling">
+<h2>SquareCoupling<a class="headerlink" href="#squarecoupling" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.modules.crawl_bend_interference.</span></span><span class="sig-name descname"><span class="pre">SquareCoupling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/crawl_bend_interference.html#SquareCoupling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling" title="larvaworld.lib.model.modules.crawl_bend_interference.DefaultCoupling"><code class="xref py py-class docutils literal notranslate"><span class="pre">DefaultCoupling</span></code></a></p>
+<p>params(crawler_phi_range=PhaseRange, feeder_phi_range=PhaseRange, attenuation=Magnitude, attenuation_max=Magnitude, suppression_mode=Selector, name=String)
+[1;32mParameters of ‘SquareCoupling’
+==============================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                   Value        Type              Bounds           Mode [0m</p>
+<p>attenuation             0.0      Magnitude          (0.0, 1.0)         V RW
+attenuation_max         1.0      Magnitude          (0.0, 1.0)         V RW
+suppression_mode    ‘amplitude’   Selector                             V RW
+crawler_phi_range    (0.0, 0.0)  PhaseRange  (0.0, 6.283185307179586)  V RW
+feeder_phi_range     (0.0, 0.0)  PhaseRange  (0.0, 6.283185307179586)  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mattenuation:       The attenuation coefficient for the crawl-interference to the angular motion.[0m
+[1;31mattenuation_max:   The suppression relief coefficient for the crawl-interference to the angular motion.[0m
+[1;34msuppression_mode:  The suppression mode for the crawl-interference to the angular motion.[0m
+[1;31mcrawler_phi_range: CRAWLER phase range for TURNER suppression lift.[0m
+[1;34mfeeder_phi_range:  FEEDER phase range for TURNER suppression lift.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'attenuation':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'attenuation_max':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'crawler_phi_range':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PhaseRange</span> <span class="pre">object&gt;,</span> <span class="pre">'feeder_phi_range':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PhaseRange</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'suppression_mode':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.check_crawler">
+<span class="sig-name descname"><span class="pre">check_crawler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">crawler</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/crawl_bend_interference.html#SquareCoupling.check_crawler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.check_crawler" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.check_feeder">
+<span class="sig-name descname"><span class="pre">check_feeder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feeder</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/crawl_bend_interference.html#SquareCoupling.check_feeder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.check_feeder" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.crawler_phi_range">
+<span class="sig-name descname"><span class="pre">crawler_phi_range</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.0,</span> <span class="pre">0.0)</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.crawler_phi_range" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.feeder_phi_range">
+<span class="sig-name descname"><span class="pre">feeder_phi_range</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.0,</span> <span class="pre">0.0)</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.feeder_phi_range" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SquareCoupling'</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.crawl_bend_interference.SquareCoupling.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="brain.html" class="btn btn-neutral float-left" title="brain" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="crawler.html" class="btn btn-neutral float-right" title="crawler" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

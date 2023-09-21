@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>README &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="About larvaworld" href="content/larvaworld/index.html" />
+    <link rel="prev" title="Welcome to larvaworld’s code docs!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">README</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#gui">GUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#visualization">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#arena-drawing">Arena drawing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#larva-models">Larva models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-import-behavioral-analysis">Data import &amp; Behavioral analysis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#behavioral-simulation">Behavioral simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#supporting-resources">Supporting resources</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">README</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/readme_link.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="readme">
+<h1>README<a class="headerlink" href="#readme" title="Permalink to this heading"></a></h1>
+<p>==================LARVAWORLD==================</p>
+<p>Drosophila larva behavioral analysis and simulation platform</p>
+<hr class="docutils" />
+<p>Publication :</p>
+<p>A realistic locomotory model of Drosophila larva for behavioral simulations</p>
+<p>Panagiotis Sakagiannis, Anna-Maria Jürgensen, Martin Paul Nawrot</p>
+<p>doi: <a class="reference external" href="https://doi.org/10.1101/2021.07.07.451470">https://doi.org/10.1101/2021.07.07.451470</a></p>
+<section id="gui">
+<h2>GUI<a class="headerlink" href="#gui" title="Permalink to this heading"></a></h2>
+<p>A user-friendly GUI allows easy importation, inspection and analysis of data, model, life-history and environment configuration, visualization and data-acquisition setup and control over simulations, essays and batch-runs. Videos and tutorials are also available. In principle the user shouldn’t have to mess with the code at all.</p>
+</section>
+<section id="visualization">
+<h2>Visualization<a class="headerlink" href="#visualization" title="Permalink to this heading"></a></h2>
+<p>Both imported experiments and simulations can be visualized real-time at realistic scale. The pop-up screen allows zooming in and out, locking on specific individuals, bringing up dynamic graphs of selected parameters, coloring of the midline, contour, head and centroid, linear and angular velocity dependent coloring of the larva trajectories and much more. Keyboard and mouse shortcuts enable changing parameters online, adding or deleting agents, food and odor sources and impassable borders.</p>
+</section>
+<section id="arena-drawing">
+<h2>Arena drawing<a class="headerlink" href="#arena-drawing" title="Permalink to this heading"></a></h2>
+<p>The GUI features an arena editor that supports :</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Arenas and dishes
+The arena editor allows defining arena shape and dimensions in detail and placement of larva groups and items at preferred locations in predefined spatial         distributions and orientations.</p></li>
+<li><p>Odorscapes
+Odor sources can be specified and arbitrary odor landscapes can be constructed. The constructed arenas are directly available for modeling simulations. The       virtual larvae themselves can bear an odor creating dynamic odorscapes while moving.</p></li>
+<li><p>Food items
+Food sources are available either as single items, distributions of defined parameters or food grids of defined dimensions.</p></li>
+<li><p>Impassable borders.</p></li>
+</ol>
+</div></blockquote>
+</section>
+<section id="larva-models">
+<h2>Larva models<a class="headerlink" href="#larva-models" title="Permalink to this heading"></a></h2>
+<p>Multiple aspects of real larvae are captured in various models. These can be configured through the GUI at maximum detail and directly tested in simulations.  Specifically the components are:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><dl class="simple">
+<dt>Virtual body</dt><dd><p>The 2D body consists of 1, 2(default) or more segments, featuring viscoelastic forces (torsional spring model), olfactory and touch sensors at                     desired locations and a mouth for feeding. Exemplary models with angular and linear motion optimized to fit empirical data are available                           featuring differential motion of the front and rear segments and realistic velocities and accelerations at both plains. Furthermore, optional use                   of the Box2D physics engine is available as illustrated in an example of realistic imitation of real larvae with a multi-segment body model.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Sensorimotor effectors</dt><dd><p>Crawling, lateral bending and feeding are modeled as oscillatory processes, either independent, coupled or mutually exclusive. The individual                     modules and their interaction are easily configurable through the GUI. Body-dependent phasic interference can be defined as well. An olfactory                     sensor dynamically tracks odor gradients enabling chemotactic navigation. Feedback from the environment is only partially supported as in the case                 of recurrent feeding motion at successful food encounter.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Intermittent behavior</dt><dd><p>Intermittent function of the oscillator modules is available through definition of specific spatial or temporal distributions. Models featuring                   empirically-fitted intermittent crawling interspersed by brief pauses can be readily tested. Time has been quantized at the scale of single                       crawling or feeding motions.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Olfactory learning</dt><dd><p>A neuron-level detailed mushroom-body model has been integrated to the locomotory model, enabling olfactory learning after associative                             conditioning of novel odorants to food. The short neuron-level temporal scale (0.1 ms) has been coupled to the 0.1 s behavioral timestep in parallel               simulation. Detailed implementations of an established olfactory learning behavioral paradigm are supported.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Energetics and life-history</dt><dd><p>A widely-accepted dynamic energy budget (DEB) model runs in the background and controls energy allocation to growth and biomass maintenance. The model             has been fitted to Drosophila and accurately reproduces the larva life stage in terms of body-length, wet-weight, instar duration and time to                     pupation. The long timescale model (in days) has been coupled to the behavioral timescale as well. Therefore, virtual larvae can be realistically                   reared in substrates of specified quality before entering the behavioral simulation or can be starved for defined periods during or before being                   tested.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Hunger drive and foraging phenotypes</dt><dd><p>The DEB energetics module has been coupled to behavior via a variety of model configurations, each based on different assumptions. For example in one             implementation a hunger/satiety homeostatic drive that tracks the energy reserve density deriving from metabolism controls the exploration VS                       exploitation behavioral balance, boosting consumption after food deprivation and vice versa. The rover and sitter foraging phenotypes have been                   modeled, integrating differential glucose absorption to differential exploration pathlength and food consumption.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</div></blockquote>
+</section>
+<section id="data-import-behavioral-analysis">
+<h2>Data import &amp; Behavioral analysis<a class="headerlink" href="#data-import-behavioral-analysis" title="Permalink to this heading"></a></h2>
+<p>Experimental datasets from a variety of tracker software can be imported and transformed to a common hdf5 format so that they can be analysed and directly compared to the simulated data. To make datasets compatible and facilitate reproducibility, only the primary tracked x,y coordinates are used, both of the midline points and optionally points around the body contour.Compatible formats are text files, either per individual or per group. All secondary parameters are derived via an identical pipeline that allows parameterization and definition of novel metrics.</p>
+</section>
+<section id="behavioral-simulation">
+<h2>Behavioral simulation<a class="headerlink" href="#behavioral-simulation" title="Permalink to this heading"></a></h2>
+<p>The simulation platform supports simulations of experiments that implement established behavioral paradigms reported in literature. These can be run as single simulations, grouped in essays for globally testing models over multiple conditions and arenas or as batch-runs that allow parameter search and optimization of defined utility metrics. Specifically the behaviors covered are :</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Free exploration</p></li>
+<li><p>Chemotaxis</p></li>
+<li><p>Olfactory learning an odor preference</p></li>
+<li><p>Feeding</p></li>
+<li><p>Foraging in patch environments</p></li>
+<li><p>Growth over the whole larva stage</p></li>
+</ol>
+</div></blockquote>
+<p>Finally, some games are available for fun where opposite larva groups try to capture the flag or stay at the top of the odorscape hill!!!</p>
+</section>
+<hr class="docutils" />
+<section id="supporting-resources">
+<h2>Supporting resources<a class="headerlink" href="#supporting-resources" title="Permalink to this heading"></a></h2>
+<ul class="simple">
+<li><p>Agent and simulation classes extend on the agent-based modeling library [agentpy](<a class="reference external" href="https://agentpy.readthedocs.io/en/latest/index.html">https://agentpy.readthedocs.io/en/latest/index.html</a>).</p></li>
+<li><p>The homeostasis/energetics module is based on the [DEB](<a class="reference external" href="http://www.debtheory.org/wiki/index.php?title=Main_Page">http://www.debtheory.org/wiki/index.php?title=Main_Page</a>) (Dynamic Energy Budget) Theory</p></li>
+<li><p>Optionally, for multi-segment larvae the spatial environment and bodies are simulated through [Box2D](<a class="reference external" href="https://box2d.org/">https://box2d.org/</a>) physics engine based on [box2d-py](<a class="reference external" href="https://pypi.org/project/box2d-py/">https://pypi.org/project/box2d-py/</a>) package.</p></li>
+<li><p>Optionally neural modules can be implemented using the [Nengo](<a class="reference external" href="https://www.nengo.ai/">https://www.nengo.ai/</a>) neural simulator</p></li>
+</ul>
+<hr class="docutils" />
+<p><strong>Installation</strong></p>
+<p>The platform comes as a Pypi package. Install easily using pip. This will additionally install all package dependencies. Note that a python version &gt;=3.8 is required :</p>
+<blockquote>
+<div><p>pip install larvaworld</p>
+</div></blockquote>
+<p><strong>Run Larvaworld</strong></p>
+<p>The platform is mainly accessed through the command line interface via the <em>larvaworld-cli</em> command.
+Five different modes are available. The mode has to declared after the command as a first positional argument. Mode-specific argumants can be declared afterwards :</p>
+<ol class="arabic">
+<li><p>Single Simulation</p>
+<blockquote>
+<div><p>Run a single simulation of one of multiple available experiments.
+Optionally run the respective analysis.</p>
+<p>This line runs a dish simulation (30 larvae, 3 minutes) without analysis.</p>
+<blockquote>
+<div><p>larvaworld-cli Exp dish -N 30 -t 3.0 -m video
+larvaworld-cli Exp patch_grid -N 30 -t 3.0 -m video</p>
+</div></blockquote>
+<p>This line runs a dispersion simulation and compares the results to the existing reference dataset (<cite>larvaworld/data/reference</cite>)
+We choose to only produce a final image of the simulation.</p>
+<blockquote>
+<div><p>larvaworld-cli Exp dispersion -N 30 -t 3.0 -m image -a</p>
+</div></blockquote>
+</div></blockquote>
+</li>
+<li><dl>
+<dt>Batch run</dt><dd><p>(needs debugging)
+Run multiple trials of a given experiment with different parameters.
+This line runs a batch run of odor preference experiments for different valences of the two odor sources.</p>
+<blockquote>
+<div><p>larvaworld-cli Batch PItest_off -N 5 -t 1.0</p>
+</div></blockquote>
+</dd>
+</dl>
+</li>
+<li><p>Genetic Algorithm optimization</p>
+<blockquote>
+<div><p>Run a genetic algorith optimization algorithm to optimize a basic model’s configuration set according to a fitness function.
+This line optimizes a model for kinematic realism against a reference experimental dataset</p>
+<blockquote>
+<div><p>larvaworld-cli Ga realism -refID exploration.40controls -N 20 -t 0.5 -mID1 GA_test_loco -mGA model</p>
+</div></blockquote>
+</div></blockquote>
+</li>
+<li><p>Experiment replay</p>
+<p>Replay a real-world experiment.
+This line replays a reference experimental dataset (note that this is imported by the example named : import_Schleyer)</p>
+<blockquote>
+<div><p>larvaworld-cli Replay -refID exploration.dish03
+larvaworld-cli Replay -dir SchleyerGroup/processed/exploration/dish03</p>
+</div></blockquote>
+</li>
+<li><p>Model evaluation / comparison to real data</p>
+<p>Evaluate diverse model configurations against real data.
+This line evaluates two models against a reference experimental dataset</p>
+<blockquote>
+<div><p>larvaworld-cli Eval -refID exploration.60controls -mIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 3</p>
+</div></blockquote>
+</li>
+</ol>
+<p>A graphical user interface is also available. All functionalities are available via the respective tabs.
+Launch the GUI :</p>
+<blockquote>
+<div><p>larvaworld-gui</p>
+</div></blockquote>
+<p>Troubleshooting</p>
+<ol class="arabic">
+<li><p>If the installation crashes because of the <em>cartopy</em> library dependency, try running :</p>
+<blockquote>
+<div><p>sudo apt install libgeos-dev</p>
+</div></blockquote>
+</li>
+<li><p>If you get the error msg : <em>libGL error: MESA-LOADER: failed to open iris</em> when running a simulation with video on, try running :</p>
+<blockquote>
+<div><p>export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6</p>
+</div></blockquote>
+</li>
+<li><p>If the sample datasets are not included in the original installation, you can download them separately to the <em>data</em> folder:</p>
+<blockquote>
+<div><p>git clone <a class="reference external" href="https://github.com/bagjohn/larvaworld_sample_data.git">https://github.com/bagjohn/larvaworld_sample_data.git</a></p>
+</div></blockquote>
+</li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to larvaworld’s code docs!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="content/larvaworld/index.html" class="btn btn-neutral float-right" title="About larvaworld" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

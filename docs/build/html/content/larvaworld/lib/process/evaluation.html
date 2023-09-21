@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>evaluation &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="patch" href="patch.html" />
+    <link rel="prev" title="dataset" href="dataset.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">Modeling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../param/index.html">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../plot/index.html">Plotting</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Data management</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="angular.html">angular</a></li>
+<li class="toctree-l4"><a class="reference internal" href="annotation.html">annotation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="calibration.html">calibration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="dataset.html">dataset</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">evaluation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="patch.html">patch</a></li>
+<li class="toctree-l4"><a class="reference internal" href="preprocess.html">preprocess</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spatial.html">spatial</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../screen/index.html">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sim/index.html">Simulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../util/index.html">Dataset fitting &amp; sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Data management</a></li>
+      <li class="breadcrumb-item active">evaluation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/process/evaluation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.process.evaluation">
+<span id="evaluation"></span><h1>evaluation<a class="headerlink" href="#module-larvaworld.lib.process.evaluation" title="Permalink to this heading"></a></h1>
+<section id="dataevaluation">
+<h2>DataEvaluation<a class="headerlink" href="#dataevaluation" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.DataEvaluation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.evaluation.</span></span><span class="sig-name descname"><span class="pre">DataEvaluation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#DataEvaluation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.DataEvaluation" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.process.evaluation.Evaluation" title="larvaworld.lib.process.evaluation.Evaluation"><code class="xref py py-class docutils literal notranslate"><span class="pre">Evaluation</span></code></a></p>
+<p>params(eval_modes=ListSelector, norm_modes=ListSelector, cycle_curve_metrics=List, eval_metrics=Dict, refID=OptionalSelector, name=String)
+[1;32mParameters of ‘DataEvaluation’
+==============================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                                   Value                          Type          Bounds     Mode  [0m</p>
+<p>refID                                   None                    OptionalSelector             V RW AN
+eval_metrics          {‘angular kinematics’: [‘run_fov_mu’,…        Dict                     V RW
+cycle_curve_metrics                      []                           List        (0, None)    V RW
+norm_modes                       [‘raw’, ‘minmax’]                ListSelector                 V RW
+eval_modes                           [‘pooled’]                   ListSelector                 V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mrefID:               Selection among stored Ref configurations by ID[0m
+[1;31meval_metrics:        Evaluation metrics to use[0m
+[1;34mcycle_curve_metrics: &lt; No docstring available &gt;[0m
+[1;31mnorm_modes:          Normalization modes to use[0m
+[1;34meval_modes:          Evaluation modes to use[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.DataEvaluation.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'cycle_curve_metrics':</span> <span class="pre">&lt;param.List</span> <span class="pre">object&gt;,</span> <span class="pre">'eval_metrics':</span> <span class="pre">&lt;param.Dict</span> <span class="pre">object&gt;,</span> <span class="pre">'eval_modes':</span> <span class="pre">&lt;param.ListSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'norm_modes':</span> <span class="pre">&lt;param.ListSelector</span> <span class="pre">object&gt;,</span> <span class="pre">'refID':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalSelector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.DataEvaluation.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.DataEvaluation._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.DataEvaluation._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.DataEvaluation._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.DataEvaluation._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.DataEvaluation.eval_modes">
+<span class="sig-name descname"><span class="pre">eval_modes</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['pooled']</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.DataEvaluation.eval_modes" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.DataEvaluation.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'DataEvaluation'</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.DataEvaluation.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.DataEvaluation.norm_error_dict">
+<span class="sig-name descname"><span class="pre">norm_error_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">error_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'raw'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#DataEvaluation.norm_error_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.DataEvaluation.norm_error_dict" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.DataEvaluation.norm_modes">
+<span class="sig-name descname"><span class="pre">norm_modes</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['raw',</span> <span class="pre">'minmax']</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.DataEvaluation.norm_modes" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="id1">
+<h2>Evaluation<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.evaluation.</span></span><span class="sig-name descname"><span class="pre">Evaluation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#Evaluation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../param/custom.html#larvaworld.lib.param.custom.NestedConf" title="larvaworld.lib.param.custom.NestedConf"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestedConf</span></code></a></p>
+<p>params(cycle_curve_metrics=List, eval_metrics=Dict, refID=OptionalSelector, name=String)
+[1;32mParameters of ‘Evaluation’
+==========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                                   Value                          Type          Bounds     Mode  [0m</p>
+<p>refID                                   None                    OptionalSelector             V RW AN
+eval_metrics          {‘angular kinematics’: [‘run_fov_mu’,…        Dict                     V RW
+cycle_curve_metrics                      []                           List        (0, None)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mrefID:               Selection among stored Ref configurations by ID[0m
+[1;31meval_metrics:        Evaluation metrics to use[0m
+[1;34mcycle_curve_metrics: &lt; No docstring available &gt;[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'cycle_curve_metrics':</span> <span class="pre">&lt;param.List</span> <span class="pre">object&gt;,</span> <span class="pre">'eval_metrics':</span> <span class="pre">&lt;param.Dict</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'refID':</span> <span class="pre">&lt;larvaworld.lib.param.custom.OptionalSelector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.arrange_evaluation">
+<span class="sig-name descname"><span class="pre">arrange_evaluation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#Evaluation.arrange_evaluation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.arrange_evaluation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#Evaluation.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.build" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.cycle_curve_metrics">
+<span class="sig-name descname"><span class="pre">cycle_curve_metrics</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">[]</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.cycle_curve_metrics" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.eval_datasets">
+<span class="sig-name descname"><span class="pre">eval_datasets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#Evaluation.eval_datasets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.eval_datasets" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.eval_metrics">
+<span class="sig-name descname"><span class="pre">eval_metrics</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'angular</span> <span class="pre">kinematics':</span> <span class="pre">['run_fov_mu',</span> <span class="pre">'pau_fov_mu',</span> <span class="pre">'b',</span> <span class="pre">'fov',</span> <span class="pre">'foa',</span> <span class="pre">'rov',</span> <span class="pre">'roa',</span> <span class="pre">'tur_fou'],</span> <span class="pre">'epochs':</span> <span class="pre">['run_t',</span> <span class="pre">'pau_t'],</span> <span class="pre">'spatial</span> <span class="pre">displacement':</span> <span class="pre">['cum_d',</span> <span class="pre">'run_d',</span> <span class="pre">'str_c_l',</span> <span class="pre">'v_mu',</span> <span class="pre">'pau_v_mu',</span> <span class="pre">'run_v_mu',</span> <span class="pre">'v',</span> <span class="pre">'a',</span> <span class="pre">'dsp_0_40_max',</span> <span class="pre">'str_N',</span> <span class="pre">'tor5',</span> <span class="pre">'tor20'],</span> <span class="pre">'stride</span> <span class="pre">cycle':</span> <span class="pre">['str_d_mu',</span> <span class="pre">'str_d_std',</span> <span class="pre">'str_sv_mu',</span> <span class="pre">'str_fov_mu',</span> <span class="pre">'str_fov_std',</span> <span class="pre">'str_N'],</span> <span class="pre">'temporal</span> <span class="pre">dynamics':</span> <span class="pre">['fsv',</span> <span class="pre">'ffov',</span> <span class="pre">'run_t',</span> <span class="pre">'pau_t',</span> <span class="pre">'run_tr',</span> <span class="pre">'pau_tr'],</span> <span class="pre">'tortuosity':</span> <span class="pre">['tor5',</span> <span class="pre">'tor20']}</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.eval_metrics" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.fit_func_multi">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fit_func_multi</span></span><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.fit_func_multi" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.fit_func_solo">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fit_func_solo</span></span><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.fit_func_solo" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.func_cycle_curve_multi">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">func_cycle_curve_multi</span></span><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.func_cycle_curve_multi" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.func_cycle_curve_solo">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">func_cycle_curve_solo</span></span><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.func_cycle_curve_solo" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.func_eval_metric_multi">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">func_eval_metric_multi</span></span><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.func_eval_metric_multi" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.func_eval_metric_solo">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">func_eval_metric_solo</span></span><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.func_eval_metric_solo" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Evaluation'</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.Evaluation.refID">
+<span class="sig-name descname"><span class="pre">refID</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#larvaworld.lib.process.evaluation.Evaluation.refID" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="rss">
+<h2>RSS<a class="headerlink" href="#rss" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.RSS">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.evaluation.</span></span><span class="sig-name descname"><span class="pre">RSS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vs0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#RSS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.RSS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="rss-dic">
+<h2>RSS_dic<a class="headerlink" href="#rss-dic" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.RSS_dic">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.evaluation.</span></span><span class="sig-name descname"><span class="pre">RSS_dic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#RSS_dic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.RSS_dic" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="col-df">
+<h2>col_df<a class="headerlink" href="#col-df" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.col_df">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.evaluation.</span></span><span class="sig-name descname"><span class="pre">col_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">shorts</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#col_df"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.col_df" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="eval-rss">
+<h2>eval_RSS<a class="headerlink" href="#eval-rss" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.eval_RSS">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.evaluation.</span></span><span class="sig-name descname"><span class="pre">eval_RSS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rss_target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rss_sym</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'1:pooled'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#eval_RSS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.eval_RSS" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="eval-distro-fast">
+<h2>eval_distro_fast<a class="headerlink" href="#eval-distro-fast" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.eval_distro_fast">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.evaluation.</span></span><span class="sig-name descname"><span class="pre">eval_distro_fast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_sym</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pooled'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#eval_distro_fast"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.eval_distro_fast" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="eval-end-fast">
+<h2>eval_end_fast<a class="headerlink" href="#eval-end-fast" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.eval_end_fast">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.evaluation.</span></span><span class="sig-name descname"><span class="pre">eval_end_fast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ee</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e_sym</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pooled'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#eval_end_fast"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.eval_end_fast" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="eval-fast">
+<h2>eval_fast<a class="headerlink" href="#eval-fast" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.process.evaluation.eval_fast">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.process.evaluation.</span></span><span class="sig-name descname"><span class="pre">eval_fast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">datasets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symbols</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pooled'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/process/evaluation.html#eval_fast"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.process.evaluation.eval_fast" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dataset.html" class="btn btn-neutral float-left" title="dataset" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="patch.html" class="btn btn-neutral float-right" title="patch" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

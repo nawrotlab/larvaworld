@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.process.spatial &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.process.spatial</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.process.spatial</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.aux</span> <span class="kn">import</span> <span class="n">nam</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">XYops</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;comp_spatial&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;comp_length&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;comp_centroid&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;store_spatial&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;spatial_processing&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;comp_dispersion&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;straightness_index&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;comp_straightness_index&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;comp_source_metrics&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;comp_wind&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;align_trajectories&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;fixate_larva&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;comp_PI&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;comp_dataPI&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;scale_to_length&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">comp_linear</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;minimal&#39;</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">reg</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">DatasetConfig</span><span class="p">)</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">midline_points</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;full&#39;</span><span class="p">:</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Computing linear distances, velocities and accelerations for </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">Npoints</span> <span class="o">-</span> <span class="mi">1</span><span class="si">}</span><span class="s1"> points&#39;</span><span class="p">)</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">points</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">orientations</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">seg_orientations</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;minimal&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">point</span> <span class="o">==</span> <span class="s1">&#39;centroid&#39;</span> <span class="ow">or</span> <span class="n">c</span><span class="o">.</span><span class="n">point</span> <span class="o">==</span> <span class="n">points</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Defined point is either centroid or head. Orientation of front segment not defined.&#39;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Computing linear distances, velocities and accelerations for a single spinepoint&#39;</span><span class="p">)</span>
+            <span class="n">points</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">point</span><span class="p">]</span>
+            <span class="n">orientations</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;rear_orientation&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">aux</span><span class="o">.</span><span class="n">cols_exist</span><span class="p">(</span><span class="n">orientations</span><span class="p">,</span><span class="n">s</span><span class="p">):</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Required orients not found. Component linear metrics not computed.&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+
+    <span class="n">all_d</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;AgentID&#39;</span><span class="p">,</span> <span class="n">drop_level</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">]</span>
+    <span class="n">dsts</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">lin</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">dst</span><span class="p">(</span><span class="n">points</span><span class="p">))</span>
+    <span class="n">cum_dsts</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">cum</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">lin</span><span class="p">(</span><span class="n">dsts</span><span class="p">))</span>
+    <span class="n">vels</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">lin</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="n">points</span><span class="p">))</span>
+    <span class="n">accs</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">lin</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">acc</span><span class="p">(</span><span class="n">points</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">cum_dst</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">acc</span><span class="p">,</span> <span class="n">orient</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">dsts</span><span class="p">,</span> <span class="n">cum_dsts</span><span class="p">,</span> <span class="n">vels</span><span class="p">,</span> <span class="n">accs</span><span class="p">,</span> <span class="n">orientations</span><span class="p">):</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">Nticks</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">N</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">Dcum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">Nticks</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">N</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">Nticks</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">N</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">Nticks</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">N</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">all_d</span><span class="p">):</span>
+            <span class="n">v</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">compute_component_velocity</span><span class="p">(</span><span class="n">xy</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">angles</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="n">orient</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">return_dst</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">/</span> <span class="n">c</span><span class="o">.</span><span class="n">dt</span>
+            <span class="n">cum_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nancumsum</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="n">D</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span>
+            <span class="n">Dcum</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cum_d</span>
+            <span class="n">V</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span>
+
+        <span class="n">s</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span> <span class="o">=</span> <span class="n">D</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">cum_dst</span><span class="p">]</span> <span class="o">=</span> <span class="n">Dcum</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">vel</span><span class="p">]</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">acc</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">cum</span><span class="p">(</span><span class="n">dst</span><span class="p">)]</span> <span class="o">=</span> <span class="n">Dcum</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">pars</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">+</span> <span class="n">dsts</span> <span class="o">+</span> <span class="n">cum_dsts</span> <span class="o">+</span> <span class="n">vels</span> <span class="o">+</span> <span class="n">accs</span>
+    <span class="n">scale_to_length</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">pars</span><span class="o">=</span><span class="n">pars</span><span class="p">)</span>
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;All linear parameters computed&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="comp_spatial"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.comp_spatial">[docs]</a><span class="k">def</span> <span class="nf">comp_spatial</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;minimal&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;full&#39;</span><span class="p">:</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Computing distances, velocities and accelerations for </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">Npoints</span><span class="si">}</span><span class="s1"> points&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">midline_points</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;centroid&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;minimal&#39;</span><span class="p">:</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Computing distances, velocities and accelerations for a single spinepoint&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">point</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s1"> not in supported modes : [minimal, full]&#39;</span><span class="p">)</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">aux</span><span class="o">.</span><span class="n">unique_list</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="k">if</span> <span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">exist_in</span><span class="p">(</span><span class="n">s</span><span class="p">)]</span>
+
+
+    <span class="n">dsts</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">dst</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+    <span class="n">cum_dsts</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">cum</span><span class="p">(</span><span class="n">dsts</span><span class="p">)</span>
+    <span class="n">vels</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+    <span class="n">accs</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">acc</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">cum_dst</span><span class="p">,</span> <span class="n">vel</span><span class="p">,</span> <span class="n">acc</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">dsts</span><span class="p">,</span> <span class="n">cum_dsts</span><span class="p">,</span> <span class="n">vels</span><span class="p">,</span> <span class="n">accs</span><span class="p">):</span>
+        <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">Nticks</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">N</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">Dcum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">Nticks</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">N</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">Nticks</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">N</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">Nticks</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">N</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="nb">id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">agent_ids</span><span class="p">):</span>
+            <span class="n">D</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">eudist</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">Dcum</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nancumsum</span><span class="p">(</span><span class="n">D</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+            <span class="n">V</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">D</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">dt</span>
+            <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">V</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="o">/</span> <span class="n">c</span><span class="o">.</span><span class="n">dt</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span> <span class="o">=</span> <span class="n">D</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">cum_dst</span><span class="p">]</span> <span class="o">=</span> <span class="n">Dcum</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">vel</span><span class="p">]</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">acc</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">cum</span><span class="p">(</span><span class="n">dst</span><span class="p">)]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">cum_dst</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+
+    <span class="n">pars</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">points</span><span class="p">)</span> <span class="o">+</span> <span class="n">dsts</span> <span class="o">+</span> <span class="n">cum_dsts</span> <span class="o">+</span> <span class="n">vels</span> <span class="o">+</span> <span class="n">accs</span>
+    <span class="n">scale_to_length</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">pars</span><span class="o">=</span><span class="n">pars</span><span class="p">)</span>
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;All spatial parameters computed&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="comp_length"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.comp_length">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">proc</span><span class="p">(</span><span class="s2">&quot;length&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">comp_length</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;minimal&#39;</span><span class="p">,</span> <span class="n">recompute</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s1">&#39;length&#39;</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">recompute</span><span class="p">:</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Length is already computed. If you want to recompute it, set recompute_length to True&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="o">.</span><span class="n">midline_xy</span><span class="o">.</span><span class="n">exist_in</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;XY coordinates not found for the </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">Npoints</span><span class="si">}</span><span class="s1"> midline points. Body length can not be computed.&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="n">xy</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">midline_xy</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;full&#39;</span><span class="p">:</span>
+        <span class="n">segs</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">midline_segs</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">c</span><span class="o">.</span><span class="n">Nsegs</span><span class="p">,</span> <span class="n">t</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="n">t</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Computing lengths for </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">Nsegs</span><span class="si">}</span><span class="s1"> segments and total body length&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">seg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">segs</span><span class="p">):</span>
+                <span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">((</span><span class="n">xy</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">i</span><span class="p">:</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">xy</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">4</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="n">L</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">S</span><span class="p">[:,</span> <span class="n">j</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">seg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">segs</span><span class="p">):</span>
+            <span class="n">s</span><span class="p">[</span><span class="n">seg</span><span class="p">]</span> <span class="o">=</span> <span class="n">S</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;minimal&#39;</span><span class="p">:</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Computing body length&#39;</span><span class="p">)</span>
+        <span class="n">xy2</span> <span class="o">=</span> <span class="n">xy</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">xy</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">c</span><span class="o">.</span><span class="n">Npoints</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">xy3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">xy2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">xy3</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">s</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">L</span>
+    <span class="n">e</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;All lengths computed.&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="comp_centroid"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.comp_centroid">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">proc</span><span class="p">(</span><span class="s2">&quot;centroid&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">comp_centroid</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">recompute</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">centroid_xy</span><span class="o">.</span><span class="n">exist_in</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">recompute</span><span class="p">:</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Centroid is already computed. If you want to recompute it, set recompute_centroid to True&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="o">.</span><span class="n">contour_xy</span><span class="o">.</span><span class="n">exist_in</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="ow">or</span> <span class="n">c</span><span class="o">.</span><span class="n">Ncontour</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;No contour found. Not computing centroid&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Computing centroid from </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">Ncontour</span><span class="si">}</span><span class="s1"> contourpoints&#39;</span><span class="p">)</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">centroid_xy</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">contour_xy</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">Ncontour</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">c</span><span class="o">.</span><span class="n">Ncontour</span>
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Centroid coordinates computed.&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="store_spatial"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.store_spatial">[docs]</a><span class="k">def</span> <span class="nf">store_spatial</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">point</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">point</span>
+    <span class="n">dst</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">dst</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">sdst</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+    <span class="n">cdst</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">cum</span><span class="p">(</span><span class="n">dst</span><span class="p">)</span>
+    <span class="n">csdst</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">cum</span><span class="p">(</span><span class="n">sdst</span><span class="p">)</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">acc</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="n">dic</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">point</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">point</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">dst</span><span class="p">:</span> <span class="n">nam</span><span class="o">.</span><span class="n">dst</span><span class="p">(</span><span class="n">point</span><span class="p">),</span>
+        <span class="n">v</span><span class="p">:</span> <span class="n">nam</span><span class="o">.</span><span class="n">vel</span><span class="p">(</span><span class="n">point</span><span class="p">),</span>
+        <span class="n">a</span><span class="p">:</span> <span class="n">nam</span><span class="o">.</span><span class="n">acc</span><span class="p">(</span><span class="n">point</span><span class="p">),</span>
+        <span class="n">cdst</span><span class="p">:</span> <span class="n">nam</span><span class="o">.</span><span class="n">cum</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">dst</span><span class="p">(</span><span class="n">point</span><span class="p">)),</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">k1</span><span class="p">,</span> <span class="n">k2</span> <span class="ow">in</span> <span class="n">dic</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">s</span><span class="p">[</span><span class="n">k1</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">k2</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="n">e</span><span class="p">[</span><span class="n">cdst</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">s</span><span class="p">[</span><span class="n">cdst</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">dst</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]:</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">final</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">initial</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">v</span><span class="p">)]</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="n">cdst</span><span class="p">]</span> <span class="o">/</span> <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">cum</span><span class="p">(</span><span class="s1">&#39;dur&#39;</span><span class="p">)]</span>
+
+    <span class="n">scale_to_length</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">pars</span><span class="o">=</span><span class="p">[</span><span class="n">dst</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">a</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">sdst</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">csdst</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">sdst</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">csdst</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">sdst</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">v</span><span class="p">))]</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="n">csdst</span><span class="p">]</span> <span class="o">/</span> <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">cum</span><span class="p">(</span><span class="s1">&#39;dur&#39;</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+        <span class="k">try</span> <span class="p">:</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">aux</span><span class="o">.</span><span class="n">existing_cols</span><span class="p">([</span><span class="n">dst</span><span class="p">,</span> <span class="n">cdst</span><span class="p">,</span> <span class="n">sdst</span><span class="p">,</span> <span class="n">csdst</span><span class="p">],</span><span class="n">s</span><span class="p">)],</span> <span class="s1">&#39;pathlength&#39;</span><span class="p">)</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">s</span><span class="p">[[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]],</span> <span class="s1">&#39;traj.default&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="spatial_processing"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.spatial_processing">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">proc</span><span class="p">(</span><span class="s2">&quot;spatial&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">spatial_processing</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;minimal&#39;</span><span class="p">,</span> <span class="n">recompute</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">traj2origin</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">reg</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">DatasetConfig</span><span class="p">)</span>
+
+    <span class="n">comp_length</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">recompute</span><span class="o">=</span><span class="n">recompute</span><span class="p">)</span>
+    <span class="n">comp_centroid</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">recompute</span><span class="o">=</span><span class="n">recompute</span><span class="p">)</span>
+    <span class="n">comp_spatial</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+    <span class="n">store_spatial</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span><span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">traj2origin</span> <span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">align_trajectories</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span><span class="n">d</span><span class="o">=</span><span class="n">d</span><span class="p">,</span>  <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">transposition</span><span class="o">=</span><span class="s1">&#39;origin&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Completed </span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s1"> spatial processing.&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="comp_dispersion"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.comp_dispersion">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">proc</span><span class="p">(</span><span class="s2">&quot;dispersion&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">comp_dispersion</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span><span class="n">d</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dsp_starts</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dsp_stops</span><span class="o">=</span><span class="p">[</span><span class="mi">40</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">dsp_starts</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dsp_stops</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="n">xy0</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">load_traj</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">s</span><span class="p">[[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]]</span>
+    <span class="n">dsps</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">dsp_starts</span><span class="p">,</span> <span class="n">dsp_stops</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;dsp_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">t0</span><span class="p">)</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">t1</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">p</span><span class="p">],</span><span class="n">Nt</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">compute_dispersal_multi</span><span class="p">(</span><span class="n">xy0</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+
+        <span class="n">s0</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">t0</span> <span class="o">/</span> <span class="n">c</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+
+        <span class="n">fp</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">final</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">mp</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">mup</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">temp</span><span class="o">=</span><span class="n">s</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">mp</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">mup</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">fp</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+        <span class="n">scale_to_length</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">pars</span><span class="o">=</span><span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">mp</span><span class="p">,</span> <span class="n">mup</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">par</span> <span class="ow">in</span> <span class="p">[</span><span class="n">p</span><span class="p">,</span> <span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">p</span><span class="p">)]:</span>
+            <span class="n">dsps</span><span class="p">[</span><span class="n">par</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_disp_df</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">par</span><span class="p">],</span> <span class="n">s0</span><span class="p">,</span> <span class="n">Nt</span><span class="p">)</span>
+
+
+    <span class="n">aux</span><span class="o">.</span><span class="n">save_dict</span><span class="p">(</span><span class="n">dsps</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">dir</span><span class="si">}</span><span class="s1">/data/dsp.txt&#39;</span><span class="p">)</span>
+
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Completed dispersal processing.&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_disp_df</span><span class="p">(</span><span class="n">dsp</span><span class="p">,</span> <span class="n">s0</span><span class="p">,</span> <span class="n">Nt</span><span class="p">):</span>
+    <span class="n">trange</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">s0</span><span class="p">,</span> <span class="n">s0</span> <span class="o">+</span> <span class="n">Nt</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">dsp_ar</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">Nt</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">dsp_ar</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">dsp</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s1">&#39;Step&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">s0</span><span class="p">:</span><span class="n">s0</span> <span class="o">+</span> <span class="n">Nt</span><span class="p">]</span>
+    <span class="n">dsp_ar</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">dsp</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s1">&#39;Step&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="mf">0.75</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">s0</span><span class="p">:</span><span class="n">s0</span> <span class="o">+</span> <span class="n">Nt</span><span class="p">]</span>
+    <span class="n">dsp_ar</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">dsp</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s1">&#39;Step&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">q</span><span class="o">=</span><span class="mf">0.25</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">s0</span><span class="p">:</span><span class="n">s0</span> <span class="o">+</span> <span class="n">Nt</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">dsp_ar</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">trange</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;median&#39;</span><span class="p">,</span> <span class="s1">&#39;upper&#39;</span><span class="p">,</span> <span class="s1">&#39;lower&#39;</span><span class="p">])</span>
+
+<span class="c1"># def comp_tortuosity(s, e, dt, tor_durs=[2, 5, 10, 20], **kwargs):</span>
+<span class="c1">#     &#39;&#39;&#39;</span>
+<span class="c1">#     Trajectory tortuosity metrics</span>
+<span class="c1">#     In the simplest case a single value is computed as T=1-D/L where D is the dispersal and L the actual pathlength.</span>
+<span class="c1">#     This metric has been used in :</span>
+<span class="c1">#     [1] J. Loveless and B. Webb, “A Neuromechanical Model of Larval Chemotaxis,” Integr. Comp. Biol., vol. 58, no. 5, pp. 906–914, 2018.</span>
+<span class="c1">#     Additionally tortuosity can be computed over a given time interval in which case the result is a vector called straightness index in [2].</span>
+<span class="c1">#     The mean and std are then computed.</span>
+<span class="c1">#</span>
+<span class="c1">#     TODO Check also for binomial distribution over the straightness index vector. If there is a switch between global exploration and local search there should be evidence over a certain time interval.</span>
+<span class="c1">#     Data from here is relevant :</span>
+<span class="c1">#     [2] D. W. Sims, N. E. Humphries, N. Hu, V. Medan, and J. Berni, “Optimal searching behaviour generated intrinsically by the central pattern generator for locomotion,” Elife, vol. 8, pp. 1–31, 2019.</span>
+<span class="c1">#     &#39;&#39;&#39;</span>
+<span class="c1">#     if tor_durs is None:</span>
+<span class="c1">#         return</span>
+<span class="c1">#     try:</span>
+<span class="c1">#         dsp_par = nam.final(&#39;dispersion&#39;) if nam.final(&#39;dispersion&#39;) in e.columns else &#39;dispersion&#39;</span>
+<span class="c1">#         e[&#39;tortuosity&#39;] = 1 - e[dsp_par] / e[nam.cum(nam.dst(&#39;&#39;))]</span>
+<span class="c1">#     except:</span>
+<span class="c1">#         pass</span>
+<span class="c1">#     durs = [int(1 / dt * d) for d in tor_durs]</span>
+<span class="c1">#     Ndurs = len(durs)</span>
+<span class="c1">#     if Ndurs &gt; 0:</span>
+<span class="c1">#         ids = s.index.unique(&#39;AgentID&#39;).values</span>
+<span class="c1">#         Nids = len(ids)</span>
+<span class="c1">#         ds = [s[[&#39;x&#39;, &#39;y&#39;]].xs(id, level=&#39;AgentID&#39;) for id in ids]</span>
+<span class="c1">#         ds = [d.loc[d.first_valid_index(): d.last_valid_index()].values for d in ds]</span>
+<span class="c1">#         for j, r in enumerate(durs):</span>
+<span class="c1">#             par = f&#39;tortuosity_{tor_durs[j]}&#39;</span>
+<span class="c1">#             par_m, par_s = nam.mean(par), nam.std(par)</span>
+<span class="c1">#             T_m = np.ones(Nids) * np.nan</span>
+<span class="c1">#             T_s = np.ones(Nids) * np.nan</span>
+<span class="c1">#             for z, id in enumerate(ids):</span>
+<span class="c1">#                 si = ds[z]</span>
+<span class="c1">#                 u = len(si) % r</span>
+<span class="c1">#                 if u &gt; 1:</span>
+<span class="c1">#                     si0 = si[:-u + 1]</span>
+<span class="c1">#                 else:</span>
+<span class="c1">#                     si0 = si[:-r + 1]</span>
+<span class="c1">#                 k = int(len(si0) / r)</span>
+<span class="c1">#                 T = []</span>
+<span class="c1">#                 for i in range(k):</span>
+<span class="c1">#                     t = si0[i * r:i * r + r + 1, :]</span>
+<span class="c1">#                     if np.isnan(t).any():</span>
+<span class="c1">#                         continue</span>
+<span class="c1">#                     else:</span>
+<span class="c1">#                         t_D = np.sum(np.sqrt(np.sum(np.diff(t, axis=0) ** 2, axis=1)))</span>
+<span class="c1">#                         t_L = np.sqrt(np.sum(np.array(t[-1, :] - t[0, :]) ** 2))</span>
+<span class="c1">#                         t_T = 1 - t_L / t_D</span>
+<span class="c1">#                         T.append(t_T)</span>
+<span class="c1">#                 T_m[z] = np.mean(T)</span>
+<span class="c1">#                 T_s[z] = np.std(T)</span>
+<span class="c1">#             e[par_m] = T_m</span>
+<span class="c1">#             e[par_s] = T_s</span>
+<span class="c1">#</span>
+<span class="c1">#     reg.vprint(&#39;Tortuosities computed&#39;)</span>
+
+
+<span class="k">def</span> <span class="nf">rolling_window</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+    <span class="c1"># Get windows of size w from array a</span>
+    <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Input array must be 1-dimensional&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="o">-</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">w</span><span class="p">)])</span><span class="o">.</span><span class="n">T</span><span class="p">[:</span><span class="o">-</span><span class="n">w</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">rolling_window_xy</span><span class="p">(</span><span class="n">xy</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
+    <span class="c1"># Get windows of size w from 2D array xy</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">rolling_window</span><span class="p">(</span><span class="n">xy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">w</span><span class="p">)</span>
+    <span class="n">ys</span> <span class="o">=</span> <span class="n">rolling_window</span><span class="p">(</span><span class="n">xy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">w</span><span class="p">)</span>
+    <span class="n">xys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">([</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">xys</span>
+
+<div class="viewcode-block" id="straightness_index"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.straightness_index">[docs]</a><span class="k">def</span> <span class="nf">straightness_index</span><span class="p">(</span><span class="n">ss</span><span class="p">,</span> <span class="n">rolling_ticks</span><span class="p">):</span>
+    <span class="n">ps</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;dst&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">aux</span><span class="o">.</span><span class="n">cols_exist</span><span class="p">(</span><span class="n">ps</span><span class="p">,</span><span class="n">ss</span><span class="p">)</span>
+    <span class="n">sss</span><span class="o">=</span><span class="n">ss</span><span class="p">[</span><span class="n">ps</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">temp</span><span class="o">=</span><span class="n">sss</span><span class="p">[</span><span class="n">rolling_ticks</span><span class="p">]</span>
+    <span class="n">Ds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">temp</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">xys</span> <span class="o">=</span> <span class="n">temp</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+
+    <span class="n">k0</span><span class="p">,</span> <span class="n">k1</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ss</span><span class="p">),</span> <span class="n">rolling_ticks</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">dk</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">k0</span> <span class="o">-</span> <span class="n">k1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">SI0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">k0</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k1</span><span class="p">)</span> <span class="p">:</span>
+        <span class="n">D</span><span class="o">=</span><span class="n">Ds</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">D</span><span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">xy</span> <span class="o">=</span> <span class="n">xys</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">xys</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">xy</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+                <span class="n">SI0</span><span class="p">[</span><span class="n">dk</span><span class="o">+</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">L</span> <span class="o">/</span> <span class="n">D</span>
+    <span class="k">return</span> <span class="n">SI0</span></div>
+
+
+<span class="c1"># def straightness_index2(ss, w, match_shape=True):</span>
+<span class="c1">#     xy0 = ss[[&#39;x&#39;, &#39;y&#39;]].values</span>
+<span class="c1">#     # Compute tortuosity over intervals of duration w</span>
+<span class="c1">#     xys = rolling_window_xy(xy0, w)</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#     k0, k1 = xy0.shape[0], xys.shape[0]</span>
+<span class="c1">#     l_xys = np.array([xys[i, :][~np.isnan(xys[i, :]).any(axis=1)] for i in range(k1)])</span>
+<span class="c1">#     valid=np.where([l_xys[i].shape[0]&gt;= 2 for i in range(k1)])[0]</span>
+<span class="c1">#</span>
+<span class="c1">#     if &#39;dst&#39; in ss.columns:</span>
+<span class="c1">#         dst = ss[&#39;dst&#39;].values</span>
+<span class="c1">#         Ds = np.nansum(rolling_window(dst, w), axis=1)[valid]</span>
+<span class="c1">#</span>
+<span class="c1">#     else:</span>
+<span class="c1">#         Ds = np.array([np.nansum(np.sqrt(np.nansum(np.diff(l_xys[i], axis=0) ** 2, axis=1))) for i in valid])</span>
+<span class="c1">#</span>
+<span class="c1">#     valid2=np.where(Ds!=0)[0]</span>
+<span class="c1">#     Ds=Ds[valid2]</span>
+<span class="c1">#</span>
+<span class="c1">#     valid_fin=valid[valid2]</span>
+<span class="c1">#</span>
+<span class="c1">#     dxys=np.array([l_xys[i][-1, :] -l_xys[i][0, :] for i in valid_fin])</span>
+<span class="c1">#     Ls = np.sqrt(np.nansum(dxys ** 2, axis=1))</span>
+<span class="c1">#     A=1 - Ls / Ds</span>
+<span class="c1">#</span>
+<span class="c1">#     if match_shape:</span>
+<span class="c1">#         dk = int((k0 - k1) / 2)</span>
+<span class="c1">#         SI0 = np.zeros(k0) * np.nan</span>
+<span class="c1">#         SI0[dk+valid_fin] = A</span>
+<span class="c1">#         return SI0</span>
+<span class="c1">#     else:</span>
+<span class="c1">#         SI = np.zeros(k1) * np.nan</span>
+<span class="c1">#         SI[valid_fin] = A</span>
+<span class="c1">#</span>
+<span class="c1">#         return SI</span>
+<span class="c1">#     &#39;&#39;&#39;</span>
+<span class="c1">#         if match_shape:</span>
+<span class="c1">#         dk = int((k0 - k1) / 2)</span>
+<span class="c1">#         SI = np.zeros(k0) * np.nan</span>
+<span class="c1">#         for i in range(k1):</span>
+<span class="c1">#             SI[dk + i] = tortuosity(xys[i, :])</span>
+<span class="c1">#     else:</span>
+<span class="c1">#         SI = np.zeros(k1) * np.nan</span>
+<span class="c1">#         for i in range(k1):</span>
+<span class="c1">#             SI[i] = tortuosity(xys[i, :])</span>
+<span class="c1">#     return SI</span>
+<span class="c1">#     &#39;&#39;&#39;</span>
+
+
+<div class="viewcode-block" id="comp_straightness_index"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.comp_straightness_index">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">proc</span><span class="p">(</span><span class="s2">&quot;tortuosity&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">comp_straightness_index</span><span class="p">(</span><span class="n">s</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">e</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">d</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tor_durs</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">dt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">dt</span>
+
+    <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_hdf</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">dir</span><span class="si">}</span><span class="s1">/data/data.h5&#39;</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="s1">&#39;step&#39;</span><span class="p">)</span>
+
+    <span class="n">ticks</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">Nticks</span><span class="p">)</span>
+    <span class="n">ps</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;dst&#39;</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">aux</span><span class="o">.</span><span class="n">cols_exist</span><span class="p">(</span><span class="n">ps</span><span class="p">,</span><span class="n">s</span><span class="p">)</span>
+
+    <span class="n">ss</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">ps</span><span class="p">]</span>
+    <span class="n">pars</span> <span class="o">=</span> <span class="p">[</span><span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;tor</span><span class="si">{</span><span class="n">dur</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">dur</span> <span class="ow">in</span> <span class="n">tor_durs</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">dur</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">tor_durs</span><span class="p">,</span> <span class="n">pars</span><span class="p">):</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">dur</span> <span class="o">/</span> <span class="n">dt</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">rolling_ticks</span><span class="o">=</span><span class="n">rolling_window</span><span class="p">(</span><span class="n">ticks</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">apply_per_level</span><span class="p">(</span><span class="n">ss</span><span class="p">,</span> <span class="n">straightness_index</span><span class="p">,</span> <span class="n">rolling_ticks</span><span class="o">=</span><span class="n">rolling_ticks</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">p</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Completed tortuosity processing.&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="comp_source_metrics"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.comp_source_metrics">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">proc</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">comp_source_metrics</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">fo</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="s1">&#39;fo&#39;</span><span class="p">)</span>
+    <span class="n">xy</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">source_xy</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Computing bearing and distance to </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1"> based on xy position&#39;</span><span class="p">)</span>
+        <span class="n">o</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">bearing_to</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">nam</span><span class="o">.</span><span class="n">dst_to</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">pmax</span><span class="p">,</span> <span class="n">pmu</span><span class="p">,</span> <span class="n">pfin</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">nam</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">nam</span><span class="o">.</span><span class="n">final</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">pabs</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="o">-</span> <span class="n">s</span><span class="p">[</span><span class="n">xy</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">o</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">fo</span><span class="p">]</span> <span class="o">+</span> <span class="mi">180</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">temp</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">temp</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])))</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">pabs</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">o</span><span class="p">]</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">eudi5x</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">xy</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">pmax</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">pmu</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">pfin</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">d</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">pabs</span><span class="p">)]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">pabs</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s1">&#39;length&#39;</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span>
+
+            <span class="k">def</span> <span class="nf">rowIndex</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">row</span><span class="o">.</span><span class="n">name</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="k">def</span> <span class="nf">rowLength</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">l</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">rowIndex</span><span class="p">(</span><span class="n">row</span><span class="p">)]</span>
+
+            <span class="k">def</span> <span class="nf">rowFunc</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">row</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">/</span> <span class="n">rowLength</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+            <span class="n">s</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">rowFunc</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">[</span><span class="n">pmax</span><span class="p">,</span> <span class="n">pmu</span><span class="p">,</span> <span class="n">pfin</span><span class="p">]:</span>
+                <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">p</span><span class="p">)]</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">/</span> <span class="n">l</span>
+
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Bearing and distance to source computed&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="comp_wind"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.comp_wind">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">proc</span><span class="p">(</span><span class="s2">&quot;wind&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">comp_wind</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="p">:</span>
+    <span class="k">try</span> <span class="p">:</span>
+        <span class="n">comp_wind_metrics</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">:</span>
+        <span class="n">comp_final_anemotaxis</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">comp_wind_metrics</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">env_params</span><span class="o">.</span><span class="n">windscape</span>
+    <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">wo</span><span class="p">,</span> <span class="n">wv</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">wind_direction</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">wind_speed</span>
+        <span class="n">woo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">wo</span><span class="p">)</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="n">xy</span> <span class="o">=</span> <span class="n">s</span><span class="p">[[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;AgentID&#39;</span><span class="p">,</span> <span class="n">drop_level</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+            <span class="n">origin</span> <span class="o">=</span> <span class="n">e</span><span class="p">[[</span><span class="n">nam</span><span class="o">.</span><span class="n">initial</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">),</span> <span class="n">nam</span><span class="o">.</span><span class="n">initial</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">)]]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">eudi5x</span><span class="p">(</span><span class="n">xy</span><span class="p">,</span> <span class="n">origin</span><span class="p">)</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="n">xy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">origin</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">dy</span> <span class="o">=</span> <span class="n">xy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">origin</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">angs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">dy</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">aux</span><span class="o">.</span><span class="n">angle_dif</span><span class="p">(</span><span class="n">ang</span><span class="p">,</span> <span class="n">woo</span><span class="p">)</span> <span class="k">for</span> <span class="n">ang</span> <span class="ow">in</span> <span class="n">angs</span><span class="p">])</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="nb">id</span><span class="p">),</span> <span class="s1">&#39;anemotaxis&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">bearing_to</span><span class="p">(</span><span class="s1">&#39;wind&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">aux</span><span class="o">.</span><span class="n">angle_dif</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">orient</span><span class="p">(</span><span class="s1">&#39;front&#39;</span><span class="p">)],</span> <span class="n">wo</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">e</span><span class="p">[</span><span class="s1">&#39;anemotaxis&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;anemotaxis&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">comp_final_anemotaxis</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">env_params</span><span class="o">.</span><span class="n">windscape</span>
+    <span class="k">if</span> <span class="n">w</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">wo</span><span class="p">,</span> <span class="n">wv</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">wind_direction</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">wind_speed</span>
+        <span class="n">woo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">deg2rad</span><span class="p">(</span><span class="n">wo</span><span class="p">)</span>
+        <span class="n">xy0</span> <span class="o">=</span> <span class="n">s</span><span class="p">[[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+        <span class="n">xy1</span> <span class="o">=</span> <span class="n">s</span><span class="p">[[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">xy1</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">xy0</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="n">xy1</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xy0</span><span class="o">.</span><span class="n">values</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dx</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">dy</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">angs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">dy</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">aux</span><span class="o">.</span><span class="n">angle_dif</span><span class="p">(</span><span class="n">ang</span><span class="p">,</span> <span class="n">woo</span><span class="p">)</span> <span class="k">for</span> <span class="n">ang</span> <span class="ow">in</span> <span class="n">angs</span><span class="p">])</span>
+        <span class="n">e</span><span class="p">[</span><span class="s1">&#39;anemotaxis&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="align_trajectories"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.align_trajectories">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">preproc</span><span class="p">(</span><span class="s2">&quot;transposition&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">align_trajectories</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">track_point</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">arena_dims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transposition</span><span class="o">=</span><span class="s1">&#39;origin&#39;</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">reg</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">DatasetConfig</span><span class="p">):</span>
+        <span class="n">c</span><span class="o">=</span><span class="n">reg</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">DatasetConfig</span><span class="p">(</span><span class="o">**</span><span class="n">c</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">transposition</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]:</span>
+        <span class="k">return</span>
+    <span class="n">mode</span><span class="o">=</span><span class="n">transposition</span>
+
+    <span class="n">xy_flat</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">all_xy</span><span class="o">.</span><span class="n">existing</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="n">xy_pairs</span> <span class="o">=</span> <span class="n">xy_flat</span><span class="o">.</span><span class="n">in_pairs</span>
+    <span class="c1"># xy_flat=np.unique(aux.flatten_list(xy_pairs))</span>
+    <span class="c1"># xy_pairs = aux.group_list_by_n(xy_flat, 2)</span>
+
+    <span class="k">if</span> <span class="n">replace</span> <span class="p">:</span>
+        <span class="n">ss</span><span class="o">=</span><span class="n">s</span>
+    <span class="k">else</span> <span class="p">:</span>
+        <span class="n">ss</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">xy_flat</span><span class="p">])</span>
+
+
+    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;arena&#39;</span><span class="p">:</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Centralizing trajectories in arena center&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">arena_dims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">arena_dims</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">env_params</span><span class="o">.</span><span class="n">arena</span><span class="o">.</span><span class="n">dims</span>
+        <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span> <span class="o">=</span> <span class="n">arena_dims</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">x0</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">y0</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">xy_pairs</span><span class="p">:</span>
+            <span class="n">ss</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">-=</span> <span class="n">X</span>
+            <span class="n">ss</span><span class="p">[</span><span class="n">y</span><span class="p">]</span> <span class="o">-=</span> <span class="n">Y</span>
+        <span class="k">return</span> <span class="n">ss</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">track_point</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">track_point</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">point</span>
+        <span class="n">XY</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">track_point</span><span class="p">)</span> <span class="k">if</span> <span class="n">aux</span><span class="o">.</span><span class="n">cols_exist</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">track_point</span><span class="p">),</span><span class="n">s</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">aux</span><span class="o">.</span><span class="n">cols_exist</span><span class="p">(</span><span class="n">XY</span><span class="p">,</span><span class="n">s</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Defined point xy coordinates do not exist. Can not align trajectories! &#39;</span><span class="p">)</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">Nticks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="s1">&#39;Step&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;origin&#39;</span><span class="p">:</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Aligning trajectories to common origin&#39;</span><span class="p">)</span>
+            <span class="n">xy</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="n">XY</span><span class="p">]</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;center&#39;</span><span class="p">:</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Centralizing trajectories in trajectory center using min-max positions&#39;</span><span class="p">)</span>
+            <span class="n">xy_max</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="n">XY</span><span class="p">]</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">values</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+            <span class="n">xy_min</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="n">XY</span><span class="p">]</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">values</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">]</span>
+            <span class="n">xy</span> <span class="o">=</span> <span class="p">[(</span><span class="nb">max</span> <span class="o">+</span> <span class="nb">min</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="k">for</span> <span class="nb">max</span><span class="p">,</span> <span class="nb">min</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">xy_max</span><span class="p">,</span> <span class="n">xy_min</span><span class="p">)]</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Supported modes are &quot;arena&quot;, &quot;origin&quot; and &quot;center&quot;!&#39;</span><span class="p">)</span>
+        <span class="n">xs</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">xy</span><span class="p">]</span><span class="o">*</span><span class="n">Nticks</span><span class="p">)</span>
+        <span class="n">ys</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">y</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">xy</span><span class="p">]</span><span class="o">*</span><span class="n">Nticks</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">jj</span><span class="p">,(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">xy_pairs</span><span class="p">):</span>
+            <span class="n">ss</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">ss</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">-</span><span class="n">xs</span>
+            <span class="n">ss</span><span class="p">[</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="n">ss</span><span class="p">[</span><span class="n">y</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">-</span><span class="n">ys</span>
+
+        <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">ss</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;traj.</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;traj_aligned2</span><span class="si">{</span><span class="n">mode</span><span class="si">}</span><span class="s1"> stored&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ss</span></div>
+
+
+<div class="viewcode-block" id="fixate_larva"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.fixate_larva">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">preproc</span><span class="p">(</span><span class="s2">&quot;fixation&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">fixate_larva</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">P1</span><span class="p">,</span> <span class="n">P2</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">reg</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">DatasetConfig</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">DatasetConfig</span><span class="p">(</span><span class="o">**</span><span class="n">c</span><span class="p">)</span>
+
+
+
+    <span class="n">pars</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">all_xy</span><span class="o">.</span><span class="n">existing</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">P1</span><span class="p">)</span><span class="o">.</span><span class="n">exist_in</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; The requested </span><span class="si">{</span><span class="n">P1</span><span class="si">}</span><span class="s2"> is not part of the dataset&quot;</span><span class="p">)</span>
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Fixing </span><span class="si">{</span><span class="n">P1</span><span class="si">}</span><span class="s1"> to arena center&#39;</span><span class="p">)</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">env_params</span><span class="o">.</span><span class="n">arena</span><span class="o">.</span><span class="n">dims</span>
+    <span class="n">xy</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">P1</span><span class="p">)]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">xy_start</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">P1</span><span class="p">)]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">bg_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">xy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">xy_start</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">X</span>
+    <span class="n">bg_y</span> <span class="o">=</span> <span class="p">(</span><span class="n">xy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">xy_start</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">Y</span>
+
+    <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">pars</span><span class="o">.</span><span class="n">in_pairs</span><span class="p">:</span>
+        <span class="n">s</span><span class="p">[[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]]</span> <span class="o">-=</span> <span class="n">xy</span>
+
+    <span class="n">N</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="s1">&#39;Step&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span>
+    <span class="k">if</span> <span class="n">P2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">P2</span><span class="p">)</span><span class="o">.</span><span class="n">exist_in</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; The requested secondary </span><span class="si">{</span><span class="n">P2</span><span class="si">}</span><span class="s2"> is not part of the dataset&quot;</span><span class="p">)</span>
+        <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Fixing </span><span class="si">{</span><span class="n">P2</span><span class="si">}</span><span class="s1"> as secondary point on vertical axis&#39;</span><span class="p">)</span>
+        <span class="n">xy_sec</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="n">P2</span><span class="p">)]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">bg_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">xy_sec</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">xy_sec</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span><span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="n">s</span><span class="p">[</span><span class="n">pars</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">aux</span><span class="o">.</span><span class="n">flatten_list</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">rotate_points_around_point</span><span class="p">(</span><span class="n">points</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">pars</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">,:],</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span>
+                                                            <span class="n">radians</span><span class="o">=</span><span class="n">bg_a</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bg_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+
+
+    <span class="n">bg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">bg_x</span><span class="p">,</span> <span class="n">bg_y</span><span class="p">,</span> <span class="n">bg_a</span><span class="p">))</span>
+    <span class="n">reg</span><span class="o">.</span><span class="n">vprint</span><span class="p">(</span><span class="s1">&#39;Fixed-point dataset generated&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">s</span><span class="p">,</span> <span class="n">bg</span></div>
+
+
+<span class="k">def</span> <span class="nf">comp_PI2</span><span class="p">(</span><span class="n">xys</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mf">0.04</span><span class="p">):</span>
+    <span class="n">Nticks</span> <span class="o">=</span> <span class="n">xys</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="s1">&#39;Step&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="n">xys</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+    <span class="n">dLR</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">N</span><span class="p">,</span> <span class="n">Nticks</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="nb">id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">ids</span><span class="p">):</span>
+        <span class="n">xy</span> <span class="o">=</span> <span class="n">xys</span><span class="o">.</span><span class="n">xs</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">dL</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">eudi5x</span><span class="p">(</span><span class="n">xy</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">dR</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">eudi5x</span><span class="p">(</span><span class="n">xy</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">dLR</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">dR</span> <span class="o">-</span> <span class="n">dL</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+    <span class="n">dLR_mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dLR</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">mu_dLR_mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dLR_mu</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mu_dLR_mu</span>
+
+
+<div class="viewcode-block" id="comp_PI"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.comp_PI">[docs]</a><span class="k">def</span> <span class="nf">comp_PI</span><span class="p">(</span><span class="n">arena_xdim</span><span class="p">,</span> <span class="n">xs</span><span class="p">,</span> <span class="n">return_num</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="n">arena_xdim</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
+    <span class="n">N_l</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">[</span><span class="n">xs</span> <span class="o">&lt;=</span> <span class="o">-</span><span class="n">r</span> <span class="o">/</span> <span class="mi">2</span><span class="p">])</span>
+    <span class="n">N_r</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">xs</span><span class="p">[</span><span class="n">xs</span> <span class="o">&gt;=</span> <span class="o">+</span><span class="n">r</span> <span class="o">/</span> <span class="mi">2</span><span class="p">])</span>
+    <span class="c1"># N_m = len(xs[(xs &lt;= +r / 2) &amp; (xs &gt;= -r / 2)])</span>
+    <span class="n">pI</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">N_l</span> <span class="o">-</span> <span class="n">N_r</span><span class="p">)</span> <span class="o">/</span> <span class="n">N</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">return_num</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pI</span><span class="p">,</span> <span class="n">N</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pI</span></div>
+
+
+<div class="viewcode-block" id="comp_dataPI"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.comp_dataPI">[docs]</a><span class="nd">@reg</span><span class="o">.</span><span class="n">funcs</span><span class="o">.</span><span class="n">proc</span><span class="p">(</span><span class="s2">&quot;PI&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">comp_dataPI</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s1">&#39;x&#39;</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">px</span> <span class="o">=</span> <span class="s1">&#39;x&#39;</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="n">px</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">elif</span> <span class="n">nam</span><span class="o">.</span><span class="n">final</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">px</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">final</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">)</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="n">px</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">elif</span> <span class="s1">&#39;x&#39;</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">px</span> <span class="o">=</span> <span class="s1">&#39;x&#39;</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">px</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">elif</span> <span class="s1">&#39;centroid_x&#39;</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">px</span> <span class="o">=</span> <span class="s1">&#39;centroid_x&#39;</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">px</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No x coordinate found&#39;</span><span class="p">)</span>
+    <span class="n">PI</span><span class="p">,</span> <span class="n">N</span> <span class="o">=</span> <span class="n">comp_PI</span><span class="p">(</span><span class="n">xs</span><span class="o">=</span><span class="n">xs</span><span class="p">,</span> <span class="n">arena_xdim</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">env_params</span><span class="o">.</span><span class="n">arena</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">return_num</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">c</span><span class="o">.</span><span class="n">PI</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;PI&#39;</span><span class="p">:</span> <span class="n">PI</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">:</span> <span class="n">N</span><span class="p">}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">PI2</span> <span class="o">=</span> <span class="n">comp_PI2</span><span class="p">(</span><span class="n">xys</span><span class="o">=</span><span class="n">s</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">xy</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)])</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+
+
+
+<div class="viewcode-block" id="scale_to_length"><a class="viewcode-back" href="../../../../content/larvaworld/lib/process/spatial.html#larvaworld.lib.process.spatial.scale_to_length">[docs]</a><span class="k">def</span> <span class="nf">scale_to_length</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pars</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">l_par</span> <span class="o">=</span> <span class="s1">&#39;length&#39;</span>
+    <span class="k">if</span> <span class="n">l_par</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">comp_length</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;minimal&#39;</span><span class="p">,</span> <span class="n">recompute</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="n">l_par</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">pars</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">keys</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pars</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getPar</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No parameter names or keys provided.&#39;</span><span class="p">)</span>
+    <span class="n">s_pars</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">existing_cols</span><span class="p">(</span><span class="n">pars</span><span class="p">,</span><span class="n">s</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s_pars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">get_level_values</span><span class="p">(</span><span class="s1">&#39;AgentID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">ls</span> <span class="o">=</span> <span class="n">l</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ids</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">s</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">s_pars</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">s_pars</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">T</span> <span class="o">/</span> <span class="n">ls</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">e_pars</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">existing_cols</span><span class="p">(</span><span class="n">pars</span><span class="p">,</span><span class="n">e</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">e_pars</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">e</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">scal</span><span class="p">(</span><span class="n">e_pars</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="n">e_pars</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">T</span> <span class="o">/</span> <span class="n">l</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">T</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

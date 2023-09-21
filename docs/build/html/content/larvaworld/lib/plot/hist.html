@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hist &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="metric" href="metric.html" />
+    <link rel="prev" title="grid" href="grid.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../model/index.html">Modeling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../param/index.html">Parameters</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Plotting</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="aux.html">aux</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bar.html">bar</a></li>
+<li class="toctree-l4"><a class="reference internal" href="base.html">Plotting template classes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="bearing.html">bearing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="box.html">box</a></li>
+<li class="toctree-l4"><a class="reference internal" href="deb.html">deb</a></li>
+<li class="toctree-l4"><a class="reference internal" href="epochs.html">epochs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="freq.html">freq</a></li>
+<li class="toctree-l4"><a class="reference internal" href="grid.html">grid</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">hist</a></li>
+<li class="toctree-l4"><a class="reference internal" href="metric.html">metric</a></li>
+<li class="toctree-l4"><a class="reference internal" href="scape.html">scape</a></li>
+<li class="toctree-l4"><a class="reference internal" href="stridecycle.html">stridecycle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="table.html">table</a></li>
+<li class="toctree-l4"><a class="reference internal" href="time.html">time</a></li>
+<li class="toctree-l4"><a class="reference internal" href="traj.html">traj</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../process/index.html">Data management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../screen/index.html">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sim/index.html">Simulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../util/index.html">Dataset fitting &amp; sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Plotting</a></li>
+      <li class="breadcrumb-item active">hist</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/content/larvaworld/lib/plot/hist.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.plot.hist">
+<span id="hist"></span><h1>hist<a class="headerlink" href="#module-larvaworld.lib.plot.hist" title="Permalink to this heading"></a></h1>
+<section id="module-endpoint-hists">
+<h2>module_endpoint_hists<a class="headerlink" href="#module-endpoint-hists" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.hist.module_endpoint_hists">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.hist.</span></span><span class="sig-name descname"><span class="pre">module_endpoint_hists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mkey</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'crawler'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'realistic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">e</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refID</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nbins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_median</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/hist.html#module_endpoint_hists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.hist.module_endpoint_hists" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="plot-ang-pars">
+<h2>plot_ang_pars<a class="headerlink" href="#plot-ang-pars" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.hist.plot_ang_pars">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.hist.</span></span><span class="sig-name descname"><span class="pre">plot_ang_pars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">absolute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_rear</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ang_pars'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">half_circles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kde</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subfolder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'turn'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Npars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nbins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sns.hist'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/hist.html#plot_ang_pars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.hist.plot_ang_pars" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="plot-bout-ang-pars">
+<h2>plot_bout_ang_pars<a class="headerlink" href="#plot-bout-ang-pars" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.hist.plot_bout_ang_pars">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.hist.</span></span><span class="sig-name descname"><span class="pre">plot_bout_ang_pars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bout_ang_pars'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_rear</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subfolder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'turn'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/hist.html#plot_bout_ang_pars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.hist.plot_bout_ang_pars" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="plot-crawl-pars">
+<h2>plot_crawl_pars<a class="headerlink" href="#plot-crawl-pars" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.hist.plot_crawl_pars">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.hist.</span></span><span class="sig-name descname"><span class="pre">plot_crawl_pars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['str_N',</span> <span class="pre">'run_tr',</span> <span class="pre">'cum_sd']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subfolder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'endpoint'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'crawl_pars'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sns.hist'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kde</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/hist.html#plot_crawl_pars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.hist.plot_crawl_pars" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="plot-distros">
+<h2>plot_distros<a class="headerlink" href="#plot-distros" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.hist.plot_distros">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.hist.</span></span><span class="sig-name descname"><span class="pre">plot_distros</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['v',</span> <span class="pre">'a',</span> <span class="pre">'sv',</span> <span class="pre">'sa',</span> <span class="pre">'b',</span> <span class="pre">'bv',</span> <span class="pre">'ba',</span> <span class="pre">'fov',</span> <span class="pre">'foa']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hist'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">half_circles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annotation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_only</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_ns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subfolder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'distro'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Nbins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/hist.html#plot_distros"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.hist.plot_distros" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="plot-endpoint-box">
+<h2>plot_endpoint_box<a class="headerlink" href="#plot-endpoint-box" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.hist.plot_endpoint_box">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.hist.</span></span><span class="sig-name descname"><span class="pre">plot_endpoint_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/hist.html#plot_endpoint_box"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.hist.plot_endpoint_box" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="plot-endpoint-hist">
+<h2>plot_endpoint_hist<a class="headerlink" href="#plot-endpoint-hist" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.hist.plot_endpoint_hist">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.hist.</span></span><span class="sig-name descname"><span class="pre">plot_endpoint_hist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/hist.html#plot_endpoint_hist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.hist.plot_endpoint_hist" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="plot-endpoint-params">
+<h2>plot_endpoint_params<a class="headerlink" href="#plot-endpoint-params" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.hist.plot_endpoint_params">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.hist.</span></span><span class="sig-name descname"><span class="pre">plot_endpoint_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'basic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ncols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subfolder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'endpoint'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/hist.html#plot_endpoint_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.hist.plot_endpoint_params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="plot-endpoint-scatter">
+<h2>plot_endpoint_scatter<a class="headerlink" href="#plot-endpoint-scatter" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.hist.plot_endpoint_scatter">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.hist.</span></span><span class="sig-name descname"><span class="pre">plot_endpoint_scatter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subfolder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'endpoint'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/hist.html#plot_endpoint_scatter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.hist.plot_endpoint_scatter" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="plot-turn-amp-vs-ypos">
+<h2>plot_turn_amp_VS_Ypos<a class="headerlink" href="#plot-turn-amp-vs-ypos" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.hist.plot_turn_amp_VS_Ypos">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.hist.</span></span><span class="sig-name descname"><span class="pre">plot_turn_amp_VS_Ypos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/hist.html#plot_turn_amp_VS_Ypos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.hist.plot_turn_amp_VS_Ypos" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="plot-turn-duration">
+<h2>plot_turn_duration<a class="headerlink" href="#plot-turn-duration" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.hist.plot_turn_duration">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.hist.</span></span><span class="sig-name descname"><span class="pre">plot_turn_duration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">absolute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/hist.html#plot_turn_duration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.hist.plot_turn_duration" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="plot-turns">
+<h2>plot_turns<a class="headerlink" href="#plot-turns" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.plot.hist.plot_turns">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.plot.hist.</span></span><span class="sig-name descname"><span class="pre">plot_turns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'turn_amplitude'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subfolder</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'turn'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/larvaworld/lib/plot/hist.html#plot_turns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.plot.hist.plot_turns" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="grid.html" class="btn btn-neutral float-left" title="grid" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="metric.html" class="btn btn-neutral float-right" title="metric" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

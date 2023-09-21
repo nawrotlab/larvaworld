@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.sim.ABM_model &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.sim.ABM_model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.sim.ABM_model</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">agentpy.version</span> <span class="kn">import</span> <span class="n">__version__</span>
+<span class="kn">from</span> <span class="nn">agentpy.datadict</span> <span class="kn">import</span> <span class="n">DataDict</span>
+<span class="kn">from</span> <span class="nn">agentpy.sample</span> <span class="kn">import</span> <span class="n">Range</span><span class="p">,</span> <span class="n">Values</span>
+
+<span class="kn">from</span> <span class="nn">agentpy.tools</span> <span class="kn">import</span> <span class="n">make_list</span><span class="p">,</span> <span class="n">InfoStr</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib.model</span> <span class="kn">import</span> <span class="n">Object</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;BasicABModel&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ABModel&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="BasicABModel"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel">[docs]</a><span class="k">class</span> <span class="nc">BasicABModel</span><span class="p">(</span><span class="n">Object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Basic Class for the Agent-based model</span>
+<span class="sd">        Extends the agentpy Model class</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;ABModel&#39;</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_run_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="c1"># Prepare parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="p">(</span><span class="n">Range</span><span class="p">,</span> <span class="n">Values</span><span class="p">)):</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">vdef</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+        <span class="c1"># Iniate model as model object with id 0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_id_counter</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">)</span>
+
+        <span class="c1"># Simulation attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_id</span> <span class="o">=</span> <span class="n">_run_id</span>
+
+        <span class="c1"># Random number generators</span>
+        <span class="c1"># Can be re-initiated with seed by Model.run()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">random</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nprandom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+
+        <span class="c1"># Recording</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reporters</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">DataDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;model_type&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
+            <span class="s1">&#39;time_stamp&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">),</span>
+            <span class="s1">&#39;agentpy_version&#39;</span><span class="p">:</span> <span class="n">__version__</span><span class="p">,</span>
+            <span class="s1">&#39;python_version&#39;</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="p">[:</span><span class="mi">5</span><span class="p">],</span>
+            <span class="s1">&#39;experiment&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s1">&#39;completed&#39;</span><span class="p">:</span> <span class="kc">False</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Private variables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_steps</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_partly_run</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_var_ignore</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span>
+
+    <span class="c1"># Class Methods --------------------------------------------------------- #</span>
+
+<div class="viewcode-block" id="BasicABModel.as_function"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.as_function">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">as_function</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Converts the model into a function that can be used with the</span>
+<span class="sd">        `ema_workbench &lt;https://emaworkbench.readthedocs.io/&gt;`_ library.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            **kwargs: Additional keyword arguments that will passed</span>
+<span class="sd">                to the model in addition to the parameters.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            function:</span>
+<span class="sd">                The model as a function that takes</span>
+<span class="sd">                parameter values as keyword arguments and</span>
+<span class="sd">                returns a dictionary of reporters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">superkwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+
+        <span class="k">def</span> <span class="nf">agentpy_model_as_function</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">superkwargs</span><span class="p">)</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">reporters</span>
+
+        <span class="n">agentpy_model_as_function</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        Performs a simulation of the model &#39;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&#39;.</span>
+
+<span class="s2">        Arguments:</span>
+<span class="s2">            **kwargs: Keyword arguments with parameter values.</span>
+
+<span class="s2">        Returns:</span>
+<span class="s2">            dict: Reporters of the model.</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">agentpy_model_as_function</span></div>
+
+    <span class="c1"># Properties ------------------------------------------------------------ #</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">rep</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Agent-based model </span><span class="se">{{</span><span class="s2">&quot;</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">_short_repr</span><span class="p">()</span> <span class="k">if</span> <span class="s1">&#39;_short_repr&#39;</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span>
+                <span class="n">rep</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&#39;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">rep</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">}&#39;</span>
+        <span class="k">return</span> <span class="n">InfoStr</span><span class="p">(</span><span class="n">rep</span><span class="p">)</span>
+
+    <span class="c1"># Handling object ids --------------------------------------------------- #</span>
+
+<div class="viewcode-block" id="BasicABModel._new_id"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel._new_id">[docs]</a>    <span class="k">def</span> <span class="nf">_new_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns a new unique object id (int). &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_id_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id_counter</span></div>
+
+    <span class="c1"># Recording ------------------------------------------------------------- #</span>
+
+<div class="viewcode-block" id="BasicABModel.report"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.report">[docs]</a>    <span class="k">def</span> <span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rep_keys</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Reports a new simulation result.</span>
+<span class="sd">        Reporters are meant to be &#39;summary statistics&#39; or &#39;evaluation measures&#39;</span>
+<span class="sd">        of the simulation as a whole, and only one value can be stored per run.</span>
+<span class="sd">        In comparison, variables that are recorded with :func:`Model.record`</span>
+<span class="sd">        can be recorded multiple times for each time-step and object.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            rep_keys (str or list of str):</span>
+<span class="sd">                Name(s) of the reporter(s) to be documented.</span>
+<span class="sd">            value (int or float, optional): Value to be reported.</span>
+<span class="sd">                The same value will be used for all `rep_keys`.</span>
+<span class="sd">                If none is given, the values of object attributes</span>
+<span class="sd">                with the same name as each rep_key will be used.</span>
+
+<span class="sd">        Examples:</span>
+
+<span class="sd">            Store a reporter `x` with a value `42`::</span>
+
+<span class="sd">                model.report(&#39;x&#39;, 42)</span>
+
+<span class="sd">            Define a custom model that stores a reporter `sum_id`</span>
+<span class="sd">            with the sum of all agent ids at the end of the simulation::</span>
+
+<span class="sd">                class MyModel(ap.Model):</span>
+<span class="sd">                    def setup(self):</span>
+<span class="sd">                        agents = ap.AgentList(self, self.p.agents)</span>
+<span class="sd">                    def end(self):</span>
+<span class="sd">                        self.report(&#39;sum_id&#39;, sum(self.agents.id))</span>
+
+<span class="sd">            Running an experiment over different numbers of agents for this</span>
+<span class="sd">            model yields the following datadict of reporters::</span>
+
+<span class="sd">                &gt;&gt;&gt; sample = ap.sample({&#39;agents&#39;: (1, 3)}, 3)</span>
+<span class="sd">                &gt;&gt;&gt; exp = ap.Experiment(MyModel, sample)</span>
+<span class="sd">                &gt;&gt;&gt; results = exp.run()</span>
+<span class="sd">                &gt;&gt;&gt; results.reporters</span>
+<span class="sd">                        sum_id</span>
+<span class="sd">                run_id</span>
+<span class="sd">                0            1</span>
+<span class="sd">                1            3</span>
+<span class="sd">                2            6</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">rep_key</span> <span class="ow">in</span> <span class="n">make_list</span><span class="p">(</span><span class="n">rep_keys</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reporters</span><span class="p">[</span><span class="n">rep_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reporters</span><span class="p">[</span><span class="n">rep_key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rep_key</span><span class="p">)</span></div>
+
+    <span class="c1"># Placeholder methods for custom simulation methods --------------------- #</span>
+
+<div class="viewcode-block" id="BasicABModel.setup"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Defines the model&#39;s actions before the first simulation step.</span>
+<span class="sd">        Can be overwritten to initiate agents and environments.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="BasicABModel.step"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Defines the model&#39;s actions</span>
+<span class="sd">        during each simulation step (excluding `t==0`).</span>
+<span class="sd">        Can be overwritten to define the models&#39; main dynamics.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="BasicABModel.update"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Defines the model&#39;s actions</span>
+<span class="sd">        after each simulation step (including `t==0`).</span>
+<span class="sd">        Can be overwritten for the recording of dynamic variables. &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="BasicABModel.end"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Defines the model&#39;s actions after the last simulation step.</span>
+<span class="sd">        Can be overwritten for final calculations and reporting.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+    <span class="c1"># Simulation routines (in line with ipysimulate) ------------------------ #</span>
+
+<div class="viewcode-block" id="BasicABModel.set_parameters"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.set_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Adds and/or updates the parameters of the model. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">parameters</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BasicABModel.sim_setup"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.sim_setup">[docs]</a>    <span class="k">def</span> <span class="nf">sim_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Prepares time-step 0 of the simulation.</span>
+<span class="sd">        Initiates (additional) steps and the two random number generators,</span>
+<span class="sd">        and then calls :func:`Model.setup` and :func:`Model.update`. &quot;&quot;&quot;</span>
+
+        <span class="c1"># Prepare random number generators if initial run</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_partly_run</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;seed&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">:</span>
+                    <span class="n">seed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;seed&#39;</span><span class="p">]</span>  <span class="c1"># Take seed from parameters</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">seed</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">getrandbits</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="s1">&#39;report_seed&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;report_seed&#39;</span><span class="p">]):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">report</span><span class="p">(</span><span class="s1">&#39;seed&#39;</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">random</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+            <span class="n">npseed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">getrandbits</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nprandom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">npseed</span><span class="p">)</span>
+
+        <span class="c1"># Prepare simulation steps</span>
+        <span class="k">if</span> <span class="n">steps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;steps&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s1">&#39;steps&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">+</span> <span class="n">steps</span>
+
+        <span class="c1"># Initiate simulation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_partly_run</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># Execute setup and first update</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_setup_kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+        <span class="c1"># Stop simulation if t too high</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_steps</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="BasicABModel.sim_step"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.sim_step">[docs]</a>    <span class="k">def</span> <span class="nf">sim_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Proceeds the simulation by one step, incrementing `Model.t` by 1</span>
+<span class="sd">        and then calling :func:`Model.step` and :func:`Model.update`.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_steps</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="BasicABModel.sim_reset"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.sim_reset">[docs]</a>    <span class="k">def</span> <span class="nf">sim_reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Reset model to initial conditions. &quot;&quot;&quot;</span>
+        <span class="c1"># TODO Remove attributes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">record</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">record</span>
+        <span class="bp">self</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">,</span>
+                      <span class="n">_run_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_id</span><span class="p">,</span>
+                      <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_setup_kwargs</span><span class="p">)</span></div>
+
+    <span class="c1"># Main simulation method for direct use --------------------------------- #</span>
+
+<div class="viewcode-block" id="BasicABModel.stop"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Stops :meth:`Model.run` during an active simulation. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">running</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="BasicABModel.run"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">display</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Executes the simulation of the model.</span>
+<span class="sd">        Can also be used to continue a partly-run simulation</span>
+<span class="sd">        for a given number of additional steps.</span>
+
+<span class="sd">        It starts by calling :func:`Model.run_setup` and then calls</span>
+<span class="sd">        :func:`Model.run_step` until the method :func:`Model.stop` is called</span>
+<span class="sd">        or `steps` is reached. After that, :func:`Model.end` and</span>
+<span class="sd">        :func:`Model.create_output` are called. The simulation results can</span>
+<span class="sd">        be found in :attr:`Model.output`.</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            steps (int, optional):</span>
+<span class="sd">                Number of (additional) steps for the simulation to run.</span>
+<span class="sd">                If passed, the parameter &#39;Model.p.steps&#39; will be ignored.</span>
+<span class="sd">                The simulation can still be stopped with :func:&#39;Model.stop&#39;.</span>
+<span class="sd">            seed (int, optional):</span>
+<span class="sd">                Seed to initialize the model&#39;s random number generators.</span>
+<span class="sd">                If none is given, the parameter &#39;Model.p.seed&#39; is used.</span>
+<span class="sd">                If there is no such parameter, a random seed will be used.</span>
+<span class="sd">                For a partly-run simulation, this argument will be ignored.</span>
+<span class="sd">            display (bool, optional):</span>
+<span class="sd">                Whether to display simulation progress (default True).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            DataDict: Recorded variables and reporters.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">dt0</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sim_setup</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">running</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim_step</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">display</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2">Completed: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="si">}</span><span class="s2"> steps&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_output</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;completed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;created_objects&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_id_counter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;completed_steps&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;run_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ct</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">dt0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">display</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Run time: </span><span class="si">{</span><span class="n">ct</span><span class="si">}</span><span class="se">\n</span><span class="s2">Simulation finished&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output</span></div>
+
+    <span class="c1"># Data management ------------------------------------------------------- #</span>
+
+<div class="viewcode-block" id="BasicABModel.create_output"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.BasicABModel.create_output">[docs]</a>    <span class="k">def</span> <span class="nf">create_output</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Generates a :class:`DataDict` with dataframes of all recorded</span>
+<span class="sd">        variables and reporters, which will be stored in :obj:`Model.output`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">output_from_obj_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_dict</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+            <span class="c1"># Aggregate logs per object type</span>
+            <span class="c1"># Log dict structure: {obj_type: obj_id: log}</span>
+            <span class="n">obj_types</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">obj_type</span><span class="p">,</span> <span class="n">log_subdict</span> <span class="ow">in</span> <span class="n">log_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+
+                <span class="k">if</span> <span class="n">obj_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">obj_types</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">obj_types</span><span class="p">[</span><span class="n">obj_type</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+                <span class="k">for</span> <span class="n">obj_id</span><span class="p">,</span> <span class="n">log</span> <span class="ow">in</span> <span class="n">log_subdict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+
+                    <span class="c1"># Add object id/key to object log</span>
+                    <span class="n">log</span><span class="p">[</span><span class="s1">&#39;obj_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj_id</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">log</span><span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">])</span>
+
+                    <span class="c1"># Add object log to aggregate log</span>
+                    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">log</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">obj_types</span><span class="p">[</span><span class="n">obj_type</span><span class="p">]:</span>
+                            <span class="n">obj_types</span><span class="p">[</span><span class="n">obj_type</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                        <span class="n">obj_types</span><span class="p">[</span><span class="n">obj_type</span><span class="p">][</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+            <span class="c1"># Transform logs into dataframes</span>
+            <span class="k">for</span> <span class="n">obj_type</span><span class="p">,</span> <span class="n">log</span> <span class="ow">in</span> <span class="n">obj_types</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">obj_type</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">log</span><span class="p">[</span><span class="s1">&#39;obj_id&#39;</span><span class="p">]</span>
+                    <span class="n">index_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;t&#39;</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">index_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;obj_id&#39;</span><span class="p">,</span> <span class="s1">&#39;t&#39;</span><span class="p">]</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">log</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">df</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>  <span class="c1"># Set additional index columns</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">columns</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="n">index_keys</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="s1">&#39;variables&#39;</span><span class="p">][</span><span class="n">obj_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span>
+
+        <span class="c1"># 1 - Document parameters</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="s1">&#39;parameters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">DataDict</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="s1">&#39;parameters&#39;</span><span class="p">][</span><span class="s1">&#39;constants&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># 2 - Define additional index columns</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_id</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">columns</span><span class="p">[</span><span class="s1">&#39;sample_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_id</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_id</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_id</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">columns</span><span class="p">[</span><span class="s1">&#39;iteration&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_id</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># 3 - Create variable output</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="s1">&#39;variables&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">DataDict</span><span class="p">()</span>
+            <span class="n">output_from_obj_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logs</span><span class="p">,</span> <span class="n">columns</span><span class="p">)</span>
+
+        <span class="c1"># 4 - Create reporters output</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reporters</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">reporters</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">columns</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">columns</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">columns</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="s1">&#39;reporters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span></div></div>
+
+
+
+<div class="viewcode-block" id="ABModel"><a class="viewcode-back" href="../../../../content/larvaworld/lib/sim/ABM_model.html#larvaworld.lib.sim.ABM_model.ABModel">[docs]</a><span class="k">class</span> <span class="nc">ABModel</span><span class="p">(</span><span class="n">BasicABModel</span><span class="p">,</span><span class="n">reg</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">SimConfigurationParams</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Basic simulation class that extends the agentpy.Model class and creates a larvaworld agent-based model (ABM).</span>
+<span class="sd">        Further extended by classes supporting the various simulation modes in larvaworld.</span>
+<span class="sd">        Specifies the simulation mode, type of experiment and simulation duration and timestep.</span>
+<span class="sd">        Specifies paths for saving simulated data and results.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            runtype: The simulation mode as defined by a subclass</span>
+<span class="sd">            parameters: Dictionary of configuration parameters to be passed to the ABM model</span>
+<span class="sd">            store_data: Whether to store simulation data. Defaults to True</span>
+<span class="sd">            save_to: Path to store data. If not specified, it is automatically set to the runtype-specific subdirectory under the platform&#39;s ROOT/DATA directory</span>
+<span class="sd">            id: Unique ID of the simulation. If not specified it is automatically set according to the simulation mode and experiment type.</span>
+<span class="sd">            experiment: The experiment simulated</span>
+<span class="sd">            offline: Whether to perform the simulation without launching a spatial arena. Defaults to False</span>
+<span class="sd">            Box2D: Whether to implement the Box2D physics engine. Defaults to False</span>
+<span class="sd">            larva_collisions: Whether to allow overlap between larva bodies. Defaults to True</span>
+<span class="sd">            dt: The simulation timestep in seconds. Defaults to 0.1</span>
+<span class="sd">            duration: The simulation duration in seconds. Defaults to None for unlimited duration. Computed from Nsteps if specified.</span>
+<span class="sd">            Nsteps: The number of simulation timesteps. Defaults to None for unlimited timesteps. Computed from duration if specified.</span>
+<span class="sd">            **kwargs: Arguments passed to the setup method</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">reg</span><span class="o">.</span><span class="n">generators</span><span class="o">.</span><span class="n">SimConfigurationParams</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># self.initialize_superclasses(self.parameters)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">steps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nsteps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">agentpy_output_kws</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;exp_name&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiment</span><span class="p">,</span> <span class="s1">&#39;exp_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                                     <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="si">}</span><span class="s1">/agentpy_output&#39;</span><span class="p">}</span>
+        <span class="n">BasicABModel</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+
+    <span class="c1"># def initialize_superclasses(self, parameters,**kwargs):</span>
+    <span class="c1">#     pass</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sensor &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+    <link rel="next" title="sensor2" href="sensor2.html" />
+    <link rel="prev" title="rot_surface" href="rot_surface.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html">Modeling</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../deb/index.html">Dynamic Energy Budget</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../envs/index.html">Environment</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="index.html">Modular behavioral architecture</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../object.html">Basic ABM class</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../param/index.html">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../plot/index.html">Plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../process/index.html">Data management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../screen/index.html">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sim/index.html">Simulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../util/index.html">Dataset fitting &amp; sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Modeling</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Modular behavioral architecture</a></li>
+      <li class="breadcrumb-item active">sensor</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/content/larvaworld/lib/model/modules/sensor.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.model.modules.sensor">
+<span id="sensor"></span><h1>sensor<a class="headerlink" href="#module-larvaworld.lib.model.modules.sensor" title="Permalink to this heading"></a></h1>
+<section id="olfactor">
+<h2>Olfactor<a class="headerlink" href="#olfactor" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Olfactor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.modules.sensor.</span></span><span class="sig-name descname"><span class="pre">Olfactor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">odor_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Olfactor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Olfactor" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.modules.sensor.Sensor" title="larvaworld.lib.model.modules.sensor.Sensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sensor</span></code></a></p>
+<p>params(brute_force=Boolean, decay_coef=PositiveNumber, perception=Selector, input_noise=Magnitude, input_range=Range, output_noise=Magnitude, output_range=Range, dt=PositiveNumber, name=String)
+[1;32mParameters of ‘Olfactor’
+========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName              Value          Type         Bounds      Mode  [0m</p>
+<p>input_noise        0.0        Magnitude     (0.0, 1.0)    V RW
+output_noise       0.0        Magnitude     (0.0, 1.0)    V RW
+input_range        None         Range                   V RW AN
+output_range   (-1.0, 1.0)   RangeRobust                  V RW
+perception       ‘linear’      Selector                   V RW
+decay_coef         1.0      PositiveNumber  (0.0,[1;36m 2.0[0m)    V RW
+brute_force       False        Boolean        (0, 1)      V RW
+dt                 0.1      PositiveNumber  (0.0,[1;36m 1.0[0m)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34minput_noise:  The noise applied at the input of the module.[0m
+[1;31moutput_noise: The noise applied at the output of the module.[0m
+[1;34minput_range:  The input range of the module.[0m
+[1;31moutput_range: The output range of the module.[0m
+[1;34mperception:   The method used to calculate the perceived sensory activation from the current and previous sensory input.[0m
+[1;31mdecay_coef:   The linear decay coefficient of the olfactory sensory activation.[0m
+[1;34mbrute_force:  Whether to apply direct rule-based modulation on locomotion or not.[0m
+[1;31mdt:           The timestep of the simulation in seconds.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Olfactor.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'brute_force':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'decay_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'dt':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'input_noise':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'input_range':</span> <span class="pre">&lt;param.Range</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'output_noise':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'output_range':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RangeRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'perception':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Olfactor.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Olfactor._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Olfactor._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Olfactor._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Olfactor._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Olfactor.affect_locomotion">
+<span class="sig-name descname"><span class="pre">affect_locomotion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Olfactor.affect_locomotion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Olfactor.affect_locomotion" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Olfactor.first_odor_concentration">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">first_odor_concentration</span></span><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Olfactor.first_odor_concentration" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Olfactor.first_odor_concentration_change">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">first_odor_concentration_change</span></span><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Olfactor.first_odor_concentration_change" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Olfactor.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Olfactor'</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Olfactor.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Olfactor.novel_odors">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">novel_odors</span></span><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Olfactor.novel_odors" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Olfactor.second_odor_concentration">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">second_odor_concentration</span></span><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Olfactor.second_odor_concentration" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Olfactor.second_odor_concentration_change">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">second_odor_concentration_change</span></span><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Olfactor.second_odor_concentration_change" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Olfactor.update_gain">
+<span class="sig-name descname"><span class="pre">update_gain</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Olfactor.update_gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Olfactor.update_gain" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="id1">
+<h2>Sensor<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.modules.sensor.</span></span><span class="sig-name descname"><span class="pre">Sensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gain_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">brain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="basic.html#larvaworld.lib.model.modules.basic.Effector" title="larvaworld.lib.model.modules.basic.Effector"><code class="xref py py-class docutils literal notranslate"><span class="pre">Effector</span></code></a></p>
+<p>params(brute_force=Boolean, decay_coef=PositiveNumber, perception=Selector, input_noise=Magnitude, input_range=Range, output_noise=Magnitude, output_range=Range, dt=PositiveNumber, name=String)
+[1;32mParameters of ‘Sensor’
+======================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName              Value          Type         Bounds      Mode  [0m</p>
+<p>input_noise        0.0        Magnitude     (0.0, 1.0)    V RW
+output_noise       0.0        Magnitude     (0.0, 1.0)    V RW
+input_range        None         Range                   V RW AN
+output_range   (-1.0, 1.0)   RangeRobust                  V RW
+perception       ‘linear’      Selector                   V RW
+decay_coef         1.0      PositiveNumber  (0.0,[1;36m 2.0[0m)    V RW
+brute_force       False        Boolean        (0, 1)      V RW
+dt                 0.1      PositiveNumber  (0.0,[1;36m 1.0[0m)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34minput_noise:  The noise applied at the input of the module.[0m
+[1;31moutput_noise: The noise applied at the output of the module.[0m
+[1;34minput_range:  The input range of the module.[0m
+[1;31moutput_range: The output range of the module.[0m
+[1;34mperception:   The method used to calculate the perceived sensory activation from the current and previous sensory input.[0m
+[1;31mdecay_coef:   The linear decay coefficient of the olfactory sensory activation.[0m
+[1;34mbrute_force:  Whether to apply direct rule-based modulation on locomotion or not.[0m
+[1;31mdt:           The timestep of the simulation in seconds.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'brute_force':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'decay_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'dt':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'input_noise':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'input_range':</span> <span class="pre">&lt;param.Range</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'output_noise':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'output_range':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RangeRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'perception':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.add_novel_gain">
+<span class="sig-name descname"><span class="pre">add_novel_gain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">con</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.add_novel_gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.add_novel_gain" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.affect_locomotion">
+<span class="sig-name descname"><span class="pre">affect_locomotion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.affect_locomotion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.affect_locomotion" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.brute_force">
+<span class="sig-name descname"><span class="pre">brute_force</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.brute_force" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.compute_dX">
+<span class="sig-name descname"><span class="pre">compute_dX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.compute_dX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.compute_dX" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.compute_dif">
+<span class="sig-name descname"><span class="pre">compute_dif</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.compute_dif"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.compute_dif" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.compute_single_dx">
+<span class="sig-name descname"><span class="pre">compute_single_dx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cur</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prev</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.compute_single_dx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.compute_single_dx" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.decay_coef">
+<span class="sig-name descname"><span class="pre">decay_coef</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1.0</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.decay_coef" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.get_X_values">
+<span class="sig-name descname"><span class="pre">get_X_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.get_X_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.get_X_values" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.get_dX">
+<span class="sig-name descname"><span class="pre">get_dX</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.get_dX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.get_dX" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.get_gain">
+<span class="sig-name descname"><span class="pre">get_gain</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.get_gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.get_gain" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.init_gain">
+<span class="sig-name descname"><span class="pre">init_gain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gain_dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.init_gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.init_gain" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Sensor'</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.output_range">
+<span class="sig-name descname"><span class="pre">output_range</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(-1.0,</span> <span class="pre">1.0)</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.output_range" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.perception">
+<span class="sig-name descname"><span class="pre">perception</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'linear'</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.perception" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.reset_all_gains">
+<span class="sig-name descname"><span class="pre">reset_all_gains</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.reset_all_gains"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.reset_all_gains" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.reset_gain">
+<span class="sig-name descname"><span class="pre">reset_gain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gain_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.reset_gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.reset_gain" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.set_gain">
+<span class="sig-name descname"><span class="pre">set_gain</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gain_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.set_gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.set_gain" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.update" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Sensor.update_gain">
+<span class="sig-name descname"><span class="pre">update_gain</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Sensor.update_gain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Sensor.update_gain" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="thermosensor">
+<h2>Thermosensor<a class="headerlink" href="#thermosensor" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Thermosensor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.modules.sensor.</span></span><span class="sig-name descname"><span class="pre">Thermosensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cool_gain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">warm_gain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Thermosensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Thermosensor" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.modules.sensor.Sensor" title="larvaworld.lib.model.modules.sensor.Sensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sensor</span></code></a></p>
+<p>params(brute_force=Boolean, decay_coef=PositiveNumber, perception=Selector, input_noise=Magnitude, input_range=Range, output_noise=Magnitude, output_range=Range, dt=PositiveNumber, name=String)
+[1;32mParameters of ‘Thermosensor’
+============================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName              Value          Type         Bounds      Mode  [0m</p>
+<p>input_noise        0.0        Magnitude     (0.0, 1.0)    V RW
+output_noise       0.0        Magnitude     (0.0, 1.0)    V RW
+input_range        None         Range                   V RW AN
+output_range   (-1.0, 1.0)   RangeRobust                  V RW
+perception       ‘linear’      Selector                   V RW
+decay_coef         1.0      PositiveNumber  (0.0,[1;36m 2.0[0m)    V RW
+brute_force       False        Boolean        (0, 1)      V RW
+dt                 0.1      PositiveNumber  (0.0,[1;36m 1.0[0m)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34minput_noise:  The noise applied at the input of the module.[0m
+[1;31moutput_noise: The noise applied at the output of the module.[0m
+[1;34minput_range:  The input range of the module.[0m
+[1;31moutput_range: The output range of the module.[0m
+[1;34mperception:   The method used to calculate the perceived sensory activation from the current and previous sensory input.[0m
+[1;31mdecay_coef:   The linear decay coefficient of the olfactory sensory activation.[0m
+[1;34mbrute_force:  Whether to apply direct rule-based modulation on locomotion or not.[0m
+[1;31mdt:           The timestep of the simulation in seconds.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Thermosensor.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'brute_force':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'decay_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'dt':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'input_noise':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'input_range':</span> <span class="pre">&lt;param.Range</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'output_noise':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'output_range':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RangeRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'perception':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Thermosensor.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Thermosensor._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Thermosensor._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Thermosensor._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Thermosensor._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Thermosensor.cool_sensor_input">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cool_sensor_input</span></span><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Thermosensor.cool_sensor_input" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Thermosensor.cool_sensor_perception">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">cool_sensor_perception</span></span><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Thermosensor.cool_sensor_perception" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Thermosensor.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Thermosensor'</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Thermosensor.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Thermosensor.warm_sensor_input">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">warm_sensor_input</span></span><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Thermosensor.warm_sensor_input" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Thermosensor.warm_sensor_perception">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">warm_sensor_perception</span></span><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Thermosensor.warm_sensor_perception" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="toucher">
+<h2>Toucher<a class="headerlink" href="#toucher" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Toucher">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.modules.sensor.</span></span><span class="sig-name descname"><span class="pre">Toucher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_gain</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">touch_sensors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Toucher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Toucher" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.modules.sensor.Sensor" title="larvaworld.lib.model.modules.sensor.Sensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sensor</span></code></a></p>
+<p>params(brute_force=Boolean, decay_coef=PositiveNumber, perception=Selector, input_noise=Magnitude, input_range=Range, output_noise=Magnitude, output_range=Range, dt=PositiveNumber, name=String)
+[1;32mParameters of ‘Toucher’
+=======================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName              Value          Type         Bounds      Mode  [0m</p>
+<p>input_noise        0.0        Magnitude     (0.0, 1.0)    V RW
+output_noise       0.0        Magnitude     (0.0, 1.0)    V RW
+input_range        None         Range                   V RW AN
+output_range   (-1.0, 1.0)   RangeRobust                  V RW
+perception       ‘linear’      Selector                   V RW
+decay_coef         1.0      PositiveNumber  (0.0,[1;36m 2.0[0m)    V RW
+brute_force       False        Boolean        (0, 1)      V RW
+dt                 0.1      PositiveNumber  (0.0,[1;36m 1.0[0m)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34minput_noise:  The noise applied at the input of the module.[0m
+[1;31moutput_noise: The noise applied at the output of the module.[0m
+[1;34minput_range:  The input range of the module.[0m
+[1;31moutput_range: The output range of the module.[0m
+[1;34mperception:   The method used to calculate the perceived sensory activation from the current and previous sensory input.[0m
+[1;31mdecay_coef:   The linear decay coefficient of the olfactory sensory activation.[0m
+[1;34mbrute_force:  Whether to apply direct rule-based modulation on locomotion or not.[0m
+[1;31mdt:           The timestep of the simulation in seconds.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Toucher.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'brute_force':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'decay_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'dt':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'input_noise':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'input_range':</span> <span class="pre">&lt;param.Range</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'output_noise':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'output_range':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RangeRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'perception':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Toucher.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Toucher._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Toucher._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Toucher._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Toucher._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Toucher.affect_locomotion">
+<span class="sig-name descname"><span class="pre">affect_locomotion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Toucher.affect_locomotion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Toucher.affect_locomotion" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Toucher.init_sensors">
+<span class="sig-name descname"><span class="pre">init_sensors</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#Toucher.init_sensors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Toucher.init_sensors" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.Toucher.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Toucher'</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.Toucher.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="windsensor">
+<h2>WindSensor<a class="headerlink" href="#windsensor" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.WindSensor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.modules.sensor.</span></span><span class="sig-name descname"><span class="pre">WindSensor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perception</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'null'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/modules/sensor.html#WindSensor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.WindSensor" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.modules.sensor.Sensor" title="larvaworld.lib.model.modules.sensor.Sensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Sensor</span></code></a></p>
+<p>params(brute_force=Boolean, decay_coef=PositiveNumber, perception=Selector, input_noise=Magnitude, input_range=Range, output_noise=Magnitude, output_range=Range, dt=PositiveNumber, name=String)
+[1;32mParameters of ‘WindSensor’
+==========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName              Value          Type         Bounds      Mode  [0m</p>
+<p>input_noise        0.0        Magnitude     (0.0, 1.0)    V RW
+output_noise       0.0        Magnitude     (0.0, 1.0)    V RW
+input_range        None         Range                   V RW AN
+output_range   (-1.0, 1.0)   RangeRobust                  V RW
+perception       ‘linear’      Selector                   V RW
+decay_coef         1.0      PositiveNumber  (0.0,[1;36m 2.0[0m)    V RW
+brute_force       False        Boolean        (0, 1)      V RW
+dt                 0.1      PositiveNumber  (0.0,[1;36m 1.0[0m)    V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34minput_noise:  The noise applied at the input of the module.[0m
+[1;31moutput_noise: The noise applied at the output of the module.[0m
+[1;34minput_range:  The input range of the module.[0m
+[1;31moutput_range: The output range of the module.[0m
+[1;34mperception:   The method used to calculate the perceived sensory activation from the current and previous sensory input.[0m
+[1;31mdecay_coef:   The linear decay coefficient of the olfactory sensory activation.[0m
+[1;34mbrute_force:  Whether to apply direct rule-based modulation on locomotion or not.[0m
+[1;31mdt:           The timestep of the simulation in seconds.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.WindSensor.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'brute_force':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'decay_coef':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'dt':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'input_noise':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'input_range':</span> <span class="pre">&lt;param.Range</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'output_noise':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'output_range':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RangeRobust</span> <span class="pre">object&gt;,</span> <span class="pre">'perception':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.WindSensor.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.WindSensor._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.WindSensor._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.WindSensor._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.WindSensor._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.modules.sensor.WindSensor.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WindSensor'</span></em><a class="headerlink" href="#larvaworld.lib.model.modules.sensor.WindSensor.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="rot_surface.html" class="btn btn-neutral float-left" title="rot_surface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sensor2.html" class="btn btn-neutral float-right" title="sensor2" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

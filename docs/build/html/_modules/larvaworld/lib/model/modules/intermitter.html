@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.model.modules.intermitter &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.model.modules.intermitter</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.model.modules.intermitter</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib.model.modules.oscillator</span> <span class="kn">import</span> <span class="n">Timer</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">reg</span><span class="p">,</span> <span class="n">aux</span><span class="p">,</span> <span class="n">util</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.aux</span> <span class="kn">import</span> <span class="n">nam</span>
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">PositiveNumber</span><span class="p">,</span> <span class="n">OptionalPositiveNumber</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;Intermitter&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;OfflineIntermitter&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;NengoIntermitter&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;BranchIntermitter&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;FittedIntermitter&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;get_EEB_poly1d&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;get_EEB_time_fractions&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">default_bout_distros</span><span class="o">=</span><span class="n">aux</span><span class="o">.</span><span class="n">AttrDict</span><span class="p">({</span><span class="s1">&#39;turn_dur&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.25</span><span class="p">,</span> <span class="mf">3.25</span><span class="p">],</span> <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;exponential&#39;</span><span class="p">,</span> <span class="s1">&#39;beta&#39;</span><span class="p">:</span> <span class="mf">4.70099</span><span class="p">},</span>
+ <span class="s1">&#39;turn_amp&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.00042</span><span class="p">,</span> <span class="mf">305.7906</span><span class="p">],</span>
+  <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;lognormal&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mf">2.08133</span><span class="p">,</span>
+  <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mf">1.26487</span><span class="p">},</span>
+ <span class="s1">&#39;turn_vel_max&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.00031</span><span class="p">,</span> <span class="mf">2752.80403</span><span class="p">],</span>
+  <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;levy&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.22434</span><span class="p">,</span>
+  <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mf">11.93284</span><span class="p">},</span>
+ <span class="s1">&#39;run_dur&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.44</span><span class="p">,</span> <span class="mf">114.25</span><span class="p">],</span>
+  <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;lognormal&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mf">1.148</span><span class="p">,</span>
+  <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mf">1.11329</span><span class="p">},</span>
+ <span class="s1">&#39;run_dst&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.00022</span><span class="p">,</span> <span class="mf">0.14457</span><span class="p">],</span>
+  <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;levy&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mf">0.00017</span><span class="p">,</span>
+  <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mf">0.00125</span><span class="p">},</span>
+ <span class="s1">&#39;pause_dur&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.12</span><span class="p">,</span> <span class="mf">15.94</span><span class="p">],</span> <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;exponential&#39;</span><span class="p">,</span> <span class="s1">&#39;beta&#39;</span><span class="p">:</span> <span class="mf">1.01503</span><span class="p">},</span>
+ <span class="s1">&#39;run_count&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;range&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">142</span><span class="p">],</span>
+  <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;lognormal&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mf">1.39115</span><span class="p">,</span>
+  <span class="s1">&#39;sigma&#39;</span><span class="p">:</span> <span class="mf">1.14667</span><span class="p">}})</span>
+
+<div class="viewcode-block" id="Intermitter"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter">[docs]</a><span class="k">class</span> <span class="nc">Intermitter</span><span class="p">(</span><span class="n">Timer</span><span class="p">):</span>
+    <span class="n">EEB</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;exploitation-exploration balance&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The baseline exploitation-exploration balance. 0 means only exploitation, 1 only exploration.&#39;</span><span class="p">)</span>
+    <span class="n">EEB_decay</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">softmax</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The exponential decay coefficient of the exploitation-exploration balance when no food is detected.&#39;</span><span class="p">)</span>
+    <span class="n">run_mode</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Selector</span><span class="p">(</span><span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;stridechain&#39;</span><span class="p">,</span><span class="s1">&#39;exec&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The generation mode of the crawling epochs.&#39;</span><span class="p">)</span>
+    <span class="n">feeder_reoccurence_rate</span> <span class="o">=</span> <span class="n">OptionalPositiveNumber</span><span class="p">(</span><span class="n">softmax</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;feed reoccurence&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The default reoccurence rate of the feeding motion.&#39;</span><span class="p">)</span>
+    <span class="n">feed_bouts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether feeding epochs are generated.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pause_dist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stridechain_dist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">run_dist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">crawl_freq</span><span class="o">=</span><span class="mi">10</span> <span class="o">/</span> <span class="mi">7</span><span class="p">,</span> <span class="n">feed_freq</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">crawl_freq</span> <span class="o">=</span> <span class="n">crawl_freq</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feed_freq</span> <span class="o">=</span> <span class="n">feed_freq</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cur_state</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_mode</span><span class="o">==</span><span class="s1">&#39;stridechain&#39;</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="n">stridechain_dist</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">stridechain_dist</span><span class="o">.</span><span class="n">range</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">stridechain_dist</span> <span class="o">=</span> <span class="n">default_bout_distros</span><span class="o">.</span><span class="n">run_count</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_max</span> <span class="o">=</span> <span class="n">stridechain_dist</span><span class="o">.</span><span class="n">range</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_dist</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">BoutGenerator</span><span class="p">(</span><span class="o">**</span><span class="n">stridechain_dist</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_dist</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_mode</span><span class="o">==</span><span class="s1">&#39;exec&#39;</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="n">run_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">run_dist</span><span class="o">.</span><span class="n">range</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">run_dist</span> <span class="o">=</span> <span class="n">default_bout_distros</span><span class="o">.</span><span class="n">run_dur</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_max</span> <span class="o">=</span> <span class="n">run_dist</span><span class="o">.</span><span class="n">range</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_dist</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">BoutGenerator</span><span class="p">(</span><span class="o">**</span><span class="n">run_dist</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_dist</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span> <span class="p">(</span><span class="s1">&#39;None of stidechain or exec distribution exist&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">pause_dist</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">pause_dist</span><span class="o">.</span><span class="n">range</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="n">pause_dist</span> <span class="o">=</span> <span class="n">default_bout_distros</span><span class="o">.</span><span class="n">pause_dur</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pau_min</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pau_max</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pause_dist</span><span class="o">.</span><span class="n">range</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pause_dist</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">BoutGenerator</span><span class="p">(</span><span class="o">**</span><span class="n">pause_dist</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nstrides</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nstridechains</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nruns</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Npauses</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nfeeds</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nfeedchains</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nfeeds_success</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Nfeeds_fail</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_EEB</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">EEB</span>
+
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">exp_Nstrides</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cur_Nstrides</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exp_Trun</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="c1"># self.current_run_duration =0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exp_Tpause</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cur_Nfeeds</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># self.cum_feedchain_dur = 0</span>
+        <span class="c1"># self.cum_stridechain_dur = 0</span>
+        <span class="c1"># self.cum_run_dur = 0</span>
+        <span class="c1"># self.cum_pause_dur = 0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_lengths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_durs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feedchain_lengths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feedchain_durs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pause_durs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_durs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feed_durs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stride_durs</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+
+
+    <span class="o">@</span> <span class="nb">property</span>
+    <span class="k">def</span> <span class="nf">pause_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">t</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">exp_Tpause</span>
+        <span class="k">return</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">&gt;</span> <span class="n">t</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">run_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_Trun</span>
+        <span class="k">return</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span> <span class="o">&gt;</span> <span class="n">t</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">stridechain_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_Nstrides</span>
+        <span class="k">return</span> <span class="n">n</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">cur_Nstrides</span> <span class="o">&gt;</span> <span class="n">n</span>
+
+<div class="viewcode-block" id="Intermitter.alternate_crawlNpause"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.alternate_crawlNpause">[docs]</a>    <span class="k">def</span> <span class="nf">alternate_crawlNpause</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">stride_completed</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">stride_completed</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cur_Nstrides</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_completed</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;stridechain&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_Tpause</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_pause</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cur_state</span> <span class="o">=</span> <span class="s1">&#39;pause&#39;</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">pause_completed</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;pause&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_initiation</span><span class="p">()</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_completed</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;run&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_Tpause</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_pause</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cur_state</span> <span class="o">=</span> <span class="s1">&#39;pause&#39;</span></div>
+
+    <span class="o">@</span> <span class="nb">property</span>
+    <span class="k">def</span> <span class="nf">feed_repeated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feeder_reoccurence_rate</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">feeder_reoccurence_rate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">EEB</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">r</span>
+
+
+<div class="viewcode-block" id="Intermitter.alternate_exploreNexploit"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.alternate_exploreNexploit">[docs]</a>    <span class="k">def</span> <span class="nf">alternate_exploreNexploit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">feed_motion</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">on_food</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">feed_motion</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cur_Nfeeds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="k">else</span> <span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Nfeeds</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">on_food</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">Nfeeds_fail</span> <span class="o">+=</span><span class="mi">1</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;feedchain&#39;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">run_initiation</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">Nfeeds_success</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_repeated</span> <span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">cur_Nfeeds</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;feedchain&#39;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">run_initiation</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">on_food</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">cur_Nfeeds</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">EEB</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cur_Nfeeds</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cur_state</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cur_state</span> <span class="o">=</span> <span class="s1">&#39;feed&#39;</span></div>
+            <span class="c1"># self.reset()</span>
+
+<div class="viewcode-block" id="Intermitter.register"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bout</span><span class="p">):</span>
+        <span class="n">dur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ticks</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">bout</span><span class="o">==</span><span class="s1">&#39;exec&#39;</span> <span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_dist</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">bout</span><span class="o">=</span><span class="s1">&#39;run&#39;</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_dist</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">bout</span> <span class="o">=</span> <span class="s1">&#39;stridechain&#39;</span>
+
+        <span class="k">if</span> <span class="n">bout</span> <span class="o">==</span> <span class="s1">&#39;feedchain&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Nfeedchains</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">feedchain_lengths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cur_Nfeeds</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">feedchain_durs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dur</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cur_Nfeeds</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">elif</span> <span class="n">bout</span> <span class="o">==</span> <span class="s1">&#39;stridechain&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Nstridechains</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_lengths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cur_Nstrides</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_durs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dur</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_Nstrides</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cur_Nstrides</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">elif</span> <span class="n">bout</span> <span class="o">==</span> <span class="s1">&#39;run&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Nruns</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_durs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dur</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_Trun</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">elif</span> <span class="n">bout</span> <span class="o">==</span> <span class="s1">&#39;pause&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">Npauses</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pause_durs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dur</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_Tpause</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Intermitter.update_state"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.update_state">[docs]</a>    <span class="k">def</span> <span class="nf">update_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stride_completed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">feed_motion</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="n">on_food</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">feed_bouts</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">alternate_exploreNexploit</span><span class="p">(</span><span class="n">feed_motion</span><span class="p">,</span> <span class="n">on_food</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alternate_crawlNpause</span><span class="p">(</span><span class="n">stride_completed</span><span class="p">)</span>
+        <span class="c1"># print(self.EEB, self.feeder_reoccurence_rate, self.base_EEB)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cur_state</span></div>
+
+
+<div class="viewcode-block" id="Intermitter.step"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cur_state</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_initiation</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">count_time</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_state</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Intermitter.generate_stridechain"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.generate_stridechain">[docs]</a>    <span class="k">def</span> <span class="nf">generate_stridechain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_dist</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Intermitter.generate_run"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.generate_run">[docs]</a>    <span class="k">def</span> <span class="nf">generate_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_dist</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Intermitter.run_initiation"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.run_initiation">[docs]</a>    <span class="k">def</span> <span class="nf">run_initiation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_Nstrides</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stridechain_dist</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_dist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exp_Trun</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_dist</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cur_Nstrides</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cur_state</span> <span class="o">=</span> <span class="s1">&#39;exec&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ticks</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="Intermitter.generate_pause"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.generate_pause">[docs]</a>    <span class="k">def</span> <span class="nf">generate_pause</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pause_dist</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Intermitter.build_dict"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.build_dict">[docs]</a>    <span class="k">def</span> <span class="nf">build_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">cum_t</span><span class="o">=</span><span class="n">nam</span><span class="o">.</span><span class="n">cum</span><span class="p">(</span><span class="s1">&#39;t&#39;</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">d</span><span class="p">[</span><span class="n">cum_t</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_t</span>
+        <span class="n">d</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">num</span><span class="p">(</span><span class="s1">&#39;tick&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_ticks</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c0</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;feed&#39;</span><span class="p">,</span> <span class="s1">&#39;stride&#39;</span><span class="p">]:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="n">c0</span><span class="p">)</span>
+            <span class="n">Nc0</span><span class="p">,</span> <span class="n">Nc</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">num</span><span class="p">([</span><span class="n">c0</span><span class="p">,</span> <span class="n">c</span><span class="p">])</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">length</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">ll</span><span class="p">)</span> <span class="k">for</span> <span class="n">ll</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s1">s&#39;</span><span class="p">)]</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">Nc0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">l</span><span class="p">]))</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">freq</span><span class="p">(</span><span class="n">c0</span><span class="p">))]</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">Nc0</span><span class="p">]</span> <span class="o">/</span> <span class="n">d</span><span class="p">[</span><span class="n">cum_t</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;feedchain&#39;</span><span class="p">,</span> <span class="s1">&#39;stridechain&#39;</span><span class="p">,</span> <span class="s1">&#39;pause&#39;</span><span class="p">]:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">dur</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s1">s&#39;</span><span class="p">)</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">num</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+            <span class="n">cum_chunk_t</span> <span class="o">=</span> <span class="n">nam</span><span class="o">.</span><span class="n">cum</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">cum_chunk_t</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">t</span><span class="p">])</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">nam</span><span class="o">.</span><span class="n">dur_ratio</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">cum_chunk_t</span><span class="p">]</span> <span class="o">/</span> <span class="n">d</span><span class="p">[</span><span class="n">cum_t</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">d</span></div>
+
+<div class="viewcode-block" id="Intermitter.save_dict"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.Intermitter.save_dict">[docs]</a>    <span class="k">def</span> <span class="nf">save_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dic</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">dic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_dict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">file</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s1">/intermitter_dict.txt&#39;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">aux</span><span class="o">.</span><span class="n">save_dict</span><span class="p">(</span><span class="n">dic</span><span class="p">,</span> <span class="n">file</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">active_bouts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_Nstrides</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cur_Nfeeds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_Tpause</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exp_Trun</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mean_feed_freq</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Nfeeds</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_t</span></div>
+
+
+
+<div class="viewcode-block" id="OfflineIntermitter"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.OfflineIntermitter">[docs]</a><span class="k">class</span> <span class="nc">OfflineIntermitter</span><span class="p">(</span><span class="n">Intermitter</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>  <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">crawl_ticks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crawl_freq</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feed_ticks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feed_freq</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+<div class="viewcode-block" id="OfflineIntermitter.step"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.OfflineIntermitter.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stride_completed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">feed_motion</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">on_food</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">count_time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">feed_motion</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">feed_motion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cur_state</span> <span class="o">==</span> <span class="s1">&#39;feed&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ticks</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">feed_ticks</span><span class="o">==</span><span class="mi">0</span>
+        <span class="k">if</span> <span class="n">stride_completed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stride_completed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cur_state</span> <span class="o">==</span> <span class="s1">&#39;exec&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ticks</span><span class="o">%</span><span class="bp">self</span><span class="o">.</span><span class="n">crawl_ticks</span><span class="o">==</span><span class="mi">0</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_state</span><span class="p">(</span><span class="n">stride_completed</span><span class="p">,</span> <span class="n">feed_motion</span><span class="p">,</span> <span class="n">on_food</span><span class="p">)</span></div></div>
+
+
+
+<div class="viewcode-block" id="NengoIntermitter"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.NengoIntermitter">[docs]</a><span class="k">class</span> <span class="nc">NengoIntermitter</span><span class="p">(</span><span class="n">Intermitter</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="BranchIntermitter"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.BranchIntermitter">[docs]</a><span class="k">class</span> <span class="nc">BranchIntermitter</span><span class="p">(</span><span class="n">Intermitter</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">beta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span><span class="n">sigma</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">feed_bouts</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">feed_bouts</span><span class="o">=</span><span class="n">feed_bouts</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">c</span> <span class="o">=</span> <span class="n">c</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">beta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span>
+
+<div class="viewcode-block" id="BranchIntermitter.generate_stridechain"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.BranchIntermitter.generate_stridechain">[docs]</a>    <span class="k">def</span> <span class="nf">generate_stridechain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">util</span><span class="o">.</span><span class="n">exp_bout</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stridechain_max</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stridechain_min</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BranchIntermitter.generate_pause"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.BranchIntermitter.generate_pause">[docs]</a>    <span class="k">def</span> <span class="nf">generate_pause</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">util</span><span class="o">.</span><span class="n">critical_bout</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pau_max</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pau_min</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span></div></div>
+
+
+<div class="viewcode-block" id="FittedIntermitter"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.FittedIntermitter">[docs]</a><span class="k">class</span> <span class="nc">FittedIntermitter</span><span class="p">(</span><span class="n">OfflineIntermitter</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">refID</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getRef</span><span class="p">(</span><span class="n">refID</span><span class="p">)[</span><span class="s1">&#39;intermitter&#39;</span><span class="p">]</span>
+        <span class="n">stored_conf</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;crawl_freq&#39;</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">&#39;crawl_freq&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;feed_freq&#39;</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">&#39;feed_freq&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;dt&#39;</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">&#39;dt&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;stridechain_dist&#39;</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">&#39;stride&#39;</span><span class="p">][</span><span class="s1">&#39;best&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;pause_dist&#39;</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">&#39;pause&#39;</span><span class="p">][</span><span class="s1">&#39;best&#39;</span><span class="p">],</span>
+            <span class="s1">&#39;feeder_reoccurence_rate&#39;</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">&#39;feeder_reoccurence_rate&#39;</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="n">stored_conf</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">stored_conf</span><span class="p">[</span><span class="s1">&#39;feed_bouts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">stored_conf</span><span class="p">[</span><span class="s1">&#39;feed_freq&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">False</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">stored_conf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_EEB_poly1d"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.get_EEB_poly1d">[docs]</a><span class="k">def</span> <span class="nf">get_EEB_poly1d</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">):</span>
+    <span class="n">max_dur</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span>
+    <span class="n">EEBs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.05</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span>
+    <span class="n">ms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">EEB</span> <span class="ow">in</span> <span class="n">EEBs</span><span class="p">:</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">OfflineIntermitter</span><span class="p">(</span><span class="n">EEB</span><span class="o">=</span><span class="n">EEB</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">M</span><span class="o">.</span><span class="n">total_t</span> <span class="o">&lt;</span> <span class="n">max_dur</span><span class="p">:</span>
+            <span class="n">M</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">ms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">mean_feed_freq</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">poly1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ms</span><span class="p">),</span> <span class="n">EEBs</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">z</span></div>
+
+<div class="viewcode-block" id="get_EEB_time_fractions"><a class="viewcode-back" href="../../../../../content/larvaworld/lib/model/modules/intermitter.html#larvaworld.lib.model.modules.intermitter.get_EEB_time_fractions">[docs]</a><span class="k">def</span> <span class="nf">get_EEB_time_fractions</span><span class="p">(</span><span class="n">refID</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">refID</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kws</span> <span class="o">=</span> <span class="n">reg</span><span class="o">.</span><span class="n">getRef</span><span class="p">(</span><span class="n">refID</span><span class="p">)[</span><span class="s1">&#39;intermitter&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">kws</span> <span class="o">=</span> <span class="n">kwargs</span>
+    <span class="k">if</span> <span class="n">dt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kws</span><span class="p">[</span><span class="s1">&#39;dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dt</span>
+    <span class="n">max_dur</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span>
+    <span class="n">rts</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s1"> ratio&#39;</span><span class="p">:</span> <span class="n">nam</span><span class="o">.</span><span class="n">dur_ratio</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span> <span class="ow">in</span>
+           <span class="nb">zip</span><span class="p">([</span><span class="s1">&#39;stridechain&#39;</span><span class="p">,</span> <span class="s1">&#39;pause&#39;</span><span class="p">,</span> <span class="s1">&#39;feedchain&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;crawl&#39;</span><span class="p">,</span> <span class="s1">&#39;pause&#39;</span><span class="p">,</span> <span class="s1">&#39;feed&#39;</span><span class="p">])}</span>
+    <span class="n">EEBs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">EEB</span> <span class="ow">in</span> <span class="n">EEBs</span><span class="p">:</span>
+        <span class="n">M</span> <span class="o">=</span> <span class="n">OfflineIntermitter</span><span class="p">(</span><span class="n">EEB</span><span class="o">=</span><span class="n">EEB</span><span class="p">,</span> <span class="o">**</span><span class="n">kws</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">M</span><span class="o">.</span><span class="n">total_t</span> <span class="o">&lt;</span> <span class="n">max_dur</span><span class="p">:</span>
+            <span class="n">M</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="n">M</span><span class="o">.</span><span class="n">build_dict</span><span class="p">()</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;EEB&#39;</span><span class="p">:</span> <span class="n">EEB</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">dic</span><span class="p">[</span><span class="n">v</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">rts</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span> <span class="n">nam</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">nam</span><span class="o">.</span><span class="n">freq</span><span class="p">(</span><span class="s1">&#39;feed&#39;</span><span class="p">)):</span> <span class="n">M</span><span class="o">.</span><span class="n">mean_feed_freq</span><span class="p">}</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

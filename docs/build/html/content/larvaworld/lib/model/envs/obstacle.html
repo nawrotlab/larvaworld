@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>obstacle &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+    <link rel="next" title="valuegrid" href="valuegrid.html" />
+    <link rel="prev" title="maze" href="maze.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html">Modeling</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../deb/index.html">Dynamic Energy Budget</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="index.html">Environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/index.html">Modular behavioral architecture</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../object.html">Basic ABM class</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../param/index.html">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../plot/index.html">Plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../process/index.html">Data management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../screen/index.html">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sim/index.html">Simulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../util/index.html">Dataset fitting &amp; sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Modeling</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Environment</a></li>
+      <li class="breadcrumb-item active">obstacle</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/content/larvaworld/lib/model/envs/obstacle.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.model.envs.obstacle">
+<span id="obstacle"></span><h1>obstacle<a class="headerlink" href="#module-larvaworld.lib.model.envs.obstacle" title="Permalink to this heading"></a></h1>
+<section id="border">
+<h2>Border<a class="headerlink" href="#border" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Border">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.obstacle.</span></span><span class="sig-name descname"><span class="pre">Border</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/obstacle.html#Border"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Border" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.envs.obstacle.Obstacle" title="larvaworld.lib.model.envs.obstacle.Obstacle"><code class="xref py py-class docutils literal notranslate"><span class="pre">Obstacle</span></code></a></p>
+<p>params(unique_id=String, default_color=RandomizedColor, selected=Boolean, visible=Boolean, closed=Boolean, vertices=XYLine, width=PositiveNumber, name=String)
+[1;32mParameters of ‘Border’
+======================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName             Value         Type          Bounds      Mode  [0m</p>
+<p>width            0.001    PositiveNumber  (0.0,[1;36m 10.0[0m)    V RW
+vertices           []         XYLine       (0, None)     V RW
+closed           False       Boolean         (0, 1)      V RW
+default_color   ‘black’  RandomizedColor                 V RW
+visible           True       Boolean         (0, 1)      V RW
+selected         False       Boolean         (0, 1)      V RW
+unique_id         None        String                   V RW AN</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mwidth:         The width of the line vertices[0m
+[1;31mvertices:      The list of 2d points[0m
+[1;34mclosed:        Whether the line is closed[0m
+[1;31mdefault_color: The default color of the entity[0m
+[1;34mvisible:       Whether the entity is visible or not[0m
+[1;31mselected:      Whether the entity is selected or not[0m
+[1;34munique_id:     The unique ID of the entity[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Border.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'closed':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'vertices':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Border.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Border._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Border._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Border._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Border._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Border.contained">
+<span class="sig-name descname"><span class="pre">contained</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/obstacle.html#Border.contained"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Border.contained" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Border.define_lines">
+<span class="sig-name descname"><span class="pre">define_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/obstacle.html#Border.define_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Border.define_lines" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Border.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Border'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Border.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="box">
+<h2>Box<a class="headerlink" href="#box" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Box">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.obstacle.</span></span><span class="sig-name descname"><span class="pre">Box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/obstacle.html#Box"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Box" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.envs.obstacle.Obstacle" title="larvaworld.lib.model.envs.obstacle.Obstacle"><code class="xref py py-class docutils literal notranslate"><span class="pre">Obstacle</span></code></a></p>
+<p>params(unique_id=String, default_color=RandomizedColor, selected=Boolean, visible=Boolean, closed=Boolean, vertices=XYLine, width=PositiveNumber, name=String)
+[1;32mParameters of ‘Box’
+===================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName             Value         Type          Bounds      Mode  [0m</p>
+<p>width            0.001    PositiveNumber  (0.0,[1;36m 10.0[0m)    V RW
+vertices           []         XYLine       (0, None)     V RW
+closed           False       Boolean         (0, 1)      V RW
+default_color   ‘black’  RandomizedColor                 V RW
+visible           True       Boolean         (0, 1)      V RW
+selected         False       Boolean         (0, 1)      V RW
+unique_id         None        String                   V RW AN</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mwidth:         The width of the line vertices[0m
+[1;31mvertices:      The list of 2d points[0m
+[1;34mclosed:        Whether the line is closed[0m
+[1;31mdefault_color: The default color of the entity[0m
+[1;34mvisible:       Whether the entity is visible or not[0m
+[1;31mselected:      Whether the entity is selected or not[0m
+[1;34munique_id:     The unique ID of the entity[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Box.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'closed':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'vertices':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Box.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Box._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Box._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Box._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Box._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Box.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Box'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Box.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="id1">
+<h2>Obstacle<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Obstacle">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.obstacle.</span></span><span class="sig-name descname"><span class="pre">Obstacle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edges</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/obstacle.html#Obstacle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Obstacle" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../object.html#larvaworld.lib.model.object.NamedObject" title="larvaworld.lib.model.object.NamedObject"><code class="xref py py-class docutils literal notranslate"><span class="pre">NamedObject</span></code></a>, <a class="reference internal" href="../../param/drawable.html#larvaworld.lib.param.drawable.Contour" title="larvaworld.lib.param.drawable.Contour"><code class="xref py py-class docutils literal notranslate"><span class="pre">Contour</span></code></a></p>
+<p>params(unique_id=String, default_color=RandomizedColor, selected=Boolean, visible=Boolean, closed=Boolean, vertices=XYLine, width=PositiveNumber, name=String)
+[1;32mParameters of ‘Obstacle’
+========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName             Value         Type          Bounds      Mode  [0m</p>
+<p>width            0.001    PositiveNumber  (0.0,[1;36m 10.0[0m)    V RW
+vertices           []         XYLine       (0, None)     V RW
+closed           False       Boolean         (0, 1)      V RW
+default_color   ‘black’  RandomizedColor                 V RW
+visible           True       Boolean         (0, 1)      V RW
+selected         False       Boolean         (0, 1)      V RW
+unique_id         None        String                   V RW AN</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mwidth:         The width of the line vertices[0m
+[1;31mvertices:      The list of 2d points[0m
+[1;34mclosed:        Whether the line is closed[0m
+[1;31mdefault_color: The default color of the entity[0m
+[1;34mvisible:       Whether the entity is visible or not[0m
+[1;31mselected:      Whether the entity is selected or not[0m
+[1;34munique_id:     The unique ID of the entity[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Obstacle.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'closed':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'vertices':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Obstacle.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Obstacle._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Obstacle._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Obstacle._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Obstacle._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Obstacle.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Obstacle'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Obstacle.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="wall">
+<h2>Wall<a class="headerlink" href="#wall" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Wall">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.obstacle.</span></span><span class="sig-name descname"><span class="pre">Wall</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">point2</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/obstacle.html#Wall"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Wall" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.envs.obstacle.Obstacle" title="larvaworld.lib.model.envs.obstacle.Obstacle"><code class="xref py py-class docutils literal notranslate"><span class="pre">Obstacle</span></code></a></p>
+<p>params(unique_id=String, default_color=RandomizedColor, selected=Boolean, visible=Boolean, closed=Boolean, vertices=XYLine, width=PositiveNumber, name=String)
+[1;32mParameters of ‘Wall’
+====================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName             Value         Type          Bounds      Mode  [0m</p>
+<p>width            0.001    PositiveNumber  (0.0,[1;36m 10.0[0m)    V RW
+vertices           []         XYLine       (0, None)     V RW
+closed           False       Boolean         (0, 1)      V RW
+default_color   ‘black’  RandomizedColor                 V RW
+visible           True       Boolean         (0, 1)      V RW
+selected         False       Boolean         (0, 1)      V RW
+unique_id         None        String                   V RW AN</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mwidth:         The width of the line vertices[0m
+[1;31mvertices:      The list of 2d points[0m
+[1;34mclosed:        Whether the line is closed[0m
+[1;31mdefault_color: The default color of the entity[0m
+[1;34mvisible:       Whether the entity is visible or not[0m
+[1;31mselected:      Whether the entity is selected or not[0m
+[1;34munique_id:     The unique ID of the entity[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Wall.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'closed':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'default_color':</span> <span class="pre">&lt;larvaworld.lib.param.custom.RandomizedColor</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'vertices':</span> <span class="pre">&lt;larvaworld.lib.param.custom.XYLine</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'width':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Wall.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Wall._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Wall._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Wall._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Wall._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.obstacle.Wall.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Wall'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.obstacle.Wall.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="maze.html" class="btn btn-neutral float-left" title="maze" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="valuegrid.html" class="btn btn-neutral float-right" title="valuegrid" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

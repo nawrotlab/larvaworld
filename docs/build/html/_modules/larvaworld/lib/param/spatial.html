@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>larvaworld.lib.param.spatial &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../content/larvaworld/index.html">About larvaworld</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">larvaworld.lib.param.spatial</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for larvaworld.lib.param.spatial</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">shapely</span> <span class="kn">import</span> <span class="n">geometry</span><span class="p">,</span> <span class="n">Polygon</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib</span> <span class="kn">import</span> <span class="n">aux</span>
+
+<span class="kn">from</span> <span class="nn">larvaworld.lib.param</span> <span class="kn">import</span> <span class="n">NestedConf</span><span class="p">,</span> <span class="n">PositiveNumber</span><span class="p">,</span> <span class="n">RandomizedPhase</span><span class="p">,</span> <span class="n">XYLine</span><span class="p">,</span> \
+    <span class="n">PositiveIntegerRange</span><span class="p">,</span> <span class="n">PositiveRange</span><span class="p">,</span> <span class="n">NumericTuple2DRobust</span><span class="p">,</span> <span class="n">IntegerTuple2DRobust</span><span class="p">,</span> <span class="n">RangeRobust</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;Pos2D&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Pos2DPixel&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;RadiallyExtended&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;OrientedPoint&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;MobilePoint&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;MobileVector&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;LineExtended&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;LineClosed&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Area2D&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Area2DPixel&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Area&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ScreenWindowAreaBasic&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ScreenWindowAreaZoomable&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;ScreenWindowArea&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;BoundedArea&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Grid&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;PosPixelRel2Point&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;PosPixelRel2Area&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">__displayname__</span> <span class="o">=</span> <span class="s1">&#39;Spatial elements&#39;</span>
+
+<div class="viewcode-block" id="Pos2D"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.Pos2D">[docs]</a><span class="k">class</span> <span class="nc">Pos2D</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">NumericTuple2DRobust</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The xy spatial position coordinates&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Pos2D.get_position"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.Pos2D.get_position">[docs]</a>    <span class="k">def</span> <span class="nf">get_position</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Pos2D.set_position"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.Pos2D.set_position">[docs]</a>    <span class="k">def</span> <span class="nf">set_position</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">pos</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="n">pos</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">x</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">y</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">last_delta_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">x0</span><span class="p">,</span><span class="n">y0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">last_pos</span>
+        <span class="n">x1</span><span class="p">,</span><span class="n">y1</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">((</span><span class="n">x1</span><span class="o">-</span><span class="n">x0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">y1</span><span class="o">-</span><span class="n">y0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Pos2DPixel"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.Pos2DPixel">[docs]</a><span class="k">class</span> <span class="nc">Pos2DPixel</span><span class="p">(</span><span class="n">Pos2D</span><span class="p">):</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">IntegerTuple2DRobust</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The xy spatial position coordinates&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="RadiallyExtended"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.RadiallyExtended">[docs]</a><span class="k">class</span> <span class="nc">RadiallyExtended</span><span class="p">(</span><span class="n">Pos2D</span><span class="p">):</span>
+    <span class="n">radius</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mf">0.003</span><span class="p">,</span> <span class="n">softmax</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The spatial radius of the source in meters&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RadiallyExtended.get_shape"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.RadiallyExtended.get_shape">[docs]</a>    <span class="k">def</span> <span class="nf">get_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="RadiallyExtended.contained"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.RadiallyExtended.contained">[docs]</a>    <span class="k">def</span> <span class="nf">contained</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">point</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_position</span><span class="p">())</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">point</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span></div></div>
+
+<div class="viewcode-block" id="OrientedPoint"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.OrientedPoint">[docs]</a><span class="k">class</span> <span class="nc">OrientedPoint</span><span class="p">(</span><span class="n">Pos2D</span><span class="p">):</span>
+    <span class="n">orientation</span> <span class="o">=</span> <span class="n">RandomizedPhase</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;orientation&#39;</span><span class="p">,</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The absolute orientation in space.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initial_orientation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_orientation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_orientation</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rotationMatrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">a</span><span class="o">=-</span><span class="bp">self</span><span class="o">.</span><span class="n">orientation</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">)],</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">)]])</span>
+
+<div class="viewcode-block" id="OrientedPoint.translate"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.OrientedPoint.translate">[docs]</a>    <span class="k">def</span> <span class="nf">translate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">point</span><span class="p">):</span>
+        <span class="n">p</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">point</span><span class="p">)</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">rotationMatrix</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">aux</span><span class="o">.</span><span class="n">np2Dtotuples</span><span class="p">(</span><span class="n">p</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrientedPoint.set_orientation"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.OrientedPoint.set_orientation">[docs]</a>    <span class="k">def</span> <span class="nf">set_orientation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">orientation</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_orientation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_orientation</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span> <span class="o">=</span> <span class="n">orientation</span></div>
+
+
+<div class="viewcode-block" id="OrientedPoint.get_orientation"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.OrientedPoint.get_orientation">[docs]</a>    <span class="k">def</span> <span class="nf">get_orientation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span></div>
+
+<div class="viewcode-block" id="OrientedPoint.get_pose"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.OrientedPoint.get_pose">[docs]</a>    <span class="k">def</span> <span class="nf">get_pose</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pos</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span></div>
+
+<div class="viewcode-block" id="OrientedPoint.update_pose"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.OrientedPoint.update_pose">[docs]</a>    <span class="k">def</span> <span class="nf">update_pose</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">orientation</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_position</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_orientation</span><span class="p">(</span><span class="n">orientation</span><span class="o">%</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">last_delta_orientation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">a0</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">last_orientation</span>
+        <span class="n">a1</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_orientation</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">a1</span><span class="o">-</span><span class="n">a0</span></div>
+
+
+
+
+<div class="viewcode-block" id="MobilePoint"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.MobilePoint">[docs]</a><span class="k">class</span> <span class="nc">MobilePoint</span><span class="p">(</span><span class="n">OrientedPoint</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lin_vel</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ang_vel</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ang_acc</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cum_dst</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dst</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+<div class="viewcode-block" id="MobilePoint.get_angularvelocity"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.MobilePoint.get_angularvelocity">[docs]</a>    <span class="k">def</span> <span class="nf">get_angularvelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ang_vel</span></div>
+
+<div class="viewcode-block" id="MobilePoint.get_linearvelocity"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.MobilePoint.get_linearvelocity">[docs]</a>    <span class="k">def</span> <span class="nf">get_linearvelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lin_vel</span></div>
+
+<div class="viewcode-block" id="MobilePoint.set_linearvelocity"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.MobilePoint.set_linearvelocity">[docs]</a>    <span class="k">def</span> <span class="nf">set_linearvelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lin_vel</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lin_vel</span> <span class="o">=</span> <span class="n">lin_vel</span></div>
+
+<div class="viewcode-block" id="MobilePoint.set_angularvelocity"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.MobilePoint.set_angularvelocity">[docs]</a>    <span class="k">def</span> <span class="nf">set_angularvelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ang_vel</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ang_vel</span> <span class="o">=</span> <span class="n">ang_vel</span></div>
+
+<div class="viewcode-block" id="MobilePoint.update_all"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.MobilePoint.update_all">[docs]</a>    <span class="k">def</span> <span class="nf">update_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">orientation</span><span class="p">,</span> <span class="n">lin_vel</span><span class="p">,</span> <span class="n">ang_vel</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_position</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_orientation</span><span class="p">(</span><span class="n">orientation</span> <span class="o">%</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_linearvelocity</span><span class="p">(</span><span class="n">lin_vel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_angularvelocity</span><span class="p">(</span><span class="n">ang_vel</span><span class="p">)</span></div></div>
+
+
+
+
+
+<div class="viewcode-block" id="MobileVector"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.MobileVector">[docs]</a><span class="k">class</span> <span class="nc">MobileVector</span><span class="p">(</span><span class="n">MobilePoint</span><span class="p">):</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The initial length of the body in meters&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">front_end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">translate</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rear_end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">translate</span><span class="p">((</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span></div>
+
+
+
+
+<div class="viewcode-block" id="LineExtended"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.LineExtended">[docs]</a><span class="k">class</span> <span class="nc">LineExtended</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">softmax</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The width of the line vertices&#39;</span><span class="p">)</span>
+    <span class="n">vertices</span> <span class="o">=</span> <span class="n">XYLine</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The list of 2d points&#39;</span><span class="p">)</span>
+    <span class="n">closed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether the line is closed&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">vs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">vertices</span>
+        <span class="n">N</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">vs</span><span class="p">)</span>
+        <span class="n">edges</span><span class="o">=</span><span class="p">[[</span><span class="n">vs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">vs</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">closed</span> <span class="p">:</span>
+            <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">vs</span><span class="p">[</span><span class="n">N</span><span class="p">],</span> <span class="n">vs</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="k">return</span> <span class="n">edges</span></div>
+
+
+<div class="viewcode-block" id="LineClosed"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.LineClosed">[docs]</a><span class="k">class</span> <span class="nc">LineClosed</span><span class="p">(</span><span class="n">LineExtended</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">closed</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="Area2D"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.Area2D">[docs]</a><span class="k">class</span> <span class="nc">Area2D</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">dims</span> <span class="o">=</span> <span class="n">PositiveRange</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The arena dimensions&#39;</span><span class="p">)</span>
+    <span class="n">centered</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether area is centered to (0,0)&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">w</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">h</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">X</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">X</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">Y</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">Y</span> <span class="o">/</span> <span class="mi">2</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="Area2DPixel"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.Area2DPixel">[docs]</a><span class="k">class</span> <span class="nc">Area2DPixel</span><span class="p">(</span><span class="n">Area2D</span><span class="p">):</span>
+    <span class="n">dims</span> <span class="o">=</span> <span class="n">PositiveIntegerRange</span><span class="p">((</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span> <span class="n">softmax</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The arena dimensions in pixels&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Area2DPixel.get_rect_at_pos"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.Area2DPixel.get_rect_at_pos">[docs]</a>    <span class="k">def</span> <span class="nf">get_rect_at_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">pygame</span>
+        <span class="k">if</span> <span class="n">pos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">pos</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">centered</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pygame</span><span class="o">.</span><span class="n">Rect</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pygame</span><span class="o">.</span><span class="n">Rect</span><span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div></div>
+
+<div class="viewcode-block" id="Area"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.Area">[docs]</a><span class="k">class</span> <span class="nc">Area</span><span class="p">(</span><span class="n">Area2D</span><span class="p">):</span>
+    <span class="n">dims</span> <span class="o">=</span> <span class="n">PositiveRange</span><span class="p">((</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">softmax</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The arena dimensions in meters&#39;</span><span class="p">)</span>
+    <span class="n">geometry</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Selector</span><span class="p">(</span><span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;circular&#39;</span><span class="p">,</span> <span class="s1">&#39;rectangular&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The arena shape&#39;</span><span class="p">)</span>
+    <span class="n">torus</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Whether to allow a toroidal space&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ScreenWindowAreaBasic"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.ScreenWindowAreaBasic">[docs]</a><span class="k">class</span> <span class="nc">ScreenWindowAreaBasic</span><span class="p">(</span><span class="n">Area2DPixel</span><span class="p">):</span>
+
+    <span class="n">scaling_factor</span><span class="o">=</span><span class="n">PositiveNumber</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Scaling factor&#39;</span><span class="p">)</span>
+    <span class="n">space</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">Area</span><span class="p">,</span><span class="n">default</span><span class="o">=</span><span class="n">Area</span><span class="p">(),</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Arena&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dims</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">get_window_dims</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ScreenWindowAreaBasic.space2screen_pos"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.ScreenWindowAreaBasic.space2screen_pos">[docs]</a>    <span class="k">def</span> <span class="nf">space2screen_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">pos</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaling_factor</span>
+            <span class="n">rw</span><span class="p">,</span> <span class="n">rh</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">w</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">h</span>
+            <span class="c1"># X, Y = np.array(self.space.dims) * self.scaling_factor</span>
+
+            <span class="c1"># p = pos[0] * 2 / self.space.w/s, pos[1] * 2 / self.space.h/s</span>
+            <span class="n">pp</span> <span class="o">=</span> <span class="p">(</span><span class="n">pos</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span><span class="n">s</span><span class="o">*</span> <span class="n">rw</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">pos</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">/</span><span class="n">s</span><span class="o">*</span> <span class="n">rh</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">pp</span></div>
+
+<div class="viewcode-block" id="ScreenWindowAreaBasic.get_rect_at_pos"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.ScreenWindowAreaBasic.get_rect_at_pos">[docs]</a>    <span class="k">def</span> <span class="nf">get_rect_at_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">convert2screen_pos</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">convert2screen_pos</span><span class="p">:</span>
+            <span class="n">pos</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">space2screen_pos</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_rect_at_pos</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ScreenWindowAreaBasic.get_relative_pos"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.ScreenWindowAreaBasic.get_relative_pos">[docs]</a>    <span class="k">def</span> <span class="nf">get_relative_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos_scale</span><span class="p">):</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">pos_scale</span>
+        <span class="n">x_pos</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+        <span class="n">y_pos</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x_pos</span><span class="p">,</span> <span class="n">y_pos</span></div>
+
+<div class="viewcode-block" id="ScreenWindowAreaBasic.get_relative_font_size"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.ScreenWindowAreaBasic.get_relative_font_size">[docs]</a>    <span class="k">def</span> <span class="nf">get_relative_font_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">font_size_scale</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">*</span> <span class="n">font_size_scale</span><span class="p">)</span></div></div>
+
+
+
+<div class="viewcode-block" id="ScreenWindowAreaZoomable"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable">[docs]</a><span class="k">class</span> <span class="nc">ScreenWindowAreaZoomable</span><span class="p">(</span><span class="n">ScreenWindowAreaBasic</span><span class="p">):</span>
+    <span class="n">zoom</span> <span class="o">=</span> <span class="n">PositiveNumber</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Zoom factor&#39;</span><span class="p">)</span>
+    <span class="n">center</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]),</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Center xy&#39;</span><span class="p">)</span>
+    <span class="n">center_lim</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]),</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Center xy lim&#39;</span><span class="p">)</span>
+    <span class="n">_scale</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span><span class="p">]]),</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Scale of xy&#39;</span><span class="p">)</span>
+    <span class="n">_translation</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;Translation of xy&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">()</span>
+
+    <span class="o">@</span> <span class="nb">property</span>
+    <span class="k">def</span> <span class="nf">display_size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">zoom</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ScreenWindowAreaZoomable.set_bounds"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.set_bounds">[docs]</a>    <span class="nd">@param</span><span class="o">.</span><span class="n">depends</span><span class="p">(</span><span class="s1">&#39;zoom&#39;</span><span class="p">,</span> <span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">watch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">set_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span><span class="p">,</span><span class="n">z</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">scaling_factor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zoom</span>
+        <span class="n">rw</span><span class="p">,</span><span class="n">rh</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">w</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">h</span>
+        <span class="c1"># left, right, bottom, top=self.space.range * s</span>
+        <span class="c1"># assert right &gt; left and top &gt; bottom</span>
+        <span class="c1"># x = int(self.w/ z) / (self.space.w* s)</span>
+        <span class="c1"># y = int(self.h/ z) / (self.space.h* s)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">rw</span><span class="p">,</span> <span class="mf">.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">.0</span><span class="p">,</span> <span class="o">-</span><span class="n">rh</span><span class="p">]])</span><span class="o">/</span> <span class="n">z</span><span class="o">/</span> <span class="n">s</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_translation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="o">/</span> <span class="n">z</span><span class="o">/</span> <span class="n">s</span> <span class="o">*</span> <span class="p">[</span><span class="o">-</span><span class="n">rw</span><span class="p">,</span> <span class="n">rh</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center_lim</span> <span class="o">=</span> <span class="p">(</span><span class="n">z</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span><span class="n">s</span><span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">space</span><span class="o">.</span><span class="n">dims</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span></div>
+
+<div class="viewcode-block" id="ScreenWindowAreaZoomable._transform"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable._transform">[docs]</a>    <span class="k">def</span> <span class="nf">_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_scale</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">position</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_translation</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ScreenWindowAreaZoomable.move_center"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.move_center">[docs]</a>    <span class="k">def</span> <span class="nf">move_center</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dy</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_lim</span> <span class="o">*</span> <span class="p">[</span><span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_lim</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">center_lim</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ScreenWindowAreaZoomable.zoom_screen"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.ScreenWindowAreaZoomable.zoom_screen">[docs]</a>    <span class="k">def</span> <span class="nf">zoom_screen</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sign</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">d_zoom</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.01</span><span class="o">*</span><span class="n">sign</span>
+        <span class="k">if</span> <span class="n">pos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mouse_position</span>
+        <span class="k">if</span> <span class="mf">0.001</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zoom</span> <span class="o">+</span> <span class="n">d_zoom</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">zoom</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zoom</span> <span class="o">+</span> <span class="n">d_zoom</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span> <span class="o">*</span> <span class="n">d_zoom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_lim</span><span class="p">,</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">center_lim</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zoom</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span></div></div>
+
+
+
+
+<div class="viewcode-block" id="ScreenWindowArea"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.ScreenWindowArea">[docs]</a><span class="k">class</span> <span class="nc">ScreenWindowArea</span><span class="p">(</span><span class="n">ScreenWindowAreaZoomable</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="BoundedArea"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.BoundedArea">[docs]</a><span class="k">class</span> <span class="nc">BoundedArea</span><span class="p">(</span><span class="n">Area</span><span class="p">,</span> <span class="n">LineClosed</span><span class="p">):</span>
+    <span class="n">boundary_margin</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Magnitude</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The boundary margin width relative to the area vertices&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">vertices</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="n">Area</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dims</span>
+        <span class="k">if</span> <span class="n">vertices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">geometry</span> <span class="o">==</span> <span class="s1">&#39;circular&#39;</span><span class="p">:</span>
+                <span class="c1"># This is a circle_to_polygon shape from the function</span>
+                <span class="n">vertices</span> <span class="o">=</span> <span class="n">aux</span><span class="o">.</span><span class="n">circle_to_polygon</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="n">X</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">geometry</span> <span class="o">==</span> <span class="s1">&#39;rectangular&#39;</span><span class="p">:</span>
+                <span class="c1"># This is a rectangular shape</span>
+                <span class="n">vertices</span> <span class="o">=</span> <span class="p">[(</span><span class="o">-</span><span class="n">X</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">Y</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+                            <span class="p">(</span><span class="o">-</span><span class="n">X</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">Y</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+                            <span class="p">(</span><span class="n">X</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">Y</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+                            <span class="p">(</span><span class="n">X</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="n">Y</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)]</span>
+        <span class="n">LineClosed</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">vertices</span><span class="o">=</span><span class="n">vertices</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">polygon</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Polygon</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vertices</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">boundary_margin</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BoundedArea.in_area"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.BoundedArea.in_area">[docs]</a>    <span class="k">def</span> <span class="nf">in_area</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">polygon</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">p</span><span class="p">))</span></div></div>
+
+
+
+<div class="viewcode-block" id="Grid"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.Grid">[docs]</a><span class="k">class</span> <span class="nc">Grid</span><span class="p">(</span><span class="n">NestedConf</span><span class="p">):</span>
+    <span class="n">grid_dims</span> <span class="o">=</span> <span class="n">PositiveIntegerRange</span><span class="p">((</span><span class="mi">51</span><span class="p">,</span> <span class="mi">51</span><span class="p">),</span> <span class="n">softmax</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The spatial resolution of the food grid.&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">X</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">Y</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_dims</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="PosPixelRel2Point"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.PosPixelRel2Point">[docs]</a><span class="k">class</span> <span class="nc">PosPixelRel2Point</span><span class="p">(</span><span class="n">Pos2DPixel</span><span class="p">):</span>
+    <span class="n">reference_point</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">Pos2DPixel</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The reference position instance&#39;</span><span class="p">,</span> <span class="n">is_instance</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">pos_scale</span> <span class="o">=</span> <span class="n">PositiveRange</span><span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">softmax</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+                              <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The position relative to reference position&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_pos</span><span class="p">()</span>
+
+<div class="viewcode-block" id="PosPixelRel2Point.update_pos"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.PosPixelRel2Point.update_pos">[docs]</a>    <span class="nd">@param</span><span class="o">.</span><span class="n">depends</span><span class="p">(</span><span class="s1">&#39;pos_scale&#39;</span><span class="p">,</span> <span class="s1">&#39;reference_point&#39;</span><span class="p">,</span> <span class="n">watch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">update_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_scale</span>
+        <span class="n">x_pos</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference_point</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+        <span class="n">y_pos</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference_point</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_pos</span><span class="p">,</span> <span class="n">y_pos</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="PosPixelRel2Area"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.PosPixelRel2Area">[docs]</a><span class="k">class</span> <span class="nc">PosPixelRel2Area</span><span class="p">(</span><span class="n">Pos2DPixel</span><span class="p">):</span>
+    <span class="n">reference_area</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">Area2DPixel</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The reference position instance&#39;</span><span class="p">,</span> <span class="n">is_instance</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">pos_scale</span> <span class="o">=</span> <span class="n">PositiveRange</span><span class="p">((</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">softmax</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+                              <span class="n">doc</span><span class="o">=</span><span class="s1">&#39;The position relative to reference position&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_pos</span><span class="p">()</span>
+
+<div class="viewcode-block" id="PosPixelRel2Area.update_pos"><a class="viewcode-back" href="../../../../content/larvaworld/lib/param/spatial.html#larvaworld.lib.param.spatial.PosPixelRel2Area.update_pos">[docs]</a>    <span class="nd">@param</span><span class="o">.</span><span class="n">depends</span><span class="p">(</span><span class="s1">&#39;pos_scale&#39;</span><span class="p">,</span> <span class="s1">&#39;reference_area&#39;</span><span class="p">,</span> <span class="n">watch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">update_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_scale</span>
+        <span class="n">x_pos</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference_area</span><span class="o">.</span><span class="n">w</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+        <span class="n">y_pos</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference_area</span><span class="o">.</span><span class="n">h</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_pos</span><span class="p">,</span> <span class="n">y_pos</span><span class="p">)</span></div></div>
+
+
+
+<span class="c1"># class PositionedArea2DPixel(Pos2DPixel, Area2DPixel): pass</span>
+
+
+<span class="c1"># class PositionedArea2DPixelRel2Area(PosPixelRel2Area, Area2DPixel): pass</span>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

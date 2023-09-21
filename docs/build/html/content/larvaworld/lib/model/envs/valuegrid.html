@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>valuegrid &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+    <link rel="next" title="Modular behavioral architecture" href="../modules/index.html" />
+    <link rel="prev" title="obstacle" href="obstacle.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html">Modeling</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../deb/index.html">Dynamic Energy Budget</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="index.html">Environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/index.html">Modular behavioral architecture</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../object.html">Basic ABM class</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../param/index.html">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../plot/index.html">Plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../process/index.html">Data management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../screen/index.html">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sim/index.html">Simulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../util/index.html">Dataset fitting &amp; sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Modeling</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Environment</a></li>
+      <li class="breadcrumb-item active">valuegrid</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/content/larvaworld/lib/model/envs/valuegrid.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.model.envs.valuegrid">
+<span id="valuegrid"></span><h1>valuegrid<a class="headerlink" href="#module-larvaworld.lib.model.envs.valuegrid" title="Permalink to this heading"></a></h1>
+<section id="diffusionvaluelayer">
+<h2>DiffusionValueLayer<a class="headerlink" href="#diffusionvaluelayer" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.valuegrid.</span></span><span class="sig-name descname"><span class="pre">DiffusionValueLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#DiffusionValueLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.envs.valuegrid.OdorScape" title="larvaworld.lib.model.envs.valuegrid.OdorScape"><code class="xref py py-class docutils literal notranslate"><span class="pre">OdorScape</span></code></a></p>
+<p>params(evap_const=Magnitude, gaussian_sigma=NumericTuple, odorscape=Selector, fixed_max=Boolean, initial_value=Number, default_color=RandomizedColor, selected=Boolean, visible=Boolean, unique_id=String, grid_dims=PositiveIntegerRange, name=String)
+[1;32mParameters of ‘DiffusionValueLayer’
+===================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                Value              Type            Bounds    Mode [0m</p>
+<p>grid_dims          (51, 51)    PositiveIntegerRange   (0,[1;36m 500[0m)   V RW
+unique_id        ‘Odorscape’          String                     V RW
+default_color      ‘white’            Color                      V RW
+visible             False            Boolean           (0, 1)    V RW
+selected            False            Boolean           (0, 1)    V RW
+initial_value        0.0              Number                     V RW
+fixed_max           False            Boolean           (0, 1)    V RW
+odorscape        ‘Diffusion’         Selector                    V RW
+evap_const           0.9            Magnitude        (0.0, 1.0)  V RW
+gaussian_sigma   (0.95, 0.95)      NumericTuple                  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mgrid_dims:      The spatial resolution of the food grid.[0m
+[1;31munique_id:      The unique ID of the entity[0m
+[1;34mdefault_color:  The default color of the entity[0m
+[1;31mvisible:        Whether the entity is visible or not[0m
+[1;34mselected:       Whether the entity is selected or not[0m
+[1;31minitial_value:  initial value over the grid[0m
+[1;34mfixed_max:      whether the max is kept constant[0m
+[1;31modorscape:      The odorscape algorithm[0m
+[1;34mevap_const:     The evaporation constant of the diffusion algorithm.[0m
+[1;31mgaussian_sigma: The sigma of the gaussian difusion algorithm.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;param.Color</span> <span class="pre">object&gt;,</span> <span class="pre">'evap_const':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'fixed_max':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'gaussian_sigma':</span> <span class="pre">&lt;param.NumericTuple</span> <span class="pre">object&gt;,</span> <span class="pre">'grid_dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'initial_value':</span> <span class="pre">&lt;param.Number</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odorscape':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.evap_const">
+<span class="sig-name descname"><span class="pre">evap_const</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.9</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.evap_const" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.gaussian_sigma">
+<span class="sig-name descname"><span class="pre">gaussian_sigma</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">(0.95,</span> <span class="pre">0.95)</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.gaussian_sigma" title="Permalink to this definition"></a></dt>
+<dd><p>A typical diffusion coefficient for a molecule in the gas phase is in the range of 10-6 to 10-5 m2/sigma</p>
+<p>Yes, it does that automatically based on the sigma and truncate parameters.
+Indeed, the function gaussian_filter is implemented by applying multiples 1D gaussian filters (you can see that here).
+This function uses gaussian_filter1d which generate itself the kernel using _gaussian_kernel1d with a radius of
+int(truncate * sigma + 0.5).</p>
+<p>Doing the math, sigma ends up reeeeally small</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'DiffusionValueLayer'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.odorscape">
+<span class="sig-name descname"><span class="pre">odorscape</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Diffusion'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.odorscape" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.update_values">
+<span class="sig-name descname"><span class="pre">update_values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#DiffusionValueLayer.update_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.DiffusionValueLayer.update_values" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="foodgrid">
+<h2>FoodGrid<a class="headerlink" href="#foodgrid" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.FoodGrid">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.valuegrid.</span></span><span class="sig-name descname"><span class="pre">FoodGrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#FoodGrid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.FoodGrid" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid" title="larvaworld.lib.model.envs.valuegrid.ValueGrid"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueGrid</span></code></a></p>
+<p>params(substrate=ClassAttr, fixed_max=Boolean, initial_value=Number, default_color=RandomizedColor, selected=Boolean, visible=Boolean, unique_id=String, grid_dims=PositiveIntegerRange, name=String)
+[1;32mParameters of ‘FoodGrid’
+========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                             Value                            Type           Bounds   Mode [0m</p>
+<p>grid_dims                       (51, 51)                  PositiveIntegerRange  (0,[1;36m 500[0m)  V RW
+unique_id                      ‘FoodGrid’                        String                   V RW
+default_color                   ‘green’                          Color                    V RW
+visible                          False                          Boolean          (0, 1)   V RW
+selected                         False                          Boolean          (0, 1)   V RW
+initial_value                    1e-06                           Number                   V RW
+fixed_max                         True                          Boolean          (0, 1)   V RW
+substrate       Substrate(composition={‘glucose’: 0.1…       ClassAttr                  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mgrid_dims:     The spatial resolution of the food grid.[0m
+[1;31munique_id:     The unique ID of the entity[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m
+[1;31minitial_value: initial value over the grid[0m
+[1;34mfixed_max:     whether the max is kept constant[0m
+[1;31msubstrate:     The substrate where the agent feeds[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.FoodGrid.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;param.Color</span> <span class="pre">object&gt;,</span> <span class="pre">'fixed_max':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'grid_dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'initial_value':</span> <span class="pre">&lt;param.Number</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'substrate':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.FoodGrid.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.FoodGrid._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.FoodGrid._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.FoodGrid._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.FoodGrid._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.FoodGrid.default_color">
+<span class="sig-name descname"><span class="pre">default_color</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'green'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.FoodGrid.default_color" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.FoodGrid.draw">
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#FoodGrid.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.FoodGrid.draw" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.FoodGrid.fixed_max">
+<span class="sig-name descname"><span class="pre">fixed_max</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.FoodGrid.fixed_max" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.FoodGrid.get_color">
+<span class="sig-name descname"><span class="pre">get_color</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#FoodGrid.get_color"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.FoodGrid.get_color" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.FoodGrid.initial_value">
+<span class="sig-name descname"><span class="pre">initial_value</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-06</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.FoodGrid.initial_value" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.FoodGrid.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'FoodGrid'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.FoodGrid.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.FoodGrid.substrate">
+<span class="sig-name descname"><span class="pre">substrate</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Substrate(composition={'glucose':</span> <span class="pre">0.1,</span> <span class="pre">'dextrose':</span> <span class="pre">0.0,</span> <span class="pre">'saccharose':</span> <span class="pre">0.0,</span> <span class="pre">'yeast':</span> <span class="pre">0.05,</span> <span class="pre">'agar':</span> <span class="pre">0.016,</span> <span class="pre">'cornmeal':</span> <span class="pre">0.0},</span> <span class="pre">name='Substrate00347',</span> <span class="pre">quality=1.0)</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.FoodGrid.substrate" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.FoodGrid.unique_id">
+<span class="sig-name descname"><span class="pre">unique_id</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'FoodGrid'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.FoodGrid.unique_id" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="gaussianvaluelayer">
+<h2>GaussianValueLayer<a class="headerlink" href="#gaussianvaluelayer" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GaussianValueLayer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.valuegrid.</span></span><span class="sig-name descname"><span class="pre">GaussianValueLayer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#GaussianValueLayer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.envs.valuegrid.OdorScape" title="larvaworld.lib.model.envs.valuegrid.OdorScape"><code class="xref py py-class docutils literal notranslate"><span class="pre">OdorScape</span></code></a></p>
+<p>params(odorscape=Selector, fixed_max=Boolean, initial_value=Number, default_color=RandomizedColor, selected=Boolean, visible=Boolean, unique_id=String, grid_dims=PositiveIntegerRange, name=String)
+[1;32mParameters of ‘GaussianValueLayer’
+==================================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName               Value             Type           Bounds   Mode [0m</p>
+<p>grid_dims         (51, 51)   PositiveIntegerRange  (0,[1;36m 500[0m)  V RW
+unique_id       ‘Odorscape’         String                   V RW
+default_color     ‘white’           Color                    V RW
+visible            False           Boolean          (0, 1)   V RW
+selected           False           Boolean          (0, 1)   V RW
+initial_value       0.0             Number                   V RW
+fixed_max          False           Boolean          (0, 1)   V RW
+odorscape        ‘Gaussian’        Selector                  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mgrid_dims:     The spatial resolution of the food grid.[0m
+[1;31munique_id:     The unique ID of the entity[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m
+[1;31minitial_value: initial value over the grid[0m
+[1;34mfixed_max:     whether the max is kept constant[0m
+[1;31modorscape:     The odorscape algorithm[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;param.Color</span> <span class="pre">object&gt;,</span> <span class="pre">'fixed_max':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'grid_dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'initial_value':</span> <span class="pre">&lt;param.Number</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odorscape':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GaussianValueLayer._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GaussianValueLayer._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.draw_isocontours">
+<span class="sig-name descname"><span class="pre">draw_isocontours</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#GaussianValueLayer.draw_isocontours"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.draw_isocontours" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.get_grid">
+<span class="sig-name descname"><span class="pre">get_grid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#GaussianValueLayer.get_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.get_grid" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.get_value">
+<span class="sig-name descname"><span class="pre">get_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#GaussianValueLayer.get_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.get_value" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'GaussianValueLayer'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.odorscape">
+<span class="sig-name descname"><span class="pre">odorscape</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Gaussian'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GaussianValueLayer.odorscape" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="gridoverspace">
+<h2>GridOverSpace<a class="headerlink" href="#gridoverspace" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GridOverSpace">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.valuegrid.</span></span><span class="sig-name descname"><span class="pre">GridOverSpace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#GridOverSpace"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GridOverSpace" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../../param/drawable.html#larvaworld.lib.param.drawable.ViewableNamedGrid" title="larvaworld.lib.param.drawable.ViewableNamedGrid"><code class="xref py py-class docutils literal notranslate"><span class="pre">ViewableNamedGrid</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Grid</span></code></p>
+<p>params(default_color=RandomizedColor, selected=Boolean, visible=Boolean, grid_dims=PositiveIntegerRange, unique_id=String, name=String)
+[1;32mParameters of ‘GridOverSpace’
+=============================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                 Value               Type           Bounds   Mode [0m</p>
+<p>unique_id       ‘GridOverArena’         String                   V RW
+grid_dims           (51, 51)     PositiveIntegerRange  (0,[1;36m 500[0m)  V RW
+default_color       ‘white’             Color                    V RW
+visible              False             Boolean          (0, 1)   V RW
+selected             False             Boolean          (0, 1)   V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34munique_id:     The unique ID of the entity[0m
+[1;31mgrid_dims:     The spatial resolution of the food grid.[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GridOverSpace.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;param.Color</span> <span class="pre">object&gt;,</span> <span class="pre">'grid_dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GridOverSpace.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GridOverSpace._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GridOverSpace._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GridOverSpace._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GridOverSpace._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GridOverSpace.cell_vertices">
+<span class="sig-name descname"><span class="pre">cell_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#GridOverSpace.cell_vertices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GridOverSpace.cell_vertices" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GridOverSpace.default_color">
+<span class="sig-name descname"><span class="pre">default_color</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'white'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GridOverSpace.default_color" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GridOverSpace.generate_grid_vertices">
+<span class="sig-name descname"><span class="pre">generate_grid_vertices</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#GridOverSpace.generate_grid_vertices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GridOverSpace.generate_grid_vertices" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GridOverSpace.get_grid_cell">
+<span class="sig-name descname"><span class="pre">get_grid_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#GridOverSpace.get_grid_cell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GridOverSpace.get_grid_cell" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GridOverSpace.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'GridOverSpace'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GridOverSpace.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GridOverSpace.space">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">space</span></span><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GridOverSpace.space" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GridOverSpace.unique_id">
+<span class="sig-name descname"><span class="pre">unique_id</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'GridOverArena'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GridOverSpace.unique_id" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.GridOverSpace.visible">
+<span class="sig-name descname"><span class="pre">visible</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.GridOverSpace.visible" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="odorscape">
+<h2>OdorScape<a class="headerlink" href="#odorscape" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.OdorScape">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.valuegrid.</span></span><span class="sig-name descname"><span class="pre">OdorScape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subclass_initialized</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#OdorScape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.OdorScape" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid" title="larvaworld.lib.model.envs.valuegrid.ValueGrid"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueGrid</span></code></a></p>
+<p>params(odorscape=Selector, fixed_max=Boolean, initial_value=Number, default_color=RandomizedColor, selected=Boolean, visible=Boolean, unique_id=String, grid_dims=PositiveIntegerRange, name=String)
+[1;32mParameters of ‘OdorScape’
+=========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName               Value             Type           Bounds   Mode [0m</p>
+<p>grid_dims         (51, 51)   PositiveIntegerRange  (0,[1;36m 500[0m)  V RW
+unique_id       ‘Odorscape’         String                   V RW
+default_color     ‘white’           Color                    V RW
+visible            False           Boolean          (0, 1)   V RW
+selected           False           Boolean          (0, 1)   V RW
+initial_value       0.0             Number                   V RW
+fixed_max          False           Boolean          (0, 1)   V RW
+odorscape        ‘Gaussian’        Selector                  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mgrid_dims:     The spatial resolution of the food grid.[0m
+[1;31munique_id:     The unique ID of the entity[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m
+[1;31minitial_value: initial value over the grid[0m
+[1;34mfixed_max:     whether the max is kept constant[0m
+[1;31modorscape:     The odorscape algorithm[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.OdorScape.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;param.Color</span> <span class="pre">object&gt;,</span> <span class="pre">'fixed_max':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'grid_dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'initial_value':</span> <span class="pre">&lt;param.Number</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'odorscape':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.OdorScape.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.OdorScape._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.OdorScape._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.OdorScape._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.OdorScape._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.OdorScape.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'OdorScape'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.OdorScape.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.OdorScape.odorscape">
+<span class="sig-name descname"><span class="pre">odorscape</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Gaussian'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.OdorScape.odorscape" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.OdorScape.unique_id">
+<span class="sig-name descname"><span class="pre">unique_id</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Odorscape'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.OdorScape.unique_id" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="thermoscape">
+<h2>ThermoScape<a class="headerlink" href="#thermoscape" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ThermoScape">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.valuegrid.</span></span><span class="sig-name descname"><span class="pre">ThermoScape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plate_temp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">22</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spread</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thermo_sources</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thermo_source_dTemps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ThermoScape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ThermoScape" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid" title="larvaworld.lib.model.envs.valuegrid.ValueGrid"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueGrid</span></code></a></p>
+<p>params(fixed_max=Boolean, initial_value=Number, default_color=RandomizedColor, selected=Boolean, visible=Boolean, unique_id=String, grid_dims=PositiveIntegerRange, name=String)
+[1;32mParameters of ‘ThermoScape’
+===========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                Value              Type           Bounds   Mode [0m</p>
+<p>grid_dims          (51, 51)    PositiveIntegerRange  (0,[1;36m 500[0m)  V RW
+unique_id       ‘ThermoScape’         String                   V RW
+default_color      ‘white’            Color                    V RW
+visible             False            Boolean          (0, 1)   V RW
+selected            False            Boolean          (0, 1)   V RW
+initial_value        0.0              Number                   V RW
+fixed_max           False            Boolean          (0, 1)   V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mgrid_dims:     The spatial resolution of the food grid.[0m
+[1;31munique_id:     The unique ID of the entity[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m
+[1;31minitial_value: initial value over the grid[0m
+[1;34mfixed_max:     whether the max is kept constant[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ThermoScape.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;param.Color</span> <span class="pre">object&gt;,</span> <span class="pre">'fixed_max':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'grid_dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'initial_value':</span> <span class="pre">&lt;param.Number</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ThermoScape.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ThermoScape._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ThermoScape._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ThermoScape._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ThermoScape._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ThermoScape.draw_isocontours">
+<span class="sig-name descname"><span class="pre">draw_isocontours</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ThermoScape.draw_isocontours"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ThermoScape.draw_isocontours" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ThermoScape.generate_thermoscape">
+<span class="sig-name descname"><span class="pre">generate_thermoscape</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ThermoScape.generate_thermoscape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ThermoScape.generate_thermoscape" title="Permalink to this definition"></a></dt>
+<dd><p>size is the length of the square arena in mm.
+rezo is the resolution with 1 being a mm, 0.1 being a 10th of a mm.
+spread is the spread put into the multivariate_normal function.
+pTem is the plate Temp i.e. the standard temperature of the plate - default is 22˚C.
+origins are the coordinate locations on the size x size plate of the heat or cold sources. type: list
+tempDiff needs to be a list the same length as origins, and determines if that source will be cold or hot and by how much.
+In other words a &lt;ptemp&gt; of 22 and a &lt;origins&gt; of [[10,20], [30,40]] and &lt;tempDiff&gt; of [8,-8] would make a temperature source at
+[10,20] that is ~30˚C and a source at [30,40] that is ~14˚C. The mean is taken where the temperatures of multiple sources overlap.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ThermoScape.get_grid">
+<span class="sig-name descname"><span class="pre">get_grid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ThermoScape.get_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ThermoScape.get_grid" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ThermoScape.get_thermo_value">
+<span class="sig-name descname"><span class="pre">get_thermo_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ThermoScape.get_thermo_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ThermoScape.get_thermo_value" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ThermoScape.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ThermoScape'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ThermoScape.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ThermoScape.unique_id">
+<span class="sig-name descname"><span class="pre">unique_id</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ThermoScape'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ThermoScape.unique_id" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="id1">
+<h2>ValueGrid<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.valuegrid.</span></span><span class="sig-name descname"><span class="pre">ValueGrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sources</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SpatialEntity</span></code>, <a class="reference internal" href="../../param/spatial.html#larvaworld.lib.param.spatial.Grid" title="larvaworld.lib.param.spatial.Grid"><code class="xref py py-class docutils literal notranslate"><span class="pre">Grid</span></code></a></p>
+<p>params(fixed_max=Boolean, initial_value=Number, default_color=RandomizedColor, selected=Boolean, visible=Boolean, unique_id=String, grid_dims=PositiveIntegerRange, name=String)
+[1;32mParameters of ‘ValueGrid’
+=========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName             Value            Type           Bounds     Mode  [0m</p>
+<p>grid_dims       (51, 51)  PositiveIntegerRange  (0,[1;36m 500[0m)    V RW
+unique_id         None           String                   V RW AN
+default_color   ‘white’          Color                      V RW
+visible          False          Boolean          (0, 1)     V RW
+selected         False          Boolean          (0, 1)     V RW
+initial_value     0.0            Number                     V RW
+fixed_max        False          Boolean          (0, 1)     V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mgrid_dims:     The spatial resolution of the food grid.[0m
+[1;31munique_id:     The unique ID of the entity[0m
+[1;34mdefault_color: The default color of the entity[0m
+[1;31mvisible:       Whether the entity is visible or not[0m
+[1;34mselected:      Whether the entity is selected or not[0m
+[1;31minitial_value: initial value over the grid[0m
+[1;34mfixed_max:     whether the max is kept constant[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;param.Color</span> <span class="pre">object&gt;,</span> <span class="pre">'fixed_max':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'grid_dims':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveIntegerRange</span> <span class="pre">object&gt;,</span> <span class="pre">'initial_value':</span> <span class="pre">&lt;param.Number</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.add_cell_value">
+<span class="sig-name descname"><span class="pre">add_cell_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cell</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.add_cell_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.add_cell_value" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.add_value">
+<span class="sig-name descname"><span class="pre">add_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.add_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.add_value" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.cel_pos">
+<span class="sig-name descname"><span class="pre">cel_pos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.cel_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.cel_pos" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.cell_vertices">
+<span class="sig-name descname"><span class="pre">cell_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.cell_vertices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.cell_vertices" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.draw">
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.draw" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.draw_isocontours">
+<span class="sig-name descname"><span class="pre">draw_isocontours</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.draw_isocontours"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.draw_isocontours" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.draw_peak">
+<span class="sig-name descname"><span class="pre">draw_peak</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.draw_peak"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.draw_peak" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.empty_grid">
+<span class="sig-name descname"><span class="pre">empty_grid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.empty_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.empty_grid" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.fixed_max">
+<span class="sig-name descname"><span class="pre">fixed_max</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.fixed_max" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.generate_grid_vertices">
+<span class="sig-name descname"><span class="pre">generate_grid_vertices</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.generate_grid_vertices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.generate_grid_vertices" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.get_color_grid">
+<span class="sig-name descname"><span class="pre">get_color_grid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.get_color_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.get_color_grid" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.get_grid_cell">
+<span class="sig-name descname"><span class="pre">get_grid_cell</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.get_grid_cell"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.get_grid_cell" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.get_value">
+<span class="sig-name descname"><span class="pre">get_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.get_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.get_value" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.initial_value">
+<span class="sig-name descname"><span class="pre">initial_value</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.initial_value" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.match_space">
+<span class="sig-name descname"><span class="pre">match_space</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">space</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.match_space"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.match_space" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ValueGrid'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.reset" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.ValueGrid.update_values">
+<span class="sig-name descname"><span class="pre">update_values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#ValueGrid.update_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.ValueGrid.update_values" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="windscape">
+<h2>WindScape<a class="headerlink" href="#windscape" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.valuegrid.</span></span><span class="sig-name descname"><span class="pre">WindScape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#WindScape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">SpatialEntity</span></code></p>
+<p>params(puffs=Parameter, wind_direction=Phase, wind_speed=PositiveNumber, default_color=RandomizedColor, selected=Boolean, visible=Boolean, unique_id=String, name=String)
+[1;32mParameters of ‘WindScape’
+=========================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                   Value             Type                Bounds           Mode [0m</p>
+<p>unique_id           ‘WindScape’         String                                V RW
+default_color          ‘red’            Color                                 V RW
+visible                False           Boolean               (0, 1)           V RW
+selected               False           Boolean               (0, 1)           V RW
+wind_direction   3.141592653589793      Phase       (0.0, 6.283185307179586)  V RW
+wind_speed              0.0         PositiveNumber        (0.0,[1;36m 100.0[0m)        V RW
+puffs                    {}           Parameter                               V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34munique_id:      The unique ID of the entity[0m
+[1;31mdefault_color:  The default color of the entity[0m
+[1;34mvisible:        Whether the entity is visible or not[0m
+[1;31mselected:       Whether the entity is selected or not[0m
+[1;34mwind_direction: The absolute polar direction of the wind/air puff.[0m
+[1;31mwind_speed:     The speed of the wind/air puff.[0m
+[1;34mpuffs:          Repetitive or single air-puff stimuli.[0m</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default_color':</span> <span class="pre">&lt;param.Color</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'puffs':</span> <span class="pre">&lt;param.parameterized.Parameter</span> <span class="pre">object&gt;,</span> <span class="pre">'selected':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'unique_id':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'visible':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'wind_direction':</span> <span class="pre">&lt;larvaworld.lib.param.custom.Phase</span> <span class="pre">object&gt;,</span> <span class="pre">'wind_speed':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.add_puff">
+<span class="sig-name descname"><span class="pre">add_puff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">speed</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#WindScape.add_puff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.add_puff" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.default_color">
+<span class="sig-name descname"><span class="pre">default_color</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'red'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.default_color" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.draw">
+<span class="sig-name descname"><span class="pre">draw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#WindScape.draw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.draw" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.generate_scapelines">
+<span class="sig-name descname"><span class="pre">generate_scapelines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">D</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#WindScape.generate_scapelines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.generate_scapelines" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.get_value">
+<span class="sig-name descname"><span class="pre">get_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">agent</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#WindScape.get_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.get_value" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WindScape'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.obstructed">
+<span class="sig-name descname"><span class="pre">obstructed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pos</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#WindScape.obstructed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.obstructed" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.puffs">
+<span class="sig-name descname"><span class="pre">puffs</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.puffs" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.set_wind_direction">
+<span class="sig-name descname"><span class="pre">set_wind_direction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#WindScape.set_wind_direction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.set_wind_direction" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.unique_id">
+<span class="sig-name descname"><span class="pre">unique_id</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WindScape'</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.unique_id" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#WindScape.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.update" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.wind_direction">
+<span class="sig-name descname"><span class="pre">wind_direction</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3.141592653589793</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.wind_direction" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.WindScape.wind_speed">
+<span class="sig-name descname"><span class="pre">wind_speed</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.WindScape.wind_speed" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="create-odor-layers">
+<h2>create_odor_layers<a class="headerlink" href="#create-odor-layers" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.model.envs.valuegrid.create_odor_layers">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.envs.valuegrid.</span></span><span class="sig-name descname"><span class="pre">create_odor_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sources</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pars</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/envs/valuegrid.html#create_odor_layers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.envs.valuegrid.create_odor_layers" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="obstacle.html" class="btn btn-neutral float-left" title="obstacle" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../modules/index.html" class="btn btn-neutral float-right" title="Modular behavioral architecture" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

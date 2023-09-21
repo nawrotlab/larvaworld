@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>deb &mdash; Python  documentation</title>
+      <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/graphviz.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../../" id="documentation_options" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" />
+    <link rel="next" title="deb_aux" href="deb_aux.html" />
+    <link rel="prev" title="Dynamic Energy Budget" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Python
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../index.html">Welcome to larvaworld’s code docs!</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../readme_link.html">README</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Index:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">About larvaworld</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../cli/index.html">CLI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../gui/index.html">GUI</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html">Core library</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../ipc/index.html">larvaworld.lib.ipc</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html">Modeling</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="index.html">Dynamic Energy Budget</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../envs/index.html">Environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../modules/index.html">Modular behavioral architecture</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../object.html">Basic ABM class</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../param/index.html">Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../plot/index.html">Plotting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../process/index.html">Data management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../screen/index.html">Visualization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sim/index.html">Simulation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../util/index.html">Dataset fitting &amp; sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../reg.html">Registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">About larvaworld</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Core library</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Modeling</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Dynamic Energy Budget</a></li>
+      <li class="breadcrumb-item active">deb</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/content/larvaworld/lib/model/deb/deb.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-larvaworld.lib.model.deb.deb">
+<span id="deb"></span><h1>deb<a class="headerlink" href="#module-larvaworld.lib.model.deb.deb" title="Permalink to this heading"></a></h1>
+<p>DEB pipeline from literature</p>
+<section id="id1">
+<h2>DEB<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.deb.deb.</span></span><span class="sig-name descname"><span class="pre">DEB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DEB</span> <span class="pre">model'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cv</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">T</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">298.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">print_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">V_bite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0005</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_hunger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">simulation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intermitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gut_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="../../param/custom.html#larvaworld.lib.param.custom.NestedConf" title="larvaworld.lib.param.custom.NestedConf"><code class="xref py py-class docutils literal notranslate"><span class="pre">NestedConf</span></code></a></p>
+<p>params(aging=Boolean, assimilation_mode=Selector, hours_as_larva=PositiveNumber, hunger_as_EEB=Boolean, hunger_gain=Magnitude, species=Selector, starvation_strategy=Boolean, steps_per_day=PositiveInteger, substrate=ClassAttr, use_gut=Boolean, name=String)
+[1;32mParameters of ‘DEB’
+===================
+[0m
+[1;31mParameters changed from their default values are marked in red.[0m
+[1;36mSoft bound values are marked in cyan.[0m
+C/V= Constant/Variable, RO/RW = ReadOnly/ReadWrite, AN=Allow None</p>
+<p>[1;34mName                                   Value                          Type          Bounds    Mode [0m</p>
+<p>species                              ‘default’                      Selector                  V RW
+assimilation_mode                      ‘gut’                        Selector                  V RW
+starvation_strategy                    False                        Boolean         (0, 1)    V RW
+aging                                  False                        Boolean         (0, 1)    V RW
+hunger_as_EEB                          False                        Boolean         (0, 1)    V RW
+use_gut                                 True                        Boolean         (0, 1)    V RW
+hunger_gain                             0.0                        Magnitude      (0.0, 1.0)  V RW
+hours_as_larva                          0.0                      PositiveNumber  (0.0, None)  V RW
+steps_per_day                           1440                    PositiveInteger   (0, None)   V RW
+substrate             Substrate(composition={‘glucose’: 0.0…     ClassAttr                  V RW</p>
+<p>[1;32mParameter docstrings:
+=====================[0m</p>
+<p>[1;34mspecies:             The phenotype/species-specific fitted DEB model to use.[0m
+[1;31massimilation_mode:   The method used to calculate the DEB assimilation energy flow.[0m
+[1;34mstarvation_strategy: Whether starvation strategy is active[0m
+[1;31maging:               Whether aging is active[0m
+[1;34mhunger_as_EEB:       Whether the DEB-generated hunger drive informs the exploration-exploitation balance.[0m
+[1;31muse_gut:             Whether to use the gut module.[0m
+[1;34mhunger_gain:         The sensitivy of the hunger drive in deviations of the DEB reserve density.[0m
+[1;31mhours_as_larva:      The age since eclosion[0m
+[1;34msteps_per_day:       How many iterations of the model per day[0m
+[1;31msubstrate:           The substrate where the agent feeds[0m</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.EEB">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">EEB</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.EEB" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.F">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">F</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.F" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.J_X_A">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">J_X_A</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.J_X_A" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.L">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">L</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.L" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.Lw">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Lw</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.Lw" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.Vw">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Vw</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.Vw" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.Ww">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Ww</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.Ww" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.__params">
+<span class="sig-name descname"><span class="pre">__params</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'aging':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'assimilation_mode':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'hours_as_larva':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveNumber</span> <span class="pre">object&gt;,</span> <span class="pre">'hunger_as_EEB':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'hunger_gain':</span> <span class="pre">&lt;param.Magnitude</span> <span class="pre">object&gt;,</span> <span class="pre">'name':</span> <span class="pre">&lt;param.parameterized.String</span> <span class="pre">object&gt;,</span> <span class="pre">'species':</span> <span class="pre">&lt;param.Selector</span> <span class="pre">object&gt;,</span> <span class="pre">'starvation_strategy':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;,</span> <span class="pre">'steps_per_day':</span> <span class="pre">&lt;larvaworld.lib.param.custom.PositiveInteger</span> <span class="pre">object&gt;,</span> <span class="pre">'substrate':</span> <span class="pre">&lt;larvaworld.lib.param.custom.ClassAttr</span> <span class="pre">object&gt;,</span> <span class="pre">'use_gut':</span> <span class="pre">&lt;param.Boolean</span> <span class="pre">object&gt;}</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.__params" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB._param">
+<span class="sig-name descname"><span class="pre">_param</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;param.parameterized.Parameters</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB._param" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB._parameters_state">
+<span class="sig-name descname"><span class="pre">_parameters_state</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'BATCH_WATCH':</span> <span class="pre">False,</span> <span class="pre">'TRIGGER':</span> <span class="pre">False,</span> <span class="pre">'events':</span> <span class="pre">[],</span> <span class="pre">'watchers':</span> <span class="pre">[]}</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB._parameters_state" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.aging">
+<span class="sig-name descname"><span class="pre">aging</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.aging" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.amount_absorbed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">amount_absorbed</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.amount_absorbed" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.assimilation_mode">
+<span class="sig-name descname"><span class="pre">assimilation_mode</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'gut'</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.assimilation_mode" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.compute_Ww">
+<span class="sig-name descname"><span class="pre">compute_Ww</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">V</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">E</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.compute_Ww"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.compute_Ww" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.compute_hunger">
+<span class="sig-name descname"><span class="pre">compute_hunger</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.compute_hunger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.compute_hunger" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.deb_f_deviation">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">deb_f_deviation</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.deb_f_deviation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.deb_f_deviation_mean">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">deb_f_deviation_mean</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.deb_f_deviation_mean" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.deb_f_mean">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">deb_f_mean</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.deb_f_mean" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.derived_pars">
+<span class="sig-name descname"><span class="pre">derived_pars</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.derived_pars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.derived_pars" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.die">
+<span class="sig-name descname"><span class="pre">die</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.die"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.die" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.e">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">e</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.e" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.finalize_dict">
+<span class="sig-name descname"><span class="pre">finalize_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.finalize_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.finalize_dict" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.fr_feed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fr_feed</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.fr_feed" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.get_p_A">
+<span class="sig-name descname"><span class="pre">get_p_A</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assimilation_mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_V</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.get_p_A"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.get_p_A" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.get_tau_b">
+<span class="sig-name descname"><span class="pre">get_tau_b</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.get_tau_b"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.get_tau_b" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.grow_larva">
+<span class="sig-name descname"><span class="pre">grow_larva</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epochs</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.grow_larva"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.grow_larva" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.hex_model">
+<span class="sig-name descname"><span class="pre">hex_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.hex_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.hex_model" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.hours_as_larva">
+<span class="sig-name descname"><span class="pre">hours_as_larva</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.hours_as_larva" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.hunger_as_EEB">
+<span class="sig-name descname"><span class="pre">hunger_as_EEB</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.hunger_as_EEB" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.hunger_gain">
+<span class="sig-name descname"><span class="pre">hunger_gain</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.0</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.hunger_gain" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.ingested_body_area_ratio">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ingested_body_area_ratio</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.ingested_body_area_ratio" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.ingested_body_mass_ratio">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ingested_body_mass_ratio</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.ingested_body_mass_ratio" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.ingested_body_volume_ratio">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ingested_body_volume_ratio</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.ingested_body_volume_ratio" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.ingested_gut_volume_ratio">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ingested_gut_volume_ratio</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.ingested_gut_volume_ratio" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.init_dict">
+<span class="sig-name descname"><span class="pre">init_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.init_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.init_dict" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'DEB'</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.name" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.predict_imago_stage">
+<span class="sig-name descname"><span class="pre">predict_imago_stage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.predict_imago_stage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.predict_imago_stage" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.predict_larva_stage">
+<span class="sig-name descname"><span class="pre">predict_larva_stage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.predict_larva_stage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.predict_larva_stage" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.predict_pupa_stage">
+<span class="sig-name descname"><span class="pre">predict_pupa_stage</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.predict_pupa_stage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.predict_pupa_stage" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.pupation_buffer">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pupation_buffer</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.pupation_buffer" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.return_dict">
+<span class="sig-name descname"><span class="pre">return_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.return_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.return_dict" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">X_V</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assimilation_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.run" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.run_embryo_stage">
+<span class="sig-name descname"><span class="pre">run_embryo_stage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.run_embryo_stage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.run_embryo_stage" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.run_larva_stage">
+<span class="sig-name descname"><span class="pre">run_larva_stage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.run_larva_stage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.run_larva_stage" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.save_dict">
+<span class="sig-name descname"><span class="pre">save_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.save_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.save_dict" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.scale_time">
+<span class="sig-name descname"><span class="pre">scale_time</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.scale_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.scale_time" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.set_intermitter">
+<span class="sig-name descname"><span class="pre">set_intermitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">intermitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_hunger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.set_intermitter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.set_intermitter" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.set_steps_per_day">
+<span class="sig-name descname"><span class="pre">set_steps_per_day</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">steps_per_day</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.set_steps_per_day"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.set_steps_per_day" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.species">
+<span class="sig-name descname"><span class="pre">species</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'default'</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.species" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.starvation_strategy">
+<span class="sig-name descname"><span class="pre">starvation_strategy</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.starvation_strategy" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.steps_per_day">
+<span class="sig-name descname"><span class="pre">steps_per_day</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1440</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.steps_per_day" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.substrate">
+<span class="sig-name descname"><span class="pre">substrate</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">Substrate(composition={'glucose':</span> <span class="pre">0.0,</span> <span class="pre">'dextrose':</span> <span class="pre">0.0,</span> <span class="pre">'saccharose':</span> <span class="pre">0.0,</span> <span class="pre">'yeast':</span> <span class="pre">0.0,</span> <span class="pre">'agar':</span> <span class="pre">0.0,</span> <span class="pre">'cornmeal':</span> <span class="pre">0.0},</span> <span class="pre">name='Substrate00344',</span> <span class="pre">quality=1.0)</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.substrate" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.time_to_death_by_starvation">
+<span class="sig-name descname"><span class="pre">time_to_death_by_starvation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.time_to_death_by_starvation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.time_to_death_by_starvation" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.update_dict">
+<span class="sig-name descname"><span class="pre">update_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.update_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.update_dict" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.update_hunger">
+<span class="sig-name descname"><span class="pre">update_hunger</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#DEB.update_hunger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.update_hunger" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.use_gut">
+<span class="sig-name descname"><span class="pre">use_gut</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.use_gut" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.DEB.volume_ingested">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">volume_ingested</span></span><a class="headerlink" href="#larvaworld.lib.model.deb.deb.DEB.volume_ingested" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="deb-default">
+<h2>deb_default<a class="headerlink" href="#deb-default" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.deb_default">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.deb.deb.</span></span><span class="sig-name descname"><span class="pre">deb_default</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DEB</span> <span class="pre">model'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">age</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#deb_default"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.deb_default" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="deb-sim">
+<h2>deb_sim<a class="headerlink" href="#deb-sim" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.deb_sim">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.deb.deb.</span></span><span class="sig-name descname"><span class="pre">deb_sim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">refID</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'DEB</span> <span class="pre">sim'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">EEB</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deb_dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_hunger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#deb_sim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.deb_sim" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="get-best-eeb">
+<h2>get_best_EEB<a class="headerlink" href="#get-best-eeb" title="Permalink to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="larvaworld.lib.model.deb.deb.get_best_EEB">
+<span class="sig-prename descclassname"><span class="pre">larvaworld.lib.model.deb.deb.</span></span><span class="sig-name descname"><span class="pre">get_best_EEB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">deb</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cRef</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../../_modules/larvaworld/lib/model/deb/deb.html#get_best_EEB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#larvaworld.lib.model.deb.deb.get_best_EEB" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Dynamic Energy Budget" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="deb_aux.html" class="btn btn-neutral float-right" title="deb_aux" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
