@@ -34,7 +34,7 @@ dependencies = [
     'powerlaw',
     'progressbar',
     'param',
-    'libgeos-dev',
+    #'libgeos-dev',
     'movingpandas',
     'geopandas',
 ]
