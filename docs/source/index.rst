@@ -27,6 +27,25 @@ environment and install ``larvaworld`` through pip:
 
     pip install larvaworld
 
+About the Authors
+-----------------
+
+The ``larvaworld`` code library was created and is managed by `Panagiotis Sakagiannis`_,
+graduate student at the Computational Neuroscience lab
+of the University of Cologne under Martin-Paul Nawrot.
+If you would like to contact us, please inquire with `nawrot-office@uni-koeln.de`_.
+
+.. _Panagiotis Sakagiannis: https://computational-systems-neuroscience.de/team/
+.. _nawrot-office@uni-koeln.de: mailto:nawrot-office@uni-koeln.de
+
+It is important to note the project is open source and that many features in
+this repository were made possible by contributors volunteering their time.
+Please take a look at the `Contributors Page`_ to learn more about the
+developers of ``larvaworld``.
+
+.. _Contributors Page: https://github.com/nawrotlab/larvaworld/graphs/contributors
+
+.. include:: ../CITATION.rst
 
 
 

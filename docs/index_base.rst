@@ -43,9 +43,9 @@ this repository were made possible by contributors volunteering their time.
 Please take a look at the `Contributors Page`_ to learn more about the
 developers of ``larvaworld``.
 
-.. _Contributors Page:https://github.com/nawrotlab/larvaworld/graphs/contributors
+.. _Contributors Page: https://github.com/nawrotlab/larvaworld/graphs/contributors
 
-.. include:: ../../CITATION.rst
+.. include:: ../CITATION.rst
 
 
 

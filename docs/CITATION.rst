@@ -3,9 +3,6 @@
 Citing larvaworld
 ------------
 
-.. image:: https://static-00.iconduck.com/assets.00/biorxiv-square-icon-511x512-ppzxq08z.png
-   :target: https://doi.org/10.1101/2021.07.07.451470
-
 There is a `paper about larvaworld <https://doi.org/10.1101/2021.07.07.451470>`_!
 
 If you are using larvaworld in your scientific research, please help our scientific
@@ -30,3 +27,4 @@ BibTex:
 	eprint = {https://www.biorxiv.org/content/early/2021/07/08/2021.07.07.451470.full.pdf},
 	journal = {bioRxiv}
 }
+
