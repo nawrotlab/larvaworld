@@ -4,6 +4,7 @@ gendocs
 Sphinx
 sphinx-autobuild
 sphinx-rtd-theme
+libgeos-dev
 # sphinxcontrib-napoleon
 # sphinxcontrib-#websupport
 # sphinx-copybutton
