@@ -47,6 +47,8 @@ developers of ``larvaworld``.
 
 .. include:: ../CITATION.rst
 
+%load_ext param.ipython
+
 
 
 

@@ -32,7 +32,7 @@ sys.path.append(os.path.abspath('sphinxext'))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-# project = 'larvaworld'
+project = 'larvaworld'
 # copyright = '2023, Panagiotis Sakagiannis'
 # author = 'Panagiotis Sakagiannis'
 # The short X.Y version

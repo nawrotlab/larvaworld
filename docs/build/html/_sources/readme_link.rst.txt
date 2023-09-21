@@ -1,7 +1,3 @@
-
-README
-######
-
 .. include:: ../../README.md
 
 
