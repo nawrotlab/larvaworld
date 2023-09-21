@@ -4,6 +4,7 @@ gendocs
 Sphinx
 sphinx-autobuild
 sphinx-rtd-theme
+panel
 larvaworld
 #libgeos-dev
 # sphinxcontrib-napoleon
