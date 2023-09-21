@@ -3,7 +3,7 @@ import numpy as np
 from typing import List, Tuple
 import sys
 
-from pint_pandas import PintType
+
 
 
 
@@ -2148,6 +2148,7 @@ class ParamRegistry:
         The pint-pandas readable pint unit is a string formatted by the unit registered in the parameter class (check "upint" property of the LarvaworldParam class in lib.util.data_aux)
 
         '''
+        from pint_pandas.pint_array import PintType
         valid_pars=self.valid_pkeys(df.columns)
         valid_pars= [col for col in valid_pars if not isinstance(df.dtypes[col], PintType)]
         pint_dtypes = {par: self.getPar(d=par, to_return='upint') for par in valid_pars}
