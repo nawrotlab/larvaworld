@@ -43,7 +43,7 @@ dependencies = [
 
 [project.urls]
 # homepage = "https://example.com"
-# documentation = "https://readthedocs.org"
+documentation = "https://larvaworld.readthedocs.io/en/dev/"
 repository = "https://github.com/nawrotlab/larvaworld"
 
 [project.scripts]

@@ -5,8 +5,8 @@ Sphinx
 sphinx-autobuild
 sphinx-rtd-theme
 autodocsumm
-panel
-holoviews
+#panel
+#holoviews
 larvaworld
 #libgeos-dev
 # sphinxcontrib-napoleon
