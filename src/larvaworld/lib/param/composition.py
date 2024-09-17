@@ -182,7 +182,9 @@ class Life3(NestedConf):
     subs=param.List([], item_type=Substrate, doc='The substrates of the rearing periods.')
     reach_pupation=param.Boolean(False, doc='If True the larva will grow to pupation.')
 
-    @param.depends('grow_to_pupation')
+    # @param.depends('grow_to_pupation')  
+    from warnings import warn
+    warn("No 'grow_to_pupation() attribute found on the Life3 class")
     def update_age_to_inf(self):
         if self.reach_pupation :
             self.age=param.Infinity
@@ -196,7 +198,9 @@ class Life3(NestedConf):
             self.age_ticks.append(self.age)
 
 
-    @param.depends('age_ticks', 'epoch_substrates')
+    # @param.depends('age_ticks', 'epoch_substrates')
+    warn('epoch_substrates() not found on class Life3')
+    @param.depends('age_ticks')
     def update_substrates(self):
         while self.Nmismatch!=0:
             if self.Nmismatch>0:

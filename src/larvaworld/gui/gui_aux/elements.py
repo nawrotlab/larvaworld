@@ -504,6 +504,13 @@ class SelectionList(GuiElement):
 
     @property
     def confs(self):
+        # todo: fix situation where 'Body' is requested and not found
+        if self.conftype == 'Body':
+            from warnings import warn
+            warn('Body not found.  Using some random default instead in the hope that it works...')
+            default_confID = list[reg.conf.values()][0].confIDs
+            return default_confID
+
         return reg.conf[self.conftype].confIDs
         # return kConfDict(self.conftype)
 

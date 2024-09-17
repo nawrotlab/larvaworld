@@ -123,8 +123,10 @@ class ModelTab(gui_aux.GuiTab):
                 ppp.append(sg.Col(ll, scrollable=True, vertical_scroll_only=True))
             pp[k] = [[sg.Pane(ppp, orientation='horizontal', show_handle=False)]]
             tt.append(sg.Tab(k, pp[k], key=f'{k} MODULES'))
-
-        modules_tab = sg.TabGroup([tt], key='ACTIVE_MODULES', tab_location='topcenter', **gui_aux.tab_kws)
+        
+        from warnings import warn
+        warn("commented out tab_kws reference when making TabGroup")
+        modules_tab = sg.TabGroup([tt], key='ACTIVE_MODULES', tab_location='topcenter') #, **gui_aux.tab_kws)
         l=sg.Col([[modules_tab]])
         return l, c
 

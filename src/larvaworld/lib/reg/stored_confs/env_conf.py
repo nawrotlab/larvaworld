@@ -163,21 +163,21 @@ def Env_dict() :
     'arena_200mm': env((0.2, 0.2)),
     'arena_500mm': env((0.5, 0.5)),
     'arena_1000mm': env((1.0, 1.0)),
-    'odor_gradient': env((0.1, 0.06), f_pars(su=su2(pos=(0.04, 0.0), odor=oG(2))), 'G'),
-    'mid_odor_gaussian': env((0.1, 0.06), f_pars(su=su2(odor=oG())), 'G'),
+    'odor_gradient': env((0.04, 0.06), f_pars(su=su2(pos=(0.04, 0.0), odor=oG(2))), 'G'),  # todo: was (.1 .06), but errored out
+    'mid_odor_gaussian': env((0.04, 0.06), f_pars(su=su2(odor=oG())), 'G'),
     'mid_odor_gaussian_square': env((0.2, 0.2), f_pars(su=su2(odor=oG())), 'G'),
     'mid_odor_diffusion': env((0.3, 0.3), f_pars(su=su2(r=0.03, odor=oD())), 'D'),
     '4corners': env((0.2, 0.2), f_pars(su=foodNodor_4corners()), 'D'),
     'food_at_bottom': env((0.2, 0.2),
-                          f_pars(sg=sg2('FoodLine', odor=oG(), a=0.002, r=0.001, N=20, shape='oval', scale=(0.01, 0.0),
+                          f_pars(sg=sg2('FoodLine', odor=oG(), a=0.002, r=0.001, N=20, shape='oval', scale=(0.01, 0.02),  # todo: changed 0.00 to 0.02
                                        mode='periphery')), 'G'),
     'thermo_arena': env((0.3, 0.3), th={}),
     'windy_arena': env((0.3, 0.3), w={'wind_speed': 10.0}),
-    'windy_blob_arena': env((0.128, 0.014),
-                            f_pars(sg=sgs(1, qs=np.ones(4), cs=aux.N_colors(4), N=1, scale=(0.0, 0.0), loc=(0.005, 0.0),
+    'windy_blob_arena': env((0.128, 0.14),  # todo: changed .014 to .14
+                            f_pars(sg=sgs(1, qs=np.ones(4), cs=aux.N_colors(4), N=1, scale=(0.0, 0.0), loc=(0.005, 0.006),  # todo: changed 0.0 to 0.006
                                           mode='uniform', shape='rectangular', can_be_displaced=True,
                                           regeneration=True,
-                                          regeneration_pos={'loc': (0.005, 0.0), 'scale': (0.0, 0.0)})),
+                                          regeneration_pos={'loc': (0.005, 0.006), 'scale': (0.0, 0.0)})),  # todo: changed 0.0 to 0.006
                             w={'wind_speed': 1.0}),
     'windy_arena_bordered': env((0.3, 0.3), w={'wind_speed': 10.0},
                                 bl={'Border': vborder(-0.03, [-0.01, -0.06], w=0.005)}),

@@ -170,6 +170,10 @@ class OptionalPositiveRange(RangeInf):
     def __init__(self,default=None, softmin=0.0, softmax=None, hardmin=0.0, hardmax=None, **kwargs):
         super().__init__(default=default,softbounds=(softmin, softmax),bounds=(hardmin, hardmax),allow_None=True,**kwargs)
 
+    def _validate_bounds(self, *args, **kwargs):
+        from warnings import warn
+        warn("OptionalPosiitveRange has a different interface to _validate_bounds() than RangeInf")
+
 class OptionalPhaseRange(RangeRobust):
     """Phase range within (0,2pi)"""
     def __init__(self,default=None, softmin=0.0, softmax=2 * np.pi, hardmin=0.0, hardmax=2 * np.pi, **kwargs):
