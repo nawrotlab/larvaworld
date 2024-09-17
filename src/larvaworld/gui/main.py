@@ -11,6 +11,7 @@ def main() :
     from larvaworld.gui.tabs.larvaworld_gui import LarvaworldGui
     my_gui = LarvaworldGui(tabs=args.tabs)
     my_gui.run()
+    print('Done!!!')
 
 if __name__ == '__main__':
     main()
