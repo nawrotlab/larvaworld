@@ -75,6 +75,8 @@ class LarvaworldGui:
                 self.run0(e, v)
                 n = v['ACTIVE_TAB'].split()[0]
                 self.tabs[n].eval0(e=e, v=v)
+        print('Finished running.')
+            
 
     def build(self, tabs):
         ls, cs, ds, gs, ts = [], {}, {}, {}, {}
