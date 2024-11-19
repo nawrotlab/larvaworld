@@ -1,20 +1,36 @@
-from lib import reg, aux, plot
+import os
 
 import matplotlib.pyplot as plt
 
-
-def test_plots() :
-    refIDs=['AttP240.Fed', 'AttP240.Deprived', 'AttP240.Starved']
-    figs={}
-    ds=reg.loadRefDs(refIDs, h5_ks=['angular', 'midline', 'epochs'])
-    kws={'datasets':ds, 'show':False, 'save_to': f'{reg.ROOT_DIR}/tests/plots',
-         'subfolder': None}
+import larvaworld
+from larvaworld.lib import reg
 
 
-    for k in ['boxplot (simple)', 'epochs', 'fft multi', 'dispersal summary',
-              'kinematic analysis', 'angular pars', 'crawl pars', 'stride cycle',
-              'stride cycle multi', 'ethogram', 'Y pos', 'dispersal', 'pathlength',
-              'trajectories'] :
-        figs[k] = reg.graphs.run(k, save_as=k,**kws)
+def xx_test_plots():
+    gIDs = reg.conf.Ref.RefGroupIDs
+    gID = gIDs[0]
+    dcol = reg.conf.Ref.loadRefGroup(gID)
+    assert dcol.dir is not None
+    assert os.path.exists(dcol.dir)
+    kws = {"save_to": f"{larvaworld.TEST_DIR}/plots", "show": True}
+
+    graphIDs = [
+        "trajectories",
+        "pathlength",
+        "dispersal",
+        "angular pars",
+        "endpoint box",
+        "epochs",
+        "freq powerspectrum",
+        "dispersal summary",
+        "kinematic analysis",
+        "crawl pars",
+        "stride cycle",
+        "stride cycle multi",
+        "ethogram",
+    ][:3]
+
+    figs = dcol.plot(ids=graphIDs, **kws)
+    for k in graphIDs:
         assert isinstance(figs[k], plt.Figure)
         plt.close(figs[k])

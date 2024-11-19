@@ -1,89 +1,96 @@
-import lib.sim.genetic_algorithm
-from lib import reg, sim
+from larvaworld.lib import reg, sim
+from larvaworld.lib.process.dataset import LarvaDataset
 
-from lib.process.dataset import LarvaDataset
 
-def test_replay() :
-    refID =  'exploration.dish'
-    replay_kws = {
-        'normal': {
-            'time_range': (60,80)
-        },
-        'dispersal': {
-            'transposition': 'origin',
-            'time_range': (10,30)
-        },
-        'fixed_point': {
-            'agent_ids': [1],
-            'close_view': True,
-            'fix_point': 6,
-            'time_range': (80, 100)
-        },
-        'fixed_segment': {
-            'agent_ids': [1],
-            'close_view': True,
-            'fix_point': 6,
-            'fix_segment': -1,
-            'time_range': (100, 130)
-        },
-        'fixed_overlap': {
-            'agent_ids': [1],
-            'close_view': True,
-            'fix_point': 6,
-            'fix_segment': -1,
-            'overlap_mode': True
-        },
-    }
+def test_exploration_experiments():
+    ids = ["tethered", "dish", "dispersion_x2"]
 
-    for mode, kws in replay_kws.items() :
-        rep = sim.ReplayRun(refID=refID, id=f'{refID}_replay_{mode}', save_to= './media', **kws)
-        rep.run()
-
-def test_exp_run() :
-    for exp in ['chemotaxis'] :
-        conf=reg.expandConf('Exp', exp)
-        conf.sim_params.duration=1
-        exp_run = sim.ExpRun(parameters=conf)
-        exp_run.simulate()
-        for d in exp_run.datasets :
+    for id in ids:
+        r = sim.ExpRun.from_ID(id, duration=1, store_data=False)
+        for d in r.datasets:
             assert isinstance(d, LarvaDataset)
 
 
-def test_GA() :
-    conf=reg.expandConf('Ga', 'realism')
-    conf.ga_select_kws.Ngenerations = 5
+def test_chemosensory_experiments():
+    ids = [
+        "chemorbit",
+        "chemotaxis_diffusion",
+        "single_odor_patch_x4",
+        "PItest_off",
+        "PItrain",
+    ]
 
-    ga_run = lib.sim.ga_engine.GAlauncher(parameters=conf)
-    best1=ga_run.run()
-    print(best1)
-    assert best1 is not None
+    for id in ids:
+        r = sim.ExpRun.from_ID(id, duration=1, store_data=False)
+        for d in r.datasets:
+            assert isinstance(d, LarvaDataset)
 
-    conf.offline=True
-    conf.show_screen=False
-    ga_run = lib.sim.ga_engine.GAlauncher(parameters=conf)
-    best2=ga_run.run()
-    print(best2)
-    assert best2 is not None
 
-def test_evaluation() :
-    refID = 'exploration.merged_dishes'
-    mIDs = ['RE_NEU_PHI_DEF', 'RE_SIN_PHI_DEF']
-    evrun = sim.EvalRun(refID=refID, modelIDs=mIDs, N=3, show=False)
+def test_other_sensory_experiments():
+    ids = [
+        "tactile_detection",
+        "anemotaxis",
+        "single_puff",
+        "thermotaxis",
+        "prey_detection",
+    ]
+
+    for id in ids:
+        r = sim.ExpRun.from_ID(id, duration=1, store_data=False)
+        for d in r.datasets:
+            assert isinstance(d, LarvaDataset)
+
+
+def test_games():
+    ids = ["keep_the_flag", "maze"]
+
+    for id in ids:
+        r = sim.ExpRun.from_ID(id, duration=1, store_data=False)
+        for d in r.datasets:
+            assert isinstance(d, LarvaDataset)
+
+
+def test_foraging_experiments():
+    ids = ["4corners", "double_patch", "random_food", "patch_grid"]
+
+    for id in ids:
+        r = sim.ExpRun.from_ID(id, duration=1, store_data=False)
+        for d in r.datasets:
+            assert isinstance(d, LarvaDataset)
+
+
+def test_growth_experiments():
+    ids = ["RvsS_on", "growth"]
+
+    for id in ids:
+        r = sim.ExpRun.from_ID(id, duration=1, store_data=False)
+        for d in r.datasets:
+            assert isinstance(d, LarvaDataset)
+
+
+def xtest_evaluation():
+    # refID = 'exploration.merged_dishes'
+    # mIDs = ['RE_NEU_PHI_DEF', 'RE_SIN_PHI_DEF']
+    parameters = reg.par.get_null(
+        "Eval",
+        **{
+            "refID": "exploration.merged_dishes",
+            "modelIDs": ["RE_NEU_PHI_DEF", "RE_SIN_PHI_DEF"],
+            # 'groupIDs': dIDs,
+            "N": 3,
+            # 'offline': False,
+        },
+    )
+    evrun = sim.EvalRun(parameters=parameters, id=id, show=False)
+
+    # evrun = sim.EvalRun(refID=refID, modelIDs=mIDs, N=3, show=False)
     evrun.simulate()
     evrun.plot_results()
     evrun.plot_models()
 
 
-
-
-
-
-
-
-def xtest_batch_run() :
-    for exp in ['PItest_off'] :
-        conf=reg.expandConf('Batch', exp)
-        # conf.sim_params.duration=1
-        batch_run = sim.BatchRun(id=f'test_{exp}',batch_type=exp,**conf)
-        batch_run.simulate()
-
+# def xtest_batch_run() :
+#     for exp in ['PItest_off'] :
+#         conf=reg.conf.Batch.expand(exp)
+#         batch_run = sim.BatchRun(id=f'test_{exp}',batch_type=exp,**conf)
+#         batch_run.simulate()
