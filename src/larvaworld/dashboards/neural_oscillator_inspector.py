@@ -71,7 +71,9 @@ def module_tester(A_in):
 if __name__ == "__main__":
     plot = hvplot.bind(module_tester, A_in).interactive()
     template = pn.template.MaterialTemplate(
-        title="Material Dark", theme=DarkTheme, sidebar_width=sidebar_width
+        title="larvaworld : Neural oscillator module inspector",
+        theme=DarkTheme,
+        sidebar_width=sidebar_width,
     )
     template.sidebar.append(p1)
     template.main.append(
@@ -84,4 +86,4 @@ if __name__ == "__main__":
     )
     template.servable()
 
-    # Run from terminal with : panel serve neural_oscillator_tester.py --show --autoreload
+    # Run from terminal with : panel serve neural_oscillator_inspector.py --show --autoreload

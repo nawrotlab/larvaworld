@@ -511,6 +511,7 @@ class SimModeParser:
         sp = self.parsers.RuntimeOps.add(sp)
         if m not in ["Replay", "Eval"]:
             sp = self.parsers.SimOps.add(sp)
+        # if m == "Replay":
         # for k in self.dict[m]:
         #     sp = self.parsers[k].add(sp)
 

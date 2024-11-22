@@ -73,7 +73,9 @@ if __name__ == "__main__":
     w, h = 400, 500
     w2 = int(w / 2) - 20
     template = pn.template.MaterialTemplate(
-        title="Material Dark", theme=DarkTheme, sidebar_width=w
+        title="larvaworld : Behavioral module inspector",
+        theme=DarkTheme,
+        sidebar_width=w,
     )
 
     Ms = [
@@ -89,4 +91,4 @@ if __name__ == "__main__":
     template.servable()
     pn.serve(template)
 
-    # Run from terminal with : panel serve neural_oscillator_tester.py --show --autoreload
+    # Run from terminal with : panel serve module_inspector.py --show --autoreload
