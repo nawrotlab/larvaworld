@@ -69,24 +69,24 @@ def bind_to_value(widget, temp):
     return pn.bind(module_tester, widget, temp)
 
 
-if __name__ == "__main__":
-    w, h = 400, 500
-    w2 = int(w / 2) - 20
-    template = pn.template.MaterialTemplate(
-        title="Material Dark", theme=DarkTheme, sidebar_width=w
-    )
+# if __name__ == "__main__":
+w, h = 400, 500
+w2 = int(w / 2) - 20
+template = pn.template.MaterialTemplate(
+    title="Material Dark", theme=DarkTheme, sidebar_width=w
+)
 
-    Ms = [
-        model.Crawler,
-        model.PhaseOscillator,
-        model.NeuralOscillator,
-        model.ConstantTurner,
-        model.SinTurner,
-    ]
-    Msel = pn.widgets.Select(name="module", options={MM.__name__: MM for MM in Ms})
-    template.sidebar.append(pn.Column(Msel, bind_to_value(Msel, temp=template)))
+Ms = [
+    model.Crawler,
+    model.PhaseOscillator,
+    model.NeuralOscillator,
+    model.ConstantTurner,
+    model.SinTurner,
+]
+Msel = pn.widgets.Select(name="module", options={MM.__name__: MM for MM in Ms})
+template.sidebar.append(pn.Column(Msel, bind_to_value(Msel, temp=template)))
 
-    template.servable()
-    pn.serve(template)
+template.servable()
+# pn.serve(template)
 
-    # Run from terminal with : panel serve neural_oscillator_tester.py --show --autoreload
+# Run from terminal with : panel serve neural_oscillator_tester.py --show --autoreload

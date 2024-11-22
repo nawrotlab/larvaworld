@@ -129,23 +129,23 @@ class ModuleInspector:
         return self.plot
 
 
-if __name__ == "__main__":
-    inspector = ModuleInspector()
-    CT = reg.conf.Model
-    Msel = pn.widgets.Select(value="explorer", name="larva-model", options=CT.confIDs)
-    Mrun = pn.widgets.Button(name="Run")
+# if __name__ == "__main__":
+inspector = ModuleInspector()
+CT = reg.conf.Model
+Msel = pn.widgets.Select(value="explorer", name="larva-model", options=CT.confIDs)
+Mrun = pn.widgets.Button(name="Run")
 
-    T = pn.template.MaterialTemplate(
-        title="Material Dark", theme=DarkTheme, sidebar_width=w
+T = pn.template.MaterialTemplate(
+    title="Material Dark", theme=DarkTheme, sidebar_width=w
+)
+
+T.sidebar.append(
+    pn.Column(
+        pn.Row(Msel, Mrun, width=300, height=80), pn.bind(inspector.build, Msel)
     )
+)
+T.main.append(pn.bind(inspector.run, Mrun))
+T.servable()
+# pn.serve(T)
 
-    T.sidebar.append(
-        pn.Column(
-            pn.Row(Msel, Mrun, width=300, height=80), pn.bind(inspector.build, Msel)
-        )
-    )
-    T.main.append(pn.bind(inspector.run, Mrun))
-    T.servable()
-    pn.serve(T)
-
-    # Run from terminal with : panel serve neural_oscillator_tester.py --show --autoreload
+# Run from terminal with : panel serve neural_oscillator_tester.py --show --autoreload
