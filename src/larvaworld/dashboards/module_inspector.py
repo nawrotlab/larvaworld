@@ -73,7 +73,9 @@ if __name__ == "__main__":
     w, h = 400, 500
     w2 = int(w / 2) - 20
     template = pn.template.MaterialTemplate(
-        title="larvaworld : Behavioral module inspector", theme=DarkTheme, sidebar_width=w
+        title="larvaworld : Behavioral module inspector",
+        theme=DarkTheme,
+        sidebar_width=w,
     )
 
     Ms = [
