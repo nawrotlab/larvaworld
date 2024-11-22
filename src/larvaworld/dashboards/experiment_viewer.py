@@ -156,3 +156,4 @@ if __name__ == "__main__":
     v = ArenaViewer()
     app = v.get_app()
     app.servable()
+    pn.serve(app)

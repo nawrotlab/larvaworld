@@ -136,7 +136,7 @@ if __name__ == "__main__":
     Mrun = pn.widgets.Button(name="Run")
 
     T = pn.template.MaterialTemplate(
-        title="Material Dark", theme=DarkTheme, sidebar_width=w
+        title="larvaworld : Larva model inspector", theme=DarkTheme, sidebar_width=w
     )
 
     T.sidebar.append(
@@ -148,4 +148,4 @@ if __name__ == "__main__":
     T.servable()
     pn.serve(T)
 
-    # Run from terminal with : panel serve neural_oscillator_tester.py --show --autoreload
+    # Run from terminal with : panel serve model_inspector.py --show --autoreload

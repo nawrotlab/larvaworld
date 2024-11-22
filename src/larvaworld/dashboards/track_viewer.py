@@ -149,3 +149,5 @@ if __name__ == "__main__":
     v = TrackViewer()
     app = v.get_app()
     app.servable()
+    # pn.serve(app)
+
