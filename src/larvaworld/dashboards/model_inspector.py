@@ -135,17 +135,15 @@ CT = reg.conf.Model
 Msel = pn.widgets.Select(value="explorer", name="larva-model", options=CT.confIDs)
 Mrun = pn.widgets.Button(name="Run")
 
-T = pn.template.MaterialTemplate(
-    title="Material Dark", theme=DarkTheme, sidebar_width=w
+app = pn.template.MaterialTemplate(
+    title="larvaworld : Larva Model inspector", theme=DarkTheme, sidebar_width=w
 )
 
-T.sidebar.append(
-    pn.Column(
-        pn.Row(Msel, Mrun, width=300, height=80), pn.bind(inspector.build, Msel)
-    )
+app.sidebar.append(
+    pn.Column(pn.Row(Msel, Mrun, width=300, height=80), pn.bind(inspector.build, Msel))
 )
-T.main.append(pn.bind(inspector.run, Mrun))
-T.servable()
+app.main.append(pn.bind(inspector.run, Mrun))
+app.servable()
 # pn.serve(T)
 
-# Run from terminal with : panel serve neural_oscillator_tester.py --show --autoreload
+# Run from terminal with : panel serve model_inspector.py --show --autoreload

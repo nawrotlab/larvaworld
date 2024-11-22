@@ -72,8 +72,8 @@ def bind_to_value(widget, temp):
 # if __name__ == "__main__":
 w, h = 400, 500
 w2 = int(w / 2) - 20
-template = pn.template.MaterialTemplate(
-    title="Material Dark", theme=DarkTheme, sidebar_width=w
+app = pn.template.MaterialTemplate(
+    title="larvaworld : Behavioral Module inspector", theme=DarkTheme, sidebar_width=w
 )
 
 Ms = [
@@ -84,9 +84,9 @@ Ms = [
     model.SinTurner,
 ]
 Msel = pn.widgets.Select(name="module", options={MM.__name__: MM for MM in Ms})
-template.sidebar.append(pn.Column(Msel, bind_to_value(Msel, temp=template)))
+app.sidebar.append(pn.Column(Msel, bind_to_value(Msel, temp=app)))
 
-template.servable()
+app.servable()
 # pn.serve(template)
 
-# Run from terminal with : panel serve neural_oscillator_tester.py --show --autoreload
+# Run from terminal with : panel serve module_inspector.py --show --autoreload

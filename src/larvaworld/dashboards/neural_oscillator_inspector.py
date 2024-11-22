@@ -68,20 +68,20 @@ def module_tester(A_in):
     return df
 
 
-if __name__ == "__main__":
-    plot = hvplot.bind(module_tester, A_in).interactive()
-    template = pn.template.MaterialTemplate(
-        title="Material Dark", theme=DarkTheme, sidebar_width=sidebar_width
+# if __name__ == "__main__":
+plot = hvplot.bind(module_tester, A_in).interactive()
+app = pn.template.MaterialTemplate(
+    title="larvaworld : Neural Oscillator module Inspector", theme=DarkTheme, sidebar_width=sidebar_width
+)
+app.sidebar.append(p1)
+app.main.append(
+    pn.Card(
+        plot.hvplot(min_height=sidebar_height)
+        .output()
+        .options(xlabel="time (sec)", ylabel="Neural units"),
+        title=title,
     )
-    template.sidebar.append(p1)
-    template.main.append(
-        pn.Card(
-            plot.hvplot(min_height=sidebar_height)
-            .output()
-            .options(xlabel="time (sec)", ylabel="Neural units"),
-            title=title,
-        )
-    )
-    template.servable()
+)
+app.servable()
 
-    # Run from terminal with : panel serve neural_oscillator_tester.py --show --autoreload
+# Run from terminal with : panel serve neural_oscillator_inspector.py --show --autoreload
