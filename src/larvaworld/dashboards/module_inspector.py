@@ -7,6 +7,10 @@ from panel.template import DarkTheme
 import larvaworld.lib.model as model
 import larvaworld.lib.param
 
+__all__ = [
+    "module_inspector_app",
+]
+
 
 def module_tester(M, temp):
     defaults = larvaworld.lib.param.class_defaults(M)
@@ -69,10 +73,9 @@ def bind_to_value(widget, temp):
     return pn.bind(module_tester, widget, temp)
 
 
-# if __name__ == "__main__":
 w, h = 400, 500
 w2 = int(w / 2) - 20
-app = pn.template.MaterialTemplate(
+module_inspector_app = pn.template.MaterialTemplate(
     title="larvaworld : Behavioral Module inspector", theme=DarkTheme, sidebar_width=w
 )
 
@@ -84,9 +87,9 @@ Ms = [
     model.SinTurner,
 ]
 Msel = pn.widgets.Select(name="module", options={MM.__name__: MM for MM in Ms})
-app.sidebar.append(pn.Column(Msel, bind_to_value(Msel, temp=app)))
+module_inspector_app.sidebar.append(
+    pn.Column(Msel, bind_to_value(Msel, temp=module_inspector_app))
+)
 
-app.servable()
-# pn.serve(template)
+module_inspector_app.servable()
 
-# Run from terminal with : panel serve module_inspector.py --show --autoreload

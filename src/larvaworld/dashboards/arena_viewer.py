@@ -9,6 +9,7 @@ from larvaworld.lib import screen, sim, util
 
 __all__ = [
     "ArenaViewer",
+    "arena_viewer_app",
 ]
 
 
@@ -152,7 +153,6 @@ class ArenaViewer:
         return app
 
 
-if __name__ == "__main__":
-    v = ArenaViewer()
-    app = v.get_app()
-    app.servable()
+v = ArenaViewer()
+arena_viewer_app = v.get_app()
+arena_viewer_app.servable()

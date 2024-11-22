@@ -6,6 +6,10 @@ from panel.template import DarkTheme
 
 import larvaworld.lib.model as model
 
+__all__ = [
+    "lateral_oscillator_app",
+]
+
 M = model.NeuralOscillator
 module_attrs = ["input", "activation", "output"]
 title = "Neural lateral oscillator"
@@ -68,13 +72,14 @@ def module_tester(A_in):
     return df
 
 
-# if __name__ == "__main__":
 plot = hvplot.bind(module_tester, A_in).interactive()
-app = pn.template.MaterialTemplate(
-    title="larvaworld : Neural Oscillator module Inspector", theme=DarkTheme, sidebar_width=sidebar_width
+lateral_oscillator_app = pn.template.MaterialTemplate(
+    title="larvaworld : Lateral Oscillator module",
+    theme=DarkTheme,
+    sidebar_width=sidebar_width,
 )
-app.sidebar.append(p1)
-app.main.append(
+lateral_oscillator_app.sidebar.append(p1)
+lateral_oscillator_app.main.append(
     pn.Card(
         plot.hvplot(min_height=sidebar_height)
         .output()
@@ -82,6 +87,4 @@ app.main.append(
         title=title,
     )
 )
-app.servable()
-
-# Run from terminal with : panel serve neural_oscillator_inspector.py --show --autoreload
+lateral_oscillator_app.servable()

@@ -7,9 +7,7 @@ pn.extension()
 from larvaworld.lib import util
 from larvaworld.lib.process.dataset import LarvaDatasetCollection
 
-__all__ = [
-    "TrackViewer",
-]
+__all__ = ["TrackViewer", "track_viewer_app"]
 
 
 class TrackViewer(LarvaDatasetCollection):
@@ -145,7 +143,6 @@ class TrackViewer(LarvaDatasetCollection):
         return app
 
 
-if __name__ == "__main__":
-    v = TrackViewer()
-    app = v.get_app()
-    app.servable()
+v = TrackViewer()
+track_viewer_app = v.get_app()
+track_viewer_app.servable()

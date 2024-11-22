@@ -1,9 +1,5 @@
 """
-Visualization dashboards
+Larvaworld web-based apps
 """
-
-from . import track_viewer
-
-# from .track_viewer import TrackViewer
 
 __displayname__ = "Dashboards"
