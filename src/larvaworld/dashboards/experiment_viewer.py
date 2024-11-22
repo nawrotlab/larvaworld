@@ -8,12 +8,12 @@ from larvaworld.lib import screen, sim, util
 
 
 __all__ = [
-    "ArenaViewer",
-    "arena_viewer_app",
+    "ExperimentViewer",
+    "experiment_viewer_app",
 ]
 
 
-class ArenaViewer:
+class ExperimentViewer:
     def __init__(self, img_width=600, experiment="dish", duration=1, **kwargs):
         self.size = img_width
         self.launcher = sim.ExpRun(experiment=experiment, duration=duration, **kwargs)
@@ -47,7 +47,7 @@ class ArenaViewer:
         sources = self.launcher.sources
         d = util.AttrDict(
             {
-                "draw_segs": np.multiply(
+                "draw_segs": hv.Overlay(
                     [
                         hv.Polygons([seg.vertices for seg in a.segs]).opts(
                             color=a.color
@@ -59,7 +59,7 @@ class ArenaViewer:
                     size=5, color="black"
                 ),
                 "draw_head": hv.Points(agents.head.front_end).opts(size=5, color="red"),
-                "draw_midline": np.multiply(
+                "draw_midline": hv.Overlay(
                     [
                         hv.Path(a.midline_xy).opts(color="blue", line_width=2)
                         for a in agents
@@ -70,17 +70,16 @@ class ArenaViewer:
                 ).opts(color="black"),
             }
         )
-        source_img = np.multiply(
-            [
+        source_imgs = [
                 hv.Ellipse(s.pos[0], s.pos[1], s.radius * 2).opts(
                     line_width=5, color=s.color, bgcolor=s.color
                 )
                 for s in sources
             ]
-        )
-        return np.multiply(
-            [self.tank_plot, source_img]
-            + [img for k, img in d.items() if self.draw_ops[k]]
+        agent_imgs = [img for k, img in d.items() if getattr(self.draw_ops,k)]
+                
+        return hv.Overlay(
+            [self.tank_plot] + source_imgs + agent_imgs
         ).opts(responsive=False, **self.image_kws)
 
     def get_app(self):
@@ -90,7 +89,7 @@ class ArenaViewer:
             "start": 0,
             "end": self.launcher.Nsteps - 1,
             "interval": int(1000 * self.launcher.dt),
-            "value": 0,
+            "value": 1,
             # 'step': 5,
             # 'loop_policy': 'loop',
         }
@@ -108,7 +107,8 @@ class ArenaViewer:
             while i > self.launcher.t:
                 self.launcher.sim_step()
                 self.progress_bar.value = self.launcher.t
-                return self.draw_imgs()
+            return self.draw_imgs()
+                
 
             # overlay = self.tank_plot
             # agents=self.launcher.agents
@@ -153,6 +153,6 @@ class ArenaViewer:
         return app
 
 
-v = ArenaViewer()
-arena_viewer_app = v.get_app()
-arena_viewer_app.servable()
+v = ExperimentViewer()
+experiment_viewer_app = v.get_app()
+experiment_viewer_app.servable()
