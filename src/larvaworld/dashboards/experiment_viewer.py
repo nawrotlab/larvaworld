@@ -15,11 +15,11 @@ __all__ = [
 
 w, h = 800, 500
 
+
 class ExperimentViewer:
     def __init__(self):
         self.size = 600
         self.draw_ops = screen.AgentDrawOps(draw_centroid=True, draw_segs=False)
-        
 
     def get_tank_plot(self):
         a = self.env.arena
@@ -60,16 +60,16 @@ class ExperimentViewer:
             }
         )
         source_imgs = [
-                hv.Ellipse(s.pos[0], s.pos[1], s.radius * 2).opts(
-                    line_width=5, color=s.color, bgcolor=s.color
-                )
-                for s in sources
-            ]
-        agent_imgs = [img for k, img in d.items() if getattr(self.draw_ops,k)]
-                
-        return hv.Overlay(
-            [self.tank_plot] + source_imgs + agent_imgs
-        ).opts(responsive=False, **self.image_kws)
+            hv.Ellipse(s.pos[0], s.pos[1], s.radius * 2).opts(
+                line_width=5, color=s.color, bgcolor=s.color
+            )
+            for s in sources
+        ]
+        agent_imgs = [img for k, img in d.items() if getattr(self.draw_ops, k)]
+
+        return hv.Overlay([self.tank_plot] + source_imgs + agent_imgs).opts(
+            responsive=False, **self.image_kws
+        )
 
     def get_app(self, experiment="dish", duration=1, **kwargs):
         self.launcher = sim.ExpRun(experiment=experiment, duration=duration, **kwargs)
@@ -110,7 +110,6 @@ class ExperimentViewer:
                 self.launcher.sim_step()
                 self.progress_bar.value = self.launcher.t
             return self.draw_imgs()
-                
 
             # overlay = self.tank_plot
             # agents=self.launcher.agents
@@ -154,6 +153,7 @@ class ExperimentViewer:
         )
         return app
 
+
 v = ExperimentViewer()
 
 CT = reg.conf.Exp
@@ -163,9 +163,7 @@ Mrun = pn.widgets.Button(name="Run")
 experiment_viewer_app = pn.template.MaterialTemplate(
     title="larvaworld : Experiment viewer", theme=DarkTheme, sidebar_width=w
 )
-experiment_viewer_app.sidebar.append(
-    pn.Row(Msel, Mrun, width=300, height=80)
-)
+experiment_viewer_app.sidebar.append(pn.Row(Msel, Mrun, width=300, height=80))
 experiment_viewer_app.main.append(pn.bind(v.get_app, Msel))
 
 experiment_viewer_app.servable()

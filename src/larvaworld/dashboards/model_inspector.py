@@ -146,4 +146,3 @@ model_inspector_app.sidebar.append(
 )
 model_inspector_app.main.append(pn.bind(inspector.run, Mrun))
 model_inspector_app.servable()
-

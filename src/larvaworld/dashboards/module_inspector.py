@@ -92,4 +92,3 @@ module_inspector_app.sidebar.append(
 )
 
 module_inspector_app.servable()
-
