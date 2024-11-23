@@ -1,10 +1,11 @@
 import holoviews as hv
 import numpy as np
 import panel as pn
+from panel.template import DarkTheme
 
 pn.extension()
 
-from larvaworld.lib import screen, sim, util
+from larvaworld.lib import reg, screen, sim, util
 
 
 __all__ = [
@@ -12,25 +13,13 @@ __all__ = [
     "experiment_viewer_app",
 ]
 
+w, h = 800, 500
 
 class ExperimentViewer:
-    def __init__(self, img_width=600, experiment="dish", duration=1, **kwargs):
-        self.size = img_width
-        self.launcher = sim.ExpRun(experiment=experiment, duration=duration, **kwargs)
-        self.env = self.launcher.p.env_params
-        x, y = self.env.arena.dims
-        self.image_kws = {
-            "title": "Arena viewer",
-            "xlim": (-x / 2, x / 2),
-            "ylim": (-y / 2, y / 2),
-            "width": self.size,
-            "height": int(self.size * y / x),
-            "xlabel": "X (m)",
-            "ylabel": "Y (m)",
-        }
-
+    def __init__(self):
+        self.size = 600
         self.draw_ops = screen.AgentDrawOps(draw_centroid=True, draw_segs=False)
-        self.Nfade = int(self.draw_ops.trail_dt / self.launcher.dt)
+        
 
     def get_tank_plot(self):
         a = self.env.arena
@@ -82,7 +71,20 @@ class ExperimentViewer:
             [self.tank_plot] + source_imgs + agent_imgs
         ).opts(responsive=False, **self.image_kws)
 
-    def get_app(self):
+    def get_app(self, experiment="dish", duration=1, **kwargs):
+        self.launcher = sim.ExpRun(experiment=experiment, duration=duration, **kwargs)
+        self.Nfade = int(self.draw_ops.trail_dt / self.launcher.dt)
+        self.env = self.launcher.p.env_params
+        x, y = self.env.arena.dims
+        self.image_kws = {
+            "title": "Arena viewer",
+            "xlim": (-x / 2, x / 2),
+            "ylim": (-y / 2, y / 2),
+            "width": self.size,
+            "height": int(self.size * y / x),
+            "xlabel": "X (m)",
+            "ylabel": "Y (m)",
+        }
         self.launcher.sim_setup(steps=self.launcher.p.steps)
         slider_kws = {
             "width": int(self.size / 2),
@@ -152,7 +154,18 @@ class ExperimentViewer:
         )
         return app
 
-
 v = ExperimentViewer()
-experiment_viewer_app = v.get_app()
+
+CT = reg.conf.Exp
+Msel = pn.widgets.Select(value="dish", name="experiment", options=CT.confIDs)
+Mrun = pn.widgets.Button(name="Run")
+
+experiment_viewer_app = pn.template.MaterialTemplate(
+    title="larvaworld : Experiment viewer", theme=DarkTheme, sidebar_width=w
+)
+experiment_viewer_app.sidebar.append(
+    pn.Row(Msel, Mrun, width=300, height=80)
+)
+experiment_viewer_app.main.append(pn.bind(v.get_app, Msel))
+
 experiment_viewer_app.servable()
