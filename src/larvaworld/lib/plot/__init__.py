@@ -2,7 +2,7 @@
 This module contains all methods and classes relevant in plot generation
 """
 
-from .aux import *
+from .util import *
 from .base import *
 
 

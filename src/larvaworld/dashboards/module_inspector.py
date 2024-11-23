@@ -7,6 +7,7 @@ from panel.template import DarkTheme
 import larvaworld.lib.model as model
 import larvaworld.lib.param
 
+
 __all__ = [
     "module_inspector_app",
 ]
@@ -92,3 +93,4 @@ module_inspector_app.sidebar.append(
 )
 
 module_inspector_app.servable()
+
