@@ -1,24 +1,56 @@
 import pandas as pd
 import holoviews as hv
 import panel as pn
+from panel.template import DarkTheme
 
 pn.extension()
 
-from larvaworld.lib import util
-from larvaworld.lib.process.dataset import LarvaDatasetCollection
+from larvaworld.lib import reg, util
+from larvaworld.lib.process.dataset import LarvaDataset, LarvaDatasetCollection
 
 __all__ = ["TrackViewer", "track_viewer_app"]
 
+w, h = 800, 500
 
-class TrackViewer(LarvaDatasetCollection):
-    def __init__(self, size=600, **kwargs):
-        super().__init__(**kwargs)
 
+class TrackViewer:
+    def __init__(self, size=600):
         self.size = size
 
-        self.xy_data = self.build_data()
+    def dataset_as_dict(self, d: LarvaDataset):
+        xy = d.load_traj()
+        xy_origin = pd.concat(
+            [g - g.dropna().iloc[0] for id, g in xy.groupby("AgentID")]
+        ).sort_index()
+        dsp_mu = {
+            i: ((ttt.dropna() ** 2).sum(axis=1) ** 0.5).mean()
+            for i, ttt in xy_origin.groupby("Step")
+        }
+        return util.AttrDict({"default": xy, "origin": xy_origin, "dispersal": dsp_mu})
 
-        x, y = self.arena_dims
+    def build_data(self, id: str):
+        # TODO: This has been modified to work with both LarvaDataset and LarvaDatasetCollection. Needs to be simplified!
+        if id in reg.conf.Ref.RefGroupIDs:
+            d = reg.conf.Ref.loadRefGroup(id)
+            data = util.AttrDict(
+                {l: self.dataset_as_dict(d) for l, d in d.data_dict.items()}
+            )
+            x, y = d.arena_dims
+            self.labels = d.labels
+            self.Nticks = d.Nticks
+            self.dt = d.dt
+            self.color_palette = d.color_palette
+        elif id in reg.conf.Ref.confIDs:
+            d = reg.conf.Ref.loadRef(id)
+            data = util.AttrDict({d.id: self.dataset_as_dict(d)})
+            x, y = d.env_params.arena.dims
+            self.labels = [d.id]
+            self.Nticks = d.config.Nticks
+            self.dt = d.config.dt
+            self.color_palette = util.AttrDict({d.id: d.config.color})
+        else:
+            raise ValueError("Invalid ID! No single or group dataset found.")
+
         self.image_kws = {
             "title": "Trajectory viewer",
             "xlim": (-x / 2, x / 2),
@@ -28,25 +60,10 @@ class TrackViewer(LarvaDatasetCollection):
             "xlabel": "X (m)",
             "ylabel": "Y (m)",
         }
-        self.app = self.get_app()
-
-    def build_data(self):
-        data = util.AttrDict()
-        for l, d in self.data_dict.items():
-            xy = d.load_traj()
-            xy_origin = pd.concat(
-                [g - g.dropna().iloc[0] for id, g in xy.groupby("AgentID")]
-            ).sort_index()
-            dsp_mu = {
-                i: ((ttt.dropna() ** 2).sum(axis=1) ** 0.5).mean()
-                for i, ttt in xy_origin.groupby("Step")
-            }
-            data[l] = util.AttrDict(
-                {"default": xy, "origin": xy_origin, "dispersal": dsp_mu}
-            )
         return data
 
-    def get_app(self):
+    def get_app(self, id: str):
+        self.xy_data = self.build_data(id=id)
         cb_IDs = pn.widgets.CheckBoxGroup(value=self.labels, options=self.labels)
         cb_vis = pn.widgets.CheckBoxGroup(
             value=["Positions", "Disperal circle"],
@@ -62,7 +79,7 @@ class TrackViewer(LarvaDatasetCollection):
             "start": 0,
             "end": self.Nticks - 1,
             "interval": int(1000 * self.dt),
-            "value": 0,
+            "value": 1,
             "step": 5,
             "loop_policy": "loop",
         }
@@ -144,6 +161,20 @@ class TrackViewer(LarvaDatasetCollection):
 
 
 v = TrackViewer()
-track_viewer_app = v.get_app()
-track_viewer_app.servable()
 
+CT = reg.conf.Ref
+Msel = pn.widgets.Select(
+    value=reg.default_refID,
+    name="Reference datasets (single or grouped)",
+    options=reg.conf.Ref.confIDs + reg.conf.Ref.RefGroupIDs,
+)
+# Mrun = pn.widgets.Button(name="Run")
+
+track_viewer_app = pn.template.MaterialTemplate(
+    title="larvaworld : Dataset track viewer", theme=DarkTheme, sidebar_width=w
+)
+track_viewer_app.sidebar.append(pn.Row(Msel, width=300, height=80))
+track_viewer_app.main.append(pn.bind(v.get_app, Msel))
+
+
+track_viewer_app.servable()

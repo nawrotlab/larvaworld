@@ -167,4 +167,3 @@ experiment_viewer_app.sidebar.append(pn.Row(Msel, Mrun, width=300, height=80))
 experiment_viewer_app.main.append(pn.bind(v.get_app, Msel))
 
 experiment_viewer_app.servable()
-

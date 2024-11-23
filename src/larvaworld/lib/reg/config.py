@@ -669,7 +669,9 @@ class RefType(ConfType):
 
         """
         d = self.Refdict
-        gd = util.AttrDict({c.group_id: c for id, c in d.items()})
+        gd = util.AttrDict(
+            {c.group_id: c for id, c in d.items() if c.group_id is not None}
+        )
         return util.unique_list(list(gd.keys()))
 
     @property
