@@ -29,6 +29,7 @@ packages = [
 [tool.poetry.scripts]
 larvaworld = "larvaworld.cli.main:main"
 larvaworld-gui = "larvaworld.gui.main:main"
+larvaworld-app = "larvaworld.dashboards.main:main"
 
 [tool.setuptools.package-data]
 "*" = ["*.sh", "*.png", "*.pdf", "*.txt", "*.csv"]

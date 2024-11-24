@@ -15,11 +15,15 @@ from larvaworld.lib.model import DefaultBrain, Effector
 from larvaworld.lib.model import moduleDB as MD
 from larvaworld.lib.param import class_objs
 
+__all__ = [
+    "model_inspector_app",
+]
+
 w, h = 800, 500
 MODULES = MD.LocoModsBasic
 
 
-class ModuleInspector:
+class ModelInspector:
     def __init__(self):
         self.running = False
         self.t = 0
@@ -27,7 +31,6 @@ class ModuleInspector:
 
     def build(self, mID):
         if mID != self.mID:
-            print(mID, self.mID)
             self.reset()
             if hasattr(self, "brain"):
                 del (
@@ -129,23 +132,17 @@ class ModuleInspector:
         return self.plot
 
 
-if __name__ == "__main__":
-    inspector = ModuleInspector()
-    CT = reg.conf.Model
-    Msel = pn.widgets.Select(value="explorer", name="larva-model", options=CT.confIDs)
-    Mrun = pn.widgets.Button(name="Run")
+inspector = ModelInspector()
+CT = reg.conf.Model
+Msel = pn.widgets.Select(value="explorer", name="larva-model", options=CT.confIDs)
+Mrun = pn.widgets.Button(name="Run")
 
-    T = pn.template.MaterialTemplate(
-        title="larvaworld : Larva model inspector", theme=DarkTheme, sidebar_width=w
-    )
+model_inspector_app = pn.template.MaterialTemplate(
+    title="larvaworld : Larva Model inspector", theme=DarkTheme, sidebar_width=w
+)
 
-    T.sidebar.append(
-        pn.Column(
-            pn.Row(Msel, Mrun, width=300, height=80), pn.bind(inspector.build, Msel)
-        )
-    )
-    T.main.append(pn.bind(inspector.run, Mrun))
-    T.servable()
-    pn.serve(T)
-
-    # Run from terminal with : panel serve model_inspector.py --show --autoreload
+model_inspector_app.sidebar.append(
+    pn.Column(pn.Row(Msel, Mrun, width=300, height=80), pn.bind(inspector.build, Msel))
+)
+model_inspector_app.main.append(pn.bind(inspector.run, Mrun))
+model_inspector_app.servable()

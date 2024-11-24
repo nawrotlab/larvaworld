@@ -1,35 +1,25 @@
 import holoviews as hv
 import numpy as np
 import panel as pn
+from panel.template import DarkTheme
 
 pn.extension()
 
-from larvaworld.lib import screen, sim, util
+from larvaworld.lib import reg, screen, sim, util
 
 
 __all__ = [
-    "ArenaViewer",
+    "ExperimentViewer",
+    "experiment_viewer_app",
 ]
 
+w, h = 800, 500
 
-class ArenaViewer:
-    def __init__(self, img_width=600, experiment="dish", duration=1, **kwargs):
-        self.size = img_width
-        self.launcher = sim.ExpRun(experiment=experiment, duration=duration, **kwargs)
-        self.env = self.launcher.p.env_params
-        x, y = self.env.arena.dims
-        self.image_kws = {
-            "title": "Arena viewer",
-            "xlim": (-x / 2, x / 2),
-            "ylim": (-y / 2, y / 2),
-            "width": self.size,
-            "height": int(self.size * y / x),
-            "xlabel": "X (m)",
-            "ylabel": "Y (m)",
-        }
 
+class ExperimentViewer:
+    def __init__(self):
+        self.size = 600
         self.draw_ops = screen.AgentDrawOps(draw_centroid=True, draw_segs=False)
-        self.Nfade = int(self.draw_ops.trail_dt / self.launcher.dt)
 
     def get_tank_plot(self):
         a = self.env.arena
@@ -46,7 +36,7 @@ class ArenaViewer:
         sources = self.launcher.sources
         d = util.AttrDict(
             {
-                "draw_segs": np.multiply(
+                "draw_segs": hv.Overlay(
                     [
                         hv.Polygons([seg.vertices for seg in a.segs]).opts(
                             color=a.color
@@ -58,7 +48,7 @@ class ArenaViewer:
                     size=5, color="black"
                 ),
                 "draw_head": hv.Points(agents.head.front_end).opts(size=5, color="red"),
-                "draw_midline": np.multiply(
+                "draw_midline": hv.Overlay(
                     [
                         hv.Path(a.midline_xy).opts(color="blue", line_width=2)
                         for a in agents
@@ -69,27 +59,39 @@ class ArenaViewer:
                 ).opts(color="black"),
             }
         )
-        source_img = np.multiply(
-            [
-                hv.Ellipse(s.pos[0], s.pos[1], s.radius * 2).opts(
-                    line_width=5, color=s.color, bgcolor=s.color
-                )
-                for s in sources
-            ]
-        )
-        return np.multiply(
-            [self.tank_plot, source_img]
-            + [img for k, img in d.items() if self.draw_ops[k]]
-        ).opts(responsive=False, **self.image_kws)
+        source_imgs = [
+            hv.Ellipse(s.pos[0], s.pos[1], s.radius * 2).opts(
+                line_width=5, color=s.color, bgcolor=s.color
+            )
+            for s in sources
+        ]
+        agent_imgs = [img for k, img in d.items() if getattr(self.draw_ops, k)]
 
-    def get_app(self):
+        return hv.Overlay([self.tank_plot] + source_imgs + agent_imgs).opts(
+            responsive=False, **self.image_kws
+        )
+
+    def get_app(self, experiment="dish", duration=1, **kwargs):
+        self.launcher = sim.ExpRun(experiment=experiment, duration=duration, **kwargs)
+        self.Nfade = int(self.draw_ops.trail_dt / self.launcher.dt)
+        self.env = self.launcher.p.env_params
+        x, y = self.env.arena.dims
+        self.image_kws = {
+            "title": "Arena viewer",
+            "xlim": (-x / 2, x / 2),
+            "ylim": (-y / 2, y / 2),
+            "width": self.size,
+            "height": int(self.size * y / x),
+            "xlabel": "X (m)",
+            "ylabel": "Y (m)",
+        }
         self.launcher.sim_setup(steps=self.launcher.p.steps)
         slider_kws = {
             "width": int(self.size / 2),
             "start": 0,
             "end": self.launcher.Nsteps - 1,
             "interval": int(1000 * self.launcher.dt),
-            "value": 0,
+            "value": 1,
             # 'step': 5,
             # 'loop_policy': 'loop',
         }
@@ -107,7 +109,7 @@ class ArenaViewer:
             while i > self.launcher.t:
                 self.launcher.sim_step()
                 self.progress_bar.value = self.launcher.t
-                return self.draw_imgs()
+            return self.draw_imgs()
 
             # overlay = self.tank_plot
             # agents=self.launcher.agents
@@ -152,8 +154,16 @@ class ArenaViewer:
         return app
 
 
-if __name__ == "__main__":
-    v = ArenaViewer()
-    app = v.get_app()
-    app.servable()
-    pn.serve(app)
+v = ExperimentViewer()
+
+CT = reg.conf.Exp
+Msel = pn.widgets.Select(value="dish", name="experiment", options=CT.confIDs)
+Mrun = pn.widgets.Button(name="Run")
+
+experiment_viewer_app = pn.template.MaterialTemplate(
+    title="larvaworld : Experiment viewer", theme=DarkTheme, sidebar_width=w
+)
+experiment_viewer_app.sidebar.append(pn.Row(Msel, Mrun, width=300, height=80))
+experiment_viewer_app.main.append(pn.bind(v.get_app, Msel))
+
+experiment_viewer_app.servable()
