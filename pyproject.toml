@@ -4,7 +4,7 @@ requires = [ "poetry-core>=1.0.0" ]
 
 [tool.poetry]
 name = "larvaworld"
-version = "0.0.0"
+version = "0.0.1-rc.1"
 description = "A virtual lab for Drosophila larva behavioral modeling and analysis"
 authors = ['Panagiotis Sakagiannis <bagjohn0@gmail.com>']
 license = "GNU General Public License v3"
