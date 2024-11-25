@@ -382,7 +382,7 @@ def sample_ps(ps, e=None):
     """
     Sinv = SAMPLING_PARS.inverse
     ps = util.SuperList([Sinv[k] for k in util.existing_cols(Sinv, ps)]).flatten
-    if e:
+    if e is not None:
         ps = ps.existing(e)
     return ps
 
