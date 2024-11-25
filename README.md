@@ -127,7 +127,7 @@ This line runs a batch run of odor preference experiments for different valences
 Run a genetic algorith optimization algorithm to optimize a basic model's configuration set according to a fitness function.
 This line optimizes a model for kinematic realism against a reference experimental dataset
 
-`larvaworld Ga realism -refID exploration.30controls -Nagents 20 -duration 0.5 -bestConfID GA_test_loco -init_mode model`
+`larvaworld Ga realism -refID exploration.30controls -N 20 -duration 0.5 -mID1 GA_test_loco -mGA model`
 
 ### Experiment replay
 
@@ -142,14 +142,7 @@ This line replays a reference experimental dataset (note that this is imported b
 Evaluate diverse model configurations against real data.
 This line evaluates two models against a reference experimental dataset
 
-`larvaworld Eval -refID exploration.30controls -modelIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 10`
-
-## Web Apps
-
-A number of web-based applications are available to inspect larva models, test isolated behavioral modules, view replays of stored datasets and launch simulations of behavioral experiments. The apps can be launched via a single webpage by clicking on their respective icons.
-Launch the web server :
-
-`larvaworld-app`
+`larvaworld Eval -refID exploration.30controls -mIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 3`
 
 ## GUI (deprecated)
 

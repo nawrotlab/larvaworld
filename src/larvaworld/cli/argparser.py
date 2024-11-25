@@ -155,21 +155,16 @@ def parser_entry_from_param(k, p):
         d.action = "store_true" if not v else "store_false"
     elif c == param.String:
         d.type = str
-    elif c in [param.Integer] + param.Integer.__subclasses__():
+    elif c in param.Integer.__subclasses__():
         d.type = int
-    elif c in [param.Number] + param.Number.__subclasses__():
+    elif c in param.Number.__subclasses__():
         d.type = float
-    elif c in [param.Tuple] + param.Tuple.__subclasses__():
+    elif c in param.Tuple.__subclasses__():
         d.type = tuple
 
     if hasattr(p, "objects"):
         d.choices = p.objects
-        if (
-            c
-            in [param.List, param.ListSelector]
-            + param.List.__subclasses__()
-            + param.ListSelector.__subclasses__()
-        ):
+        if c in param.List.__subclasses__():
             d.nargs = "+"
         if hasattr(p, "item_type"):
             d.type = p.item_type
@@ -387,12 +382,15 @@ def parser_dict_from_dict(d0):
     return p.flatten()
 
 
-class SimModeParser(ArgumentParser):
+class SimModeParser:
     """
     Parser for simulation modes and arguments.
     """
 
     def __init__(self):
+        """
+        Initialize parsers for different simulation modes.
+        """
         # self.dict = AttrDict(
         #     {
         #         "Batch": [],
@@ -404,52 +402,47 @@ class SimModeParser(ArgumentParser):
         # )
         # ks = aux.SuperList(self.dict.values()).flatten.unique
         # self.parsers = aux.AttrDict({k: ParserArgumentDict.from_dict(reg.par.PI[k]) for k in ks})
+        self.parsers = AttrDict()
+        self.parsers.screen_kws = ParserArgumentDict.from_param(d0=ScreenOps)
+        self.parsers.SimOps = ParserArgumentDict.from_param(d0=SimOps)
+        self.parsers.RuntimeOps = ParserArgumentDict.from_param(d0=RuntimeOps)
+
+        # TODO set the parsers per mode
+        self.parsers.Replay = ParserArgumentDict.from_param(d0=reg.gen.Replay)
+        self.parsers.Eval = ParserArgumentDict.from_param(d0=reg.gen.Eval)
+        self.parsers.GAselector = ParserArgumentDict.from_param(d0=reg.gen.GAselector)
+        self.parsers.GAevaluation = ParserArgumentDict.from_param(
+            d0=reg.gen.GAevaluation
+        )
+
+        self.cli_parser = self.build_cli_parser()
         self.mode = None
         self.run = None
         self.args = AttrDict()
         self.run_kws = AttrDict()
-        self.parser_dicts = AttrDict(
-            {
-                "screen_kws": ParserArgumentDict.from_param(d0=ScreenOps),
-                "SimOps": ParserArgumentDict.from_param(d0=SimOps),
-                "RuntimeOps": ParserArgumentDict.from_param(d0=RuntimeOps),
-                "Replay": ParserArgumentDict.from_param(d0=reg.gen.Replay),
-                "Eval": ParserArgumentDict.from_param(d0=reg.gen.Eval),
-                "GAselector": ParserArgumentDict.from_param(d0=reg.gen.GAselector),
-                "GAevaluation": ParserArgumentDict.from_param(d0=reg.gen.GAevaluation),
-            }
-        )
-        super().__init__(
-            prog="larvaworld", description="CLI for running larvaworld simulations"
-        )
-        self.add_argument(
-            "-verbose",
-            "--VERBOSE",
-            type=int,
-            default=2,
-            help="Level of verbosity in the output",
-        )
-        self.add_argument(
-            "-parsargs",
-            "--show_parser_args",
-            action="store_true",
-            default=False,
-            help="Whether to show the parser argument namespace",
-        )
-        subparsers = self.add_subparsers(
-            dest="sim_mode",
-            help="The simulation mode to launch",
-            parser_class=ArgumentParser,
-        )
-        for m in SIMTYPES:
-            sp = subparsers.add_parser(m)
-            sp = self.init_mode_subparser(sp, m)
 
     def parse_args(self):
         """
         Parse command line arguments.
         """
-        self.args = AttrDict(vars(super().parse_args()))
+        self.args = AttrDict(vars(self.cli_parser.parse_args()))
+        print(self.args)
+
+    # def populate_mode_subparser(self, sp, m):
+    #     """
+    #     Populate a subparser with arguments for a specific simulation mode.
+
+    #     :param sp: The subparser.
+    #     :param m: The simulation mode.
+    #     :return: The modified subparser.
+    #     """
+    #     sp = self.parsers.screen_kws.add(sp)
+    #     sp = self.parsers.RuntimeOps.add(sp)
+    #     if m not in ["Replay", "Eval"]:
+    #         sp = self.parsers.SimOps.add(sp)
+    #     # for k in self.dict[m]:
+    #     #     sp = self.parsers[k].add(sp)
+    #     return sp
 
     def init_mode_subparser(self, sp, m):
         """
@@ -464,7 +457,19 @@ class SimModeParser(ArgumentParser):
             sp.add_argument(
                 "experiment", choices=reg.conf[m].confIDs, help="The experiment mode"
             )
-            sp = self.parser_dicts.SimOps.add(sp)
+        # if m in ["Eval", "Replay"]:
+        #     sp.add_argument(
+        #         "-refID",
+        #         "--refID",
+        #         choices=reg.conf.Ref.confIDs,
+        #         help="The reference ID under which the dataset is stored",
+        #     )
+        #     sp.add_argument(
+        #         "-dir",
+        #         "--dir",
+        #         type=str,
+        #         help="The directory containing the dataset to be replayed"
+        #     )
         if m in ["Exp", "Batch"]:
             sp.add_argument(
                 "-N",
@@ -502,16 +507,43 @@ class SimModeParser(ArgumentParser):
                 help="Whether to show the plots generated during data-analysis",
             )
 
-        sp = self.parser_dicts.screen_kws.add(sp)
-        sp = self.parser_dicts.RuntimeOps.add(sp)
-        if m == "Replay":
-            sp = self.parser_dicts.Replay.add(sp)
-        elif m == "Eval":
-            sp = self.parser_dicts.Eval.add(sp)
-        elif m == "Ga":
-            sp = self.parser_dicts.GAselector.add(sp)
-            sp = self.parser_dicts.GAevaluation.add(sp)
+        sp = self.parsers.screen_kws.add(sp)
+        sp = self.parsers.RuntimeOps.add(sp)
+        if m not in ["Replay", "Eval"]:
+            sp = self.parsers.SimOps.add(sp)
+        # if m == "Replay":
+        # for k in self.dict[m]:
+        #     sp = self.parsers[k].add(sp)
+
         return sp
+
+    def build_cli_parser(self):
+        """
+        Build the command line argument parser.
+        """
+        p = ArgumentParser()
+        p.add_argument(
+            "-verbose",
+            "--VERBOSE",
+            type=int,
+            default=2,
+            help="Level of verbosity in the output",
+        )
+        p.add_argument(
+            "-parsargs",
+            "--show_parser_args",
+            action="store_true",
+            default=False,
+            help="Whether to show the parser argument namespace",
+        )
+        subparsers = p.add_subparsers(
+            dest="sim_mode", help="The simulation mode to launch"
+        )
+        for m in SIMTYPES:
+            sp = subparsers.add_parser(m)
+            sp = self.init_mode_subparser(sp, m)
+            # sp = self.populate_mode_subparser(sp, m)
+        return p
 
     def eval_parser(self, p_key):
         """
@@ -520,7 +552,7 @@ class SimModeParser(ArgumentParser):
         :param p_key: The argument key.
         :return: The parsed value of the argument.
         """
-        return self.parser_dicts[p_key].get(self.args)
+        return self.parsers[p_key].get(self.args)
 
     def configure(self, show_args: bool = False):
         """
@@ -554,7 +586,7 @@ class SimModeParser(ArgumentParser):
             kw.conf.N = a.Nagents
             kw.conf.modelIDs = a.modelIDs
             kw.conf.groupIDs = a.groupIDs
-            self.run = sim.BatchRun(**kw)
+            self.run = sim.Exec(**kw)
         elif m == "Exp":
             kw.N = a.Nagents
             kw.modelIDs = a.modelIDs
@@ -617,6 +649,7 @@ class SimModeParser(ArgumentParser):
         """
         Launch the simulation run.
         """
+        anal_kws = AttrDict({"show": self.args.show})
         m = self.mode
         r = self.run
         if m == "Batch":

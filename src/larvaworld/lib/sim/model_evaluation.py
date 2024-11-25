@@ -49,11 +49,7 @@ class EvalRun(EvalConf, SimConfiguration):
         if "duration" not in kwargs:
             kwargs["duration"] = self.target.config.Nticks * kwargs["dt"] / 60
         SimConfiguration.__init__(self, runtype="Eval", **kwargs)
-
-        # TODO This should be removed
-        if self.groupIDs is None:
-            self.groupIDs = self.modelIDs
-
+        # super().__init__(runtype='Eval', **kwargs)
         self.screen_kws = screen_kws
         self.enrichment = enrichment
         self.figs = AttrDict(
@@ -277,9 +273,7 @@ class EvalRun(EvalConf, SimConfiguration):
             # self.figs.boxplot.step = self.plot_data(mode='step', type='box')
 
 
-# TODO The class generator is not working properly. Arguments changed after initialization are not being updated. In this case groupIDs.
 reg.gen.Eval = class_generator(EvalConf)
-# reg.gen.Eval = EvalConf
 
 
 def evalNplot(show=True, **kwargs):
