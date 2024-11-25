@@ -554,7 +554,7 @@ class SimModeParser(ArgumentParser):
             kw.conf.N = a.Nagents
             kw.conf.modelIDs = a.modelIDs
             kw.conf.groupIDs = a.groupIDs
-            self.run = sim.Exec(**kw)
+            self.run = sim.BatchRun(**kw)
         elif m == "Exp":
             kw.N = a.Nagents
             kw.modelIDs = a.modelIDs
