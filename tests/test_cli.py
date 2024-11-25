@@ -25,9 +25,7 @@ def test_run_experiment_with_analysis_with_video():
 
 def test_run_experiment_no_analysis_with_image():
     """Run an experiment without analysis, with visualization on screen."""
-    result = shell(
-        f"{cli_entry_point} Exp dish -N 4 -duration 2.0 -vis_mode image"
-    )
+    result = shell(f"{cli_entry_point} Exp dish -N 4 -duration 2.0 -vis_mode image")
     assert result.exit_code == 0
 
 
