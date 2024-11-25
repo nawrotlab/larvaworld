@@ -76,6 +76,7 @@ class LarvaGroupMutator(NestedConf):
         super().__init__(**kwargs)
 
 
+# TODO : Integration of the following function in the LarvaGroupMutator class
 def prepare_larvagroup_args(
     Ns=None, modelIDs=None, groupIDs=None, colors=None, default_Nlgs=1, **kwargs
 ):

@@ -6,7 +6,7 @@ It includes classes for configuration types and the unique reference type, as we
 import os
 import param
 
-from ... import vprint, CONF_DIR, CONFTYPES
+from ... import vprint, CONF_DIR, DATA_DIR, CONFTYPES
 from .. import reg, util, funcs
 from ..param import ClassDict, OptionalSelector
 
@@ -546,8 +546,10 @@ class RefType(ConfType):
 
         """
         if dir is None:
-            dir = self.getRefDir(id)
-        return f"{dir}/data/conf.txt"
+            refDir = self.getRefDir(id)
+        else:
+            refDir = f"{DATA_DIR}/{dir}"
+        return f"{refDir}/data/conf.txt"
 
     def loadRef(self, id=None, dir=None, load=False, **kwargs):
         """
