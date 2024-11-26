@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
 
 concurrency:
@@ -94,7 +94,7 @@ jobs:
       # Do a dry run of PSR
       - name: Test release
         uses: python-semantic-release/python-semantic-release@v9.8.1
-        if: github.ref_name != 'main'
+        if: github.ref_name != 'master'
         with:
           root_options: --noop
 
@@ -102,7 +102,7 @@ jobs:
       - name: Release
         uses: python-semantic-release/python-semantic-release@v9.8.1
         id: release
-        if: github.ref_name == 'main'
+        if: github.ref_name == 'master'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
