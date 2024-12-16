@@ -431,12 +431,6 @@ class SimModeParser(ArgumentParser):
             sp = subparsers.add_parser(m)
             sp = self.init_mode_subparser(sp, m)
 
-    # def parse_args(self, args=None, namespace=None):
-    #     """
-    #     Parse command line arguments.
-    #     """
-    #     return AttrDict(vars(super().parse_args(args=args, namespace=namespace)))
-
     def init_mode_subparser(self, sp: ArgumentParser, m: str) -> ArgumentParser:
         """
         Initialize a subparser with common arguments for a specific simulation mode.
@@ -445,7 +439,6 @@ class SimModeParser(ArgumentParser):
         :param m: The simulation mode.
         :return: The modified subparser.
         """
-        # sp.add_argument('-id', '--id', type=str, help='The simulation ID. If not provided a default is generated')
         if m in ["Exp", "Batch", "Ga"]:
             sp.add_argument(
                 "experiment", choices=reg.conf[m].confIDs, help="The experiment mode"
@@ -526,11 +519,6 @@ class SimModeParser(ArgumentParser):
         if m not in ["Replay", "Eval"]:
             kw.update(**self.eval_parser("SimOps", args))
             kw.experiment = args.experiment
-        # else :
-        #     if a.refID is not None:
-        #         kw.refID = a.refID
-        #     if a.dir is not None:
-        #         kw.dir = a.dir
         if m == "Batch":
             kw.mode = "batch"
             kw.experiment = args.experiment
