@@ -3,6 +3,7 @@ from unittest.mock import Mock
 from pytest import mark
 
 from larvaworld.cli.main import main
+from larvaworld.lib import reg
 
 
 def cli_args(cli_str: str):
@@ -48,11 +49,11 @@ def test_cli_analysis_and_visualization_args():
 def test_cli_GA_args():
     """Run a genetic algorithm experiment without visualization on screen."""
     run, args = cli_args(
-        "Ga realism -refID exploration.30controls -Nagents 10 -Ngenerations 5 -duration 0.5 -bestConfID GA_test_loco -init_mode model"
+        f"Ga realism -refID {reg.default_refID} -Nagents 10 -Ngenerations 5 -duration 0.5 -bestConfID GA_test_loco -init_mode model"
     )
     assert args.sim_mode == "Ga"
     assert args.experiment == "realism"
-    assert args.refID == "exploration.30controls"
+    assert args.refID == reg.default_refID
     assert args.Nagents == 10
     assert args.Ngenerations == 5
     assert args.duration == 0.5
@@ -66,37 +67,37 @@ def test_cli_GA_args():
     assert run.p.ga_select_kws.Ngenerations == 5
     assert run.p.ga_select_kws.bestConfID == "GA_test_loco"
     assert run.p.ga_select_kws.init_mode == "model"
-    assert run.p.ga_eval_kws.refID == "exploration.30controls"
+    assert run.p.ga_eval_kws.refID == reg.default_refID
 
     assert run.selector.Nagents == 10
     assert run.selector.Ngenerations == 5
     assert run.selector.bestConfID == "GA_test_loco"
     assert run.selector.init_mode == "model"
-    assert run.evaluator.refID == "exploration.30controls"
+    assert run.evaluator.refID == reg.default_refID
 
 
 def test_cli_replay_args():
     """Run an experiment replay specifying the dataset by its reference ID."""
-    run, args = cli_args("Replay -refID exploration.30controls")
+    run, args = cli_args(f"Replay -refID {reg.default_refID}")
     assert args.sim_mode == "Replay"
-    assert args.refID == "exploration.30controls"
+    assert args.refID == reg.default_refID
 
     assert run.__class__.__name__ == "ReplayRun"
-    assert run.p.refID == "exploration.30controls"
+    assert run.p.refID == reg.default_refID
 
 
 def test_cli_evaluation_args():
     """Perform an experiment evaluation run."""
     run, args = cli_args(
-        "Eval -refID exploration.30controls -modelIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 10"
+        f"Eval -refID {reg.default_refID} -modelIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 10"
     )
     assert args.sim_mode == "Eval"
-    assert args.refID == "exploration.30controls"
+    assert args.refID == reg.default_refID
     assert args.modelIDs == ["RE_NEU_PHI_DEF", "RE_SIN_PHI_DEF"]
     assert args.N == 10
 
     assert run.__class__.__name__ == "EvalRun"
-    assert run.refID == "exploration.30controls"
+    assert run.refID == reg.default_refID
     assert run.modelIDs == ["RE_NEU_PHI_DEF", "RE_SIN_PHI_DEF"]
     assert run.N == 10
 
