@@ -591,7 +591,7 @@ class LabFormat(NestedConf):
     tracker = ClassAttr(TrackerOps, doc="The dataset metadata")
     filesystem = ClassAttr(Filesystem, doc="The import-relevant lab-format filesystem")
     env_params = ClassAttr(EnvConf, doc="The environment configuration")
-    preprocess = ClassAttr(PreprocessConf, doc="The environment configuration")
+    preprocess = ClassAttr(PreprocessConf, doc="The preprocessing configuration")
 
     @property
     def path(self):
