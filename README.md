@@ -134,8 +134,8 @@ This line optimizes a model for kinematic realism against a reference experiment
 Replay a real-world experiment.
 This line replays a reference experimental dataset (note that this is imported by the example named : import_Schleyer)
 
-`larvaworld Replay -refID exploration.30controls`
-`larvaworld Replay -refDir SchleyerGroup/processed/exploration/30controls`
+`larvaworld Replay -refID exploration.30controls -vis_mode video`
+`larvaworld Replay -refDir SchleyerGroup/processed/exploration/30controls -vis_mode video`
 
 ### Model evaluation / comparison to real data
 

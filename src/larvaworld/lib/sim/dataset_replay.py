@@ -12,7 +12,7 @@ __all__ = [
 
 
 class ReplayRun(BaseRun):
-    def __init__(self, parameters, dataset=None, **kwargs):
+    def __init__(self, parameters, dataset=None, screen_kws={}, **kwargs):
         """
         Simulation mode 'Replay' reconstructs a real or simulated experiment from stored data.
 
@@ -37,7 +37,14 @@ class ReplayRun(BaseRun):
         if parameters.draw_Nsegs == "all":
             parameters.draw_Nsegs = c.Npoints - 1
 
-        super().__init__(runtype="Replay", parameters=parameters, **kwargs)
+        screen_kws["background_motion"] = self.background_motion
+        if parameters.overlap_mode:
+            screen_kws["vis_mode"] = "image"
+            screen_kws["image_mode"] = "overlap"
+
+        super().__init__(
+            runtype="Replay", parameters=parameters, screen_kws=screen_kws, **kwargs
+        )
 
     @property
     def configuration_text(self):
@@ -58,12 +65,6 @@ class ReplayRun(BaseRun):
         self.draw_Nsegs = self.p.draw_Nsegs
         self.build_env(self.p.env_params)
         self.build_agents(d=self.refDataset)
-        screen_kws = {
-            "mode": "video" if not self.p.overlap_mode else "image",
-            "show_display": True,
-            "image_mode": "overlap" if self.p.overlap_mode else None,
-            "background_motion": self.background_motion,
-        }
 
     def build_agents(self, d):
         s, e, c = d.data

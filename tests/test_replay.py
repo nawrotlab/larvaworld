@@ -6,8 +6,8 @@ larvaworld.VERBOSE = 1
 
 
 replay_confs = [
-    ("normal", {"time_range": (10, 80)}),
-    ("dispersal", {"transposition": "origin", "time_range": (60, 120)}),
+    ("normal", {"time_range": (40, 60)}),
+    ("dispersal", {"transposition": "origin", "time_range": (60, 80)}),
     (
         "fixed_point",
         {
@@ -37,8 +37,8 @@ replay_confs = [
             "overlap_mode": True,
         },
     ),
-    ("2segs", {"draw_Nsegs": 2}),
-    ("all_segs", {"draw_Nsegs": 11}),
+    ("2segs", {"draw_Nsegs": 2, "time_range": (80, 100)}),
+    ("all_segs", {"draw_Nsegs": 11, "time_range": (80, 100)}),
 ]
 
 
@@ -51,6 +51,7 @@ def test_replay(id, conf):
         # dataset=d,
         id=f"{refID}_replay_{id}",
         dir=f"./media/{id}",
+        screen_kws={"vis_mode": "video", "show_display": True},
     )
     output = rep.run()
     assert output.parameters.constants["id"] == rep.id
@@ -60,12 +61,22 @@ def test_replay_by_dir():
     """Run an experiment replay specifying the dataset by its directory path."""
     rep = sim.ReplayRun(
         parameters=reg.gen.Replay(
-            **util.AttrDict(
-                {"refDir": "SchleyerGroup/processed/exploration/30controls"}
-            )
+            refDir="SchleyerGroup/processed/exploration/30controls"
         ).nestedConf,
         id="replay_by_dir",
         dir="./media/replay_by_dir",
     )
     output = rep.run()
     assert output.parameters.constants["id"] == rep.id
+
+
+# def test_replay_visualization():
+#     """Run an experiment replay with visualization."""
+#     rep = sim.ReplayRun(
+#         parameters=reg.gen.Replay(refID=reg.default_refID).nestedConf,
+#         id=f"{reg.default_refID}_replay_visualization",
+#         dir=f"./media/replay_visualization",
+#         screen_kws={"vis_mode":"video", "show_display":True}
+#     )
+#     output = rep.run()
+#     assert output.parameters.constants["id"] == rep.id
