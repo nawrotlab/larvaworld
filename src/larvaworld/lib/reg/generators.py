@@ -56,6 +56,9 @@ __all__ = [
     "EnvConf",
     "LabFormat",
     "ExpConf",
+    "ReplayConfGroup",
+    "ReplayConfUnit",
+    "ReplayConf",
 ]
 
 gen = AttrDict(

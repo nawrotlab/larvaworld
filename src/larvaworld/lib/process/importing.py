@@ -80,7 +80,8 @@ def import_Jovanic(
 
 def import_Schleyer(source_dir, tracker, filesystem, save_mode="semifull", **kwargs):
     """
-     Builds a larvaworld dataset from Schleyer-lab-specific raw data
+     Builds a larvaworld dataset from Schleyer-lab-specific raw data.
+     The data is available at https://doi.gin.g-node.org/10.12751/g-node.5e1ifd/
 
     Parameters
     ----------

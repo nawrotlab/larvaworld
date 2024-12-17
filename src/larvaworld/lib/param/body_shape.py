@@ -165,13 +165,18 @@ class SegmentedBody(BodyMobile):
         y0 = np.max(p.exterior.coords.xy[1])
 
         # Segment body via vertical lines
-        ps = [p]
-        for cum_r in np.cumsum(R):
-            l = geometry.LineString([(1 - cum_r, y0), (1 - cum_r, -y0)])
-            new_ps = []
-            for p in ps:
-                new_ps += list(ops.split(p, l).geoms)
-            ps = new_ps
+        multiline = geometry.MultiLineString(
+            [
+                geometry.LineString([(1 - cum_r, y0), (1 - cum_r, -y0)])
+                for cum_r in np.cumsum(R)
+            ]
+        )
+
+        # Divide multipolygon by lines
+        for line in multiline.geoms:
+            p = geometry.MultiPolygon(ops.split(p, line).geoms)
+
+        ps = list(p.geoms)
 
         # Sort segments so that front segments come first
         ps.sort(key=lambda x: x.exterior.xy[0], reverse=True)
@@ -189,14 +194,15 @@ class SegmentedBody(BodyMobile):
         for i in range(len(ps)):
             if i == 0:
                 ind = np.argmax(ps[i][:, 0])
-                ps[i] = np.flip(np.roll(ps[i], -ind - 1, axis=0), axis=0)
+                ps[i] = np.roll(ps[i], -ind - 1, axis=0)
             else:
-                ps[i] = np.flip(np.roll(ps[i], 1, axis=0), axis=0)
+                ps[i] = np.roll(ps[i], 1, axis=0)
+            ps[i] = np.flip(ps[i], axis=0)
             _, idx = np.unique(ps[i], axis=0, return_index=True)
             ps[i] = ps[i][np.sort(idx)]
             if closed:
                 ps[i] = np.concatenate([ps[i], [ps[i][0]]])
-            ps = [util.np2Dtotuples(pp) for pp in ps]
+        ps = [util.np2Dtotuples(pp) for pp in ps]
         return ps
 
     def generate_seg_positions(self):
@@ -245,7 +251,7 @@ class SegmentedBody(BodyMobile):
         ps = [geometry.Polygon(seg.vertices) for seg in self.segs]
         if scale != 1:
             ps = [affinity.scale(p, xfact=scale, yfact=scale) for p in ps]
-        return ops.cascaded_union(ps).boundary.coords
+        return ops.unary_union(ps).boundary.coords
 
     @property
     def global_midspine_of_body(self):

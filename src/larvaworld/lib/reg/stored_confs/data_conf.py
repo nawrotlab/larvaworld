@@ -28,7 +28,9 @@ def LabFormat_dict():
             "filesystem": Filesystem(
                 **{
                     "read_sequence": ["Step"]
-                    + nam.midline_xy(12, flat=True)
+                    + nam.midline_xy(
+                        12, reverse=True, flat=True
+                    )  # As stated in the dataset description midline order is reversed from rear to front. See https://doi.gin.g-node.org/10.12751/g-node.5e1ifd/
                     + nam.contour_xy(22, flat=True)
                     + nam.centroid_xy
                     + [

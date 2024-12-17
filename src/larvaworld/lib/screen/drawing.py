@@ -129,7 +129,7 @@ class AgentDrawOps(NestedConf):
     Options for drawing the agents on the screen.
     """
 
-    visible_trails = Boolean(True, doc="Draw the larva trajectories")
+    visible_trails = Boolean(False, doc="Draw the larva trajectories")
     trail_dt = PositiveNumber(20, step=0.2, doc="Duration of the drawn trajectories")
     trail_color = param.Selector(
         objects=["normal", "linear", "angular"],
