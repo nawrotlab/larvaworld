@@ -151,6 +151,8 @@ Launch the web server :
 
 `larvaworld-app`
 
+Then open http://localhost:5006 in your browser (if not automatically opened).
+
 ## GUI (deprecated)
 
 A user-friendly GUI allows easy importation, inspection and analysis of data, model, life-history and environment configuration, visualization and data-acquisition setup and control over simulations, essays and batch-runs. Videos and tutorials are also available. In principle the user shouldn't have to mess with the code at all.

@@ -165,8 +165,6 @@ def define_default_refID():
 
 default_refID = define_default_refID()
 
-vprint("Registry configured!", 2)
-
 
 def default_ref():
     return loadRef(default_refID, load=True)
@@ -180,3 +178,5 @@ def default_model():
 
 
 config.resetConfs(init=True)
+
+vprint("Registry configured!", 2)

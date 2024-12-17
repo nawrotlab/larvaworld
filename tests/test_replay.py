@@ -1,12 +1,13 @@
+import pytest
 import larvaworld
 from larvaworld.lib import reg, sim, util
 
 larvaworld.VERBOSE = 1
 
 
+# @pytest.mark.parametrize("a", range(1000))
 def test_replay():
-    refIDs = reg.conf.Ref.confIDs
-    refID = refIDs[-1]
+    refID = reg.default_refID
     d = reg.conf.Ref.loadRef(refID)
     replay_kws = {
         "normal": {"time_range": (10, 80)},
@@ -55,3 +56,18 @@ def test_replay():
         output = rep.run()
         assert output.parameters.constants["id"] == rep.id
         # raise
+
+
+def test_replay_by_dir():
+    """Run an experiment replay specifying the dataset by its directory path."""
+    rep = sim.ReplayRun(
+        parameters=reg.gen.Replay(
+            **util.AttrDict(
+                {"refDir": "SchleyerGroup/processed/exploration/30controls"}
+            )
+        ).nestedConf,
+        id="replay_by_dir",
+        dir="./media/replay_by_dir",
+    )
+    output = rep.run()
+    assert output.parameters.constants["id"] == rep.id

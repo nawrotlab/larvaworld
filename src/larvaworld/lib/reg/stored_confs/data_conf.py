@@ -118,21 +118,18 @@ def LabFormat_dict():
 
 
 @funcs.stored_conf("Ref")
-def Ref_dict(DATA=None):
-    if DATA is None:
-        DATA = DATA_DIR
+def Ref_dict():
     dds = [
-        [f"{DATA}/JovanicGroup/processed/AttP{g}/{c}" for g in ["2", "240"]]
+        [f"{DATA_DIR}/JovanicGroup/processed/AttP{g}/{c}" for g in ["2", "240"]]
         for c in ["Fed", "Deprived", "Starved"]
     ]
     dds = util.flatten_list(dds)
-    dds.append(f"{DATA}/SchleyerGroup/processed/exploration/dish")
-    dds.append(f"{DATA}/SchleyerGroup/processed/exploration/40controls")
-    dds.append(f"{DATA}/SchleyerGroup/processed/no_odor/150controls")
+    dds.append(f"{DATA_DIR}/SchleyerGroup/processed/exploration/dish")
+    dds.append(f"{DATA_DIR}/SchleyerGroup/processed/exploration/40controls")
+    dds.append(f"{DATA_DIR}/SchleyerGroup/processed/no_odor/150controls")
     entries = {}
     for dr in dds:
         f = f"{dr}/data/conf.txt"
-        # f = reg.datapath('conf', dr)
         if os.path.isfile(f):
             try:
                 with open(f) as tfp:

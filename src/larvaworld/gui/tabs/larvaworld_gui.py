@@ -18,16 +18,16 @@ __all__ = [
 def build_tab_dict():
     tab_dict = {
         "intro": (tabs.intro.IntroTab, None, None, "introduction"),
-        "model": (tabs.model.ModelTab, "Model", "Model", "larva-model"),
-        "life": (tabs.life_history.LifeTab, "Life", "Life", "life-history"),
-        "sim": (tabs.simulation.SimTab, "Exp", "Exp", "simulation"),
-        "batch": (tabs.batch_run.BatchTab, "Batch", "Batch", "batch-exec"),
-        "essay": (tabs.essay.EssayTab, "Essay", "essay_conf", "essay"),
-        "import": (tabs.importing.ImportTab, "Group", None, "import"),
+        # "model": (tabs.model.ModelTab, "Model", "Model", "larva-model"),
+        # "life": (tabs.life_history.LifeTab, "Life", "Life", "life-history"),
+        # "sim": (tabs.simulation.SimTab, "Exp", "Exp", "simulation"),
+        # "batch": (tabs.batch_run.BatchTab, "Batch", "Batch", "batch-exec"),
+        # "essay": (tabs.essay.EssayTab, "Essay", "essay_conf", "essay"),
+        # "import": (tabs.importing.ImportTab, "Group", None, "import"),
         "anal": (tabs.analysis.AnalysisTab, None, None, "analysis"),
         "vid": (tabs.videos.VideoTab, None, None, "videos"),
-        "tutor": (tabs.tutorial.TutorialTab, None, None, "tutorials"),
-        "set": (tabs.settings.SettingsTab, None, None, "settings"),
+        # "tutor": (tabs.tutorial.TutorialTab, None, None, "tutorials"),
+        # "set": (tabs.settings.SettingsTab, None, None, "settings"),
     }
     return tab_dict
 

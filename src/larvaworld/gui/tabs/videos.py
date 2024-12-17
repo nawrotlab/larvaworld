@@ -13,7 +13,7 @@ __all__ = [
 class VideoTab(gui_aux.GuiTab):
     def build(self):
         link0 = (
-            "http://computational-systems-neuroscience.de/wp-content/uploads/2021/04/"
+            "http://computational-systems-neuroscience.de/wp-content/uploads/2024/10/"
         )
         f0 = f"{ROOT_DIR}/gui/media/video"
         fs = [f for f in os.listdir(f0) if f.endswith("png")]
