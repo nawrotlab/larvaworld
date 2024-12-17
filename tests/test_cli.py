@@ -76,7 +76,8 @@ def test_cli_GA_args():
 
 
 # FIXME - This test is failing because the Ref.confIDs is empty. Should be fixed by importing larvaworld once at installation.
-def xtest_cli_replay_args():
+# Check if solved by importing larvaworld once at installation.
+def test_cli_replay_args():
     """Run an experiment replay specifying the dataset by its reference ID."""
     run, args = cli_args(f"Replay -refID {reg.default_refID}")
     assert args.sim_mode == "Replay"
@@ -87,7 +88,8 @@ def xtest_cli_replay_args():
 
 
 # FIXME - This test is failing because the Ref.confIDs and Model.confIDs is empty. Should be fixed by importing larvaworld once at installation.
-def xtest_cli_evaluation_args():
+# Check if solved by importing larvaworld once at installation.
+def test_cli_evaluation_args():
     """Perform an experiment evaluation run."""
     run, args = cli_args(
         f"Eval -refID {reg.default_refID} -modelIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 10"
