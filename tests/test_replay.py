@@ -5,6 +5,8 @@ from larvaworld.lib import reg, sim, util
 larvaworld.VERBOSE = 1
 
 
+
+
 # @pytest.mark.parametrize("a", range(1000))
 def test_replay():
     refID = reg.default_refID
@@ -13,20 +15,20 @@ def test_replay():
         "normal": {"time_range": (10, 80)},
         "dispersal": {"transposition": "origin", "time_range": (60, 120)},
         "fixed_point": {
-            "agent_ids": [1],
+            "agent_ids": [0],
             "close_view": True,
             "fix_point": 6,
             "time_range": (80, 100),
         },
         "fixed_segment": {
-            "agent_ids": [1],
+            "agent_ids": [0],
             "close_view": True,
             "fix_point": 6,
             "fix_segment": "rear",
             "time_range": (100, 130),
         },
         "fixed_overlap": {
-            "agent_ids": [1],
+            "agent_ids": [0],
             "close_view": True,
             "fix_point": 6,
             "fix_segment": "front",
