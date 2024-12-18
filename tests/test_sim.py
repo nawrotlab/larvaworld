@@ -4,7 +4,7 @@ from larvaworld.lib.process.dataset import LarvaDataset
 
 expIDs = [
     # "tethered",
-    "dish",
+    # "dish",
     "dispersion_x2",
     "chemorbit",
     # "chemotaxis_diffusion",
