@@ -7,7 +7,7 @@ larvaworld.VERBOSE = 1
 
 replay_confs = [
     ("normal", {"time_range": (40, 60)}),
-    ("dispersal", {"transposition": "origin", "time_range": (0, 20)}),
+    # ("dispersal", {"transposition": "origin", "time_range": (0, 20)}),
     (
         "fixed_point",
         {
