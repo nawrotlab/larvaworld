@@ -6,7 +6,7 @@ larvaworld.VERBOSE = 1
 
 
 replay_confs = [
-    ("normal", {"time_range": (40, 60)}),
+    ("normal", {}),
     # ("dispersal", {"transposition": "origin", "time_range": (0, 20)}),
     (
         "fixed_point",
@@ -14,7 +14,7 @@ replay_confs = [
             "agent_ids": [0],
             "close_view": True,
             "fix_point": 6,
-            "time_range": (80, 100),
+            # "time_range": (80, 100),
         },
     ),
     (
@@ -24,7 +24,7 @@ replay_confs = [
             "close_view": True,
             "fix_point": 6,
             "fix_segment": "rear",
-            "time_range": (100, 130),
+            # "time_range": (100, 130),
         },
     ),
     (
@@ -37,8 +37,8 @@ replay_confs = [
             "overlap_mode": True,
         },
     ),
-    ("2segs", {"draw_Nsegs": 2, "time_range": (80, 100)}),
-    ("all_segs", {"draw_Nsegs": 11, "time_range": (80, 100)}),
+    ("2segs", {"draw_Nsegs": 2}),
+    ("all_segs", {"draw_Nsegs": 11}),
 ]
 
 
@@ -51,7 +51,7 @@ def test_replay(id, conf):
         # dataset=d,
         id=f"{refID}_replay_{id}",
         dir=f"./media/{id}",
-        screen_kws={"vis_mode": "video", "show_display": True},
+        # screen_kws={"vis_mode": "video", "show_display": True},
     )
     output = rep.run()
     assert output.parameters.constants["id"] == rep.id
@@ -70,13 +70,15 @@ def test_replay_by_dir():
     assert output.parameters.constants["id"] == rep.id
 
 
-# def test_replay_visualization():
-#     """Run an experiment replay with visualization."""
-#     rep = sim.ReplayRun(
-#         parameters=reg.gen.Replay(refID=reg.default_refID).nestedConf,
-#         id=f"{reg.default_refID}_replay_visualization",
-#         dir=f"./media/replay_visualization",
-#         screen_kws={"vis_mode":"video", "show_display":True}
-#     )
-#     output = rep.run()
-#     assert output.parameters.constants["id"] == rep.id
+def test_replay_visualization():
+    """Run an experiment replay with visualization."""
+    rep = sim.ReplayRun(
+        parameters=reg.gen.Replay(
+            refID=reg.default_refID, time_range=(40, 60)
+        ).nestedConf,
+        id=f"{reg.default_refID}_replay_visualization",
+        dir=f"./media/replay_visualization",
+        screen_kws={"vis_mode": "video", "show_display": True},
+    )
+    output = rep.run()
+    assert output.parameters.constants["id"] == rep.id
