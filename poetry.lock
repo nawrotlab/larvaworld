@@ -360,17 +360,6 @@ files = [
 ]
 
 [[package]]
-name = "cli-test-helpers"
-version = "4.0.0"
-description = "Useful helpers for writing tests for your Python CLI program."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "cli-test-helpers-4.0.0.tar.gz", hash = "sha256:322e23eb329d6c6f7768a69385fc1b9e8cb8dd161628fee09988a3cd97745b0e"},
-    {file = "cli_test_helpers-4.0.0-py3-none-any.whl", hash = "sha256:ada66063f17b43cc885a647d976c2559bffe4001a4c213401fa27e77e57fcf69"},
-]
-
-[[package]]
 name = "click"
 version = "8.1.7"
 description = "Composable command line interface toolkit"
@@ -778,8 +767,11 @@ name = "docutils"
 version = "0.18.1"
 description = "Docutils -- Python Documentation Utilities"
 optional = false
-python-versions = "*"
-files = []
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+files = [
+    {file = "docutils-0.18.1-py2.py3-none-any.whl", hash = "sha256:23010f129180089fbcd3bc08cfefccb3b890b0050e1ca00c867036e9d161b98c"},
+    {file = "docutils-0.18.1.tar.gz", hash = "sha256:679987caf361a7539d76e584cbeddc311e3aee937877c87346f31debc63e9d06"},
+]
 
 [[package]]
 name = "exceptiongroup"
@@ -3461,4 +3453,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "ac4902373371e83320bfceb8f8dcc152f942266994aed7bc4f1bc7245ebc490a"
+content-hash = "f91ec9eedef0ddc371b497f5b6cc4bae54481a8bc3fc5bd4fd8f5791f3e24176"
