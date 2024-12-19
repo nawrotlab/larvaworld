@@ -120,7 +120,7 @@ class GAselector(SpaceDict):
         doc="Number of generations to run for the genetic algorithm engine",
     )
     Nagents = param.Integer(
-        default=30,
+        default=20,
         label="# agents per generation",
         doc="Number of agents per generation",
     )

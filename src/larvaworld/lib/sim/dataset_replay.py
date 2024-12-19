@@ -12,7 +12,7 @@ __all__ = [
 
 
 class ReplayRun(BaseRun):
-    def __init__(self, parameters, dataset=None, **kwargs):
+    def __init__(self, parameters, dataset=None, screen_kws={}, **kwargs):
         """
         Simulation mode 'Replay' reconstructs a real or simulated experiment from stored data.
 
@@ -29,7 +29,9 @@ class ReplayRun(BaseRun):
         self.refDataset = copy.deepcopy(d)
 
         # Configure the dataset to replay
-        self.refDataset = self.smaller_dataset(p=parameters, d=self.refDataset)
+        self.refDataset, screen_kws["background_motion"] = self.smaller_dataset(
+            p=parameters, d=self.refDataset
+        )
         c = self.refDataset.config
         parameters.steps = c.Nsteps
         kwargs.update(**{"duration": c.duration, "dt": c.dt, "Nsteps": c.Nsteps})
@@ -37,7 +39,13 @@ class ReplayRun(BaseRun):
         if parameters.draw_Nsegs == "all":
             parameters.draw_Nsegs = c.Npoints - 1
 
-        super().__init__(runtype="Replay", parameters=parameters, **kwargs)
+        if parameters.overlap_mode:
+            screen_kws["vis_mode"] = "image"
+            screen_kws["image_mode"] = "overlap"
+
+        super().__init__(
+            runtype="Replay", parameters=parameters, screen_kws=screen_kws, **kwargs
+        )
 
     @property
     def configuration_text(self):
@@ -58,12 +66,6 @@ class ReplayRun(BaseRun):
         self.draw_Nsegs = self.p.draw_Nsegs
         self.build_env(self.p.env_params)
         self.build_agents(d=self.refDataset)
-        screen_kws = {
-            "mode": "video" if not self.p.overlap_mode else "image",
-            "show_display": True,
-            "image_mode": "overlap" if self.p.overlap_mode else None,
-            "background_motion": self.background_motion,
-        }
 
     def build_agents(self, d):
         s, e, c = d.data
@@ -73,17 +75,11 @@ class ReplayRun(BaseRun):
         else:
             ls = np.ones(c.N) * 0.005
 
-        ors = ["front_orientation", "rear_orientation"]
-        assert util.cols_exist(ors, s)
-        # mid_ps = c.midline_xy
-        # con_ps = c.contour_xy
+        assert util.cols_exist(["front_orientation", "rear_orientation"], s)
         if self.p.draw_Nsegs is not None:
             if self.p.draw_Nsegs == 2:
                 pass
             elif self.p.draw_Nsegs == c.Npoints - 1:
-                # or_ps = c.seg_orientations
-                # assert or_ps.exist_in(s)
-                # assert mid_ps.exist_in(s)
                 seg_orientD = d.midline_seg_orients_data_byID
                 midlineD = d.midline_seg_xy_data_byID
             else:
@@ -167,12 +163,6 @@ class ReplayRun(BaseRun):
             c.agent_ids = c.agent_ids[:1]
         d.update_ids_in_data()
 
-        if p.env_params is None:
-            p.env_params = c.env_params.nestedConf
-
-        if p.close_view:
-            p.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01)).nestedConf
-
         s = d.step_data
 
         if p.time_range is not None:
@@ -183,11 +173,22 @@ class ReplayRun(BaseRun):
         assert util.cols_exist(xy_pars, s)
         s[["x", "y"]] = s[xy_pars]
 
+        if p.env_params is None:
+            p.env_params = c.env_params.nestedConf
+
+        if p.close_view:
+            p.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01)).nestedConf
+
         if c.fix_point is not None:
-            s, bg = util.fixate_larva(s, c, P1=c.fix_point, P2=c.fix_point2)
+            s, bg = util.fixate_larva(
+                s,
+                c,
+                arena_dims=p.env_params.arena.dims,
+                P1=c.fix_point,
+                P2=c.fix_point2,
+            )
         else:
             bg = None
-        self.background_motion = bg
 
         if p.transposition is not None:
             s = util.align_trajectories(
@@ -198,4 +199,4 @@ class ReplayRun(BaseRun):
 
         d.set_data(step=s)
 
-        return d
+        return d, bg

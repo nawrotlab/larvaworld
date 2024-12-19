@@ -15,7 +15,8 @@ def main():
             "lateral_oscillator": lateral_oscillator_app,
             "track_viewer": track_viewer_app,
             "experiment_viewer": experiment_viewer_app,
-        }
+        },
+        port=5006,
     )
 
 

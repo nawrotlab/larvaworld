@@ -240,10 +240,19 @@ class ExpRun(BaseRun):
         if "disp" in exp:
             samples = util.unique_list([d.config.sample for d in ds])
             ds += [reg.conf.Ref.loadRef(sd) for sd in samples if sd is not None]
-        graphgroups = reg.graphs.get_analysis_graphgroups(exp, self.p.source_xy)
         self.figs = reg.graphs.eval_graphgroups(
-            graphgroups, datasets=ds, save_to=self.plot_dir, **kwargs
+            self.graphgroups, datasets=ds, save_to=self.plot_dir, **kwargs
         )
+
+    @property
+    def graphgroups(self):
+        """
+        Retrieve the graph groups for the current experiment type.
+
+        Returns:
+            list: A list of graph groups corresponding to the experiment type.
+        """
+        return reg.graphs.get_analysis_graphgroups(self.experiment, self.p.source_xy)
 
     def store(self):
         """

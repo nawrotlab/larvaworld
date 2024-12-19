@@ -263,7 +263,7 @@ class GraphRegistry:
 
         """
         ID = source_ID
-        gID = f"locomotion relative to source {ID}"
+        gID = f"locomotion_relative_to_source_{ID}"
         d0 = [
             # FIXME Currently the bearing related plots are buggy
             # self.entry('bearing/turn', name=f'bearing to {ID}', min_angle=5.0, ref_angle=None, source_ID=ID, **kwargs),
@@ -320,10 +320,11 @@ class GraphRegistry:
                 if k in exp:
                     groups += v
 
+        # FIXME Currently the source related plots don't work as expected. Timeplot takes forever and bearing related plots are buggy
         groups += [
             self.source_graphgroup(id, pos=pos, **kwargs) for id, pos in sources.items()
         ]
-        return groups
+        return self.grouplist_to_dict(groups)
 
     def build_graphgroups(self):
         """
@@ -378,7 +379,7 @@ class GraphRegistry:
                         "timeplots",
                         "chemosensation",
                         ks=["c_odor1", "dc_odor1", "A_olf", "A_T", "I_T"],
-                        individuals=True,
+                        individuals=False,
                     ),
                     self.entry("trajectories"),
                     # self.entry('turn amplitude'),

@@ -900,7 +900,7 @@ def align_trajectories(
         return ss
 
 
-def fixate_larva(s, c, P1, P2=None):
+def fixate_larva(s, c, arena_dims, P1, P2=None):
     """
     Adjusts the coordinates of a larva in the dataset to fixate a primary point (P1) to the arena center,
     and optionally a secondary point (P2) to the vertical axis.
@@ -922,7 +922,7 @@ def fixate_larva(s, c, P1, P2=None):
     if not nam.xy(P1).exist_in(s):
         raise ValueError(f" The requested {P1} is not part of the dataset")
     vprint(f"Fixing {P1} to arena center")
-    X, Y = c.env_params.arena.dims
+    X, Y = arena_dims
     xy = s[nam.xy(P1)].values
     xy_start = s[nam.xy(P1)].dropna().values[0]
     bg_x = (xy[:, 0] - xy_start[0]) / X

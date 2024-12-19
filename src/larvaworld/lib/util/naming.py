@@ -180,20 +180,22 @@ class NamingRegistry(AttrDict):
     def contour(self, Nc):
         return [f"contour{i}" for i in range(Nc)]
 
-    def midline(self, N, type="point"):
+    def midline(self, N, type="point", reverse=False):
         if N >= 2:
             points = ["head"] + [f"{type}{i}" for i in np.arange(2, N, 1)] + ["tail"]
         elif N == 1:
             points = ["body"]
         else:
             points = []
+        if reverse:
+            points.reverse()
         return points
 
     def contour_xy(self, Nc, flat=False, xsNys=False):
         return self.xy(self.contour(Nc), flat=flat, xsNys=xsNys)
 
-    def midline_xy(self, N, flat=False, xsNys=False):
-        return self.xy(self.midline(N), flat=flat, xsNys=xsNys)
+    def midline_xy(self, N, reverse=False, flat=False, xsNys=False):
+        return self.xy(self.midline(N, reverse=reverse), flat=flat, xsNys=xsNys)
 
     @property
     def centroid_xy(self):

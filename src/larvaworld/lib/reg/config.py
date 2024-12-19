@@ -356,7 +356,7 @@ class ConfType(param.Parameterized):
 
         return conf
 
-    # @param.depends('confIDs','dict', watch=True)
+    @param.depends("dict", watch=True)
     def confID_selector(self, default=None, single=True):
         """
         A configuration selector object.
@@ -372,6 +372,7 @@ class ConfType(param.Parameterized):
         - OptionalSelector or ListSelector: A selector object for configuration IDs.
 
         """
+        # self.reset()
         kws = {
             "default": default,
             "objects": self.confIDs,

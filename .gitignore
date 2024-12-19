@@ -54,6 +54,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+.ruff_cache/
 
 # Translations
 *.mo
@@ -77,6 +78,7 @@ docs/_build/
 /docs/source/content/
 /docs/build/
 /dist/
+/docs/diagram/
 
 # PyBuilder
 .pybuilder/

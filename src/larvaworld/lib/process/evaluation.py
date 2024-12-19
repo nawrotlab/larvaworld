@@ -331,7 +331,9 @@ class Evaluation(NestedConf):
         ),
         doc="Evaluation metrics to use",
     )
-    cycle_curve_metrics = param.List()
+    cycle_curve_metrics = param.List(
+        default=["sv", "fov", "rov", "foa", "b"], doc="Stride-cycle metrics to evaluate"
+    )
 
     def __init__(self, dataset=None, **kwargs):
         super().__init__(**kwargs)

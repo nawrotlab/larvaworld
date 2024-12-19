@@ -70,7 +70,6 @@ typing-extensions = "4.12.*"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
 pytest-cov = "^5.0.0"
-cli-test-helpers = "^4.0.0"
 
 [tool.poetry.group.nengo]
 optional = false
