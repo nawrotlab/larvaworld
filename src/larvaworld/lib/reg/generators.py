@@ -745,8 +745,7 @@ class LabFormat(NestedConf):
              The ID under which to store the imported dataset.
              If not provided it is set by default.
 
-         N: integer, optional
-             The number of larvae in the dataset.
+         
          sample: string, optional
              The reference ID of the reference dataset from which the current is sampled.
          color: string

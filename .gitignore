@@ -150,6 +150,7 @@ cython_debug/
 /src/larvaworld/data/JovanicGroup/
 /src/larvaworld/data/SimGroup/
 /src/larvaworld/data/SchleyerGroup/processed/
+/src/larvaworld/data/SchleyerGroup/raw/naive
 /src/larvaworld/lib/reg/confDicts/
 
 #Poetry
