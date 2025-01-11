@@ -94,6 +94,10 @@ jobs:
         run: |
           git checkout -B ${{ github.ref_name }} ${{ github.sha }}
 
+      - name: Print debug info
+        run: |
+          echo "ref_name: ${{ github.ref_name }} sha=${{ github.sha }}"
+
       # Do a dry run of PSR
       - name: Test release
         uses: python-semantic-release/python-semantic-release@v9.8.1
