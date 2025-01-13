@@ -96,7 +96,13 @@ jobs:
 
       - name: Print debug info
         run: |
-          echo "ref_name: ${{ github.ref_name }} sha=${{ github.sha }}"
+          echo "ref_name: '${{ github.ref_name }}' sha=${{ github.sha }}"
+
+      # On main branch: actual PSR + upload to PyPI & GitHub
+      - name: Conditional test
+        if: github.ref_name == 'master'
+        run: |
+          echo "ref_name: '${{ github.ref_name }}' sha=${{ github.sha }}"
 
       # Do a dry run of PSR
       - name: Test release
