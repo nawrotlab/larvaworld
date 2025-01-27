@@ -31,20 +31,22 @@ class EvalConf(LarvaGroupMutator, DataEvaluation):
         self.target.config.color = "grey"
 
 
+#TODO this should be a subclass of SimConfigurationParams and not of SimConfiguration. 
+# This should be adjusted in order to remove also the need for the LarvaGroupMutator parent class of EvalConf 
+# (note that the args N,modelIDS, groupIDs are common in LarvaGroupMutator and SimConfigurationParams)
 class EvalRun(EvalConf, SimConfiguration):
     def __init__(self, enrichment=True, screen_kws={}, **kwargs):
-        """
-        Simulation mode 'Eval' compares/evaluates different models against a reference dataset obtained by a real or simulated experiment.
+        """Model evaluation mode. This mode is used to evaluate a number of larva models 
+        for similarity with a preexisting reference dataset, most often one retained 
+        via monitoring real experiments. The evaluation is done by comparing the
+        trajectories of the models with the reference dataset, via several evaluation metrics. 
 
         Args:
-            parameters: Dictionary of configuration parameters to be passed to the ABM model
-            dataset: The stored dataset used as reference to evaluate the performance of the simulated models. If not specified it is retrieved using either the storage path (parameters.dir) or the respective unique reference ID (parameters.RefID)
-            dur: Duration of the simulation. If not specifies defaults to the reference dataset duration.
-            experiment: The type of experiment. Defaults to 'dispersion'
-            **kwargs: Arguments passed to parent class
-
+            enrichment (bool, optional): Whether to enrich the simulated datasets by deriving secondary pareameters. Defaults to True.
+            screen_kws (dict, optional): The screen visualization parameters. Defaults to {}.
         """
-        EvalConf.__init__(self, runtype="Eval", **kwargs)
+        
+        EvalConf.__init__(self, **kwargs)
         kwargs["dt"] = self.target.config.dt
         if "duration" not in kwargs:
             kwargs["duration"] = self.target.config.Nticks * kwargs["dt"] / 60
