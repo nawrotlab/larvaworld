@@ -28,13 +28,13 @@ class ReplayRun(BaseRun):
 
         
 
-        # Configure the dataset to replay
+        # Configure the dataset to replay (deprecated)
         # self.refDataset = copy.deepcopy(d)
         # self.refDataset, screen_kws["background_motion"] = self.smaller_dataset(
         #     p=parameters, d=self.refDataset
         # )
         
-        #Trying this out instead of the above
+        # Configure the dataset to replay (refactored)
         self.refDataset, screen_kws["background_motion"] = d.smaller_dataset(
             p=parameters
         )
@@ -132,7 +132,8 @@ class ReplayRun(BaseRun):
     def end(self):
         self.screen_manager.finalize()
 
-    # TODO: Refactor this as a method with args a Dataset and a ReplayConf objects. Use methods from Dataset not from util. Test this separately
+    '''
+    # NOTE: This has been refactored as a method in LarvaDataset
     def smaller_dataset(self, p, d):
         from ..process.dataset import DatasetConfig
 
@@ -208,3 +209,6 @@ class ReplayRun(BaseRun):
         d.set_data(step=s)
 
         return d, bg
+
+    '''
+    

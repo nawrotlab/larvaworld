@@ -54,7 +54,7 @@ __all__ = [
     "eudiNxN",
     "compute_dst",
     "comp_extrema",
-    "align_trajectories",
+    # "align_trajectories",
     "fixate_larva",
     "epoch_overlap",
     "epoch_slices",
@@ -831,7 +831,8 @@ def comp_extrema(a, order=3, threshold=None, return_2D=True):
         aa[i_max] = 1
     return aa
 
-
+    """
+    NOTE:Refactored as a method of LarvaDataset class
 def align_trajectories(
     s,
     c,
@@ -898,7 +899,7 @@ def align_trajectories(
             d.store(ss, f"traj.{mode}")
             vprint(f"traj_aligned2{mode} stored")
         return ss
-
+    """
 
 def fixate_larva(s, c, arena_dims, P1, P2=None):
     """
