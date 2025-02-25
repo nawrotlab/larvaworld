@@ -26,12 +26,19 @@ class ReplayRun(BaseRun):
         dir = parameters.refDir if "refDir" in parameters else None
         d = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID, dir=dir)
 
-        self.refDataset = copy.deepcopy(d)
+        
 
         # Configure the dataset to replay
-        self.refDataset, screen_kws["background_motion"] = self.smaller_dataset(
-            p=parameters, d=self.refDataset
+        # self.refDataset = copy.deepcopy(d)
+        # self.refDataset, screen_kws["background_motion"] = self.smaller_dataset(
+        #     p=parameters, d=self.refDataset
+        # )
+        
+        #Trying this out instead of the above
+        self.refDataset, screen_kws["background_motion"] = d.smaller_dataset(
+            p=parameters
         )
+        
         c = self.refDataset.config
         parameters.steps = c.Nsteps
         kwargs.update(**{"duration": c.duration, "dt": c.dt, "Nsteps": c.Nsteps})
@@ -125,7 +132,7 @@ class ReplayRun(BaseRun):
     def end(self):
         self.screen_manager.finalize()
 
-    # TODO: Refactor this as a method with args a Dataset and a ReplayConf objects. Test this separately
+    # TODO: Refactor this as a method with args a Dataset and a ReplayConf objects. Use methods from Dataset not from util. Test this separately
     def smaller_dataset(self, p, d):
         from ..process.dataset import DatasetConfig
 

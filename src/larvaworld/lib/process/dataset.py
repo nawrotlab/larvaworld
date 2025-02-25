@@ -1205,6 +1205,89 @@ class ParamLarvaDataset(param.Parameterized):
                 len(s.xs(id, level="AgentID", drop_level=True).dropna()) * c.dt
             )
         vprint(f"Rows excluded according to {flag}.", 1)
+        
+    def smaller_dataset(self, p):
+        """
+        Generate a smaller dataset based on the given ReplayConf parameters.
+
+        Args:
+            p (ReplayConf): The configuration for dataset replay.
+
+        Returns:
+            LarvaDataset: A subset of the original dataset.
+        """
+        d = copy.deepcopy(self)
+        c = d.config
+        # Ensure the dataset is loaded
+        d.load(h5_ks=["contour", "midline", "angular"])
+
+        # Update point tracking configuration
+        if p.track_point is not None:
+            c.point_idx = p.track_point
+
+        # Fix a specific point if required
+        if p.fix_point is not None:
+            c.fix_point = c.get_track_point(p.fix_point)
+            if c.fix_point == "centroid" or p.fix_segment is None:
+                c.fix_point2 = None
+            else:
+                P2_idx = p.fix_point + 1 if p.fix_segment == "rear" else p.fix_point - 1
+                c.fix_point2 = c.get_track_point(P2_idx)
+        else:
+            c.fix_point = None
+
+        # Select specific agent IDs if provided
+        if p.agent_ids not in [None, []]:
+            if isinstance(p.agent_ids, list) and all(isinstance(i, int) for i in p.agent_ids):
+                p.agent_ids = [c.agent_ids[i] for i in p.agent_ids]
+            elif isinstance(p.agent_ids, int):
+                p.agent_ids = [c.agent_ids[p.agent_ids]]
+            c.agent_ids = p.agent_ids
+
+        # If a fixation point is provided, only keep the first agent
+        if c.fix_point is not None:
+            c.agent_ids = c.agent_ids[:1]
+
+        # Update dataset based on selected agents
+        d.update_ids_in_data()
+
+        # Apply time slicing if specified
+        if p.time_range is not None:
+            d.step_data = d.timeseries_slice(time_range=p.time_range)
+
+        # Align trajectory to match tracking point
+        xy_pars = nam.xy(c.point)
+        if xy_pars.exist_in(d.step_data):
+            d.step_data[["x", "y"]] = d.step_data[xy_pars]
+
+        # Update environment parameters
+        if p.env_params is None:
+            p.env_params = c.env_params.nestedConf
+
+        # Reduce arena size for close view
+        if p.close_view:
+            p.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01)).nestedConf
+
+        # Fix larva orientation if required
+        if c.fix_point is not None:
+            d.step_data, bg = util.fixate_larva(
+                d.step_data,
+                c,
+                arena_dims=p.env_params.arena.dims,
+                P1=c.fix_point,
+                P2=c.fix_point2,
+            )
+        else:
+            bg = None
+
+        # Apply spatial transposition if specified
+        if p.transposition is not None:
+            d.step_data = d.align_trajectories(transposition=p.transposition, replace=True)
+            xy_max = 2 * np.max(d.step_data[nam.xy(c.point)].dropna().abs().values.flatten())
+            p.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max)).nestedConf
+
+        return d, bg
+
 
     def align_trajectories(
         self, track_point=None, arena_dims=None, transposition="origin", replace=True
@@ -1231,6 +1314,7 @@ class ParamLarvaDataset(param.Parameterized):
                 ss[y] -= arena_dims[1] / 2
             return ss
         else:
+            # s = self._load_step(h5_ks=["contour", "midline"])
             if track_point is None:
                 track_point = c.point
             XY = (
@@ -1267,10 +1351,6 @@ class ParamLarvaDataset(param.Parameterized):
             for x, y in xy_pairs:
                 ss[x] = ss[x].values - xs
                 ss[y] = ss[y].values - ys
-
-            # if d is not None:
-            #     d.store(ss, f'traj.{mode}')
-            #     reg.vprint(f'traj_aligned2{mode} stored')
             return ss
 
     def preprocess(
@@ -1397,10 +1477,7 @@ class ParamLarvaDataset(param.Parameterized):
             if mode == "default":
                 df = self._load_step(h5_ks=[])[["x", "y"]]
             elif mode in ["origin", "center"]:
-                s = self._load_step(h5_ks=["contour", "midline"])
-                df = util.align_trajectories(
-                    s, c=self.config, replace=False, transposition=mode
-                )[["x", "y"]]
+                df = self.align_trajectories(replace=False, transposition=mode)[["x", "y"]]
             else:
                 raise ValueError("Not implemented")
             self.store(df, key)
