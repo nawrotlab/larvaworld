@@ -125,6 +125,7 @@ class ReplayRun(BaseRun):
     def end(self):
         self.screen_manager.finalize()
 
+    # TODO: Refactor this as a method with args a Dataset and a ReplayConf objects. Test this separately
     def smaller_dataset(self, p, d):
         from ..process.dataset import DatasetConfig
 

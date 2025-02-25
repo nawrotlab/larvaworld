@@ -119,7 +119,7 @@ def define_default_refID_by_running_test():
     return conf.Ref.confIDs[0]
 
 
-def define_default_refID():
+def define_default_refID(id='exploration.30controls'):
     """
     Defines the default reference dataset ID for the package.
 
@@ -138,7 +138,9 @@ def define_default_refID():
     """
     R = conf.Ref
     R.cleanRefIDs()
-    if len(R.confIDs) == 0:
+    if id in R.confIDs:
+        return id
+    elif id=='exploration.30controls' and len(R.confIDs) == 0:
         vprint(
             "No reference datasets available.Automatically importing one from the experimental data folder.",
             2,
@@ -160,7 +162,9 @@ def define_default_refID():
         d.process(is_last=False)
         d.annotate(is_last=True)
         assert len(R.confIDs) == 1
-    return R.confIDs[0]
+        return id
+    else :
+        raise(ValueError(f"Reference dataset with ID {id} not found"))
 
 
 default_refID = define_default_refID()

@@ -1464,6 +1464,8 @@ class ParamLarvaDataset(param.Parameterized):
 
     @property
     def contour_xy_data_byID(self):
+        if self.c.Ncontour == 0:
+            return AttrDict({id : np.array([]) for id in self.ids})
         xy = self.c.contour_xy
         assert xy.exist_in(self.s)
         grouped = self.s[xy].groupby("AgentID")
