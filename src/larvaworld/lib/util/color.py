@@ -51,7 +51,7 @@ def random_colors(n):
     return ret
 
 
-def N_colors(N, as_rgb=False):
+def N_colors(N: int, as_rgb: bool = False) -> list:
     cols = [
         "green",
         "red",

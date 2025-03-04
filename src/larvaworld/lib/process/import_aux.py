@@ -127,6 +127,13 @@ def read_timeseries_from_raw_files_per_parameter(
 
     df = pd.concat(par_list, axis=1, sort=False)
     df.columns = columns
+    
+    # Set the AgentID as a string with the Larva prefix. 
+    # Omitting to do this causes error when creating the agents because of the unique_id interpreted as int.
+    # Implementing this needed debugging get_vs in comp_pooled_epochs in LarvaDataset
+    # Also implementing this causes errors in the trajectory importing. Dropping it
+    # df[aID] = "Larva_" + df[aID].astype(str)
+    
     df.set_index(keys=[aID], inplace=True, drop=True)
     df["Step"] = df["t"] / dt
     return df

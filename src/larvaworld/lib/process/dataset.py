@@ -931,6 +931,31 @@ class ParamLarvaDataset(param.Parameterized):
         vprint("Completed bout detection.", 1)
 
     def comp_pooled_epochs(self):
+        """
+        Compute pooled epochs from chunk dictionaries.
+
+        This method processes the `chunk_dicts` attribute to create `epoch_dicts` and `pooled_epochs`.
+        It first extracts unique epoch keys from the chunk dictionaries and then constructs a dictionary
+        of epochs (`epoch_dicts`) where each key corresponds to a dictionary of chunk data.
+
+        The method then defines an inner function `get_vs` to concatenate values from the dictionaries,
+        handling cases where the values have different shapes. If the majority of the values have a shape
+        of 2 dimensions, it filters out those with a shape of 1 dimension before concatenation.
+
+        Finally, it creates the `pooled_epochs` attribute by concatenating the values for each epoch key,
+        excluding specific keys such as "turn_slice", "pause_idx", "run_idx", and "stride_idx".
+
+        Attributes:
+            chunk_dicts (dict): A dictionary containing chunk data.
+            epoch_dicts (AttrDict): A dictionary of epochs with chunk data.
+            pooled_epochs (AttrDict): A dictionary of concatenated epoch data.
+
+        Raises:
+            Exception: If there is an issue with concatenating the values in `get_vs`.
+
+        Prints:
+            "Completed bout detection." upon successful completion.
+        """
         d0 = self.chunk_dicts
         epoch_ks = SuperList([list(dic.keys()) for dic in d0.values()]).flatten.unique
         self.epoch_dicts = AttrDict(
@@ -939,19 +964,20 @@ class ParamLarvaDataset(param.Parameterized):
 
         def get_vs(dic):
             l = SuperList(dic.values())
-            try:
-                sh = [len(ll.shape) for ll in l]
-                if sh.count(2) > sh.count(1):
-                    l = SuperList([ll for ll in l if len(ll.shape) == 2])
-            except:
-                pass
-            return np.concatenate(l)
+            
+            # Filter out empty arrays or lists
+            l = SuperList([ll for ll in l if (isinstance(ll, np.ndarray) and ll.size > 0) or (isinstance(ll, list) and len(ll) > 0)])
+            
+            if len(l) == 0:
+                return np.array([])
+            else:
+                return np.concatenate(l)
 
         self.pooled_epochs = AttrDict(
             {
                 k: get_vs(dic)
                 for k, dic in self.epoch_dicts.items()
-                if k not in ["turn_slice", "pause_idx", "run_idx", "stride_idx"]
+                # if k not in ["turn_slice", "pause_idx", "run_idx", "stride_idx"]
             }
         )
 
@@ -1329,7 +1355,7 @@ class ParamLarvaDataset(param.Parameterized):
             if mode == "origin":
                 vprint("Aligning trajectories to common origin")
                 xy = [
-                    s[XY].xs(id, level="AgentID").dropna().values[0] for id in self.ids
+                    s[XY].xs(id, level="AgentID").dropna().values[0] if not s[XY].xs(id, level="AgentID").dropna().empty else [0, 0] for id in self.ids
                 ]
             elif mode == "center":
                 vprint(
@@ -1542,7 +1568,7 @@ class ParamLarvaDataset(param.Parameterized):
     @property
     def contour_xy_data_byID(self):
         if self.c.Ncontour == 0:
-            return AttrDict({id : np.array([]) for id in self.ids})
+            return AttrDict({id : np.zeros([self.c.Nticks, 2]) * np.nan for id in self.ids})
         xy = self.c.contour_xy
         assert xy.exist_in(self.s)
         grouped = self.s[xy].groupby("AgentID")
@@ -1552,6 +1578,8 @@ class ParamLarvaDataset(param.Parameterized):
 
     @property
     def midline_xy_data_byID(self):
+        if self.c.Npoints == 0:
+            return AttrDict({id : np.zeros([self.c.Nticks, 2]) * np.nan for id in self.ids})
         xy = self.c.midline_xy
         # assert xy.exist_in(self.step_data)
         grouped = self.s[xy].groupby("AgentID")

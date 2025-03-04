@@ -156,3 +156,6 @@ cython_debug/
 #Poetry
 # poetry.lock
 .idea/**
+
+# Personal work - scripts
+my_work/
