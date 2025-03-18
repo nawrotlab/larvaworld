@@ -28,7 +28,8 @@ packages = [
 
 [tool.poetry.scripts]
 larvaworld = "larvaworld.cli.main:main"
-larvaworld-gui = "larvaworld.gui.main:main"
+# Currently GUI is not functional
+# larvaworld-gui = "larvaworld.gui.main:main"
 larvaworld-app = "larvaworld.dashboards.main:main"
 
 [tool.setuptools.package-data]
@@ -58,7 +59,8 @@ powerlaw = "1.5"
 progressbar = "2.5"
 pygame = "2.6.*"
 pypdf = "5.0.*"
-PySimpleGUI = "*"
+# PySimpleGUI is now located on a private PyPI server.  Please add to your pip command: -i https://PySimpleGUI.net/install
+#PySimpleGUI = "*"
 seaborn = "0.13.*"
 scikit-learn = "1.3.*"
 scipy = "1.9.*"

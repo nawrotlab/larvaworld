@@ -160,3 +160,6 @@ cython_debug/
 
 # Personal work - scripts
 my_work/
+
+# GUI obsolete since pysimplegui v.5
+src/larvaworld/gui/
