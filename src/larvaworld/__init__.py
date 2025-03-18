@@ -62,4 +62,4 @@ SIMTYPES = ["Exp", "Batch", "Ga", "Eval", "Replay"]
 CONFTYPES = ["Env", "LabFormat", "Ref", "Model", "Trial", "Exp", "Batch", "Ga"]
 # GROUPTYPES = ['LarvaGroup', 'FoodGroup', 'epoch']
 
-from . import lib, cli #, gui
+from . import lib, cli
