@@ -16,6 +16,7 @@ __all__ = [
     "model_summary",
     "velocity_definition",
     "dsp_summary",
+    "exploration_summary",
     "RvsS_summary",
     "DoublePatch_summary",
     "chemo_summary",
@@ -215,15 +216,14 @@ def velocity_definition(
     )
     fig.savefig(f"{save_to}/{save_as}", dpi=300)
 
-
 @funcs.graph(
-    "dispersal summary",
+    "exploration summary",
     required={"graphIDs": ["trajectories", "dispersal", "crawl pars"]},
 )
-def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
+def exploration_summary(datasets, target=None, range=(0, 40), **kwargs):
     w, h = 54, 26
     P = plot.GridPlot(
-        name=f"dsp_summary_{range}",
+        name=f"exploration_summary_{range}",
         width=w,
         height=h,
         scale=(0.4, 0.5),
@@ -237,7 +237,7 @@ def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
 
     P.plot(
         func="trajectories",
-        kws={"mode": "origin", "range": range, **kws},
+        kws={"mode": "default", "range": range, **kws},
         N=Nds,
         x0=True,
         y0=True,
@@ -253,6 +253,54 @@ def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
         w=30,
         w0=22,
         h0=14,
+        **kws2,
+    )
+    P.adjust((0.1, 0.95), (0.05, 0.9), 0.05, 0.1)
+    P.annotate()
+    return P.get()
+
+@funcs.graph(
+    "dispersal summary",
+    required={"graphIDs": ["trajectories", "dispersal", "endpoint box"]},
+)
+def dsp_summary(datasets, target=None, range=(0, 40), **kwargs):
+    w, h = 54, 26
+    P = plot.GridPlot(
+        name=f"dsp_summary_{range}",
+        width=w,
+        height=h,
+        scale=(0.4, 0.5),
+        text_xy0=(0.05, 0.95),
+        **kwargs,
+    )
+    ds = [target] + datasets if target is not None else datasets
+    Nds = len(ds)
+    kws = {"datasets": ds, "save_to": None, "subfolder": None, "show": False}
+    kws2 = {"h": 8, "share_h": True}
+    
+    t0, t1 = range
+    dsp_k = f"dsp_{int(t0)}_{int(t1)}"
+
+    P.plot(
+        func="trajectories",
+        kws={"mode": "origin", "range": range, **kws},
+        N=Nds,
+        x0=True,
+        y0=True,
+        dw=0,
+        **kws2,
+    )
+    P.plot(
+        func="dispersal", kws={"range": range, **kws}, N=1, w=16, h0=14, x0=True, dw=0, **kws2
+    )
+    P.plot(
+        func="endpoint box",
+        kws={"ks" : [f'{dsp_k}_mu',f'{dsp_k}_max'], **kws},
+        N=2,
+        w=30,
+        w0=22,
+        h0=14,
+        dw=5,
         **kws2,
     )
     P.adjust((0.1, 0.95), (0.05, 0.9), 0.05, 0.1)

@@ -97,7 +97,7 @@ class ReplayRun(BaseRun):
 
         confs = []
         for i, id in enumerate(c.agent_ids):
-            conf = util.AttrDict({"unique_id": id, "length": ls[i]})
+            conf = util.AttrDict({"unique_id": id, "length": ls[i], "color": d.config.color})
             data = util.AttrDict()
             ss = s.xs(id, level="AgentID", drop_level=True)
             xy = ss[["x", "y"]].values
