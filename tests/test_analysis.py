@@ -2,10 +2,8 @@ import pytest
 from larvaworld.lib.sim import ExpRun
 from larvaworld.lib.process.dataset import LarvaDataset
 
-expIDs = [
-    "dispersion",
-    "chemorbit"
-]
+expIDs = ["dispersion", "chemorbit"]
+
 
 @pytest.mark.parametrize("id", expIDs)
 def test_experiment_analysis(id):
@@ -15,4 +13,3 @@ def test_experiment_analysis(id):
     r.analyze()
     for d in r.datasets:
         assert isinstance(d, LarvaDataset)
-
