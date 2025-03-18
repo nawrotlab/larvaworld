@@ -2321,14 +2321,14 @@ files = [
 certifi = "*"
 
 [[package]]
-name = "PySimpleGUI"
-version = "4.70.1"
-description = "Python GUIs for Humans. Launched in 2018. It's 2024 & PySimpleGUI is an ACTIVE project. Super-simple to create custom GUI's. 340+ Demo programs & Cookbook for rapid start. Extensive documentation.  Great for beginners & advanced GUI programmers."
+name = "pysimplegui"
+version = "5.0.8.2"
+description = "PySimpleGUI is now located on a private PyPI server.  Please add to your pip command: --extra-index-url https://PySimpleGUI.net/install"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 files = [
-    {file = "PySimpleGUI-4.70.1-py3-none-any.whl", hash = "sha256:afdf64aaac0a6231b1bdac4c033a75daf8e259edb77b156fa86f6e2763bb8efd"},
-    {file = "PySimpleGUI-4.70.1.tar.gz", hash = "sha256:84b2bd09435a41d0a9cfd7ecbb464daa0557174cfd099068524266ed43b3525f"},
+    {file = "pysimplegui-5.0.8.2-py3-none-any.whl", hash = "sha256:b353edf41e9be6863da465731f12638693a022f01eee8c52bb3b6d50a3498692"},
+    {file = "pysimplegui-5.0.8.2.tar.gz", hash = "sha256:29580f9a432c9d54523ee65c61b90e8b83d10690f8daf66abedba415e5e90c65"},
 ]
 
 [[package]]
@@ -3457,4 +3457,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "e468a85cd6d3703618b0c6bf36c46226205eb63e9b0c851375f395c691a86402"
+content-hash = "a1867396590ac8b0fd4e1bc143db973b78b4338f48f4ee274942202c4b22c6cc"
