@@ -149,16 +149,22 @@ def combine_videos(
     """
     if files is None:
         files = files_in_dir(file_dir, suf=".mp4")
-    
+
     if len(files) < 2:
         raise ValueError("At least two video files are required to combine.")
 
     # Check if all videos have the same duration
     durations = []
     for file in files:
-        result = os.popen(f'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{file}"').read().strip()
+        result = (
+            os.popen(
+                f'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{file}"'
+            )
+            .read()
+            .strip()
+        )
         durations.append(float(result))
-    
+
     if len(set(durations)) != 1:
         raise ValueError("All videos must have the same duration.")
 

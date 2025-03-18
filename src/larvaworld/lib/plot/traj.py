@@ -26,9 +26,15 @@ __all__ = [
 
 
 def traj_1group(
-    d, unit="mm", mode="default", title=None, single_color=False, time_range=None, **kwargs
+    d,
+    unit="mm",
+    mode="default",
+    title=None,
+    single_color=False,
+    time_range=None,
+    **kwargs,
 ):
-    df=d.load_traj(mode=mode)
+    df = d.load_traj(mode=mode)
     xy = d.timeseries_slice(time_range=time_range, df=df)[d.c.traj_xy]
     c = d.config
     color = c.color if single_color else None

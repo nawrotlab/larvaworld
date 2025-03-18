@@ -26,19 +26,17 @@ class ReplayRun(BaseRun):
         dir = parameters.refDir if "refDir" in parameters else None
         d = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID, dir=dir)
 
-        
-
         # Configure the dataset to replay (deprecated)
         # self.refDataset = copy.deepcopy(d)
         # self.refDataset, screen_kws["background_motion"] = self.smaller_dataset(
         #     p=parameters, d=self.refDataset
         # )
-        
+
         # Configure the dataset to replay (refactored)
         self.refDataset, screen_kws["background_motion"] = d.smaller_dataset(
             p=parameters
         )
-        
+
         c = self.refDataset.config
         parameters.steps = c.Nsteps
         kwargs.update(**{"duration": c.duration, "dt": c.dt, "Nsteps": c.Nsteps})
@@ -97,7 +95,9 @@ class ReplayRun(BaseRun):
 
         confs = []
         for i, id in enumerate(c.agent_ids):
-            conf = util.AttrDict({"unique_id": id, "length": ls[i], "color": d.config.color})
+            conf = util.AttrDict(
+                {"unique_id": id, "length": ls[i], "color": d.config.color}
+            )
             data = util.AttrDict()
             ss = s.xs(id, level="AgentID", drop_level=True)
             xy = ss[["x", "y"]].values
@@ -132,7 +132,7 @@ class ReplayRun(BaseRun):
     def end(self):
         self.screen_manager.finalize()
 
-    '''
+    """
     # NOTE: This has been refactored as a method in LarvaDataset
     def smaller_dataset(self, p, d):
         from ..process.dataset import DatasetConfig
@@ -210,5 +210,4 @@ class ReplayRun(BaseRun):
 
         return d, bg
 
-    '''
-    
+    """

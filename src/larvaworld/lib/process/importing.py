@@ -69,7 +69,7 @@ def import_Jovanic(
 
     if match_ids:
         s0 = match_larva_ids(s0, Npoints=tracker.Npoints, dt=tracker.dt, **matchID_kws)
-    
+
     s0 = constrain_selected_tracks(s0, **kwargs)
 
     e = init_endpoint_dataframe_from_timeseries(df=s0, dt=tracker.dt)

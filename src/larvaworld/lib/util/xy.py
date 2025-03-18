@@ -901,6 +901,7 @@ def align_trajectories(
         return ss
     """
 
+
 def fixate_larva(s, c, arena_dims, P1, P2=None):
     """
     Adjusts the coordinates of a larva in the dataset to fixate a primary point (P1) to the arena center,

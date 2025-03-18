@@ -31,21 +31,21 @@ class EvalConf(LarvaGroupMutator, DataEvaluation):
         self.target.config.color = "grey"
 
 
-#TODO this should be a subclass of SimConfigurationParams and not of SimConfiguration. 
-# This should be adjusted in order to remove also the need for the LarvaGroupMutator parent class of EvalConf 
+# TODO this should be a subclass of SimConfigurationParams and not of SimConfiguration.
+# This should be adjusted in order to remove also the need for the LarvaGroupMutator parent class of EvalConf
 # (note that the args N,modelIDS, groupIDs are common in LarvaGroupMutator and SimConfigurationParams)
 class EvalRun(EvalConf, SimConfiguration):
     def __init__(self, enrichment=True, screen_kws={}, **kwargs):
-        """Model evaluation mode. This mode is used to evaluate a number of larva models 
-        for similarity with a preexisting reference dataset, most often one retained 
+        """Model evaluation mode. This mode is used to evaluate a number of larva models
+        for similarity with a preexisting reference dataset, most often one retained
         via monitoring real experiments. The evaluation is done by comparing the
-        trajectories of the models with the reference dataset, via several evaluation metrics. 
+        trajectories of the models with the reference dataset, via several evaluation metrics.
 
         Args:
             enrichment (bool, optional): Whether to enrich the simulated datasets by deriving secondary pareameters. Defaults to True.
             screen_kws (dict, optional): The screen visualization parameters. Defaults to {}.
         """
-        
+
         EvalConf.__init__(self, **kwargs)
         kwargs["dt"] = self.target.config.dt
         if "duration" not in kwargs:

@@ -19,9 +19,13 @@ __all__ = [
 
 
 class ExpRun(BaseRun):
-
-
-    def __init__(self, experiment: Optional[str] = None, parameters: Optional[dict] = None, parameter_dict: dict = {}, **kwargs: dict) -> None:
+    def __init__(
+        self,
+        experiment: Optional[str] = None,
+        parameters: Optional[dict] = None,
+        parameter_dict: dict = {},
+        **kwargs: dict,
+    ) -> None:
         """
         Simulation mode 'Exp' launches a single simulation of a specified experiment type.
 

@@ -964,10 +964,17 @@ class ParamLarvaDataset(param.Parameterized):
 
         def get_vs(dic):
             l = SuperList(dic.values())
-            
+
             # Filter out empty arrays or lists
-            l = SuperList([ll for ll in l if (isinstance(ll, np.ndarray) and ll.size > 0) or (isinstance(ll, list) and len(ll) > 0)])
-            
+            l = SuperList(
+                [
+                    ll
+                    for ll in l
+                    if (isinstance(ll, np.ndarray) and ll.size > 0)
+                    or (isinstance(ll, list) and len(ll) > 0)
+                ]
+            )
+
             if len(l) == 0:
                 return np.array([])
             else:
@@ -1231,7 +1238,7 @@ class ParamLarvaDataset(param.Parameterized):
                 len(s.xs(id, level="AgentID", drop_level=True).dropna()) * c.dt
             )
         vprint(f"Rows excluded according to {flag}.", 1)
-        
+
     def smaller_dataset(self, p):
         """
         Generate a smaller dataset based on the given ReplayConf parameters.
@@ -1264,7 +1271,9 @@ class ParamLarvaDataset(param.Parameterized):
 
         # Select specific agent IDs if provided
         if p.agent_ids not in [None, []]:
-            if isinstance(p.agent_ids, list) and all(isinstance(i, int) for i in p.agent_ids):
+            if isinstance(p.agent_ids, list) and all(
+                isinstance(i, int) for i in p.agent_ids
+            ):
                 p.agent_ids = [c.agent_ids[i] for i in p.agent_ids]
             elif isinstance(p.agent_ids, int):
                 p.agent_ids = [c.agent_ids[p.agent_ids]]
@@ -1308,12 +1317,15 @@ class ParamLarvaDataset(param.Parameterized):
 
         # Apply spatial transposition if specified
         if p.transposition is not None:
-            d.step_data = d.align_trajectories(transposition=p.transposition, replace=True)
-            xy_max = 2 * np.max(d.step_data[nam.xy(c.point)].dropna().abs().values.flatten())
+            d.step_data = d.align_trajectories(
+                transposition=p.transposition, replace=True
+            )
+            xy_max = 2 * np.max(
+                d.step_data[nam.xy(c.point)].dropna().abs().values.flatten()
+            )
             p.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max)).nestedConf
 
         return d, bg
-
 
     def align_trajectories(
         self, track_point=None, arena_dims=None, transposition="origin", replace=True
@@ -1355,7 +1367,10 @@ class ParamLarvaDataset(param.Parameterized):
             if mode == "origin":
                 vprint("Aligning trajectories to common origin")
                 xy = [
-                    s[XY].xs(id, level="AgentID").dropna().values[0] if not s[XY].xs(id, level="AgentID").dropna().empty else [0, 0] for id in self.ids
+                    s[XY].xs(id, level="AgentID").dropna().values[0]
+                    if not s[XY].xs(id, level="AgentID").dropna().empty
+                    else [0, 0]
+                    for id in self.ids
                 ]
             elif mode == "center":
                 vprint(
@@ -1503,7 +1518,9 @@ class ParamLarvaDataset(param.Parameterized):
             if mode == "default":
                 df = self._load_step(h5_ks=[])[["x", "y"]]
             elif mode in ["origin", "center"]:
-                df = self.align_trajectories(replace=False, transposition=mode)[["x", "y"]]
+                df = self.align_trajectories(replace=False, transposition=mode)[
+                    ["x", "y"]
+                ]
             else:
                 raise ValueError("Not implemented")
             self.store(df, key)
@@ -1568,7 +1585,9 @@ class ParamLarvaDataset(param.Parameterized):
     @property
     def contour_xy_data_byID(self):
         if self.c.Ncontour == 0:
-            return AttrDict({id : np.zeros([self.c.Nticks, 2]) * np.nan for id in self.ids})
+            return AttrDict(
+                {id: np.zeros([self.c.Nticks, 2]) * np.nan for id in self.ids}
+            )
         xy = self.c.contour_xy
         assert xy.exist_in(self.s)
         grouped = self.s[xy].groupby("AgentID")
@@ -1579,7 +1598,9 @@ class ParamLarvaDataset(param.Parameterized):
     @property
     def midline_xy_data_byID(self):
         if self.c.Npoints == 0:
-            return AttrDict({id : np.zeros([self.c.Nticks, 2]) * np.nan for id in self.ids})
+            return AttrDict(
+                {id: np.zeros([self.c.Nticks, 2]) * np.nan for id in self.ids}
+            )
         xy = self.c.midline_xy
         # assert xy.exist_in(self.step_data)
         grouped = self.s[xy].groupby("AgentID")
