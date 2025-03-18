@@ -46,7 +46,7 @@ class EvalRun(EvalConf, SimConfiguration):
             screen_kws (dict, optional): The screen visualization parameters. Defaults to {}.
         """
 
-        EvalConf.__init__(self, **kwargs)
+        EvalConf.__init__(self, runtype="Eval", **kwargs)
         kwargs["dt"] = self.target.config.dt
         if "duration" not in kwargs:
             kwargs["duration"] = self.target.config.Nticks * kwargs["dt"] / 60
