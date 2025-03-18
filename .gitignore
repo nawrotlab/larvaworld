@@ -162,4 +162,4 @@ cython_debug/
 my_work/
 
 # GUI obsolete since pysimplegui v.5
-src/larvaworld/gui/
+/src/larvaworld/gui/
