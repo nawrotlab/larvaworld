@@ -2321,17 +2321,6 @@ files = [
 certifi = "*"
 
 [[package]]
-name = "pysimplegui"
-version = "5.0.8.2"
-description = "PySimpleGUI is now located on a private PyPI server.  Please add to your pip command: --extra-index-url https://PySimpleGUI.net/install"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "pysimplegui-5.0.8.2-py3-none-any.whl", hash = "sha256:b353edf41e9be6863da465731f12638693a022f01eee8c52bb3b6d50a3498692"},
-    {file = "pysimplegui-5.0.8.2.tar.gz", hash = "sha256:29580f9a432c9d54523ee65c61b90e8b83d10690f8daf66abedba415e5e90c65"},
-]
-
-[[package]]
 name = "pytest"
 version = "8.3.5"
 description = "pytest: simple powerful testing with Python"
@@ -3457,4 +3446,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "a1867396590ac8b0fd4e1bc143db973b78b4338f48f4ee274942202c4b22c6cc"
+content-hash = "c2a7792905776f1978dcd6bbecc5658057c35354adca6f43df621269ef296985"
