@@ -1516,7 +1516,7 @@ class ParamLarvaDataset(param.Parameterized):
         df = self.read(key)
         if df is None:
             if mode == "default":
-                df = self._load_step()[["x", "y"]]
+                df = self.s[["x", "y"]]
             elif mode in ["origin", "center"]:
                 df = self.align_trajectories(replace=False, transposition=mode)[
                     ["x", "y"]
