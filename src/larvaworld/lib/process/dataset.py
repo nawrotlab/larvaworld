@@ -931,6 +931,31 @@ class ParamLarvaDataset(param.Parameterized):
         vprint("Completed bout detection.", 1)
 
     def comp_pooled_epochs(self):
+        """
+        Compute pooled epochs from chunk dictionaries.
+
+        This method processes the `chunk_dicts` attribute to create `epoch_dicts` and `pooled_epochs`.
+        It first extracts unique epoch keys from the chunk dictionaries and then constructs a dictionary
+        of epochs (`epoch_dicts`) where each key corresponds to a dictionary of chunk data.
+
+        The method then defines an inner function `get_vs` to concatenate values from the dictionaries,
+        handling cases where the values have different shapes. If the majority of the values have a shape
+        of 2 dimensions, it filters out those with a shape of 1 dimension before concatenation.
+
+        Finally, it creates the `pooled_epochs` attribute by concatenating the values for each epoch key,
+        excluding specific keys such as "turn_slice", "pause_idx", "run_idx", and "stride_idx".
+
+        Attributes:
+            chunk_dicts (dict): A dictionary containing chunk data.
+            epoch_dicts (AttrDict): A dictionary of epochs with chunk data.
+            pooled_epochs (AttrDict): A dictionary of concatenated epoch data.
+
+        Raises:
+            Exception: If there is an issue with concatenating the values in `get_vs`.
+
+        Prints:
+            "Completed bout detection." upon successful completion.
+        """
         d0 = self.chunk_dicts
         epoch_ks = SuperList([list(dic.keys()) for dic in d0.values()]).flatten.unique
         self.epoch_dicts = AttrDict(
@@ -939,19 +964,27 @@ class ParamLarvaDataset(param.Parameterized):
 
         def get_vs(dic):
             l = SuperList(dic.values())
-            try:
-                sh = [len(ll.shape) for ll in l]
-                if sh.count(2) > sh.count(1):
-                    l = SuperList([ll for ll in l if len(ll.shape) == 2])
-            except:
-                pass
-            return np.concatenate(l)
+
+            # Filter out empty arrays or lists
+            l = SuperList(
+                [
+                    ll
+                    for ll in l
+                    if (isinstance(ll, np.ndarray) and ll.size > 0)
+                    or (isinstance(ll, list) and len(ll) > 0)
+                ]
+            )
+
+            if len(l) == 0:
+                return np.array([])
+            else:
+                return np.concatenate(l)
 
         self.pooled_epochs = AttrDict(
             {
                 k: get_vs(dic)
                 for k, dic in self.epoch_dicts.items()
-                if k not in ["turn_slice", "pause_idx", "run_idx", "stride_idx"]
+                # if k not in ["turn_slice", "pause_idx", "run_idx", "stride_idx"]
             }
         )
 
@@ -1206,6 +1239,94 @@ class ParamLarvaDataset(param.Parameterized):
             )
         vprint(f"Rows excluded according to {flag}.", 1)
 
+    def smaller_dataset(self, p):
+        """
+        Generate a smaller dataset based on the given ReplayConf parameters.
+
+        Args:
+            p (ReplayConf): The configuration for dataset replay.
+
+        Returns:
+            LarvaDataset: A subset of the original dataset.
+        """
+        d = copy.deepcopy(self)
+        c = d.config
+        # Ensure the dataset is loaded
+        d.load(h5_ks=["contour", "midline", "angular"])
+
+        # Update point tracking configuration
+        if p.track_point is not None:
+            c.point_idx = p.track_point
+
+        # Fix a specific point if required
+        if p.fix_point is not None:
+            c.fix_point = c.get_track_point(p.fix_point)
+            if c.fix_point == "centroid" or p.fix_segment is None:
+                c.fix_point2 = None
+            else:
+                P2_idx = p.fix_point + 1 if p.fix_segment == "rear" else p.fix_point - 1
+                c.fix_point2 = c.get_track_point(P2_idx)
+        else:
+            c.fix_point = None
+
+        # Select specific agent IDs if provided
+        if p.agent_ids not in [None, []]:
+            if isinstance(p.agent_ids, list) and all(
+                isinstance(i, int) for i in p.agent_ids
+            ):
+                p.agent_ids = [c.agent_ids[i] for i in p.agent_ids]
+            elif isinstance(p.agent_ids, int):
+                p.agent_ids = [c.agent_ids[p.agent_ids]]
+            c.agent_ids = p.agent_ids
+
+        # If a fixation point is provided, only keep the first agent
+        if c.fix_point is not None:
+            c.agent_ids = c.agent_ids[:1]
+
+        # Update dataset based on selected agents
+        d.update_ids_in_data()
+
+        # Apply time slicing if specified
+        if p.time_range is not None:
+            d.step_data = d.timeseries_slice(time_range=p.time_range)
+
+        # Align trajectory to match tracking point
+        xy_pars = nam.xy(c.point)
+        if xy_pars.exist_in(d.step_data):
+            d.step_data[["x", "y"]] = d.step_data[xy_pars]
+
+        # Update environment parameters
+        if p.env_params is None:
+            p.env_params = c.env_params.nestedConf
+
+        # Reduce arena size for close view
+        if p.close_view:
+            p.env_params.arena = reg.gen.Arena(dims=(0.01, 0.01)).nestedConf
+
+        # Fix larva orientation if required
+        if c.fix_point is not None:
+            d.step_data, bg = util.fixate_larva(
+                d.step_data,
+                c,
+                arena_dims=p.env_params.arena.dims,
+                P1=c.fix_point,
+                P2=c.fix_point2,
+            )
+        else:
+            bg = None
+
+        # Apply spatial transposition if specified
+        if p.transposition is not None:
+            d.step_data = d.align_trajectories(
+                transposition=p.transposition, replace=True
+            )
+            xy_max = 2 * np.max(
+                d.step_data[nam.xy(c.point)].dropna().abs().values.flatten()
+            )
+            p.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max)).nestedConf
+
+        return d, bg
+
     def align_trajectories(
         self, track_point=None, arena_dims=None, transposition="origin", replace=True
     ):
@@ -1231,6 +1352,7 @@ class ParamLarvaDataset(param.Parameterized):
                 ss[y] -= arena_dims[1] / 2
             return ss
         else:
+            # s = self._load_step(h5_ks=["contour", "midline"])
             if track_point is None:
                 track_point = c.point
             XY = (
@@ -1245,7 +1367,10 @@ class ParamLarvaDataset(param.Parameterized):
             if mode == "origin":
                 vprint("Aligning trajectories to common origin")
                 xy = [
-                    s[XY].xs(id, level="AgentID").dropna().values[0] for id in self.ids
+                    s[XY].xs(id, level="AgentID").dropna().values[0]
+                    if not s[XY].xs(id, level="AgentID").dropna().empty
+                    else [0, 0]
+                    for id in self.ids
                 ]
             elif mode == "center":
                 vprint(
@@ -1267,10 +1392,6 @@ class ParamLarvaDataset(param.Parameterized):
             for x, y in xy_pairs:
                 ss[x] = ss[x].values - xs
                 ss[y] = ss[y].values - ys
-
-            # if d is not None:
-            #     d.store(ss, f'traj.{mode}')
-            #     reg.vprint(f'traj_aligned2{mode} stored')
             return ss
 
     def preprocess(
@@ -1395,12 +1516,11 @@ class ParamLarvaDataset(param.Parameterized):
         df = self.read(key)
         if df is None:
             if mode == "default":
-                df = self._load_step(h5_ks=[])[["x", "y"]]
+                df = self.s[["x", "y"]]
             elif mode in ["origin", "center"]:
-                s = self._load_step(h5_ks=["contour", "midline"])
-                df = util.align_trajectories(
-                    s, c=self.config, replace=False, transposition=mode
-                )[["x", "y"]]
+                df = self.align_trajectories(replace=False, transposition=mode)[
+                    ["x", "y"]
+                ]
             else:
                 raise ValueError("Not implemented")
             self.store(df, key)
@@ -1464,6 +1584,10 @@ class ParamLarvaDataset(param.Parameterized):
 
     @property
     def contour_xy_data_byID(self):
+        if self.c.Ncontour == 0:
+            return AttrDict(
+                {id: np.zeros([self.c.Nticks, 2]) * np.nan for id in self.ids}
+            )
         xy = self.c.contour_xy
         assert xy.exist_in(self.s)
         grouped = self.s[xy].groupby("AgentID")
@@ -1473,6 +1597,10 @@ class ParamLarvaDataset(param.Parameterized):
 
     @property
     def midline_xy_data_byID(self):
+        if self.c.Npoints == 0:
+            return AttrDict(
+                {id: np.zeros([self.c.Nticks, 2]) * np.nan for id in self.ids}
+            )
         xy = self.c.midline_xy
         # assert xy.exist_in(self.step_data)
         grouped = self.s[xy].groupby("AgentID")

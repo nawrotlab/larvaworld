@@ -26,9 +26,16 @@ __all__ = [
 
 
 def traj_1group(
-    d, unit="mm", title=None, single_color=False, time_range=None, **kwargs
+    d,
+    unit="mm",
+    mode="default",
+    title=None,
+    single_color=False,
+    time_range=None,
+    **kwargs,
 ):
-    xy = d.timeseries_slice(time_range=time_range)[d.c.traj_xy]
+    df = d.load_traj(mode=mode)
+    xy = d.timeseries_slice(time_range=time_range, df=df)[d.c.traj_xy]
     c = d.config
     color = c.color if single_color else None
     scale = 1000 if unit == "mm" else 1
@@ -87,6 +94,7 @@ def traj_grouped(
         _ = traj_1group(
             d=d,
             unit=unit,
+            mode=mode,
             fig=P.fig,
             axs=P.axs[ii],
             title=l,

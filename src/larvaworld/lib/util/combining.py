@@ -9,7 +9,7 @@ import numpy as np
 __all__ = [
     "files_in_dir",
     "combine_images",
-    "combine_videos_4to1",
+    "combine_videos",
     "combine_pdfs",
 ]
 
@@ -129,40 +129,58 @@ def combine_images(
     print(f"Images combined as {filepath}")
 
 
-def combine_videos_4to1(
+def combine_videos(
     files=None, file_dir=".", save_to=None, save_as="combined_videos.mp4"
 ):
     """
-    Merge 4 video files into one single file and store it
+    Merge multiple video files into one single file and store it
 
     Parameters
     ----------
     - files: list of strings
-        List of image absolute filenames (optional).
+        List of video absolute filenames (optional).
     - file_dir: string
         Absolute path to folder where to look for files.
     - save_to: string
         Absolute path to folder where to store file (optional).
     - save_as: string
-        Filename to store pdf as (default: 'combined_videos.mp4').
+        Filename to store video as (default: 'combined_videos.mp4').
 
     """
     if files is None:
-        files = files_in_dir(file_dir)
-    temp_files = [os.path.join(file_dir, n) for n in ["output1.mp4", "output2.mp4"]]
+        files = files_in_dir(file_dir, suf=".mp4")
+
+    if len(files) < 2:
+        raise ValueError("At least two video files are required to combine.")
+
+    # Check if all videos have the same duration
+    durations = []
+    for file in files:
+        result = (
+            os.popen(
+                f'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{file}"'
+            )
+            .read()
+            .strip()
+        )
+        durations.append(float(result))
+
+    if len(set(durations)) != 1:
+        raise ValueError("All videos must have the same duration.")
 
     if save_to is None:
         save_to = file_dir
     filepath = os.path.join(save_to, save_as)
 
+    filter_complex = ""
+    for i in range(len(files)):
+        filter_complex += f"[{i}:v]"
+
+    filter_complex += f"hstack=inputs={len(files)}[outv]"
+
+    input_files = " ".join([f"-i {file}" for file in files])
     os.system(
-        f'ffmpeg -i {files[0]} -i {files[1]} -filter_complex "[0:v]pad=iw*2:ih[int]; [int][1:v]overlay=W/2:0[vid]" -map "[vid]" -c:v libx264 -crf 23  {temp_files[0]}'
-    )
-    os.system(
-        f'ffmpeg -i {files[2]} -i {files[3]} -filter_complex "[0:v]pad=iw*2:ih[int]; [int][1:v]overlay=W/2:0[vid]" -map "[vid]" -c:v libx264 -crf 23  {temp_files[1]}'
-    )
-    os.system(
-        f'ffmpeg -i {temp_files[0]} -i {temp_files[1]} -filter_complex "[0:v]pad=iw*2:ih[int]; [int][1:v]overlay=W/2:0[vid]" -map "[vid]" -c:v libx264 -crf 23  {filepath}'
+        f'ffmpeg {input_files} -filter_complex "{filter_complex}" -map "[outv]" -c:v libx264 -crf 23 {filepath}'
     )
 
     print(f"Videos combined as {filepath}")

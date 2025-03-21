@@ -109,7 +109,7 @@ class NeuralOscillator(Turner):
         self.warm_up()
 
     def warm_up(self):
-        for i in range(100):
+        for i in range(1000):
             if random.uniform(0, 1) < 0.5:
                 self.step()
 

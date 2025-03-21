@@ -63,17 +63,18 @@ def import_Jovanic(
          The endpoint dataframe
 
     """
-    df = read_timeseries_from_raw_files_per_parameter(
+    s0 = read_timeseries_from_raw_files_per_parameter(
         pref=f"{source_dir}/{source_id}", tracker=tracker
     )
 
     if match_ids:
-        df = match_larva_ids(df, Npoints=tracker.Npoints, dt=tracker.dt, **matchID_kws)
-    df = constrain_selected_tracks(df, **kwargs)
+        s0 = match_larva_ids(s0, Npoints=tracker.Npoints, dt=tracker.dt, **matchID_kws)
 
-    e = init_endpoint_dataframe_from_timeseries(df=df, dt=tracker.dt)
+    s0 = constrain_selected_tracks(s0, **kwargs)
+
+    e = init_endpoint_dataframe_from_timeseries(df=s0, dt=tracker.dt)
     s = finalize_timeseries_dataframe(
-        df, complete_ticks=False, interpolate_ticks=interpolate_ticks
+        s0, complete_ticks=False, interpolate_ticks=interpolate_ticks
     )
     return s, e
 

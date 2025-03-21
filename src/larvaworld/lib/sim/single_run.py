@@ -4,10 +4,11 @@ import time
 import agentpy
 import numpy as np
 import pandas as pd
-
+from typing import Optional
 
 from ... import vprint
 from .. import reg, util
+from ..reg.larvagroup import LarvaGroup
 from ..process.dataset import LarvaDatasetCollection
 from ..sim.base_run import BaseRun
 from .conditions import get_exp_condition
@@ -18,7 +19,13 @@ __all__ = [
 
 
 class ExpRun(BaseRun):
-    def __init__(self, experiment=None, parameters=None, parameter_dict={}, **kwargs):
+    def __init__(
+        self,
+        experiment: Optional[str] = None,
+        parameters: Optional[dict] = None,
+        parameter_dict: dict = {},
+        **kwargs: dict,
+    ) -> None:
         """
         Simulation mode 'Exp' launches a single simulation of a specified experiment type.
 
@@ -31,7 +38,7 @@ class ExpRun(BaseRun):
         )
         self.parameter_dict = parameter_dict
 
-    def setup(self):
+    def setup(self) -> None:
         """
         Sets up the simulation environment and agents for a single run.
 
@@ -120,7 +127,7 @@ class ExpRun(BaseRun):
         vprint(f"--- Simulation {self.id} : Generating agent groups!--- ", 1)
         confs = util.SuperList(
             [
-                reg.larvagroup.LarvaGroup(**v)(parameter_dict=parameter_dict)
+                LarvaGroup(**v)(parameter_dict=parameter_dict)
                 for v in larva_groups.values()
             ]
         ).flatten
