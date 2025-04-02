@@ -65,6 +65,13 @@ jobs:
       - name: Test with Pytest
         run: poetry run pytest
         shell: bash
+      - name: Test venv import
+        shell: bash
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip3 install .
+          python3 -c "import larvaworld"
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:

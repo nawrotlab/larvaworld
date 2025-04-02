@@ -44,7 +44,15 @@ A virtual lab for Drosophila larva behavioral modeling and analysis.
 
 Install this via pip (or your favourite package manager):
 
-`pip install larvaworld`
+```shell
+pip install larvaworld
+```
+
+If you plan to export simulations as video files you also need to install the ffmpeg extension of imageio:
+
+```shell
+pip install 'imageio[ffmpeg]'
+```
 
 ## Features
 
