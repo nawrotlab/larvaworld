@@ -68,6 +68,7 @@ shapely = "2.0.*"
 statannot = "0.2.*"
 tables = "3.8.*"
 typing-extensions = "4.12.*"
+docopt = "0.6.*"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
