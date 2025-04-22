@@ -7,7 +7,7 @@
 project = "larvaworld"
 author = "Panagiotis Sakagiannis"
 copyright = "2024, Panagiotis Sakagiannis"
-release = "0.0.1-rc.1"
+release = "0.1.0-rc.1"
 
 # General configuration
 extensions = [
