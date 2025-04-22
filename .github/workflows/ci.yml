@@ -62,6 +62,15 @@ jobs:
       - name: Import the package
         run: poetry run python -c "import larvaworld"
         shell: bash
+      - name: Test venv import
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
+          pip3 install .
+          python3 -c "import larvaworld"
+
       - name: Test with Pytest
         run: poetry run pytest
         shell: bash

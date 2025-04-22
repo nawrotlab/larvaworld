@@ -202,7 +202,7 @@ class ParamLarvaDataset(param.Parameterized):
         ks = list(kwargs.keys())
         kws2 = AttrDict()
         for k in ks:
-            if k not in self.param.objects():
+            if k not in self.param.objects(instance=False):
                 kws2[k] = kwargs[k]
                 kwargs.pop(k)
         kwargs["config2"] = AttrDict(kws2)
