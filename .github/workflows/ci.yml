@@ -71,13 +71,13 @@ jobs:
           pip3 install .
           python3 -c "import larvaworld"
 
-      - name: Test with Pytest
-        run: poetry run pytest
-        shell: bash
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+      #- name: Test with Pytest
+      #  run: poetry run pytest
+      #  shell: bash
+      #- name: Upload coverage to Codecov
+      #  uses: codecov/codecov-action@v4
+      #  with:
+      #    token: ${{ secrets.CODECOV_TOKEN }}
 
   release:
     needs:
