@@ -204,8 +204,8 @@ exclude_commit_patterns = [
 keep_trailing_newline = true
 
 [tool.semantic_release.branches.main]
-match = "main"
+match = "master"
 
 [tool.semantic_release.branches.noop]
-match = "(?!main$)"
+match = "(?!master$)"
 prerelease = true
