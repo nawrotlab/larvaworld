@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.0 (2025-05-08)
+
+### Fix
+
+- Semantic versioning ([`a224d62`](https://github.com/nawrotlab/larvaworld/commit/a224d62c2792ec195a8c95885b0f82f10d9f0c4e))
+- Semantic versioning ([`a6c3929`](https://github.com/nawrotlab/larvaworld/commit/a6c3929f2a588fdee0e8ba90f8ff0537f0ba37b4))
+
 ## v0.1.0-rc.1 (2025-04-22)
 
 ### Fix
