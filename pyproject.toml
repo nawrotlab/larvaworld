@@ -192,6 +192,8 @@ version_variables = [
   "docs/conf.py:release",
 ]
 build_command = "pip install poetry && poetry build"
+allow_zero_version  = false
+
 
 [tool.semantic_release.changelog]
 exclude_commit_patterns = [
