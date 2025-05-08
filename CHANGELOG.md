@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.0 (2025-05-08)
+
+### Feature
+
+- Start semver at 1.0.0 (#35) ([`f532b66`](https://github.com/nawrotlab/larvaworld/commit/f532b6653ad0a5bba8111194c99ec87f2e7e3efe))
+
 ## v0.1.0 (2025-05-08)
 
 ### Fix
