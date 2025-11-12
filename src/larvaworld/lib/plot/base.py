@@ -2,22 +2,28 @@
 Basic plotting classes
 """
 
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Sequence, Tuple
+
+if TYPE_CHECKING:  # type-only imports to avoid heavy runtime deps
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
+
 import itertools
 import os
 
 import numpy as np
 import pandas as pd
 from matplotlib import patches, ticker
-from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
 from scipy.stats import ttest_ind
 
 from ... import vprint
 from .. import plot, reg, util
-from ..process.dataset import LarvaDatasetCollection
+from ..process import LarvaDatasetCollection
 from ..util import AttrDict
 
-__all__ = [
+__all__: list[str] = [
     "BasePlot",
     "AutoBasePlot",
     "AutoPlot",
@@ -26,33 +32,67 @@ __all__ = [
 
 __displayname__ = "Plotting template classes"
 
-plt_conf = {
-    "axes.labelsize": 20,
-    "axes.titlesize": 25,
-    "figure.titlesize": 25,
-    "xtick.labelsize": 20,
-    "ytick.labelsize": 20,
-    "legend.fontsize": 20,
-    "legend.title_fontsize": 20,
-}
-plt.rcParams.update(plt_conf)
+_MPL_CONFIGURED = False
+
+
+def _ensure_matplotlib_config():
+    global _MPL_CONFIGURED
+    if not _MPL_CONFIGURED:
+        from matplotlib import pyplot as plt  # local import
+
+        plt_conf = {
+            "axes.labelsize": 20,
+            "axes.titlesize": 25,
+            "figure.titlesize": 25,
+            "xtick.labelsize": 20,
+            "ytick.labelsize": 20,
+            "legend.fontsize": 20,
+            "legend.title_fontsize": 20,
+        }
+        try:
+            plt.rcParams.update(plt_conf)
+        except Exception:
+            pass
+        _MPL_CONFIGURED = True
 
 
 class BasePlot:
+    """
+    Base class for creating customizable matplotlib plots.
+
+    Provides common functionality for plot generation, styling, and output
+    management. Handles figure/axes creation, saving, and display options.
+    Subclasses implement specific plot types by overriding plot methods.
+
+    Attributes:
+        filename: Output filename with extension
+        fit_filename: Filename for fit data CSV
+        save_to: Directory path for saving plots
+        return_fig: Whether to return figure object
+        show: Whether to display plot immediately
+        build_kws: Keyword arguments for figure building
+
+    Example:
+        >>> plotter = BasePlot(name='myplot', save_to='./plots', suf='png')
+        >>> plotter.build(nrows=2, ncols=2)
+        >>> # ... add plot content ...
+        >>> plotter.save()
+    """
+
     def __init__(
         self,
-        name="larvaworld_plot",
-        save_as=None,
-        pref=None,
-        suf="pdf",
-        save_to=None,
-        subfolder=None,
-        return_fig=False,
-        show=False,
-        subplot_kw={},
-        build_kws={},
-        **kwargs,
-    ):
+        name: str = "larvaworld_plot",
+        save_as: Optional[str] = None,
+        pref: Optional[str] = None,
+        suf: str = "pdf",
+        save_to: Optional[str] = None,
+        subfolder: Optional[str] = None,
+        return_fig: bool = False,
+        show: bool = False,
+        subplot_kw: Dict[str, Any] = {},
+        build_kws: Dict[str, Any] = {},
+        **kwargs: Any,
+    ) -> None:
         if save_as is None:
             if pref:
                 name = f"{pref}_{name}"
@@ -78,7 +118,14 @@ class BasePlot:
             elif v == "Nks" and hasattr(self, "Nks"):
                 self.build_kws[k] = self.Nks
 
-    def build(self, fig=None, axs=None, dim3=False, azim=115, elev=15):
+    def build(
+        self,
+        fig: Optional["Figure"] = None,
+        axs: Optional["Axes | Sequence[Axes]"] = None,
+        dim3: bool = False,
+        azim: int = 115,
+        elev: int = 15,
+    ) -> None:
         """
         Method that defines the figure and axes on which to draw.
         These can be provided externally as arguments to create a composite figure. Otherwise they are created independently.
@@ -98,81 +145,86 @@ class BasePlot:
         else:
             if dim3:
                 from mpl_toolkits.mplot3d import Axes3D
+                from matplotlib import pyplot as plt
 
+                _ensure_matplotlib_config()
                 self.fig = plt.figure(figsize=(15, 10))
                 ax = Axes3D(self.fig, azim=azim, elev=elev)
                 self.axs = [ax]
             else:
+                from matplotlib import pyplot as plt
+
+                _ensure_matplotlib_config()
                 self.fig, axs = plt.subplots(
                     **plot.configure_subplot_grid(**self.build_kws)
                 )
                 self.axs = axs.ravel() if isinstance(axs, np.ndarray) else [axs]
 
     @property
-    def Naxs(self):
+    def Naxs(self) -> int:
         return len(self.axs)
 
     @property
-    def Ncols(self):
+    def Ncols(self) -> int:
         return self.axs[0].get_gridspec().ncols
 
     @property
-    def Nrows(self):
+    def Nrows(self) -> int:
         return self.axs[0].get_gridspec().nrows
 
     def conf_ax(
         self,
-        idx=0,
-        ax=None,
-        xlab=None,
-        ylab=None,
-        zlab=None,
-        xlim=None,
-        ylim=None,
-        zlim=None,
-        xticks=None,
-        xticklabels=None,
-        yticks=None,
-        xticklabelrotation=None,
-        yticklabelrotation=None,
-        yticklabels=None,
-        zticks=None,
-        zticklabels=None,
-        xtickpos=None,
-        xtickpad=None,
-        ytickpad=None,
-        ztickpad=None,
-        xlabelfontsize=None,
-        ylabelfontsize=None,
-        xticklabelsize=None,
-        yticklabelsize=None,
-        zticklabelsize=None,
-        major_ticklabelsize=None,
-        minor_ticklabelsize=None,
-        xlabelpad=None,
-        ylabelpad=None,
-        zlabelpad=None,
-        equal_aspect=None,
-        xMaxN=None,
-        yMaxN=None,
-        zMaxN=None,
-        yStrN=None,
-        xMath=None,
-        yMath=None,
-        tickMath=None,
-        ytickMath=None,
-        xMaxFix=False,
-        leg_loc=None,
-        leg_handles=None,
-        leg_labels=None,
-        legfontsize=None,
-        xvis=None,
-        yvis=None,
-        zvis=None,
-        title=None,
-        title_y=None,
-        titlefontsize=None,
-    ):
+        idx: int = 0,
+        ax: Optional["Axes"] = None,
+        xlab: Optional[str] = None,
+        ylab: Optional[str] = None,
+        zlab: Optional[str] = None,
+        xlim: Optional[Sequence[float]] = None,
+        ylim: Optional[Sequence[float]] = None,
+        zlim: Optional[Sequence[float]] = None,
+        xticks: Optional[Sequence[float]] = None,
+        xticklabels: Optional[Sequence[str]] = None,
+        yticks: Optional[Sequence[float]] = None,
+        xticklabelrotation: Optional[int] = None,
+        yticklabelrotation: Optional[int] = None,
+        yticklabels: Optional[Sequence[str]] = None,
+        zticks: Optional[Sequence[float]] = None,
+        zticklabels: Optional[Sequence[str]] = None,
+        xtickpos: Optional[str] = None,
+        xtickpad: Optional[int] = None,
+        ytickpad: Optional[int] = None,
+        ztickpad: Optional[int] = None,
+        xlabelfontsize: Optional[int] = None,
+        ylabelfontsize: Optional[int] = None,
+        xticklabelsize: Optional[int] = None,
+        yticklabelsize: Optional[int] = None,
+        zticklabelsize: Optional[int] = None,
+        major_ticklabelsize: Optional[int] = None,
+        minor_ticklabelsize: Optional[int] = None,
+        xlabelpad: Optional[int] = None,
+        ylabelpad: Optional[int] = None,
+        zlabelpad: Optional[int] = None,
+        equal_aspect: Optional[bool] = None,
+        xMaxN: Optional[int] = None,
+        yMaxN: Optional[int] = None,
+        zMaxN: Optional[int] = None,
+        yStrN: Optional[int] = None,
+        xMath: Optional[bool] = None,
+        yMath: Optional[bool] = None,
+        tickMath: Optional[Tuple[int, int]] = None,
+        ytickMath: Optional[Tuple[int, int]] = None,
+        xMaxFix: bool = False,
+        leg_loc: Optional[str] = None,
+        leg_handles: Optional[Sequence[Any]] = None,
+        leg_labels: Optional[Sequence[str]] = None,
+        legfontsize: Optional[int] = None,
+        xvis: Optional[bool] = None,
+        yvis: Optional[bool] = None,
+        zvis: Optional[bool] = None,
+        title: Optional[str] = None,
+        title_y: Optional[float] = None,
+        titlefontsize: Optional[int] = None,
+    ) -> None:
         """
         Helper method that configures an axis of the figure
 
@@ -279,8 +331,16 @@ class BasePlot:
             ax.legend(**kws)
 
     def conf_ax_3d(
-        self, vars, target, lims=None, title=None, maxN=3, labelpad=15, tickpad=5, idx=0
-    ):
+        self,
+        vars: Sequence[str],
+        target: str,
+        lims: Optional[Tuple[Sequence[float], Sequence[float], Sequence[float]]] = None,
+        title: Optional[str] = None,
+        maxN: int = 3,
+        labelpad: int = 15,
+        tickpad: int = 5,
+        idx: int = 0,
+    ) -> None:
         if lims is None:
             xlim, ylim, zlim = None, None, None
         else:
@@ -305,7 +365,13 @@ class BasePlot:
             title=title,
         )
 
-    def adjust(self, LR=None, BT=None, W=None, H=None):
+    def adjust(
+        self,
+        LR: Optional[Tuple[float, float]] = None,
+        BT: Optional[Tuple[float, float]] = None,
+        W: Optional[float] = None,
+        H: Optional[float] = None,
+    ) -> None:
         kws = {}
         if LR is not None:
             kws["left"] = LR[0]
@@ -319,10 +385,10 @@ class BasePlot:
             kws["hspace"] = H
         self.fig.subplots_adjust(**kws)
 
-    def set(self, fig):
+    def set(self, fig: "Figure") -> None:
         self.fig = fig
 
-    def get(self):
+    def get(self) -> Any:
         if self.fit_df is not None and self.save_to is not None:
             self.fit_df.to_csv(
                 os.path.join(self.save_to, self.fit_filename), index=True, header=True
@@ -331,7 +397,13 @@ class BasePlot:
             self.fig, self.save_to, self.filename, self.return_fig, self.show
         )
 
-    def conf_fig(self, adjust_kws=None, align=None, title=None, title_kws={}):
+    def conf_fig(
+        self,
+        adjust_kws: Optional[Dict[str, Any]] = None,
+        align: Optional[Sequence["Axes"] | Sequence[Any]] = None,
+        title: Optional[str] = None,
+        title_kws: Dict[str, Any] = {},
+    ) -> None:
         if title is not None:
             pairs = {
                 # 't':'t',
@@ -352,36 +424,77 @@ class BasePlot:
 
 
 class AutoBasePlot(BasePlot):
-    def __init__(self, fig=None, axs=None, dim3=False, azim=115, elev=15, **kwargs):
+    """
+    Automatic plot generation with immediate figure building.
+
+    Extends BasePlot by automatically calling build() during initialization,
+    creating the matplotlib figure and axes immediately. Supports both 2D
+    and 3D plots with customizable viewing angles.
+
+    Attributes:
+        fig: Matplotlib Figure object
+        ax: Matplotlib Axes object (or array of Axes for subplots)
+        dim3: Whether plot is 3D
+
+    Example:
+        >>> plot = AutoBasePlot(nrows=2, ncols=2, dim3=False)
+        >>> plot.ax[0, 0].plot(x, y)  # Use axes directly
+        >>> plot.save()
+    """
+
+    def __init__(
+        self,
+        fig: Optional["Figure"] = None,
+        axs: Optional["Axes | Sequence[Axes]"] = None,
+        dim3: bool = False,
+        azim: int = 115,
+        elev: int = 15,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**kwargs)
 
         self.build(fig=fig, axs=axs, dim3=dim3, azim=azim, elev=elev)
 
 
 class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
+    """
+    Automatic plot generation with larvaworld dataset integration.
+
+    Combines AutoBasePlot functionality with LarvaDatasetCollection to
+    enable direct plotting from larvaworld LarvaDataset objects. Handles
+    multiple datasets with automatic labeling, coloring, and unit conversion.
+
+    Attributes:
+        datasets: Collection of LarvaDataset objects
+        labels: Dataset labels for legend
+        colors: Colors for each dataset
+        ks: Parameter keys to plot
+        key: Indexing key ('step', 'time', etc.)
+        klabels: Custom labels for parameters
+        Ndatasets: Number of datasets
+        Nks: Number of parameters
+
+    Example:
+        >>> plot = AutoPlot(datasets=[d1, d2], labels=['Control', 'Test'])
+        >>> plot.plot(ks=['v', 'a'])  # Plot velocity and acceleration
+        >>> plot.save()
+    """
+
     def __init__(
         self,
-        ks=[],
-        key="step",
-        klabels={},
-        datasets=[],
-        labels=None,
-        colors=None,
-        add_samples=False,
-        ranges=None,
-        absolute=False,
-        rad2deg=False,
-        space_unit="mm",
-        **kwargs,
-    ):
-        """
-        Extension of the basic plotting class that receives datasets of type larvaworld.LarvaDataset
-        Args:
-            datasets: The datasets to access for plotting
-            labels: The labels by which the datasets will be indicated in the plots. If not specified the IDs of the datasets will be used
-            add_samples: Whether to also plot the reference datasets of any simulated datasets
-            **kwargs:
-        """
+        ks: Sequence[str] = [],
+        key: str = "step",
+        klabels: Dict[str, str] = {},
+        datasets: Sequence[Any] = [],
+        labels: Optional[Sequence[str]] = None,
+        colors: Optional[Sequence[Any]] = None,
+        add_samples: bool = False,
+        ranges: Optional[Sequence[Any]] = None,
+        absolute: bool = False,
+        rad2deg: bool = False,
+        space_unit: str = "mm",
+        **kwargs: Any,
+    ) -> None:
         LarvaDatasetCollection.__init__(
             self,
             datasets=datasets,
@@ -408,7 +521,7 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
             try:
                 dfs = self.datasets.get_par(k=k, key=key) * coeff
 
-                def get_vs_from_df(df):
+                def get_vs_from_df(df: pd.DataFrame) -> np.ndarray:
                     assert df is not None
                     v = df.dropna().values
                     if absolute:
@@ -441,7 +554,7 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
 
         AutoBasePlot.__init__(self, **kwargs)
 
-    def comp_all_pvalues(self):
+    def comp_all_pvalues(self) -> None:
         if self.Ndatasets < 2:
             return
         columns = pd.MultiIndex.from_product(
@@ -466,7 +579,7 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
                     t = -1
                 self.fit_df.loc[ind, k] = [t, st, np.round(pv, 11)]
 
-    def plot_all_half_circles(self):
+    def plot_all_half_circles(self) -> None:
         if self.fit_df is None:
             return
         for i, k in enumerate(self.ks):
@@ -486,7 +599,15 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
                     ii += 1
                     continue
 
-    def plot_half_circle(self, ax, col1, col2, v, pv, coef=0):
+    def plot_half_circle(
+        self,
+        ax: "Axes",
+        col1: Any,
+        col2: Any,
+        v: int,
+        pv: float,
+        coef: int = 0,
+    ) -> bool:
         res = True
         if v == 1:
             c1, c2 = col1, col2
@@ -527,15 +648,15 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
 
     def data_leg(
         self,
-        idx=None,
-        labels=None,
-        colors=None,
-        anchor=None,
-        handlelength=0.5,
-        handleheight=0.5,
-        Nagents_in_label=True,
-        **kwargs,
-    ):
+        idx: Optional[int] = None,
+        labels: Optional[Sequence[str]] = None,
+        colors: Optional[Sequence[Any]] = None,
+        anchor: Optional[Tuple[float, float]] = None,
+        handlelength: float = 0.5,
+        handleheight: float = 0.5,
+        Nagents_in_label: bool = True,
+        **kwargs: Any,
+    ) -> Any:
         if labels is None:
             if not Nagents_in_label:
                 labels = self.labels
@@ -555,6 +676,8 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
             **kwargs,
         }
         if idx is None:
+            from matplotlib import pyplot as plt
+
             leg = plt.legend(**kws)
         else:
             ax = self.axs[idx]
@@ -564,22 +687,22 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
 
     def plot_quantiles(
         self,
-        k=None,
-        par=None,
-        idx=0,
-        ax=None,
-        xlim=None,
-        ylim=None,
-        ylab=None,
-        unit="sec",
-        leg_loc="upper left",
-        coeff=1,
-        absolute=False,
-        individuals=False,
-        show_first=False,
-        Nagents_in_label=True,
-        **kwargs,
-    ):
+        k: Optional[str] = None,
+        par: Optional[str] = None,
+        idx: int = 0,
+        ax: Optional["Axes"] = None,
+        xlim: Optional[Sequence[float]] = None,
+        ylim: Optional[Sequence[float]] = None,
+        ylab: Optional[str] = None,
+        unit: str = "sec",
+        leg_loc: str = "upper left",
+        coeff: float = 1,
+        absolute: bool = False,
+        individuals: bool = False,
+        show_first: bool = False,
+        Nagents_in_label: bool = True,
+        **kwargs: Any,
+    ) -> None:
         x = self.trange(unit)
         if ax is None:
             ax = self.axs[idx]
@@ -649,15 +772,15 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
 
     def plot_hist(
         self,
-        half_circles=True,
-        use_title=False,
-        par_legend=False,
-        nbins=30,
-        alpha=0.5,
-        ylim=[0, 0.2],
-        Nagents_in_label=True,
-        **kwargs,
-    ):
+        half_circles: bool = True,
+        use_title: bool = False,
+        par_legend: bool = False,
+        nbins: int = 30,
+        alpha: float = 0.5,
+        ylim: Sequence[float] = [0, 0.2],
+        Nagents_in_label: bool = True,
+        **kwargs: Any,
+    ) -> None:
         loc = "upper left" if half_circles else "upper right"
         for i, k in enumerate(self.ks):
             p = self.pdict[k]
@@ -707,14 +830,14 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
 
     def boxplots(
         self,
-        grouped=False,
-        annotation=True,
-        show_ns=False,
-        target_only=None,
-        stripplot=False,
-        ylims=None,
-        **kwargs,
-    ):
+        grouped: bool = False,
+        annotation: bool = True,
+        show_ns: bool = False,
+        target_only: Any = None,
+        stripplot: bool = False,
+        ylims: Optional[Sequence[Sequence[float]]] = None,
+        **kwargs: Any,
+    ) -> None:
         if not grouped:
             hue = None
             palette = dict(zip(self.labels, self.colors))
@@ -751,15 +874,45 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
 
 
 class GridPlot(BasePlot):
-    def __init__(self, name, width, height, scale=(1, 1), **kwargs):
-        """
-        Class for compiling composite plots
+    """
+    Multi-panel grid layout for composite plots.
 
-        """
+    Creates a grid-based figure layout using matplotlib GridSpec for
+    organizing multiple subplots. Supports automatic subplot placement
+    with optional lettering (A, B, C, ...) and flexible sizing.
+
+    Attributes:
+        width: Number of columns in grid
+        height: Number of rows in grid
+        fig: Matplotlib Figure object
+        grid: GridSpec layout manager
+        cur_w: Current column position
+        cur_h: Current row position
+        letters: List of panel labels
+        letter_dict: Mapping of panel positions to letters
+
+    Example:
+        >>> grid = GridPlot(name='composite', width=3, height=2)
+        >>> ax1 = grid.add()  # Add first panel
+        >>> ax2 = grid.add(N=2)  # Add panel spanning 2 columns
+        >>> grid.save()
+    """
+
+    def __init__(
+        self,
+        name: str,
+        width: int,
+        height: int,
+        scale: Tuple[int, int] = (1, 1),
+        **kwargs: Any,
+    ) -> None:
         super().__init__(name, **kwargs)
         ws, hs = scale
         self.width, self.height = width, height
         figsize = (int(width * ws), int(height * hs))
+        from matplotlib import pyplot as plt
+
+        _ensure_matplotlib_config()
         self.fig = plt.figure(constrained_layout=False, figsize=figsize)
         self.grid = GridSpec(height, width, figure=self.fig)
         self.cur_w, self.cur_h = 0, 0
@@ -771,21 +924,21 @@ class GridPlot(BasePlot):
 
     def add(
         self,
-        N=1,
-        w=None,
-        h=None,
-        w0=None,
-        h0=None,
-        dw=0,
-        dh=0,
-        share_w=False,
-        share_h=False,
-        letter=True,
-        x0=False,
-        y0=False,
-        cols_first=False,
-        annotate_all=False,
-    ):
+        N: int = 1,
+        w: Optional[int] = None,
+        h: Optional[int] = None,
+        w0: Optional[int] = None,
+        h0: Optional[int] = None,
+        dw: int = 0,
+        dh: int = 0,
+        share_w: bool = False,
+        share_h: bool = False,
+        letter: bool = True,
+        x0: bool = False,
+        y0: bool = False,
+        cols_first: bool = False,
+        annotate_all: bool = False,
+    ) -> "Axes | list[Axes]":
         if w0 is None:
             w0 = self.cur_w
         if h0 is None:
@@ -858,7 +1011,9 @@ class GridPlot(BasePlot):
             # ax_letter = axs[0]
         return axs
 
-    def add_letter(self, ax, letter=True, x0=False, y0=False):
+    def add_letter(
+        self, ax: "Axes", letter: bool = True, x0: bool = False, y0: bool = False
+    ) -> None:
         if letter:
             self.letter_dict[ax] = self.letters[self.cur_idx]
             self.cur_idx += 1
@@ -867,7 +1022,9 @@ class GridPlot(BasePlot):
             if y0:
                 self.y0s.append(ax)
 
-    def annotate(self, dx=-0.05, dy=0.005, full_dict=False):
+    def annotate(
+        self, dx: float = -0.05, dy: float = 0.005, full_dict: bool = False
+    ) -> None:
         text_x0, text_y0 = 0.05, 0.98
 
         if full_dict:
@@ -878,7 +1035,13 @@ class GridPlot(BasePlot):
             Y = text_y0 if ax in self.y0s else ax.get_position().y1 + dy
             self.fig.text(X, Y, text, size=30, weight="bold")
 
-    def plot(self, func, kws, axs=None, **kwargs):
+    def plot(
+        self,
+        func: str,
+        kws: Dict[str, Any],
+        axs: Optional[Sequence["Axes"]] = None,
+        **kwargs: Any,
+    ) -> Any:
         if axs is None:
             axs = self.add(**kwargs)
         _ = reg.graphs.run(ID=func, fig=self.fig, axs=axs, **kws)

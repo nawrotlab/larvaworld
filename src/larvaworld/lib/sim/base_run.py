@@ -1,15 +1,18 @@
+from __future__ import annotations
+from typing import Any
 import agentpy
 
-from .. import reg, screen, sim, util
+from .. import reg, screen, util
+from .ABM_model import ABModel
 from ..model import agents, envs
 
-__all__ = [
+__all__: list[str] = [
     "BaseRun",
 ]
 
 
-class BaseRun(sim.ABModel):
-    def __init__(self, screen_kws={}, **kwargs):
+class BaseRun(ABModel):
+    def __init__(self, screen_kws: dict[str, Any] = {}, **kwargs: Any):
         """
         Basic simulation class that extends the agentpy.Model class and creates a larvaworld agent-based model (ABM).
         Further extended by classes supporting the various simulation modes in larvaworld.
@@ -49,12 +52,12 @@ class BaseRun(sim.ABModel):
         self.screen_manager = self.screen_class(model=self, **self.screen_kws)
 
     @property
-    def end_condition_met(self):
+    def end_condition_met(self) -> bool:
         if self.exp_condition is not None:
             return self.exp_condition.check()
         return False
 
-    def sim_step(self):
+    def sim_step(self) -> None:
         """
         Proceeds the simulation by one step, incrementing `Model.t` by 1
         and then calling :func:`Model.step` and :func:`Model.update`.
@@ -68,14 +71,14 @@ class BaseRun(sim.ABModel):
             if self.t >= self._steps or self.end_condition_met:
                 self.running = False
 
-    def step_env(self):
+    def step_env(self) -> None:
         for id, layer in self.odor_layers.items():
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
         if self.windscape is not None:
             self.windscape.update()
 
     @property
-    def Nticks(self):
+    def Nticks(self) -> int:
         return self.t
 
     @property
@@ -86,11 +89,11 @@ class BaseRun(sim.ABModel):
         ls = [l for l in ls if l is not None]
         return ls
 
-    def set_obj_visibility(self, objs, vis=True):
+    def set_obj_visibility(self, objs, vis: bool = True) -> None:
         for obj in objs:
             obj.visible = vis
 
-    def build_env(self, p):
+    def build_env(self, p: Any) -> None:
         # reg.vprint(f'--- Simulation {self.id} : Building environment!--- ', 1)
         # Define environment
         if self.Box2D:
@@ -116,7 +119,7 @@ class BaseRun(sim.ABModel):
         )
         self.thermoscape = envs.ThermoScape(**p.thermoscape) if p.thermoscape else None
 
-    def create_odor_layers(self, odorscape, **kwargs):
+    def create_odor_layers(self, odorscape: str, **kwargs: Any):
         odor_layers = {}
         ids = util.unique_list(
             [s.odor.id for s in self.sources if s.odor.id is not None]
@@ -155,7 +158,7 @@ class BaseRun(sim.ABModel):
             self._odor_ids = [id for id in ids if id is not None]
         return self._odor_ids
 
-    def place_obstacles(self, barriers={}):
+    def place_obstacles(self, barriers: dict = {}) -> None:
         borderConfs = reg.gen.Border.from_entries(barriers)
         border_list = [envs.Border(model=self, **conf) for conf in borderConfs]
         # border_list = [envs.Border(model=self, **pars) for pars in barriers]
@@ -163,7 +166,7 @@ class BaseRun(sim.ABModel):
         self.borders = agentpy.AgentList(model=self, objs=border_list)
         self.border_lines = util.SuperList(self.borders.border_lines).flatten
 
-    def place_food(self, p):
+    def place_food(self, p: Any) -> None:
         self.food_grid = (
             envs.FoodGrid(**p.food_grid, model=self) if p.food_grid else None
         )
@@ -178,7 +181,7 @@ class BaseRun(sim.ABModel):
     def get_all_objects(self):
         return self.sources + self.agents + self.borders
 
-    def place_agents(self, confs):
+    def place_agents(self, confs: list[Any]) -> None:
         agent_list = [self.agent_class(model=self, **conf) for conf in confs]
         self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
@@ -208,21 +211,21 @@ class BaseRun(sim.ABModel):
     def screen_class(self):
         return screen.GA_ScreenManager if self.runtype == "Ga" else screen.ScreenManager
 
-    def delete_agent(self, a):
+    def delete_agent(self, a: Any) -> None:
         self.agents.remove(a)
         self.space.remove_agents([a])
 
-    def delete_source(self, a):
+    def delete_source(self, a: Any) -> None:
         self.sources.remove(a)
         # self.space.remove_agents([a])
 
-    def delete_agents(self, agent_list=None):
+    def delete_agents(self, agent_list: Any | None = None) -> None:
         if agent_list is None:
             agent_list = self.agents
         for a in agent_list:
             self.delete_agent(a)
 
-    def set_collectors(self, cs):
+    def set_collectors(self, cs: Any) -> None:
         self.collectors = reg.par.get_reporters(cs=cs, agents=self.agents)
         self.p.collectors = util.AttrDict(
             {
@@ -255,14 +258,14 @@ class BaseRun(sim.ABModel):
     @classmethod
     def visualize_Env(
         cls,
-        envID=None,
-        envConf=None,
-        id=None,
-        duration=1,
-        screen_kws={},
-        func=None,
-        **kwargs,
-    ):
+        envID: Any | None = None,
+        envConf: Any | None = None,
+        id: Any | None = None,
+        duration: int = 1,
+        screen_kws: dict[str, Any] = {},
+        func: Any | None = None,
+        **kwargs: Any,
+    ) -> None:
         if envConf is None:
             if envID and envID in reg.conf.Env.confIDs:
                 envConf = reg.conf.Env.get(envID).nestedConf

@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Any, Optional, Sequence
+
 import numpy as np
 import param
 from shapely import affinity, geometry, ops
@@ -7,7 +10,7 @@ from .custom import ItemListParam, PositiveInteger, PositiveNumber, XYLine
 from .drawable import Viewable
 from .spatial import LineClosed, MobileVector
 
-__all__ = [
+__all__: list[str] = [
     "body_plans",
     "BodyContour",
     "ShapeMobile",
@@ -28,8 +31,20 @@ body_plans = util.AttrDict(
 
 class BodyContour(LineClosed):
     """
-    Body contour class
+    Body contour defined by guide points and symmetry.
 
+    Generates body vertices from guide points using bilateral or radial
+    symmetry. Supports predefined body plans (drosophila/zebrafish larvae).
+
+    Attributes:
+        symmetry: Body symmetry type ('bilateral' or 'radial')
+        guide_points: List of 2D points outside midline to generate vertices
+        base_vertices: Generated list of vertices forming the contour
+        body_plan: Predefined body plan ('drosophila_larva' or 'zebrafish_larva')
+
+    Example:
+        >>> contour = BodyContour(body_plan='drosophila_larva', symmetry='bilateral')
+        >>> ratio = contour.width_to_length_ratio
     """
 
     symmetry = param.Selector(objects=["bilateral", "radial"], doc="The body symmetry.")
@@ -46,7 +61,7 @@ class BodyContour(LineClosed):
 
         self.generate_base_vertices()
 
-    def generate_base_vertices(self):
+    def generate_base_vertices(self) -> None:
         if not self.guide_points:
             self.guide_points = body_plans[self.body_plan]
         if self.symmetry == "bilateral":
@@ -58,11 +73,26 @@ class BodyContour(LineClosed):
 
     # TODO make this more explicit
     @property
-    def width_to_length_ratio(self):
+    def width_to_length_ratio(self) -> float:
         return np.mean(np.array(self.guide_points)[:, 1])
 
 
 class ShapeMobile(LineClosed, MobileVector):
+    """
+    Mobile shape with dynamic vertex updates based on position and orientation.
+
+    Combines closed line shape with mobile vector capabilities, automatically
+    updating vertices when position, orientation, or length changes.
+
+    Attributes:
+        length: Physical length of the shape in meters
+        base_vertices: Template vertices scaled and transformed to actual position
+
+    Example:
+        >>> shape = ShapeMobile(length=0.005, base_vertices=[(1,0), (0,0.1), (0,-0.1)])
+        >>> shape.set_position((0.01, 0.01))
+    """
+
     length = PositiveNumber(0.005)
     base_vertices = XYLine(doc="The list of 2d points")
 
@@ -71,12 +101,12 @@ class ShapeMobile(LineClosed, MobileVector):
         self.length_ratio = self.get_length_ratio()
         self.update_vertices()
 
-    def get_length_ratio(self):
+    def get_length_ratio(self) -> float:
         xs = np.array(self.base_vertices)[:, 0]
         return -np.min(xs) + np.max(xs)
 
     @param.depends("pos", "orientation", "length", watch=True)
-    def update_vertices(self):
+    def update_vertices(self) -> None:
         self.vertices = self.translate(
             self.length / self.length_ratio * np.array(self.base_vertices)
         )
@@ -85,7 +115,18 @@ class ShapeMobile(LineClosed, MobileVector):
 
 
 class ShapeViewable(ShapeMobile, Viewable):
-    def draw(self, v, **kwargs):
+    """
+    Mobile shape with rendering capabilities.
+
+    Extends ShapeMobile with visualization methods for drawing the shape
+    as a filled polygon using a viewer object.
+
+    Example:
+        >>> shape = ShapeViewable(length=0.005, color=(255, 0, 0))
+        >>> shape.draw(viewer)
+    """
+
+    def draw(self, v, **kwargs) -> None:
         # self.update_vertices()
         v.draw_polygon(self.vertices, filled=True, color=self.color)
 
@@ -117,6 +158,24 @@ class BodyMobile(ShapeMobile, BodyContour):
 
 
 class SegmentedBody(BodyMobile):
+    """
+    Multi-segment body with articulation and mass distribution.
+
+    Divides body into configurable number of segments with independent
+    positions and orientations. Supports custom segment length ratios
+    and provides utilities for shape manipulation and rendering.
+
+    Attributes:
+        Nsegs: Number of segments comprising the body
+        segment_ratio: Ratio of each segment's length to total body length
+        segs: List of body segment shape objects
+
+    Example:
+        >>> body = SegmentedBody(Nsegs=12, length=0.005)
+        >>> body.compute_body_bend()
+        >>> head_pos = body.head.get_position()
+    """
+
     Nsegs = PositiveInteger(
         2, softmax=20, doc="The number of segments comprising the segmented larva body."
     )
@@ -136,7 +195,7 @@ class SegmentedBody(BodyMobile):
         self.update_seg_lengths()
 
     @property
-    def Nangles(self):
+    def Nangles(self) -> int:
         return self.Nsegs - 1
 
     def segmentize(self, centered: bool = True, closed: bool = False) -> np.ndarray:
@@ -205,7 +264,7 @@ class SegmentedBody(BodyMobile):
         ps = [util.np2Dtotuples(pp) for pp in ps]
         return ps
 
-    def generate_seg_positions(self):
+    def generate_seg_positions(self) -> list[tuple[float, float]]:
         N = self.Nsegs
         ls_x = np.cos(self.orientation) * self.length * self.segment_ratio
         ls_y = np.sin(self.orientation) * self.length / N
@@ -214,7 +273,7 @@ class SegmentedBody(BodyMobile):
             for i in range(N)
         ]
 
-    def generate_segs(self):
+    def generate_segs(self) -> None:
         self.segs = util.ItemList(
             objs=self.Nsegs,
             cls=self.param.segs.item_type,
@@ -224,7 +283,7 @@ class SegmentedBody(BodyMobile):
             length=(self.length * self.segment_ratio).tolist(),
         )
 
-    def compute_body_bend(self):
+    def compute_body_bend(self) -> None:
         angles = [
             util.angle_dif(
                 self.segs[i].get_orientation(),
@@ -236,15 +295,15 @@ class SegmentedBody(BodyMobile):
         self.body_bend = util.wrap_angle_to_0(sum(angles))
 
     @property
-    def head(self):
+    def head(self) -> ShapeViewable:
         return self.segs[0]
 
     @property
-    def tail(self):
+    def tail(self) -> ShapeViewable:
         return self.segs[-1]
 
     @property
-    def direction(self):
+    def direction(self) -> float:
         return self.head.get_orientation()
 
     def get_shape(self, scale=1):
@@ -254,7 +313,7 @@ class SegmentedBody(BodyMobile):
         return ops.unary_union(ps).boundary.coords
 
     @property
-    def global_midspine_of_body(self):
+    def global_midspine_of_body(self) -> tuple[float, float]:
         if self.Nsegs == 1:
             return self.head.get_position()
         elif self.Nsegs == 2:
@@ -268,18 +327,18 @@ class SegmentedBody(BodyMobile):
         return global_pos
 
     @param.depends("length", watch=True)
-    def update_seg_lengths(self):
+    def update_seg_lengths(self) -> None:
         for i in range(self.Nsegs):
             self.segs[i].length = self.length * self.segment_ratio[i]
 
-    def move_body(self, dx, dy):
+    def move_body(self, dx, dy) -> None:
         x0, y0 = self.get_position()
         self.set_position((x0 + dx, y0 + dy))
         for i, seg in enumerate(self.segs):
             x, y = seg.get_position()
             seg.set_position((x + dx, y + dy))
 
-    def valid_Dbend_range(self, idx=0):
+    def valid_Dbend_range(self, idx=0) -> tuple[float, float]:
         if self.Nsegs > idx + 1:
             dang = util.wrap_angle_to_0(
                 self.segs[idx + 1].get_orientation() - self.segs[idx].get_orientation()
@@ -288,43 +347,58 @@ class SegmentedBody(BodyMobile):
             dang = 0
         return (-np.pi + dang), (np.pi + dang)
 
-    def set_color(self, colors):
+    def set_color(self, colors) -> None:
         if len(colors) != self.Nsegs:
             colors = [tuple(colors)] * self.Nsegs
         for seg, col in zip(self.segs, colors):
             seg.color = col
 
     @property
-    def midline_xy(self):
+    def midline_xy(self) -> list[tuple]:
         return [seg.front_end for seg in self.segs] + [self.tail.rear_end]
 
     @property
-    def front_orientation(self):
+    def front_orientation(self) -> float:
         return self.head.get_orientation() % (2 * np.pi)
 
     @property
-    def rear_orientation(self):
+    def rear_orientation(self) -> float:
         return self.tail.get_orientation() % (2 * np.pi)
 
-    def draw_segs(self, v, **kwargs):
+    def draw_segs(self, v, **kwargs) -> None:
         self.segs.draw(v, **kwargs)
 
 
 class SegmentedBodySensored(SegmentedBody):
+    """
+    Segmented body with configurable sensory organs.
+
+    Extends SegmentedBody with support for positioning sensors (olfactory,
+    touch, etc.) on specific body segments with local coordinates.
+
+    Attributes:
+        sensors: Dictionary of sensor definitions with positions and modalities
+
+    Example:
+        >>> body = SegmentedBodySensored(Nsegs=12)
+        >>> body.add_touch_sensors([5, 10])
+        >>> olf_pos = body.olfactor_pos
+    """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.sensors = util.AttrDict()
         self.define_sensor("olfactor", (1, 0), modality="olfaction")
 
     @property
-    def olfactor_pos(self):
+    def olfactor_pos(self) -> tuple:
         return self.head.front_end
 
     @property
-    def olfactor_point(self):
+    def olfactor_point(self) -> geometry.Point:
         return geometry.Point(self.olfactor_pos[0], self.olfactor_pos[1])
 
-    def define_sensor(self, sensor, pos_on_body, modality):
+    def define_sensor(self, sensor, pos_on_body, modality) -> None:
         x, y = pos_on_body
         for i, (r, cum_r) in enumerate(
             zip(self.segment_ratio, np.cumsum(self.segment_ratio))
@@ -341,17 +415,17 @@ class SegmentedBodySensored(SegmentedBody):
             }
         )
 
-    def get_sensor_position(self, sensor):
+    def get_sensor_position(self, sensor) -> tuple:
         d = self.sensors[sensor]
         return self.segs[d.seg_idx].translate(tuple(d.local_pos * self.length))
 
-    def add_touch_sensors(self, idx):
+    def add_touch_sensors(self, idx) -> None:
         for i in idx:
             self.define_sensor(
                 f"touch_sensor_{i}", self.base_vertices[i], modality="touch"
             )
 
-    def draw_sensors(self, v, **kwargs):
+    def draw_sensors(self, v, **kwargs) -> None:
         for s in self.sensors:
             pos = self.get_sensor_position(s)
             v.draw_circle(
@@ -362,9 +436,9 @@ class SegmentedBodySensored(SegmentedBody):
                 width=0.1,
             )
 
-    def get_sensors_by_modality(self, modality):
+    def get_sensors_by_modality(self, modality) -> list[str]:
         return [s for s, dic in self.sensors.items() if dic["modality"] == modality]
 
     @property
-    def touch_sensorIDs(self):
+    def touch_sensorIDs(self) -> list[str]:
         return self.get_sensors_by_modality("touch")

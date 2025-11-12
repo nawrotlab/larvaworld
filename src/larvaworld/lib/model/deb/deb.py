@@ -2,6 +2,10 @@
 DEB pipeline from literature
 """
 
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional
+
 import json
 import os
 
@@ -21,15 +25,35 @@ from ...param import (
 )
 from . import Gut
 
-__all__ = [
+__all__: list[str] = [
     "DEB_model",
     "DEB_basic",
     "DEB",
 ]
 
 
-# p.257 in S. a. L. M. Kooijman, “Dynamic Energy Budget theory for metabolic organisation : Summary of concepts of the third edition,” Water, vol. 365, p. 68, 2010.
+# p.257 in S. a. L. M. Kooijman, "Dynamic Energy Budget theory for metabolic organisation : Summary of concepts of the third edition," Water, vol. 365, p. 68, 2010.
 class DEB_model(NestedConf):
+    """
+    Dynamic Energy Budget (DEB) model parameters.
+
+    Implements standard DEB theory parameters for metabolic organization
+    following Kooijman (2010). Provides core DEB equations for growth,
+    maintenance, reproduction, and aging.
+
+    Key DEB parameters include surface-area specific rates (F_m, p_Am),
+    volume-specific costs (E_G, p_M), allocation fractions (kap, kap_X),
+    maturity thresholds (E_Hb, E_He), and aging parameters (h_a, s_G).
+
+    Reference:
+        Kooijman (2010). "Dynamic Energy Budget theory for metabolic
+        organisation." Water, vol. 365, p. 68.
+
+    Example:
+        >>> deb = DEB_model(species="rover")
+        >>> deb.compute_compound_pars()
+    """
+
     F_m = PositiveNumber(
         6.5, doc="maximum surface-area specific searching rate (l cm**-2 d**-1)"
     )
@@ -101,7 +125,7 @@ class DEB_model(NestedConf):
         0.2, doc="yield coefficient that couples mass flux E to mass flux V"
     )
 
-    def __init__(self, print_output=False, **kwargs):
+    def __init__(self, print_output: bool = False, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.print_output = print_output
         self.stages = ["embryo", "larva", "pupa", "imago"]
@@ -119,7 +143,7 @@ class DEB_model(NestedConf):
         self.compute_initial_state()
         self.predict_life_history()
 
-    def derive_pars(self):
+    def derive_pars(self) -> None:
         # self.p_Am = self.z*self.p_M/self.kap
         self.E_M = self.p_Am / self.v  # maximum reserve density
         self.k_M = self.p_M / self.E_G
@@ -136,7 +160,7 @@ class DEB_model(NestedConf):
         self.J_X_Am = self.J_E_Am / self.y_E_X
         self.K = self.J_X_Am / self.F_m
 
-    def get_lb(self):
+    def get_lb(self) -> float:
         g = self.g
         xb = self.xb
         n = 1000 + round(1000 * max(0, self.k - 1))
@@ -171,7 +195,7 @@ class DEB_model(NestedConf):
             i += 1
         return lb
 
-    def get_tau_b(self):
+    def get_tau_b(self) -> float:
         from scipy.integrate import quad
 
         def get_tb(x, ab, xb):
@@ -180,7 +204,7 @@ class DEB_model(NestedConf):
         ab = 3 * self.g * self.xb ** (1 / 3) / self.lb
         return 3 * quad(func=get_tb, a=1e-15, b=self.xb, args=(ab, self.xb))[0]
 
-    def get_E0(self):
+    def get_E0(self) -> float:
         """
         This function calculates the maximum reserve density (E0) that an organism can achieve given its energy budget parameters.
 
@@ -212,13 +236,13 @@ class DEB_model(NestedConf):
         # Calculate U0 and E0 using the equations in the Dynamic Energy Budget textbook
         return self.p_Am * uE0 / self.Ucoeff
 
-    def compute_initial_state(self):
+    def compute_initial_state(self) -> None:
         self.lb = self.get_lb()
         self.E0 = self.get_E0()
         self.Lw0 = self.L0 / self.del_M
         self.Ww0 = self.compute_Ww(V=self.L0**3, E=self.E0)
 
-    def predict_embryo_stage(self):
+    def predict_embryo_stage(self) -> None:
         self.k_E = self.g * self.k_M / self.lb
         self.Lb = self.lb * self.Lm
         self.Lwb = self.Lb / self.del_M
@@ -250,7 +274,7 @@ class DEB_model(NestedConf):
         # self.U0 = self.uE0 * v ** 2 / g ** 2 / k_M ** 3
         # self.E0 = self.U0 * p_Am
 
-    def predict_larva_stage(self, f=1.0):
+    def predict_larva_stage(self, f: float = 1.0) -> None:
         g = self.g
         lb = self.lb
         c1 = f / g * (g + lb) / (f - lb)
@@ -278,7 +302,7 @@ class DEB_model(NestedConf):
             V=self.Lj**3, E=self.Ej + self.E_Rj
         )  # g, wet weight at pupation
 
-    def predict_pupa_stage(self):
+    def predict_pupa_stage(self) -> None:
         from scipy.integrate import solve_ivp
 
         g = self.g
@@ -309,7 +333,7 @@ class DEB_model(NestedConf):
             V=self.Le**3, E=self.Ee + self.E_Rj
         )  # g, wet weight at emergence
 
-    def predict_imago_stage(self, f=1.0):
+    def predict_imago_stage(self, f: float = 1.0) -> None:
         # if np.abs(self.sG) < 1e-10:
         #     self.sG = 1e-10
         # self.uh_a =self.h_a/ self.k_M ** 2 # scaled Weibull aging coefficient
@@ -335,7 +359,7 @@ class DEB_model(NestedConf):
             V=self.Li**3, E=self.Ei + self.E_Rj
         )  # g, imago wet weight
 
-    def predict_life_history(self, f=1.0):
+    def predict_life_history(self, f: float = 1.0) -> None:
         self.predict_embryo_stage()
         self.predict_larva_stage(f=f)
         self.predict_pupa_stage()
@@ -349,7 +373,9 @@ class DEB_model(NestedConf):
         if self.print_output:
             self.print_life_history(Es, Wws, Lws, Durs)
 
-    def print_life_history(self, Es, Wws, Lws, Durs):
+    def print_life_history(
+        self, Es: List[float], Wws: List[float], Lws: List[float], Durs: List[float]
+    ) -> None:
         ages = np.cumsum(Durs).tolist()
         ages.insert(0, 0)
 
@@ -383,19 +409,19 @@ class DEB_model(NestedConf):
             print(l)
 
     @property
-    def M_V(self):
+    def M_V(self) -> float:
         """Number of C-atoms per unit of structural body volume V : dV /wV"""
         return self.d_V / self.w_V
 
     @property
-    def T_factor(self):
+    def T_factor(self) -> float:
         return np.exp(self.T_A / self.T_ref - self.T_A / self.T)  # Arrhenius factor
 
-    def compute_Ww(self, V, E):
+    def compute_Ww(self, V: float, E: float) -> float:
         return V * self.d_V + E * self.w_E / self.mu_E
 
     @classmethod
-    def from_file(cls, species="default", **kwargs):
+    def from_file(cls, species: str = "default", **kwargs: Any) -> "DEB_model":
         # Drosophila model by default
         with open(f"{ROOT_DIR}/lib/model/deb/models/deb_{species}.csv") as tfp:
             d = json.load(tfp)
@@ -404,6 +430,27 @@ class DEB_model(NestedConf):
 
 
 class DEB_basic(DEB_model):
+    """
+    Basic DEB model with species-specific parameters and gut integration.
+
+    Extends DEB_model with species phenotypes (rover/sitter), gut assimilation,
+    starvation strategies, and aging dynamics. Includes fitted parameters for
+    Drosophila larva phenotypes.
+
+    Attributes:
+        id: Model identifier (default: "DEB model")
+        species: Phenotype selection ("default", "rover", "sitter")
+        starvation_strategy: Enable starvation response (default: False)
+        aging: Enable aging dynamics (default: False)
+        dt: Simulation timestep in days (default: 1/(24*60))
+        substrate: Feeding substrate configuration
+        assimilation_mode: Assimilation calculation method ("gut", "sim", "deb")
+
+    Example:
+        >>> deb = DEB_basic(species="rover", aging=True, dt=1/1440)
+        >>> deb.step_basic(f=0.8, V=0.001)
+    """
+
     id = param.String("DEB model", doc="The unique ID of the DEB model")
     species = param.Selector(
         objects=["default", "rover", "sitter"],
@@ -425,8 +472,13 @@ class DEB_basic(DEB_model):
     )
 
     def __init__(
-        self, species="default", save_dict=True, V_bite=0.001, gut_params={}, **kwargs
-    ):
+        self,
+        species: str = "default",
+        save_dict: bool = True,
+        V_bite: float = 0.001,
+        gut_params: Dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         # Drosophila model by default
         with open(f"{ROOT_DIR}/lib/model/deb/models/deb_{species}.csv") as tfp:
             species_dict = json.load(tfp)
@@ -455,19 +507,21 @@ class DEB_basic(DEB_model):
         self.X_V_buffer = 0
         self.time_buffer = 0
 
+        if gut_params is None:
+            gut_params = {}
         self.gut = Gut(deb=self, save_dict=save_dict, **gut_params)
         self.scale_time()
 
     @property
-    def dt_in_sec(self):
+    def dt_in_sec(self) -> float:
         return self.dt * 24 * 60 * 60
 
     @property
-    def alive(self):
+    def alive(self) -> bool:
         return self.E > 0
 
     @property
-    def stage(self):
+    def stage(self) -> str:
         if not self.alive:
             return "dead"
         if self.E_H < self.E_Hb:
@@ -480,34 +534,34 @@ class DEB_basic(DEB_model):
             return "imago"
 
     @property
-    def Lw(self):
+    def Lw(self) -> float:
         return self.L / self.del_M
 
     @property
-    def L(self):
+    def L(self) -> float:
         return (self.V + self.V2) ** (1 / 3)
 
     @property
-    def Ww(self):
+    def Ww(self) -> float:
         return self.compute_Ww(V=self.V, E=self.E + self.E_R)
 
     @property
-    def e(self):
+    def e(self) -> float:
         return self.E / self.V / self.E_M
 
     @property
-    def Vw(self):
+    def Vw(self) -> float:
         return self.V + self.w_E / self.d_E / self.mu_E * self.E
 
     @property
-    def pupation_buffer(self):
+    def pupation_buffer(self) -> float:
         return self.E_R / self.E_Rj
 
     @property
-    def time_to_death_by_starvation(self):
+    def time_to_death_by_starvation(self) -> float:
         return self.v**-1 * self.L * np.log(self.kap**-1)
 
-    def scale_time(self):
+    def scale_time(self) -> None:
         dt = self.dt * self.T_factor
         self.v_dt = self.v * dt
         self.p_M_dt = self.p_M * dt
@@ -520,14 +574,14 @@ class DEB_basic(DEB_model):
 
         self.J_X_A_array = np.ones(int(self.gut.residence_time / dt)) * self.J_X_A
 
-    def hex_model(self):
+    def hex_model(self) -> None:
         # p.161    [1] S. a. L. M. Kooijman, “Comments on Dynamic Energy Budget theory,” Changes, 2010.
         # For the larva stage
         # self.r = self.g * self.k_M * (self.e/self.lb -1)/(self.e+self.g) # growth rate at  constant food where e=f
         # self.k_E = self.v/self.Lb # Reserve turnover
         pass
 
-    def apply_fluxes(self, **kwargs):
+    def apply_fluxes(self, **kwargs: Any) -> None:
         """
         Energy fluxes at different life stages of holometabolous insects.
         Based on 'A dynamic energy budget for the whole life-cycle of holometabolous insects' Llandres(2015) Table 5
@@ -601,7 +655,9 @@ class DEB_basic(DEB_model):
         else:
             raise
 
-    def run_stage(self, stage, assimilation_mode="deb", **kwargs):
+    def run_stage(
+        self, stage: str, assimilation_mode: str = "deb", **kwargs: Any
+    ) -> float:
         t = 0
         while self.stage == stage and self.alive:
             self.apply_fluxes(assimilation_mode=assimilation_mode, **kwargs)
@@ -610,7 +666,7 @@ class DEB_basic(DEB_model):
             self.update()
         return t
 
-    def run_life_history(self, **kwargs):
+    def run_life_history(self, **kwargs: Any) -> None:
         if not self.age == 0:
             return
         Es, Wws, Lws, Durs = [self.E], [self.Ww], [self.Lw], []
@@ -624,7 +680,7 @@ class DEB_basic(DEB_model):
         if self.print_output:
             self.print_life_history(Es, Wws, Lws, Durs)
 
-    def run(self, **kwargs):
+    def run(self, **kwargs: Any) -> None:
         if self.alive:
             self.age += self.dt
             if self.stage == "larva":
@@ -633,7 +689,7 @@ class DEB_basic(DEB_model):
                 self.pupation_time_in_hours_sim = np.round(self.age * 24, 2)
         self.update()
 
-    def run_check(self, dt, X_V=0):
+    def run_check(self, dt: float, X_V: float = 0) -> None:
         self.X_V_buffer += X_V
         self.time_buffer += dt
         if self.time_buffer >= self.dt_in_sec:
@@ -641,15 +697,15 @@ class DEB_basic(DEB_model):
             self.X_V_buffer = 0
             self.time_buffer = 0
 
-    def update(self):
+    def update(self) -> None:
         pass
 
     @property
-    def J_X_A(self):
+    def J_X_A(self) -> float:
         return self.J_X_Am / self.Lb * self.V * self.base_f
 
     @property
-    def F(self):
+    def F(self) -> float:
         """Vol specific filtering rate (cm**3/(d*cm**3) -> vol of environment/vol of individual*day"""
         return (
             self.J_X_Am
@@ -658,16 +714,16 @@ class DEB_basic(DEB_model):
         )
 
     @property
-    def fr_feed(self):
+    def fr_feed(self) -> float:
         freq = self.F / self.V_bite * self.T_factor
         freq /= 24 * 60 * 60
         return freq
 
-    def get_best_EEB(self, cRef):
+    def get_best_EEB(self, cRef: Dict[str, Any]) -> float:
         z = np.poly1d(cRef["EEB_poly1d"])
         return np.clip(z(self.fr_feed), a_min=0, a_max=1)
 
-    def grow_larva(self, epochs, **kwargs):
+    def grow_larva(self, epochs: List[Any], **kwargs: Any) -> None:
         self.run_stage(stage="embryo")
         tb = self.age * 24
         for e in epochs:
@@ -684,7 +740,12 @@ class DEB_basic(DEB_model):
                 self.epoch_qs.append(e.substrate.quality)
         # self.gut.update()
 
-    def get_p_A(self, f=None, assimilation_mode=None, X_V=0.0):
+    def get_p_A(
+        self,
+        f: Optional[float] = None,
+        assimilation_mode: Optional[str] = None,
+        X_V: float = 0.0,
+    ) -> float:
         if f is None:
             f = self.base_f
         self.f = f
@@ -701,39 +762,59 @@ class DEB_basic(DEB_model):
             return self.deb_p_A
 
     @property
-    def steps_per_day(self):
+    def steps_per_day(self) -> int:
         return int(1 / self.dt)
 
     @property
-    def ingested_body_mass_ratio(self):
+    def ingested_body_mass_ratio(self) -> float:
         return self.gut.ingested_mass() / self.Ww * 100
 
     @property
-    def ingested_body_volume_ratio(self):
+    def ingested_body_volume_ratio(self) -> float:
         return self.gut.ingested_volume / self.V * 100
 
     @property
-    def ingested_gut_volume_ratio(self):
+    def ingested_gut_volume_ratio(self) -> float:
         return self.gut.ingested_volume / (self.V * self.gut.V_gm) * 100
 
     @property
-    def ingested_body_area_ratio(self):
+    def ingested_body_area_ratio(self) -> float:
         return (self.gut.ingested_volume / self.V) ** (1 / 2) * 100
 
     @property
-    def amount_absorbed(self):
+    def amount_absorbed(self) -> float:
         return self.gut.absorbed_mass("mg")
 
     @property
-    def volume_ingested(self):
+    def volume_ingested(self) -> float:
         return self.gut.ingested_volume
 
     @property
-    def deb_f_deviation(self):
+    def deb_f_deviation(self) -> float:
         return self.f - 1
 
 
 class DEB(DEB_basic):
+    """
+    Full DEB model with hunger-driven behavior and data recording.
+
+    Complete DEB implementation integrating energetics with behavioral control
+    through hunger-driven exploration-exploitation balance (EEB). Tracks and
+    records all DEB state variables over time for analysis.
+
+    Attributes:
+        hunger_as_EEB: Use hunger to modulate EEB (default: True)
+        hunger_gain: Hunger sensitivity to reserve depletion (default: 1.0)
+        dict: AttrDict storing timeseries of DEB state variables
+              (age, mass, length, reserve, hunger, etc.)
+        save_to: File path for saving DEB trajectory data
+
+    Example:
+        >>> deb = DEB(species="rover", hunger_as_EEB=True, save_to="results.h5")
+        >>> deb.step(f=0.9, V_food=0.002, dt=0.01)
+        >>> hunger = deb.get_hunger()
+    """
+
     hunger_as_EEB = param.Boolean(
         True,
         doc="Whether the DEB-generated hunger drive informs the exploration-exploitation balance.",
@@ -745,8 +826,13 @@ class DEB(DEB_basic):
     )
 
     def __init__(
-        self, save_dict=True, save_to=None, base_hunger=0.5, intermitter=None, **kwargs
-    ):
+        self,
+        save_dict: bool = True,
+        save_to: str | None = None,
+        base_hunger: float = 0.5,
+        intermitter: Any = None,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**kwargs)
         self.set_intermitter(base_hunger, intermitter)
         self.save_to = save_to
@@ -773,7 +859,9 @@ class DEB(DEB_basic):
             else None
         )
 
-    def set_intermitter(self, base_hunger=0.5, intermitter=None):
+    def set_intermitter(
+        self, base_hunger: float = 0.5, intermitter: Any | None = None
+    ) -> None:
         self.intermitter = intermitter
         if self.intermitter is not None:
             if self.hunger_as_EEB:
@@ -781,12 +869,12 @@ class DEB(DEB_basic):
         self.base_hunger = base_hunger
         self.update_hunger()
 
-    def update(self):
+    def update(self) -> None:
         self.update_hunger()
         self.update_dict()
 
     @property
-    def birth_time_in_hours(self):
+    def birth_time_in_hours(self) -> float:
         try:
             t = self.t_b_comp
         except:
@@ -794,7 +882,7 @@ class DEB(DEB_basic):
         return np.round(t * 24, 1)
 
     @property
-    def pupation_time_in_hours(self):
+    def pupation_time_in_hours(self) -> float:
         try:
             return self.pupation_time_in_hours_sim
         except:
@@ -805,13 +893,13 @@ class DEB(DEB_basic):
             return self.birth_time_in_hours + np.round(t * 24, 1)
 
     @property
-    def death_time_in_hours(self):
+    def death_time_in_hours(self) -> float:
         if not self.alive:
             return self.age * 24
         else:
             return np.nan
 
-    def update_hunger(self):
+    def update_hunger(self) -> None:
         self.hunger = np.clip(
             self.base_hunger + self.hunger_gain * (1 - self.e), a_min=0, a_max=1
         )
@@ -820,13 +908,13 @@ class DEB(DEB_basic):
                 self.intermitter.EEB = self.hunger
 
     @property
-    def EEB(self):
+    def EEB(self) -> Optional[float]:
         if self.intermitter is None:
             return None
         else:
             return self.intermitter.EEB
 
-    def update_dict(self):
+    def update_dict(self) -> None:
         if self.dict is not None:
             dict_values = [
                 self.age * 24,
@@ -845,7 +933,7 @@ class DEB(DEB_basic):
                 self.dict[k].append(v)
             self.gut.update_dict()
 
-    def finalize_dict(self):
+    def finalize_dict(self) -> Dict[str, Any]:
         if self.dict is not None:
             d = self.dict
             d["species"] = self.species
@@ -886,7 +974,7 @@ class DEB(DEB_basic):
 
         return d
 
-    def save_dict(self, path=None):
+    def save_dict(self, path: Optional[str] = None) -> None:
         if path is None:
             if self.save_to is not None:
                 path = self.save_to
@@ -898,14 +986,16 @@ class DEB(DEB_basic):
             util.save_dict(d, f"{path}/{self.id}.txt")
 
     @classmethod
-    def default_growth(cls, id="DEB default", life_history=None, **kwargs):
+    def default_growth(
+        cls, id: str = "DEB default", life_history: Any | None = None, **kwargs: Any
+    ) -> Dict[str, Any]:
         if life_history is None:
             life_history = Life.from_epoch_ticks(reach_pupation=True)
         d = cls(id=id, **kwargs)
         d.grow_larva(epochs=life_history.epochs)
         return d.finalize_dict()
 
-    def run_larva_stage_offline(self, intermitter):
+    def run_larva_stage_offline(self, intermitter: Any) -> None:
         I = intermitter
         assert I is not None
         cum_feeds = 0
@@ -917,12 +1007,12 @@ class DEB(DEB_basic):
     @classmethod
     def sim_run(
         cls,
-        refID=None,
-        id="DEB sim",
-        EEB=None,
-        substrate=Substrate(type="standard"),
-        **kwargs,
-    ):
+        refID: Optional[str] = None,
+        id: str = "DEB sim",
+        EEB: Optional[float] = None,
+        substrate: Substrate = Substrate(type="standard"),
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
         from ... import reg
 
         if refID is None:

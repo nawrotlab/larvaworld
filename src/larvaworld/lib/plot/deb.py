@@ -2,6 +2,9 @@
 DEB-related plotting
 """
 
+from __future__ import annotations
+from typing import Any, Optional, Sequence, Tuple
+
 import warnings
 
 import numpy as np
@@ -10,7 +13,7 @@ from scipy import signal
 from ... import SIM_DIR
 from .. import plot, reg, util, funcs
 
-__all__ = [
+__all__: list[str] = [
     "plot_gut",
     "plot_food_amount",
     "plot_debs",
@@ -19,7 +22,22 @@ __all__ = [
 
 
 @funcs.graph("gut")
-def plot_gut(**kwargs):
+def plot_gut(**kwargs: Any) -> Any:
+    """
+    Plot gut occupancy over time with quantiles.
+
+    Creates time series plot showing gut occupancy percentage across
+    datasets with median and quartile bands.
+
+    Args:
+        **kwargs: Arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_gut(datasets=[d1, d2])
+    """
     P = plot.AutoPlot(name="gut", **kwargs)
     P.plot_quantiles(
         par="gut_occupancy", coeff=100, ylab="% gut occupied", ylim=[0, 100]
@@ -30,7 +48,26 @@ def plot_gut(**kwargs):
 
 
 @funcs.graph("food intake (timeplot)")
-def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
+def plot_food_amount(
+    filt_amount: bool = False, scaled: bool = False, **kwargs: Any
+) -> Any:
+    """
+    Plot cumulative food intake over time.
+
+    Creates time series showing food consumption with options for filtering
+    and scaling by larval body mass.
+
+    Args:
+        filt_amount: Whether to apply low-pass filter to intake rate. Defaults to False
+        scaled: Whether to scale by body mass percentage. Defaults to False
+        **kwargs: Arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_food_amount(datasets=[d1, d2], scaled=True, filt_amount=True)
+    """
     name = "food_intake"
     ylab = r"Cumulative food intake $(mg)$"
     par = "ingested_food_volume"
@@ -79,22 +116,52 @@ def plot_food_amount(filt_amount=False, scaled=False, **kwargs):
 
 @funcs.graph("deb")
 def plot_debs(
-    deb_dicts=None,
-    name=None,
-    save_to=None,
-    mode="full",
-    roversVSsitters=False,
-    include_egg=True,
-    time_unit="hours",
-    sim_only=False,
-    force_ymin=None,
-    color_epoch_quality=True,
-    datasets=None,
-    labels=None,
-    label_epochs=True,
-    label_lifestages=True,
-    **kwargs,
-):
+    deb_dicts: Optional[Sequence[Any]] = None,
+    name: Optional[str] = None,
+    save_to: Optional[str] = None,
+    mode: str = "full",
+    roversVSsitters: bool = False,
+    include_egg: bool = True,
+    time_unit: str = "hours",
+    sim_only: bool = False,
+    force_ymin: Optional[float] = None,
+    color_epoch_quality: bool = True,
+    datasets: Optional[Sequence[Any]] = None,
+    labels: Optional[Sequence[str]] = None,
+    label_epochs: bool = True,
+    label_lifestages: bool = True,
+    **kwargs: Any,
+) -> Any:
+    """
+    Plot DEB (Dynamic Energy Budget) model variables over lifetime.
+
+    Creates multi-panel time series showing DEB state variables (mass, length,
+    reserve, hunger, etc.) across life stages with annotations for key events
+    (hatching, pupation, death) and behavioral epochs.
+
+    Args:
+        deb_dicts: DEB data dictionaries. Auto-loaded from datasets if None
+        name: Plot name for saving. Defaults to 'debs'
+        save_to: Directory for saving. Defaults to simulation directory
+        mode: Variable set to plot ('full', 'energy', 'growth', 'feeding', etc.). Defaults to 'full'
+        roversVSsitters: Color code by rover/sitter phenotype. Defaults to False
+        include_egg: Include egg stage in timeline. Defaults to True
+        time_unit: Time unit for x-axis ('hours', 'minutes', 'seconds'). Defaults to 'hours'
+        sim_only: Show only simulation period. Defaults to False
+        force_ymin: Force minimum y-value. Defaults to None
+        color_epoch_quality: Color epochs by quality. Defaults to True
+        datasets: Dataset list for loading DEB data. Required if deb_dicts is None
+        labels: Custom labels. Defaults to None
+        label_epochs: Annotate behavioral epochs. Defaults to True
+        label_lifestages: Annotate life stages. Defaults to True
+        **kwargs: Arguments passed to AutoBasePlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_debs(datasets=[d1], mode='energy', time_unit='minutes')
+    """
     warnings.filterwarnings("ignore")
     if name is None:
         name = "debs"
@@ -497,15 +564,37 @@ def plot_debs(
 
 @funcs.graph("EEBvsQuality")
 def plot_EEB_vs_food_quality(
-    refIDs=None,
-    dt=None,
-    name=None,
-    species_list=["rover", "sitter", "default"],
-    **kwargs,
-):
+    refIDs: Optional[Sequence[str]] = None,
+    dt: Optional[float] = None,
+    name: Optional[str] = None,
+    species_list: Sequence[str] = ("rover", "sitter", "default"),
+    **kwargs: Any,
+) -> Any:
+    """
+    Plot EEB (Exploit-Explore Balance) vs food quality relationship.
+
+    Creates scatter plots showing relationships between substrate quality,
+    feeding frequency, and EEB for different larva species/phenotypes.
+
+    Args:
+        refIDs: Reference configuration IDs to analyze. Required
+        dt: Time step for DEB calculations. Defaults to None
+        name: Plot name for saving. Defaults to 'EEB_vs_food_quality'
+        species_list: Species/phenotypes to compare. Defaults to ('rover', 'sitter', 'default')
+        **kwargs: Arguments passed to AutoBasePlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Raises:
+        Exception: If refIDs is None
+
+    Example:
+        >>> fig = plot_EEB_vs_food_quality(refIDs=['Rover', 'Sitter'], dt=0.1)
+    """
     if refIDs is None:
         raise ("No sample configurations provided")
-    from ..model.deb.deb import DEB
+    from ..model import DEB
     from ..model.modules.intermitter import get_EEB_poly1d
 
     if name is None:

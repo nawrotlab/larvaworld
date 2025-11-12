@@ -1,11 +1,13 @@
 import os
+
 import pandas as pd
 import pytest
-from larvaworld.lib.process.import_aux import (
-    read_timeseries_from_raw_files_per_parameter,
-)
+
+from larvaworld.lib.process import read_timeseries_from_raw_files_per_parameter
 from larvaworld.lib import reg
 from larvaworld import DATA_DIR
+
+pytestmark = [pytest.mark.integration, pytest.mark.fast]
 
 
 @pytest.fixture

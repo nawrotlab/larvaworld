@@ -1,5 +1,7 @@
-# import warnings
+from __future__ import annotations
+
 import math
+from typing import Any, Callable
 
 import numpy as np
 from numpy.lib import scimath
@@ -8,7 +10,7 @@ from scipy.optimize import minimize
 # from scipy.stats import levy, norm, rv_discrete, ks_2samp
 
 
-__all__ = [
+__all__: list[str] = [
     "simplex",
     "beta0",
     "exp_bout",
@@ -16,7 +18,26 @@ __all__ = [
 ]
 
 
-def simplex(func, x0, args=()):
+def simplex(
+    func: Callable[..., float], x0: float | np.ndarray, args: tuple[Any, ...] = ()
+) -> float:
+    """
+    Nelder-Mead simplex optimization.
+
+    Minimizes function using Nelder-Mead algorithm with tight tolerance.
+
+    Args:
+        func: Function to minimize.
+        x0: Initial parameter value(s).
+        args: Additional arguments passed to func.
+
+    Returns:
+        Optimized parameter value.
+
+    Example:
+        >>> def cost(x): return (x - 3)**2
+        >>> result = simplex(cost, x0=0.0)
+    """
     res = minimize(
         func,
         x0,
@@ -27,16 +48,24 @@ def simplex(func, x0, args=()):
     return res
 
 
-def beta0(x0, x1):
+def beta0(x0: float, x1: float) -> float:
     """
-    Beta function used in the DEB textbook (p.58)
+    Compute beta function used in DEB textbook (p.58).
+
+    Implements the beta function for Dynamic Energy Budget (DEB) modeling
+    as defined in the DEB textbook, page 58.
 
     Args:
-        x0:float
-        x1:float
+        x0: First parameter value
+        x1: Second parameter value
 
-    Returns:float
+    Returns:
+        Real part of the computed beta function difference
 
+    Example:
+        >>> result = beta0(0.5, 1.0)
+        >>> isinstance(result, float)
+        True
     """
     x03 = x0 ** (1 / 3)
     x13 = x1 ** (1 / 3)
@@ -57,7 +86,28 @@ def beta0(x0, x1):
     return np.real(f1 - f0)
 
 
-def critical_bout(c=0.9, sigma=1, N=1000, tmax=1100, tmin=1):
+def critical_bout(
+    c: float = 0.9, sigma: float = 1, N: int = 1000, tmax: int = 1100, tmin: int = 1
+) -> int:
+    """
+    Stochastic bout duration with critical dynamics.
+
+    Simulates behavioral bout durations using critical point dynamics
+    with population size N and control parameters c, sigma.
+
+    Args:
+        c: Control parameter (default: 0.9).
+        sigma: Noise parameter (default: 1).
+        N: Population size (default: 1000).
+        tmax: Maximum bout duration (default: 1100).
+        tmin: Minimum bout duration (default: 1).
+
+    Returns:
+        Bout duration in timesteps.
+
+    Example:
+        >>> duration = critical_bout(c=0.9, sigma=1.0, N=1000)
+    """
     t = 0
     S = 1
     S_prev = 0
@@ -78,7 +128,24 @@ def critical_bout(c=0.9, sigma=1, N=1000, tmax=1100, tmin=1):
     return t
 
 
-def exp_bout(beta=0.01, tmax=1100, tmin=1):
+def exp_bout(beta: float = 0.01, tmax: int = 1100, tmin: int = 1) -> int:
+    """
+    Stochastic bout duration with exponential dynamics.
+
+    Simulates behavioral bout durations using exponential waiting time
+    with rate parameter beta.
+
+    Args:
+        beta: Rate parameter for exponential process (default: 0.01).
+        tmax: Maximum bout duration (default: 1100).
+        tmin: Minimum bout duration (default: 1).
+
+    Returns:
+        Bout duration in timesteps.
+
+    Example:
+        >>> duration = exp_bout(beta=0.01, tmax=1000)
+    """
     t = 0
     S = 0
     while S <= 0:

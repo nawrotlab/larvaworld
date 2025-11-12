@@ -1,6 +1,8 @@
 import pytest
 from larvaworld.lib.sim import ExpRun
-from larvaworld.lib.process.dataset import LarvaDataset
+from larvaworld.lib.process import LarvaDataset
+
+pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
 expIDs = [
     # "tethered",

@@ -2,6 +2,9 @@
 Basic classes for larvaworld-format datasets
 """
 
+from __future__ import annotations
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple
+
 import copy
 import itertools
 import os
@@ -16,7 +19,7 @@ from scipy.signal import find_peaks
 
 from ... import vprint, DATA_DIR
 from .. import reg, util
-from ..reg.larvagroup import LarvaGroup
+from ..reg import LarvaGroup
 from ..param import (
     ClassAttr,
     ClassDict,
@@ -32,7 +35,7 @@ from ..param import (
 )
 from ..util import AttrDict, SuperList, nam
 
-__all__ = [
+__all__: list[str] = [
     "DatasetConfig",
     "ParamLarvaDataset",
     "BaseLarvaDataset",
@@ -45,6 +48,9 @@ class DatasetConfig(RuntimeDataOps, SimMetricOps, SimTimeOps):
     """
     The configuration of a LarvaDataset.
     """
+
+    def __init__(self, **kwargs: Any) -> None:  # type: ignore[override]
+        super().__init__(**kwargs)
 
     Nticks = OptionalPositiveInteger(default=None)
     refID = param.String(None, doc="The unique ID of the reference dataset")
@@ -189,7 +195,7 @@ class ParamLarvaDataset(param.Parameterized):
         default=AttrDict(), item_type=None, doc="Additional dataset metadata"
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         if "config" not in kwargs:
             kws = AttrDict()
             for k in DatasetConfig().param_keys:
@@ -2240,11 +2246,15 @@ class ParamLarvaDataset(param.Parameterized):
 
 class BaseLarvaDataset(ParamLarvaDataset):
     @staticmethod
-    def initGeo(to_Geo=False, **kwargs):
+    def initGeo(to_Geo: bool = False, **kwargs: Any) -> "BaseLarvaDataset":
         if to_Geo:
             try:
-                from ..process.dataset_geo import GeoLarvaDataset
+                from importlib import import_module
 
+                GeoLarvaDataset = getattr(
+                    import_module("larvaworld.lib.process.dataset_geo"),
+                    "GeoLarvaDataset",
+                )
                 return GeoLarvaDataset(**kwargs)
             except:
                 pass
@@ -2252,16 +2262,16 @@ class BaseLarvaDataset(ParamLarvaDataset):
 
     def __init__(
         self,
-        dir=None,
-        refID=None,
-        load_data=True,
-        config=None,
-        step=None,
-        end=None,
-        agents=None,
-        initialize=False,
-        **kwargs,
-    ):
+        dir: Optional[str] = None,
+        refID: Optional[str] = None,
+        load_data: bool = True,
+        config: Optional[AttrDict] = None,
+        step: Optional[pd.DataFrame] = None,
+        end: Optional[pd.DataFrame] = None,
+        agents: Optional[list[str]] = None,
+        initialize: bool = False,
+        **kwargs: Any,
+    ) -> None:
         """
         Dataset class that stores a single experiment, real or simulated.
         Metadata and configuration parameters are stored in the 'config' dictionary.
@@ -2386,7 +2396,7 @@ class BaseLarvaDataset(ParamLarvaDataset):
 
 
 class LarvaDataset(BaseLarvaDataset):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """
         This is the default dataset class. Timeseries are stored as a pd.Dataframe 'step_data' with a 2-level index : 'Step' for the timestep index and 'AgentID' for the agent unique ID.
         Data is stored as a single HDF5 file or as nested dictionaries. The core file is 'data.h5' with keys like 'step' for timeseries and 'end' for endpoint metrics.
@@ -2404,7 +2414,7 @@ class LarvaDataset(BaseLarvaDataset):
         super().__init__(**kwargs)
 
     def visualize(self, parameters={}, **kwargs):
-        from ..sim.dataset_replay import ReplayRun
+        from ..sim import ReplayRun
 
         kwargs["dataset"] = self
         rep = ReplayRun(parameters=parameters, **kwargs)
@@ -2483,8 +2493,13 @@ class LarvaDataset(BaseLarvaDataset):
 
 class LarvaDatasetCollection:
     def __init__(
-        self, labels=None, colors=None, add_samples=False, config=None, **kwargs
-    ):
+        self,
+        labels: Optional[list[str]] = None,
+        colors: Optional[list[Any]] = None,
+        add_samples: bool = False,
+        config: Optional[AttrDict] = None,
+        **kwargs: Any,
+    ) -> None:
         ds = self.get_datasets(**kwargs)
 
         for d in ds:
@@ -2717,7 +2732,7 @@ def get_larva_dicts(ls, validIDs=None):
         if hasattr(l, "deb") and l.deb is not None:
             deb_dicts[id] = l.deb.finalize_dict()
         try:
-            from ..model.modules.nengobrain import NengoBrain
+            from ..model import NengoBrain
 
             if isinstance(l.brain, NengoBrain):
                 if l.brain.dict is not None:

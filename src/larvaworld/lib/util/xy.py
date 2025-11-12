@@ -2,6 +2,8 @@
 Methods for managing spatial metrics (2D x-y arrays)
 """
 
+from __future__ import annotations
+
 import copy
 import random
 
@@ -11,7 +13,7 @@ from shapely import geometry, ops
 
 # Avoid SettingWithCopyWarning: A value is trying to be set on a copy of a slice from a DataFrame. Try using .loc[row_indexer,col_indexer] = value instead
 pd.options.mode.chained_assignment = None  # default='warn'
-from typing import Optional
+from typing import Any, Optional
 
 import scipy as sp
 from scipy.signal import find_peaks
@@ -19,7 +21,7 @@ from scipy.signal import find_peaks
 from ... import vprint
 from . import AttrDict, cols_exist, flatten_list, nam, rotate_points_around_point
 
-__all__ = [
+__all__: list[str] = [
     "fft_max",
     "detect_strides",
     "stride_interp",
@@ -61,30 +63,27 @@ __all__ = [
 ]
 
 
-def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
+def fft_max(
+    a: np.ndarray,
+    dt: float,
+    fr_range: tuple[float, float] = (0.0, +np.inf),
+    return_amps: bool = False,
+) -> float | tuple[float, np.ndarray]:
     """
-    Power-spectrum of signal.
+    Compute power spectrum and dominant frequency of a signal.
 
-    Compute the power spectrum of a signal and its dominant frequency within some range.
+    Args:
+        a: 1D signal timeseries array
+        dt: Timestep of the timeseries
+        fr_range: Frequency range allowed (min, max)
+        return_amps: If True, return both frequency and power spectrum array
 
-    Parameters
-    ----------
-    a : array
-        1D np.array : signal timeseries
-    dt : float
-        Timestep of the timeseries
-    fr_range : Tuple[float,float]
-        Frequency range allowed. Default is (0.0, +np.inf)
-    return_amps: bool
-        whether to return the whole array of frequency powers
+    Returns:
+        Dominant frequency within range, or tuple of (frequency, power spectrum array) if return_amps=True
 
-    Returns
-    -------
-    yf : array
-        Array of computed frequency powers.
-    fr : float
-        Dominant frequency within range.
-
+    Example:
+        >>> signal = np.sin(2 * np.pi * 1.5 * np.arange(0, 10, 0.1))
+        >>> freq = fft_max(signal, dt=0.1, fr_range=(1.0, 2.0))
     """
     from scipy.fft import fft
 
@@ -107,31 +106,29 @@ def fft_max(a, dt, fr_range=(0.0, +np.inf), return_amps=False):
         return fr
 
 
-def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None):
+def detect_strides(
+    a: np.ndarray,
+    dt: float,
+    vel_thr: float = 0.3,
+    stretch: tuple[float, float] = (0.75, 2.0),
+    fr: Optional[float] = None,
+) -> np.ndarray:
     """
-    Annotates strides-runs and pauses in timeseries.
+    Detect stride events in velocity timeseries.
 
-    Extended description of function.
+    Args:
+        a: 1D forward velocity timeseries array
+        dt: Timestep of the timeseries
+        vel_thr: Maximum velocity threshold for pause detection
+        stretch: Min-max stretch of stride duration relative to frequency-based default
+        fr: Dominant crawling frequency (auto-detected if None)
 
-    Parameters
-    ----------
-    a : array
-        1D np.array : forward velocity timeseries
-    dt : float
-        Timestep of the timeseries
-    vel_thr : float
-        Maximum velocity threshold
-    stretch : Tuple[float,float]
-        The min-max stretch of a stride relative to the default derived from the dominnt frequency
-    fr : float, optional
-        The dominant crawling frequency.
+    Returns:
+        Array of stride intervals, shape (N, 2) with [start_idx, end_idx] pairs
 
-    Returns
-    -------
-    strides : list
-        A list of pairs of the start-end indices of the strides.
-
-
+    Example:
+        >>> velocity = np.array([0.1, 0.5, 0.8, 0.5, 0.1, 0.5, 0.8])
+        >>> strides = detect_strides(velocity, dt=0.1)
     """
     if fr is None:
         fr = fft_max(a, dt, fr_range=(1, 2.5))
@@ -150,7 +147,23 @@ def detect_strides(a, dt, vel_thr=0.3, stretch=(0.75, 2.0), fr=None):
     return np.array(strides)
 
 
-def stride_interp(a, strides, Nbins=64):
+def stride_interp(a: np.ndarray, strides: np.ndarray, Nbins: int = 64) -> np.ndarray:
+    """
+    Interpolate stride segments to uniform length.
+
+    Args:
+        a: 1D signal array
+        strides: Array of stride intervals, shape (N, 2) with [start, end] indices
+        Nbins: Number of bins for interpolation
+
+    Returns:
+        Array of interpolated strides, shape (N_strides, Nbins)
+
+    Example:
+        >>> signal = np.array([0, 1, 2, 1, 0, 1, 2, 1, 0])
+        >>> strides = np.array([[0, 4], [4, 8]])
+        >>> interp = stride_interp(signal, strides, Nbins=32)
+    """
     x = np.linspace(0, 2 * np.pi, Nbins)
     aa = np.zeros([strides.shape[0], Nbins])
     for ii, (s0, s1) in enumerate(strides):
@@ -158,7 +171,27 @@ def stride_interp(a, strides, Nbins=64):
     return aa
 
 
-def mean_stride_curve(a, strides, da, Nbins=64):
+def mean_stride_curve(
+    a: np.ndarray, strides: np.ndarray, da: np.ndarray, Nbins: int = 64
+) -> AttrDict:
+    """
+    Compute median stride curves separated by direction.
+
+    Args:
+        a: 1D signal array
+        strides: Array of stride intervals
+        da: Direction array (positive/negative values)
+        Nbins: Number of bins for interpolation
+
+    Returns:
+        AttrDict with keys 'abs', 'plus', 'minus', 'norm' containing median stride curves
+
+    Example:
+        >>> signal = np.array([0, 1, 2, 1, 0, 1, 2, 1, 0])
+        >>> strides = np.array([[0, 4], [4, 8]])
+        >>> da = np.array([1, -1])
+        >>> curves = mean_stride_curve(signal, strides, da)
+    """
     aa = stride_interp(a, strides, Nbins)
     aa_minus = aa[da < 0]
     aa_plus = aa[da > 0]
@@ -175,7 +208,27 @@ def mean_stride_curve(a, strides, da, Nbins=64):
     return dic
 
 
-def comp_PI(arena_xdim, xs, return_num=False):
+def comp_PI(
+    arena_xdim: float, xs: np.ndarray, return_num: bool = False
+) -> float | tuple[float, int]:
+    """
+    Compute preference index for spatial distribution.
+
+    Calculates left-right preference index based on x-coordinates distribution
+    in arena. Values range from -1 (all right) to +1 (all left).
+
+    Args:
+        arena_xdim: Arena x-dimension
+        xs: Array of x-coordinates
+        return_num: If True, also return sample count
+
+    Returns:
+        Preference index, or tuple of (index, count) if return_num=True
+
+    Example:
+        >>> xs = np.array([-0.3, -0.2, 0.1, 0.3])
+        >>> pi = comp_PI(arena_xdim=1.0, xs=xs)
+    """
     N = len(xs)
     r = 0.2 * arena_xdim
     xs = np.array(xs)
@@ -189,14 +242,49 @@ def comp_PI(arena_xdim, xs, return_num=False):
         return pI
 
 
-def rolling_window(a, w):
+def rolling_window(a: np.ndarray, w: int) -> np.ndarray:
+    """
+    Create rolling windows of size w from 1D array.
+
+    Args:
+        a: 1D input array
+        w: Window size
+
+    Returns:
+        2D array of rolling windows, shape (N-w+1, w)
+
+    Raises:
+        ValueError: If input array is not 1-dimensional
+
+    Example:
+        >>> a = np.array([1, 2, 3, 4, 5])
+        >>> windows = rolling_window(a, w=3)
+    """
     # Get windows of size w from array a
     if a.ndim != 1:
         raise ValueError("Input array must be 1-dimensional")
     return np.vstack([np.roll(a, -i) for i in range(w)]).T[: -w + 1]
 
 
-def straightness_index(ss, rolling_ticks):
+def straightness_index(ss: pd.DataFrame, rolling_ticks: np.ndarray) -> np.ndarray:
+    """
+    Compute straightness index over rolling windows.
+
+    Straightness index is defined as 1 - (straight_line_distance / path_distance),
+    ranging from 0 (perfectly straight) to 1 (highly tortuous).
+
+    Args:
+        ss: DataFrame with columns 'x', 'y', 'dst'
+        rolling_ticks: Rolling window indices array
+
+    Returns:
+        Array of straightness index values
+
+    Example:
+        >>> ss = pd.DataFrame({'x': [0, 1, 2], 'y': [0, 0, 0], 'dst': [0, 1, 1]})
+        >>> rolling_ticks = np.array([[0, 1], [1, 2]])
+        >>> si = straightness_index(ss, rolling_ticks)
+    """
     ps = ["x", "y", "dst"]
     assert cols_exist(ps, ss)
     sss = ss[ps].values
@@ -217,7 +305,28 @@ def straightness_index(ss, rolling_ticks):
     return SI0
 
 
-def sense_food(pos, sources=None, grid=None, radius=None):
+def sense_food(
+    pos: tuple[float, float],
+    sources: Optional[Any] = None,
+    grid: Optional[Any] = None,
+    radius: Optional[float] = None,
+) -> Any:
+    """
+    Detect food sources near a position.
+
+    Args:
+        pos: (x, y) position coordinates
+        sources: Optional agent list with food sources
+        grid: Optional grid object with food distribution
+        radius: Detection radius for source-based sensing
+
+    Returns:
+        Grid cell coordinates, food source object, or None if no food detected
+
+    Example:
+        >>> pos = (0.5, 0.5)
+        >>> cell = sense_food(pos, grid=food_grid)
+    """
     if grid:
         cell = grid.get_grid_cell(pos)
         if grid.grid[cell] > 0:
@@ -239,20 +348,21 @@ def generate_seg_shapes(
     closed: bool = False,
 ) -> np.ndarray:
     """
-    Segments a body into equal-length or given-length segments via vertical lines.
+    Segment body contour into equal or custom-length segments via vertical lines.
 
     Args:
-    - Nsegs: Number of segments to divide the body into.
-    - points: Array with shape (M,2) representing the contour of the body to be segmented.
-    - seg_ratio: List of N floats specifying the ratio of the length of each segment to the length of the body.
-                Defaults to None, in which case equal-length segments will be generated.
-    - centered: If True, centers the segments around the origin. Defaults to True.
-    - closed: If True, the last point of each segment is connected to the first point. Defaults to False.
+        Nsegs: Number of segments to divide the body into
+        points: Array of shape (M, 2) representing body contour
+        seg_ratio: Optional array of segment length ratios (default: equal segments)
+        centered: If True, center segments around origin
+        closed: If True, connect last point to first point in each segment
 
     Returns:
-    - ps: Numpy array with shape (Nsegs,L,2), where L is the number of vertices of each segment.
-          The first segment in the list is the front-most segment.
+        Array of shape (Nsegs, L, 2) where L is vertices per segment, front segment first
 
+    Example:
+        >>> contour = np.array([[1, 0.1], [0.5, 0.1], [0, 0]])
+        >>> segments = generate_seg_shapes(Nsegs=2, points=contour)
     """
     # If segment ratio is not provided, generate equal-length segments
     if seg_ratio is None:
@@ -299,12 +409,36 @@ def generate_seg_shapes(
 
 
 class Collision(Exception):
-    def __init__(self, object1, object2):
+    """
+    Exception raised when two objects collide.
+
+    Attributes:
+        object1: First colliding object
+        object2: Second colliding object
+
+    Example:
+        >>> raise Collision(agent1, agent2)
+    """
+
+    def __init__(self, object1: Any, object2: Any) -> None:
         self.object1 = object1
         self.object2 = object2
 
 
-def rearrange_contour(ps0):
+def rearrange_contour(ps0: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    """
+    Rearrange contour points by separating positive and negative y-values.
+
+    Args:
+        ps0: List of (x, y) contour points
+
+    Returns:
+        Rearranged list with positive y points (descending x) followed by negative y points (ascending x)
+
+    Example:
+        >>> points = [(1.0, 0.5), (0.5, -0.3), (0.8, 0.2)]
+        >>> rearranged = rearrange_contour(points)
+    """
     ps_plus = [p for p in ps0 if p[1] >= 0]
     ps_plus.sort(key=lambda x: x[0], reverse=True)
     ps_minus = [p for p in ps0 if p[1] < 0]
@@ -312,38 +446,31 @@ def rearrange_contour(ps0):
     return ps_plus + ps_minus
 
 
-def comp_bearing(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
+def comp_bearing(
+    xs: np.ndarray,
+    ys: np.ndarray,
+    ors: float | np.ndarray,
+    loc: tuple[float, float] = (0.0, 0.0),
+    in_deg: bool = True,
+) -> np.ndarray:
     """
-    Compute the bearing (azimuth) of a set of oriented 2D point-vectors relative to a location point.
+    Compute bearing (azimuth) of oriented points relative to reference location.
 
-    Parameters
-    ----------
-    xs : array-like
-        x-coordinates of the points.
-    ys : array-like
-        y-coordinates of the points.
-    ors : float or array-like
-        The orientations (in degrees) of the point-vectors.
-    loc : tuple, optional
-        The reference location's coordinates as a (x, y) tuple. Default is (0.0, 0.0).
-    in_deg : bool, optional
-        If True, returns bearings in degrees (default). If False, returns bearings in radians.
+    Args:
+        xs: Array of x-coordinates
+        ys: Array of y-coordinates
+        ors: Orientation angles (in degrees)
+        loc: Reference location (x, y)
+        in_deg: If True, return bearings in degrees; if False, in radians
 
-    Returns
-    -------
-    array-like
-        An array of bearing angles in degrees or radians, depending on the 'in_deg' parameter.
-        Positive angles indicate clockwise rotation from the positive x-axis.
+    Returns:
+        Array of bearing angles, range (-180, 180] degrees or (-π, π] radians
 
-    Examples
-    --------
-    xs = [1.0, 2.0, 3.0]
-    ys = [1.0, 2.0, 0.0]
-    ors = 90.0
-    comp_bearing(xs, ys, ors)
-
-    array([-135., -135.,  -90.])
-
+    Example:
+        >>> xs = np.array([1.0, 2.0, 3.0])
+        >>> ys = np.array([1.0, 2.0, 0.0])
+        >>> bearings = comp_bearing(xs, ys, ors=90.0)
+        >>> # Returns [-135., -135., -90.]
     """
     x0, y0 = loc
     dxs = x0 - np.array(xs)
@@ -354,7 +481,24 @@ def comp_bearing(xs, ys, ors, loc=(0.0, 0.0), in_deg=True):
     return drads if in_deg else np.deg2rad(drads)
 
 
-def comp_bearing_solo(x, y, o, loc=(0.0, 0.0)):
+def comp_bearing_solo(
+    x: float, y: float, o: float, loc: tuple[float, float] = (0.0, 0.0)
+) -> float:
+    """
+    Compute bearing angle for single oriented point relative to location.
+
+    Args:
+        x: Point x-coordinate
+        y: Point y-coordinate
+        o: Orientation angle (radians)
+        loc: Reference location (x, y)
+
+    Returns:
+        Bearing angle in radians, range (-π, π]
+
+    Example:
+        >>> bearing = comp_bearing_solo(x=1.0, y=1.0, o=np.pi/4, loc=(0.0, 0.0))
+    """
     x0, y0 = loc
     b = (o - np.arctan2(y0 - y, x0 - x)) % (2 * np.pi)
     if b > np.pi:
@@ -363,40 +507,28 @@ def comp_bearing_solo(x, y, o, loc=(0.0, 0.0)):
 
 
 def compute_dispersal_solo(
-    xy, min_valid_proportion=0.2, max_start_proportion=0.1, min_end_proportion=0.9
-):
+    xy: np.ndarray | pd.DataFrame,
+    min_valid_proportion: float = 0.2,
+    max_start_proportion: float = 0.1,
+    min_end_proportion: float = 0.9,
+) -> np.ndarray:
     """
-    Compute dispersal values for a given trajectory.
+    Compute dispersal (distance from start) for single trajectory.
 
-    This function calculates dispersal values based on a trajectory represented as a 2D array or DataFrame.
-    It checks for the validity of the input trajectory and returns dispersal values accordingly.
+    Validates trajectory completeness before computing distances from initial position.
 
-    Parameters
-    ----------
-    xy : array-like or DataFrame
-        The trajectory data, where each row represents a point in 2D space.
-    min_valid_proportion : float, optional
-        The minimum proportion of valid data points required in the trajectory.
-        Defaults to 0.2, meaning at least 20% of non-missing data points are required.
-    max_start_proportion : float, optional
-        The maximum proportion of missing data allowed before the first valid point.
-        Defaults to 0.1, meaning up to 10% of missing data is allowed at the start.
-    min_end_proportion : float, optional
-        The minimum proportion of data allowed before the last valid point.
-        Defaults to 0.9, meaning up to 10% of missing data is allowed at the end.
+    Args:
+        xy: Trajectory data, shape (N, 2) with [x, y] coordinates
+        min_valid_proportion: Minimum proportion of non-NaN data points required (default: 0.2)
+        max_start_proportion: Maximum proportion of NaN data allowed at start (default: 0.1)
+        min_end_proportion: Minimum data proportion before last valid point (default: 0.9)
 
-    Returns
-    -------
-    array-like
-        An array of dispersal values or NaNs based on the input trajectory's validity.
+    Returns:
+        Array of dispersal values, or NaN array if trajectory invalid
 
-    Notes
-    -----
-    - The input trajectory should be a 2D array or a DataFrame with columns representing x and y coordinates.
-    - The function checks for the proportion of valid data points and the presence of missing data at the start and end.
-    - If the trajectory is valid, dispersal values are computed using a custom function (eudi5x).
-
-
+    Example:
+        >>> xy = np.array([[0, 0], [1, 0], [2, 1]])
+        >>> dispersal = compute_dispersal_solo(xy)
     """
     if isinstance(xy, pd.DataFrame):
         xy = xy.values
@@ -423,41 +555,25 @@ def compute_dispersal_solo(
 #         return df_slice
 
 
-def compute_dispersal_multi(xy0, t0, t1, dt, **kwargs):
+def compute_dispersal_multi(
+    xy0: pd.DataFrame, t0: float, t1: float, dt: float, **kwargs: Any
+) -> tuple[np.ndarray, int]:
     """
-    Compute dispersal values for multiple agents over a time range.
+    Compute dispersal values for multiple agents over time range.
 
-    Parameters
-    ----------
-    xy0 : pd.DataFrame
-        A DataFrame containing agent positions and timestamps.
-    t0 : float
-        The start time for dispersal computation in sec.
-    t1 : float
-        The end time for dispersal computation in sec.
-    dt : float
-        Timestep of the timeseries.
-    **kwargs : keyword arguments
-        Additional arguments to pass to compute_dispersal_solo.
+    Args:
+        xy0: MultiIndex DataFrame with agent positions (levels: Step, AgentID)
+        t0: Start time in seconds
+        t1: End time in seconds
+        dt: Timestep of timeseries
+        **kwargs: Additional arguments passed to compute_dispersal_solo
 
-    Returns
-    -------
-    np.ndarray
-        An array of dispersal values for all agents at each time step.
-    int
-        The number of time steps.
+    Returns:
+        Tuple of (dispersal_array, n_timesteps) where dispersal_array is flattened
 
     Example:
-    --------
-    xy0 = pd.DataFrame({'AgentID': [1, 1, 2, 2],
-                       'Step': [0, 1, 0, 1],
-                       'x': [0.0, 1.0, 2.0, 3.0],
-                       'y': [0.0, 1.0, 2.0, 3.0]})
-
-    AA, Nt = compute_dispersal_multi(xy0, t0=0, t1=1, dt=1)
-
-    # AA will contain dispersal values, and Nt will be the number of time steps.
-
+        >>> xy_data = pd.DataFrame({...})  # MultiIndex DataFrame
+        >>> dispersal, n_steps = compute_dispersal_multi(xy_data, t0=0, t1=10, dt=0.1)
     """
     # xy=get_timeseries_slice(xy0, dt=dt, time_range=(t0,t1))
 
@@ -476,35 +592,25 @@ def compute_dispersal_multi(xy0, t0, t1, dt, **kwargs):
     return AA0.flatten(), Nt
 
 
-def compute_component_velocity(xy, angles, dt, return_dst=False):
+def compute_component_velocity(
+    xy: np.ndarray, angles: np.ndarray, dt: float, return_dst: bool = False
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """
-    Compute the component velocity along a given orientation angle.
+    Compute velocity component along orientation angles.
 
-    This function calculates the component velocity of a set of 2D points (xy) along
-    the specified orientation angles. It can optionally return the displacement along
-    the orientation vector as well.
+    Args:
+        xy: Array of shape (N, 2) with [x, y] coordinates
+        angles: Array of shape (N,) with orientation angles in radians
+        dt: Time interval for velocity calculation
+        return_dst: If True, return both velocities and displacements
 
-    Parameters
-    ----------
-    xy : ndarray
-        An array of shape (n, 2) representing the x and y coordinates of the points.
-    angles : ndarray
-        An array of shape (n,) containing the orientation angles in radians.
-    dt : float
-        The time interval for velocity calculation.
-    return_dst : bool, optional
-        If True, the function returns both velocities and displacements.
-        If False (default), it returns only velocities.
+    Returns:
+        Velocity array, or tuple of (velocity, displacement) if return_dst=True
 
-    Returns
-    -------
-    ndarray
-        An array of component velocities calculated along the specified angles.
-
-    ndarray (optional)
-        An array of displacements along the specified orientation angles.
-        Returned only if `return_dst` is True.
-
+    Example:
+        >>> xy = np.array([[0, 0], [1, 0], [2, 1]])
+        >>> angles = np.array([0, 0, np.pi/4])
+        >>> v = compute_component_velocity(xy, angles, dt=0.1)
     """
     dx = np.diff(xy[:, 0], prepend=np.nan)
     dy = np.diff(xy[:, 1], prepend=np.nan)
@@ -523,32 +629,29 @@ def compute_component_velocity(xy, angles, dt, return_dst=False):
         return v
 
 
-def compute_velocity_threshold(v, Nbins=500, max_v=None, kernel_width=0.02):
+def compute_velocity_threshold(
+    v: np.ndarray,
+    Nbins: int = 500,
+    max_v: Optional[float] = None,
+    kernel_width: float = 0.02,
+) -> float:
     """
-    Compute a velocity threshold using a density-based approach.
+    Compute velocity threshold using density-based approach.
 
-    Parameters
-    ----------
-    v : array-like
-        The input velocity data.
-    Nbins : int, optional
-        Number of bins for the velocity histogram. Default is 500.
-    max_v : float or None, optional
-        Maximum velocity value. If None, it is computed from the data. Default is None.
-    kernel_width : float, optional
-        Width of the Gaussian kernel for density estimation. Default is 0.02.
+    Identifies minimum between local maxima and minima in smoothed density curve.
 
-    Returns
-    -------
-    float
-        The computed velocity threshold.
+    Args:
+        v: Input velocity data array
+        Nbins: Number of histogram bins
+        max_v: Maximum velocity value (auto-detected if None)
+        kernel_width: Gaussian kernel width for density smoothing
 
-    Notes
-    -----
-    This function calculates a velocity threshold by estimating the density of the velocity data.
-    It uses a histogram with `Nbins` bins, applies a Gaussian kernel of width `kernel_width`,
-    and identifies the minimum between local maxima and minima in the density curve.
+    Returns:
+        Computed velocity threshold
 
+    Example:
+        >>> velocities = np.random.exponential(0.5, 1000)
+        >>> threshold = compute_velocity_threshold(velocities)
     """
     import matplotlib.pyplot as plt
 
@@ -579,7 +682,16 @@ def compute_velocity_threshold(v, Nbins=500, max_v=None, kernel_width=0.02):
     return minimum
 
 
-def get_display_dims():
+def get_display_dims() -> tuple[int, int]:
+    """
+    Get display dimensions scaled to 2/3 of screen size.
+
+    Returns:
+        Tuple of (width, height) in pixels, rounded to multiples of 16
+
+    Example:
+        >>> width, height = get_display_dims()
+    """
     import pygame
 
     pygame.init()
@@ -587,7 +699,21 @@ def get_display_dims():
     return int(W * 2 / 3 / 16) * 16, int(H * 2 / 3 / 16) * 16
 
 
-def get_window_dims(arena_dims):
+def get_window_dims(arena_dims: tuple[float, float]) -> tuple[int, int]:
+    """
+    Compute optimal window dimensions for arena visualization.
+
+    Maintains aspect ratio while fitting within display bounds.
+
+    Args:
+        arena_dims: Arena dimensions (width, height)
+
+    Returns:
+        Tuple of (window_width, window_height) in pixels
+
+    Example:
+        >>> dims = get_window_dims(arena_dims=(0.2, 0.2))
+    """
     X, Y = np.array(arena_dims)
     W0, H0 = get_display_dims()
     R0, R = W0 / H0, X / Y
@@ -597,12 +723,39 @@ def get_window_dims(arena_dims):
         return int(H0 * R / 16) * 16, H0
 
 
-def get_arena_bounds(arena_dims, s=1):
+def get_arena_bounds(arena_dims: tuple[float, float], s: float = 1) -> np.ndarray:
+    """
+    Compute arena bounds centered at origin.
+
+    Args:
+        arena_dims: Arena dimensions (width, height)
+        s: Scaling factor
+
+    Returns:
+        Array [x_min, x_max, y_min, y_max]
+
+    Example:
+        >>> bounds = get_arena_bounds(arena_dims=(1.0, 0.8))
+        >>> # Returns [-0.5, 0.5, -0.4, 0.4]
+    """
     X, Y = np.array(arena_dims) * s
     return np.array([-X / 2, X / 2, -Y / 2, Y / 2])
 
 
-def circle_to_polygon(N, r):
+def circle_to_polygon(N: int, r: float) -> list[tuple[float, float]]:
+    """
+    Generate polygon vertices approximating a circle.
+
+    Args:
+        N: Number of vertices
+        r: Radius of circle
+
+    Returns:
+        List of (x, y) vertex coordinates
+
+    Example:
+        >>> vertices = circle_to_polygon(N=8, r=1.0)
+    """
     one_segment = np.pi * 2 / N
 
     points = [
@@ -612,7 +765,21 @@ def circle_to_polygon(N, r):
     return points
 
 
-def boolean_indexing(v, fillval=np.nan):
+def boolean_indexing(v: list[np.ndarray], fillval: float = np.nan) -> np.ndarray:
+    """
+    Convert list of variable-length arrays to 2D array with padding.
+
+    Args:
+        v: List of 1D numpy arrays with different lengths
+        fillval: Value to use for padding shorter arrays
+
+    Returns:
+        2D array with shape (N, max_length), padded with fillval
+
+    Example:
+        >>> arrays = [np.array([1, 2]), np.array([3, 4, 5])]
+        >>> result = boolean_indexing(arrays, fillval=0)
+    """
     lens = np.array([len(item) for item in v])
     mask = lens[:, None] > np.arange(lens.max())
     out = np.full(mask.shape, fillval)
@@ -620,7 +787,24 @@ def boolean_indexing(v, fillval=np.nan):
     return out
 
 
-def concat_datasets(ddic, key="end", unit="sec"):
+def concat_datasets(
+    ddic: dict[str, Any], key: str = "end", unit: str = "sec"
+) -> pd.DataFrame:
+    """
+    Concatenate multiple datasets into single DataFrame.
+
+    Args:
+        ddic: Dictionary mapping dataset IDs to dataset objects
+        key: Data type to extract ('end' for endpoint_data, 'step' for step_data)
+        unit: Time unit for step data ('sec', 'min', 'hour', 'day')
+
+    Returns:
+        Concatenated DataFrame with added DatasetID and GroupID columns
+
+    Example:
+        >>> datasets = {'exp1': dataset1, 'exp2': dataset2}
+        >>> df = concat_datasets(datasets, key='step', unit='min')
+    """
     dfs = []
     for l, d in ddic.items():
         if key == "end":
@@ -649,11 +833,43 @@ def concat_datasets(ddic, key="end", unit="sec"):
     return df0
 
 
-def moving_average(a, n=3):
+def moving_average(a: np.ndarray, n: int = 3) -> np.ndarray:
+    """
+    Compute moving average with window size n.
+
+    Args:
+        a: 1D input array
+        n: Window size
+
+    Returns:
+        Array of moving averages (same length as input)
+
+    Example:
+        >>> data = np.array([1, 2, 3, 4, 5])
+        >>> smoothed = moving_average(data, n=3)
+    """
     return np.convolve(a, np.ones((n,)) / n, mode="same")
 
 
-def body_contour(points=[(0.9, 0.1), (0.05, 0.1)], start=(1, 0), stop=(0, 0)):
+def body_contour(
+    points: list[tuple[float, float]] = [(0.9, 0.1), (0.05, 0.1)],
+    start: tuple[float, float] = (1, 0),
+    stop: tuple[float, float] = (0, 0),
+) -> np.ndarray:
+    """
+    Generate symmetric body contour from half-side points.
+
+    Args:
+        points: List of (x, y) points for upper half of body
+        start: Starting point coordinates
+        stop: Ending point coordinates
+
+    Returns:
+        Array of shape (2*N+2, 2) with full symmetric contour
+
+    Example:
+        >>> contour = body_contour(points=[(0.9, 0.1), (0.5, 0.15)])
+    """
     xy = np.zeros([len(points) * 2 + 2, 2]) * np.nan
     xy[0, :] = start
     xy[len(points) + 1, :] = stop
@@ -664,32 +880,24 @@ def body_contour(points=[(0.9, 0.1), (0.05, 0.1)], start=(1, 0), stop=(0, 0)):
     return xy
 
 
-def apply_per_level(s, func, level="AgentID", **kwargs):
+def apply_per_level(
+    s: pd.DataFrame, func: Any, level: str = "AgentID", **kwargs: Any
+) -> np.ndarray:
     """
-    Apply a function to each subdataframe of a MultiIndex DataFrame after grouping by a specified level.
+    Apply function to each group in MultiIndex DataFrame.
 
-    Parameters
-    ----------
-    s : pandas.DataFrame
-        A MultiIndex DataFrame with levels ['Step', 'AgentID'].
-    func : function
-        The function to apply to each subdataframe.
-    level : str, optional
-        The level by which to group the DataFrame. Default is 'AgentID'.
-    **kwargs : dict
-        Additional keyword arguments to pass to the 'func' function.
+    Args:
+        s: MultiIndex DataFrame with levels ['Step', 'AgentID']
+        func: Function to apply to each group
+        level: Grouping level ('AgentID' or 'Step')
+        **kwargs: Additional arguments passed to func
 
-    Returns
-    -------
-    numpy.ndarray
-        An array of dimensions [N_ticks, N_ids], where N_ticks is the number of unique 'Step' values,
-        and N_ids is the number of unique 'AgentID' values.
+    Returns:
+        Array of shape (N_steps, N_agents) with function results
 
-    Notes
-    -----
-    This function groups the DataFrame 's' by the specified 'level', applies 'func' to each subdataframe, and
-    returns the results as a numpy array.
-
+    Example:
+        >>> data = pd.DataFrame(...).set_index(['Step', 'AgentID'])
+        >>> result = apply_per_level(data, np.mean, level='AgentID')
     """
 
     def init_A(Ndims):
@@ -717,7 +925,20 @@ def apply_per_level(s, func, level="AgentID", **kwargs):
     return A
 
 
-def unwrap_deg(a):
+def unwrap_deg(a: np.ndarray | pd.Series) -> np.ndarray:
+    """
+    Unwrap angles in degrees to remove discontinuities.
+
+    Args:
+        a: Array or Series of angles in degrees
+
+    Returns:
+        Unwrapped angles in degrees
+
+    Example:
+        >>> angles = np.array([170, 180, -170, -160])
+        >>> unwrapped = unwrap_deg(angles)
+    """
     if isinstance(a, pd.Series):
         a = a.values
     b = np.copy(a)
@@ -725,7 +946,20 @@ def unwrap_deg(a):
     return b
 
 
-def unwrap_rad(a):
+def unwrap_rad(a: np.ndarray | pd.Series) -> np.ndarray:
+    """
+    Unwrap angles in radians to remove discontinuities.
+
+    Args:
+        a: Array or Series of angles in radians
+
+    Returns:
+        Unwrapped angles in radians
+
+    Example:
+        >>> angles = np.array([3.0, 3.14, -3.1, -3.0])
+        >>> unwrapped = unwrap_rad(angles)
+    """
     if isinstance(a, pd.Series):
         a = a.values
     b = np.copy(a)
@@ -733,14 +967,42 @@ def unwrap_rad(a):
     return b
 
 
-def rate(a, dt):
+def rate(a: np.ndarray | pd.Series, dt: float) -> np.ndarray:
+    """
+    Compute rate of change (derivative) of signal.
+
+    Args:
+        a: Input signal array or Series
+        dt: Time step
+
+    Returns:
+        Array of rates, first element is NaN
+
+    Example:
+        >>> signal = np.array([0, 1, 3, 6])
+        >>> velocity = rate(signal, dt=0.1)
+    """
     if isinstance(a, pd.Series):
         a = a.values
     v = np.diff(a) / dt
     return np.insert(v, 0, np.nan)
 
 
-def eudist(xy):
+def eudist(xy: np.ndarray | pd.DataFrame) -> np.ndarray:
+    """
+    Compute Euclidean distances between consecutive points in trajectory.
+
+    Args:
+        xy: Trajectory array or DataFrame, shape (N, 2) with [x, y] coordinates
+
+    Returns:
+        Array of cumulative distances, first element is 0
+
+    Example:
+        >>> xy = np.array([[0, 0], [1, 0], [1, 1]])
+        >>> distances = eudist(xy)
+        >>> # Returns [0, 1.0, 1.0]
+    """
     if isinstance(xy, pd.DataFrame):
         xy = xy.values
     A = np.sqrt(np.nansum(np.diff(xy, axis=0) ** 2, axis=1))
@@ -748,62 +1010,80 @@ def eudist(xy):
     return A
 
 
-def eudi5x(a, b):
+def eudi5x(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """
-    Calculate the Euclidean distance between points in arrays 'a' and 'b'.
+    Calculate Euclidean distances between points in arrays a and b.
 
-    Parameters
-    ----------
-    a : numpy.ndarray
-        An array containing the coordinates of the first set of points.
-    b : numpy.ndarray
-        An array containing the coordinates of the second set of points.
+    Args:
+        a: Array of shape (N, D) with N points in D dimensions
+        b: Single point or array of shape (D,) to measure distance from
 
-    Returns
-    -------
-    numpy.ndarray
-        An array of Euclidean distances between each pair of points from 'a' and 'b'.
+    Returns:
+        Array of N Euclidean distances
 
+    Example:
+        >>> a = np.array([[0, 0], [1, 0], [0, 1]])
+        >>> b = np.array([0.5, 0.5])
+        >>> distances = eudi5x(a, b)
     """
     return np.sqrt(np.sum((a - np.array(b)) ** 2, axis=1))
 
 
-def eudiNxN(a, b):
+def eudiNxN(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """
+    Compute pairwise Euclidean distances between two sets of points.
+
+    Args:
+        a: Array of shape (N, M, 2) representing N sets of M points
+        b: Array of shape (K, 2) representing K reference points
+
+    Returns:
+        Array of shape (N, M, K) with pairwise distances
+
+    Example:
+        >>> a = np.random.rand(5, 10, 2)
+        >>> b = np.random.rand(3, 2)
+        >>> distances = eudiNxN(a, b)
+    """
     b = np.array(b)
     return np.sqrt(np.sum(np.array([a - b[i] for i in range(b.shape[0])]) ** 2, axis=2))
 
 
-def compute_dst(s, point=""):
+def compute_dst(s: pd.DataFrame, point: str = "") -> None:
+    """
+    Compute and add distance column to DataFrame (in-place).
+
+    Args:
+        s: MultiIndex DataFrame with trajectory data
+        point: Point identifier (empty for default midpoint)
+
+    Example:
+        >>> compute_dst(step_data, point="head")
+    """
     s[nam.dst(point)] = apply_per_level(s[nam.xy(point)], eudist).flatten()
 
 
-def comp_extrema(a, order=3, threshold=None, return_2D=True):
+def comp_extrema(
+    a: pd.Series,
+    order: int = 3,
+    threshold: Optional[tuple[float, float]] = None,
+    return_2D: bool = True,
+) -> np.ndarray:
     """
-    Compute local extrema in a one-dimensional array or time series.
+    Compute local extrema in time series using scipy.signal.argrelextrema.
 
-    Parameters
-    ----------
-    a : pd.Series
-        The input time series data as a pandas Series.
-    order : int, optional
-        The order of the extrema detection. Default is 3.
-    threshold : tuple, optional
-        A tuple (min_threshold, max_threshold) to filter extrema based on values.
-        Default is None, which means no thresholding is applied.
-    return_2D : bool, optional
-        If True, returns a 2D array with flags for minima and maxima.
-        If False, returns a 1D array with -1 for minima, 1 for maxima, and NaN for non-extrema.
-        Default is True.
+    Args:
+        a: Input time series as pandas Series
+        order: Order of extrema detection (minimum separation)
+        threshold: Optional (min_threshold, max_threshold) to filter extrema by value
+        return_2D: If True, return 2D array [minima_flags, maxima_flags]; if False, return 1D (-1/1/NaN)
 
-    Returns
-    -------
-    np.ndarray
-        An array with extrema flags based on the specified criteria.
+    Returns:
+        Array with extrema flags (shape (N, 2) if return_2D=True, else (N,))
 
-    Notes
-    -----
-    - This function uses `scipy.signal.argrelextrema` for extrema detection.
-
+    Example:
+        >>> data = pd.Series([1, 3, 2, 4, 1, 5])
+        >>> extrema = comp_extrema(data, order=1, return_2D=False)
     """
     A = a.values
     N = A.shape[0]
@@ -902,23 +1182,33 @@ def align_trajectories(
     """
 
 
-def fixate_larva(s, c, arena_dims, P1, P2=None):
+def fixate_larva(
+    s: pd.DataFrame,
+    c: Any,
+    arena_dims: tuple[float, float],
+    P1: str,
+    P2: Optional[str] = None,
+) -> tuple[pd.DataFrame, np.ndarray]:
     """
-    Adjusts the coordinates of a larva in the dataset to fixate a primary point (P1) to the arena center,
-    and optionally a secondary point (P2) to the vertical axis.
+    Transform coordinates to fixate primary point to arena center.
 
-    Parameters:
-    s (pd.DataFrame): The dataset's step_data containing the larva coordinates.
-    c (object): The dataset's configuration dict.
-    P1 (str): The primary point to be fixed to the arena center.
-    P2 (str, optional): The secondary point to be fixed to the vertical axis. Defaults to None.
+    Optionally aligns secondary point to vertical axis via rotation.
+
+    Args:
+        s: Step data DataFrame with trajectory coordinates
+        c: Dataset configuration object
+        arena_dims: Arena dimensions (width, height)
+        P1: Primary point identifier to fix to center
+        P2: Optional secondary point to align to vertical axis
 
     Returns:
-    pd.DataFrame: The modified dataset's step_data with adjusted coordinates.
-    np.ndarray: Background array containing the transformations applied (bg_x, bg_y, bg_a).
+        Tuple of (transformed_dataframe, background_transformations) where background is [bg_x, bg_y, bg_angle]
 
     Raises:
-    ValueError: If the primary or secondary point is not part of the dataset.
+        ValueError: If requested point not found in dataset
+
+    Example:
+        >>> s_fixed, bg = fixate_larva(step_data, config, (0.2, 0.2), P1='centroid', P2='head')
     """
     pars = c.all_xy.existing(s)
     if not nam.xy(P1).exist_in(s):
@@ -959,16 +1249,21 @@ def fixate_larva(s, c, arena_dims, P1, P2=None):
     return s, bg
 
 
-def epoch_overlap(epochs1, epochs2):
+def epoch_overlap(epochs1: np.ndarray, epochs2: np.ndarray) -> np.ndarray:
     """
-    Find overlapping epochs between two sets of epochs.
+    Find epochs from epochs1 that overlap with any epoch in epochs2.
 
-    Parameters:
-    epochs1 (numpy.ndarray): A 2D array where each row represents an epoch with a start and end time.
-    epochs2 (numpy.ndarray): A 2D array where each row represents an epoch with a start and end time.
+    Args:
+        epochs1: Array of shape (N, 2) with [start, end] time pairs
+        epochs2: Array of shape (M, 2) with [start, end] time pairs
 
     Returns:
-    numpy.ndarray: A 2D array containing the epochs from epochs1 that overlap with any epoch in epochs2.
+        Array of overlapping epochs from epochs1
+
+    Example:
+        >>> epochs1 = np.array([[0, 5], [10, 15]])
+        >>> epochs2 = np.array([[3, 12]])
+        >>> overlapping = epoch_overlap(epochs1, epochs2)
     """
     valid = []
     if epochs1.shape[0] != 0 and epochs2.shape[0] != 0:
@@ -979,17 +1274,20 @@ def epoch_overlap(epochs1, epochs2):
     return np.array(valid)
 
 
-def epoch_slices(epochs):
+def epoch_slices(epochs: np.ndarray) -> list[np.ndarray]:
     """
-    Generate slices of indices for given epochs.
+    Generate index arrays for each epoch interval.
 
-    Parameters:
-    epochs (numpy.ndarray): A 2D array where each row represents an epoch with
-                            start and end indices.
+    Args:
+        epochs: Array of shape (N, 2) with [start_idx, end_idx] pairs
 
     Returns:
-    list: A list of numpy arrays, each containing indices from start to end
-          for each epoch.
+        List of N index arrays, each covering one epoch interval
+
+    Example:
+        >>> epochs = np.array([[0, 3], [5, 8]])
+        >>> slices = epoch_slices(epochs)
+        >>> # Returns [array([0, 1, 2]), array([5, 6, 7])]
     """
     if epochs.shape[0] == 0:
         return []

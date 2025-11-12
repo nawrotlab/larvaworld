@@ -9,6 +9,13 @@ usage
 ```
 
 ```{toctree}
+:caption: API Reference
+:maxdepth: 2
+
+autoapi/index
+```
+
+```{toctree}
 :caption: Project Info
 :maxdepth: 2
 

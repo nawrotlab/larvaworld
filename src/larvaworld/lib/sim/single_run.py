@@ -1,19 +1,20 @@
+from __future__ import annotations
+from typing import Any, Optional
 import os
 import time
 
 import agentpy
 import numpy as np
 import pandas as pd
-from typing import Optional
 
 from ... import vprint
 from .. import reg, util
-from ..reg.larvagroup import LarvaGroup
-from ..process.dataset import LarvaDatasetCollection
-from ..sim.base_run import BaseRun
+from ..reg import LarvaGroup
+from ..process import LarvaDatasetCollection
+from .base_run import BaseRun
 from .conditions import get_exp_condition
 
-__all__ = [
+__all__: list[str] = [
     "ExpRun",
 ]
 
@@ -24,7 +25,7 @@ class ExpRun(BaseRun):
         experiment: Optional[str] = None,
         parameters: Optional[dict] = None,
         parameter_dict: dict = {},
-        **kwargs: dict,
+        **kwargs: Any,
     ) -> None:
         """
         Simulation mode 'Exp' launches a single simulation of a specified experiment type.
@@ -65,7 +66,7 @@ class ExpRun(BaseRun):
         k = get_exp_condition(self.experiment)
         self.exp_condition = k(env=self) if k is not None else None
 
-    def step(self):
+    def step(self) -> None:
         """Defines the models' events per simulation step."""
         if not self.larva_collisions:
             self.larva_bodies = self.get_larva_bodies()
@@ -76,16 +77,16 @@ class ExpRun(BaseRun):
             self.space.Step(self.dt, 6, 2)
             self.agents.updated_by_Box2D()
 
-    def update(self):
+    def update(self) -> None:
         """Record a dynamic variable."""
         self.agents.nest_record(self.collectors["step"])
 
-    def end(self):
+    def end(self) -> None:
         """Repord an evaluation measure."""
         self.screen_manager.finalize()
         self.agents.nest_record(self.collectors["end"])
 
-    def simulate(self, **kwargs):
+    def simulate(self, **kwargs: Any):
         """
         Simulates the larva world environment and collects data.
 
@@ -113,7 +114,7 @@ class ExpRun(BaseRun):
             self.store()
         return self.datasets
 
-    def build_agents(self, larva_groups, parameter_dict={}):
+    def build_agents(self, larva_groups: dict, parameter_dict: dict = {}) -> None:
         """
         Builds and places agent groups in the simulation.
 
@@ -133,7 +134,7 @@ class ExpRun(BaseRun):
         ).flatten
         self.place_agents(confs)
 
-    def eliminate_overlap(self):
+    def eliminate_overlap(self) -> None:
         """
         Adjusts the positions of larva agents to eliminate overlaps.
 
@@ -161,7 +162,7 @@ class ExpRun(BaseRun):
                     else:
                         break
 
-    def collisions_exist(self, scale=1.0):
+    def collisions_exist(self, scale: float = 1.0) -> bool:
         """
         Check if any collisions exist among the agents.
 
@@ -181,7 +182,7 @@ class ExpRun(BaseRun):
                 return True
         return False
 
-    def detect_collisions(self, id):
+    def detect_collisions(self, id: int):
         """
         Detects collisions between a given larva and other larvae in the simulation.
 
@@ -199,7 +200,7 @@ class ExpRun(BaseRun):
                 ids.append(id0)
         return ids
 
-    def get_larva_bodies(self, scale=1.0):
+    def get_larva_bodies(self, scale: float = 1.0):
         """
         Retrieve the shapes of all larva agents in the simulation.
 
@@ -211,7 +212,7 @@ class ExpRun(BaseRun):
         """
         return {l.unique_id: l.get_shape(scale=scale) for l in self.agents}
 
-    def analyze(self, **kwargs):
+    def analyze(self, **kwargs: Any) -> None:
         """
         Analyzes the datasets based on the specified experiment type and generates plots or results accordingly.
 
@@ -261,7 +262,7 @@ class ExpRun(BaseRun):
         """
         return reg.graphs.get_analysis_graphgroups(self.experiment, self.p.source_xy)
 
-    def store(self):
+    def store(self) -> None:
         """
         Stores the simulation output and datasets.
 
@@ -303,7 +304,7 @@ class ExpRun(BaseRun):
         return df1
 
     @classmethod
-    def from_ID(cls, id, simulate=True, **kwargs):
+    def from_ID(cls, id: str, simulate: bool = True, **kwargs: Any):
         """
         Create an instance of the class from a given experiment ID.
 

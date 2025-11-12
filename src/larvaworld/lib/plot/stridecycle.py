@@ -2,16 +2,17 @@
 Stide-cycle-related plotting
 """
 
+from __future__ import annotations
+from typing import Any, Optional, Sequence
+
 import os
 
 import numpy as np
-from matplotlib import cm
-from matplotlib import pyplot as plt
 
 from .. import plot, reg, util, funcs
 from ..util import nam
 
-__all__ = [
+__all__: list[str] = [
     "plot_vel_during_strides",
     "stride_cycle",
     "stride_cycle_all_points",
@@ -22,8 +23,31 @@ __all__ = [
 
 
 def plot_vel_during_strides(
-    dataset, use_component=False, save_to=None, return_fig=False, show=False
-):
+    dataset: Any,
+    use_component: bool = False,
+    save_to: Optional[str] = None,
+    return_fig: bool = False,
+    show: bool = False,
+) -> Any:
+    """
+    Plot linear and angular velocities during stride epochs.
+
+    Creates two-panel figure showing how velocities vary across stride
+    duration, with optional component velocity analysis.
+
+    Args:
+        dataset: Dataset containing stride epoch data
+        use_component: Use component velocities instead of scalar. Defaults to False
+        save_to: Directory to save plots. Uses dataset plot_dir if None
+        return_fig: Whether to return figure object. Defaults to False
+        show: Whether to display plot. Defaults to False
+
+    Returns:
+        Figure object if return_fig is True, else None
+
+    Example:
+        >>> fig = plot_vel_during_strides(dataset, use_component=True, return_fig=True)
+    """
     chunk = "stride"
     D = dataset.epoch_dicts[chunk]
 
@@ -74,6 +98,8 @@ def plot_vel_during_strides(
     labels = [lin_labels, ang_labels]
     ylabels = [r"scaled velocity $(sec^{-1})$", "angular velocity $(deg/sec)$"]
 
+    from matplotlib import pyplot as plt
+
     for i in [0, 1]:
         fig, ax = plt.subplots(1, 1, figsize=(10, 5))
         for serie, vel, col, c, l in zip(
@@ -116,16 +142,39 @@ def plot_vel_during_strides(
 
 @funcs.graph("stride cycle", required={"ks": ["sv", "fov", "rov", "foa", "b"]})
 def stride_cycle(
-    name=None,
-    shorts=["sv", "fov", "rov", "foa", "b"],
-    modes=None,
-    subfolder="stride",
-    Nbins=64,
-    individuals=False,
-    pooled=True,
-    title="Stride cycle analysis",
-    **kwargs,
-):
+    name: Optional[str] = None,
+    shorts: Sequence[str] = ("sv", "fov", "rov", "foa", "b"),
+    modes: Optional[Sequence[str]] = None,
+    subfolder: str = "stride",
+    Nbins: int = 64,
+    individuals: bool = False,
+    pooled: bool = True,
+    title: str = "Stride cycle analysis",
+    **kwargs: Any,
+) -> Any:
+    """
+    Create stride cycle curves for kinematic parameters.
+
+    Generates multi-panel plot showing how velocity, angular velocity,
+    and bend vary throughout the stride cycle phase (0 to 2π).
+
+    Args:
+        name: Plot name for saving. Auto-generated if None
+        shorts: Parameter keys to plot. Defaults to velocity and angular parameters
+        modes: Processing modes for each parameter. Auto-determined if None
+        subfolder: Subfolder for saving. Defaults to 'stride'
+        Nbins: Number of phase bins. Defaults to 64
+        individuals: Plot individual trajectories. Defaults to False
+        pooled: Show pooled quantiles. Defaults to True
+        title: Figure title. Defaults to 'Stride cycle analysis'
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = stride_cycle(datasets=[d1, d2], individuals=True, Nbins=128)
+    """
     if name is None:
         name = (
             "stride_cycle_curves_all_larvae" if individuals else "stride_cycle_curves"
@@ -191,15 +240,37 @@ def stride_cycle(
 
 @funcs.graph("stride cycle multi", required={"ks": ["sv", "fov", "rov", "foa", "b"]})
 def stride_cycle_all_points(
-    name="stride cycle multi",
-    idx=0,
-    Nbins=64,
-    short="fov",
-    subfolder="stride",
-    maxNpoints=5,
-    axx=None,
-    **kwargs,
-):
+    name: str = "stride cycle multi",
+    idx: int = 0,
+    Nbins: int = 64,
+    short: Optional[str] = "fov",
+    subfolder: str = "stride",
+    maxNpoints: int = 5,
+    axx: Optional[Any] = None,
+    **kwargs: Any,
+) -> Any:
+    """
+    Create stride cycle plot with all body points.
+
+    Generates detailed stride cycle visualization showing angular velocities
+    at multiple body points and orientation changes during strides.
+
+    Args:
+        name: Plot name for saving. Defaults to 'stride cycle multi'
+        idx: Agent index to plot. Defaults to 0
+        Nbins: Number of phase bins. Defaults to 64
+        short: Parameter key to analyze. Defaults to 'fov'
+        subfolder: Subfolder for saving. Defaults to 'stride'
+        maxNpoints: Maximum body points to show. Defaults to 5
+        axx: Inset axes for additional plot. Creates new if None
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = stride_cycle_all_points(datasets=[d1], idx=0, maxNpoints=7)
+    """
     P = plot.AutoPlot(
         name=name,
         subfolder=subfolder,
@@ -251,6 +322,8 @@ def stride_cycle_all_points(
                 "mediumturquoise",
             ]
         else:
+            from matplotlib import cm
+
             pointcols = cm.rainbow(np.linspace(0, 1, len(points)))
         y0max = 0.7
         for p, col in zip(points, pointcols):
@@ -345,8 +418,29 @@ def stride_cycle_all_points(
     },
 )
 def plot_stride_Dbend(
-    name="stride_bend_change", show_text=False, subfolder="stride", **kwargs
-):
+    name: str = "stride_bend_change",
+    show_text: bool = False,
+    subfolder: str = "stride",
+    **kwargs: Any,
+) -> Any:
+    """
+    Plot bend angle changes during strides.
+
+    Creates scatter plot showing relationship between initial bend angle
+    and bend change over stride, with linear regression fits.
+
+    Args:
+        name: Plot name for saving. Defaults to 'stride_bend_change'
+        show_text: Show regression equation text. Defaults to False
+        subfolder: Subfolder for saving. Defaults to 'stride'
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_stride_Dbend(datasets=[d1, d2], show_text=True)
+    """
     P = plot.AutoPlot(name=name, subfolder=subfolder, **kwargs)
     ax = P.axs[0]
     b0p, b1p, bdp = nam.atStartStopChunk("bend", "stride")
@@ -386,8 +480,31 @@ def plot_stride_Dbend(
 
 @funcs.graph("stride Dor", required={"ks": ["str_fo", "str_ro"]})
 def plot_stride_Dorient(
-    name="stride_orient_change", absolute=True, subfolder="stride", Nbins=200, **kwargs
-):
+    name: str = "stride_orient_change",
+    absolute: bool = True,
+    subfolder: str = "stride",
+    Nbins: int = 200,
+    **kwargs: Any,
+) -> Any:
+    """
+    Plot orientation changes during strides.
+
+    Creates histograms showing distribution of front and rear orientation
+    changes over stride cycles.
+
+    Args:
+        name: Plot name for saving. Defaults to 'stride_orient_change'
+        absolute: Use absolute values. Defaults to True
+        subfolder: Subfolder for saving. Defaults to 'stride'
+        Nbins: Number of histogram bins. Defaults to 200
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_stride_Dorient(datasets=[d1, d2], absolute=False, Nbins=150)
+    """
     P = plot.AutoPlot(
         ks=["str_fo", "str_ro"],
         ranges=[80, 80],
@@ -404,8 +521,29 @@ def plot_stride_Dorient(
 
 @funcs.graph("interference", required={"ks": ["sv", "fov", "rov", "bv", "l"]})
 def plot_interference(
-    mode="orientation", agent_idx=None, subfolder="interference", **kwargs
-):
+    mode: str = "orientation",
+    agent_idx: Optional[int] = None,
+    subfolder: str = "interference",
+    **kwargs: Any,
+) -> Any:
+    """
+    Plot interference patterns between body segments.
+
+    Creates scatter plots showing relationships between front/rear angular
+    velocities, body length, and orientations to detect inter-segment interference.
+
+    Args:
+        mode: Analysis mode ('orientation' or other). Defaults to 'orientation'
+        agent_idx: Specific agent index to analyze. Analyzes all if None
+        subfolder: Subfolder for saving. Defaults to 'interference'
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_interference(datasets=[d1, d2], mode='orientation', agent_idx=0)
+    """
     name = (
         f"interference_{mode}"
         if agent_idx is None

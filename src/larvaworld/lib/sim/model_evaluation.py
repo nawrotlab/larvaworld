@@ -1,9 +1,12 @@
+from __future__ import annotations
+
+from typing import Any
 import os
 import warnings
 
 from ... import vprint
 from ..param import class_generator
-from ..process.evaluation import DataEvaluation
+from ..process import DataEvaluation
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
@@ -11,11 +14,11 @@ import numpy as np
 import pandas as pd
 
 from .. import reg, util
-from ..reg.generators import SimConfiguration
-from ..reg.larvagroup import LarvaGroupMutator
+from ..reg import SimConfiguration
+from ..reg import LarvaGroupMutator
 from ..util import AttrDict
 
-__all__ = [
+__all__: list[str] = [
     "EvalRun",
     "evalNplot",
     "modelConf_analysis",
@@ -35,7 +38,9 @@ class EvalConf(LarvaGroupMutator, DataEvaluation):
 # This should be adjusted in order to remove also the need for the LarvaGroupMutator parent class of EvalConf
 # (note that the args N,modelIDS, groupIDs are common in LarvaGroupMutator and SimConfigurationParams)
 class EvalRun(EvalConf, SimConfiguration):
-    def __init__(self, enrichment=True, screen_kws={}, **kwargs):
+    def __init__(
+        self, enrichment: bool = True, screen_kws: dict[str, Any] = {}, **kwargs: Any
+    ) -> None:
         """Model evaluation mode. This mode is used to evaluate a number of larva models
         for similarity with a preexisting reference dataset, most often one retained
         via monitoring real experiments. The evaluation is done by comparing the
@@ -71,7 +76,7 @@ class EvalRun(EvalConf, SimConfiguration):
         )
         self.error_plot_dir = f"{self.plot_dir}/errors"
 
-    def simulate(self):
+    def simulate(self) -> Any:
         kws = {
             "dt": self.dt,
             "duration": self.duration,
@@ -149,7 +154,7 @@ class EvalRun(EvalConf, SimConfiguration):
             self.store()
         return self.datasets
 
-    def get_error_plots(self, error_dict, mode="pooled"):
+    def get_error_plots(self, error_dict: Any, mode: str = "pooled") -> AttrDict:
         GD = reg.graphs.dict
         label_dic = {
             "1:1": {"end": "RSS error", "step": r"median 1:1 distribution KS$_{D}$"},
@@ -187,7 +192,7 @@ class EvalRun(EvalConf, SimConfiguration):
             dic[norm] = {"tables": tabs, "barplots": bars}
         return AttrDict(dic)
 
-    def analyze(self, **kwargs):
+    def analyze(self, **kwargs: Any) -> None:
         vprint("Evaluating all models", 1)
         os.makedirs(self.plot_dir, exist_ok=True)
 
@@ -195,12 +200,12 @@ class EvalRun(EvalConf, SimConfiguration):
             self.error_dicts[m] = self.eval_datasets(self.datasets, mode=m, **kwargs)
             self.figs.errors[m] = self.get_error_plots(self.error_dicts[m], m)
 
-    def store(self):
+    def store(self) -> None:
         if self.data_dir is not None:
             util.save_dict(self.error_dicts, f"{self.data_dir}/error_dicts.txt")
             vprint(f"Results saved at {self.data_dir}", 1)
 
-    def plot_models(self, **kwargs):
+    def plot_models(self, **kwargs: Any) -> None:
         GD = reg.graphs.dict
         save_to = self.plot_dir
         for mID in self.modelIDs:
@@ -212,15 +217,22 @@ class EvalRun(EvalConf, SimConfiguration):
             )
 
     @property
-    def existing_dispersion_ranges(self):
+    def existing_dispersion_ranges(self) -> Any:
         ds = [self.target] + self.datasets
         return util.SuperList([d.existing_dispersion_ranges for d in ds]).flatten.unique
 
     def plot_results(
         self,
-        plots=["hists", "trajectories", "dispersion", "bouts", "fft", "boxplots"],
-        **kwargs,
-    ):
+        plots: list[str] = [
+            "hists",
+            "trajectories",
+            "dispersion",
+            "bouts",
+            "fft",
+            "boxplots",
+        ],
+        **kwargs: Any,
+    ) -> None:
         GD = reg.graphs.dict
 
         self.target.load(h5_ks=["epochs", "angular", "dspNtor"])
@@ -284,7 +296,7 @@ reg.gen.Eval = class_generator(EvalConf)
 # reg.gen.Eval = EvalConf
 
 
-def evalNplot(show=True, **kwargs):
+def evalNplot(show: bool = True, **kwargs: Any) -> EvalRun:
     E = EvalRun(**kwargs)
     E.simulate()
     E.plot_models(show=show)
@@ -311,7 +323,7 @@ def adapt_mID(d, mID0, mID, ks):
     reg.conf.Model.setID(mID, m0)
 
 
-def modelConf_analysis(d):
+def modelConf_analysis(d: Any) -> None:
     from collections import ChainMap
 
     from ..model.modules.module_modes import moduleDB as MD

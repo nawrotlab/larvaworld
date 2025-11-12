@@ -19,7 +19,7 @@ class LifeTab(gui_aux.GuiTab):
 
     def build(self):
         from ...lib.param import substrate_dict
-        from ...lib.plot.deb import plot_debs
+        from ...lib.plot import plot_debs
 
         sl1_kws = {"size": (30, 20), "enable_events": True, "orientation": "h"}
         deb_modes = [
@@ -191,8 +191,8 @@ class LifeTab(gui_aux.GuiTab):
                 w.write_event_value("Draw", "Draw the initial plot")
         elif e == "Draw":
             if q > 0:
-                from ...lib.model.deb.deb import DEB
-                from ...lib.plot.deb import plot_debs
+                from ...lib.model import DEB
+                from ...lib.plot import plot_debs
 
                 D = DEB.default_growth(**self.get(w, v, c))
                 for Sii in [S0, S1, Sa]:

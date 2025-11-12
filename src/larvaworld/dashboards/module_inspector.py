@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Any
+
 import hvplot.pandas
 import numpy as np
 import pandas as pd
@@ -8,7 +11,7 @@ import larvaworld.lib.model as model
 import larvaworld.lib.param
 
 
-__all__ = [
+__all__: list[str] = [
     "module_inspector_app",
 ]
 
@@ -76,7 +79,7 @@ def bind_to_value(widget, temp):
 
 w, h = 400, 500
 w2 = int(w / 2) - 20
-module_inspector_app = pn.template.MaterialTemplate(
+module_inspector_app: "pn.template.MaterialTemplate" = pn.template.MaterialTemplate(
     title="larvaworld : Behavioral Module inspector", theme=DarkTheme, sidebar_width=w
 )
 

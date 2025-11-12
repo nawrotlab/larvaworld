@@ -3,7 +3,7 @@ import itertools
 import numpy as np
 
 from larvaworld.lib import util
-from larvaworld.lib.plot.util import configure_subplot_grid
+from larvaworld.lib.plot import configure_subplot_grid
 
 
 def test_subplot_grid_configuration():

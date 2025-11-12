@@ -13,6 +13,7 @@ release = "1.0.0"
 extensions = [
     "myst_parser",
     "sphinx.ext.autodoc",
+    "autoapi.extension",
 ]
 
 # The suffix of source filenames.
@@ -32,3 +33,14 @@ exclude_patterns = [
 # Options for HTML output
 html_theme = "furo"
 html_static_path = ["_static"]
+
+# AutoAPI configuration
+autoapi_dirs = ["../src/larvaworld"]
+autoapi_type = "python"
+autoapi_ignore = ["*/gui/*", "*/tests/*"]
+autoapi_options = [
+    "members",
+    "undoc-members",
+    "show-inheritance",
+    "show-module-summary",
+]

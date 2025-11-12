@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 import param
 from scipy.stats import multivariate_normal
@@ -15,7 +16,7 @@ from .custom import (
 )
 from .nested_parameter_group import NestedConf, expand_kws_shortcuts
 
-__all__ = [
+__all__: list[str] = [
     "Compound",
     "Substrate",
     "substrate_dict",
@@ -29,6 +30,26 @@ __displayname__ = "Nutrition & Olfaction"
 
 
 class Compound(NestedConf):
+    """
+    Chemical compound parameter group for nutritional composition.
+
+    Defines molecular properties and elemental composition for substrate
+    compounds used in larva nutrition modeling.
+
+    Attributes:
+        d: Density in g/cm³
+        w: Molecular weight in g/mol
+        nC: Number of carbon atoms
+        nH: Number of hydrogen atoms
+        nO: Number of oxygen atoms
+        nN: Number of nitrogen atoms
+        ww: Computed weighted molecular mass
+
+    Example:
+        >>> glucose = Compound(w=180.18, nC=6, nH=12, nO=6)
+        >>> glucose.ww  # Weighted mass computed automatically
+    """
+
     d = PositiveNumber(doc="density in g/cm**3")
     w = PositiveNumber(doc="molecular weight (g/mol)")
     nC = PositiveInteger(doc="number of carbon atoms")
@@ -60,6 +81,25 @@ nutritious_compounds = [a for a in compound_dict if a not in ["water", "agar"]]
 
 
 class Substrate(NestedConf):
+    """
+    Substrate nutritional composition parameter group.
+
+    Models substrate nutrition with compound concentrations, quality degradation,
+    and molar concentration calculations for feeding/growth simulations.
+
+    Attributes:
+        composition: Dict of compound densities (g/cm³) per compound type
+        quality: Quality factor (0-1, default: 1.0) for nutrient degradation
+        d: Total substrate density
+        C: Total molar concentration
+        X: Nutrient molar concentration
+        X_ratio: Nutrient/total concentration ratio
+
+    Example:
+        >>> substrate = Substrate(type='standard', quality=0.8)
+        >>> substrate.get_f(K=0.1)  # Feeding response function
+    """
+
     composition = param.Dict(
         {k: 0.0 for k in all_compounds}, doc="The substrate composition"
     )
@@ -83,14 +123,14 @@ class Substrate(NestedConf):
         self.X = self.get_X()
         self.X_ratio = self.get_X_ratio()
 
-    def get_d_X(self, compounds=None, quality=None):
+    def get_d_X(self, compounds=None, quality=None) -> float:
         if quality is None:
             quality = self.quality
         if compounds is None:
             compounds = nutritious_compounds
         return sum([self.composition[c] for c in compounds]) * quality
 
-    def get_w_X(self, compounds=None):
+    def get_w_X(self, compounds=None) -> float:
         if compounds is None:
             compounds = nutritious_compounds
         d_X = self.get_d_X(compounds, quality=1)
@@ -102,7 +142,7 @@ class Substrate(NestedConf):
         else:
             return 0.0
 
-    def get_X(self, quality=None, compounds=None):
+    def get_X(self, quality=None, compounds=None) -> float:
         if quality is None:
             quality = self.quality
         if compounds is None:
@@ -113,19 +153,19 @@ class Substrate(NestedConf):
         else:
             return 0.0
 
-    def get_mol(self, V, **kwargs):
+    def get_mol(self, V, **kwargs) -> float:
         return self.get_X(**kwargs) * V
 
-    def get_f(self, K, **kwargs):
+    def get_f(self, K, **kwargs) -> float:
         X = self.get_X(**kwargs)
         return X / (K + X)
 
-    def get_C(self, quality=None):
+    def get_C(self, quality=None) -> float:
         return self.d_water / compound_dict["water"].w + self.get_X(
             quality, compounds=all_compounds
         )
 
-    def get_X_ratio(self, **kwargs):
+    def get_X_ratio(self, **kwargs) -> float:
         return self.get_X(**kwargs) / self.get_C(**kwargs)
 
 
@@ -158,6 +198,24 @@ substrate_dict = util.AttrDict(
 
 
 class Odor(NestedConf):
+    """
+    Odor stimulus parameter group for olfactory experiments.
+
+    Defines odorant identity, concentration gradient (Gaussian distribution),
+    and provides concentration computation at spatial positions.
+
+    Attributes:
+        id: Unique odorant identifier
+        intensity: Peak concentration in micromoles (optional)
+        spread: Gradient spread (standard deviation, optional)
+        dist: Multivariate normal distribution (auto-computed)
+        peak_value: Peak concentration value (auto-computed)
+
+    Example:
+        >>> odor = Odor(id='odorA', intensity=2.0, spread=0.01)
+        >>> odor.gaussian_value([0.005, 0.005])  # Concentration at position
+    """
+
     id = StringRobust(None, doc="The unique ID of the odorant")
     intensity = OptionalPositiveNumber(
         softmax=10.0, doc="The peak concentration of the odorant in micromoles"
@@ -171,7 +229,7 @@ class Odor(NestedConf):
         self._update_distro()
 
     @param.depends("intensity", "spread", watch=True)
-    def _update_distro(self):
+    def _update_distro(self) -> None:
         if self.intensity is not None and self.spread is not None:
             self.dist = multivariate_normal(
                 [0, 0], [[self.spread, 0], [0, self.spread]]
@@ -181,13 +239,13 @@ class Odor(NestedConf):
             self.dist = None
             self.peak_value = 0.0
 
-    def gaussian_value(self, pos):
+    def gaussian_value(self, pos) -> float | None:
         if self.dist:
             return self.dist.pdf(pos) * self.peak_value
         else:
             return None
 
-    def draw_dist(self):
+    def draw_dist(self) -> None:
         import matplotlib.pyplot as plt
         import numpy as np
         from scipy.stats import multivariate_normal
@@ -222,6 +280,23 @@ class Odor(NestedConf):
 
 
 class Epoch(NestedConf):
+    """
+    Life stage epoch parameter group with substrate and timing.
+
+    Defines developmental epoch with age range and associated substrate
+    nutrition, used for life history modeling.
+
+    Attributes:
+        age_range: Epoch duration in hours post-hatch (start, end)
+        substrate: Substrate nutrition for this epoch
+        start: Epoch start time (property)
+        end: Epoch end time (property, can be None for final epoch)
+
+    Example:
+        >>> epoch = Epoch(age_range=(0.0, 96.0), substrate={'type': 'standard'})
+        >>> epoch.ticks(dt=0.1)  # Simulation ticks for epoch duration
+    """
+
     age_range = OptionalPositiveRange(
         default=(0.0, None),
         softmax=100.0,
@@ -237,14 +312,14 @@ class Epoch(NestedConf):
         super().__init__(**kwargs)
 
     @property
-    def start(self):
+    def start(self) -> float:
         return self.age_range[0]
 
     @property
-    def end(self):
+    def end(self) -> float | None:
         return self.age_range[1]
 
-    def ticks(self, dt):
+    def ticks(self, dt) -> int | float:
         if self.end is not None:
             return int((self.end - self.start) / 24 / dt)
         else:
@@ -252,6 +327,22 @@ class Epoch(NestedConf):
 
 
 class Life(NestedConf):
+    """
+    Life history parameter group for larva development.
+
+    Defines complete life history with age, feeding epochs, and pupation.
+    Supports construction from epoch ticks or pre-starvation protocols.
+
+    Attributes:
+        age: Starting age in hours post-hatch (default: 0.0, None = pupation)
+        epochs: List of Epoch instances defining feeding schedule
+        reach_pupation: Whether to grow to pupation (default: False)
+
+    Example:
+        >>> life = Life(age=96.0, epochs=[epoch1, epoch2])
+        >>> life_prestarved = Life.prestarved(age=72.0, h_starved=24.0)
+    """
+
     age = OptionalPositiveNumber(
         default=0.0,
         softmax=100.0,
@@ -323,6 +414,21 @@ class Life(NestedConf):
 
 
 class AirPuff(NestedConf):
+    """
+    Air puff stimulus parameter group for mechanosensory experiments.
+
+    Defines air puff timing and strength for delivering mechanical
+    stimulation during simulations.
+
+    Attributes:
+        duration: Puff duration in seconds (default: 1.0)
+        start_time: Puff onset time in seconds (default: None)
+        strength: Puff strength coefficient (default: 1.0)
+
+    Example:
+        >>> puff = AirPuff(duration=2.0, start_time=30.0, strength=0.8)
+    """
+
     duration = PositiveNumber(
         default=1.0,
         softmax=100.0,

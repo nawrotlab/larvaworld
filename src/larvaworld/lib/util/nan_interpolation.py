@@ -2,11 +2,13 @@
 Methods for managing nans in timeseries data
 """
 
+from __future__ import annotations
+
 import numpy as np
 import scipy as sp
 from scipy.signal import butter, sosfiltfilt
 
-__all__ = [
+__all__: list[str] = [
     "interpolate_nans",
     "parse_array_at_nans",
     "apply_sos_filter_to_array_with_nans",
@@ -48,7 +50,7 @@ def parse_array_at_nans(a):
     return ds, de
 
 
-def apply_sos_filter_to_array_with_nans(sos, x, padlen=6):
+def apply_sos_filter_to_array_with_nans(sos, x, padlen: int = 6):
     try:
         A = np.full_like(x, np.nan)
         ds, de = parse_array_at_nans(x)
@@ -61,7 +63,7 @@ def apply_sos_filter_to_array_with_nans(sos, x, padlen=6):
         return sosfiltfilt(sos, x, padlen=padlen)
 
 
-def apply_filter_to_array_with_nans_multidim(a, freq, fr, N=1):
+def apply_filter_to_array_with_nans_multidim(a, freq: float, fr: float, N: int = 1):
     """
     Power-spectrum of signal.
 
@@ -108,7 +110,7 @@ def apply_filter_to_array_with_nans_multidim(a, freq, fr, N=1):
         raise ValueError("Method implement for up to 3-dimensional array")
 
 
-def convex_hull(xs=None, ys=None, N=None, interp_nans=True):
+def convex_hull(xs=None, ys=None, N=None, interp_nans: bool = True):
     Nrows, Ncols = xs.shape
     xs = [xs[i][~np.isnan(xs[i])] for i in range(Nrows)]
     ys = [ys[i][~np.isnan(ys[i])] for i in range(Nrows)]

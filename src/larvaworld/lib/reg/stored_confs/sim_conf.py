@@ -2,7 +2,7 @@ import numpy as np
 
 from ... import reg, util, funcs
 from ...param import Epoch, Odor
-from ...sim.batch_run import OptimizationOps
+from importlib import import_module
 from ...util import AttrDict
 
 __all__ = [
@@ -172,8 +172,10 @@ def Env_dict():
 @funcs.stored_conf("Exp")
 def Exp_dict():
     def d():
-        from ...param.composition import Odor
+        from ...param import Odor
         from ...reg import gen
+
+        # GTRvsS import - deep import required due to circular dependency
         from ...reg.larvagroup import GTRvsS
 
         ENR = reg.gen.EnrichConf
@@ -599,6 +601,11 @@ def Ga_dict():
         }
     )
     dID = reg.default_refID
+    # Lazy import to avoid reg<->sim cycles
+    OptimizationOps = getattr(
+        import_module("larvaworld.lib.sim.batch_run"), "OptimizationOps"
+    )
+
     l = [
         _ga_conf("interference", refID=dID, cyc=["fov", "foa", "rov"]),
         _ga_conf("exploration", refID=dID, ev=ev1),
@@ -631,6 +638,11 @@ def Ga_dict():
 
 @funcs.stored_conf("Batch")
 def Batch_dict():
+    # Lazy import to avoid reg<->sim cycles
+    OptimizationOps = getattr(
+        import_module("larvaworld.lib.sim.batch_run"), "OptimizationOps"
+    )
+
     def bb(exp, proc=[], ss={}, o=None, N=5, abs=False, min=True, thr=0.001, **kwargs):
         return AttrDict(
             exp=exp,

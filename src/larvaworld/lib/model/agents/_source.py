@@ -1,11 +1,28 @@
+from __future__ import annotations
+from typing import Any
+import os
+import warnings
+
+# Deprecation: discourage deep imports from internal module paths
+if os.getenv("LARVAWORLD_STRICT_DEPRECATIONS") == "1":
+    raise ImportError(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.agents import Source, Food'"
+    )
+else:
+    warnings.warn(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.agents import Source, Food'",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 import numpy as np
 import param
 
 from ...param import ClassAttr, PositiveNumber, Substrate, xy_uniform_circle
-from ...screen.drawing import ScreenManager
+
+# ScreenManager import deferred due to circular dependency - will be imported when needed
 from . import PointAgent
 
-__all__ = [
+__all__: list[str] = [
     "Source",
     "Food",
 ]
@@ -15,33 +32,27 @@ __displayname__ = "Food source"
 
 class Source(PointAgent):
     """
-    Base class for representing a source of something in the environment.
+    Base class for environmental resource sources.
 
-    Parameters
-    ----------
-    can_be_carried : bool, default False
-        Whether the source can be carried around.
-    can_be_displaced : bool, default False
-        Whether the source can be displaced by wind or water.
-    regeneration : bool, default False
-        Whether the agent can be regenerated.
-    regeneration_pos : tuple or None, default None
-        Where the agent appears if regenerated.
+    Represents sources of food, odor, or other resources in the environment.
+    Supports carrying by larvae, displacement by wind, and regeneration
+    after depletion or removal from arena.
 
-    Attributes
-    ----------
-    is_carried_by : object or None
-        Reference to the agent that is currently carrying this source.
+    Attributes:
+        can_be_carried: Whether larvae can carry this source (default: False)
+        can_be_displaced: Whether wind/water can move this source (default: False)
+        regeneration: Whether source regenerates after removal (default: False)
+        regeneration_pos: Position parameters for regeneration (optional)
+        is_carried_by: Reference to larva carrying this source (or None)
 
-    Methods
-    -------
-    step()
-        Perform a step in the simulation, possibly updating the source's position.
-
-    Notes
-    -----
-    This class is a base class for representing various types of sources in the environment.
-
+    Example:
+        >>> source = Source(
+        ...     pos=(0.5, 0.5),
+        ...     radius=0.002,
+        ...     can_be_displaced=True,
+        ...     regeneration=True
+        ... )
+        >>> source.step()  # Update position if displaced by wind
     """
 
     can_be_carried = param.Boolean(
@@ -57,14 +68,14 @@ class Source(PointAgent):
         None, doc="Where the agent appears if regenerated"
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.is_carried_by = None
 
         # # put all agents into same group (negative so that no collisions are detected)
         # self._fixtures[0].filterData.groupIndex = -1
 
-    def step(self):
+    def step(self) -> None:
         if self.can_be_displaced:
             w = self.model.windscape
             if w is not None:
@@ -82,9 +93,25 @@ class Source(PointAgent):
 
 class Food(Source):
     """
-    Class for representing a source of food in the environment.
-    This class extends the `Source` class to represent food sources specifically.
+    Food source agent with nutritional substrate and depletion dynamics.
 
+    Extends Source to represent consumable food patches with substrate
+    quality, amount tracking, and visual depletion indication (color fading).
+    Automatically removed from simulation when fully consumed.
+
+    Attributes:
+        amount: Current food amount available (0 to initial_amount)
+        substrate: Nutritional substrate composition (Substrate instance)
+        initial_amount: Original food amount at creation
+        color: Visual color (fades from default to white as depleted)
+
+    Example:
+        >>> food = Food(
+        ...     pos=(0.5, 0.5),
+        ...     amount=5.0,
+        ...     substrate={'type': 'standard', 'quality': 0.8}
+        ... )
+        >>> consumed = food.subtract_amount(1.0)  # Larva feeds
     """
 
     color = param.Color(default="green")
@@ -93,11 +120,11 @@ class Food(Source):
     )
     substrate = ClassAttr(Substrate, doc="The substrate where the agent feeds")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.initial_amount = self.amount
 
-    def subtract_amount(self, amount):
+    def subtract_amount(self, amount: float) -> float:
         """
         Subtract a given amount of food from the source.
 
@@ -131,7 +158,7 @@ class Food(Source):
                 pass
         return np.min([amount, prev_amount])
 
-    def draw(self, v: ScreenManager, filled: bool = None) -> None:
+    def draw(self, v: Any, filled: bool | None = None) -> None:
         """
         Draws the agent on the screen.
 

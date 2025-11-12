@@ -1,6 +1,6 @@
 import pytest
 import random
-from larvaworld.lib.model.modules.module_modes import SpaceDict
+from larvaworld.lib.model import SpaceDict
 from larvaworld.lib.util import AttrDict
 
 

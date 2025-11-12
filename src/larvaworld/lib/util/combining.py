@@ -2,11 +2,13 @@
 Methods for detecting and combining files
 """
 
+from __future__ import annotations
+
 import os
 
 import numpy as np
 
-__all__ = [
+__all__: list[str] = [
     "files_in_dir",
     "combine_images",
     "combine_videos",
@@ -14,32 +16,36 @@ __all__ = [
 ]
 
 
-def select_filenames(filenames, suf="", pref=""):
+def select_filenames(filenames: list[str], suf: str = "", pref: str = "") -> list[str]:
     return [f for f in filenames if (f.endswith(suf) and f.startswith(pref))]
 
 
-def files_in_dir(dir, sort=True, include_subdirs=False, suf="", pref=""):
+def files_in_dir(
+    dir: str,
+    sort: bool = True,
+    include_subdirs: bool = False,
+    suf: str = "",
+    pref: str = "",
+) -> list[str]:
     """
-    Select files from directory fulfilling filename conditions
+    Select files from directory matching filename conditions.
 
-    Parameters
-    ----------
-    - dir: string
-        Absolute path to folder where to look for files.
-    - pref: string
-        Required prefix to include file (default: '').
-    - suf: string
-        Required suffix to include file (default: '').
-    - sort: bool
-        Sort filenames (default: True).
-    - include_subdirs: bool
-        Include files in subdirectories (default: False).
+    Scans a directory for files matching optional prefix and suffix filters.
+    Can optionally include subdirectories and sort results.
 
-    Returns
-    -------
-    - list of strings
-        A list of the filenames selected.
+    Args:
+        dir: Absolute path to directory to search
+        sort: If True, sort filenames alphabetically (default: True)
+        include_subdirs: If True, search subdirectories recursively (default: False)
+        suf: Required suffix to include file, e.g., '.txt' (default: '')
+        pref: Required prefix to include file (default: '')
 
+    Returns:
+        List of absolute file paths matching the criteria
+
+    Example:
+        >>> files = files_in_dir('/path/to/dir', suf='.py')
+        >>> files = files_in_dir('/path/to/dir', pref='test_', suf='.txt', include_subdirs=True)
     """
     fs = []
     if include_subdirs:
@@ -57,34 +63,33 @@ def files_in_dir(dir, sort=True, include_subdirs=False, suf="", pref=""):
 
 
 def combine_images(
-    files=None,
-    file_dir=".",
-    save_as="combined_image.pdf",
-    save_to=None,
-    size=(1000, 1000),
-    figsize=None,
-):
+    files: list[str] | None = None,
+    file_dir: str = ".",
+    save_as: str = "combined_image.pdf",
+    save_to: str | None = None,
+    size: tuple[int, int] = (1000, 1000),
+    figsize: tuple[int, int] | None = None,
+) -> None:
     """
-    Merge multiple image files into one single file and store it
+    Merge multiple image files into a single combined image file.
 
-    Parameters
-    ----------
-    - files: list of strings
-        List of image absolute filenames (optional).
-    - file_dir: string
-        Absolute path to folder where to look for files.
-    - save_to: string
-        Absolute path to folder where to store file (optional).
-    - save_as: string
-        Filename to store pdf as (default: 'combined_image.pdf').
-    - size : tuple
-        Image size(default: (1000, 1000))
-    - figsize : tuple
-        Figure size (optional)
+    Creates a grid layout of images and saves as PDF or image. Images are
+    thumbnailed to fit the grid based on total count. Uses PIL for processing.
 
+    Args:
+        files: List of image file paths. If None, scans file_dir
+        file_dir: Directory to search for images if files not provided (default: '.')
+        save_as: Output filename (default: 'combined_image.pdf')
+        save_to: Directory to save output. If None, uses file_dir
+        size: Output image dimensions in pixels (default: (1000, 1000))
+        figsize: Override thumbnail size as (width, height) pixels
+
+    Example:
+        >>> combine_images(files=['img1.jpg', 'img2.jpg'], save_as='grid.pdf')
+        >>> combine_images(file_dir='/path/to/images', size=(2000, 2000))
     """
 
-    def get_dxy(N, size=(1000, 1000)):
+    def get_dxy(N: int, size: tuple[int, int] = (1000, 1000)) -> tuple[int, int]:
         x, y = size
         if N <= 4:
             dx = int(x / 2)
@@ -130,22 +135,29 @@ def combine_images(
 
 
 def combine_videos(
-    files=None, file_dir=".", save_to=None, save_as="combined_videos.mp4"
-):
+    files: list[str] | None = None,
+    file_dir: str = ".",
+    save_to: str | None = None,
+    save_as: str = "combined_videos.mp4",
+) -> None:
     """
-    Merge multiple video files into one single file and store it
+    Merge multiple video files into a single side-by-side video.
 
-    Parameters
-    ----------
-    - files: list of strings
-        List of video absolute filenames (optional).
-    - file_dir: string
-        Absolute path to folder where to look for files.
-    - save_to: string
-        Absolute path to folder where to store file (optional).
-    - save_as: string
-        Filename to store video as (default: 'combined_videos.mp4').
+    Uses ffmpeg to horizontally stack videos. All videos must have identical
+    duration. Requires ffmpeg and ffprobe installed on system.
 
+    Args:
+        files: List of video file paths (.mp4). If None, scans file_dir for .mp4 files
+        file_dir: Directory to search for videos if files not provided (default: '.')
+        save_to: Directory to save output. If None, uses file_dir
+        save_as: Output filename (default: 'combined_videos.mp4')
+
+    Raises:
+        ValueError: If fewer than 2 videos provided or durations don't match
+
+    Example:
+        >>> combine_videos(files=['vid1.mp4', 'vid2.mp4'], save_as='stacked.mp4')
+        >>> combine_videos(file_dir='/path/to/videos')
     """
     if files is None:
         files = files_in_dir(file_dir, suf=".mp4")
@@ -187,31 +199,30 @@ def combine_videos(
 
 
 def combine_pdfs(
-    files=None,
-    file_dir=".",
-    pref="",
-    save_to=None,
-    save_as="final.pdf",
-    include_subdirs=True,
-):
+    files: list[str] | None = None,
+    file_dir: str = ".",
+    pref: str = "",
+    save_to: str | None = None,
+    save_as: str = "final.pdf",
+    include_subdirs: bool = True,
+) -> None:
     """
-    Merge multiple pdf files into one single pdf and store it
+    Merge multiple PDF files into a single combined PDF.
 
-    Parameters
-    ----------
-    - files: list of strings
-        List of pdf absolute filenames (optional).
-    - file_dir: string
-        Absolute path to folder where to look for files.
-    - pref: string
-        Required prefix to include file (default: '').
-    - save_to: string
-        Absolute path to folder where to store file (optional).
-    - save_as: string
-        Filename to store pdf as (default: False).
-    - include_subdirs: bool
-        Include files in subdirectories (default: True).
+    Concatenates PDFs in order, preserving all pages. Uses pypdf library
+    for merging. Can filter by filename prefix.
 
+    Args:
+        files: List of PDF file paths. If None, scans file_dir for .pdf files
+        file_dir: Directory to search for PDFs if files not provided (default: '.')
+        pref: Required filename prefix to include (default: '' for all)
+        save_to: Directory to save output. If None, uses file_dir
+        save_as: Output filename (default: 'final.pdf')
+        include_subdirs: If True, search subdirectories recursively (default: True)
+
+    Example:
+        >>> combine_pdfs(files=['doc1.pdf', 'doc2.pdf'], save_as='merged.pdf')
+        >>> combine_pdfs(file_dir='/reports', pref='2024_', save_as='all_2024.pdf')
     """
     if files is None:
         files = files_in_dir(
@@ -219,12 +230,16 @@ def combine_pdfs(
         )
     import pypdf
 
-    merger = pypdf.PdfMerger()
+    # Use PdfWriter instead of deprecated PdfMerger (removed in pypdf 5.0.0)
+    writer = pypdf.PdfWriter()
     for f in files:
-        merger.append(pypdf.PdfReader(open(f, "rb")))
+        reader = pypdf.PdfReader(open(f, "rb"))
+        for page in reader.pages:
+            writer.add_page(page)
 
     if save_to is None:
         save_to = file_dir
     filepath = os.path.join(save_to, save_as)
-    merger.write(filepath)
+    with open(filepath, "wb") as output_file:
+        writer.write(output_file)
     print(f"Concatenated pdfs saved as {filepath}")

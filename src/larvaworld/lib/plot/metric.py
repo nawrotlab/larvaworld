@@ -2,19 +2,40 @@
 Calibration-related plotting
 """
 
+from __future__ import annotations
+from typing import Any, Optional, Sequence
+
 import numpy as np
 import seaborn as sns
 
 from .. import plot, reg, funcs
 
-__all__ = [
+__all__: list[str] = [
     "plot_segmentation_definition",
     "plot_stride_variability",
     "plot_correlated_pars",
 ]
 
 
-def plot_segmentation_definition(subfolder="metric_definition", **kwargs):
+def plot_segmentation_definition(
+    subfolder: str = "metric_definition", **kwargs: Any
+) -> Any:
+    """
+    Plot body segmentation definition analysis.
+
+    Creates dual-panel plots showing regression scores and correlation analysis
+    for different angular velocity combinations used in body segmentation.
+
+    Args:
+        subfolder: Subfolder for saving. Defaults to 'metric_definition'
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_segmentation_definition(datasets=[d1, d2])
+    """
     P = plot.AutoPlot(
         name="segmentation_definition",
         subfolder=subfolder,
@@ -29,7 +50,7 @@ def plot_segmentation_definition(subfolder="metric_definition", **kwargs):
             df_reg = d.read("bend2or_regression", file="vel_definition")
             df_corr = d.read("bend2or_correlation", file="vel_definition")
         except:
-            from ..process.calibration import vel_definition
+            from ..process import vel_definition
 
             dic = vel_definition(d)
             df_reg = dic["/bend2or_regression"]
@@ -76,8 +97,25 @@ def plot_segmentation_definition(subfolder="metric_definition", **kwargs):
 
 
 def plot_stride_variability(
-    component_vels=True, subfolder="metric_definition", **kwargs
-):
+    component_vels: bool = True, subfolder: str = "metric_definition", **kwargs: Any
+) -> Any:
+    """
+    Plot stride spatiotemporal variability analysis.
+
+    Creates scatter plots showing coefficient of variation for spatial vs
+    temporal stride components across different velocity definitions.
+
+    Args:
+        component_vels: Include component velocities. Defaults to True
+        subfolder: Subfolder for saving. Defaults to 'metric_definition'
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_stride_variability(datasets=[d1, d2], component_vels=True)
+    """
     P = plot.AutoPlot(
         name="stride_spatiotemporal_variation",
         subfolder=subfolder,
@@ -89,7 +127,7 @@ def plot_stride_variability(
             stvar = d.read("stride_variability", file="vel_definition")
 
         except:
-            from ..process.calibration import vel_definition
+            from ..process import vel_definition
 
             stvar = vel_definition(d)["/stride_variability"]
         stvar.sort_values(by="idx", inplace=True)
@@ -117,15 +155,37 @@ def plot_stride_variability(
 
 @funcs.graph("correlated metrics", required={"pars": []})
 def plot_correlated_pars(
-    pars,
-    labels,
-    refID=None,
-    dataset=None,
-    save_to=None,
-    save_as="correlated_pars.pdf",
-    return_fig=False,
-    show=False,
-):
+    pars: Sequence[str],
+    labels: Sequence[str],
+    refID: Optional[str] = None,
+    dataset: Any = None,
+    save_to: Optional[str] = None,
+    save_as: str = "correlated_pars.pdf",
+    return_fig: bool = False,
+    show: bool = False,
+) -> Any:
+    """
+    Create pairwise correlation plots for endpoint parameters.
+
+    Generates seaborn PairGrid with scatter plots, KDE plots, and confidence
+    ellipses showing correlations between three endpoint parameters.
+
+    Args:
+        pars: List of 3 parameter keys to analyze (currently only 3 supported)
+        labels: List of 3 labels for the parameters
+        refID: Reference dataset ID. Required if dataset is None
+        dataset: Pre-loaded dataset. Loads from refID if None
+        save_to: Directory to save plot. Uses dataset plot dir if None
+        save_as: Filename for saved plot. Defaults to 'correlated_pars.pdf'
+        return_fig: Whether to return figure object. Defaults to False
+        show: Whether to display plot. Defaults to False
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_correlated_pars(pars=['cum_sd', 'run_tr', 'pau_tr'], labels=['Distance', 'Run', 'Pause'], refID='ref_01')
+    """
     if len(pars) != 3:
         raise ValueError("Currently implemented only for 3 parameters")
     if dataset is None:

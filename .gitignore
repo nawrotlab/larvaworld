@@ -53,6 +53,8 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+.pytest_datasets_build.lock
+.pytest_datasets_ready
 cover/
 .ruff_cache/
 
@@ -153,6 +155,9 @@ cython_debug/
 /src/larvaworld/data/SchleyerGroup/processed/
 /src/larvaworld/data/SchleyerGroup/raw/naive
 /src/larvaworld/lib/reg/confDicts/
+
+# Test output media files
+/media/
 
 #Poetry
 # poetry.lock

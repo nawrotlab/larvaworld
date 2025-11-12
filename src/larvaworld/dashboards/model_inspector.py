@@ -2,6 +2,9 @@
 Interactive dashboard to inspect any model configuration available
 """
 
+from __future__ import annotations
+from typing import Any
+
 import holoviews as hv
 import pandas as pd
 import panel as pn
@@ -15,7 +18,7 @@ from larvaworld.lib.model import DefaultBrain, Effector
 from larvaworld.lib.model import moduleDB as MD
 from larvaworld.lib.param import class_objs
 
-__all__ = [
+__all__: list[str] = [
     "model_inspector_app",
 ]
 
@@ -24,12 +27,12 @@ MODULES = MD.LocoModsBasic
 
 
 class ModelInspector:
-    def __init__(self):
+    def __init__(self) -> None:
         self.running = False
         self.t = 0
         self.mID = None
 
-    def build(self, mID):
+    def build(self, mID: str):
         if mID != self.mID:
             self.reset()
             if hasattr(self, "brain"):
@@ -50,15 +53,15 @@ class ModelInspector:
             self.prepare_streams()
         return self.inspect
 
-    def reset(self):
+    def reset(self) -> None:
         self.running = False
         self.t = 0
 
-    def initialize(self):
+    def initialize(self) -> None:
         self.running = True
         # return self.runner()
 
-    def switch(self, brain):
+    def switch(self, brain: DefaultBrain):
         l = []
         L = brain.locomotor
         for k in MODULES:
@@ -89,7 +92,7 @@ class ModelInspector:
                     pass
         return pn.GridBox(*l, ncols=2, nrows=2)
 
-    def prepare_streams(self):
+    def prepare_streams(self) -> None:
         self.collector = reg.par.output_reporters(ks=["A_T", "A_C"], agents=[self])
         self.attrs = ["x"] + self.collector.keylist
         df = pd.DataFrame({a: [] for a in self.attrs}, columns=self.attrs)
@@ -106,7 +109,7 @@ class ModelInspector:
 
         self.plot = hv.Layout(self.dmaps).cols(1)
 
-    def run(self, v):
+    def run(self, v: bool):
         if v:
             self.initialize()
         dt = self.brain.dt
@@ -137,7 +140,7 @@ CT = reg.conf.Model
 Msel = pn.widgets.Select(value="explorer", name="larva-model", options=CT.confIDs)
 Mrun = pn.widgets.Button(name="Run")
 
-model_inspector_app = pn.template.MaterialTemplate(
+model_inspector_app: "pn.template.MaterialTemplate" = pn.template.MaterialTemplate(
     title="larvaworld : Larva Model inspector", theme=DarkTheme, sidebar_width=w
 )
 

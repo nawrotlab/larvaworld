@@ -2,17 +2,18 @@
 Screen side-panel for pygame-based simulation visualization
 """
 
+from __future__ import annotations
+
 import math
 import os
 
 import numpy as np
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
-import pygame
 
 from .. import util
 
-__all__ = [
+__all__: list[str] = [
     "SidePanel",
 ]
 
@@ -42,13 +43,23 @@ class SidePanel:
             if self.viewer.h > self.SCENE_HEIGHT_THRESHOLD
             else self.LINE_SPACING_MIN
         )
-        if pygame.font:
-            self.font = pygame.font.Font(None, self.FONT_SIZE)
-        else:
+        try:
+            import pygame
+
+            if pygame.font:
+                self.font = pygame.font.Font(None, self.FONT_SIZE)
+            else:
+                self.font = None
+        except Exception:
             self.font = None
-        self.panel_rect = pygame.Rect(
-            self.viewer.w, 0, self.viewer.panel_width, self.viewer.h
-        )
+        try:
+            import pygame
+
+            self.panel_rect = pygame.Rect(
+                self.viewer.w, 0, self.viewer.panel_width, self.viewer.h
+            )
+        except Exception:
+            self.panel_rect = None
 
     def display_ga_info(self):
         """
@@ -114,6 +125,8 @@ class SidePanel:
         line = self.font.render(text, 1, self.viewer.tank_color)
         x = self.viewer.w + self.DEFAULT_MARGIN + extra_margin
         y = self.line_num * self.line_spacing
+        import pygame
+
         lint_pos = pygame.Rect(x, y, 20, 20)
         self.viewer.draw_text_box(line, lint_pos)
         self.line_num += 1
@@ -126,6 +139,9 @@ class SidePanel:
         :param kwargs: Additional drawing arguments.
         """
         # Draw a black background for the side panel
-        pygame.draw.rect(v.v, v.sidepanel_color, self.panel_rect)
+        import pygame
+
+        if self.panel_rect is not None:
+            pygame.draw.rect(v.v, v.sidepanel_color, self.panel_rect)
         v.draw_line((v.w, 0), (v.w, v.h), color=util.Color.RED)
         self.display_ga_info()

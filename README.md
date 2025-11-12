@@ -1,8 +1,8 @@
 # larvaworld
 
 <p align="center">
-  <a href="https://github.com/nawrotlab/larvaworld/actions/workflows/ci.yml?query=branch%3Amain">
-    <img src="https://img.shields.io/github/actions/workflow/status/nawrotlab/larvaworld/ci.yml?branch=main&label=CI&logo=github&style=flat-square" alt="CI Status" >
+  <a href="https://github.com/nawrotlab/larvaworld/actions/workflows/ci.yml?query=branch%3Amaster">
+    <img src="https://img.shields.io/github/actions/workflow/status/nawrotlab/larvaworld/ci.yml?branch=master&label=CI&logo=github&style=flat-square" alt="CI Status" >
   </a>
   <a href="https://larvaworld.readthedocs.io">
     <img src="https://img.shields.io/readthedocs/larvaworld.svg?logo=read-the-docs&logoColor=fff&style=flat-square" alt="Documentation Status">

@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Any
+
 import pandas as pd
 import holoviews as hv
 import panel as pn
@@ -6,18 +9,18 @@ from panel.template import DarkTheme
 pn.extension()
 
 from larvaworld.lib import reg, util
-from larvaworld.lib.process.dataset import LarvaDataset, LarvaDatasetCollection
+from larvaworld.lib.process import LarvaDataset, LarvaDatasetCollection
 
-__all__ = ["TrackViewer", "track_viewer_app"]
+__all__: list[str] = ["TrackViewer", "track_viewer_app"]
 
 w, h = 800, 500
 
 
 class TrackViewer:
-    def __init__(self, size=600):
+    def __init__(self, size: int = 600) -> None:
         self.size = size
 
-    def dataset_as_dict(self, d: LarvaDataset):
+    def dataset_as_dict(self, d: LarvaDataset) -> util.AttrDict:
         xy = d.load_traj()
         xy_origin = pd.concat(
             [g - g.dropna().iloc[0] for id, g in xy.groupby("AgentID")]
@@ -28,7 +31,7 @@ class TrackViewer:
         }
         return util.AttrDict({"default": xy, "origin": xy_origin, "dispersal": dsp_mu})
 
-    def build_data(self, id: str):
+    def build_data(self, id: str) -> util.AttrDict:
         # TODO: This has been modified to work with both LarvaDataset and LarvaDatasetCollection. Needs to be simplified!
         if id in reg.conf.Ref.RefGroupIDs:
             d = reg.conf.Ref.loadRefGroup(id)
@@ -170,7 +173,7 @@ Msel = pn.widgets.Select(
 )
 # Mrun = pn.widgets.Button(name="Run")
 
-track_viewer_app = pn.template.MaterialTemplate(
+track_viewer_app: "pn.template.MaterialTemplate" = pn.template.MaterialTemplate(
     title="larvaworld : Dataset track viewer", theme=DarkTheme, sidebar_width=w
 )
 track_viewer_app.sidebar.append(pn.Row(Msel, width=300, height=80))

@@ -1,9 +1,12 @@
 import os
 
 import matplotlib.pyplot as plt
+import pytest
 
 import larvaworld
 from larvaworld.lib import reg
+
+pytestmark = [pytest.mark.integration, pytest.mark.slow]
 
 
 def xx_test_plots():

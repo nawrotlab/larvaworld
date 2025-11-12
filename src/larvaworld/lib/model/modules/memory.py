@@ -1,3 +1,19 @@
+from __future__ import annotations
+from typing import Any
+import os
+import warnings
+
+# Deprecation: discourage deep imports from internal module paths
+if os.getenv("LARVAWORLD_STRICT_DEPRECATIONS") == "1":
+    raise ImportError(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.modules import Memory'"
+    )
+else:
+    warnings.warn(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.modules import Memory'",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 import itertools
 import random
 
@@ -5,12 +21,11 @@ import numpy as np
 import param
 
 from .... import vprint
-from ...ipc import BrianInterfaceMessage
-from ...ipc.ipc import Client
+from ...ipc import BrianInterfaceMessage, Client
 from ...param import PositiveInteger, PositiveNumber
 from .oscillator import Timer
 
-__all__ = [
+__all__: list[str] = [
     "Memory",
     "RLmemory",
     "RLOlfMemory",
@@ -20,29 +35,87 @@ __all__ = [
 
 
 class Memory(Timer):
+    """
+    Base memory module for reinforcement learning and plasticity.
+
+    Abstract base class providing memory-based gain adaptation for
+    sensory processing. Supports reinforcement learning (RL) and
+    mushroom body (MB) algorithms for sensory gain modulation.
+
+    Attributes:
+        mode: Memory algorithm type ('RL' or 'MB')
+        modality: Sensory modality ('olfaction' or 'touch')
+        brain: Parent brain instance (polymorphic)
+        gain: Current gain values per stimulus ID
+        rewardSum: Cumulative reward for RL updates
+
+    Args:
+        brain: Parent brain instance (polymorphic: Brain or subclasses).
+               Provides access to agent for state tracking
+        gain: Initial gain dictionary mapping stimulus IDs to coefficients
+        **kwargs: Additional keyword arguments passed to parent Timer
+
+    Example:
+        >>> memory = Memory(brain=my_brain, gain={'odor1': 1.0}, modality='olfaction')
+        >>> updated_gain = memory.step(reward=True, dx={'odor1': 0.3})
+    """
+
     mode = param.Selector(objects=["RL", "MB"], doc="The memory algorithm")
     modality = param.Selector(
         objects=["olfaction", "touch"], doc="The sensory modality"
     )
 
-    def __init__(self, brain=None, gain={}, **kwargs):
+    def __init__(
+        self, brain: Any | None = None, gain: dict[str, float] = {}, **kwargs: Any
+    ) -> None:
         super().__init__(**kwargs)
         self.brain = brain
         self.gain = gain
         self.rewardSum = 0
 
-    def step(self, reward=False, **kwargs):
+    def step(self, reward: bool = False, **kwargs: Any) -> dict[str, float]:
         if self.active:
             self.count_time()
         self.rewardSum += int(reward) - 0.01
         self.update_gain(**kwargs)
         return self.gain
 
-    def update_gain(self, dx=None, **kwargs):
+    def update_gain(self, dx: dict[str, float] | None = None, **kwargs: Any) -> None:
         pass
 
 
 class RLmemory(Memory):
+    """
+    Reinforcement learning memory module with Q-learning.
+
+    Implements Q-learning algorithm for sensory gain adaptation based
+    on reward feedback. Discretizes state space and learns optimal
+    gain values through exploration and exploitation.
+
+    Attributes:
+        mode: Fixed to 'RL' (reinforcement learning)
+        update_dt: Time interval between gain updates (seconds)
+        train_dur: Training duration before stopping learning (seconds)
+        Delta: Input sensitivity for state discretization
+        alpha: Learning rate for Q-table updates (0-1)
+        gamma: Discount factor for future rewards (0-1)
+        epsilon: Exploration rate for random action selection (0-1)
+        state_spacePerSide: Number of discrete states per side of zero
+        state_specific_best: If True, use state-specific best actions
+        gain_space: Possible gain values to choose from
+        q_table: Q-learning table (states × actions)
+
+    Example:
+        >>> rl_memory = RLmemory(
+        ...     brain=my_brain,
+        ...     gain={'odor1': 0.0},
+        ...     alpha=0.05,
+        ...     gamma=0.6,
+        ...     gain_space=[-300, -50, 50, 300]
+        ... )
+        >>> updated_gain = rl_memory.step(reward=True, dx={'odor1': 0.5})
+    """
+
     mode = param.Selector(default="RL", readonly=True)
     update_dt = PositiveNumber(
         1.0,
@@ -83,7 +156,7 @@ class RLmemory(Memory):
         doc="The possible values for memory gain to choose from.",
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         n = len(self.gain)
         self.Niters = int(self.update_dt * 60 / self.dt)
@@ -102,13 +175,13 @@ class RLmemory(Memory):
         self.lastAction = 0
         self.lastState = 0
 
-    def update_q_table(self, state, reward):
+    def update_q_table(self, state: int, reward: float) -> None:
         self.q_table[self.lastState, self.lastAction] = (1 - self.alpha) * self.q_table[
             self.lastState, self.lastAction
         ] + self.alpha * (reward + self.gamma * np.max(self.q_table[state]))
         self.lastState = state
 
-    def state_collapse(self, dx):
+    def state_collapse(self, dx: dict[str, float]) -> int:
         k = self.state_spacePerSide
         if len(dx) > 0:
             dx = [dx]
@@ -121,7 +194,12 @@ class RLmemory(Memory):
         state = np.where((self.state_space == v).all(axis=1))[0][0]
         return state
 
-    def update_ext_gain(self, gain={}, dx={}, randomize=True):
+    def update_ext_gain(
+        self,
+        gain: dict[str, float] = {},
+        dx: dict[str, float] = {},
+        randomize: bool = True,
+    ) -> dict[str, float]:
         gain_ids = list(gain.keys())
         if randomize and random.uniform(0, 1) < self.epsilon:
             actionID = random.randrange(len(self.actions))
@@ -134,7 +212,7 @@ class RLmemory(Memory):
             gain[id] = self.actions[actionID][ii]
         return gain
 
-    def update_gain(self, dx=None, **kwargs):
+    def update_gain(self, dx: dict[str, float] | None = None, **kwargs: Any) -> None:
         if dx is None:
             dx = {}
         if self.learning_on:
@@ -149,45 +227,73 @@ class RLmemory(Memory):
             else:
                 self.gain = self.update_ext_gain(self.gain, dx=dx, randomize=False)
 
-    def condition(self, dx):
+    def condition(self, dx: dict[str, float]) -> bool:
         return self.iterator >= self.Niters
 
     @property
-    def best_actions(self):
+    def best_actions(self) -> tuple[float, ...]:
         return self.actions[np.argmax(np.mean(self.q_table, axis=0))]
 
     @property
-    def best_gain(self):
+    def best_gain(self) -> dict[str, float]:
         gain_ids = list(self.gain.keys())
         return dict(zip(gain_ids, self.best_actions))
 
     @property
-    def learning_on(self):
+    def learning_on(self) -> bool:
         return self.active and self.total_t <= self.train_dur * 60
 
 
 class RLOlfMemory(RLmemory):
+    """
+    Reinforcement learning memory for olfactory stimuli.
+
+    Specializes RLmemory for olfaction modality with properties
+    for accessing best gain values for first/second odors.
+
+    Attributes:
+        modality: Fixed to 'olfaction'
+
+    Example:
+        >>> olf_memory = RLOlfMemory(brain=my_brain, gain={'odor_A': 0.0, 'odor_B': 0.0})
+        >>> print(f"Best gain for first odor: {olf_memory.first_odor_best_gain}")
+    """
+
     modality = param.Selector(default="olfaction", readonly=True)
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
     @property
-    def first_odor_best_gain(self):
+    def first_odor_best_gain(self) -> float:
         return list(self.best_gain.values())[0]
 
     @property
-    def second_odor_best_gain(self):
+    def second_odor_best_gain(self) -> float:
         return list(self.best_gain.values())[1]
 
 
 class RLTouchMemory(RLmemory):
+    """
+    Reinforcement learning memory for tactile stimuli.
+
+    Specializes RLmemory for touch modality with custom condition
+    logic that triggers updates on contact detection (±1 changes).
+
+    Attributes:
+        modality: Fixed to 'touch'
+
+    Example:
+        >>> touch_memory = RLTouchMemory(brain=my_brain, gain={'sensor_0': 0.0})
+        >>> updated_gain = touch_memory.step(reward=False, dx={'sensor_0': 1})
+    """
+
     modality = param.Selector(default="touch", readonly=True)
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
-    def condition(self, dx):
+    def condition(self, dx: dict[str, int]) -> bool:
         if 1 in dx.values() or -1 in dx.values():
             if 1 in dx.values():
                 self.rewardSum = 1 / self.iterator
@@ -199,9 +305,47 @@ class RLTouchMemory(RLmemory):
 
 
 class RemoteBrianModelMemory(Memory):
+    """
+    Mushroom body memory using remote Brian2 neural simulation.
+
+    Implements biologically realistic mushroom body (MB) plasticity
+    via remote Brian2 server. Computes gain modulation based on
+    MBON (mushroom body output neuron) differential activity.
+
+    Attributes:
+        mode: Fixed to 'MB' (mushroom body)
+        server_host: Brian2 server hostname
+        server_port: Brian2 server port
+        sim_id: Simulation identifier for Brian2 tracking
+        G: Gain scaling coefficient for MBON output
+        t_sim: Simulation time step in milliseconds
+        step_id: Current step counter for Brian2 synchronization
+
+    Args:
+        G: Gain scaling coefficient (default: 0.001)
+        server_host: Brian2 server hostname (default: 'localhost')
+        server_port: Brian2 server port (default: 5795)
+        **kwargs: Additional keyword arguments passed to parent Memory
+
+    Example:
+        >>> mb_memory = RemoteBrianModelMemory(
+        ...     brain=my_brain,
+        ...     gain={'Odor': 0.0},
+        ...     G=0.001,
+        ...     server_host='localhost'
+        ... )
+        >>> updated_gain = mb_memory.step(reward=True, dx={'Odor': 0.8})
+    """
+
     mode = param.Selector(default="MB", readonly=True)
 
-    def __init__(self, G=0.001, server_host="localhost", server_port=5795, **kwargs):
+    def __init__(
+        self,
+        G: float = 0.001,
+        server_host: str = "localhost",
+        server_port: int = 5795,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**kwargs)
         self.server_host = server_host
         self.server_port = server_port
@@ -212,13 +356,13 @@ class RemoteBrianModelMemory(Memory):
 
     def runRemoteModel(
         self,
-        model_instance_id,
-        odor_id,
-        t_sim=100,
-        t_warmup=0,
-        concentration=1,
-        **kwargs,
-    ):
+        model_instance_id: str,
+        odor_id: int,
+        t_sim: int = 100,
+        t_warmup: int = 0,
+        concentration: float = 1,
+        **kwargs: Any,
+    ) -> float:
         # T: duration of remote model simulation in ms
         # warmup: duration of remote model warmup in ms
         msg = BrianInterfaceMessage(
@@ -251,7 +395,12 @@ class RemoteBrianModelMemory(Memory):
             )
             return 0
 
-    def step(self, dx=None, reward=False, t_warmup=0):
+    def step(
+        self,
+        dx: dict[str, float] | None = None,
+        reward: bool = False,
+        t_warmup: int = 0,
+    ):
         # Default message arguments
         if dx is None:
             dx = {}

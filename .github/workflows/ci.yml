@@ -2,12 +2,16 @@ name: CI
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
   pull_request:
+    branches: [master]
+  schedule:
+    # Weekly full run (UTC)
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.head_ref || github.run_id }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -31,39 +35,32 @@ jobs:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v6.0.1
 
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version:
-          - "3.8"
-          - "3.9"
-          - "3.10"
-          - "3.11"
-          # - "3.12"
-        os:
-          - ubuntu-latest
-          - windows-latest
-          # - macOS-latest
-    runs-on: ${{ matrix.os }}
+  full-linux-py311:
+    name: Full suite (Ubuntu, Python 3.11)
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Install poetry
         run: pipx install poetry
+
       - name: Set up Python
         uses: actions/setup-python@v5
         id: setup-python
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: poetry
-      - name: Install Dependencies
+          python-version: "3.11"
+          cache: "poetry"
+
+      - name: Install dependencies
         run: poetry install
         shell: bash
+
       - name: Import the package
         run: poetry run python -c "import larvaworld"
         shell: bash
+
       - name: Test venv import
-        if: matrix.os == 'ubuntu-latest'
         shell: bash
         run: |
           python3 -m venv venv
@@ -71,19 +68,91 @@ jobs:
           pip3 install .
           python3 -c "import larvaworld"
 
-      - name: Test with Pytest
-        run: poetry run pytest
+      - name: Initialize datasets for integration tests
+        run: poetry run python tests/init_datasets.py
         shell: bash
+
+      - name: Run full test suite (parallel + coverage)
+        run: poetry run pytest -n auto --cov=larvaworld --cov-report=term --cov-report=xml
+        shell: bash
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: full-suite
+          name: full-linux-py311
+
+  smoke-matrix:
+    name: Full suite (${{ matrix.os }}, Py ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11"]
+        exclude:
+          - os: ubuntu-latest
+            python-version: "3.11" # covered by full-linux-py311
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y liblzo2-dev libblosc-dev libhdf5-dev
+
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install lzo c-blosc hdf5 swig
+          echo "HDF5_DIR=$(brew --prefix hdf5)" >> $GITHUB_ENV
+          echo "BLOSC_DIR=$(brew --prefix c-blosc)" >> $GITHUB_ENV
+          echo "LZO_DIR=$(brew --prefix lzo)" >> $GITHUB_ENV
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        id: setup-python
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+
+      - name: Install dependencies
+        run: poetry install
+        shell: bash
+
+      - name: Import the package
+        run: poetry run python -c "import larvaworld"
+        shell: bash
+
+      - name: Initialize datasets for integration tests
+        run: poetry run python tests/init_datasets.py
+        shell: bash
+
+      - name: Run full test suite (parallel + coverage)
+        run: poetry run pytest -n auto --cov=larvaworld --cov-report=term --cov-report=xml
+        shell: bash
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: smoke-${{ matrix.os }}-py${{ matrix.python-version }}
+          name: smoke-${{ matrix.os }}-py${{ matrix.python-version }}
 
   release:
     needs:
-      - test
       - lint
       - commitlint
+      - full-linux-py311
+      - smoke-matrix
 
     runs-on: ubuntu-latest
     environment: release

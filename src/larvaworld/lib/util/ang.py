@@ -2,11 +2,13 @@
 Methods for managing angular metrics
 """
 
+from __future__ import annotations
+
 import math
 
 import numpy as np
 
-__all__ = [
+__all__: list[str] = [
     "wrap_angle_to_0",
     "angles_between_vectors",
     "angle_dif",
@@ -17,16 +19,22 @@ __all__ = [
 
 def wrap_angle_to_0(angle: float, in_deg: bool = False) -> float:
     """
-    Wraps an angle within an absolute range of pi if in radians,
-    or 180 if in degrees around 0.
+    Wrap an angle to range around zero.
+
+    Wraps an angle within absolute range of π (radians) or 180° (degrees) around 0.
 
     Args:
-    - angle (float): The angle to wrap.
-    - in_deg (bool): If True, the angle is assumed to be in degrees.
+        angle: The angle to wrap
+        in_deg: If True, angle is in degrees (default: False for radians)
 
     Returns:
-    - float: The wrapped angle.
+        Wrapped angle in same units as input, range (-π, π] or (-180°, 180°]
 
+    Example:
+        >>> wrap_angle_to_0(270, in_deg=True)
+        -90.0
+        >>> wrap_angle_to_0(3*np.pi/2)  # radians
+        -1.5707...
     """
     if in_deg:
         angle = angle % 360.0
@@ -48,29 +56,28 @@ def angles_between_vectors(
     wrap_to_0: bool = True,
 ) -> np.ndarray:
     """
-    Calculate the angles defined by 3 arrays of 2D points.
-    Each line of the 3 arrays defines a pair of vectors :
-        - front vector starting at the midpoint and ending at the frontpoint.
-        - rear vector starting at the rearpoint and ending at the midpoint.
+    Calculate angles between front and rear vectors defined by triplets of 2D points.
 
-    Parameters
-    ----------
-        xy_front (np.ndarray):
-            The coordinates of the frontpoints as an array of shape (N,2).
-        xy_mid (np.ndarray):
-            The coordinates of the midpoints as an array of shape (N,2). Defaults to array of (0,0) if not provided.
-        xy_rear (np.ndarray):
-            The coordinates of the rearpoints as an array of shape (N,2). Default to rear vectors parallel to the x-axis if not provided.
-        in_deg (bool):
-            If True, the angle is returned in degrees.
-        wrap_to_0 (bool):
-            If True, the angle is normalized within a range (-lim,lim) where lim=π (180 if in_deg is True).
-            Otherwise, the angle is normalized within a range (0,2*lim)
+    Each row defines two vectors:
+    - Front vector: from midpoint to frontpoint
+    - Rear vector: from rearpoint to midpoint
 
-    Returns
-    -------
-        np.ndarray: The array of pairwise angles of the front and rear vectors. Range [-π, π).
+    Args:
+        xy_front: Coordinates of frontpoints, shape (N, 2)
+        xy_mid: Coordinates of midpoints, shape (N, 2). Defaults to (0,0) if None
+        xy_rear: Coordinates of rearpoints, shape (N, 2). If None, rear vectors are parallel to x-axis
+        in_deg: If True, return angles in degrees (default: True)
+        wrap_to_0: If True, normalize to range (-lim, lim) where lim=π or 180°. If False, range (0, 2*lim)
 
+    Returns:
+        Array of pairwise angles between front and rear vectors
+
+    Example:
+        >>> front = np.array([[1, 1], [0, 1]])
+        >>> mid = np.array([[0, 0], [0, 0]])
+        >>> angles = angles_between_vectors(front, mid)
+        >>> angles[0]  # 45 degrees
+        45.0
     """
     xy_front = xy_front.astype(float)
     if xy_mid is None:
@@ -98,22 +105,25 @@ def angles_between_vectors(
     return a
 
 
-def angle_dif(angle_1, angle_2, in_deg=True):
+def angle_dif(angle_1: float, angle_2: float, in_deg: bool = True) -> float:
     """
-    Computes the difference between two angles
+    Compute the signed difference between two angles.
 
-    Parameters
-    ----------
-    angle_1, angle_2 : float
-        The angles
-    in_deg : bool, optional
-        Whether angles are in degrees (default is True)
+    Computes angle_1 - angle_2 with proper wrapping to range (-π, π] or (-180°, 180°].
 
-    Returns
-    -------
-    a
-        the angle
+    Args:
+        angle_1: First angle
+        angle_2: Second angle
+        in_deg: If True, angles are in degrees (default: True)
 
+    Returns:
+        Signed angular difference in same units as input
+
+    Example:
+        >>> angle_dif(350, 10, in_deg=True)
+        -20.0
+        >>> angle_dif(10, 350, in_deg=True)
+        20.0
     """
     a = angle_1 - angle_2
     if in_deg:
@@ -122,28 +132,45 @@ def angle_dif(angle_1, angle_2, in_deg=True):
         return (a + np.pi) % (np.pi * 2) - np.pi
 
 
-def rotationMatrix(a):
+def rotationMatrix(a: float) -> np.ndarray:
+    """
+    Create a 2D rotation matrix for given angle.
+
+    Args:
+        a: Rotation angle in radians
+
+    Returns:
+        2x2 rotation matrix as numpy array
+
+    Example:
+        >>> R = rotationMatrix(np.pi/4)  # 45 degrees
+        >>> R.shape
+        (2, 2)
+    """
     return np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
 
 
-def rotate_points_around_point(points, radians, origin=None):
+def rotate_points_around_point(
+    points: np.ndarray, radians: float, origin: tuple[float, float] | None = None
+) -> np.ndarray:
     """
-    Rotate multiple points around a given point clockwise
+    Rotate multiple points around a given origin point.
 
-    Parameters
-    ----------
-    points : List[Tuple[float]]
-        The XY coordinates of the points to be rotated
-    radians : float
-        The rotation angle
-    origin : Tuple[float], optional
-        The XY coordinates of the rotation point (default is [0, 0])
+    Applies 2D rotation transformation using rotation matrix.
 
-    Returns
-    -------
-    ps : List[Tuple[float]]
-        The XY coordinates of the rotated points
+    Args:
+        points: XY coordinates of points to rotate, shape (N, 2) or (2,)
+        radians: Rotation angle in radians (positive = counter-clockwise)
+        origin: XY coordinates of rotation center. Defaults to (0, 0)
 
+    Returns:
+        Rotated XY coordinates, same shape as input
+
+    Example:
+        >>> pts = np.array([[1, 0], [0, 1]])
+        >>> rotated = rotate_points_around_point(pts, np.pi/2)  # 90° rotation
+        >>> np.allclose(rotated, [[0, 1], [-1, 0]])
+        True
     """
     if origin is None:
         origin = (0, 0)

@@ -1,5 +1,5 @@
 import numpy as np
-from larvaworld.lib.util.xy import fft_max, detect_strides
+from larvaworld.lib.util import fft_max, detect_strides
 
 
 def test_fft_max_basic():

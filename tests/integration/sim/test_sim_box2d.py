@@ -1,7 +1,13 @@
+import pytest
+
 from larvaworld.lib import sim
-from larvaworld.lib.process.dataset import LarvaDataset
+from larvaworld.lib.process import LarvaDataset
 
 # NOTE :    This test requires the box2d-py package
+
+pytestmark = [pytest.mark.integration, pytest.mark.slow, pytest.mark.optional_dep]
+
+pytest.importorskip("Box2D")
 
 
 def xtest_box2d_experiments():

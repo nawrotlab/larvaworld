@@ -1,8 +1,12 @@
 import subprocess
 from unittest.mock import Mock
 
+import pytest
+
 from larvaworld.lib import reg
 from larvaworld.cli.main import main
+
+pytestmark = [pytest.mark.integration, pytest.mark.fast]
 
 
 def cli_args(cli_str: str):

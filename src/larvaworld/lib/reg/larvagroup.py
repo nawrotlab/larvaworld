@@ -2,6 +2,9 @@
 Configuration and Generator classes for virtual larva groups.
 """
 
+from __future__ import annotations
+from typing import Any, Optional
+
 import copy
 import numpy as np
 import param
@@ -20,7 +23,7 @@ from ..param import (
 
 from ..util import AttrDict
 
-__all__ = [
+__all__: list[str] = [
     "LarvaGroupMutator",
     "LarvaGroup",
     "GTRvsS",
@@ -28,7 +31,7 @@ __all__ = [
 ]
 
 
-def update_larva_groups(lgs, **kwargs):
+def update_larva_groups(lgs: AttrDict, **kwargs: Any) -> AttrDict:
     """
     Modifies the experiment's configuration larvagroups.
 
@@ -60,7 +63,18 @@ def update_larva_groups(lgs, **kwargs):
 
 class LarvaGroupMutator(NestedConf):
     """
-    The larva group mutator.
+    Configuration for generating multiple larva groups from model IDs.
+
+    Utility class for creating multiple larva groups by specifying
+    model IDs, group IDs, and number of agents per group.
+
+    Attributes:
+        modelIDs: List of model IDs to instantiate
+        groupIDs: Optional custom IDs for the groups
+        N: Number of agents per group
+
+    Example:
+        >>> mutator = LarvaGroupMutator(modelIDs=['rover', 'sitter'], N=10)
     """
 
     modelIDs = reg.conf.Model.confID_selector(single=False)
@@ -72,14 +86,19 @@ class LarvaGroupMutator(NestedConf):
     )
     N = PositiveInteger(5, label="# agents/group", doc="Number of agents per model ID")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
 
 # TODO : Integration of the following function in the LarvaGroupMutator class
 def prepare_larvagroup_args(
-    Ns=None, modelIDs=None, groupIDs=None, colors=None, default_Nlgs=1, **kwargs
-):
+    Ns: Optional[int | list[int]] = None,
+    modelIDs: Optional[str | list[str]] = None,
+    groupIDs: Optional[list[str]] = None,
+    colors: Optional[list[Any]] = None,
+    default_Nlgs: int = 1,
+    **kwargs: Any,
+) -> list[dict[str, Any]]:
     """
     Prepare the arguments for the larva group configuration.
 
@@ -140,7 +159,24 @@ def prepare_larvagroup_args(
 
 class LarvaGroup(NestedConf):
     """
-    The configuration of a larva group.
+    Configuration for a group of larvae with shared properties.
+
+    Defines a collection of larvae sharing the same behavioral model,
+    spatial distribution, life history, and optional reference dataset.
+
+    Attributes:
+        group_id: Unique identifier for the group
+        model: Behavioral model ID or configuration dict
+        color: Display color for the group
+        odor: Odor signature of the agents
+        distribution: Spatial distribution configuration
+        life_history: Life history and energetics configuration
+        sample: Optional reference dataset to sample from
+        imitation: Whether to imitate reference dataset trajectories
+
+    Example:
+        >>> group = LarvaGroup(model='rover', group_id='rovers', N=20)
+        >>> agents = group(parameter_dict={})
     """
 
     group_id = param.String("LarvaGroup", doc="The distinct ID of the group")
@@ -156,12 +192,26 @@ class LarvaGroup(NestedConf):
         default=False, doc="Whether to imitate the reference dataset."
     )
 
-    def __init__(self, model=None, group_id=None, **kwargs):
+    def __init__(
+        self,
+        model: Optional[str | dict] = None,
+        group_id: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
         if group_id is None:
-            group_id = model if model is not None else "LarvaGroup"
-        super().__init__(model=model, group_id=group_id, **kwargs)
+            group_id = model if isinstance(model, str) else "LarvaGroup"
 
-    def entry(self, expand=False, as_entry=True):
+        # Handle model parameter: if dict, set after init to bypass selector validation
+        if isinstance(model, dict):
+            super().__init__(group_id=group_id, **kwargs)
+            # Bypass parameter validation by setting directly via param API
+            self.param.model.check_on_set = False
+            self.model = model
+            self.param.model.check_on_set = True
+        else:
+            super().__init__(model=model, group_id=group_id, **kwargs)
+
+    def entry(self, expand: bool = False, as_entry: bool = True) -> AttrDict:
         C = self.nestedConf
         if expand:
             C.model = self.expanded_model
@@ -171,7 +221,7 @@ class LarvaGroup(NestedConf):
             return C
 
     @property
-    def expanded_model(self):
+    def expanded_model(self) -> dict:
         m = self.model
         assert m is not None
         if isinstance(m, dict):
@@ -181,7 +231,9 @@ class LarvaGroup(NestedConf):
         else:
             raise
 
-    def generate_agent_attrs(self, parameter_dict={}):
+    def generate_agent_attrs(
+        self, parameter_dict: dict[str, Any] = {}
+    ) -> tuple[list[str], list, list, list]:
         m = self.expanded_model
         Nids = self.distribution.N
         if self.sample is not None:
@@ -213,11 +265,13 @@ class LarvaGroup(NestedConf):
                 all_pars[i] = all_pars[i].update_nestdict(dic)
         return ids, ps, ors, all_pars
 
-    def __call__(self, parameter_dict={}):
+    def __call__(self, parameter_dict: dict[str, Any] = {}) -> list[dict]:
         ids, ps, ors, all_pars = self.generate_agent_attrs(parameter_dict)
         return self.generate_agent_confs(ids, ps, ors, all_pars)
 
-    def generate_agent_confs(self, ids, ps, ors, all_pars):
+    def generate_agent_confs(
+        self, ids: list[str], ps: list, ors: list, all_pars: list[dict[str, Any]]
+    ) -> list[dict]:
         confs = []
         for id, p, o, pars in zip(ids, ps, ors, all_pars):
             conf = {
@@ -233,7 +287,14 @@ class LarvaGroup(NestedConf):
             confs.append(conf)
         return confs
 
-    def new_group(self, N=None, model=None, group_id=None, color=None, **kwargs):
+    def new_group(
+        self,
+        N: Optional[int] = None,
+        model: Optional[str] = None,
+        group_id: Optional[str] = None,
+        color: Optional[str] = None,
+        **kwargs: Any,
+    ) -> "LarvaGroup":
         kws = self.nestedConf
         if N is not None:
             kws.distribution.N = N
@@ -248,7 +309,9 @@ class LarvaGroup(NestedConf):
         kws.update(**kwargs)
         return LarvaGroup(**kws)
 
-    def new_groups(self, as_dict=False, **kwargs):
+    def new_groups(
+        self, as_dict: bool = False, **kwargs: Any
+    ) -> util.ItemList | AttrDict:
         confs = prepare_larvagroup_args(**kwargs)
         lg_list = util.ItemList([self.new_group(**conf) for conf in confs])
         if not as_dict:
@@ -260,8 +323,13 @@ class LarvaGroup(NestedConf):
 
 
 def GTRvsS(
-    N=1, age=72.0, q=1.0, h_starved=0.0, substrate_type="standard", expand=False
-):
+    N: int = 1,
+    age: float = 72.0,
+    q: float = 1.0,
+    h_starved: float = 0.0,
+    substrate_type: str = "standard",
+    expand: bool = False,
+) -> AttrDict:
     """
     Create two larva-groups, 'rover' and 'sitter', based on the respective larva-models, with defined life-history to be used in simulations involving energetics.
 

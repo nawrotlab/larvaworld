@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Any
+
 import hvplot.pandas
 import numpy as np
 import pandas as pd
@@ -6,7 +9,7 @@ from panel.template import DarkTheme
 
 import larvaworld.lib.model as model
 
-__all__ = [
+__all__: list[str] = [
     "lateral_oscillator_app",
 ]
 
@@ -73,7 +76,7 @@ def module_tester(A_in):
 
 
 plot = hvplot.bind(module_tester, A_in).interactive()
-lateral_oscillator_app = pn.template.MaterialTemplate(
+lateral_oscillator_app: "pn.template.MaterialTemplate" = pn.template.MaterialTemplate(
     title="larvaworld : Lateral Oscillator module",
     theme=DarkTheme,
     sidebar_width=sidebar_width,
