@@ -5,7 +5,7 @@ Larvaworld : A Drosophila larva behavioral analysis and simulation platform
 from __future__ import annotations
 
 __author__ = "Panagiotis Sakagiannis"
-__license__ = "GNU GENERAL PUBLIC LICENSE"
+__license__ = "MIT License"
 __copyright__ = "2024, Panagiotis Sakagiannis"
 
 # TODO : the automatic version naming requires the package itself to be installed. Woraround by simply naming it 0.0.0

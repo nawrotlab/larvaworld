@@ -58,7 +58,7 @@ pip install 'imageio[ffmpeg]'
 
 ### Arena drawing
 
-The platform features an arena editor that supports :
+The platform features an arena editor that supports:
 
 1.  Arenas and dishes
     The arena editor allows defining arena shape and dimensions in detail and placement of larva groups and items at preferred locations in predefined spatial distributions and orientations.
@@ -86,7 +86,7 @@ Multiple aspects of real larvae are captured in various models. These can be con
 
 ### Behavioral simulations
 
-The simulation platform supports simulations of experiments that implement established behavioral paradigms reported in literature. These can be run as single simulations, grouped in essays for globally testing models over multiple conditions and arenas or as batch-runs that allow parameter search and optimization of defined utility metrics. Specifically the behaviors covered are :
+The simulation platform supports simulations of experiments that implement established behavioral paradigms reported in literature. These can be run as single simulations, grouped in essays for globally testing models over multiple conditions and arenas or as batch-runs that allow parameter search and optimization of defined utility metrics. Specifically the behaviors covered are:
 
 - Free exploration
 - Chemotaxis
@@ -99,7 +99,7 @@ Finally, some games are available for fun where opposite larva groups try to cap
 
 ### Data import & Behavioral analysis
 
-Experimental datasets from a variety of tracker software can be imported and transformed to a common hdf5 format so that they can be analysed and directly compared to the simulated data. To make datasets compatible and facilitate reproducibility, only the primary tracked x,y coordinates are used, both of the midline points and optionally points around the body contour.Compatible formats are text files, either per individual or per group. All secondary parameters are derived via an identical pipeline that allows parameterization and definition of novel metrics.
+Experimental datasets from a variety of tracker software can be imported and transformed to a common hdf5 format so that they can be analysed and directly compared to the simulated data. To make datasets compatible and facilitate reproducibility, only the primary tracked x,y coordinates are used, both of the midline points and optionally points around the body contour. Compatible formats are text files, either per individual or per group. All secondary parameters are derived via an identical pipeline that allows parameterization and definition of novel metrics.
 
 ### Visualization
 
@@ -108,11 +108,11 @@ Both imported experiments and simulations can be visualized real-time at realist
 ## Command Line Interface
 
 The platform is mainly accessed through the command line interface via the `larvaworld` command.
-Five different modes are available. The mode has to declared after the command as a first positional argument. Mode-specific argumants can be declared afterwards :
+Five different modes are available. The mode must be declared after the command as a first positional argument. Mode-specific arguments can be declared afterwards:
 
 ### Single Simulation
 
-Run a single simulation of one of multiple available experiments.Optionally run the respective analysis.
+Run a single simulation of one of multiple available experiments. Optionally run the respective analysis.
 
 This line runs a dish simulation (30 larvae, 3 minutes) without analysis.
 
@@ -132,15 +132,15 @@ This line runs a batch run of odor preference experiments for different valences
 
 ### Genetic Algorithm optimization
 
-Run a genetic algorith optimization algorithm to optimize a basic model's configuration set according to a fitness function.
-This line optimizes a model for kinematic realism against a reference experimental dataset
+Run a genetic algorithm optimization to optimize a basic model's configuration set according to a fitness function.
+This line optimizes a model for kinematic realism against a reference experimental dataset:
 
 `larvaworld Ga realism -refID exploration.30controls -Nagents 20 -duration 0.5 -bestConfID GA_test_loco -init_mode model`
 
 ### Experiment replay
 
 Replay a real-world experiment.
-This line replays a reference experimental dataset (note that this is imported by the example named : import_Schleyer)
+This line replays a reference experimental dataset (note that this is imported by the example named: `import_Schleyer`):
 
 `larvaworld Replay -refID exploration.30controls -vis_mode video`
 `larvaworld Replay -refDir SchleyerGroup/processed/exploration/30controls -vis_mode video`
@@ -148,24 +148,26 @@ This line replays a reference experimental dataset (note that this is imported b
 ### Model evaluation / comparison to real data
 
 Evaluate diverse model configurations against real data.
-This line evaluates two models against a reference experimental dataset
+This line evaluates two models against a reference experimental dataset:
 
 `larvaworld Eval -refID exploration.30controls -modelIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF -N 10`
 
 ## Web Apps
 
 A number of web-based applications are available to inspect larva models, test isolated behavioral modules, view replays of stored datasets and launch simulations of behavioral experiments. The apps can be launched via a single webpage by clicking on their respective icons.
-Launch the web server :
+
+Launch the web server:
 
 `larvaworld-app`
 
-Then open http://localhost:5006 in your browser (if not automatically opened).
+Then open <http://localhost:5006> in your browser (if not automatically opened).
 
 ## GUI (deprecated)
 
 A user-friendly GUI allows easy importation, inspection and analysis of data, model, life-history and environment configuration, visualization and data-acquisition setup and control over simulations, essays and batch-runs. Videos and tutorials are also available. In principle the user shouldn't have to mess with the code at all.
 All functionalities are available via the respective tabs.
-Launch the GUI :
+
+Launch the GUI:
 
 `larvaworld-gui`
 
