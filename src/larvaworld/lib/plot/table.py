@@ -2,6 +2,9 @@
 Tables
 """
 
+from __future__ import annotations
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+
 import numpy as np
 import pandas as pd
 import param
@@ -9,7 +12,7 @@ import param
 from ... import ROOT_DIR
 from .. import plot, reg, util, funcs
 
-__all__ = [
+__all__: list[str] = [
     "modelConfTable",
     "mpl_table",
     "conf_table",
@@ -20,11 +23,26 @@ __all__ = [
 ]
 
 
-def arrange_index_labels(index):
+def arrange_index_labels(index) -> List[str]:
+    """
+    Arrange index labels for table display.
+
+    Centers group labels by adding empty strings above and below,
+    useful for multi-level table indices.
+
+    Args:
+        index: Pandas index with group labels
+
+    Returns:
+        List of labels with centering empty strings
+
+    Example:
+        >>> labels = arrange_index_labels(df.index)
+    """
     ks = index.unique().tolist()
     Nks = index.value_counts(sort=False)
 
-    def merge(k, Nk):
+    def merge(k: str, Nk: int) -> List[str]:
         Nk1 = int((Nk - 1) / 2)
         Nk2 = Nk - 1 - Nk1
         return [""] * Nk1 + [k.upper()] + [""] * Nk2
@@ -34,15 +52,37 @@ def arrange_index_labels(index):
 
 
 def conf_table(
-    df,
-    row_colors,
-    mID,
-    show=False,
-    save_to=None,
-    save_as=None,
-    build_kws={"Nrows": 1, "Ncols": 1, "w": 15, "h": 20},
-    **kwargs,
-):
+    df: pd.DataFrame,
+    row_colors: Sequence[str],
+    mID: str,
+    show: bool = False,
+    save_to: Optional[str] = None,
+    save_as: Optional[str] = None,
+    build_kws: Dict[str, Any] = {"Nrows": 1, "Ncols": 1, "w": 15, "h": 20},
+    **kwargs: Any,
+) -> Any:
+    """
+    Create configuration table with color-coded rows.
+
+    Wrapper around mpl_table that creates a formatted configuration table
+    with module-specific row colors and standard layout.
+
+    Args:
+        df: Configuration data as DataFrame
+        row_colors: List of colors for each row
+        mID: Model identifier for title
+        show: Whether to display table. Defaults to False
+        save_to: Directory to save table. Defaults to None
+        save_as: Filename for saved table. Defaults to None
+        build_kws: Figure build keywords. Defaults to standard size
+        **kwargs: Additional arguments passed to mpl_table
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = conf_table(df, row_colors=['red', 'blue'], mID='model_01')
+    """
     ax, fig, mpl = mpl_table(
         df,
         header0="MODULE",
@@ -69,12 +109,31 @@ def conf_table(
 
 @funcs.graph("model table")
 def modelConfTable(
-    mID,
-    m=None,
-    columns=["parameter", "symbol", "value", "unit"],
-    colWidths=[0.35, 0.1, 0.25, 0.15],
-    **kwargs,
-):
+    mID: str,
+    m: Any = None,
+    columns: Sequence[str] = ["parameter", "symbol", "value", "unit"],
+    colWidths: Sequence[float] = [0.35, 0.1, 0.25, 0.15],
+    **kwargs: Any,
+) -> Any:
+    """
+    Create configuration table for a model.
+
+    Generates formatted table showing all model parameters including
+    brain modules, body, physics, sensorimotor, and energetics configurations.
+
+    Args:
+        mID: Model identifier
+        m: Pre-loaded model object. Loads from mID if None
+        columns: Table columns to display. Defaults to parameter info
+        colWidths: Column width ratios. Defaults to balanced widths
+        **kwargs: Additional arguments passed to conf_table
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = modelConfTable(mID='model_01', columns=['parameter', 'value'])
+    """
     from ..model import moduleDB as MD
 
     def mIDtable_data(m, columns):
@@ -90,7 +149,7 @@ def modelConfTable(
             d0 = m.brain[k]
             if d0 is not None:
                 if k == "intermitter":
-                    d = MD.module_conf(mID=k, mode=d0.mode, as_entry=False, **d0)
+                    d = MD.module_conf(mID=k, as_entry=False, **d0)
                     run_mode = d["run_mode"]
                     for p in d.keylist:
                         if p == "run_dist" and run_mode == "stridechain":
@@ -131,29 +190,65 @@ def modelConfTable(
 
 @funcs.graph("mpl")
 def mpl_table(
-    data,
-    cellLoc="center",
-    colLoc="center",
-    rowLoc="center",
-    font_size=14,
-    title=None,
-    name="mpl_table",
-    header0=None,
-    header0_color=None,
-    header_color="#40466e",
-    row_colors=["#f1f1f2", "w"],
-    edge_color="black",
-    adjust_kws=None,
-    highlighted_celltext_dict=None,
-    highlighted_cells=None,
-    bbox=[0, 0, 1, 1],
-    header_columns=0,
-    colWidths=None,
-    highlight_color="yellow",
-    return_table=False,
-    **kwargs,
-):
-    def get_idx(highlighted_cells):
+    data: pd.DataFrame,
+    cellLoc: str = "center",
+    colLoc: str = "center",
+    rowLoc: str = "center",
+    font_size: int = 14,
+    title: Optional[str] = None,
+    name: str = "mpl_table",
+    header0: Optional[str] = None,
+    header0_color: Optional[str] = None,
+    header_color: str = "#40466e",
+    row_colors: Sequence[str] = ("#f1f1f2", "w"),
+    edge_color: str = "black",
+    adjust_kws: Optional[Dict[str, Any]] = None,
+    highlighted_celltext_dict: Optional[Dict[str, Sequence[str]]] = None,
+    highlighted_cells: Optional[str] = None,
+    bbox: Sequence[float] = (0, 0, 1, 1),
+    header_columns: int = 0,
+    colWidths: Optional[Sequence[float]] = None,
+    highlight_color: str = "yellow",
+    return_table: bool = False,
+    **kwargs: Any,
+) -> Any:
+    """
+    Create matplotlib table with customizable formatting.
+
+    Generates publication-quality table with customizable colors, highlighting,
+    and formatting options. Supports row/column colors and cell highlighting.
+
+    Args:
+        data: DataFrame to display as table
+        cellLoc: Cell text alignment. Defaults to 'center'
+        colLoc: Column header alignment. Defaults to 'center'
+        rowLoc: Row index alignment. Defaults to 'center'
+        font_size: Table font size. Defaults to 14
+        title: Table title. Defaults to None
+        name: Plot name for saving. Defaults to 'mpl_table'
+        header0: Additional header row text. Defaults to None
+        header0_color: Color for additional header. Defaults to None
+        header_color: Main header color. Defaults to '#40466e'
+        row_colors: Alternating row colors. Defaults to light gray/white
+        edge_color: Cell border color. Defaults to 'black'
+        adjust_kws: Figure adjustment keywords. Defaults to None
+        highlighted_celltext_dict: Dict of highlighted cell texts. Defaults to None
+        highlighted_cells: Highlighting mode ('row_min', 'row_max'). Defaults to None
+        bbox: Table bounding box. Defaults to (0, 0, 1, 1)
+        header_columns: Number of header columns. Defaults to 0
+        colWidths: Column width ratios. Defaults to None
+        highlight_color: Highlight cell color. Defaults to 'yellow'
+        return_table: Return table object instead of figure. Defaults to False
+        **kwargs: Additional arguments passed to AutoBasePlot
+
+    Returns:
+        Table object if return_table=True, else plot output
+
+    Example:
+        >>> fig = mpl_table(df, highlighted_cells='row_min', font_size=12)
+    """
+
+    def get_idx(highlighted_cells: str) -> List[Tuple[int, int]]:
         d = data.values
         res = []
         if highlighted_cells == "row_min":
@@ -254,7 +349,34 @@ def mpl_table(
 
 
 @funcs.graph("model diff")
-def mdiff_table(mIDs, dIDs, show=False, save_to=None, save_as=None, **kwargs):
+def mdiff_table(
+    mIDs: Sequence[str],
+    dIDs: Sequence[str],
+    show: bool = False,
+    save_to: Optional[str] = None,
+    save_as: Optional[str] = None,
+    **kwargs: Any,
+) -> Any:
+    """
+    Create table comparing differences between models.
+
+    Generates table showing only parameters that differ between models,
+    with color-coded rows by module type.
+
+    Args:
+        mIDs: List of model identifiers to compare
+        dIDs: List of display identifiers for models
+        show: Whether to display table. Defaults to False
+        save_to: Directory to save table. Defaults to None
+        save_as: Filename for saved table. Defaults to None
+        **kwargs: Additional arguments passed to mpl_table
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = mdiff_table(mIDs=['model_A', 'model_B'], dIDs=['A', 'B'])
+    """
     data, row_colors = diff_df(mIDs=mIDs, dIDs=dIDs)
     mpl_kws = {
         "name": "mdiff_table",
@@ -286,7 +408,24 @@ def mdiff_table(mIDs, dIDs, show=False, save_to=None, save_as=None, **kwargs):
 
 
 @funcs.graph("error table")
-def error_table(data, k="", **kwargs):
+def error_table(data: np.ndarray, k: str = "", **kwargs: Any) -> Any:
+    """
+    Create table displaying error metrics.
+
+    Generates formatted table showing error values (transposed and rounded)
+    for model evaluation.
+
+    Args:
+        data: Error metric array
+        k: Metric key/label. Defaults to empty string
+        **kwargs: Additional arguments passed to mpl_table
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = error_table(error_array, k='RSS')
+    """
     data = np.round(data, 3).T
     figsize = ((data.shape[1] + 3) * 4, data.shape[0])
     fig = mpl_table(
@@ -300,7 +439,19 @@ def error_table(data, k="", **kwargs):
     return fig
 
 
-def store_model_graphs(mIDs=None):
+def store_model_graphs(mIDs: Optional[Sequence[str]] = None) -> None:
+    """
+    Generate and store configuration tables and summary plots for models.
+
+    Creates model configuration tables and summary plots for all specified
+    models, combining them into master PDFs.
+
+    Args:
+        mIDs: List of model identifiers. Uses all models if None
+
+    Example:
+        >>> store_model_graphs(mIDs=['model_01', 'model_02'])
+    """
     from .grid import model_summary
 
     f1 = f"{ROOT_DIR}/media/model_tables"
@@ -321,7 +472,28 @@ def store_model_graphs(mIDs=None):
     util.combine_pdfs(file_dir=f2, save_as="___ALL_MODEL_SUMMARIES___.pdf")
 
 
-def diff_df(mIDs, ms=None, dIDs=None):
+def diff_df(
+    mIDs: Sequence[str],
+    ms: Optional[Sequence[Any]] = None,
+    dIDs: Optional[Sequence[str]] = None,
+) -> Tuple[pd.DataFrame, Sequence[str]]:
+    """
+    Create difference DataFrame comparing model parameters.
+
+    Generates DataFrame showing only parameters that differ between models,
+    with row colors for visualization.
+
+    Args:
+        mIDs: List of model identifiers to compare
+        ms: Pre-loaded model objects. Loads from mIDs if None
+        dIDs: Display identifiers. Uses mIDs if None
+
+    Returns:
+        Tuple of (difference DataFrame, list of row colors)
+
+    Example:
+        >>> df, colors = diff_df(mIDs=['model_A', 'model_B'])
+    """
     from ..model import moduleDB as MD
 
     dic = {}

@@ -1,11 +1,27 @@
+from __future__ import annotations
+from typing import Any
+import os
+import warnings
+
+# Deprecation: discourage deep imports from internal module paths
+if os.getenv("LARVAWORLD_STRICT_DEPRECATIONS") == "1":
+    raise ImportError(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.agents import LarvaRobot, ObstacleLarvaRobot'"
+    )
+else:
+    warnings.warn(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.agents import LarvaRobot, ObstacleLarvaRobot'",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 from ... import util
-from ...model.modules.motor_controller import Actuator, MotorController
-from ...model.modules.sensor2 import ProximitySensor
+from ...model.modules import Actuator, MotorController, ProximitySensor
 from ...param import PositiveNumber
-from ...screen.drawing import ScreenManager
+
+# ScreenManager import deferred due to circular dependency - will be imported when needed
 from . import LarvaSim
 
-__all__ = [
+__all__: list[str] = [
     "LarvaRobot",
     "ObstacleLarvaRobot",
 ]
@@ -15,22 +31,57 @@ __displayname__ = "Braitenberg-like larva"
 
 class LarvaRobot(LarvaSim):
     """
-    A virtual larva with a parameter set as genome to be used in Genetic Algorithm optimization.
-    Inherits from LarvaSim.
+    Virtual larva agent for genetic algorithm optimization.
+
+    Extends LarvaSim with genome-based parameter encoding, enabling
+    evolutionary optimization of behavioral parameters via GA. The genome
+    represents evolvable traits (locomotor gains, sensor weights, etc.).
 
     Attributes:
-        genome (optional): The genome of the larva robot.
+        genome: Parameter genome vector for GA optimization (optional)
+
+    Args:
+        larva_pars: Dictionary of larva configuration parameters
+        genome: Optional genome encoding of evolvable parameters
+        **kwargs: Additional agent configuration
+
+    Example:
+        >>> genome = np.array([0.5, 1.2, 0.8])  # Evolvable parameters
+        >>> robot = LarvaRobot(larva_pars={'model': 'explorer'}, genome=genome)
     """
 
-    def __init__(self, larva_pars, genome=None, **kwargs):
+    def __init__(
+        self, larva_pars: dict[str, Any], genome: Any | None = None, **kwargs: Any
+    ) -> None:
         super().__init__(**larva_pars, **kwargs)
         self.genome = genome
 
 
 class ObstacleLarvaRobot(LarvaRobot):
     """
-    A specialized type of LarvaRobot designed to navigate environments with obstacles.
-    It uses proximity sensors and motor controllers to sense and act upon its surroundings.
+    Obstacle-avoiding larva robot with Braitenberg-like sensorimotor coupling.
+
+    Extends LarvaRobot with bilateral proximity sensors and motor controllers
+    that implement reactive obstacle avoidance through differential actuation.
+    Uses sensor-motor coupling to generate turning away from obstacles.
+
+    Attributes:
+        Lmotor: Left motor controller with proximity sensor
+        Rmotor: Right motor controller with proximity sensor
+        sensor_delta_direction: Angular offset of sensors from midline (radians)
+        sensor_saturation_value: Max sensor response value
+        obstacle_sensor_error: Sensor noise/error magnitude
+        sensor_max_distance: Maximum sensing distance
+        motor_coefficient: Motor gain coefficient
+        min_actuator_value: Minimum motor output value
+
+    Example:
+        >>> robot = ObstacleLarvaRobot(
+        ...     larva_pars={'model': 'navigator'},
+        ...     sensor_delta_direction=0.4,
+        ...     motor_coefficient=8770.0
+        ... )
+        >>> robot.sense()  # Detect obstacles and adjust motors
     """
 
     sensor_delta_direction = PositiveNumber(0.4, doc="Sensor delta_direction")
@@ -40,7 +91,7 @@ class ObstacleLarvaRobot(LarvaRobot):
     motor_coefficient = PositiveNumber(8770.0, doc="Motor ctrl_coefficient")
     min_actuator_value = PositiveNumber(35.0, doc="Motor ctrl_min_actuator_value")
 
-    def __init__(self, larva_pars, **kwargs):
+    def __init__(self, larva_pars: dict[str, Any], **kwargs: Any) -> None:
         kws = larva_pars.sensorimotor
         larva_pars.pop("sensorimotor", None)
         super().__init__(larva_pars=larva_pars, **kws, **kwargs)
@@ -78,7 +129,7 @@ class ObstacleLarvaRobot(LarvaRobot):
             **M_kws,
         )
 
-    def sense(self):
+    def sense(self) -> None:
         """
         This method allows the larva robot to sense its environment and act accordingly.
         If there is no collision with an object, it transforms the olfactor position and
@@ -112,7 +163,7 @@ class ObstacleLarvaRobot(LarvaRobot):
         else:
             pass
 
-    def draw(self, v: ScreenManager, **kwargs) -> None:
+    def draw(self, v: Any, **kwargs: Any) -> None:
         """
         Draws the larva robot and its sensors on the screen.
 

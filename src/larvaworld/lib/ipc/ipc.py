@@ -11,7 +11,9 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
+from __future__ import annotations
 
+from typing import Any, Callable, TypeVar
 import json
 import socket
 import socketserver
@@ -23,7 +25,7 @@ except ImportError:
     from socketserver import ThreadingTCPServer as StreamServer
 from socketserver import ThreadingTCPServer
 
-__all__ = [
+__all__: list[str] = [
     "Message",
     "Client",
     "Server",
@@ -48,7 +50,7 @@ class ConnectionClosed(IPCError):
     pass
 
 
-def _read_objects(sock):
+def _read_objects(sock: socket.socket) -> list["Message"]:
     """
     Reads and deserializes a message object from a socket.
 
@@ -59,7 +61,7 @@ def _read_objects(sock):
         sock (socket.socket): The socket from which to read the message.
 
     Returns:
-        Message: The deserialized message object.
+        list[Message]: The deserialized message objects.
 
     Raises:
         ConnectionClosed: If the connection is closed or if no data is received.
@@ -74,7 +76,7 @@ def _read_objects(sock):
     return Message.deserialize(json.loads(data.decode()))
 
 
-def _write_objects(sock, objects):
+def _write_objects(sock: socket.socket, objects: list["Message"]) -> None:
     """
     Serializes a list of objects and sends them over a socket.
 
@@ -87,7 +89,10 @@ def _write_objects(sock, objects):
     sock.sendall(str.encode(data))
 
 
-def _recursive_subclasses(cls):
+T = TypeVar("T", bound="Message")
+
+
+def _recursive_subclasses(cls: type[T]) -> dict[str, type[T]]:
     """
     Recursively finds all subclasses of a given class and returns a dictionary mapping
     subclass names to subclass objects.
@@ -99,7 +104,7 @@ def _recursive_subclasses(cls):
         dict: A dictionary where the keys are subclass names (str) and the values are
               the subclass objects (type).
     """
-    classmap = {}
+    classmap: dict[str, type[T]] = {}
     for subcls in cls.__subclasses__():
         classmap[subcls.__name__] = subcls
         classmap.update(_recursive_subclasses(subcls))
@@ -112,7 +117,7 @@ class Message:
     """
 
     @classmethod
-    def deserialize(cls, objects):
+    def deserialize(cls: type[T], objects: list[Any]) -> list[T]:
         """
         Deserialize a list of objects into their corresponding class instances.
 
@@ -131,14 +136,14 @@ class Message:
             InvalidSerialization: If there is an error in the deserialization process.
         """
         classmap = _recursive_subclasses(cls)
-        serialized = []
+        serialized: list[T] = []
         for obj in objects:
             if isinstance(obj, Message):
                 serialized.append(obj)
             else:
                 try:
                     serialized.append(
-                        classmap[obj["class"]](*obj["args"], **obj["kwargs"])
+                        classmap[obj["class"]](*obj["args"], **obj["kwargs"])  # type: ignore[misc]
                     )
                 except KeyError as e:
                     raise UnknownMessageClass(e)
@@ -146,7 +151,7 @@ class Message:
                     raise InvalidSerialization(e)
         return serialized
 
-    def serialize(self):
+    def serialize(self) -> dict[str, Any]:
         """
         Serializes the current object instance into a dictionary.
 
@@ -162,10 +167,10 @@ class Message:
         args, kwargs = self._get_args()
         return {"class": type(self).__name__, "args": args, "kwargs": kwargs}
 
-    def _get_args(self):
+    def _get_args(self) -> tuple[list[Any], dict[str, Any]]:
         return [], {}
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Return a string representation of the object for debugging.
 
@@ -188,8 +193,8 @@ class Client:
     A client class for handling IPC (Inter-Process Communication) with a server.
     """
 
-    def __init__(self, server_address):
-        self.addr = server_address
+    def __init__(self, server_address: tuple[str, int] | str | bytes) -> None:
+        self.addr: tuple[str, int] | str | bytes = server_address
         # print(self.addr)
         # raise
         if isinstance(self.addr, (str, bytes)):
@@ -198,20 +203,20 @@ class Client:
             address_family = socket.AF_INET
         self.sock = socket.socket(address_family, socket.SOCK_STREAM)
 
-    def connect(self):
+    def connect(self) -> None:
         self.sock.connect(self.addr)
 
-    def close(self):
+    def close(self) -> None:
         self.sock.close()
 
-    def __enter__(self):
+    def __enter__(self) -> "Client":
         self.connect()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.close()
 
-    def send(self, objects):
+    def send(self, objects: list[Message]) -> list[Message]:
         _write_objects(self.sock, objects)
         return _read_objects(self.sock)
 
@@ -221,12 +226,17 @@ class Server(StreamServer):
     A server class that handles inter-process communication (IPC) using a stream-based server.
     """
 
-    def __init__(self, server_address, callback, bind_and_activate=True):
+    def __init__(
+        self,
+        server_address: tuple[str, int] | str | bytes,
+        callback: Callable[[list[Message]], list[Message]] | None,
+        bind_and_activate: bool = True,
+    ) -> None:
         if not callable(callback):
             callback = lambda x: []
 
         class IPCHandler(socketserver.BaseRequestHandler):
-            def handle(self):
+            def handle(self) -> None:
                 while True:
                     try:
                         results = _read_objects(self.request)

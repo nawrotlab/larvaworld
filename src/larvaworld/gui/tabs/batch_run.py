@@ -8,7 +8,7 @@ import PySimpleGUI as sg
 from ... import BATCH_DIR, SIM_DIR
 from ...gui import gui_aux
 from ...lib import reg, sim, util
-from ...lib.plot.table import mpl_table
+from ...lib.plot import mpl_table
 
 __all__ = [
     "BatchTab",

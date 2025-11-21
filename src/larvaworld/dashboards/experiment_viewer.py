@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import Any
+
 import holoviews as hv
 import numpy as np
 import panel as pn
@@ -8,7 +11,7 @@ pn.extension()
 from larvaworld.lib import reg, screen, sim, util
 
 
-__all__ = [
+__all__: list[str] = [
     "ExperimentViewer",
     "experiment_viewer_app",
 ]
@@ -17,11 +20,11 @@ w, h = 800, 500
 
 
 class ExperimentViewer:
-    def __init__(self):
+    def __init__(self) -> None:
         self.size = 600
         self.draw_ops = screen.AgentDrawOps(draw_centroid=True, draw_segs=False)
 
-    def get_tank_plot(self):
+    def get_tank_plot(self) -> hv.element.Overlay:
         a = self.env.arena
         if a.geometry == "circular":
             tank = hv.Ellipse(0, 0, a.dims[0]).opts(line_width=5, bgcolor="lightgrey")
@@ -31,7 +34,7 @@ class ExperimentViewer:
             raise ValueError("Not implemented")
         return tank
 
-    def draw_imgs(self):
+    def draw_imgs(self) -> hv.Overlay:
         agents = self.launcher.agents
         sources = self.launcher.sources
         d = util.AttrDict(
@@ -71,7 +74,7 @@ class ExperimentViewer:
             responsive=False, **self.image_kws
         )
 
-    def get_app(self, experiment="dish", duration=1, **kwargs):
+    def get_app(self, experiment: str = "dish", duration: int = 1, **kwargs: Any):
         self.launcher = sim.ExpRun(experiment=experiment, duration=duration, **kwargs)
         self.Nfade = int(self.draw_ops.trail_dt / self.launcher.dt)
         self.env = self.launcher.p.env_params
@@ -105,7 +108,7 @@ class ExperimentViewer:
         self.tank_plot = self.get_tank_plot()
 
         @pn.depends(i=time_slider)
-        def get_image(i):
+        def get_image(i: int):
             while i > self.launcher.t:
                 self.launcher.sim_step()
                 self.progress_bar.value = self.launcher.t
@@ -160,7 +163,7 @@ CT = reg.conf.Exp
 Msel = pn.widgets.Select(value="dish", name="experiment", options=CT.confIDs)
 Mrun = pn.widgets.Button(name="Run")
 
-experiment_viewer_app = pn.template.MaterialTemplate(
+experiment_viewer_app: "pn.template.MaterialTemplate" = pn.template.MaterialTemplate(
     title="larvaworld : Experiment viewer", theme=DarkTheme, sidebar_width=w
 )
 experiment_viewer_app.sidebar.append(pn.Row(Msel, Mrun, width=300, height=80))

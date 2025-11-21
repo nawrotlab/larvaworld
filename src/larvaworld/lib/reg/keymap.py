@@ -2,17 +2,20 @@
 Keymap/shortcuts for interactive pygame visualization of simulations.
 """
 
+from __future__ import annotations
+from typing import Any, Dict
+
 import json
 
 from ... import CONF_DIR
 from ...lib import util
 
-__all__ = [
+__all__: list[str] = [
     "ControlRegistry",
 ]
 
 
-def get_pygame_key(key):
+def get_pygame_key(key: str) -> str:
     pygame_keys = util.AttrDict(
         {
             "BackSpace": "BACKSPACE",
@@ -44,7 +47,7 @@ def get_pygame_key(key):
     return f"K_{pygame_keys[key]}" if key in pygame_keys else f"K_{key}"
 
 
-def init_shortcuts():
+def init_shortcuts() -> util.AttrDict:
     d = util.AttrDict(
         {
             "draw": {
@@ -101,7 +104,7 @@ def init_shortcuts():
     return d
 
 
-def init_controls():
+def init_controls() -> util.AttrDict:
     k = init_shortcuts()
     d = util.AttrDict(
         {
@@ -125,18 +128,39 @@ def init_controls():
 
 
 class ControlRegistry:
-    def __init__(self):
+    """
+    Registry for keyboard and mouse controls in pygame visualizations.
+
+    Manages keyboard shortcuts and mouse controls for interactive simulation
+    visualization. Controls are saved to and loaded from a configuration file.
+
+    Attributes:
+        path: Path to the controls configuration file
+        conf: AttrDict containing control mappings with sections:
+            - keys: Keyboard shortcuts organized by category
+            - mouse: Mouse control mappings
+            - pygame_keys: Pygame key constant mappings
+
+    Example:
+        >>> controls = ControlRegistry()
+        >>> controls.conf.keys['draw']['visible_trails']  # 'p'
+        >>> controls.conf.mouse['select item']  # 'left click'
+        >>> controls.save()  # Save current configuration
+        >>> loaded = controls.load()  # Load from file
+    """
+
+    def __init__(self) -> None:
         self.path = f"{CONF_DIR}/controls.txt"
         self.conf = init_controls()
         self.save(self.conf)
 
-    def save(self, conf=None):
+    def save(self, conf: util.AttrDict | None = None) -> None:
         if conf is None:
             conf = self.conf
         with open(self.path, "w") as fp:
             json.dump(conf, fp)
 
-    def load(self):
+    def load(self) -> util.AttrDict:
         with open(self.path) as tfp:
             c = json.load(tfp)
         return util.AttrDict(c)

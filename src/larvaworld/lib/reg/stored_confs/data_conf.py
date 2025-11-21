@@ -1,19 +1,22 @@
+from __future__ import annotations
+
 import json
 import os
+from typing import Any
 
 from .... import DATA_DIR
 from ... import reg, util, funcs
 from ...param import Filesystem, PreprocessConf, TrackerOps
 from ...util import nam
 
-__all__ = [
+__all__: list[str] = [
     "LabFormat_dict",
     "Ref_dict",
 ]
 
 
 @funcs.stored_conf("LabFormat")
-def LabFormat_dict():
+def LabFormat_dict() -> util.AttrDict:
     d = {
         "Schleyer": {
             "tracker": TrackerOps(
@@ -120,7 +123,7 @@ def LabFormat_dict():
 
 
 @funcs.stored_conf("Ref")
-def Ref_dict():
+def Ref_dict() -> util.AttrDict:
     dds = [
         [f"{DATA_DIR}/JovanicGroup/processed/AttP{g}/{c}" for g in ["2", "240"]]
         for c in ["Fed", "Deprived", "Starved"]

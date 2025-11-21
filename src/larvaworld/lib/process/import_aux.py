@@ -2,6 +2,9 @@
 Helper methods used for importing data
 """
 
+from __future__ import annotations
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+
 import os
 import os.path
 
@@ -12,7 +15,7 @@ from scipy import interpolate
 from ... import vprint
 from .. import reg, util
 
-__all__ = [
+__all__: list[str] = [
     "init_endpoint_dataframe_from_timeseries",
     "read_timeseries_from_raw_files_per_parameter",
     "read_timeseries_from_raw_files_per_larva",
@@ -62,7 +65,11 @@ def init_endpoint_dataframe_from_timeseries(
 
 
 def read_timeseries_from_raw_files_per_parameter(
-    pref: str, tracker=None, dt: float = None, Npoints: int = None, Ncontour: int = None
+    pref: str,
+    tracker: Optional[Any] = None,
+    dt: Optional[float] = None,
+    Npoints: Optional[int] = None,
+    Ncontour: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Reads timeseries data stored in txt files of the lab-specific Jovanic format and returns them as a pd.Dataframe.
@@ -140,13 +147,13 @@ def read_timeseries_from_raw_files_per_parameter(
 
 
 def read_timeseries_from_raw_files_per_larva(
-    files: list,
-    read_sequence: list,
+    files: list[str],
+    read_sequence: list[str],
     save_mode: str = "semifull",
-    store_sequence: list = None,
-    tracker=None,
+    store_sequence: Optional[list[str]] = None,
+    tracker: Optional[Any] = None,
     inv_x: bool = False,
-) -> list:
+) -> list[pd.DataFrame]:
     """
     Reads timeseries data stored in txt files of the lab-specific Jovanic format and returns them as a list of pd.Dataframe.
 
@@ -204,7 +211,22 @@ def read_timeseries_from_raw_files_per_larva(
     return dfs
 
 
-def get_Schleyer_metadata_inv_x(dir):
+def get_Schleyer_metadata_inv_x(dir: str) -> bool:
+    """
+    Determine if x-axis should be inverted based on Schleyer lab metadata.
+
+    Reads metadata file to check odor side configuration and returns
+    whether x-axis inversion is needed for consistent data orientation.
+
+    Args:
+        dir: Directory containing vidAndLogs/metadata.txt file.
+
+    Returns:
+        True if x-axis should be inverted (odor on right), False otherwise.
+
+    Example:
+        >>> inv_x = get_Schleyer_metadata_inv_x('/path/to/dataset')
+    """
     try:
 
         def read_Schleyer_metadata(dir):
@@ -267,8 +289,12 @@ def get_Schleyer_metadata_inv_x(dir):
 
 
 def constrain_selected_tracks(
-    df, max_Nagents=None, time_slice=None, min_duration_in_sec=0.0, **kwargs
-):
+    df: pd.DataFrame,
+    max_Nagents: Optional[int] = None,
+    time_slice: Optional[tuple[float, float]] = None,
+    min_duration_in_sec: float = 0.0,
+    **kwargs: Any,
+) -> pd.DataFrame:
     """
     Applies constraints to the tracks included in timeseries data.
 
@@ -316,16 +342,16 @@ def constrain_selected_tracks(
 
 
 def match_larva_ids_including_by_length(
-    s,
-    e,
-    pars=["head_x", "head_y"],
-    wl=100,
-    wt=0.1,
-    ws=0.5,
-    max_error=600,
-    Nidx=20,
-    verbose=1,
-):
+    s: pd.DataFrame,
+    e: pd.DataFrame,
+    pars: list[str] = ["head_x", "head_y"],
+    wl: float = 100,
+    wt: float = 0.1,
+    ws: float = 0.5,
+    max_error: float = 600,
+    Nidx: int = 20,
+    verbose: int = 1,
+) -> pd.DataFrame:
     """
     Applies a matching-ID algorithm to concatenate segmented tracs.
 
@@ -442,7 +468,7 @@ def match_larva_ids_including_by_length(
     return s
 
 
-def comp_length(df, e, Npoints):
+def comp_length(df: pd.DataFrame, e: pd.DataFrame, Npoints: int) -> None:
     xys = util.nam.xy(util.nam.midline(Npoints, type="point"), flat=True)
     xy2 = df[xys].values.reshape(-1, Npoints, 2)
     xy3 = np.sum(np.diff(xy2, axis=1) ** 2, axis=2)
@@ -450,7 +476,13 @@ def comp_length(df, e, Npoints):
     e["length"] = df["length"].groupby("AgentID").quantile(q=0.5)
 
 
-def match_larva_ids(df, Npoints, dt, e=None, **kwargs):
+def match_larva_ids(
+    df: pd.DataFrame,
+    Npoints: int,
+    dt: float,
+    e: Optional[pd.DataFrame] = None,
+    **kwargs: Any,
+) -> pd.DataFrame:
     """
     Computes larval body-lengths and then applies a matching-ID algorithm to concatenate segmented tracks.
 
@@ -481,7 +513,7 @@ def match_larva_ids(df, Npoints, dt, e=None, **kwargs):
     return df
 
 
-def concatenate_larva_tracks(dfs, dt):
+def concatenate_larva_tracks(dfs: list[pd.DataFrame], dt: float) -> pd.DataFrame:
     """
     Concatenate multiple single tracks to a single dataframe
 
@@ -513,7 +545,7 @@ def concatenate_larva_tracks(dfs, dt):
     return s
 
 
-def complete_timeseries_with_nans(s0):
+def complete_timeseries_with_nans(s0: pd.DataFrame) -> pd.DataFrame:
     """
     Fill the non-existing ticks with nans
 
@@ -532,7 +564,7 @@ def complete_timeseries_with_nans(s0):
     return s
 
 
-def empty_2index_timeseries_df(s0):
+def empty_2index_timeseries_df(s0: pd.DataFrame) -> pd.DataFrame:
     """
     Generate an empty dataframe with complete ticks based on an existing
 
@@ -563,7 +595,9 @@ def empty_2index_timeseries_df(s0):
     return s
 
 
-def finalize_timeseries_dataframe(s, complete_ticks=True, interpolate_ticks=False):
+def finalize_timeseries_dataframe(
+    s: pd.DataFrame, complete_ticks: bool = True, interpolate_ticks: bool = False
+) -> pd.DataFrame:
     """
     Finalize the timeseries dataframe setting the double-index
 
@@ -599,26 +633,34 @@ def finalize_timeseries_dataframe(s, complete_ticks=True, interpolate_ticks=Fals
     return s
 
 
-def generate_dataframes(dfs, dt, complete_ticks=True, **kwargs):
-    # """
-    # Helper function that generates both timeseries & endpoint dataframes from single tracks
-    #
-    # Parameters
-    # ----------
-    # s : pd.DataFrame
-    #     The timeseries dataframe
-    # complete_ticks : boolean
-    #     Whether to complete timeseries missing ticks with nans
-    #     Defaults to False
-    # interpolate_ticks : boolean
-    #     Whether to interpolate timeseries into a fixed timestep timeseries
-    #     Defaults to False
-    #
-    # Returns
-    # -------
-    # pd.DataFrame
-    #
-    # """
+def generate_dataframes(
+    dfs: list[pd.DataFrame],
+    dt: float,
+    complete_ticks: bool = True,
+    **kwargs: Any,
+) -> tuple[Optional[pd.DataFrame], Optional[pd.DataFrame]]:
+    """
+    Generate timeseries and endpoint DataFrames from single tracks.
+
+    Concatenates individual larva tracks and computes endpoint metrics,
+    with optional tick completion and interpolation.
+
+    Args:
+        dfs: List of single-track DataFrames.
+        dt: Tracking timestep in seconds.
+        complete_ticks: If True, fill missing ticks with NaNs.
+        **kwargs: Additional arguments passed to concatenate_larva_tracks.
+
+    Returns:
+        Tuple of (step_df, endpoint_df), or (None, None) if no valid tracks.
+
+    Example:
+        >>> step_df, end_df = generate_dataframes(
+        ...     dfs=[track1, track2],
+        ...     dt=0.1,
+        ...     complete_ticks=True
+        ... )
+    """
 
     if len(dfs) == 0:
         return None, None
@@ -632,7 +674,7 @@ def generate_dataframes(dfs, dt, complete_ticks=True, **kwargs):
     return s, e
 
 
-def interpolate_timeseries_dataframe(s0):
+def interpolate_timeseries_dataframe(s0: pd.DataFrame) -> pd.DataFrame:
     """
     Interplolate irregular-timestep timeseries to regular-timestep
 

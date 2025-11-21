@@ -2,12 +2,14 @@
 Timeseries plotting
 """
 
+from __future__ import annotations
+from typing import Any, Optional, Sequence, Tuple
+
 import numpy as np
-from matplotlib import collections as mc
 
 from .. import plot, reg, util, funcs
 
-__all__ = [
+__all__: list[str] = [
     "plot_ethogram",
     "plot_nengo_network",
     "timeplot",
@@ -19,7 +21,23 @@ __all__ = [
 
 
 @funcs.graph("ethogram", required={"dicts": ["chunk_dicts"]})
-def plot_ethogram(subfolder="timeplots", **kwargs):
+def plot_ethogram(subfolder: str = "timeplots", **kwargs: Any) -> Any:
+    """
+    Create ethogram showing behavioral bouts over time.
+
+    Generates dual-panel time series showing runs/pauses and left/right turns
+    as colored horizontal bars representing behavioral epochs.
+
+    Args:
+        subfolder: Subfolder for saving. Defaults to 'timeplots'
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_ethogram(datasets=[d1, d2])
+    """
     P = plot.AutoPlot(
         name="ethogram",
         subfolder=subfolder,
@@ -48,6 +66,8 @@ def plot_ethogram(subfolder="timeplots", **kwargs):
                         b0s, b1s = bbs[:, 0], bbs[:, 1]
 
                         lines = [[(b0, j + 1), (b1, j + 1)] for b0, b1 in zip(b0s, b1s)]
+                        from matplotlib import collections as mc
+
                         lc = mc.LineCollection(lines, colors=bcol, linewidths=2)
                         P.axs[idx].add_collection(lc)
 
@@ -70,8 +90,33 @@ def plot_ethogram(subfolder="timeplots", **kwargs):
 
 @funcs.graph("nengo")
 def plot_nengo_network(
-    datasets, group=None, probes=None, same_plot=False, subfolder="nengo", **kwargs
-):
+    datasets: Sequence[Any],
+    group: Optional[str] = None,
+    probes: Optional[Sequence[str]] = None,
+    same_plot: bool = False,
+    subfolder: str = "nengo",
+    **kwargs: Any,
+) -> Any:
+    """
+    Plot Nengo neural network probe outputs over time.
+
+    Creates multi-panel time series showing neural network activity from
+    Nengo probes for different modules (crawler, turner, feeder, etc.).
+
+    Args:
+        datasets: List of datasets with Nengo probe data
+        group: Probe group name ('anemotaxis', 'frequency', etc.). Required if probes is None
+        probes: Individual probe names. Uses group probes if None
+        same_plot: Plot all probes on same axis. Defaults to False
+        subfolder: Subfolder for saving. Defaults to 'nengo'
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_nengo_network(datasets=[d1], group='anemotaxis', same_plot=True)
+    """
     probe_groups = {
         "anemotaxis": ["Ch", "LNa", "LNb", "Ha", "Hb", "B1", "B2", "Bend", "Hunch"],
         "frequency": ["linFrIn", "angFrIn", "linFr", "angFr"],
@@ -141,22 +186,51 @@ def plot_nengo_network(
 
 @funcs.graph("timeplot", required={"ks": []})
 def timeplot(
-    ks=[],
-    pars=[],
-    name=None,
-    same_plot=True,
-    individuals=False,
-    table=None,
-    unit="sec",
-    absolute=True,
-    show_legend=True,
-    show_first=False,
-    subfolder="timeplots",
-    legend_loc="upper left",
-    leg_fontsize=15,
-    figsize=(7.5, 5),
-    **kwargs,
-):
+    ks: Sequence[str] = [],
+    pars: Sequence[str] = [],
+    name: Optional[str] = None,
+    same_plot: bool = True,
+    individuals: bool = False,
+    table: Optional[Any] = None,
+    unit: str = "sec",
+    absolute: bool = True,
+    show_legend: bool = True,
+    show_first: bool = False,
+    subfolder: str = "timeplots",
+    legend_loc: str = "upper left",
+    leg_fontsize: int = 15,
+    figsize: Tuple[float, float] = (7.5, 5),
+    **kwargs: Any,
+) -> Any:
+    """
+    Create time series plot for one or more parameters.
+
+    Generates single-panel time series with quantile bands showing parameter
+    evolution over time, with optional individual trajectories.
+
+    Args:
+        ks: Parameter shortcut keys. Required if pars is empty
+        pars: Direct parameter names. Uses ks if empty
+        name: Plot name for saving. Auto-generated if None
+        same_plot: Plot all parameters on same axes. Defaults to True
+        individuals: Show individual trajectories. Defaults to False
+        table: Table data for custom x-axis. Defaults to None
+        unit: Time unit ('sec', 'min', 'hour'). Defaults to 'sec'
+        absolute: Use absolute values. Defaults to True
+        show_legend: Show dataset legend. Defaults to True
+        show_first: Highlight first individual. Defaults to False
+        subfolder: Subfolder for saving. Defaults to 'timeplots'
+        legend_loc: Legend location. Defaults to 'upper left'
+        leg_fontsize: Legend font size. Defaults to 15
+        figsize: Figure size. Defaults to (7.5, 5)
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = timeplot(ks=['v', 'fov'], datasets=[d1, d2], individuals=True)
+    """
     unit_coefs = {"sec": 1, "min": 1 / 60, "hour": 1 / 60 / 60}
     if len(pars) == 0:
         if len(ks) == 0:
@@ -238,16 +312,39 @@ def timeplot(
 
 @funcs.graph("timeplots", required={"ks": []})
 def timeplots(
-    ks,
-    subfolder="timeplots",
-    name=None,
-    unit="sec",
-    xlim=None,
-    individuals=False,
-    absolute=False,
-    show_first=False,
-    **kwargs,
-):
+    ks: Sequence[str],
+    subfolder: str = "timeplots",
+    name: Optional[str] = None,
+    unit: str = "sec",
+    xlim: Optional[Sequence[float]] = None,
+    individuals: bool = False,
+    absolute: bool = False,
+    show_first: bool = False,
+    **kwargs: Any,
+) -> Any:
+    """
+    Create multi-panel time series plots.
+
+    Generates stacked time series panels (one per parameter) showing
+    quantile bands for multiple parameters over time.
+
+    Args:
+        ks: Parameter shortcut keys to plot
+        subfolder: Subfolder for saving. Defaults to 'timeplots'
+        name: Plot name for saving. Auto-generated if None
+        unit: Time unit ('sec', 'min', 'hour'). Defaults to 'sec'
+        xlim: X-axis limits. Defaults to None
+        individuals: Show individual trajectories. Defaults to False
+        absolute: Use absolute values. Defaults to False
+        show_first: Highlight first individual. Defaults to False
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = timeplots(ks=['v', 'fov', 'b'], datasets=[d1, d2], unit='min')
+    """
     Nks = len(ks)
     if name is None:
         name = f"timeplots_x{Nks}"
@@ -275,7 +372,23 @@ def timeplots(
 
 
 @funcs.graph("navigation index", required={"traj": ["default"]})
-def plot_navigation_index(subfolder="source", **kwargs):
+def plot_navigation_index(subfolder: str = "source", **kwargs: Any) -> Any:
+    """
+    Plot navigation index time series.
+
+    Creates time series showing navigation efficiency index over time,
+    measuring directed movement toward source/target.
+
+    Args:
+        subfolder: Subfolder for saving. Defaults to 'source'
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_navigation_index(datasets=[d1, d2])
+    """
     P = plot.AutoPlot(
         name="nav_index",
         subfolder=subfolder,
@@ -304,13 +417,48 @@ def plot_navigation_index(subfolder="source", **kwargs):
 
 
 @funcs.graph("pathlength", required={"ks": ["cum_d", "cum_sd"]})
-def plot_pathlength(scaled=False, **kwargs):
+def plot_pathlength(scaled: bool = False, **kwargs: Any) -> Any:
+    """
+    Plot cumulative path length over time.
+
+    Creates time series showing total distance traveled (scaled or absolute)
+    accumulated over the experiment duration.
+
+    Args:
+        scaled: Use body-length-scaled distance. Defaults to False
+        **kwargs: Additional arguments passed to timeplots
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_pathlength(datasets=[d1, d2], scaled=True)
+    """
     k = "cum_sd" if scaled else "cum_d"
     return timeplots(ks=[k], **kwargs)
 
 
 @funcs.graph("dispersal")
-def plot_dispersal(range=(0, 40), scaled=False, **kwargs):
+def plot_dispersal(
+    range: Tuple[int, int] = (0, 40), scaled: bool = False, **kwargs: Any
+) -> Any:
+    """
+    Plot dispersal metric over time.
+
+    Creates time series showing spatial dispersal from origin over
+    specified time range (scaled or absolute distance).
+
+    Args:
+        range: Time range (start, end) in minutes. Defaults to (0, 40)
+        scaled: Use body-length-scaled distance. Defaults to False
+        **kwargs: Additional arguments passed to timeplots
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_dispersal(datasets=[d1, d2], range=(0, 60), scaled=True)
+    """
     t0, t1 = range
     k = f"dsp_{int(t0)}_{int(t1)}"
     if scaled:

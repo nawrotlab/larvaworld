@@ -2,6 +2,24 @@
 Larvaworld parameter class and associated methods
 """
 
+from __future__ import annotations
+from typing import Any, Optional
+
+import os
+import warnings
+
+# Deprecation: discourage deep imports from internal registry internals
+if os.getenv("LARVAWORLD_STRICT_DEPRECATIONS") == "1":
+    raise ImportError(
+        "Deep import path deprecated. Access registry via 'from larvaworld.lib import reg'"
+    )
+else:
+    warnings.warn(
+        "Deep import path deprecated. Access registry via 'from larvaworld.lib import reg'",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
 import random
 import sys
 import typing
@@ -18,7 +36,7 @@ else:
 from .. import reg, util
 from ..util import nam
 
-__all__ = [
+__all__: list[str] = [
     "SAMPLING_PARS",
     "sample_ps",
     "get_LarvaworldParam",
@@ -331,7 +349,28 @@ class LarvaworldParam(param.Parameterized):
                 self.v = (vv0, vv1)
 
 
-def get_LarvaworldParam(vparfunc, v0=None, dv=None, **kws):
+def get_LarvaworldParam(
+    vparfunc: Any, v0: Any = None, dv: Any = None, **kws: Any
+) -> LarvaworldParam:
+    """
+    Create a LarvaworldParam instance with custom parameter function.
+
+    Dynamically creates a LarvaworldParam subclass with specified parameter
+    function and default values, then instantiates it.
+
+    Args:
+        vparfunc: Parameter function (e.g., param.Number, param.Range)
+        v0: Default value for parameter
+        dv: Delta/range value for parameter
+        **kws: Additional keyword arguments for LarvaworldParam
+
+    Returns:
+        Configured LarvaworldParam instance
+
+    Example:
+        >>> par = get_LarvaworldParam(param.Number, v0=0.5, doc="Speed parameter")
+    """
+
     class _LarvaworldParam(LarvaworldParam):
         v = vparfunc
         u = param.Parameter(
@@ -342,7 +381,16 @@ def get_LarvaworldParam(vparfunc, v0=None, dv=None, **kws):
     return par
 
 
-SAMPLING_PARS = util.bidict(
+#: Bidirectional mapping between display names and configuration paths.
+#:
+#: Maps parameter display names to their nested configuration paths in model definition.
+#:
+#: Example:
+#:     >>> SAMPLING_PARS['length']
+#:     'body.length'
+#:     >>> SAMPLING_PARS.inverse['body.length']
+#:     ['length']
+SAMPLING_PARS: util.bidict = util.bidict(
     util.AttrDict(
         {
             "length": "body.length",
@@ -368,17 +416,24 @@ SAMPLING_PARS = util.bidict(
 )
 
 
-def sample_ps(ps, e=None):
+def sample_ps(ps: list[str], e: Optional[Any] = None) -> list[str]:
     """
-    Get the parameters from the given list `ps` that exist on the inverse `SAMPLING_PARS` dictionary.
+    Filter parameters to those that exist in SAMPLING_PARS mapping.
+
+    Gets parameters from list that exist in the inverse SAMPLING_PARS dictionary
+    (i.e., parameters that have configuration paths defined). Optionally filters
+    to parameters that also exist in endpoint DataFrame.
 
     Args:
-        ps (list): A list of parameters.
-        e (optional): The endpoint dataframe of a dataset. If provided parameters are further filtered to exist in `e`.
+        ps: List of parameter names to filter
+        e: Endpoint DataFrame to further filter parameters
 
     Returns:
-        list: A list of parameters, filtered to exist in the default `SAMPLING_PARS` dictionary and potentially filtered to exist in `e`.
+        list: List of parameters filtered to exist in the default SAMPLING_PARS dictionary and potentially filtered to exist in e
 
+    Example:
+        >>> sample_ps(['length', 'velocity', 'unknown_param'])
+        ['length', 'velocity']  # Only those in SAMPLING_PARS
     """
     Sinv = SAMPLING_PARS.inverse
     ps = util.SuperList([Sinv[k] for k in util.existing_cols(Sinv, ps)]).flatten
@@ -387,7 +442,7 @@ def sample_ps(ps, e=None):
     return ps
 
 
-def get_vfunc(dtype, lim, vs):
+def get_vfunc(dtype: Any, lim: Any, vs: Any):
     """
     Returns the appropriate Param class based on the provided data type, value limit, and value options.
 
@@ -429,7 +484,7 @@ def get_vfunc(dtype, lim, vs):
         return param.Parameter
 
 
-def vpar(vfunc, v0, doc, lab, lim, dv, vs):
+def vpar(vfunc: Any, v0: Any, doc: str, lab: str, lim: Any, dv: Any, vs: Any):
     """
     Create a parameter object with specified attributes.
 
@@ -462,59 +517,65 @@ def vpar(vfunc, v0, doc, lab, lim, dv, vs):
 
 
 def prepare_LarvaworldParam(
-    p,
-    k=None,
-    dtype=float,
-    d=None,
-    disp=None,
-    sym=None,
-    codename=None,
-    lab=None,
-    doc=None,
-    flatname=None,
-    required_ks=[],
-    u=reg.units.dimensionless,
-    v0=None,
-    v=None,
-    lim=None,
-    dv=None,
-    vs=None,
-    vfunc=None,
-    vparfunc=None,
-    func=None,
-    **kwargs,
-):
+    p: str,
+    k: Optional[str] = None,
+    dtype: Any = float,
+    d: Optional[str] = None,
+    disp: Optional[str] = None,
+    sym: Optional[str] = None,
+    codename: Optional[str] = None,
+    lab: Optional[str] = None,
+    doc: Optional[str] = None,
+    flatname: Optional[str] = None,
+    required_ks: list[str] = [],
+    u: Any = reg.units.dimensionless,
+    v0: Any = None,
+    v: Any = None,
+    lim: Any = None,
+    dv: Any = None,
+    vs: Any = None,
+    vfunc: Any = None,
+    vparfunc: Any = None,
+    func: Any = None,
+    **kwargs: Any,
+) -> util.AttrDict:
     """
-    Method that formats the dictionary of attributes for a parameter in order to create a LarvaworldParam instance.
+    Format parameter attributes dictionary for LarvaworldParam creation.
 
-    Parameters
-    ----------
-    - p (str): The primary parameter name.
-    - k (str, optional): The key for the parameter. Defaults to None.
-    - dtype (type, optional): The data type of the parameter. Defaults to float.
-    - d (str, optional): The code-related name for the parameter. Defaults to None.
-    - disp (str, optional): The display name for the parameter. Defaults to None.
-    - sym (str, optional): The symbol for the parameter. Defaults to None.
-    - codename (str, optional): The code name for the parameter. Defaults to None.
-    - lab (str, optional): The label for the parameter. Defaults to None.
-    - doc (str, optional): The documentation string for the parameter. Defaults to None.
-    - flatname (str, optional): The flat name for the parameter. Defaults to None.
-    - required_ks (list, optional): List of required keys. Defaults to [].
-    - u (unit, optional): The unit of the parameter. Defaults to reg.units.dimensionless.
-    - v0 (any, optional): The initial value of the parameter. Defaults to None.
-    - v (any, optional): The value of the parameter. Defaults to None.
-    - lim (tuple, optional): The limits for the parameter. Defaults to None.
-    - dv (any, optional): The delta value for the parameter. Defaults to None.
-    - vs (any, optional): The value set for the parameter. Defaults to None.
-    - vfunc (callable, optional): The value function for the parameter. Defaults to None.
-    - vparfunc (callable, optional): The value parameter function for the parameter. Defaults to None.
-    - func (callable, optional): The computing function for the parameter. Defaults to None.
-    - **kwargs: Additional keyword arguments.
+    Prepares a comprehensive dictionary of parameter attributes including
+    display properties, units, bounds, functions, and documentation. Handles
+    defaults and infers missing attributes from provided values.
 
-    Returns
-    -------
-    - util.AttrDict: A dictionary of formatted attributes for creating a LarvaworldParam instance.
+    Args:
+        p: Primary parameter name
+        k: Parameter key identifier. Defaults to d if not provided
+        dtype: Data type (int, float, list, tuple, etc.). Defaults to float
+        d: Code-related name. Defaults to p if not provided
+        disp: Display name for UI. Defaults to d if not provided
+        sym: LaTeX symbol representation. Defaults to k if not provided
+        codename: Internal code name. Defaults to p if not provided
+        lab: Label for plots. Auto-generated if not provided
+        doc: Documentation string for parameter
+        flatname: Flattened configuration path. Looked up in SAMPLING_PARS if not provided
+        required_ks: List of required parameter keys that must be present
+        u: Physical unit from reg.units. Defaults to dimensionless
+        v0: Initial/default value. Uses v if not provided
+        v: Current parameter value. Used as v0 if v0 not provided
+        lim: Parameter bounds as (min, max) tuple
+        dv: Step/delta value for parameter. Auto-inferred from dtype if not provided
+        vs: Value set for Selector parameters (list of valid options)
+        vfunc: Value function for parameter validation
+        vparfunc: param.Parameterized function type (Number, Range, Selector, etc.)
+        func: Computing function for derived parameters
+        **kwargs: Additional parameter attributes
 
+    Returns:
+        util.AttrDict: Dictionary of formatted attributes for creating a LarvaworldParam instance
+
+    Example:
+        >>> attrs = prepare_LarvaworldParam('speed', k='v', dtype=float, v0=1.0, lim=(0, 10))
+        >>> attrs['k']
+        'v'
     """
     codename = p if codename is None else codename
     d = p if d is None else d
@@ -579,7 +640,7 @@ def prepare_LarvaworldParam(
     )
 
 
-def build_LarvaworldParam(p, **kwargs):
+def build_LarvaworldParam(p: str, **kwargs: Any) -> LarvaworldParam:
     """
     Constructs a Larvaworld parameter object.
 

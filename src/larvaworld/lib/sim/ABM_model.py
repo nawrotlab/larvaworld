@@ -2,6 +2,9 @@
 Basic Agent-based modeling classes
 """
 
+from __future__ import annotations
+
+from typing import Any
 import random
 import sys
 from datetime import datetime
@@ -13,7 +16,7 @@ import pandas as pd
 from ... import vprint
 from .. import reg, util
 
-__all__ = [
+__all__: list[str] = [
     "BasicABModel",
     "ABModel",
 ]
@@ -26,7 +29,13 @@ class BasicABModel:
 
     """
 
-    def __init__(self, id="ABModel", parameters=None, _run_id=None, **kwargs):
+    def __init__(
+        self,
+        id: str = "ABModel",
+        parameters: Any | None = None,
+        _run_id: Any | None = None,
+        **kwargs: Any,
+    ) -> None:
         # Prepare parameters
         self.p = util.AttrDict()
         if parameters:
@@ -69,17 +78,17 @@ class BasicABModel:
         self._setup_kwargs = kwargs
         self._set_var_ignore()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.type
 
-    def _set_var_ignore(self):
+    def _set_var_ignore(self) -> None:
         """Store current attributes to separate them from custom variables"""
         self._var_ignore = [k for k in self.__dict__ if k[0] != "_"]
 
     # Class Methods --------------------------------------------------------- #
 
     @classmethod
-    def as_function(cls, **kwargs):
+    def as_function(cls, **kwargs: Any):
         """
         Converts the model into a function that can be used with the
         `ema_workbench <https://emaworkbench.readthedocs.io/>`_ library.
@@ -97,7 +106,7 @@ class BasicABModel:
         """
         superkwargs = kwargs
 
-        def agentpy_model_as_function(**kwargs):
+        def agentpy_model_as_function(**kwargs: Any):
             model = cls(kwargs, **superkwargs)
             model.run(display=False)
             return model.reporters
@@ -129,14 +138,14 @@ class BasicABModel:
 
     # Handling object ids --------------------------------------------------- #
 
-    def _new_id(self):
+    def _new_id(self) -> int:
         """Returns a new unique object id (int)."""
         self._id_counter += 1
         return self._id_counter
 
     # Recording ------------------------------------------------------------- #
 
-    def report(self, rep_keys, value=None):
+    def report(self, rep_keys: Any, value: Any | None = None) -> None:
         """
         Reports a new simulation result.
         Reporters are meant to be 'summary statistics' or 'evaluation measures'
@@ -188,14 +197,14 @@ class BasicABModel:
 
     # Placeholder methods for custom simulation methods --------------------- #
 
-    def setup(self):
+    def setup(self) -> None:
         """
         Defines the model's actions before the first simulation step.
         Can be overwritten to initiate agents and environments.
         """
         pass
 
-    def step(self):
+    def step(self) -> None:
         """
         Defines the model's actions
         during each simulation step (excluding `t==0`).
@@ -203,7 +212,7 @@ class BasicABModel:
         """
         pass
 
-    def update(self):
+    def update(self) -> None:
         """
         Defines the model's actions
         after each simulation step (including `t==0`).
@@ -211,7 +220,7 @@ class BasicABModel:
         """
         pass
 
-    def end(self):
+    def end(self) -> None:
         """
         Defines the model's actions after the last simulation step.
         Can be overwritten for final calculations and reporting.
@@ -220,11 +229,11 @@ class BasicABModel:
 
     # Simulation routines (in line with ipysimulate) ------------------------ #
 
-    def set_parameters(self, parameters):
+    def set_parameters(self, parameters: Any) -> None:
         """Adds and/or updates the parameters of the model."""
         self.p.update(parameters)
 
-    def sim_setup(self, steps=None, seed=None):
+    def sim_setup(self, steps: Any | None = None, seed: Any | None = None) -> None:
         """
         Prepares time-step 0 of the simulation.
         Initiates (additional) steps and the two random number generators,
@@ -263,7 +272,7 @@ class BasicABModel:
         if self.t >= self._steps:
             self.running = False
 
-    def sim_step(self):
+    def sim_step(self) -> None:
         """
         Proceeds the simulation by one step, incrementing `Model.t` by 1
         and then calling :func:`Model.step` and :func:`Model.update`.
@@ -274,7 +283,7 @@ class BasicABModel:
         if self.t >= self._steps:
             self.running = False
 
-    def sim_reset(self):
+    def sim_reset(self) -> None:
         """Reset model to initial conditions."""
         # TODO Remove attributes
         self.record = super().record
@@ -282,11 +291,11 @@ class BasicABModel:
 
     # Main simulation method for direct use --------------------------------- #
 
-    def stop(self):
+    def stop(self) -> None:
         """Stops :meth:`Model.run` during an active simulation."""
         self.running = False
 
-    def run(self, steps=None, seed=None):
+    def run(self, steps: Any | None = None, seed: Any | None = None):
         """
         Executes the simulation of the model.
         Can also be used to continue a partly-run simulation
@@ -334,7 +343,7 @@ class BasicABModel:
 
     # Data management ------------------------------------------------------- #
 
-    def create_output(self):
+    def create_output(self) -> None:
         """
         Generates a :class:`DataDict` with dataframes of all recorded
         variables and reporters, which will be stored in :obj:`Model.output`.
@@ -401,7 +410,7 @@ class BasicABModel:
 
 
 class ABModel(BasicABModel, reg.generators.SimConfigurationParams):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         """
         Basic simulation class that extends the agentpy.Model class and creates a larvaworld agent-based model (ABM).
         Further extended by classes supporting the various simulation modes in larvaworld.

@@ -3,6 +3,10 @@ A Box2D extension for larvaworld. This requires the box2d-py package, specified 
 If not already installed, run : "pip install box2d-py"
 """
 
+from __future__ import annotations
+
+from typing import Any, Optional, Tuple, List
+
 # import Box2D
 import numpy as np
 import param
@@ -14,7 +18,7 @@ from ..param import ShapeMobile
 from .agents import LarvaSim
 from .envs import Arena
 
-__all__ = ["SegmentBox2D", "LarvaBox2D", "ArenaBox2D"]
+__all__: list[str] = ["SegmentBox2D", "LarvaBox2D", "ArenaBox2D"]
 
 __displayname__ = "Box2D extension"
 
@@ -70,7 +74,9 @@ class SegmentBox2D(ShapeMobile):
 
     __displayname__ = "Box2D body segment"
 
-    def __init__(self, space, physics_pars, **kwargs):
+    def __init__(
+        self, space: world, physics_pars: dict[str, Any], **kwargs: Any
+    ) -> None:
         super().__init__(**kwargs)
         self._body: dynamicBody = space.CreateDynamicBody(
             position=self.pos,
@@ -92,7 +98,7 @@ class SegmentBox2D(ShapeMobile):
 
         self._fixtures = self._body.fixtures
 
-    def get_position(self):
+    def get_position(self) -> np.ndarray:
         """
         Get the world position of the segment.
 
@@ -105,7 +111,7 @@ class SegmentBox2D(ShapeMobile):
         pos = self._body.worldCenter
         return np.asarray(pos)
 
-    def set_position(self, position):
+    def set_position(self, position: Tuple[float, float]) -> None:
         """
         Set the world position of the segment.
 
@@ -117,7 +123,7 @@ class SegmentBox2D(ShapeMobile):
         """
         self._body.position = position
 
-    def get_orientation(self):
+    def get_orientation(self) -> float:
         """
         Get the orientation of the segment.
 
@@ -129,7 +135,7 @@ class SegmentBox2D(ShapeMobile):
         """
         return self._body.angle
 
-    def set_orientation(self, orientation):
+    def set_orientation(self, orientation: float) -> None:
         """
         Set the orientation of the segment.
 
@@ -141,7 +147,7 @@ class SegmentBox2D(ShapeMobile):
         """
         self._body.angle = orientation % (np.pi * 2)
 
-    def get_pose(self):
+    def get_pose(self) -> Tuple[float, float, float]:
         """
         Get the pose (position and orientation) of the segment.
 
@@ -154,7 +160,9 @@ class SegmentBox2D(ShapeMobile):
         pos = np.asarray(self._body.position)
         return tuple((*pos, self._body.angle))
 
-    def set_linearvelocity(self, lin_vel, local=False):
+    def set_linearvelocity(
+        self, lin_vel: Tuple[float, float], local: bool = False
+    ) -> None:
         """
         Set the linear velocity of the segment.
 
@@ -170,7 +178,7 @@ class SegmentBox2D(ShapeMobile):
             lin_vel = self._body.GetWorldVector(np.asarray(lin_vel))
         self._body.linearVelocity = vec2(lin_vel)
 
-    def get_angularvelocity(self):
+    def get_angularvelocity(self) -> float:
         """
         Get the angular velocity of the segment.
 
@@ -182,7 +190,7 @@ class SegmentBox2D(ShapeMobile):
         """
         return self._body.angularVelocity
 
-    def set_angularvelocity(self, ang_vel):
+    def set_angularvelocity(self, ang_vel: float) -> None:
         """
         Set the angular velocity of the segment.
 
@@ -194,7 +202,7 @@ class SegmentBox2D(ShapeMobile):
         """
         self._body.angularVelocity = ang_vel
 
-    def set_mass(self, mass):
+    def set_mass(self, mass: float) -> None:
         """
         Set the mass of the segment.
 
@@ -206,7 +214,7 @@ class SegmentBox2D(ShapeMobile):
         """
         self._body.mass = mass
 
-    def get_mass(self):
+    def get_mass(self) -> float:
         """
         Get the mass of the segment.
 
@@ -218,7 +226,7 @@ class SegmentBox2D(ShapeMobile):
         """
         return self._body.mass
 
-    def get_world_point(self, point):
+    def get_world_point(self, point: Tuple[float, float]) -> np.ndarray:
         """
         Transform a local point to world coordinates.
 
@@ -235,7 +243,7 @@ class SegmentBox2D(ShapeMobile):
         """
         return self._body.GetWorldPoint(np.asarray(point))
 
-    def get_world_facing_axis(self):
+    def get_world_facing_axis(self) -> np.ndarray:
         """
         Get the world-facing axis of the segment.
 
@@ -255,11 +263,11 @@ class LarvaBox2D(LarvaSim):
 
     segs = param.List(item_type=SegmentBox2D, doc="The body segments.")
 
-    def __init__(self, Box2D, **kwargs):
+    def __init__(self, Box2D: dict[str, Any], **kwargs: Any) -> None:
         self.Box2D_params = Box2D
         super().__init__(**kwargs)
 
-    def generate_segs(self):
+    def generate_segs(self) -> None:
         """
         Generate the segments of the larva.
         """
@@ -295,7 +303,7 @@ class LarvaBox2D(LarvaSim):
                 self.Nsegs, self.segs, joint_types=self.Box2D_params["joint_types"]
             )
 
-    def prepare_motion(self, lin, ang):
+    def prepare_motion(self, lin: float, ang: float) -> None:
         """
         Prepare the larva for motion with given linear and angular velocities.
 
@@ -351,7 +359,7 @@ class LarvaBox2D(LarvaSim):
             elif self.lin_mode == "velocity":
                 seg.set_linearvelocity(l * self.lin_vel_coef, local=False)
 
-    def updated_by_Box2D(self):
+    def updated_by_Box2D(self) -> None:
         """
         Update the larva simulation based on Box2D physics.
         """
@@ -382,7 +390,12 @@ class LarvaBox2D(LarvaSim):
     #
     #     return seg_starts, seg_stops
 
-    def create_joints(self, Nsegs, segs, joint_types=None):
+    def create_joints(
+        self,
+        Nsegs: int,
+        segs: List[SegmentBox2D],
+        joint_types: dict[str, Any] | None = None,
+    ) -> None:
         """
         Create joints to connect the segments of the larva.
 
@@ -563,7 +576,7 @@ class LarvaBox2D(LarvaSim):
 
 
 class ArenaBox2D(Arena, world):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         Arena.__init__(self, **kwargs)
         # --- pybox2d world setup ---
         # Create the world

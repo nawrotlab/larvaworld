@@ -1,9 +1,25 @@
+from __future__ import annotations
+from typing import Any
+import os
+import warnings
+
+# Deprecation: discourage deep imports from internal module paths
+if os.getenv("LARVAWORLD_STRICT_DEPRECATIONS") == "1":
+    raise ImportError(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.agents import LarvaReplay, LarvaReplayContoured, LarvaReplaySegmented'"
+    )
+else:
+    warnings.warn(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.agents import LarvaReplay, LarvaReplayContoured, LarvaReplaySegmented'",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 import numpy as np
 
 from ... import util
 from . import Larva, LarvaContoured, LarvaSegmented
 
-__all__ = [
+__all__: list[str] = [
     "LarvaReplay",
     "LarvaReplayContoured",
     "LarvaReplaySegmented",
@@ -14,25 +30,31 @@ __displayname__ = "Experimental replay larva"
 
 class LarvaReplay(Larva):
     """
-    Class representing a larva used to replay recorded data.
+    Larva agent for replaying experimental trajectory data.
 
-    Parameters
-    ----------
-    data : ReplayData
-        The recorded data for the replay larva.
-    **kwargs
-        Additional keyword arguments to pass to the base `Larva` class constructor.
+    Extends Larva to replay pre-recorded positional and orientation data
+    from real experiments, enabling visualization and analysis of
+    experimental trajectories within the simulation environment.
 
-    Notes
-    -----
-    This class extends the base `Larva` class to create a replay larva using recorded data. It initializes the replay
-    larva's position and orientation based on the provided data.
+    Attributes:
+        data: ReplayData instance with recorded trajectories
+        midline_xy: Midline points at current timestep (property)
+        front_orientation: Front orientation at current timestep (property)
+        rear_orientation: Rear orientation at current timestep (property)
 
+    Args:
+        data: Recorded experimental data (positions, orientations, midlines)
+        **kwargs: Additional larva configuration
+
+    Example:
+        >>> replay_data = load_experiment_data('SchleyerGroup')
+        >>> larva = LarvaReplay(data=replay_data['larva_0'])
+        >>> larva.step()  # Update to next recorded frame
     """
 
     __displayname__ = "Replay larva"
 
-    def __init__(self, data, **kwargs):
+    def __init__(self, data: Any, **kwargs: Any) -> None:
         self.data = data
         fo0 = self.data.front_orientation[0]
         if np.isnan(fo0):
@@ -40,7 +62,7 @@ class LarvaReplay(Larva):
 
         super().__init__(pos=self.data.pos[0], orientation=fo0, **kwargs)
 
-    def step(self):
+    def step(self) -> None:
         """
         Update the replay larva's position and orientation based on recorded data.
 
@@ -57,7 +79,7 @@ class LarvaReplay(Larva):
             self.model.space.move_to(self, np.array(self.pos))
 
     @property
-    def midline_xy(self):
+    def midline_xy(self) -> list[tuple[float, float]]:
         """
         Get the xy coordinates of the midline points based on recorded data.
 
@@ -70,7 +92,7 @@ class LarvaReplay(Larva):
         return util.np2Dtotuples(self.data.midline[self.model.t])
 
     @property
-    def front_orientation(self):
+    def front_orientation(self) -> float:
         """
         Get the front orientation of the replay larva based on recorded data.
 
@@ -83,7 +105,7 @@ class LarvaReplay(Larva):
         return self.data.front_orientation[self.model.t]
 
     @property
-    def rear_orientation(self):
+    def rear_orientation(self) -> float:
         """
         Get the rear orientation of the replay larva based on recorded data.
 
@@ -98,15 +120,24 @@ class LarvaReplay(Larva):
 
 class LarvaReplayContoured(LarvaReplay, LarvaContoured):
     """
-    Class representing a replay larva with contour data based on recorded data.
+    Replay larva with contour body representation from experimental data.
 
-    This class extends the `LarvaReplay` class and adds contour data to the replay larva based on recorded data.
+    Combines LarvaReplay trajectory playback with LarvaContoured geometry,
+    displaying recorded contour vertices at each timestep for realistic
+    body shape visualization from experimental recordings.
 
+    Attributes:
+        contour_xy: Contour vertices at current timestep (property)
+
+    Example:
+        >>> replay_data = load_experiment_data('SchleyerGroup')
+        >>> larva = LarvaReplayContoured(data=replay_data['larva_0'])
+        >>> larva.step()  # Update to next frame with contour
     """
 
     __displayname__ = "Contoured replay larva"
 
-    def step(self):
+    def step(self) -> None:
         """
         Update the replay larva's position, orientation, and contour based on recorded data.
 
@@ -120,7 +151,7 @@ class LarvaReplayContoured(LarvaReplay, LarvaContoured):
         self.vertices = self.contour_xy
 
     @property
-    def contour_xy(self):
+    def contour_xy(self) -> list[tuple[float, float]]:
         """
         Get the xy coordinates of the contour points based on recorded data.
 
@@ -137,16 +168,24 @@ class LarvaReplayContoured(LarvaReplay, LarvaContoured):
 
 class LarvaReplaySegmented(LarvaReplay, LarvaSegmented):
     """
-    Class representing a segmented replay larva based on recorded data.
+    Replay larva with segmented body from experimental data.
 
-    This class extends the `LarvaReplay` class and creates a segmented replay larva with multiple body segments based on
-    recorded data.
+    Combines LarvaReplay trajectory playback with LarvaSegmented multi-segment
+    body, positioning and orienting each segment based on recorded midline
+    data for high-fidelity biomechanical visualization.
 
+    Attributes:
+        segs: Body segments positioned from recorded midline data
+
+    Example:
+        >>> replay_data = load_experiment_data('SchleyerGroup')
+        >>> larva = LarvaReplaySegmented(data=replay_data['larva_0'], Nsegs=11)
+        >>> larva.step()  # Update all segments to recorded positions
     """
 
     __displayname__ = "Segmented replay larva"
 
-    def step(self):
+    def step(self) -> None:
         """
         Update the replay larva's position, orientation, and body segments based on recorded data.
 

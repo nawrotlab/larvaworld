@@ -1,9 +1,25 @@
+from __future__ import annotations
+from typing import Any, Tuple
+import os
+import warnings
+
+# Deprecation: discourage deep imports from internal module paths
+if os.getenv("LARVAWORLD_STRICT_DEPRECATIONS") == "1":
+    raise ImportError(
+        "Deep import path deprecated. Use public API from 'larvaworld.lib.model.modules'"
+    )
+else:
+    warnings.warn(
+        "Deep import path deprecated. Use public API from 'larvaworld.lib.model.modules'",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 import numpy as np
 import param
 
 from ...param import Phase, PhaseRange
 
-__all__ = [
+__all__: list[str] = [
     "Coupling",
     "DefaultCoupling",
     "SquareCoupling",
@@ -30,11 +46,11 @@ class Coupling(param.Parameterized):
         doc="The suppression mode for the crawl-interference to the angular motion.",
     )
 
-    def __init__(self, dt=0.1, **kwargs):
+    def __init__(self, dt: float = 0.1, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.cur_attenuation = 1
 
-    def apply_attenuation(self, cur_att):
+    def apply_attenuation(self, cur_att: float) -> tuple[float, float]:
         if self.suppression_mode == "oscillation":
             return cur_att, 1
         elif self.suppression_mode == "amplitude":
@@ -44,7 +60,7 @@ class Coupling(param.Parameterized):
         else:
             raise
 
-    def check_module(self, obj, module):
+    def check_module(self, obj: Any, module: str) -> None:
         self.cur_attenuation = self.attenuation
 
 
@@ -62,7 +78,7 @@ class SquareCoupling(Coupling):
         doc="FEEDER phase range for TURNER suppression lift.",
     )
 
-    def check_module(self, obj, module):
+    def check_module(self, obj: Any, module: str) -> None:
         phi_dic = {
             "Crawler": self.crawler_phi_range,
             "Feeder": self.feeder_phi_range,
@@ -80,7 +96,7 @@ class PhasicCoupling(Coupling):
         doc="CRAWLER phase of minimum TURNER suppression.",
     )
 
-    def get(self, x):
+    def get(self, x: float) -> float:
         def gaussian(x, mu, sig):
             return np.exp(-np.power(x - mu, 2.0) / (2 * np.power(sig, 2.0)))
 
@@ -96,6 +112,6 @@ class PhasicCoupling(Coupling):
             A = 0
         return A
 
-    def check_module(self, obj, module):
+    def check_module(self, obj: Any, module: str) -> None:
         x = obj.phi if hasattr(obj, "phi") else 0
         self.cur_attenuation = self.get(x)

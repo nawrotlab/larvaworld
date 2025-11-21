@@ -2,12 +2,15 @@
 Bearing-related plotting
 """
 
+from __future__ import annotations
+from typing import Any, Optional, Sequence
+
 import numpy as np
 
 from .. import plot, funcs
 from ..util import nam
 
-__all__ = [
+__all__: list[str] = [
     "plot_turn_Dbearing",
     "plot_turn_Dorient2center",
     "plot_chunk_Dorient2source",
@@ -16,15 +19,38 @@ __all__ = [
 
 @funcs.graph("bearing/turn")
 def plot_turn_Dbearing(
-    name=None,
-    min_angle=30.0,
-    max_angle=180.0,
-    ref_angle=None,
-    source_ID="Source",
-    Nplots=4,
-    subfolder="turn",
-    **kwargs,
-):
+    name: Optional[str] = None,
+    min_angle: float = 30.0,
+    max_angle: float = 180.0,
+    ref_angle: Optional[float] = None,
+    source_ID: str = "Source",
+    Nplots: int = 4,
+    subfolder: str = "turn",
+    **kwargs: Any,
+) -> Any:
+    """
+    Plot bearing changes during turns on polar axes.
+
+    Creates polar plots showing body orientation before and after turns,
+    relative to a reference angle or center. Useful for analyzing turning
+    behavior and orientation preferences.
+
+    Args:
+        name: Plot name for saving. Auto-generated if None
+        min_angle: Minimum turn amplitude to include. Defaults to 30.0 degrees
+        max_angle: Maximum turn amplitude to include. Defaults to 180.0 degrees
+        ref_angle: Reference angle for normalization. If None, uses center bearing
+        source_ID: Source identifier for bearing calculation. Defaults to 'Source'
+        Nplots: Number of subplot panels (2 or 4). Defaults to 4
+        subfolder: Subfolder for saving plots. Defaults to 'turn'
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_turn_Dbearing(datasets=[d1, d2], min_angle=20.0, Nplots=4)
+    """
     if ref_angle is None:
         if name is None:
             name = "turn_Dorient_to_center"
@@ -111,22 +137,61 @@ def plot_turn_Dbearing(
 
 
 @funcs.graph("bearing to center/turn")
-def plot_turn_Dorient2center(**kwargs):
+def plot_turn_Dorient2center(**kwargs: Any) -> Any:
+    """
+    Plot turn orientation changes relative to center.
+
+    Convenience wrapper for plot_turn_Dbearing() with ref_angle=None,
+    showing orientation changes relative to the arena center during turns.
+
+    Args:
+        **kwargs: Arguments passed to plot_turn_Dbearing()
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_turn_Dorient2center(datasets=[d1, d2])
+    """
     return plot_turn_Dbearing(ref_angle=None, **kwargs)
 
 
 @funcs.graph("bearing to source/epoch")
 def plot_chunk_Dorient2source(
-    source_ID,
-    datasets,
-    name=None,
-    subfolder="bouts",
-    chunk="stride",
-    Nbins=16,
-    min_dur=0.0,
-    plot_merged=False,
-    **kwargs,
-):
+    source_ID: str,
+    datasets: Sequence[Any],
+    name: Optional[str] = None,
+    subfolder: str = "bouts",
+    chunk: str = "stride",
+    Nbins: int = 16,
+    min_dur: float = 0.0,
+    plot_merged: bool = False,
+    **kwargs: Any,
+) -> Any:
+    """
+    Plot bearing to source during behavioral chunks.
+
+    Creates polar plots showing body orientation relative to a source (e.g., odor)
+    at the start and stop of behavioral epochs (strides, runs, etc.). Includes
+    statistical correction for mean orientation change.
+
+    Args:
+        source_ID: Identifier for the source/target object
+        datasets: List of LarvaDataset objects to analyze
+        name: Plot name for saving. Auto-generated if None
+        subfolder: Subfolder for saving plots. Defaults to 'bouts'
+        chunk: Behavioral chunk type ('stride', 'run', etc.). Defaults to 'stride'
+        Nbins: Number of bins for circular histogram. Defaults to 16
+        min_dur: Minimum chunk duration to include. Defaults to 0.0 seconds
+        plot_merged: Whether to include merged dataset. Defaults to False
+        **kwargs: Additional arguments passed to AutoPlot
+
+    Returns:
+        Plot output (figure object or None based on return_fig setting)
+
+    Example:
+        >>> fig = plot_chunk_Dorient2source('Food', datasets=[d1, d2], chunk='run')
+    """
     N = len(datasets)
     if plot_merged:
         N += 1

@@ -1,3 +1,19 @@
+from __future__ import annotations
+from typing import Any
+import os
+import warnings
+
+# Deprecation: discourage deep imports from internal module paths
+if os.getenv("LARVAWORLD_STRICT_DEPRECATIONS") == "1":
+    raise ImportError(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.agents import Larva, LarvaContoured, LarvaSegmented, LarvaMotile'"
+    )
+else:
+    warnings.warn(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.agents import Larva, LarvaContoured, LarvaSegmented, LarvaMotile'",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 import math
 from copy import deepcopy
 
@@ -5,10 +21,9 @@ import numpy as np
 
 from ... import util
 from ...param import Contour, SegmentedBodySensored
-from ...screen.drawing import ScreenManager
 from . import MobileAgent, Source
 
-__all__ = [
+__all__: list[str] = [
     "Larva",
     "LarvaContoured",
     "LarvaSegmented",
@@ -20,16 +35,27 @@ __displayname__ = "Larva agent"
 
 class Larva(MobileAgent):
     """
-    A Larva as a mobile agent.
+    Base larva agent with trajectory tracking and visualization.
 
-    Args:
-        model (larvaworld.lib.model.Model) : The model containing this agent.
-        unique_id (str) : The unique identifier for this agent.
-        **kwargs (dict) : Additional keyword arguments.
+    Extends MobileAgent to provide larva-specific behaviors including
+    trajectory recording, orientation tracking, and comprehensive
+    drawing capabilities for visualization.
 
+    Attributes:
+        trajectory: List of (x, y) positions recorded over time
+        orientation_trajectory: List of orientations (radians) over time
+        cum_dur: Cumulative duration of simulation in seconds
+        model: The ABM model containing this agent
+        unique_id: Unique identifier string for this agent
+
+    Example:
+        >>> larva = Larva(model=sim_model, unique_id="larva_001")
+        >>> larva.step()  # Execute one simulation timestep
     """
 
-    def __init__(self, model=None, unique_id=None, **kwargs):
+    def __init__(
+        self, model: Any | None = None, unique_id: str | None = None, **kwargs: Any
+    ) -> None:
         if unique_id is None and model:
             unique_id = model.next_id(type="Larva")
         super().__init__(unique_id=unique_id, model=model, **kwargs)
@@ -38,7 +64,7 @@ class Larva(MobileAgent):
         self.cum_dur = 0
         # self.cum_t = 0
 
-    def draw(self, v: ScreenManager, **kwargs) -> None:
+    def draw(self, v: Any, **kwargs: Any) -> None:
         """
         Draws the larva on the screen using the provided ScreenManager instance.
 
@@ -128,14 +154,27 @@ class Larva(MobileAgent):
 
 
 class LarvaContoured(Larva, Contour):
-    """A larva surrounded by a contour."""
+    """
+    Larva agent with contour-based body representation.
+
+    Combines base Larva behavior with Contour geometry, providing
+    visual representation via polygon vertices around the body perimeter.
+    Useful for rendering realistic larva shapes and collision detection.
+
+    Attributes:
+        vertices: List of (x, y) points defining the body contour
+
+    Example:
+        >>> larva = LarvaContoured(model=sim_model, num_vertices=20)
+        >>> larva.draw(screen_manager)  # Draws contour outline
+    """
 
     __displayname__ = "Contoured larva"
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
-    def draw(self, v: ScreenManager, **kwargs) -> None:
+    def draw(self, v: Any, **kwargs: Any) -> None:
         """
         Draws the larva agent on the screen.
 
@@ -150,7 +189,7 @@ class LarvaContoured(Larva, Contour):
             Contour.draw(self, v, **kwargs)
         super().draw(v, **kwargs)
 
-    def draw_selected(self, v: ScreenManager, **kwargs) -> None:
+    def draw_selected(self, v: Any, **kwargs: Any) -> None:
         """
         Draws the selected larva on the screen.
 
@@ -167,15 +206,30 @@ class LarvaContoured(Larva, Contour):
 
 
 class LarvaSegmented(Larva, SegmentedBodySensored):
-    """A larva with a segmented body, possibly bearing sensors."""
+    """
+    Larva agent with segmented body and sensor capabilities.
+
+    Combines base Larva with SegmentedBodySensored to provide realistic
+    biomechanical modeling via discrete body segments and sensor placement
+    for olfaction, touch, and other modalities.
+
+    Attributes:
+        segs: Collection of body segments with individual colors
+        sensors: Dictionary of sensory modules by modality
+
+    Example:
+        >>> larva = LarvaSegmented(model=sim_model, Nsegs=11)
+        >>> larva.define_sensor('olfactor', pos=(0.5, 0))
+        >>> larva.draw_segs(screen_manager)
+    """
 
     __displayname__ = "Segmented larva"
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.set_default_color(self.default_color)
 
-    def draw(self, v: ScreenManager, **kwargs) -> None:
+    def draw(self, v: Any, **kwargs: Any) -> None:
         """
         Draws the larva agent on the screen using the provided ScreenManager.
 
@@ -194,17 +248,17 @@ class LarvaSegmented(Larva, SegmentedBodySensored):
             self.draw_segs(v, **kwargs)
         super().draw(v, **kwargs)
 
-    def set_default_color(self, color):
+    def set_default_color(self, color: str | tuple[int, int, int]) -> None:
         """
         Sets the default color for the larva and its segments.
 
         Args:
-            color: The color to set as the default.
+            color: Color as string name ('red', 'blue') or RGB tuple (r, g, b)
         """
         super().set_default_color(color)
         self.segs.set_default_color(color)
 
-    def invert_default_color(self):
+    def invert_default_color(self) -> None:
         """
         Inverts the default color of the larva agent.
 
@@ -215,7 +269,7 @@ class LarvaSegmented(Larva, SegmentedBodySensored):
         super().invert_default_color()
         self.segs.set_default_color(self.default_color)
 
-    def draw_selected(self, v: ScreenManager, **kwargs) -> None:
+    def draw_selected(self, v: Any, **kwargs: Any) -> None:
         """
         Draws the selected larva on the screen.
 
@@ -240,21 +294,48 @@ class LarvaSegmented(Larva, SegmentedBodySensored):
 
 class LarvaMotile(LarvaSegmented):
     """
-    A larva with a segmented body, sensors, a brain, energetics, and life history.
+    Complete larva agent with behavior, energetics, and growth.
+
+    Extends LarvaSegmented with brain-driven behavior, DEB-based energetics,
+    and life history dynamics. Represents a fully autonomous larva capable
+    of sensing, decision-making, feeding, and growth over developmental stages.
+
+    Attributes:
+        brain: Behavioral control system (DefaultBrain or NengoBrain)
+        deb: Dynamic Energy Budget model for metabolism and growth
+        food_detected: Currently detected food source (if any)
+        feeder_motion: Whether currently executing feeding behavior
+        cum_food_detected: Cumulative timesteps on food
+        amount_eaten: Total food consumed (in mg)
+        carried_objects: List of objects being carried
 
     Args:
-        brain (larvaworld.lib.model.modules.brain.BrainConfiguration) :
-        The configuration for the larva's brain.
-        energetics (larvaworld.lib.model.deb.deb.EnergeticsParameters) :
-        The energetics parameters for the larva. Defaults to None.
-        life_history  (dict) : The life history of the larva. Defaults to None.
-        **kwargs (dict) : Additional keyword arguments.
+        brain: Brain configuration dict or instance
+        energetics: DEB energetics parameters (optional)
+        life_history: Life stages and substrate info (optional)
+        body: Body shape parameters dict
+        **kwargs: Additional agent configuration
 
+    Example:
+        >>> larva = LarvaMotile(
+        ...     brain={'olfactor': {'gain': 2.0}},
+        ...     energetics={'X_substrate': 0.8},
+        ...     life_history={'age': 96.0},
+        ...     body={'length': 0.003}
+        ... )
+        >>> larva.step()  # Sense, decide, act, feed, grow
     """
 
     __displayname__ = "Behaving & growing larva"
 
-    def __init__(self, brain, energetics, life_history, body, **kwargs):
+    def __init__(
+        self,
+        brain: Any,
+        energetics: Any,
+        life_history: Any,
+        body: dict[str, Any],
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**body, **kwargs)
         self.carried_objects = []
         self.brain = self.build_brain(brain)
@@ -262,7 +343,7 @@ class LarvaMotile(LarvaSegmented):
         self.food_detected, self.feeder_motion = None, False
         self.cum_food_detected, self.amount_eaten = 0, 0
 
-    def build_brain(self, conf):
+    def build_brain(self, conf: Any) -> Any:
         """Build the brain for the larva agent."""
         if conf.nengo:
             from ..modules.nengobrain import NengoBrain
@@ -273,7 +354,7 @@ class LarvaMotile(LarvaSegmented):
 
             return DefaultBrain(agent=self, conf=conf, dt=self.model.dt)
 
-    def feed(self, source, motion):
+    def feed(self, source: Any | None, motion: bool) -> float:
         """
         Feeds the larva from a given source based on its motion.
 
@@ -303,7 +384,9 @@ class LarvaMotile(LarvaSegmented):
         else:
             return 0
 
-    def build_energetics(self, energetic_pars, life_history):
+    def build_energetics(
+        self, energetic_pars: Any | None, life_history: Any | None
+    ) -> None:
         """
         Initializes and builds the energetics model for the larva.
 
@@ -356,7 +439,7 @@ class LarvaMotile(LarvaSegmented):
             self.mass = None
             # self.length = None
 
-    def run_energetics(self, V_eaten):
+    def run_energetics(self, V_eaten: float) -> None:
         """
         Update the energetics of the larva based on the volume of food eaten.
 
@@ -377,7 +460,7 @@ class LarvaMotile(LarvaSegmented):
         # TODO add this again
         # self.adjust_body_vertices()
 
-    def get_feed_success(self, t):
+    def get_feed_success(self, t: float) -> int:
         if self.feeder_motion:
             if self.on_food:
                 return 1
@@ -387,7 +470,7 @@ class LarvaMotile(LarvaSegmented):
             return 0
 
     @property
-    def on_food_dur_ratio(self):
+    def on_food_dur_ratio(self) -> float:
         return (
             self.cum_food_detected * self.model.dt / self.cum_dur
             if self.cum_dur != 0
@@ -395,17 +478,17 @@ class LarvaMotile(LarvaSegmented):
         )
 
     @property
-    def on_food(self):
+    def on_food(self) -> bool:
         return self.food_detected is not None
 
-    def get_on_food(self, t):
+    def get_on_food(self, t: float) -> bool:
         return self.on_food
 
     @property
-    def scaled_amount_eaten(self):
+    def scaled_amount_eaten(self) -> float:
         return self.amount_eaten / self.mass
 
-    def resolve_carrying(self, food):
+    def resolve_carrying(self, food: Any | None) -> None:
         """
         Handles the logic for an agent to carry a food object.
 
@@ -468,7 +551,7 @@ class LarvaMotile(LarvaSegmented):
         for o in self.carried_objects:
             o.pos = self.pos
 
-    def update_behavior_dict(self, mode="lin"):
+    def update_behavior_dict(self, mode: str = "lin") -> None:
         """
         Updates the behavior dictionary and sets the color based on the current mode and state.
 
@@ -512,10 +595,10 @@ class LarvaMotile(LarvaSegmented):
             raise
         self.set_color(color)
 
-    def sense(self):
+    def sense(self) -> None:
         pass
 
-    def step(self):
+    def step(self) -> None:
         """
         Perform a single step in the simulation for the larva agent.
 
@@ -566,6 +649,6 @@ class LarvaMotile(LarvaSegmented):
         except:
             pass
 
-    def prepare_motion(self, lin, ang):
+    def prepare_motion(self, lin: float, ang: float) -> None:
         pass
         # Overriden by subclasses

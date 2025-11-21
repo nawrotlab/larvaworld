@@ -1,15 +1,46 @@
+from __future__ import annotations
+
+from typing import Any, Optional
+
 import numpy as np
 import param
 
 from ... import util
 from ...param import NestedConf, PositiveNumber
 
-__all__ = [
+__all__: list[str] = [
     "Gut",
 ]
 
 
 class Gut(NestedConf):
+    """
+    Gut digestion and absorption model for DEB energetics.
+
+    Models gut dynamics including ingestion, enzymatic digestion, carrier-mediated
+    absorption, and faecal production. Tracks gut content (food mass M_X, digested
+    product M_P), enzyme dynamics (M_g), and carrier availability (M_c).
+
+    Integrates with DEB model to compute assimilation energy flow (p_A) based
+    on gut absorption rather than simplified functional response.
+
+    Attributes:
+        M_gm: Gut capacity per unit volume (C-moles, default: 0.01)
+        k_abs: Absorption rate constant (default: 1.0)
+        k_dig: Digestion rate constant (default: 1.0)
+        k_c: Carrier release rate (default: 1.0)
+        k_g: Enzyme decay rate (default: 1.0)
+        constant_M_c: Keep carrier density constant (default: True)
+        M_X: Current food mass in gut (C-moles)
+        M_P: Current digested product in gut (C-moles)
+        p_A: Assimilation power from gut absorption (J/day)
+
+    Example:
+        >>> gut = Gut(deb=deb_model, save_dict=True)
+        >>> gut.update(V_X=0.001)  # Ingest food volume
+        >>> power = gut.p_A  # Get assimilation power
+    """
+
     M_gm = PositiveNumber(10**-2, doc="gut capacity in C-moles for unit of gut volume")
     r_w2l = param.Magnitude(0.2, doc="body width to length ratio")
     r_gut_w = param.Magnitude(0.7, doc="gut width relative to body width")
@@ -38,7 +69,7 @@ class Gut(NestedConf):
         doc="Whether to assume a constant amount of carrier enzymes on the gut surface.",
     )
 
-    def __init__(self, deb, save_dict=True, **kwargs):
+    def __init__(self, deb: Any, save_dict: bool = True, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.deb = deb
         # Arbitrary parameters
@@ -99,7 +130,7 @@ class Gut(NestedConf):
         else:
             self.dict = None
 
-    def update(self, V_X=0):
+    def update(self, V_X: float = 0) -> None:
         self.A_g = self.r_gut_A * self.deb.L**2  # Gut surface area
         self.V_gm = self.r_gut_V * self.deb.V
         self.M_c_max = (
@@ -118,7 +149,7 @@ class Gut(NestedConf):
         self.digest()
         self.resolve_occupancy()
 
-    def resolve_occupancy(self):
+    def resolve_occupancy(self) -> None:
         dM = self.M_X + self.M_P - self.Cmax
         if dM > 0:
             rP = self.M_P / (self.M_P + self.M_X)
@@ -129,7 +160,7 @@ class Gut(NestedConf):
             self.M_X -= dX
             self.mol_not_digested += dX
 
-    def digest(self):
+    def digest(self) -> None:
         dt = self.deb.dt * 24 * 60 * 60
         # print(dt)
         # FIXME there should be another term A_g after J_g
@@ -158,7 +189,7 @@ class Gut(NestedConf):
         self.p_A = dM_Pu * self.deb.mu_E
 
     @property
-    def residence_time(self):
+    def residence_time(self) -> float:
         f = self.deb.base_f
         if f == 0.0:
             return 0.0
@@ -166,72 +197,72 @@ class Gut(NestedConf):
             return self.r_gut_V * self.M_gm / (self.deb.J_X_Am / self.deb.Lb) / f
 
     @property
-    def M_ingested(self):
+    def M_ingested(self) -> float:
         return self.mol_ingested * self.deb.substrate.get_w_X() * 1000
 
     @property
-    def M_faeces(self):
+    def M_faeces(self) -> float:
         return self.mol_faeces * self.deb.w_P * 1000
 
     @property
-    def M_not_digested(self):
+    def M_not_digested(self) -> float:
         return self.mol_not_digested * self.deb.substrate.get_w_X() * 1000
 
     @property
-    def M_not_absorbed(self):
+    def M_not_absorbed(self) -> float:
         return self.mol_not_absorbed * self.deb.w_P * 1000
 
     @property
-    def R_absorbed(self):
+    def R_absorbed(self) -> float:
         return self.M_Pu / self.mol_ingested if self.mol_ingested != 0 else 0
 
     @property
-    def R_faeces(self):
+    def R_faeces(self) -> float:
         return self.mol_faeces / self.mol_ingested if self.mol_ingested != 0 else 0
 
     @property
-    def R_not_digested(self):
+    def R_not_digested(self) -> float:
         return (
             self.mol_not_digested / self.mol_ingested if self.mol_ingested != 0 else 0
         )
 
     @property
-    def R_M_c(self):
+    def R_M_c(self) -> float:
         return self.M_c / self.M_c_max
 
     @property
-    def R_M_g(self):
+    def R_M_g(self) -> float:
         return self.M_g / self.J_g
 
     @property
-    def R_M_X_M_P(self):
+    def R_M_X_M_P(self) -> float:
         return self.M_X / self.M_P if self.M_P != 0 else 0
 
     @property
-    def R_M_X(self):
+    def R_M_X(self) -> float:
         return self.M_X / self.Cmax
 
     @property
-    def R_M_P(self):
+    def R_M_P(self) -> float:
         return self.M_P / self.Cmax
 
     @property
-    def occupancy(self):
+    def occupancy(self) -> float:
         return self.V / self.Vmax
 
     @property
-    def M(self):
+    def M(self) -> float:
         return self.V * self.deb.d_V * 1000
 
     @property
-    def Vmax(self):
+    def Vmax(self) -> float:
         return self.V_gm * self.deb.V
 
     @property
-    def Cmax(self):  # in mol
+    def Cmax(self) -> float:  # in mol
         return self.M_gm * self.V_gm
 
-    def update_dict(self):
+    def update_dict(self) -> None:
         gut_dict_values = [
             self.R_absorbed,
             self.mol_ingested * 1000,
@@ -250,14 +281,14 @@ class Gut(NestedConf):
         for k, v in zip(self.dict.keylist, gut_dict_values):
             self.dict[k].append(v)
 
-    def ingested_mass(self, unit="g"):
+    def ingested_mass(self, unit: str = "g") -> float:
         m = self.mol_ingested * self.deb.substrate.get_w_X()
         if unit == "g":
             return m
         elif unit == "mg":
             return m * 1000
 
-    def absorbed_mass(self, unit="mg"):
+    def absorbed_mass(self, unit: str = "mg") -> float:
         m = self.M_Pu * self.deb.w_E
         if unit == "g":
             return m
@@ -265,6 +296,6 @@ class Gut(NestedConf):
             return m * 1000
 
     @property
-    def ingested_volume(self):
+    def ingested_volume(self) -> float:
         return self.mol_ingested / self.deb.substrate.X
         # return self.mol_ingested * self.deb.w_X / self.deb.d_X

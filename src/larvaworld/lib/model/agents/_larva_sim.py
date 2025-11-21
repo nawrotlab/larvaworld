@@ -1,3 +1,19 @@
+from __future__ import annotations
+from typing import Any, Tuple
+import os
+import warnings
+
+# Deprecation: discourage deep imports from internal module paths
+if os.getenv("LARVAWORLD_STRICT_DEPRECATIONS") == "1":
+    raise ImportError(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.agents import BaseController, LarvaSim'"
+    )
+else:
+    warnings.warn(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.agents import BaseController, LarvaSim'",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 import math
 
 import numpy as np
@@ -8,7 +24,7 @@ from ... import util
 from ...param import PositiveNumber
 from . import LarvaMotile
 
-__all__ = [
+__all__: list[str] = [
     "BaseController",
     "LarvaSim",
 ]
@@ -18,36 +34,27 @@ __displayname__ = "Simulation larva"
 
 class BaseController(param.Parameterized):
     """
-    Base controller for larva motion simulation.
+    Physics controller for larva kinematic simulation.
 
-    Parameters
-    ----------
-    lin_vel_coef : float, positive
-        Coefficient for translational velocity.
-    ang_vel_coef : float, positive
-        Coefficient for angular velocity.
-    lin_force_coef : float, positive
-        Coefficient for force.
-    torque_coef : float, positive
-        Coefficient for torque.
-    body_spring_k : float, positive
-        Torsional spring constant for body bending.
-    bend_correction_coef : float, positive
-        Bend correction coefficient.
-    lin_damping : float, positive
-        Translational damping coefficient.
-    ang_damping : float, positive
-        Angular damping coefficient.
-    lin_mode : str
-        Mode of translational motion generation ('velocity', 'force', 'impulse').
-    ang_mode : str
-        Mode of angular motion generation ('torque', 'velocity').
+    Provides motion generation modes (velocity/force/torque), damping
+    coefficients, and body mechanics (torsional spring, bend correction)
+    for realistic larva movement simulation.
 
-    Methods
-    -------
-    compute_delta_rear_angle(bend, dst, length)
-        Compute the change in rear angle based on bend, distance, and length.
+    Attributes:
+        lin_vel_coef: Translational velocity scaling coefficient (default: 1.0)
+        ang_vel_coef: Angular velocity scaling coefficient (default: 1.0)
+        lin_force_coef: Force scaling coefficient (default: 1.0)
+        torque_coef: Torque scaling coefficient (default: 0.5)
+        body_spring_k: Torsional spring constant for body bending (default: 1.0)
+        bend_correction_coef: Bend angle correction factor (default: 1.0)
+        lin_damping: Translational damping coefficient (default: 1.0)
+        ang_damping: Angular damping coefficient (default: 1.0)
+        lin_mode: Motion mode ('velocity', 'force', or 'impulse')
+        ang_mode: Rotation mode ('torque' or 'velocity')
 
+    Example:
+        >>> controller = BaseController(torque_coef=0.8, body_spring_k=1.5)
+        >>> delta_angle = controller.compute_delta_rear_angle(0.2, 0.001, 0.003)
     """
 
     lin_vel_coef = PositiveNumber(1.0, doc="Coefficient for translational velocity")
@@ -68,7 +75,7 @@ class BaseController(param.Parameterized):
         objects=["torque", "velocity"], doc="Mode of angular motion generation"
     )
 
-    def compute_delta_rear_angle(self, bend, dst, length):
+    def compute_delta_rear_angle(self, bend: float, dst: float, length: float) -> float:
         """
         Compute the change in rear angle based on bend, distance, and length.
 
@@ -98,43 +105,50 @@ class BaseController(param.Parameterized):
 
 class LarvaSim(LarvaMotile, BaseController):
     """
-    Simulated larva agent.
+    Physically-simulated larva agent with realistic biomechanics.
 
-    Parameters
-    ----------
-    physics : dict
-        Dictionary containing physical parameters for the larva simulation.
-    Box2D : dict
-        Dictionary containing Box2D parameters for the larva simulation.
-    **kwargs
-        Additional keyword arguments.
+    Combines LarvaMotile behavioral capabilities with BaseController
+    physics to provide realistic simulation including body mechanics,
+    collision detection, and arena boundary handling.
 
-    Methods
-    -------
-    compute_ang_vel(amp)
-        Compute angular velocity based on torque amplitude.
-    prepare_motion(lin, ang)
-        Prepare translational and angular motion.
-    border_collision : bool
-        Check for collisions with borders.
-    larva_collision : bool
-        Check for collisions with other larvae.
-    position_head_in_tank(hr0, ho0, l0, fov0, fov1, ang_vel, lin_vel)
-        Position the larva's head in the simulated tank.
-    position_body(lin_vel, ang_vel)
-        Position the larva's body based on translational and angular motion.
+    Attributes:
+        collision_with_object: Whether currently colliding with obstacle
+        body_bend: Current body bend angle (radians)
+        dst: Distance traveled in last timestep
+        cum_dst: Cumulative distance traveled
+        border_collision: Border collision detection (property)
+        larva_collision: Inter-larva collision detection (property)
 
+    Args:
+        physics: Physics parameters dict (velocities, damping, spring constants)
+        Box2D: Box2D physics engine parameters (optional)
+        sensorimotor: Sensorimotor coupling parameters (optional)
+        **kwargs: Additional larva configuration
+
+    Example:
+        >>> larva = LarvaSim(
+        ...     physics={'torque_coef': 0.5, 'body_spring_k': 1.0},
+        ...     brain={'olfactor': {'gain': 2.0}},
+        ...     body={'length': 0.003}
+        ... )
+        >>> larva.step()  # Physics-based simulation step
     """
 
     __displayname__ = "Simulated larva"
 
-    def __init__(self, physics={}, Box2D={}, sensorimotor=None, **kwargs):
+    def __init__(
+        self,
+        physics: dict[str, Any] = {},
+        Box2D: dict[str, Any] = {},
+        sensorimotor: Any = None,
+        **kwargs: Any,
+    ) -> None:
         BaseController.__init__(self, **physics)
         LarvaMotile.__init__(self, **kwargs)
 
         self.collision_with_object = False
 
-    def compute_ang_vel(self, amp):
+    def compute_ang_vel(self, amp: float) -> float:
         """
         Compute angular velocity based on torque amplitude.
 
@@ -161,7 +175,7 @@ class LarvaSim(LarvaMotile, BaseController):
             * self.dt
         )
 
-    def prepare_motion(self, lin, ang):
+    def prepare_motion(self, lin: float, ang: float) -> None:
         """
         Prepare translational and angular motion.
 
@@ -186,7 +200,7 @@ class LarvaSim(LarvaMotile, BaseController):
         self.position_body(lin_vel, ang_vel)
 
     @property
-    def border_collision(self):
+    def border_collision(self) -> bool:
         """
         Check for collisions with borders.
 
@@ -217,7 +231,7 @@ class LarvaSim(LarvaMotile, BaseController):
                 return True
 
     @property
-    def larva_collision(self):
+    def larva_collision(self) -> bool:
         """
         Check for collisions with other larvae.
 
@@ -233,7 +247,16 @@ class LarvaSim(LarvaMotile, BaseController):
         else:
             return False
 
-    def position_head_in_tank(self, hr0, ho0, l0, fov0, fov1, ang_vel, lin_vel):
+    def position_head_in_tank(
+        self,
+        hr0: Tuple[float, float],
+        ho0: float,
+        l0: float,
+        fov0: float,
+        fov1: float,
+        ang_vel: float,
+        lin_vel: float,
+    ) -> tuple[float, float]:
         """
         Position the larva's head in the simulated tank.
 
@@ -310,7 +333,7 @@ class LarvaSim(LarvaMotile, BaseController):
         lin_vel = lv(lin_vel)
         return ang_vel, lin_vel
 
-    def position_body(self, lin_vel, ang_vel):
+    def position_body(self, lin_vel: float, ang_vel: float) -> None:
         """
         Position the larva's body based on translational and angular motion.
 
@@ -355,7 +378,13 @@ class LarvaSim(LarvaMotile, BaseController):
         pos = tuple(self.global_midspine_of_body)
         self.update_larva_pose(pos, ho1, lin_vel, ang_vel)
 
-    def update_larva_pose(self, position, orientation, lin_vel=0, ang_vel=0):
+    def update_larva_pose(
+        self,
+        position: tuple[float, float],
+        orientation: float,
+        lin_vel: float = 0,
+        ang_vel: float = 0,
+    ) -> None:
         """
         Update the larva's pose and trajectories' log.
 
@@ -377,7 +406,7 @@ class LarvaSim(LarvaMotile, BaseController):
         self.model.space.move_to(self, np.array(position))
         self.compute_body_bend()
 
-    def reset_larva_pose(self, reset_trajectories=False):
+    def reset_larva_pose(self, reset_trajectories: bool = False) -> None:
         """
         Reset the larva's pose to the initial position and orientation.
 

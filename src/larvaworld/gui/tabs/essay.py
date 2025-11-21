@@ -98,7 +98,7 @@ class EssayTab(gui_aux.GuiTab):
         return d, g
 
     def run_essay_exp(self, v, w, c, d, g, essay_exp):
-        from ...lib.reg.stored_confs.essay_conf import (
+        from ...lib.reg import (
             Chemotaxis_Essay,
             DoublePatch_Essay,
             RvsS_Essay,

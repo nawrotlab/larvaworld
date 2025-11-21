@@ -1,24 +1,55 @@
+from __future__ import annotations
+from typing import Any
+import os
+import warnings
+
+# Deprecation: discourage deep imports from internal module paths
+if os.getenv("LARVAWORLD_STRICT_DEPRECATIONS") == "1":
+    raise ImportError(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.agents import LarvaOffline'"
+    )
+else:
+    warnings.warn(
+        "Deep import path deprecated. Use public API: 'from larvaworld.lib.model.agents import LarvaOffline'",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 import numpy as np
 
 from ... import util
 from .larva_robot import LarvaRobot
 
-__all__ = ["LarvaOffline"]
+__all__: list[str] = ["LarvaOffline"]
 
 __displayname__ = "Offline agent"
 
 
 class LarvaOffline(LarvaRobot):
     """
-    Subclass of LarvaRobot that simulates the behavior of a larva in an offline environment.
+    Simplified larva agent for offline kinematic simulation.
+
+    Extends LarvaRobot for lightweight simulation without full environment,
+    using minimal physics (orientation tracking, bend angle constraints).
+    Used for rapid trajectory generation and parameter exploration.
+
+    Attributes:
+        fo: Front orientation angle (radians)
+        ro: Rear orientation angle (radians)
+        body_bend: Current body bend angle (radians)
+        dst: Distance traveled in last timestep
+        cum_dst: Cumulative distance traveled
+
+    Example:
+        >>> larva = LarvaOffline(model='explorer', length=0.003)
+        >>> larva.step()  # Kinematic update without environment
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.fo = self.orientation
         self.ro = self.orientation
 
-    def step(self):
+    def step(self) -> None:
         """
         Perform a single simulation step for the larva agent.
 

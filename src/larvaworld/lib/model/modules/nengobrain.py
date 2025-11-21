@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Any
 import numpy as np
 from nengo import Connection, Direct, Ensemble, Network, Node, Probe, Simulator, dists
 from nengo.networks import EnsembleArray
@@ -5,13 +7,19 @@ from nengo.networks import EnsembleArray
 from ... import util
 from . import Brain
 
-__all__ = [
+__all__: list[str] = [
     "NengoBrain",
 ]
 
 
 class NengoBrain(Network, Brain):
-    def __init__(self, conf, agent=None, dt=None, **kwargs):
+    def __init__(
+        self,
+        conf: Any,
+        agent: Any | None = None,
+        dt: float | None = None,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**kwargs)
         Brain.__init__(self, conf=conf, agent=agent, dt=dt)
         self.food_feedback = False
@@ -20,7 +28,7 @@ class NengoBrain(Network, Brain):
         self.sim = Simulator(self, dt=0.01, progress_bar=False)
         self.Nsteps = int(self.dt / self.sim.dt)
 
-    def build(self):
+    def build(self) -> None:
         o = self.olfactor
         ws = self.windsensor
         cra = self.locomotor.crawler
@@ -317,11 +325,13 @@ class NengoBrain(Network, Brain):
             else:
                 self.dict = None
 
-    def update_dict(self, data):
+    def update_dict(self, data: Any) -> None:
         for k, p in self.probes.items():
             self.dict[k].append(np.mean(data[p][-self.Nsteps :], axis=0))
 
-    def step(self, pos, length, on_food=False):
+    def step(
+        self, pos: Any, length: float, on_food: bool = False
+    ) -> tuple[float, float, bool]:
         L = self.locomotor
         N = self.Nsteps
         MS = self.modalities
@@ -358,6 +368,6 @@ class NengoBrain(Network, Brain):
         self.sim.clear_probes()
         return lin, ang, feed_motion
 
-    def save_dicts(self, path):
+    def save_dicts(self, path: str) -> None:
         if self.dict is not None:
             util.save_dict(self.dict, f"{path}/{self.agent.unique_id}.txt")

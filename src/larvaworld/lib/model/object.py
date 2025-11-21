@@ -1,9 +1,13 @@
+from __future__ import annotations
+
+from typing import Any
+
 import param
 
 from .. import util
 from ..param import NestedConf
 
-__all__ = [
+__all__: list[str] = [
     "Object",
     "GroupedObject",
 ]
@@ -75,7 +79,13 @@ class Object(NestedConf):
 
     unique_id = param.String(None, doc="The unique ID of the entity")
 
-    def __init__(self, model=None, unique_id=None, id="Object", **kwargs):
+    def __init__(
+        self,
+        model: Any | None = None,
+        unique_id: Any | None = None,
+        id: str = "Object",
+        **kwargs: Any,
+    ) -> None:
         if unique_id is None and id is not None:
             unique_id = id
         # self.unique_id=unique_id
@@ -90,25 +100,25 @@ class Object(NestedConf):
             self.p = model.p
         self.model = model
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.type} (Obj {self.unique_id})"
 
-    def __getattr__(self, key):
+    def __getattr__(self, key: str):
         raise AttributeError(f"{self} has no attribute '{key}'.")
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
         return getattr(self, key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
         setattr(self, key, value)
 
     @property
-    def vars(self):
+    def vars(self) -> list[str]:
         return [
             k for k in self.__dict__.keys() if k[0] != "_" and k not in self._var_ignore
         ]
 
-    def nest_record(self, reporter_dic):
+    def nest_record(self, reporter_dic: dict[str, str]) -> None:
         """
         Records an object's variables at the current time-step.
         Recorded variables can be accessed via the object's `log` attribute
@@ -153,7 +163,7 @@ class Object(NestedConf):
         # Set default recording function from now on
         self.nest_record = self._nest_record
 
-    def _nest_record(self, reporter_dic):
+    def _nest_record(self, reporter_dic: dict[str, str]) -> None:
         for name, codename in reporter_dic.items():
             # Create empty lists
             if name not in self.log:
@@ -243,7 +253,7 @@ class Object(NestedConf):
             self.log[var_key][-1] = v
     '''
 
-    def setup(self, **kwargs):
+    def setup(self, **kwargs: Any) -> None:
         """
         This empty method is called automatically at the objects' creation.
         Can be overwritten in custom sub-classes
@@ -285,7 +295,7 @@ class GroupedObject(Object):
 
     group = param.String(None, doc="The unique ID of the entity's group")
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         if self.group is not None:
             self.type = self.group

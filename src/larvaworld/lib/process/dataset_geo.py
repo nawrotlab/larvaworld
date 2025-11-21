@@ -6,14 +6,14 @@ Only the relevant columns of the double-index stepwise pandas dataframe are used
 See below for further explanation
 """
 
+from __future__ import annotations
+from typing import Any, Optional
+
 import warnings
 from datetime import datetime, timedelta
-import geopandas as gpd
 import movingpandas as mpd
 import numpy as np
 import pandas as pd
-import shapely as shp
-from pint_pandas import PintType
 
 warnings.filterwarnings("ignore")
 
@@ -21,7 +21,7 @@ from ... import vprint
 from ..process.dataset import BaseLarvaDataset
 from .. import reg, util
 
-__all__ = ["GeoLarvaDataset"]
+__all__: list[str] = ["GeoLarvaDataset"]
 
 
 class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
@@ -40,7 +40,12 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
 
     """
 
-    def __init__(self, step=None, dt=None, **kwargs):
+    def __init__(
+        self,
+        step: Optional[pd.DataFrame] = None,
+        dt: Optional[float] = None,
+        **kwargs: Any,
+    ) -> None:
         if step is not None:
             self.init_mpd(step, dt=dt)
         BaseLarvaDataset.__init__(self, **kwargs)
@@ -49,7 +54,29 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
     # def default_filename(self):
     #     return 'geodata'
 
-    def init_gdf(self, step, dt):
+    def init_gdf(self, step: pd.DataFrame, dt: float) -> "gpd.GeoDataFrame":  # type: ignore
+        """
+        Initialize GeoDataFrame from step data.
+
+        Converts a step DataFrame with trajectory data into a GeoDataFrame
+        with datetime index and geometry column for spatial analysis.
+
+        Args:
+            step: Step DataFrame with columns 'x', 'y', and either 'datetime',
+                  't', or 'Step'. Multi-indexed or single-indexed.
+            dt: Timestep duration in seconds for converting Step to datetime.
+
+        Returns:
+            GeoDataFrame with datetime index, 'xy' Point geometry column,
+            and all original columns preserved with pint units where applicable.
+
+        Example:
+            >>> gdf = self.init_gdf(step_df, dt=0.1)
+            >>> gdf.geometry  # 'xy' column with Point objects
+        """
+        import geopandas as gpd
+        from pint_pandas import PintType
+
         if len(step.index.names) != 1 or "datetime" not in step.index.names:
             max_tick = step[["x", "y"]].dropna().index.unique("Step").max()
             step = step.query(f"Step<={max_tick}")
@@ -74,7 +101,26 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         gdf = gdf.set_geometry("xy")
         return gdf
 
-    def init_mpd(self, step, dt):
+    def init_mpd(self, step: pd.DataFrame, dt: float) -> None:
+        """
+        Initialize movingpandas TrajectoryCollection.
+
+        Converts step DataFrame into movingpandas TrajectoryCollection
+        with proper units (pint) and grouped by AgentID.
+
+        Args:
+            step: Step DataFrame with trajectory data (x, y, AgentID).
+            dt: Timestep duration in seconds.
+
+        Side Effects:
+            Initializes self as TrajectoryCollection with trajectories
+            for each agent, spatial data converted to pint units.
+
+        Example:
+            >>> self.init_mpd(step_df, dt=0.1)
+            >>> for traj in self:  # Iterate over agent trajectories
+            >>>     print(traj.id, traj.get_length())
+        """
         gdf = self.init_gdf(step, dt)
         mpd.TrajectoryCollection.__init__(self, gdf, traj_id_col="AgentID")
 
@@ -86,7 +132,12 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
             # print(tr.df.xy.iloc[-1])
         # raise
 
-    def set_data(self, step=None, end=None, **kwargs):
+    def set_data(
+        self,
+        step: Optional[pd.DataFrame] = None,
+        end: Optional[pd.DataFrame] = None,
+        **kwargs: Any,
+    ) -> None:
         """
         Drop the Nan timesteps. This is extremely convenient as the geopandas handles unequal trajectories easily
         Build three shapely geometries :
@@ -121,6 +172,8 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
 
     @property
     def dt_mag(self):
+        from pint_pandas import PintType
+
         assert self.config.dt is not None
         _dt = self.config.dt * PintType.ureg.s
         return _dt.magnitude
@@ -135,6 +188,8 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         Computing also the transosed trajectory that starts from the center.
         Plotting the original and the transposed trajectories
         """
+        import shapely as shp
+
         for tr in self:
             xy0 = tr.get_start_location()
             tr.df[name] = tr.df["xy"].apply(
@@ -148,6 +203,8 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         for tr in self:
             tr.add_speed(name=name, **kwargs)
             tr.df = tr.df.loc[tr.df["xy"] != None]
+        from pint_pandas import PintType
+
         self.set_dtype(name, self.spatial_unit / PintType.ureg.s)
 
     def add_distance(self, name=None, **kwargs):
@@ -164,6 +221,8 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         for tr in self:
             tr.add_acceleration(name=name, **kwargs)
             tr.df = tr.df.loc[tr.df["xy"] != None]
+        from pint_pandas import PintType
+
         self.set_dtype(name, self.spatial_unit / PintType.ureg.s**2)
 
     def scale_to_length(self, pars=None, ks=None):
@@ -266,7 +325,31 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         except:
             return None
 
-    def build_endpoint_data(self, e=None):
+    def build_endpoint_data(self, e: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+        """
+        Build endpoint metrics for all trajectories.
+
+        Computes summary statistics for each trajectory including cumulative
+        distance, duration, start/end positions, and temporal extent.
+
+        Args:
+            e: Optional existing endpoint DataFrame to update. If None,
+               creates new DataFrame with AgentID index.
+
+        Returns:
+            DataFrame indexed by AgentID with columns:
+            - cum_d: Cumulative distance traveled (spatial units)
+            - cum_t: Total duration (seconds)
+            - t0, t_fin: Start and end timestamps
+            - x0, x_fin, y0, y_fin: Start and end coordinates
+            - group: Group ID from configuration
+
+        Example:
+            >>> endpoint = self.build_endpoint_data()
+            >>> print(endpoint[['cum_d', 'cum_t']])  # Distance and time per agent
+        """
+        import movingpandas as mpd
+
         if e is None:
             e = pd.DataFrame(index=list(self.traj_dic.keys()))
         e.index.name = "AgentID"
@@ -315,7 +398,32 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         e["group"] = self.config.group_id
         return e
 
-    def load_midline(self, drop=True, keep_midline_LineString=False):
+    def load_midline(
+        self, drop: bool = True, keep_midline_LineString: bool = False
+    ) -> None:
+        """
+        Load and process midline geometry data.
+
+        Computes midline length from tracked midline points, either keeping
+        the LineString geometry or just computing the length metric.
+
+        Args:
+            drop: If True, drops midline xy columns after processing
+                  to save memory.
+            keep_midline_LineString: If True, keeps 'midline' column with
+                                     shapely LineString objects. If False,
+                                     only computes and stores length values.
+
+        Side Effects:
+            - Adds 'length' column to each trajectory DataFrame
+            - Adds mean 'length' to endpoint_data
+            - Optionally adds 'midline' LineString column
+            - Drops midline xy columns if drop=True
+
+        Example:
+            >>> self.load_midline(drop=True, keep_midline_LineString=False)
+            >>> mean_length = self.endpoint_data['length'].mean()
+        """
         l = "length"
         xy_flat = self.config.midline_xy
         xy_pairs = xy_flat.in_pairs
@@ -431,7 +539,32 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
     #     e[tick0] = np.ceil(e[t0] / dt).astype(int)
     #     e[Nticks] = e[tick1] - e[tick0]
 
-    def interpolate_traj(self, dt=0.1):
+    def interpolate_traj(self, dt: float = 0.1) -> pd.DataFrame:
+        """
+        Interpolate trajectories to uniform timestep grid.
+
+        Resamples all trajectories to a common temporal grid with specified
+        timestep, enabling synchronized multi-agent analysis.
+
+        Args:
+            dt: Target timestep duration in seconds for interpolation.
+                Default is 0.1 seconds (10 Hz).
+
+        Returns:
+            Multi-indexed DataFrame with (Step, AgentID) index containing
+            interpolated x, y coordinates at uniform time intervals.
+            Missing values are NaN for agents not present at those times.
+
+        Side Effects:
+            Updates endpoint_data with tick0, tick1, N_ticks columns
+            indicating valid time ranges for each agent.
+
+        Example:
+            >>> interp_df = self.interpolate_traj(dt=0.1)
+            >>> interp_df.loc[10]  # All agents at timestep 10
+        """
+        from pint_pandas import PintType
+
         dtu = dt * PintType.ureg.sec
         e = self.endpoint_data
         t0, t1 = reg.getPar(["t0", "t_fin"])

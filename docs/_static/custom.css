@@ -1,0 +1,157 @@
+/* Override Furo sidebar caption capitalization */
+.sidebar-tree .caption-text {
+  text-transform: none;
+}
+
+/* Normalize base font sizes across all pages */
+:root {
+  font-size: 16px !important;
+}
+
+body {
+  font-size: 1rem !important;
+}
+
+/* Fix font size consistency across ALL pages - sidebar */
+.sidebar-tree,
+.sidebar-tree * {
+  font-size: 0.9rem !important;
+}
+
+.sidebar-tree a,
+.sidebar-tree a:visited,
+.sidebar-tree a:hover {
+  font-size: 0.9rem !important;
+}
+
+.sidebar-tree .caption-text {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+}
+
+/* Fix font size consistency across ALL pages - main content */
+/* Target all content areas regardless of page type */
+.main .content,
+body .main .content,
+body[data-page] .main .content,
+body.home .main .content {
+  font-size: 1rem !important;
+}
+
+.main .content p,
+body .main .content p,
+body[data-page] .main .content p,
+body.home .main .content p {
+  font-size: 1rem !important;
+  line-height: 1.6;
+}
+
+.main .content h1,
+body .main .content h1,
+body[data-page] .main .content h1 {
+  font-size: 2rem !important;
+}
+
+.main .content h2,
+body .main .content h2,
+body[data-page] .main .content h2 {
+  font-size: 1.5rem !important;
+}
+
+.main .content h3,
+body .main .content h3,
+body[data-page] .main .content h3 {
+  font-size: 1.25rem !important;
+}
+
+/* Ensure consistent font for notebook pages */
+.nbinput,
+.nboutput,
+.nbinput .highlight,
+.nboutput .highlight {
+  font-size: 0.9rem !important;
+}
+
+/* Ensure consistent font for code blocks */
+.highlight,
+.highlight pre,
+code {
+  font-size: 0.9rem !important;
+}
+
+/* Ensure lists have consistent font size */
+.main .content ul,
+.main .content ol,
+.main .content li {
+  font-size: 1rem !important;
+  line-height: 1.6;
+}
+
+/* Ensure links have consistent font size */
+.main .content a {
+  font-size: 1rem !important;
+}
+
+/* Ensure strong/bold text has consistent font size */
+.main .content strong,
+.main .content b {
+  font-size: 1rem !important;
+}
+
+/* Ensure emphasis/italic text has consistent font size */
+.main .content em,
+.main .content i {
+  font-size: 1rem !important;
+}
+
+/* Override any Furo-specific large font on index page */
+body[data-page="index"] .main .content *,
+body.home .main .content * {
+  font-size: inherit !important;
+}
+
+body[data-page="index"] .main .content p,
+body.home .main .content p {
+  font-size: 1rem !important;
+}
+
+body[data-page="index"] .main .content ul,
+body.home .main .content ul,
+body[data-page="index"] .main .content ol,
+body.home .main .content ol,
+body[data-page="index"] .main .content li,
+body.home .main .content li {
+  font-size: 1rem !important;
+}
+
+/* Ensure badges/images don't affect text size */
+.main .content img {
+  vertical-align: middle;
+}
+
+/* Ensure transitions (----) don't affect layout */
+.main .content hr {
+  margin: 1.5rem 0;
+}
+
+/* Ensure toctree elements have consistent styling */
+.main .content .toctree-wrapper {
+  font-size: 1rem !important;
+}
+
+.main .content .toctree-wrapper * {
+  font-size: 1rem !important;
+}
+
+/* Ensure all headings maintain consistent relative sizes */
+.main .content h4 {
+  font-size: 1.125rem !important;
+}
+
+.main .content h5 {
+  font-size: 1rem !important;
+}
+
+.main .content h6 {
+  font-size: 0.875rem !important;
+}

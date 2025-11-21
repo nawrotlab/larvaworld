@@ -2,6 +2,8 @@
 Methods for managing context and attributes
 """
 
+from __future__ import annotations
+
 import functools
 import os
 import sys
@@ -14,7 +16,7 @@ from operator import and_
 
 import pandas as pd
 
-__all__ = [
+__all__: list[str] = [
     "TimeUtil",
     "suppress_stdout_stderr",
     "suppress_stdout",
@@ -34,21 +36,21 @@ class TimeUtil:
     """
 
     @staticmethod
-    def current_time_millis():
+    def current_time_millis() -> int:
         return int(round(time.time() * 1000))
 
     @staticmethod
-    def current_time_sec():
+    def current_time_sec() -> int:
         return int(round(time.time()))
 
     @staticmethod
-    def format_time_seconds(seconds):
+    def format_time_seconds(seconds: int) -> str:
         m, s = divmod(seconds, 60)
         h, m = divmod(m, 60)
         return "%d:%02d:%02d" % (h, m, s)
 
     @staticmethod
-    def format_date_time():
+    def format_date_time() -> str:
         return time.strftime("%Y-%m-%d_%H.%M.%S")
 
 
@@ -61,7 +63,7 @@ def suppress_stdout_stderr():
 
 
 @contextmanager
-def suppress_stdout(show_output):
+def suppress_stdout(show_output: bool):
     with open(os.devnull, "w") as devnull:
         old_stdout = sys.stdout
         old_stderr = sys.stderr
@@ -74,13 +76,13 @@ def suppress_stdout(show_output):
             sys.stderr = old_stderr
 
 
-def remove_prefix(text, prefix):
+def remove_prefix(text: str, prefix: str) -> str:
     if text.startswith(prefix):
         return text[len(prefix) :]
     return text  # or whatever
 
 
-def remove_suffix(text, suffix):
+def remove_suffix(text: str, suffix: str) -> str:
     if text.endswith(suffix):
         return text[: -len(suffix)]
     return text  # or whatever
@@ -89,12 +91,12 @@ def remove_suffix(text, suffix):
 # using wonder's beautiful simplification: https://stackoverflow.com/questions/31174295/getattr-and-setattr-on-nested-objects/31174427?noredirect=1#comment86638618_31174427
 
 
-def rsetattr(obj, attr, val):
+def rsetattr(obj, attr: str, val):
     pre, _, post = attr.rpartition(".")
     return setattr(rgetattr(obj, pre) if pre else obj, post, val)
 
 
-def rgetattr(obj, attr, *args):
+def rgetattr(obj, attr: str, *args):
     def _getattr(obj, attr):
         return getattr(obj, attr, *args)
 
@@ -108,7 +110,13 @@ def try_except(success, failure, *exceptions):
         return failure() if callable(failure) else failure
 
 
-def storeH5(df, path=None, key=None, mode=None, **kwargs):
+def storeH5(
+    df,
+    path: str | None = None,
+    key: str | None = None,
+    mode: str | None = None,
+    **kwargs,
+):
     if path is not None:
         if mode is None:
             if os.path.isfile(path):

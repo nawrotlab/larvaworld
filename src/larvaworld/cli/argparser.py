@@ -1,5 +1,6 @@
+from __future__ import annotations
 from argparse import ArgumentParser, Namespace
-from typing import List
+from typing import Any, List
 import param
 
 from .. import SIMTYPES
@@ -8,7 +9,7 @@ from ..lib.screen import ScreenOps
 from ..lib import reg, sim
 from ..lib.param import RuntimeOps, SimOps
 
-__all__ = ["SingleParserArgument", "ParserArgumentDict", "SimModeParser"]
+__all__: list[str] = ["SingleParserArgument", "ParserArgumentDict", "SimModeParser"]
 
 __displayname__ = "CLI argument parsing classes"
 
@@ -39,12 +40,12 @@ class SingleParserArgument:
 
     """
 
-    def __init__(self, short, key, **kwargs):
+    def __init__(self, short: str, key: str, **kwargs: Any) -> None:
         self.key = key
         self.args = [f"-{short}", f"--{key}"]
         self.kwargs = kwargs
 
-    def add(self, p):
+    def add(self, p: ArgumentParser) -> ArgumentParser:
         """
         Add the argument to a parser.
 
@@ -62,7 +63,7 @@ class SingleParserArgument:
         p.add_argument(*self.args, **self.kwargs)
         return p
 
-    def get(self, input):
+    def get(self, input: Namespace) -> Any:
         """
         Get the value of the argument from parsed input.
 
@@ -80,7 +81,7 @@ class SingleParserArgument:
         return getattr(input, self.key)
 
     @classmethod
-    def from_dict(cls, name, **kwargs):
+    def from_dict(cls, name: str, **kwargs: Any) -> SingleParserArgument:
         """
         Create a SingleParserArgument from a dictionary.
 
@@ -100,7 +101,7 @@ class SingleParserArgument:
         return cls(**parser_entry_from_dict(name, **kwargs))
 
     @classmethod
-    def from_param(cls, k, p):
+    def from_param(cls, k: str, p: param.Parameter) -> SingleParserArgument:
         """
         Create a SingleParserArgument from a parameter.
 
@@ -120,7 +121,7 @@ class SingleParserArgument:
         return cls(**parser_entry_from_param(k, p))
 
 
-def parser_entry_from_param(k, p):
+def parser_entry_from_param(k: str, p: param.Parameter) -> AttrDict:
     """
     Create a dictionary entry for a parser argument from a parameter.
 
@@ -174,7 +175,15 @@ def parser_entry_from_param(k, p):
     return d
 
 
-def parser_entry_from_dict(name, k=None, h="", dtype=float, v=None, vs=None, **kwargs):
+def parser_entry_from_dict(
+    name: str,
+    k: str | None = None,
+    h: str = "",
+    dtype: type = float,
+    v: Any | None = None,
+    vs: List[Any] | None = None,
+    **kwargs: Any,
+) -> AttrDict:
     """
     Create a dictionary entry for a parser argument from a dictionary.
 
@@ -239,7 +248,7 @@ class ParserArgumentDict:
     This class can be instantiated either by a dictionary of param.Parameters or by a dictionary existing in the registry parameter Database.
     """
 
-    def __init__(self, parsargs):
+    def __init__(self, parsargs: AttrDict) -> None:
         """
         Initialize a ParserArgumentDict.
 
@@ -252,7 +261,7 @@ class ParserArgumentDict:
         self.parsargs = parsargs
 
     @classmethod
-    def from_param(cls, d0: param.Parameterized):
+    def from_param(cls, d0: param.Parameterized) -> ParserArgumentDict:
         """
         Create a ParserArgumentDict from a parameter dictionary.
 
@@ -270,7 +279,7 @@ class ParserArgumentDict:
         return cls(parser_dict_from_param(d0))
 
     @classmethod
-    def from_dict(cls, d0):
+    def from_dict(cls, d0: dict) -> ParserArgumentDict:
         """
         Create a ParserArgumentDict from a dictionary.
 
@@ -287,7 +296,7 @@ class ParserArgumentDict:
         """
         return cls(parser_dict_from_dict(d0))
 
-    def add(self, parser=None) -> ArgumentParser:
+    def add(self, parser: ArgumentParser | None = None) -> ArgumentParser:
         """
         Add parser arguments to an ArgumentParser.
 
@@ -308,7 +317,7 @@ class ParserArgumentDict:
             parser = v.add(parser)
         return parser
 
-    def get(self, input) -> AttrDict:
+    def get(self, input: Namespace) -> AttrDict:
         """
         Get parser argument values from parsed input.
 
@@ -361,7 +370,7 @@ def parser_dict_from_param(d0: param.Parameterized) -> AttrDict:
     return d.flatten()
 
 
-def parser_dict_from_dict(d0) -> AttrDict:
+def parser_dict_from_dict(d0: dict) -> AttrDict:
     """
     Create a dictionary of parser arguments from a dictionary.
 
@@ -390,7 +399,7 @@ class SimModeParser(ArgumentParser):
     Parser for simulation modes and arguments.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.parser_dicts = AttrDict(
             {
                 "screen_kws": ParserArgumentDict.from_param(d0=ScreenOps),
@@ -492,7 +501,7 @@ class SimModeParser(ArgumentParser):
             sp = self.parser_dicts.GAevaluation.add(sp)
         return sp
 
-    def eval_parser(self, p_key: str, args: Namespace):
+    def eval_parser(self, p_key: str, args: Namespace) -> AttrDict:
         """
         Evaluate a parser argument.
 
@@ -501,7 +510,7 @@ class SimModeParser(ArgumentParser):
         """
         return self.parser_dicts[p_key].get(args)
 
-    def configure(self, args: Namespace):
+    def configure(self, args: Namespace) -> tuple[Any, AttrDict]:
         """
         Configure the simulation run based on parsed arguments.
 
@@ -581,7 +590,7 @@ class SimModeParser(ArgumentParser):
             print("Input args : ")
             AttrDict(vars(args)).print(flat=True)
 
-    def launch(self, run, args):
+    def launch(self, run: Any, args: Namespace) -> None:
         """
         Launch the simulation run.
         """

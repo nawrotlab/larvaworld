@@ -11,4 +11,6 @@ Launch the web server via the CLI command :
 Then open http://localhost:5006 in your browser (if not automatically opened).
 """
 
+from __future__ import annotations
+
 __displayname__ = "Web-based apps"

@@ -14,7 +14,8 @@ build:
       # Install poetry
       - python -m pip install poetry
     post_install:
-      # Install dependencies, reusing RTD virtualenv
+      # Install main package and documentation dependencies
+      # Using --with docs ensures both main package and docs group are installed
       - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install --with docs
 
 # Build documentation in the docs directory with Sphinx

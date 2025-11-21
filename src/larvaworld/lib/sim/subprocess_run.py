@@ -1,28 +1,62 @@
+from __future__ import annotations
+from typing import Any
 import argparse
 import subprocess
 
 import pandas as pd
 
-from .. import sim, util
+from .. import util
 from ... import ROOT_DIR, SIM_DIR
-from ..process.dataset import LarvaDataset
+from ..process import LarvaDataset
 
-__all__ = [
+__all__: list[str] = [
     "Exec",
 ]
 
 
 class Exec:
+    """
+    Subprocess execution wrapper for simulations.
+
+    Manages simulation execution either synchronously (in-process) or
+    asynchronously (as external subprocess) for non-blocking operation.
+    """
+
     def __init__(
         self,
-        mode,
-        conf,
-        experiment,
-        run_externally=True,
-        progressbar=None,
-        w_progressbar=None,
-        **kwargs,
-    ):
+        mode: str,
+        conf: dict,
+        experiment: str,
+        run_externally: bool = True,
+        progressbar: Any | None = None,
+        w_progressbar: Any | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Initialize subprocess execution wrapper for simulations.
+
+        Creates an execution wrapper that can run simulations either
+        synchronously or as external subprocess for non-blocking operation.
+
+        Args:
+            mode: Execution mode ('sim' for single run or 'batch' for batch execution).
+            conf: Configuration dict (structure depends on mode).
+                  For 'sim': Must contain 'id', 'sim_params', 'larva_groups'.
+                  For 'batch': Must contain 'id' and batch parameters.
+            experiment: Experiment type string (e.g., 'chemorbit', 'dispersion').
+            run_externally: If True, launches as subprocess (non-blocking).
+                           If False, runs synchronously in current process.
+            progressbar: Optional progress bar widget for GUI integration.
+            w_progressbar: Optional secondary progress bar widget.
+            **kwargs: Additional args passed to subprocess.Popen.
+
+        Example:
+            >>> exec = Exec('sim', sim_conf, 'chemorbit', run_externally=True)
+            >>> exec.run()
+            >>> # Later check completion:
+            >>> if exec.check():
+            >>>     results = exec.results
+        """
         self.run_externally = run_externally
         self.mode = mode
         self.conf = conf
@@ -31,12 +65,12 @@ class Exec:
         self.type = experiment
         self.done = False
 
-    def terminate(self):
+    def terminate(self) -> None:
         if self.process is not None:
             self.process.terminate()
             self.process.kill()
 
-    def run(self, **kwargs):
+    def run(self, **kwargs: Any) -> None:
         f0, f1 = (
             f"{ROOT_DIR}/lib/sim/exec_conf.txt",
             f"{ROOT_DIR}/lib/sim/exec_run.py",
@@ -49,7 +83,7 @@ class Exec:
             self.results = self.retrieve(res)
             self.done = True
 
-    def check(self):
+    def check(self) -> bool:
         if not self.done:
             if self.run_externally:
                 if self.process.poll() is not None:
@@ -60,7 +94,39 @@ class Exec:
         else:
             return True
 
-    def retrieve(self, res=None):
+    def retrieve(
+        self, res: pd.DataFrame | list[LarvaDataset] | None = None
+    ) -> pd.DataFrame | tuple[dict[str, dict[str, Any]], dict[str, Any]] | None:
+        """
+        Retrieve and process results from subprocess execution.
+
+        Collects simulation results from subprocess execution and
+        processes them according to experiment type and mode.
+
+        Args:
+            res: Results from subprocess - can be:
+                 - pd.DataFrame: Single batch endpoint data (batch mode).
+                 - list[LarvaDataset]: Multiple dataset results (sim mode).
+                 - None: Load from disk based on self.conf (default for external runs).
+
+        Returns:
+            Processed results, type depends on self.mode:
+            - For 'batch' mode: DataFrame with batch results or None if load fails.
+            - For 'sim' mode: tuple of (entry_dict, fig_dict) where:
+              * entry_dict: {id: {'dataset': list[LarvaDataset], 'figs': dict}}
+              * fig_dict: Figure dictionary (currently None - TODO)
+            - None: If results cannot be retrieved.
+
+        Example:
+            >>> # After external batch run completes:
+            >>> results = exec.retrieve()  # Loads from disk
+            >>> if isinstance(results, pd.DataFrame):
+            >>>     print(f"Batch results: {len(results)} rows")
+            >>>
+            >>> # For sim mode with manual results:
+            >>> datasets = [LarvaDataset(dir=path) for path in paths]
+            >>> entry, figs = exec.retrieve(res=datasets)
+        """
         if self.mode == "batch":
             if res is None and self.run_externally:
                 f = f'{SIM_DIR}/batch_runs/{self.type}/{self.conf["id"]}/results.h5'
@@ -89,11 +155,17 @@ class Exec:
 
     def exec_run(self):
         if self.mode == "sim":
-            self.process = sim.ExpRun(parameters=self.conf)
+            # Local import to avoid importing the sim package and potential cycles
+            from .single_run import ExpRun  # type: ignore
+
+            self.process = ExpRun(parameters=self.conf)
             res = self.process.simulate()
         elif self.mode == "batch":
+            # Local import to avoid importing the sim package and potential cycles
+            from .batch_run import BatchRun  # type: ignore
+
             self.process = None
-            k = sim.BatchRun(**self.conf)
+            k = BatchRun(**self.conf)
             res = k.simulate()
 
         return res
