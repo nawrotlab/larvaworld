@@ -4,21 +4,23 @@
 
 ### Web-based Applications
 
-| Application | Description |
-|-------------|-------------|
-| **Experiment Viewer** | Inspect/launch preconfigured experiments |
-| **Larva Models** | Inspect/visualize modular larva-models |
-| **Locomotory Modules** | Inspect/test behavioral modules |
-| **Track Viewer** | Visualize stored datasets |
+| Application            | Description                              |
+| ---------------------- | ---------------------------------------- |
+| **Experiment Viewer**  | Inspect/launch preconfigured experiments |
+| **Larva Models**       | Inspect/visualize modular larva-models   |
+| **Locomotory Modules** | Inspect/test behavioral modules          |
+| **Track Viewer**       | Visualize stored datasets                |
 
 ---
 
 ## Detailed Descriptions
 
 ### Experiment Viewer
+
 **Purpose**: Browse and launch preconfigured experiments
 
 **Features**:
+
 - View all available experiment configurations
 - Filter by category (chemotaxis, foraging, learning, etc.)
 - Inspect experiment parameters before launching
@@ -26,6 +28,7 @@
 - Modify parameters on-the-fly
 
 **Use Cases**:
+
 - Quick experiment exploration
 - Parameter inspection
 - Educational demonstrations
@@ -34,9 +37,11 @@
 ---
 
 ### Larva Models (Model Inspector)
+
 **Purpose**: Inspect and visualize modular composition of larva models
 
 **Features**:
+
 - Select from all preconfigured locomotory models
 - View configuration of 4 basic locomotor modules:
   - **Crawler**: Peristaltic crawling parameters
@@ -48,6 +53,7 @@
 - Module parameter adjustment
 
 **Use Cases**:
+
 - Understanding model architecture
 - Comparing different models
 - Educational tool for modular design
@@ -58,9 +64,11 @@
 ---
 
 ### Locomotory Modules
+
 **Purpose**: Inspect and test individual behavioral modules
 
 **Features**:
+
 - Standalone module testing
 - Parameter configuration interface
 - Real-time oscillator visualization
@@ -68,6 +76,7 @@
 - Module output plotting
 
 **Use Cases**:
+
 - Module development and debugging
 - Understanding module behavior in isolation
 - Parameter tuning
@@ -76,9 +85,11 @@
 ---
 
 ### Track Viewer
+
 **Purpose**: Visualize and analyze stored datasets
 
 **Features**:
+
 - Load any stored or imported dataset
 - Interactive trajectory visualization
 - Time-series plotting
@@ -87,6 +98,7 @@
 - Export visualizations
 
 **Use Cases**:
+
 - Quick dataset inspection
 - Presentation-ready visualizations
 - Comparative analysis
@@ -157,14 +169,14 @@ Applications will open in your default web browser at ``http://localhost:5006`` 
    :alt: Model Inspector Application
    :align: center
    :width: 90%
-   
+
    Web-based application for inspecting locomotory models. Select any model
    from the dropdown to view its modular configuration and real-time behavior.
 
 .. note::
    **Development Status**: Web applications are currently under active development.
    Some features may not work as expected and will be improved in future releases.
-   
+
    Please report issues at: https://github.com/nawrotlab/larvaworld/issues
 
 **Technical Stack:**
@@ -182,24 +194,27 @@ Applications will open in your default web browser at ``http://localhost:5006`` 
 ### Technology Stack
 
 **Web Framework**: Panel (https://panel.holoviz.org/)
+
 - Part of the Holoviz ecosystem
 - Python-based dashboard framework
 - Supports reactive programming
 - Jupyter-compatible widgets
 
 **Server**: Bokeh Server
+
 - Real-time data streaming
 - WebSocket communication
 - Interactive callbacks
 
-**Visualization**: 
+**Visualization**:
+
 - HoloViews for declarative plotting
 - Bokeh for interactive plots
 - Matplotlib for static figures
 
 ### Code Location
 
-Applications are defined in: ``src/larvaworld/dashboards/``
+Applications are defined in: `src/larvaworld/dashboards/`
 
 **File Structure**:
 
@@ -217,6 +232,7 @@ dashboards/
 ### Dependencies
 
 Required packages (from `pyproject.toml`):
+
 - `panel`: Dashboard framework
 - `holoviews`: Declarative plotting
 - `hvplot`: High-level plotting API
@@ -230,21 +246,25 @@ Required packages (from `pyproject.toml`):
 **Planned Enhancements** (next development cycle):
 
 1. **Experiment Viewer**:
+
    - Better filtering/search
    - Experiment comparison mode
    - Batch launch interface
 
 2. **Model Inspector**:
+
    - Side-by-side model comparison
    - Parameter optimization interface
    - Export model configurations
 
 3. **Module Tester**:
+
    - Module composition playground
    - Custom module integration
    - Advanced parameter sweeps
 
 4. **Track Viewer**:
+
    - Enhanced statistical analysis
    - Custom metric calculation
    - Video export functionality

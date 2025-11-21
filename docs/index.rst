@@ -37,7 +37,7 @@ Project links
 
 - **Source code (GitHub)**: https://github.com/nawrotlab/larvaworld
 - **PyPI package**: https://pypi.org/project/larvaworld/
-- **Larvaworld paper (preprint)**: *Larvaworld: A behavioral simulation and analysis platform for Drosophila larva*  
+- **Larvaworld paper (preprint)**: *Larvaworld: A behavioral simulation and analysis platform for Drosophila larva*
   bioRxiv 2025.06.15.659765; https://doi.org/10.1101/2025.06.15.659765
 
 For the scientific background, model assumptions and validation results, please refer to the paper above and to the :doc:`concepts/theory_overview` section of this documentation.

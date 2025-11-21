@@ -7,6 +7,7 @@ This diagram illustrates the **hierarchical component architecture** of a `Larva
 ### Why This Matters
 
 Understanding the agent architecture reveals:
+
 - ✅ **Multiple inheritance**: `LarvaSim(LarvaMotile, BaseController)` combines two parent classes
 - ✅ **Component hierarchy**: How modules are organized and nested
 - ✅ **Functional separation**: Clear distinction between behavior (LarvaMotile) and physics (BaseController)
@@ -16,6 +17,7 @@ Understanding the agent architecture reveals:
 ### Key Insight
 
 `LarvaSim` implements **multiple inheritance** combining:
+
 1. **LarvaMotile**: Brain, sensors, locomotor, DEB, segmented body
 2. **BaseController**: Physics parameters, motion control, body mechanics
 
@@ -27,23 +29,23 @@ Understanding the agent architecture reveals:
 graph TB
     subgraph LARVASIM ["LarvaSim"]
         AGENT[LarvaSim]:::agent
-        
+
         subgraph FROM_LARVAMOTILE ["From LarvaMotile"]
             subgraph BODY ["Physical Body"]
                 SEGMENTS[Segmented Body<br/>Nseg segments<br/>from LarvaSegmented]:::body
                 CONTOUR[Body Contour<br/>Shape & collision]:::body
             end
-            
+
             subgraph BRAIN_MODULE ["Brain Module"]
                 BRAIN[DefaultBrain<br/>or NengoBrain]:::brain
-                
+
                 subgraph SENSORS ["Sensors"]
                     OLFACTOR[Olfactor<br/>Odor detection]:::sensor
                     TOUCHER[Toucher<br/>Touch sensing]:::sensor
                     WINDSENSOR[WindSensor<br/>optional]:::sensor
                     THERMOSENSOR[Thermosensor<br/>optional]:::sensor
                 end
-                
+
                 subgraph LOCO ["Locomotor"]
                     LOCOMOTOR[Locomotor Module]:::locomotor
                     CRAWLER[Crawler<br/>Peristaltic crawling]:::module
@@ -52,30 +54,30 @@ graph TB
                     INTERMITTER[Intermitter<br/>Run/pause switching]:::module
                     INTERFERENCE[Interference<br/>Crawl-bend coupling]:::module
                 end
-                
+
                 MEMORY[Memory Module<br/>optional RL/MB]:::memory
             end
-            
+
             subgraph ENERGETICS ["DEB Model"]
                 DEB[Dynamic Energy<br/>Budget]:::energy
                 GUT[Gut Model<br/>Food processing]:::energy
                 RESERVES[Energy Reserves<br/>E, E_R, E_H]:::energy
             end
         end
-        
+
         subgraph FROM_BASECONTROLLER ["From BaseController"]
             PHYSICS[Physics Parameters]:::physics
             MOTION[Motion Control<br/>lin/ang velocity<br/>force/torque modes]:::physics
             BODYMECH[Body Mechanics<br/>spring constant<br/>damping<br/>bend correction]:::physics
         end
     end
-    
+
     %% Main connections
     AGENT --> SEGMENTS
     AGENT --> BRAIN
     AGENT --> DEB
     AGENT --> PHYSICS
-    
+
     %% Brain structure
     BRAIN --> OLFACTOR
     BRAIN --> TOUCHER
@@ -83,22 +85,22 @@ graph TB
     BRAIN --> THERMOSENSOR
     BRAIN --> LOCOMOTOR
     BRAIN -.-> MEMORY
-    
+
     %% Locomotor structure
     LOCOMOTOR --> CRAWLER
     LOCOMOTOR --> TURNER
     LOCOMOTOR --> FEEDER
     LOCOMOTOR --> INTERMITTER
     LOCOMOTOR --> INTERFERENCE
-    
+
     %% DEB structure
     DEB --> GUT
     DEB --> RESERVES
-    
+
     %% Physics structure
     PHYSICS --> MOTION
     PHYSICS --> BODYMECH
-    
+
     %% Functional flows
     SEGMENTS -.->|Sensing| OLFACTOR
     SEGMENTS -.->|Sensing| TOUCHER
@@ -107,7 +109,7 @@ graph TB
     BODYMECH -.->|Body mechanics| SEGMENTS
     FEEDER -.->|Feeding| GUT
     DEB -.->|Metabolism| SEGMENTS
-    
+
     %% Color definitions
     classDef agent fill:#2c3e50,stroke:#34495e,stroke-width:3px,color:#ffffff
     classDef body fill:#e74c3c,stroke:#c0392b,stroke-width:2px,color:#ffffff
@@ -124,8 +126,8 @@ graph TB
 
 ## Verification Data
 
-**Status:** ✅ VERIFIED with actual codebase  
-**Date:** November 19, 2025  
+**Status:** ✅ VERIFIED with actual codebase
+**Date:** November 19, 2025
 **Source:** `/src/larvaworld/lib/model/agents/_larva.py`, `/src/larvaworld/lib/model/agents/_larva_sim.py`, `/src/larvaworld/lib/model/modules/`
 
 ### Multiple Inheritance Structure ✅
@@ -142,7 +144,7 @@ class LarvaSim(LarvaMotile, BaseController):
     collision detection, and arena boundary handling.
     """
     __displayname__ = "Simulated larva"
-    
+
     def __init__(self, physics={}, Box2D={}, sensorimotor=None, **kwargs):
         BaseController.__init__(self, **physics)  # Initialize physics
         LarvaMotile.__init__(self, **kwargs)      # Initialize behavior
@@ -158,6 +160,7 @@ class LarvaSim(LarvaMotile, BaseController):
 **Display Name**: `"Behaving & growing larva"` (line 329)
 
 **Initialization** (`_larva.py`, lines 331-344):
+
 ```python
 def __init__(self, brain, energetics, life_history, body, **kwargs):
     super().__init__(**body, **kwargs)  # LarvaSegmented initialization
@@ -169,6 +172,7 @@ def __init__(self, brain, energetics, life_history, body, **kwargs):
 ```
 
 **Components from LarvaMotile**:
+
 - `brain`: Brain instance (DefaultBrain or NengoBrain)
   - `brain.olfactor`, `brain.toucher`, `brain.windsensor`, `brain.thermosensor`
   - `brain.locomotor` (contains crawler, turner, feeder, intermitter, interference)
@@ -185,6 +189,7 @@ def __init__(self, brain, energetics, life_history, body, **kwargs):
 **Class**: `BaseController` (`_larva_sim.py`, line 35)
 
 **Initialization** (`_larva_sim.py`, lines 35-76):
+
 ```python
 class BaseController(param.Parameterized):
     """
@@ -199,24 +204,25 @@ class BaseController(param.Parameterized):
     ang_vel_coef = PositiveNumber(1.0)
     lin_force_coef = PositiveNumber(1.0)
     torque_coef = PositiveNumber(0.5)
-    
+
     # Body mechanics
     body_spring_k = PositiveNumber(1.0, doc="Torsional spring constant")
     bend_correction_coef = PositiveNumber(1.0)
-    
+
     # Damping
     lin_damping = PositiveNumber(1.0)
     ang_damping = PositiveNumber(1.0)
-    
+
     # Motion modes
     lin_mode = param.Selector(objects=["velocity", "force", "impulse"])
     ang_mode = param.Selector(objects=["torque", "velocity"])
 ```
 
 **Components from BaseController**:
+
 - **Physics Parameters**: velocity/force/torque coefficients
 - **Motion Control**: lin_mode, ang_mode (velocity/force/torque/impulse)
-- **Body Mechanics**: 
+- **Body Mechanics**:
   - `body_spring_k`: Torsional spring for body bending
   - `bend_correction_coef`: Bend angle correction
   - `lin_damping`, `ang_damping`: Damping coefficients
@@ -227,6 +233,7 @@ class BaseController(param.Parameterized):
 ### Integration in LarvaSim ✅
 
 **Initialization Order** (`_larva_sim.py`, lines 146-148):
+
 ```python
 def __init__(self, physics={}, Box2D={}, sensorimotor=None, **kwargs):
     BaseController.__init__(self, **physics)  # 1. Initialize physics first
@@ -235,6 +242,7 @@ def __init__(self, physics={}, Box2D={}, sensorimotor=None, **kwargs):
 ```
 
 **Key Integration Points**:
+
 1. **Locomotor → Motion Control**: Brain.locomotor generates (lin_vel, ang_vel, feeder_motion)
 2. **Motion Control → Physics**: BaseController applies physics parameters to velocities
 3. **Physics → Body**: Final motion is applied to segmented body with damping, spring, etc.
@@ -318,32 +326,35 @@ larva.step()
 
 ### Comparison: LarvaMotile vs LarvaSim ✅
 
-| Feature | LarvaMotile | LarvaSim |
-|---------|-------------|----------|
-| **Inheritance** | `LarvaMotile(LarvaSegmented)` | `LarvaSim(LarvaMotile, BaseController)` |
-| **Brain** | ✅ Yes | ✅ Inherited from LarvaMotile |
-| **DEB** | ✅ Yes | ✅ Inherited from LarvaMotile |
-| **Sensors** | ✅ Yes (in brain) | ✅ Inherited from LarvaMotile |
-| **Locomotor** | ✅ Yes (in brain) | ✅ Inherited from LarvaMotile |
-| **Physics Control** | ❌ No | ✅ From BaseController |
-| **Body Mechanics** | ❌ No | ✅ From BaseController |
-| **Motion Modes** | ❌ No | ✅ From BaseController |
-| **Collision Detection** | ❌ No | ✅ Added in LarvaSim |
-| **Use Case** | Abstract behavioral model | Fully simulated larva with physics |
+| Feature                 | LarvaMotile                   | LarvaSim                                |
+| ----------------------- | ----------------------------- | --------------------------------------- |
+| **Inheritance**         | `LarvaMotile(LarvaSegmented)` | `LarvaSim(LarvaMotile, BaseController)` |
+| **Brain**               | ✅ Yes                        | ✅ Inherited from LarvaMotile           |
+| **DEB**                 | ✅ Yes                        | ✅ Inherited from LarvaMotile           |
+| **Sensors**             | ✅ Yes (in brain)             | ✅ Inherited from LarvaMotile           |
+| **Locomotor**           | ✅ Yes (in brain)             | ✅ Inherited from LarvaMotile           |
+| **Physics Control**     | ❌ No                         | ✅ From BaseController                  |
+| **Body Mechanics**      | ❌ No                         | ✅ From BaseController                  |
+| **Motion Modes**        | ❌ No                         | ✅ From BaseController                  |
+| **Collision Detection** | ❌ No                         | ✅ Added in LarvaSim                    |
+| **Use Case**            | Abstract behavioral model     | Fully simulated larva with physics      |
 
 ### Why LarvaSim, not just LarvaMotile? ✅
 
 **LarvaMotile** provides:
+
 - Behavioral decision-making (brain)
 - Energetics and growth (DEB)
 - Raw motor commands (lin_vel, ang_vel)
 
 **BaseController** adds:
+
 - Physics realism (damping, spring constants)
 - Motion control modes (velocity/force/torque)
 - Body mechanics (torsional spring, bend correction)
 
 **LarvaSim** combines both to create a **fully physically-simulated larva** that:
+
 1. Makes behavioral decisions based on sensory input
 2. Generates motor commands through locomotor modules
 3. Applies realistic physics to those commands
@@ -376,13 +387,13 @@ multiple inheritance:
 ``LarvaMotile`` provides behavioral capabilities:
 
 - **Brain**: Sensory processing and decision-making
-  
+
   - Sensors: ``olfactor``, ``toucher``, ``windsensor``, ``thermosensor``
   - Locomotor: Coordinates behavioral modules
   - Memory: Optional RL/MB learning
 
 - **DEB Model**: Metabolism and growth
-  
+
   - Gut model for food processing
   - Energy reserves (E, E_R, E_H)
 
@@ -393,12 +404,12 @@ multiple inheritance:
 ``BaseController`` provides physics simulation:
 
 - **Physics Parameters**
-  
+
   - Velocity/force/torque coefficients
   - Motion control modes (velocity/force/impulse)
 
 - **Body Mechanics**
-  
+
   - Torsional spring constant (``body_spring_k``)
   - Damping coefficients (``lin_damping``, ``ang_damping``)
   - Bend correction factor

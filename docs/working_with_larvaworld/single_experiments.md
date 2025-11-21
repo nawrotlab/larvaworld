@@ -30,29 +30,29 @@ graph TB
         Larvae[N larvae<br/>Uniform distribution]
         Duration[3-10 minutes<br/>Free movement]
     end
-    
+
     subgraph "Metrics"
         Dispersion[Dispersion Index<br/>Spatial spread over time]
         Velocity[Velocity Distribution<br/>Speed patterns]
         Tortuosity[Path Tortuosity<br/>Trajectory straightness]
         Activity[Activity Patterns<br/>Runs, turns, pauses]
     end
-    
+
     subgraph "Applications"
         Baseline[Baseline Behavior<br/>Control experiments]
         Validation[Model Validation<br/>Compare to real data]
         Phenotype[Phenotype Screening<br/>Behavioral differences]
     end
-    
+
     Arena --> Dispersion
     Larvae --> Velocity
     Duration --> Tortuosity
-    
+
     Dispersion --> Baseline
     Velocity --> Validation
     Tortuosity --> Phenotype
     Activity --> Phenotype
-    
+
     style Arena fill:#2196f3,stroke:#1976d2,stroke-width:2px,color:#fff
     style Dispersion fill:#f44336,stroke:#d32f2f,stroke-width:2px,color:#fff
     style Baseline fill:#4caf50,stroke:#388e3c,stroke-width:2px,color:#000
@@ -65,6 +65,7 @@ larvaworld Exp dish -N 10 -duration 5.0
 ```
 
 **Parameters**:
+
 - `-N 10`: 10 larvae
 - `-duration 5.0`: 5 minutes simulated time
 
@@ -94,15 +95,15 @@ print(f"Duration: {dataset.config.duration} min")
 
 **Computed automatically** by Larvaworld:
 
-| Metric | Description | Unit |
-|--------|-------------|------|
-| **Dispersion Index** | Spatial spread over time | cm |
-| **Linear Velocity** | Forward speed distribution | mm/s |
-| **Angular Velocity** | Turning rate distribution | rad/s |
-| **Tortuosity** | Path straightness | dimensionless |
-| **Activity Index** | Fraction of time active | 0-1 |
-| **Stride Frequency** | Crawling frequency | Hz |
-| **Turn Rate** | Reorientation frequency | 1/s |
+| Metric               | Description                | Unit          |
+| -------------------- | -------------------------- | ------------- |
+| **Dispersion Index** | Spatial spread over time   | cm            |
+| **Linear Velocity**  | Forward speed distribution | mm/s          |
+| **Angular Velocity** | Turning rate distribution  | rad/s         |
+| **Tortuosity**       | Path straightness          | dimensionless |
+| **Activity Index**   | Fraction of time active    | 0-1           |
+| **Stride Frequency** | Crawling frequency         | Hz            |
+| **Turn Rate**        | Reorientation frequency    | 1/s           |
 
 ### Analysis Example
 
@@ -146,26 +147,26 @@ sequenceDiagram
     participant L as Larvae
     participant E as Environment
     participant M as Memory System
-    
+
     Note over L,E: Pre-Test Phase
     L->>E: Naive odor preference
     E-->>L: Odor A & B present
     Note over M: Baseline preference (PI₀)
-    
+
     Note over L,E: Training Phase
     L->>E: Conditioning
     E-->>L: Odor A + Food (CS+)
     E-->>L: Odor B alone (CS-)
     L->>M: Associate A with food (reward signal)
     Note over M: Q-learning updates gain
-    
+
     Note over L,E: Test Phase
     L->>E: Trained preference
     E-->>L: Odor A & B present (no food)
     M->>L: Recall association (high gain for A)
     L->>E: Prefer Odor A
     Note over M: Memory expressed (PI > PI₀)
-    
+
     Note over L,E: Post-Test
     L->>E: Extinction or retention
     Note over M: Memory decay analysis
@@ -173,12 +174,12 @@ sequenceDiagram
 
 ### Experimental Phases
 
-| Phase | Duration | Odor A | Odor B | Food | Purpose |
-|-------|----------|--------|--------|------|---------|
-| **Pre-Test** | 3 min | Present | Present | Absent | Baseline preference (PI₀) |
-| **Training** | 10 min | Present | Present | With A only | Conditioning (CS+/CS-) |
-| **Test** | 3 min | Present | Present | Absent | Memory expression (PI) |
-| **Post-Test** | 3 min | Present | Present | Absent | Memory retention |
+| Phase         | Duration | Odor A  | Odor B  | Food        | Purpose                   |
+| ------------- | -------- | ------- | ------- | ----------- | ------------------------- |
+| **Pre-Test**  | 3 min    | Present | Present | Absent      | Baseline preference (PI₀) |
+| **Training**  | 10 min   | Present | Present | With A only | Conditioning (CS+/CS-)    |
+| **Test**      | 3 min    | Present | Present | Absent      | Memory expression (PI)    |
+| **Post-Test** | 3 min    | Present | Present | Absent      | Memory retention          |
 
 ### Running Training Phase
 
@@ -241,10 +242,12 @@ print(f"Learning effect: {PI_trained - PI_baseline:.3f}")
 **Definition**: `PI = (N_CS+ - N_CS-) / (N_CS+ + N_CS-)`
 
 Where:
+
 - `N_CS+`: Time spent near odor associated with food
 - `N_CS-`: Time spent near control odor
 
 **Interpretation**:
+
 - `PI = 0`: No preference
 - `PI > 0`: Preference for CS+ (learning)
 - `PI < 0`: Avoidance of CS+
@@ -342,7 +345,7 @@ Override default parameters:
 ```python
 run = ExpRun(
     experiment="chemotaxis",
-    
+
     # Environment customization
     env_params={
         "arena": {"geometry": [0.15, 0.15]},  # 15cm x 15cm
@@ -352,16 +355,16 @@ run = ExpRun(
             ]
         }
     },
-    
+
     # Agent customization
     larva_groups=[
         {"model": "navigator", "N": 30, "age": 72.0}
     ],
-    
+
     # Simulation settings
     duration=10.0,
     dt=0.1,
-    
+
     # Visualization
     screen_kws={"vis_mode": "video", "video_name": "chemotaxis.mp4"}
 )

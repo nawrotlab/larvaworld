@@ -17,13 +17,13 @@ pie title Larvaworld Code Distribution
     "Comments (1,115)" : 1115
 ```
 
-| Category | Lines | Percentage | Description |
-|----------|-------|------------|-------------|
-| **Core Logic** | 48,451 | 61% | Source code without comments/blanks/docstrings |
-| **Tests** | 11,401 | 14% | Test suite ensuring code quality |
-| **Docstrings** | 10,169 | 13% | Embedded documentation |
-| **Whitespace** | 8,237 | 10% | Blank lines for readability |
-| **Comments** | 1,115 | 1% | Inline explanatory comments |
+| Category       | Lines  | Percentage | Description                                    |
+| -------------- | ------ | ---------- | ---------------------------------------------- |
+| **Core Logic** | 48,451 | 61%        | Source code without comments/blanks/docstrings |
+| **Tests**      | 11,401 | 14%        | Test suite ensuring code quality               |
+| **Docstrings** | 10,169 | 13%        | Embedded documentation                         |
+| **Whitespace** | 8,237  | 10%        | Blank lines for readability                    |
+| **Comments**   | 1,115  | 1%         | Inline explanatory comments                    |
 
 :::{note}
 The high documentation ratio (13% docstrings) and strong test coverage (14% tests) demonstrate a commitment to code quality and maintainability.
@@ -42,13 +42,13 @@ pie title File Count by Category
     "Scripts (5)" : 5
 ```
 
-| Category | Count | Description |
-|----------|-------|-------------|
-| **Source Code** | 310 | Python modules implementing Larvaworld |
-| **Tests** | 66 | Test files (pytest suite) |
-| **Configuration** | 15 | `pyproject.toml`, CI/CD, pre-commit |
-| **Documentation** | 8 | Markdown, RST, Sphinx config |
-| **Scripts** | 5 | Utility scripts for development |
+| Category          | Count | Description                            |
+| ----------------- | ----- | -------------------------------------- |
+| **Source Code**   | 310   | Python modules implementing Larvaworld |
+| **Tests**         | 66    | Test files (pytest suite)              |
+| **Configuration** | 15    | `pyproject.toml`, CI/CD, pre-commit    |
+| **Documentation** | 8     | Markdown, RST, Sphinx config           |
+| **Scripts**       | 5     | Utility scripts for development        |
 
 ---
 
@@ -68,16 +68,16 @@ pie title Lines of Code by Module
     "param (1,510)" : 1510
 ```
 
-| Module | Lines | Percentage | Purpose |
-|--------|-------|------------|---------|
-| **model** | 15,243 | 29% | Agent models (larvae, brains, modules) |
-| **sim** | 9,872 | 19% | Simulation engine (Exp, Batch, GA, Eval) |
-| **reg** | 8,456 | 16% | Configuration registry and generators |
-| **process** | 6,789 | 13% | Data processing and analysis |
-| **plot** | 5,123 | 10% | Plotting and visualization |
-| **screen** | 3,891 | 7% | Real-time rendering (Pygame) |
-| **util** | 2,567 | 5% | Utilities and helper functions |
-| **param** | 1,510 | 3% | Parameter definitions and validation |
+| Module      | Lines  | Percentage | Purpose                                  |
+| ----------- | ------ | ---------- | ---------------------------------------- |
+| **model**   | 15,243 | 29%        | Agent models (larvae, brains, modules)   |
+| **sim**     | 9,872  | 19%        | Simulation engine (Exp, Batch, GA, Eval) |
+| **reg**     | 8,456  | 16%        | Configuration registry and generators    |
+| **process** | 6,789  | 13%        | Data processing and analysis             |
+| **plot**    | 5,123  | 10%        | Plotting and visualization               |
+| **screen**  | 3,891  | 7%         | Real-time rendering (Pygame)             |
+| **util**    | 2,567  | 5%         | Utilities and helper functions           |
+| **param**   | 1,510  | 3%         | Parameter definitions and validation     |
 
 ---
 
@@ -257,14 +257,14 @@ lib/
 
 ## Code Quality Metrics
 
-| Metric | Value | Interpretation |
-|--------|-------|----------------|
-| **Documentation Coverage** | 13% | Excellent (typical is 5-10%) |
-| **Test Coverage** | 14% lines | Strong (nearly 1:5 test-to-code ratio) |
-| **Docstring/Code Ratio** | 1:4.7 | Very good |
-| **Test/Code Ratio** | 1:4.2 | Robust |
-| **Average Module Size** | ~156 lines | Well-factored |
-| **Files per Module** | ~39 | Modular |
+| Metric                     | Value      | Interpretation                         |
+| -------------------------- | ---------- | -------------------------------------- |
+| **Documentation Coverage** | 13%        | Excellent (typical is 5-10%)           |
+| **Test Coverage**          | 14% lines  | Strong (nearly 1:5 test-to-code ratio) |
+| **Docstring/Code Ratio**   | 1:4.7      | Very good                              |
+| **Test/Code Ratio**        | 1:4.2      | Robust                                 |
+| **Average Module Size**    | ~156 lines | Well-factored                          |
+| **Files per Module**       | ~39        | Modular                                |
 
 ---
 

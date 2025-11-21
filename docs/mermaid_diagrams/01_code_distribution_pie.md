@@ -13,6 +13,7 @@ This pie chart visualizes **how the Larvaworld codebase is organized by line cou
 ### Why This Matters
 
 This distribution demonstrates:
+
 - ✅ **High code-to-documentation ratio**: 13% docstrings shows excellent documentation coverage
 - ✅ **Strong test coverage**: 14% test code (nearly 1:5 ratio) indicates robust quality assurance
 - ✅ **Readable codebase**: 10% whitespace shows attention to code formatting and readability
@@ -39,23 +40,24 @@ pie title Larvaworld Code Distribution
 
 ## Verification Data
 
-**Status:** ✅ VERIFIED with actual codebase analysis  
-**Date:** November 18, 2025  
+**Status:** ✅ VERIFIED with actual codebase analysis
+**Date:** November 18, 2025
 **Total Lines:** 79,373
 
 ### Breakdown by Category
 
-| Category | Lines | Percentage | Description |
-|----------|-------|------------|-------------|
-| **Core Logic** | 48,451 | 61% | Source code without comments/blanks/docstrings |
-| **Tests** | 11,401 | 14% | All test files |
-| **Docstrings** | 10,169 | 13% | API documentation (verified with AST parsing) |
-| **Whitespace** | 8,237 | 10% | Blank lines in source |
-| **Comments** | 1,115 | 1% | Inline # comments |
+| Category       | Lines  | Percentage | Description                                    |
+| -------------- | ------ | ---------- | ---------------------------------------------- |
+| **Core Logic** | 48,451 | 61%        | Source code without comments/blanks/docstrings |
+| **Tests**      | 11,401 | 14%        | All test files                                 |
+| **Docstrings** | 10,169 | 13%        | API documentation (verified with AST parsing)  |
+| **Whitespace** | 8,237  | 10%        | Blank lines in source                          |
+| **Comments**   | 1,115  | 1%         | Inline # comments                              |
 
 ### Source Breakdown
 
 **SOURCE CODE (src/larvaworld/):**
+
 - Total lines: 57,803
 - Code lines: 48,451
 - Blank lines: 8,237
@@ -63,6 +65,7 @@ pie title Larvaworld Code Distribution
 - Docstring lines: 10,169
 
 **TEST CODE (tests/):**
+
 - Total lines: 11,401
 - Code lines: 7,723
 - Blank lines: 2,594

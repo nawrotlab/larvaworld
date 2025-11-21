@@ -13,12 +13,15 @@
 This figure provides a comprehensive overview of the Larvaworld platform architecture, showing:
 
 ### Main Components:
+
 1. **User Interfaces**
+
    - Command Line Interface (CLI)
    - Web-based applications
    - GUI (deprecated/legacy)
 
 2. **Core Modules**
+
    - Simulation engine
    - Agent modeling (larvae)
    - Environment modeling
@@ -34,6 +37,7 @@ This figure provides a comprehensive overview of the Larvaworld platform archite
 ### Purpose
 
 This architecture diagram is intended to:
+
 - ✅ **Central placement** in documentation (developer request)
 - ✅ Give newcomers a high-level understanding of the platform
 - ✅ Show how different components interact
@@ -55,15 +59,15 @@ Platform Architecture
    :alt: Larvaworld Architecture Overview
    :align: center
    :width: 100%
-   
-   **Figure 1**: Larvaworld architecture. A schematic of the main components 
-   and functionalities of the platform. The architecture demonstrates the 
-   modular design with clear separation between user interfaces, core engine, 
+
+   **Figure 1**: Larvaworld architecture. A schematic of the main components
+   and functionalities of the platform. The architecture demonstrates the
+   modular design with clear separation between user interfaces, core engine,
    modeling layers, and data processing pipelines.
 
-Larvaworld is built around a modular architecture that separates concerns and 
-enables flexible extension. The platform can be accessed through multiple 
-interfaces (CLI, web apps, Python library) while maintaining a unified core 
+Larvaworld is built around a modular architecture that separates concerns and
+enables flexible extension. The platform can be accessed through multiple
+interfaces (CLI, web apps, Python library) while maintaining a unified core
 engine for simulation and analysis.
 ```
 
@@ -75,4 +79,3 @@ engine for simulation and analysis.
 - **File**: `/images/architecture.png`
 - **Caption** (LaTeX line 320): "Larvaworld architecture. A schematic of the main components and functionalities of Larvaworld."
 - **Label**: `fig:architecture`
-

@@ -7,6 +7,7 @@ This diagram compares the **five simulation modes** available in Larvaworld, sho
 ### Why This Matters
 
 Understanding simulation types enables users to:
+
 - ✅ **Choose the right tool**: Match simulation mode to research question
 - ✅ **Optimize workflow**: Use parallel execution when appropriate
 - ✅ **Compare systematically**: Understand trade-offs between modes
@@ -28,31 +29,31 @@ graph TB
         E2[One or multiple agents<br/>Fixed parameters]
         E3[Output: Dataset + Video]
     end
-    
+
     subgraph "Batch Run - Batch"
         B1[Multiple simulations<br/>Parameter sweep]
         B2[Parallel execution<br/>Different conditions]
         B3[Output: Multiple datasets<br/>Comparative analysis]
     end
-    
+
     subgraph "Genetic Algorithm - Ga"
         G1[Optimization loop<br/>Evolutionary search]
         G2[Population of genomes<br/>Fitness evaluation]
         G3[Output: Best genome<br/>Evolution history]
     end
-    
+
     subgraph "Model Evaluation - Eval"
         V1[Compare models<br/>Against reference data]
         V2[Multiple model configs<br/>Fixed reference dataset]
         V3[Output: Statistical comparison<br/>KS test results]
     end
-    
+
     subgraph "Dataset Replay - Replay"
         R1[Replay real data<br/>Visualization only]
         R2[Tracked trajectories<br/>From experiments]
         R3[Output: Video + Plots<br/>No simulation]
     end
-    
+
     style E1 fill:#2196f3,stroke:#1976d2,stroke-width:2px,color:#fff
     style B1 fill:#4caf50,stroke:#388e3c,stroke-width:2px,color:#000
     style G1 fill:#9c27b0,stroke:#7b1fa2,stroke-width:2px,color:#fff
@@ -64,8 +65,8 @@ graph TB
 
 ## Verification Data
 
-**Status:** ✅ VERIFIED with actual codebase  
-**Date:** November 19, 2025  
+**Status:** ✅ VERIFIED with actual codebase
+**Date:** November 19, 2025
 **Source:** `/src/larvaworld/lib/sim/`
 
 ### Mode 1: Single Experiment (Exp) ✅
@@ -75,6 +76,7 @@ graph TB
 **Purpose**: Run a single simulation with fixed parameters
 
 **Characteristics**:
+
 - **Configuration**: One experiment ID (e.g., `'chemotaxis'`, `'dish'`)
 - **Agents**: N larvae with specified model (e.g., `mID='explorer'`, `N=10`)
 - **Parameters**: Fixed throughout simulation
@@ -83,12 +85,14 @@ graph TB
 - **Timesteps**: All agents step synchronously
 
 **Outputs**:
+
 - **Dataset**: Single `LarvaDataset` with pose, brain data
 - **Video**: Optional real-time rendering or export (MP4, AVI)
 - **Plots**: Analysis figures via `exp.analyze()`
 - **HDF5**: Stored in `DATA/SimGroup/exp_runs/{experiment}/{id}/`
 
 **Use Cases**:
+
 - Exploratory testing
 - Video generation for presentations
 - Single condition analysis
@@ -97,6 +101,7 @@ graph TB
 **CLI**: `larvaworld Exp chemotaxis -N 20 -duration 5.0`
 
 **Code**:
+
 ```python
 from larvaworld.lib.sim import ExpRun
 exp = ExpRun(experiment='chemotaxis', duration=5.0)
@@ -113,6 +118,7 @@ dataset = exp.datasets[0]
 **Purpose**: Run multiple simulations with parameter variations
 
 **Characteristics**:
+
 - **Configuration**: One experiment ID + parameter sweep
 - **Agents**: Multiple agent configurations
 - **Parameters**: Varied across runs (e.g., `N=[10, 20, 30]`)
@@ -121,12 +127,14 @@ dataset = exp.datasets[0]
 - **Sampling**: Parameter combinations via `sample_space`
 
 **Outputs**:
+
 - **Datasets**: Multiple `LarvaDataset` objects (one per run)
 - **Summary**: Aggregated results across conditions
 - **Comparison**: Statistical analysis across parameter space
 - **Storage**: `DATA/SimGroup/batch_runs/{experiment}/`
 
 **Use Cases**:
+
 - Parameter sensitivity analysis
 - Robustness testing
 - Comparative studies
@@ -137,6 +145,7 @@ dataset = exp.datasets[0]
 **CLI**: `larvaworld Batch PItest_off -Nsims 10`
 
 **Code**:
+
 ```python
 from larvaworld.lib import reg
 from larvaworld.lib.sim import BatchRun
@@ -158,6 +167,7 @@ par_df, figs = batch.simulate(n_jobs=4)
 **Purpose**: Optimize model parameters using evolutionary algorithm
 
 **Characteristics**:
+
 - **Configuration**: Base experiment + parameter space to optimize
 - **Genomes**: Population of parameter sets
 - **Fitness**: Evaluated against reference data or target metrics
@@ -166,6 +176,7 @@ par_df, figs = batch.simulate(n_jobs=4)
 - **Population size**: `Nagents` genomes per generation
 
 **Outputs**:
+
 - **Best Genome**: Optimized parameter set
 - **Evolution History**: Fitness over generations
 - **Final Population**: All genomes with fitness scores
@@ -173,6 +184,7 @@ par_df, figs = batch.simulate(n_jobs=4)
 - **Storage**: `DATA/SimGroup/ga_runs/{experiment}/`
 
 **Use Cases**:
+
 - Model parameter fitting
 - Behavior matching to real data
 - Multi-objective optimization
@@ -181,6 +193,7 @@ par_df, figs = batch.simulate(n_jobs=4)
 **CLI**: `larvaworld Ga exploration -Ngenerations 50`
 
 **Code**:
+
 ```python
 from larvaworld.lib import reg
 from larvaworld.lib.sim.genetic_algorithm import GAevaluation, optimize_mID
@@ -211,6 +224,7 @@ best_conf = results["explorer"]  # Optimized model configuration
 **Purpose**: Compare multiple models against reference dataset
 
 **Characteristics**:
+
 - **Configuration**: Multiple model IDs + reference dataset
 - **Models**: Different behavioral configurations to compare
 - **Reference**: Real experimental data (`refID`)
@@ -219,6 +233,7 @@ best_conf = results["explorer"]  # Optimized model configuration
 - **Repetitions**: Multiple runs per model for robustness
 
 **Outputs**:
+
 - **Comparison Report**: KS D-statistic per metric per model
 - **Statistical Tests**: p-values for each comparison
 - **Plots**: Box plots, trajectories, metric distributions
@@ -226,6 +241,7 @@ best_conf = results["explorer"]  # Optimized model configuration
 - **Storage**: `DATA/SimGroup/eval_runs/{experiment}/`
 
 **Use Cases**:
+
 - Model validation
 - Model selection
 - Behavioral fingerprinting
@@ -234,6 +250,7 @@ best_conf = results["explorer"]  # Optimized model configuration
 **CLI**: `larvaworld Eval -refID exploration.30controls -mIDs explorer navigator`
 
 **Code**:
+
 ```python
 from larvaworld.lib.sim import EvalRun
 
@@ -261,6 +278,7 @@ print(eval_run.error_dict['step'])  # Distribution metric errors
 **Purpose**: Visualize real tracked data without simulation
 
 **Characteristics**:
+
 - **Configuration**: Reference dataset ID
 - **No Simulation**: No agent stepping, no physics
 - **Replay Only**: Playback of recorded trajectories
@@ -269,12 +287,14 @@ print(eval_run.error_dict['step'])  # Distribution metric errors
 - **Fast**: No computational overhead of simulation
 
 **Outputs**:
+
 - **Video**: Rendered trajectories (MP4, AVI)
 - **Images**: Snapshots at specific timepoints
 - **Plots**: Same analysis as simulation data
 - **No HDF5**: Uses existing reference dataset
 
 **Use Cases**:
+
 - Visualizing experimental data
 - Creating videos from tracked data
 - Quality control of imported datasets
@@ -283,6 +303,7 @@ print(eval_run.error_dict['step'])  # Distribution metric errors
 **CLI**: `larvaworld Replay -refID exploration.30controls -video_name replay.mp4`
 
 **Code**:
+
 ```python
 from larvaworld.lib.sim import ReplayRun
 
@@ -300,29 +321,31 @@ replay.run()  # No simulation, just visualization
 
 ## Comparison Table
 
-| Feature | Exp | Batch | Ga | Eval | Replay |
-|---------|-----|-------|----|----|--------|
-| **# Simulations** | 1 | N × M × Nsims | Ngenerations × Nagents | Nmodels × Nruns | 0 (replay only) |
-| **Parameter Variation** | Fixed | Sweep | Evolving | Fixed per model | N/A |
-| **Parallel Execution** | No | Yes | Yes | Yes | N/A |
-| **Optimization** | No | No | Yes | No | No |
-| **Reference Data** | Optional | Optional | Required | Required | Required |
-| **Statistical Tests** | No | Optional | Yes (fitness) | Yes (KS tests) | No |
-| **Video Output** | Yes | Optional | Optional | Optional | Yes |
-| **HDF5 Storage** | Yes | Yes | Yes | Yes | No (uses existing) |
-| **Duration** | Minutes | Hours | Hours-Days | Hours | Seconds-Minutes |
-| **Use Case** | Single test | Parameter study | Optimization | Validation | Visualization |
+| Feature                 | Exp         | Batch           | Ga                     | Eval            | Replay             |
+| ----------------------- | ----------- | --------------- | ---------------------- | --------------- | ------------------ |
+| **# Simulations**       | 1           | N × M × Nsims   | Ngenerations × Nagents | Nmodels × Nruns | 0 (replay only)    |
+| **Parameter Variation** | Fixed       | Sweep           | Evolving               | Fixed per model | N/A                |
+| **Parallel Execution**  | No          | Yes             | Yes                    | Yes             | N/A                |
+| **Optimization**        | No          | No              | Yes                    | No              | No                 |
+| **Reference Data**      | Optional    | Optional        | Required               | Required        | Required           |
+| **Statistical Tests**   | No          | Optional        | Yes (fitness)          | Yes (KS tests)  | No                 |
+| **Video Output**        | Yes         | Optional        | Optional               | Optional        | Yes                |
+| **HDF5 Storage**        | Yes         | Yes             | Yes                    | Yes             | No (uses existing) |
+| **Duration**            | Minutes     | Hours           | Hours-Days             | Hours           | Seconds-Minutes    |
+| **Use Case**            | Single test | Parameter study | Optimization           | Validation      | Visualization      |
 
 ---
 
 ## Execution Patterns
 
 ### Sequential (Exp, Replay)
+
 ```
 Run 1 → Dataset 1 → End
 ```
 
 ### Parallel (Batch, Eval)
+
 ```
 Run 1 ─┐
 Run 2 ─┼→ Datasets 1-N → Aggregated Analysis
@@ -330,6 +353,7 @@ Run 3 ─┘
 ```
 
 ### Iterative (Ga)
+
 ```
 Generation 1 → Fitness Evaluation → Selection
     ↓
@@ -342,13 +366,13 @@ Generation N → Best Genome
 
 ## Performance Considerations
 
-| Mode | CPU Usage | Memory | Disk I/O | Time Complexity |
-|------|-----------|--------|----------|----------------|
-| **Exp** | Single core | Low | Low | O(N_steps) |
-| **Batch** | Multi-core | Medium | High | O(N_sims × N_steps) |
-| **Ga** | Multi-core | Medium-High | High | O(N_gen × N_agents × N_steps) |
-| **Eval** | Multi-core | Medium | Medium | O(N_models × N_runs × N_steps) |
-| **Replay** | Single core | Low | Low | O(N_frames) |
+| Mode       | CPU Usage   | Memory      | Disk I/O | Time Complexity                |
+| ---------- | ----------- | ----------- | -------- | ------------------------------ |
+| **Exp**    | Single core | Low         | Low      | O(N_steps)                     |
+| **Batch**  | Multi-core  | Medium      | High     | O(N_sims × N_steps)            |
+| **Ga**     | Multi-core  | Medium-High | High     | O(N_gen × N_agents × N_steps)  |
+| **Eval**   | Multi-core  | Medium      | Medium   | O(N_models × N_runs × N_steps) |
+| **Replay** | Single core | Low         | Low      | O(N_frames)                    |
 
 ---
 

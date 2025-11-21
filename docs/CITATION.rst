@@ -5,7 +5,7 @@ Citing larvaworld
 
 Larvaworld: A behavioral simulation and analysis platform for *Drosophila* larva
 
-Sakagiannis, Panagiotis; Rapp, Hannes; Jovanic, Tihana; Nawrot, Martin Paul.  
+Sakagiannis, Panagiotis; Rapp, Hannes; Jovanic, Tihana; Nawrot, Martin Paul.
 bioRxiv 2025.06.15.659765; https://doi.org/10.1101/2025.06.15.659765
 
 BibTex:

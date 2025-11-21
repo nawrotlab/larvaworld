@@ -9,6 +9,7 @@
 **Web-based Larvaworld application to inspect the modular composition of any preconfigured locomotory larva-model.**
 
 This application allows users to:
+
 1. **Select a model** by its unique ID from a drop-down list of all available models
 2. **View configuration** of all 4 basic modules comprising the locomotory layer:
    - Crawler (peristaltic crawling)
@@ -22,6 +23,7 @@ This application allows users to:
 ## Purpose
 
 This web application demonstrates:
+
 - ✅ **Interactive model exploration**: Browse all available models
 - ✅ **Module inspection**: View detailed configuration of each behavioral module
 - ✅ **Real-time visualization**: Dynamic plots of model behavior
@@ -46,7 +48,7 @@ This is one of several web-based applications available (see **Table 10: Web-bas
 Web-based Applications
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Larvaworld provides several interactive web applications for model exploration 
+Larvaworld provides several interactive web applications for model exploration
 and experimentation.
 
 Model Inspector
@@ -56,11 +58,11 @@ Model Inspector
    :alt: Model Inspector Web Application
    :align: center
    :width: 100%
-   
-   **Figure 8**: Web-based model inspector application. Users can select any 
-   preconfigured locomotory model from a dropdown menu and inspect the 
-   configuration of its four behavioral modules (Crawler, Turner, Feeder, 
-   Intermitter). Real-time simulation variables are plotted dynamically in 
+
+   **Figure 8**: Web-based model inspector application. Users can select any
+   preconfigured locomotory model from a dropdown menu and inspect the
+   configuration of its four behavioral modules (Crawler, Turner, Feeder,
+   Intermitter). Real-time simulation variables are plotted dynamically in
    the central panel.
 
 **Features:**
@@ -75,7 +77,7 @@ Model Inspector
 For a complete list of web-based tools, see :ref:`table-web-applications`.
 
 .. note::
-   Web applications are currently under active development. Some features 
+   Web applications are currently under active development. Some features
    may not work as expected and will be improved in future releases.
 
 **Launching Web Apps:**
@@ -84,7 +86,7 @@ For a complete list of web-based tools, see :ref:`table-web-applications`.
 
    # Launch model inspector app
    larvaworld -app model_inspector
-   
+
    # Launch all apps dashboard
    larvaworld -app all
 
@@ -106,14 +108,17 @@ The applications will open in your default web browser at ``localhost:5006``.
 ### Modules Shown in Application:
 
 1. **Crawler Module**
+
    - Frequency, amplitude, phase
    - Peristaltic wave parameters
 
 2. **Turner Module**
+
    - Turn amplitude, frequency
    - Reorientation parameters
 
 3. **Feeder Module**
+
    - Head-sweeping parameters
    - Feeding triggers
 
@@ -137,4 +142,3 @@ The applications will open in your default web browser at ``localhost:5006``.
 - **Caption** (LaTeX lines 872-873)
 - **Label**: `fig:app.models`
 - **Related**: Table 5 (Web-based applications) in paper (Table 10 in our docs)
-

@@ -40,6 +40,7 @@ larvaworld Exp dish -N 5 -duration 3.0
 ```
 
 **What happens:**
+
 - 5 larvae are placed in a circular arena (Petri dish)
 - The simulation runs for 3 minutes (simulated time)
 - A visualization window opens showing the larvae exploring
@@ -47,13 +48,13 @@ larvaworld Exp dish -N 5 -duration 3.0
 
 ### Common CLI Options
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| `-N`, `--Nagents` | Number of larvae | `-N 20` |
-| `--duration` | Simulation duration (minutes) | `--duration 10.0` |
-| `--dt` | Simulation timestep (seconds) | `--dt 0.05` |
-| `--Box2D` | Enable Box2D physics engine | `--Box2D` |
-| `--show_display` | Show pygame visualization window | `--show_display` |
+| Option            | Description                      | Example           |
+| ----------------- | -------------------------------- | ----------------- |
+| `-N`, `--Nagents` | Number of larvae                 | `-N 20`           |
+| `--duration`      | Simulation duration (minutes)    | `--duration 10.0` |
+| `--dt`            | Simulation timestep (seconds)    | `--dt 0.05`       |
+| `--Box2D`         | Enable Box2D physics engine      | `--Box2D`         |
+| `--show_display`  | Show pygame visualization window | `--show_display`  |
 
 ### Save Output to a Custom Directory
 
@@ -145,13 +146,13 @@ print(dataset.s)   # Step-wise data
 
 Larvaworld supports **five simulation modes**, each accessed via a different run class:
 
-| Mode | Python Class | CLI Command | Use Case |
-|------|--------------|-------------|----------|
-| **Exp** | `ExpRun` | `larvaworld Exp <experiment>` | Single behavioral experiment |
-| **Batch** | `BatchRun` | `larvaworld Batch <batch_id>` | Parameter sweeps (advanced) |
-| **Eval** | `EvalRun` | `larvaworld Eval <refID>` | Model evaluation vs. data |
-| **Replay** | `ReplayRun` | `larvaworld Replay <dataset>` | Visualize existing datasets |
-| **Ga** | `optimize_mID` | `larvaworld Ga <config>` | Genetic algorithm optimization |
+| Mode       | Python Class   | CLI Command                   | Use Case                       |
+| ---------- | -------------- | ----------------------------- | ------------------------------ |
+| **Exp**    | `ExpRun`       | `larvaworld Exp <experiment>` | Single behavioral experiment   |
+| **Batch**  | `BatchRun`     | `larvaworld Batch <batch_id>` | Parameter sweeps (advanced)    |
+| **Eval**   | `EvalRun`      | `larvaworld Eval <refID>`     | Model evaluation vs. data      |
+| **Replay** | `ReplayRun`    | `larvaworld Replay <dataset>` | Visualize existing datasets    |
+| **Ga**     | `optimize_mID` | `larvaworld Ga <config>`      | Genetic algorithm optimization |
 
 For a complete guide to simulation modes, see {doc}`concepts/simulation_modes`.
 

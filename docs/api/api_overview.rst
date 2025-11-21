@@ -100,4 +100,3 @@ Related Documentation
 - :doc:`../concepts/architecture_overview` - Platform architecture
 - :doc:`../working_with_larvaworld/index` - Workflow guides
 - :doc:`../tutorials/index` - Step-by-step tutorials
-

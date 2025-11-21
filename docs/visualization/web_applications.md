@@ -16,13 +16,13 @@ larvaworld-app
 
 ## Available Dashboards
 
-| Dashboard | Purpose |
-|-----------|---------|
-| **Experiment Viewer** | View experiment results interactively |
-| **Track Viewer** | Inspect trajectories |
-| **Model Inspector** | Explore locomotory models |
-| **Module Inspector** | Inspect behavioral modules |
-| **Neural Oscillator Inspector** | Visualize neural oscillators |
+| Dashboard                       | Purpose                               |
+| ------------------------------- | ------------------------------------- |
+| **Experiment Viewer**           | View experiment results interactively |
+| **Track Viewer**                | Inspect trajectories                  |
+| **Model Inspector**             | Explore locomotory models             |
+| **Module Inspector**            | Inspect behavioral modules            |
+| **Neural Oscillator Inspector** | Visualize neural oscillators          |
 
 ---
 
@@ -31,6 +31,7 @@ larvaworld-app
 **Purpose**: Interactive exploration of simulation results
 
 **Features**:
+
 - Load saved experiments
 - Plot trajectories, metrics, distributions
 - Filter by time window, agent ID
@@ -45,6 +46,7 @@ larvaworld-app
 **Purpose**: Detailed trajectory inspection
 
 **Features**:
+
 - 2D trajectory plots
 - Velocity/acceleration profiles
 - Zoom and pan
@@ -57,6 +59,7 @@ larvaworld-app
 **Purpose**: Explore model parameters
 
 **Features**:
+
 - Browse available models
 - View parameter values
 - Compare model configurations
@@ -69,6 +72,7 @@ larvaworld-app
 **Purpose**: Inspect behavioral modules
 
 **Features**:
+
 - Crawler, Turner, Feeder modules
 - Real-time parameter adjustment
 - Behavior visualization
@@ -80,6 +84,7 @@ larvaworld-app
 **Purpose**: Visualize neural oscillators (CPG)
 
 **Features**:
+
 - Phase plots
 - Oscillation frequency analysis
 - Coupling visualization
@@ -107,4 +112,3 @@ Web applications are **functional but under active development**. Some features 
 - {doc}`keyboard_controls` - Interactive controls
 - {doc}`visualization_snapshots` - Visualization examples
 - {doc}`../concepts/architecture_overview` - Platform architecture
-

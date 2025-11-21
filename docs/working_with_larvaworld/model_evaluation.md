@@ -81,15 +81,15 @@ For details on importing datasets, see {doc}`../data_pipeline/lab_formats_import
 
 **Predefined models**:
 
-| Model ID | Description |
-|----------|-------------|
-| `'explorer'` | Basic navigation |
-| `'navigator'` | Odor-guided navigation |
-| `'forager'` | Feeding behavior |
-| `'RE'` | Rover forager (high activity) |
-| `'SI'` | Sitter forager (low activity) |
-| `'RL_model'` | Reinforcement learning |
-| `'nengo'` | Neural network controller |
+| Model ID      | Description                   |
+| ------------- | ----------------------------- |
+| `'explorer'`  | Basic navigation              |
+| `'navigator'` | Odor-guided navigation        |
+| `'forager'`   | Feeding behavior              |
+| `'RE'`        | Rover forager (high activity) |
+| `'SI'`        | Sitter forager (low activity) |
+| `'RL_model'`  | Reinforcement learning        |
+| `'nengo'`     | Neural network controller     |
 
 **Inspect models**:
 
@@ -125,6 +125,7 @@ eval_run.simulate()
 ```
 
 **What happens**:
+
 1. Load reference dataset
 2. For each model:
    - Run `Nruns` simulations with `Nagents` larvae
@@ -160,6 +161,7 @@ eval_run.plot_results()  # KS D-statistic heatmaps
 ```
 
 **Generated plots**:
+
 - **KS D-statistic heatmap**: Models × Metrics
 - **Box plots**: Metric distributions per model
 - **P-value summary**: Statistical significance
@@ -172,6 +174,7 @@ eval_run.plot_models()  # Trajectories, distributions
 ```
 
 **Generated plots per model**:
+
 - **Trajectories**: Spatial paths
 - **Angular distributions**: Orientation, turns
 - **Spatial distributions**: Velocity, dispersal
@@ -185,38 +188,38 @@ Larvaworld computes **40+ behavioral metrics** across three categories:
 
 ### Endpoint Metrics (Summary Statistics)
 
-| Metric | Description | Unit |
-|--------|-------------|------|
-| **cum_dur** | Total duration | s |
-| **cum_sd** | Total distance | m |
-| **v_mu** | Mean linear velocity | mm/s |
-| **a_mu** | Mean linear acceleration | mm/s² |
-| **av_mu** | Mean angular velocity | rad/s |
-| **fov_mu** | Mean forward velocity | mm/s |
-| **pau_N** | Number of pauses | count |
-| **str_N** | Number of strides | count |
-| **run_N** | Number of runs | count |
-| **str_f** | Stride frequency | Hz |
-| **run_t** | Average run duration | s |
-| **pau_t** | Average pause duration | s |
+| Metric      | Description              | Unit  |
+| ----------- | ------------------------ | ----- |
+| **cum_dur** | Total duration           | s     |
+| **cum_sd**  | Total distance           | m     |
+| **v_mu**    | Mean linear velocity     | mm/s  |
+| **a_mu**    | Mean linear acceleration | mm/s² |
+| **av_mu**   | Mean angular velocity    | rad/s |
+| **fov_mu**  | Mean forward velocity    | mm/s  |
+| **pau_N**   | Number of pauses         | count |
+| **str_N**   | Number of strides        | count |
+| **run_N**   | Number of runs           | count |
+| **str_f**   | Stride frequency         | Hz    |
+| **run_t**   | Average run duration     | s     |
+| **pau_t**   | Average pause duration   | s     |
 
 ### Distribution Metrics (Time-Series)
 
-| Metric | Description |
-|--------|-------------|
-| **angular** | Orientation, angular velocity/acceleration |
-| **spatial** | Linear velocity/acceleration distributions |
-| **dispersal** | Spatial spread over time |
-| **tortuosity** | Path straightness (sliding windows) |
+| Metric         | Description                                |
+| -------------- | ------------------------------------------ |
+| **angular**    | Orientation, angular velocity/acceleration |
+| **spatial**    | Linear velocity/acceleration distributions |
+| **dispersal**  | Spatial spread over time                   |
+| **tortuosity** | Path straightness (sliding windows)        |
 
 ### Bout Metrics (Event-Based)
 
-| Metric | Description |
-|--------|-------------|
+| Metric              | Description                      |
+| ------------------- | -------------------------------- |
 | **stride_duration** | Distribution of stride durations |
-| **turn_amplitude** | Distribution of turn amplitudes |
-| **pause_duration** | Distribution of pause durations |
-| **run_distance** | Distribution of run distances |
+| **turn_amplitude**  | Distribution of turn amplitudes  |
+| **pause_duration**  | Distribution of pause durations  |
+| **run_distance**    | Distribution of run distances    |
 
 ---
 
@@ -234,6 +237,7 @@ Larvaworld computes **40+ behavioral metrics** across three categories:
 - Where `F_model(x)` is the cumulative distribution of the model and `F_ref(x)` that of the reference.
 
 **Interpretation**:
+
 - `D = 0`: Perfect match
 - `D < 0.2`: Good match
 - `D > 0.5`: Poor match
@@ -300,7 +304,7 @@ eval_run = EvalRun(
     refID='exploration.30controls',
     modelIDs=['explorer'],
     duration=5.0,
-    
+
     # Custom metric selection
     metric_definition="angular"  # Only angular metrics
     # Options: "angular", "spatial", "spatial+angular", "all"

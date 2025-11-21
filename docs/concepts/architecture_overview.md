@@ -15,13 +15,13 @@ graph TB
     Model[Models<br/>Agents • Envs • Modules]
     Data[Data Layer<br/>Import • Storage • Analysis]
     Viz[Visualization<br/>Plots • Video • Dashboards]
-    
+
     UI --> Sim
     Sim --> Model
     Model --> Data
     Data --> Viz
     Viz --> UI
-    
+
     style UI fill:#2196f3,stroke:#1976d2,stroke-width:2px,color:#fff
     style Sim fill:#4caf50,stroke:#388e3c,stroke-width:2px,color:#000
     style Model fill:#9c27b0,stroke:#7b1fa2,stroke-width:2px,color:#fff
@@ -46,6 +46,7 @@ larvaworld Batch PItest_off -Nsims 10
 ```
 
 **Key Components**:
+
 - `main.py`: Entry point with `main()` function
 - `argparser.py`: `SimModeParser` class for argument parsing
 - **Modes**: Exp, Batch, Ga, Eval, Replay
@@ -60,14 +61,14 @@ larvaworld Batch PItest_off -Nsims 10
 
 Interactive web applications built with **Panel** (Holoviz stack) and **Bokeh**:
 
-| Dashboard | Purpose |
-|-----------|---------|
-| **Experiment Viewer** | View experiment results interactively |
-| **Track Viewer** | Inspect larva trajectories |
-| **Model Inspector** | Explore locomotory models |
-| **Module Inspector** | Inspect behavioral modules |
-| **Neural Oscillator Inspector** | Visualize neural oscillators |
-| **Lateral Oscillator Inspector** | Examine lateral dynamics |
+| Dashboard                        | Purpose                               |
+| -------------------------------- | ------------------------------------- |
+| **Experiment Viewer**            | View experiment results interactively |
+| **Track Viewer**                 | Inspect larva trajectories            |
+| **Model Inspector**              | Explore locomotory models             |
+| **Module Inspector**             | Inspect behavioral modules            |
+| **Neural Oscillator Inspector**  | Visualize neural oscillators          |
+| **Lateral Oscillator Inspector** | Examine lateral dynamics              |
 
 Launch with:
 
@@ -97,19 +98,21 @@ The desktop GUI built with **PySimpleGUI** is **deprecated** but still present f
 
 The simulation engine provides **five specialized modes**, each optimized for different workflows:
 
-| Mode | Class | File | Purpose |
-|------|-------|------|---------|
-| **Exp** | `ExpRun` | `single_run.py` | Single experiment run |
-| **Batch** | `BatchRun` | `batch_run.py` | Multiple parallel experiments |
-| **Ga** | `GAlauncher` | `genetic_algorithm.py` | Genetic algorithm optimization |
-| **Eval** | `EvalRun` | `model_evaluation.py` | Model evaluation vs. real data |
-| **Replay** | `ReplayRun` | `dataset_replay.py` | Replay recorded trajectories |
+| Mode       | Class        | File                   | Purpose                        |
+| ---------- | ------------ | ---------------------- | ------------------------------ |
+| **Exp**    | `ExpRun`     | `single_run.py`        | Single experiment run          |
+| **Batch**  | `BatchRun`   | `batch_run.py`         | Multiple parallel experiments  |
+| **Ga**     | `GAlauncher` | `genetic_algorithm.py` | Genetic algorithm optimization |
+| **Eval**   | `EvalRun`    | `model_evaluation.py`  | Model evaluation vs. real data |
+| **Replay** | `ReplayRun`  | `dataset_replay.py`    | Replay recorded trajectories   |
 
 **Common Base**:
+
 - **BaseRun**: Base class for all simulation modes
 - **ABModel**: Agentpy-based agent-based model
 
 **Key Methods**:
+
 - `simulate()`: Run the simulation loop
 - `store()`: Save results to HDF5
 - `plot()`: Generate analysis plots
@@ -128,6 +131,7 @@ This layer contains the **agent models** (larvae) and **environment models** (ar
 ### Agent Models
 
 **Key Classes**:
+
 - **LarvaSim**: Complete larva agent (inherits from `LarvaMotile` and `BaseController`)
 - **LarvaMotile**: Core agent step-by-step behavior (inherits from `LarvaSegmented`)
 - **LarvaSegmented**: Morphology (shape, segments, sensors)
@@ -135,6 +139,7 @@ This layer contains the **agent models** (larvae) and **environment models** (ar
 - **Locomotor**: Unified crawling, turning, and feeding
 
 **Modules** (in `modules/`):
+
 - **Sensors**: Olfactor, Touch, Windsensor, Thermo, Feeder
 - **Brain**: DefaultBrain, NengoBrain, Brian2Brain
 - **Locomotor**: Crawler, Turner, Feeder, Interference
@@ -145,11 +150,13 @@ For detailed architecture, see {doc}`../agents_environments/larva_agent_architec
 ### Environment Models
 
 **Key Classes**:
+
 - **Env**: Arena with borders, food sources, odorscapes
 - **FoodSource**: Patches, gradients, or uniform substrates
 - **Odorscape**: Gaussian plumes, gradients, or thermal fields
 
 **Configuration**:
+
 - Configurable via `EnvConf` registry entries
 - Pre-configured arenas (e.g., `'dish'`, `'arena_200mm'`)
 
@@ -166,12 +173,14 @@ This layer handles **data import, storage, processing, and analysis**.
 ### Dataset Management
 
 **LarvaDataset** (`dataset.py`):
+
 - **Time-series data**: Pose, velocity, acceleration, orientation
 - **Endpoint data**: Summary statistics per larva
 - **Bout data**: Annotated behavioral events (strides, turns, pauses)
 - **Storage**: HDF5 format for efficient I/O
 
 **Methods**:
+
 - `preprocess()`: Filtering, scaling, alignment
 - `process()`: Compute metrics (angular, spatial, tortuosity)
 - `annotate()`: Detect bouts (strides, turns, pauses)
@@ -181,6 +190,7 @@ For detailed workflows, see {doc}`../data_pipeline/data_processing`.
 ### Data Import
 
 **LabFormat** (`reg/generators.py`):
+
 - Import experimental datasets from diverse tracking systems
 - **Supported labs**: Schleyer, Jovanic, Berni, Arguello
 
@@ -189,6 +199,7 @@ For details, see {doc}`../data_pipeline/lab_formats_import`.
 ### Registry
 
 **Configuration Registry** (`/src/larvaworld/lib/reg/`):
+
 - **stored_confs/**: Preconfigured experiments, models, environments
 - **reg.conf**: Access configurations (`Env`, `Model`, `Exp`, `Batch`, `Ga`)
 - **reg.gen**: Generators for configurations and datasets
@@ -206,6 +217,7 @@ This layer provides **plotting**, **real-time rendering**, and **video export**.
 ### Plotting API
 
 **Modules** (in `plot/`):
+
 - `traj.py`: Trajectory plots
 - `time.py`: Time-series plots
 - `hist.py`: Histograms and distributions
@@ -218,6 +230,7 @@ For details, see {doc}`../visualization/plotting_api`.
 ### Real-Time Visualization
 
 **Screen** (`screen/`):
+
 - Real-time 2D rendering using Pygame
 - Configurable drawing (midline, contour, trails)
 - Interactive controls (zoom, pause, snapshot)
@@ -229,13 +242,13 @@ For keyboard controls, see {doc}`../visualization/keyboard_controls`.
 
 ## Mapping to Codebase
 
-| Layer | Primary Folders | Key Classes/Files |
-|-------|----------------|-------------------|
-| **User Interfaces** | `/cli`, `/dashboards`, `/gui` | `cli/main.py`, `dashboards/main.py` |
-| **Simulation Engine** | `/lib/sim` | `ExpRun`, `BatchRun`, `EvalRun`, `GAlauncher`, `ReplayRun` |
-| **Models** | `/lib/model` | `LarvaSim`, `Brain`, `Locomotor`, `Env` |
-| **Data Layer** | `/lib/process`, `/lib/reg` | `LarvaDataset`, `LabFormat`, `reg.conf` |
-| **Visualization** | `/lib/plot`, `/lib/screen` | `plot/traj.py`, `screen/drawing.py` |
+| Layer                 | Primary Folders               | Key Classes/Files                                          |
+| --------------------- | ----------------------------- | ---------------------------------------------------------- |
+| **User Interfaces**   | `/cli`, `/dashboards`, `/gui` | `cli/main.py`, `dashboards/main.py`                        |
+| **Simulation Engine** | `/lib/sim`                    | `ExpRun`, `BatchRun`, `EvalRun`, `GAlauncher`, `ReplayRun` |
+| **Models**            | `/lib/model`                  | `LarvaSim`, `Brain`, `Locomotor`, `Env`                    |
+| **Data Layer**        | `/lib/process`, `/lib/reg`    | `LarvaDataset`, `LabFormat`, `reg.conf`                    |
+| **Visualization**     | `/lib/plot`, `/lib/screen`    | `plot/traj.py`, `screen/drawing.py`                        |
 
 ---
 

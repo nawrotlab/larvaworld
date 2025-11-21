@@ -29,6 +29,7 @@ Configuration Types <CONFTYPES.ipynb>
    **File**: `single_simulation.ipynb`
 
    **Topics**:
+
    - Running your first experiment
    - `ExpRun` basics
    - Accessing datasets
@@ -38,6 +39,7 @@ Configuration Types <CONFTYPES.ipynb>
    **File**: `cli.ipynb`
 
    **Topics**:
+
    - Command-line usage
    - Common CLI options
    - Batch execution from terminal
@@ -49,6 +51,7 @@ Configuration Types <CONFTYPES.ipynb>
    **File**: `environment_configuration.ipynb`
 
    **Topics**:
+
    - Arena geometry
    - Food sources and substrates
    - Odorscapes
@@ -60,6 +63,7 @@ Configuration Types <CONFTYPES.ipynb>
    **File**: `import_datasets.ipynb`
 
    **Topics**:
+
    - Lab-specific formats (Schleyer, Jovanic, Berni, Arguello)
    - `LabFormat` usage
    - Data preprocessing
@@ -69,6 +73,7 @@ Configuration Types <CONFTYPES.ipynb>
    **File**: `replay.ipynb`
 
    **Topics**:
+
    - Replay mode (`ReplayRun`)
    - Visualization options
    - Video export
@@ -80,6 +85,7 @@ Configuration Types <CONFTYPES.ipynb>
    **File**: `model_evaluation.ipynb`
 
    **Topics**:
+
    - `EvalRun` usage
    - Comparing models against real data
    - Kolmogorov-Smirnov tests
@@ -89,6 +95,7 @@ Configuration Types <CONFTYPES.ipynb>
    **File**: `genetic_algorithm_optimization.ipynb`
 
    **Topics**:
+
    - `optimize_mID` function
    - `GAevaluation` setup
    - Parameter space definition
@@ -100,6 +107,7 @@ Configuration Types <CONFTYPES.ipynb>
    **File**: `library_interface.ipynb`
 
    **Topics**:
+
    - Direct library API usage
    - Custom simulation loops
    - Advanced configuration
@@ -109,6 +117,7 @@ Configuration Types <CONFTYPES.ipynb>
    **File**: `custom_module.ipynb`
 
    **Topics**:
+
    - Creating custom behavioral modules
    - Subclassing `Effector`
    - Implementing `update()` methods
@@ -120,6 +129,7 @@ Configuration Types <CONFTYPES.ipynb>
     **File**: `sensorscapes.ipynb`
 
     **Topics**:
+
     - Thermal landscapes
     - Wind fields
     - Odor plumes
@@ -129,6 +139,7 @@ Configuration Types <CONFTYPES.ipynb>
     **File**: `remote_model_interface.ipynb`
 
     **Topics**:
+
     - Remote integration
     - External controller interface
     - Advanced scripting
@@ -137,6 +148,7 @@ Configuration Types <CONFTYPES.ipynb>
     **File**: `CONFTYPES.ipynb`
 
     **Topics**:
+
     - `EnvConf`, `ModelConf`, `ExpConf`, `BatchConf`, `GaConf`
     - Configuration registry system
     - Creating custom configurations
@@ -149,24 +161,16 @@ Configuration Types <CONFTYPES.ipynb>
 ### Recommended Learning Path
 
 **Beginners** (New to Larvaworld):
+
 1. Single Simulation
 2. CLI Interface
 3. Environment Configuration
 
-**Intermediate** (Basic understanding):
-4. Importing Datasets
-5. Dataset Replay
-6. Model Evaluation
+**Intermediate** (Basic understanding): 4. Importing Datasets 5. Dataset Replay 6. Model Evaluation
 
-**Advanced** (Ready for research):
-7. Genetic Algorithm Optimization
-8. Library Interface
-9. Custom Modules
+**Advanced** (Ready for research): 7. Genetic Algorithm Optimization 8. Library Interface 9. Custom Modules
 
-**Experts** (Platform development):
-10. Sensorscapes
-11. Remote Model Interface
-12. Configuration Types
+**Experts** (Platform development): 10. Sensorscapes 11. Remote Model Interface 12. Configuration Types
 
 ---
 
@@ -194,6 +198,7 @@ pip install jupyter notebook
 If you've developed a workflow that could help others, consider contributing a tutorial!
 
 **Guidelines**:
+
 - Clear learning objectives
 - Step-by-step code cells
 - Markdown explanations
@@ -201,4 +206,3 @@ If you've developed a workflow that could help others, consider contributing a t
 - Error handling examples
 
 **Submit**: Open a pull request on [GitHub](https://github.com/nawrotlab/larvaworld)
-

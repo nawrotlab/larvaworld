@@ -5,7 +5,7 @@
 ````md
 # Theoretical Overview
 
-Larvaworld is an open-source Python framework and virtual laboratory for *Drosophila melanogaster* larval behavior. It combines agent-based modeling (ABM) with multiscale neural control and supports analysis of both simulated and experimental motion-tracking data. Virtual larvae are implemented as 2D agents capable of realistic locomotion, guided by multimodal sensory input and constrained by a Dynamic Energy Budget (DEB) model that regulates the exploration–exploitation balance across the larval life stage.
+Larvaworld is an open-source Python framework and virtual laboratory for _Drosophila melanogaster_ larval behavior. It combines agent-based modeling (ABM) with multiscale neural control and supports analysis of both simulated and experimental motion-tracking data. Virtual larvae are implemented as 2D agents capable of realistic locomotion, guided by multimodal sensory input and constrained by a Dynamic Energy Budget (DEB) model that regulates the exploration–exploitation balance across the larval life stage.
 
 The platform was developed to address two central challenges in behavioral neuroscience and computational modeling. First, it provides a shared “virtual laboratory” in which experimental data analysis and behavioral modeling are integrated within the same software environment. Experimental locomotion datasets can be imported and converted into a standardized internal format that is identical to the format produced by simulations, while all derived kinematic and behavioral metrics are computed within Larvaworld using transparent, configurable analysis pipelines. This ensures that simulated and experimental datasets share the same structure and can be analyzed with identical, unbiased procedures.
 
@@ -27,6 +27,7 @@ Figure 1 from the companion paper summarizes the architecture. The following sec
 :align: center
 
 Larvaworld architecture. A schematic of the main components and functionalities of the platform.
+```
 ````
 
 ## Larva Model
@@ -49,10 +50,10 @@ The larva groups block organizes how individual larva models are instantiated, p
 
 A group configuration specifies:
 
-* **Larva models**: which larva model class and parameter set to use (including body, sensory, and control modules),
-* **Placement**: how many individuals to instantiate, and how to place them in the arena (initial positions, orientations, and spatial distributions),
-* **Age and life history**: rearing conditions, post-hatch age, and nutritional history, as encoded in the DEB model,
-* **Individuality**: per-agent parameter variation to capture individual differences (e.g. foraging phenotypes, sensory sensitivity, or controller parameters).
+- **Larva models**: which larva model class and parameter set to use (including body, sensory, and control modules),
+- **Placement**: how many individuals to instantiate, and how to place them in the arena (initial positions, orientations, and spatial distributions),
+- **Age and life history**: rearing conditions, post-hatch age, and nutritional history, as encoded in the DEB model,
+- **Individuality**: per-agent parameter variation to capture individual differences (e.g. foraging phenotypes, sensory sensitivity, or controller parameters).
 
 These settings support experiments in which multiple groups (e.g. different genotypes, rearing conditions, or phenotypes) are simulated side by side in a shared environment. They also provide the necessary structure for importing and annotating real experiments that involve multiple groups or conditions.
 
@@ -64,9 +65,9 @@ The environment block covers the arenas, substrates, and sensory landscapes with
 
 Environmental configuration includes:
 
-* **Arena geometry**: shape and size of the arena (e.g. dish radius, rectangular bounds), impassable borders, and internal obstacles,
-* **Sensory landscapes**: spatial distributions of sensory quantities, such as odorscapes (odor gradients and sources), thermoscapes (temperature gradients), and windscapes (airflow patterns),
-* **Sources and obstacles**: discrete food items, food grids, nutritive substrates with known composition, and other objects that influence movement or feeding.
+- **Arena geometry**: shape and size of the arena (e.g. dish radius, rectangular bounds), impassable borders, and internal obstacles,
+- **Sensory landscapes**: spatial distributions of sensory quantities, such as odorscapes (odor gradients and sources), thermoscapes (temperature gradients), and windscapes (airflow patterns),
+- **Sources and obstacles**: discrete food items, food grids, nutritive substrates with known composition, and other objects that influence movement or feeding.
 
 These elements allow Larvaworld to reproduce established behavioral assays (exploration, chemotaxis, foraging, maze navigation) and to extend them to new configurations. The same abstractions are also used to reconstruct real experimental arenas when importing motion-tracking data.
 
@@ -78,9 +79,9 @@ The setup and agent-based simulation block specifies how larva groups and enviro
 
 A simulation setup defines:
 
-* **Trial protocol**: the temporal structure of the simulated experiment (e.g. number of trials, durations, inter-trial intervals, training vs test phases),
-* **Nested timescales**: integration timesteps for neural and behavioral dynamics versus the slower updates of the energetics model (e.g. sub-millisecond neural updates vs circadian-scale DEB updates),
-* **Termination conditions**: criteria for stopping a trial or experiment (elapsed time, state changes, or user-defined conditions).
+- **Trial protocol**: the temporal structure of the simulated experiment (e.g. number of trials, durations, inter-trial intervals, training vs test phases),
+- **Nested timescales**: integration timesteps for neural and behavioral dynamics versus the slower updates of the energetics model (e.g. sub-millisecond neural updates vs circadian-scale DEB updates),
+- **Termination conditions**: criteria for stopping a trial or experiment (elapsed time, state changes, or user-defined conditions).
 
 During a simulation, agents execute their control loops in a turn-based fashion determined by the ABM scheduler. At each time step, sensory inputs are sampled from the environment; behavioral modules update their internal state; effectors update the larval body; energetics are advanced at their own timescale; and relevant variables are recorded into the data collection pipeline. The same infrastructure supports single experiments, multi-condition essays, and large batch runs.
 
@@ -92,9 +93,9 @@ The data collection and Larva Datasets block forms the bridge between simulation
 
 Each `LarvaDataset` consists of three main components:
 
-* **Time-series data**: a multi-indexed `pandas.DataFrame` indexed by `(time, larva ID)`. Initially, it contains the primary tracked parameters (2D coordinates of at least the centroid, and often additional midline and contour points). This table is incrementally enriched with derived variables (e.g. velocities, turning angles, curvature, bout-level descriptors) as processing stages are applied.
-* **Endpoint metrics**: a per-larva `DataFrame` indexed by larva ID, containing summary metrics computed once per agent (e.g. total path length, time spent on food, growth outcomes). This table is also enriched as the analysis pipeline progresses.
-* **Metadata**: a nested configuration dictionary describing experimental conditions, group definitions, tracking parameters, and storage paths.
+- **Time-series data**: a multi-indexed `pandas.DataFrame` indexed by `(time, larva ID)`. Initially, it contains the primary tracked parameters (2D coordinates of at least the centroid, and often additional midline and contour points). This table is incrementally enriched with derived variables (e.g. velocities, turning angles, curvature, bout-level descriptors) as processing stages are applied.
+- **Endpoint metrics**: a per-larva `DataFrame` indexed by larva ID, containing summary metrics computed once per agent (e.g. total path length, time spent on food, growth outcomes). This table is also enriched as the analysis pipeline progresses.
+- **Metadata**: a nested configuration dictionary describing experimental conditions, group definitions, tracking parameters, and storage paths.
 
 DataFrames are stored in HDF5 files under different keys (e.g. `step`, `midline`, `contour`, `angular`, `dspNtor`), while metadata are stored in configuration text files. Datasets can be registered under unique IDs as reference datasets for later use in model evaluation, visualization, and replay.
 
@@ -120,12 +121,12 @@ The analysis and model evaluation block implements the standardized pipelines th
 
 Key stages include:
 
-* **Preprocessing**: cleaning and alignment of raw trajectories, interpolation or trimming of missing samples where appropriate, and basic coordinate transformations;
-* **Secondary metrics**: computation of derived kinematic and behavioral variables (e.g. speed, curvature, heading, turning events, bouts, occupancy measures);
-* **Epoch annotation**: segmentation of trajectories into behaviorally or experimentally defined epochs (e.g. training vs test, pre- vs post-stimulus intervals, on- vs off-food periods);
-* **Distribution fitting and statistical analysis**: fitting of distributions to micro-behavioral variables and group-level comparisons under different conditions;
-* **Plotting and visualization**: trajectory plots, dispersal measures, time series plots, frequency and polar plots, and other visual summaries at the individual and group levels;
-* **Group comparison and model evaluation**: systematic comparison of models against reference datasets, using standardized metrics and summary statistics.
+- **Preprocessing**: cleaning and alignment of raw trajectories, interpolation or trimming of missing samples where appropriate, and basic coordinate transformations;
+- **Secondary metrics**: computation of derived kinematic and behavioral variables (e.g. speed, curvature, heading, turning events, bouts, occupancy measures);
+- **Epoch annotation**: segmentation of trajectories into behaviorally or experimentally defined epochs (e.g. training vs test, pre- vs post-stimulus intervals, on- vs off-food periods);
+- **Distribution fitting and statistical analysis**: fitting of distributions to micro-behavioral variables and group-level comparisons under different conditions;
+- **Plotting and visualization**: trajectory plots, dispersal measures, time series plots, frequency and polar plots, and other visual summaries at the individual and group levels;
+- **Group comparison and model evaluation**: systematic comparison of models against reference datasets, using standardized metrics and summary statistics.
 
 Model evaluation workflows treat `LarvaDataset` instances as first-class objects and allow competing models to be benchmarked against the same experimental reference under identical analysis settings. This supports both qualitative inspection and quantitative scoring of model performance.
 
@@ -137,9 +138,9 @@ The genetic algorithm (GA) optimization block closes the loop between model spec
 
 Typical objectives include:
 
-* matching summary statistics or distributions from a reference experimental dataset,
-* optimizing performance in a specific virtual task (e.g. chemotactic efficiency, foraging efficiency),
-* tuning parameters that control foraging phenotypes (e.g. rovers vs sitters) under defined environmental conditions.
+- matching summary statistics or distributions from a reference experimental dataset,
+- optimizing performance in a specific virtual task (e.g. chemotactic efficiency, foraging efficiency),
+- tuning parameters that control foraging phenotypes (e.g. rovers vs sitters) under defined environmental conditions.
 
 The GA operates over parameter sets stored in the same nested configuration structures that define larva models and experiments. Each candidate configuration is evaluated by running simulations, collecting the resulting `LarvaDataset`, and computing an objective score from the analysis pipeline. The GA then updates the population of parameter sets accordingly.
 
@@ -151,13 +152,13 @@ Advanced usage of the GA tools is covered in {doc}`../working_with_larvaworld/ga
 
 The architectural components described above are instantiated in a set of preconfigured virtual experiments that mirror established larval behavioral paradigms and extend them in controlled ways. These experiments cover, among others:
 
-* free exploration in non-nutritious arenas at different spatial scales,
-* chemotaxis and local search around odor sources,
-* olfactory learning and odor preference with distinct training and test phases,
-* feeding and foraging in patchy or uniform food environments,
-* phenotypic comparisons such as rovers vs sitters under varied environmental conditions,
-* growth and rearing experiments across the full larval stage under defined DEB parameters and nutritional histories,
-* maze-like arenas and a capture-the-flag game where larva groups compete to retrieve a central odor source.
+- free exploration in non-nutritious arenas at different spatial scales,
+- chemotaxis and local search around odor sources,
+- olfactory learning and odor preference with distinct training and test phases,
+- feeding and foraging in patchy or uniform food environments,
+- phenotypic comparisons such as rovers vs sitters under varied environmental conditions,
+- growth and rearing experiments across the full larval stage under defined DEB parameters and nutritional histories,
+- maze-like arenas and a capture-the-flag game where larva groups compete to retrieve a central odor source.
 
 Each experiment can be used as a standalone simulation, combined into multi-condition essays, or embedded in batch runs and optimization procedures. The same experiments can also be run in replay mode on real datasets, enabling direct side-by-side comparison between virtual and real larvae.
 
@@ -168,9 +169,10 @@ For a practical entry point to these experiments, see the tutorials index in {do
 For full methodological and theoretical details, including additional examples and applications, see the companion article:
 
 > Sakagiannis Panagiotis, Rapp Hannes, Jovanic Tihana, Nawrot Martin Paul (2025)
-> *Larvaworld: A behavioral simulation and analysis platform for Drosophila larva*. bioRxiv 2025.06.15.659765.
+> _Larvaworld: A behavioral simulation and analysis platform for Drosophila larva_. bioRxiv 2025.06.15.659765.
 
 Further references on agent-based modeling, DEB theory, and behavioral architectures are listed in the bibliography of that article and are cited throughout this documentation using the `{cite}` directive.
 
 ```
+
 ```

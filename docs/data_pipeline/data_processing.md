@@ -28,13 +28,13 @@ dataset.preprocess(
 
 ### Available Options
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `drop_collisions` | Remove frames with collisions | `False` |
-| `interpolate_nans` | Interpolate missing values | `False` |
-| `filter_f` | Low-pass filter cutoff (Hz) | `None` |
-| `rescale_by` | Scale factor | `None` |
-| `transposition` | Alignment mode (`"center"`, `"origin"`) | `None` |
+| Parameter          | Description                             | Default |
+| ------------------ | --------------------------------------- | ------- |
+| `drop_collisions`  | Remove frames with collisions           | `False` |
+| `interpolate_nans` | Interpolate missing values              | `False` |
+| `filter_f`         | Low-pass filter cutoff (Hz)             | `None`  |
+| `rescale_by`       | Scale factor                            | `None`  |
+| `transposition`    | Alignment mode (`"center"`, `"origin"`) | `None`  |
 
 ---
 
@@ -60,6 +60,7 @@ proc_keys = ["angular"]
 ```
 
 **Computes**:
+
 - Orientation angle
 - Angular velocity
 - Angular acceleration
@@ -72,6 +73,7 @@ proc_keys = ["spatial"]
 ```
 
 **Computes**:
+
 - Linear velocity
 - Linear acceleration
 - Cumulative distance
@@ -137,6 +139,7 @@ anot_keys = ["bout_detection"]
 ```
 
 **Detects**:
+
 - **Strides**: Individual peristaltic waves
 - **Runs**: Chains of strides
 - **Pauses**: Immobility epochs
@@ -149,6 +152,7 @@ anot_keys = ["bout_distribution"]
 ```
 
 **Computes**:
+
 - Distribution fitting (exponential, power-law)
 - Duration/length statistics
 
@@ -159,6 +163,7 @@ anot_keys = ["interference"]
 ```
 
 **Analyzes**:
+
 - Crawl-turn coupling
 - Phase relationships
 
@@ -188,6 +193,7 @@ dataset.e.columns
 ```
 
 **Available**:
+
 - `cum_dur`: Total duration (s)
 - `cum_sd`: Total distance (m)
 - `v_mu`: Mean velocity (mm/s)
@@ -203,6 +209,7 @@ dataset.s.columns
 ```
 
 **Available**:
+
 - `x`, `y`: Position
 - `orientation`: Body angle (rad)
 - `linear_velocity`: Speed (mm/s)

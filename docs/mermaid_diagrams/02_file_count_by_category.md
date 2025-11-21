@@ -19,6 +19,7 @@ This pie chart visualizes **how Python files are distributed across different fu
 ### Why This Matters
 
 This distribution demonstrates:
+
 - ✅ **Balanced architecture**: No single module dominates the codebase
 - ✅ **Strong model layer**: 25% dedicated to agent and environment modeling
 - ✅ **Multiple interfaces**: 25% for various user interaction methods (CLI, web, GUI)
@@ -50,28 +51,29 @@ pie title File Count by Category (155 Files)
 
 ## Verification Data
 
-**Status:** ✅ VERIFIED with actual file counts  
-**Date:** November 18, 2025  
+**Status:** ✅ VERIFIED with actual file counts
+**Date:** November 18, 2025
 **Total Files:** 155
 
 ### Breakdown by Category
 
-| Category | Files | Percentage | Location |
-|----------|-------|------------|----------|
-| **Model Components** | 38 | 24.5% | `lib/model/` |
-| **Interfaces** | 39 | 25.2% | `cli/`, `dashboards/`, `gui/` |
-| **Visualization** | 17 | 11.0% | `lib/plot/` |
-| **Registry** | 14 | 9.0% | `lib/reg/` |
-| **Simulation** | 11 | 7.1% | `lib/sim/` |
-| **Utilities** | 11 | 7.1% | `lib/util/` |
-| **Parameters** | 10 | 6.5% | `lib/param/` |
-| **Processing** | 7 | 4.5% | `lib/process/` |
-| **Other** | 8 | 5.2% | `lib/screen/`, etc. |
+| Category             | Files | Percentage | Location                      |
+| -------------------- | ----- | ---------- | ----------------------------- |
+| **Model Components** | 38    | 24.5%      | `lib/model/`                  |
+| **Interfaces**       | 39    | 25.2%      | `cli/`, `dashboards/`, `gui/` |
+| **Visualization**    | 17    | 11.0%      | `lib/plot/`                   |
+| **Registry**         | 14    | 9.0%       | `lib/reg/`                    |
+| **Simulation**       | 11    | 7.1%       | `lib/sim/`                    |
+| **Utilities**        | 11    | 7.1%       | `lib/util/`                   |
+| **Parameters**       | 10    | 6.5%       | `lib/param/`                  |
+| **Processing**       | 7     | 4.5%       | `lib/process/`                |
+| **Other**            | 8     | 5.2%       | `lib/screen/`, etc.           |
 
 ### Interface Components Breakdown
 
 The "Interfaces" category (39 files) consists of:
-- **GUI** (28 files): Legacy desktop GUI - *deprecated but still present*
+
+- **GUI** (28 files): Legacy desktop GUI - _deprecated but still present_
 - **Dashboards** (8 files): Modern web-based apps (Holoviz stack)
 - **CLI** (3 files): Command-line interface tools
 
@@ -101,5 +103,3 @@ The Larvaworld codebase consists of **155 Python files** organized into nine fun
 
 This modular architecture ensures clear separation of concerns and maintainability.
 ```
-
-

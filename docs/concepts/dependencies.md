@@ -68,16 +68,16 @@ mindmap
 
 The foundation of all numerical operations:
 
-| Package | Purpose | Use in Larvaworld |
-|---------|---------|-------------------|
-| **numpy** | N-dimensional arrays | All numerical operations, trajectory data |
-| **pandas** | Data manipulation | Time-series data (`step_data`), tabular results |
-| **scipy** | Scientific algorithms | Statistical tests (KS), signal processing, optimization |
-| **matplotlib** | Base plotting | All static plots (trajectories, distributions, etc.) |
-| **seaborn** | Statistical visualization | Box plots, heatmaps, distribution comparisons |
-| **scikit-learn** | Machine learning | Clustering, dimensionality reduction |
-| **powerlaw** | Power-law distributions | Analysis of movement patterns |
-| **statannot** | Statistical annotations | P-value annotations on plots |
+| Package          | Purpose                   | Use in Larvaworld                                       |
+| ---------------- | ------------------------- | ------------------------------------------------------- |
+| **numpy**        | N-dimensional arrays      | All numerical operations, trajectory data               |
+| **pandas**       | Data manipulation         | Time-series data (`step_data`), tabular results         |
+| **scipy**        | Scientific algorithms     | Statistical tests (KS), signal processing, optimization |
+| **matplotlib**   | Base plotting             | All static plots (trajectories, distributions, etc.)    |
+| **seaborn**      | Statistical visualization | Box plots, heatmaps, distribution comparisons           |
+| **scikit-learn** | Machine learning          | Clustering, dimensionality reduction                    |
+| **powerlaw**     | Power-law distributions   | Analysis of movement patterns                           |
+| **statannot**    | Statistical annotations   | P-value annotations on plots                            |
 
 ---
 
@@ -85,11 +85,11 @@ The foundation of all numerical operations:
 
 Specialized libraries for simulation and physics:
 
-| Package | Purpose | Use in Larvaworld |
-|---------|---------|-------------------|
-| **agentpy** | Agent-based modeling | Core ABM framework (`ABModel` class), parameter sweeps |
-| **box2d-py** | 2D physics engine | Realistic multisegment larva bodies with physics |
-| **nengo** | Neural simulation | Neural network-based brain controllers (`NengoBrain`) |
+| Package      | Purpose              | Use in Larvaworld                                      |
+| ------------ | -------------------- | ------------------------------------------------------ |
+| **agentpy**  | Agent-based modeling | Core ABM framework (`ABModel` class), parameter sweeps |
+| **box2d-py** | 2D physics engine    | Realistic multisegment larva bodies with physics       |
+| **nengo**    | Neural simulation    | Neural network-based brain controllers (`NengoBrain`)  |
 
 :::{note}
 `nengo` and `box2d-py` are **optional dependencies**. Install them if you need neural controllers or physics-based body simulation:
@@ -97,6 +97,7 @@ Specialized libraries for simulation and physics:
 ```bash
 pip install larvaworld[nengo,box2d]
 ```
+
 :::
 
 ---
@@ -105,11 +106,11 @@ pip install larvaworld[nengo,box2d]
 
 For spatial operations and trajectory analysis:
 
-| Package | Purpose | Use in Larvaworld |
-|---------|---------|-------------------|
-| **geopandas** | Geospatial data frames | Spatial analysis of trajectories |
-| **shapely** | Geometric objects | Arena boundaries, collision detection |
-| **movingpandas** | Trajectory analysis | Movement pattern analysis |
+| Package          | Purpose                | Use in Larvaworld                     |
+| ---------------- | ---------------------- | ------------------------------------- |
+| **geopandas**    | Geospatial data frames | Spatial analysis of trajectories      |
+| **shapely**      | Geometric objects      | Arena boundaries, collision detection |
+| **movingpandas** | Trajectory analysis    | Movement pattern analysis             |
 
 ---
 
@@ -117,14 +118,14 @@ For spatial operations and trajectory analysis:
 
 Rich visualization tools for interactive and static outputs:
 
-| Package | Purpose | Use in Larvaworld |
-|---------|---------|-------------------|
-| **holoviews** | Declarative visualization | Interactive plots |
-| **hvplot** | Pandas plotting | High-level interactive plotting API |
-| **panel** | Web dashboards | Interactive web applications (`larvaworld-app`) |
-| **param** | Parameter management | Dashboard widgets and validation |
-| **pygame** | Game engine | Real-time 2D rendering (`screen` module) |
-| **imageio** | Image/video I/O | Video export (MP4, AVI) |
+| Package       | Purpose                   | Use in Larvaworld                               |
+| ------------- | ------------------------- | ----------------------------------------------- |
+| **holoviews** | Declarative visualization | Interactive plots                               |
+| **hvplot**    | Pandas plotting           | High-level interactive plotting API             |
+| **panel**     | Web dashboards            | Interactive web applications (`larvaworld-app`) |
+| **param**     | Parameter management      | Dashboard widgets and validation                |
+| **pygame**    | Game engine               | Real-time 2D rendering (`screen` module)        |
+| **imageio**   | Image/video I/O           | Video export (MP4, AVI)                         |
 
 ---
 
@@ -132,10 +133,10 @@ Rich visualization tools for interactive and static outputs:
 
 Data persistence and file handling:
 
-| Package | Purpose | Use in Larvaworld |
-|---------|---------|-------------------|
+| Package               | Purpose        | Use in Larvaworld                            |
+| --------------------- | -------------- | -------------------------------------------- |
 | **tables** (PyTables) | HDF5 interface | Dataset storage (`LarvaDataset` persistence) |
-| **pypdf** | PDF handling | PDF figure import/export |
+| **pypdf**             | PDF handling   | PDF figure import/export                     |
 
 ---
 
@@ -143,13 +144,13 @@ Data persistence and file handling:
 
 Command-line interface utilities:
 
-| Package | Purpose | Use in Larvaworld |
-|---------|---------|-------------------|
-| **argparse** | Argument parsing | Primary CLI argument parser |
-| **typer** | Modern CLI | Optional CLI utilities (legacy) |
-| **rich** | Terminal formatting | Pretty printing, progress bars |
-| **docopt** | CLI from docstrings | Alternative CLI interface |
-| **progressbar** | Progress bars | Long-running task feedback |
+| Package         | Purpose             | Use in Larvaworld               |
+| --------------- | ------------------- | ------------------------------- |
+| **argparse**    | Argument parsing    | Primary CLI argument parser     |
+| **typer**       | Modern CLI          | Optional CLI utilities (legacy) |
+| **rich**        | Terminal formatting | Pretty printing, progress bars  |
+| **docopt**      | CLI from docstrings | Alternative CLI interface       |
+| **progressbar** | Progress bars       | Long-running task feedback      |
 
 ---
 
@@ -157,12 +158,12 @@ Command-line interface utilities:
 
 General-purpose utilities:
 
-| Package | Purpose | Use in Larvaworld |
-|---------|---------|-------------------|
-| **pint** | Physical units | Unit conversions (mm, cm, seconds, etc.) |
-| **pint_pandas** | Pint + Pandas | Units in data frames |
-| **typing-extensions** | Type hints | Python 3.10+ type annotations |
-| **filelock** | File locking | Multi-process safe file access |
+| Package               | Purpose        | Use in Larvaworld                        |
+| --------------------- | -------------- | ---------------------------------------- |
+| **pint**              | Physical units | Unit conversions (mm, cm, seconds, etc.) |
+| **pint_pandas**       | Pint + Pandas  | Units in data frames                     |
+| **typing-extensions** | Type hints     | Python 3.10+ type annotations            |
+| **filelock**          | File locking   | Multi-process safe file access           |
 
 ---
 
@@ -170,11 +171,11 @@ General-purpose utilities:
 
 Test framework for quality assurance:
 
-| Package | Purpose | Use in Larvaworld |
-|---------|---------|-------------------|
-| **pytest** | Testing framework | Test suite runner |
-| **pytest-cov** | Coverage reporting | Code coverage analysis |
-| **pytest-xdist** | Parallel testing | Speed up test execution |
+| Package          | Purpose            | Use in Larvaworld       |
+| ---------------- | ------------------ | ----------------------- |
+| **pytest**       | Testing framework  | Test suite runner       |
+| **pytest-cov**   | Coverage reporting | Code coverage analysis  |
+| **pytest-xdist** | Parallel testing   | Speed up test execution |
 
 ---
 
@@ -182,14 +183,14 @@ Test framework for quality assurance:
 
 Sphinx-based documentation generation:
 
-| Package | Purpose | Use in Larvaworld |
-|---------|---------|-------------------|
-| **sphinx** | Documentation generator | ReadTheDocs build |
-| **sphinx-rtd-theme** | ReadTheDocs theme | Classic RTD theme (alternative) |
-| **sphinx-autoapi** | API documentation | Auto-generate API docs from docstrings |
-| **sphinx-autobuild** | Live rebuild | Development server with auto-reload |
-| **furo** | Modern Sphinx theme | Primary documentation theme |
-| **myst-parser** | Markdown support | Write docs in Markdown instead of RST |
+| Package              | Purpose                 | Use in Larvaworld                      |
+| -------------------- | ----------------------- | -------------------------------------- |
+| **sphinx**           | Documentation generator | ReadTheDocs build                      |
+| **sphinx-rtd-theme** | ReadTheDocs theme       | Classic RTD theme (alternative)        |
+| **sphinx-autoapi**   | API documentation       | Auto-generate API docs from docstrings |
+| **sphinx-autobuild** | Live rebuild            | Development server with auto-reload    |
+| **furo**             | Modern Sphinx theme     | Primary documentation theme            |
+| **myst-parser**      | Markdown support        | Write docs in Markdown instead of RST  |
 
 ---
 
@@ -278,7 +279,6 @@ Python 3.12 is not yet supported due to some dependency incompatibilities (notab
 - **Core deps**: Pinned to major versions (e.g., `numpy >=1.20,<2.0`)
 - **Dev deps**: Flexible (e.g., `pytest >=7.0`)
 - **Docs deps**: Python 3.11+ only (e.g., `sphinx >=4.0, python >=3.11`)
-
 
 ---
 

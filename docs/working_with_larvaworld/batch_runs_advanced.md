@@ -48,7 +48,8 @@ par_df, figs = batch.simulate(n_jobs=4)
 # Total simulations: 3 models × 10 runs = 30 simulations
 
 par_df, figs = batch.simulate(n_jobs=4)
-```
+
+````
 
 ---
 
@@ -65,7 +66,7 @@ forwarded to the underlying `agentpy.Experiment`:
 
 ```python
 par_df, figs = batch.simulate(n_jobs=4)   # Use 4 CPU cores
-```
+````
 
 Use the columns of `par_df` together with standard tools such as `pandas`,
 `seaborn` και `matplotlib` για να κάνεις boxplots, heatmaps και άλλες
@@ -93,8 +94,10 @@ par_df.to_csv(f"{batch.dir}/parameter_sweep.csv", index=False)
 par_df, figs = batch.simulate()
 
 # Plot sensitivity
+
 sns.lineplot(data=par_df, x='intensity', y='v_mu')
-```
+
+````
 
 ### 2. Robustness Testing
 
@@ -114,7 +117,7 @@ par_df, figs = batch.simulate()
 
 # Check variance
 print(par_df.groupby('Npoints')['v_mu'].agg(['mean', 'std']))
-```
+````
 
 ### 3. Comparative Study
 

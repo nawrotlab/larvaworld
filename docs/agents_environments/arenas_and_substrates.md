@@ -105,15 +105,15 @@ env_params = {
 
 Larvaworld implements real experimental substrates:
 
-| Substrate | Glucose (μg/ml) | Yeast (μg/ml) | Agar (μg/ml) | Source |
-|-----------|----------------|---------------|--------------|--------|
-| **standard-medium** | 100 | 50 | 16 | Kaun et al. (2007) |
-| **PED-tracker** | 10* | 187.5 | 5000 | Schumann et al. (2020) |
-| **cornmeal** | 70.3** | 14.1 | 6.6 | Wosniack et al. (2021) |
-| **sucrose** | 17.1 | 0 | 4 | Wosniack et al. (2021) |
+| Substrate           | Glucose (μg/ml) | Yeast (μg/ml) | Agar (μg/ml) | Source                 |
+| ------------------- | --------------- | ------------- | ------------ | ---------------------- |
+| **standard-medium** | 100             | 50            | 16           | Kaun et al. (2007)     |
+| **PED-tracker**     | 10\*            | 187.5         | 5000         | Schumann et al. (2020) |
+| **cornmeal**        | 70.3\*\*        | 14.1          | 6.6          | Wosniack et al. (2021) |
+| **sucrose**         | 17.1            | 0             | 4            | Wosniack et al. (2021) |
 
-*Saccharose instead of glucose  
-**Dextrose instead of glucose
+\*Saccharose instead of glucose
+\*\*Dextrose instead of glucose
 
 **Usage**:
 
@@ -231,12 +231,12 @@ larva_groups = [
 
 ### Distribution Modes
 
-| Mode | Description |
-|------|-------------|
-| `"uniform"` | Uniform random within shape |
-| `"periphery"` | Ring around center |
-| `"line"` | Linear arrangement |
-| `"grid"` | Regular grid |
+| Mode          | Description                 |
+| ------------- | --------------------------- |
+| `"uniform"`   | Uniform random within shape |
+| `"periphery"` | Ring around center          |
+| `"line"`      | Linear arrangement          |
+| `"grid"`      | Regular grid                |
 
 See [Table 4](../figures_tables_from_paper/tables/table4_larva_placement.md) for details.
 
@@ -282,4 +282,3 @@ run.simulate()
 - {doc}`larva_agent_architecture` - Agent models
 - {doc}`../concepts/experiment_types` - Preconfigured experiments
 - {doc}`../concepts/experiment_configuration_pipeline` - Configuration system
-

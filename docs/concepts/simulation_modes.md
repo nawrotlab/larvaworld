@@ -31,31 +31,31 @@ graph TB
         E2[One or multiple agents<br/>Fixed parameters]
         E3[Output: Dataset + Video]
     end
-    
+
     subgraph "Batch Run - Batch"
         B1[Multiple simulations<br/>Parameter sweep]
         B2[Parallel execution<br/>Different conditions]
         B3[Output: Multiple datasets<br/>Comparative analysis]
     end
-    
+
     subgraph "Genetic Algorithm - Ga"
         G1[Optimization loop<br/>Evolutionary search]
         G2[Population of genomes<br/>Fitness evaluation]
         G3[Output: Best genome<br/>Evolution history]
     end
-    
+
     subgraph "Model Evaluation - Eval"
         V1[Compare models<br/>Against reference data]
         V2[Multiple model configs<br/>Fixed reference dataset]
         V3[Output: Statistical comparison<br/>KS test results]
     end
-    
+
     subgraph "Dataset Replay - Replay"
         R1[Replay real data<br/>Visualization only]
         R2[Tracked trajectories<br/>From experiments]
         R3[Output: Video + Plots<br/>No simulation]
     end
-    
+
     style E1 fill:#805aab,stroke:#5f497a,stroke-width:2px,color:#fff
     style B1 fill:#4caf50,stroke:#388e3c,stroke-width:2px,color:#000
     style G1 fill:#ed7d31,stroke:#b54d21,stroke-width:2px,color:#fff
@@ -68,6 +68,7 @@ graph TB
 ## 1. Single Experiment (Exp)
 
 ### Purpose
+
 Run **one simulation** with fixed parameters for testing, exploration, or video generation.
 
 ### Command-Line Usage
@@ -113,6 +114,7 @@ dataset = exp.datasets[0]
 ## 2. Batch Run (Batch)
 
 ### Purpose
+
 Run **multiple simulations** with parameter variations to explore parameter space.
 
 ### Command-Line Usage
@@ -167,6 +169,7 @@ par_df, figs = batch.simulate(n_jobs=4)
 ## 3. Genetic Algorithm (Ga)
 
 ### Purpose
+
 **Optimize model parameters** using evolutionary search to match target behaviors.
 
 ### Command-Line Usage
@@ -228,6 +231,7 @@ For detailed workflows, see {doc}`../working_with_larvaworld/ga_optimization_adv
 ## 4. Model Evaluation (Eval)
 
 ### Purpose
+
 **Compare multiple models** against experimental reference data using statistical tests.
 
 ### Command-Line Usage
@@ -287,6 +291,7 @@ For detailed workflows, see {doc}`../working_with_larvaworld/model_evaluation`.
 ## 5. Dataset Replay (Replay)
 
 ### Purpose
+
 **Visualize real tracked data** without running a simulation.
 
 ### Command-Line Usage
@@ -339,17 +344,17 @@ For detailed workflows, see {doc}`../working_with_larvaworld/replay`.
 
 ## Comparison Table
 
-| Feature | Exp | Batch | Ga | Eval | Replay |
-|---------|-----|-------|----|----|--------|
-| **# Simulations** | 1 | N × M × Nsims | Ngenerations × Nagents | Nmodels × Nruns | 0 (replay only) |
-| **Parameter Variation** | Fixed | Sweep | Evolving | Fixed per model | N/A |
-| **Parallel Execution** | No | Yes | Yes | Yes | N/A |
-| **Optimization** | No | No | Yes | No | No |
-| **Reference Data** | Optional | Optional | Required | Required | Required |
-| **Statistical Tests** | No | Optional | Yes (fitness) | Yes (KS tests) | No |
-| **Video Output** | Yes | Optional | Optional | Optional | Yes |
-| **HDF5 Storage** | Yes | Yes | Yes | Yes | No (uses existing) |
-| **Duration** | Minutes | Hours | Hours-Days | Hours | Seconds-Minutes |
+| Feature                 | Exp      | Batch         | Ga                     | Eval            | Replay             |
+| ----------------------- | -------- | ------------- | ---------------------- | --------------- | ------------------ |
+| **# Simulations**       | 1        | N × M × Nsims | Ngenerations × Nagents | Nmodels × Nruns | 0 (replay only)    |
+| **Parameter Variation** | Fixed    | Sweep         | Evolving               | Fixed per model | N/A                |
+| **Parallel Execution**  | No       | Yes           | Yes                    | Yes             | N/A                |
+| **Optimization**        | No       | No            | Yes                    | No              | No                 |
+| **Reference Data**      | Optional | Optional      | Required               | Required        | Required           |
+| **Statistical Tests**   | No       | Optional      | Yes (fitness)          | Yes (KS tests)  | No                 |
+| **Video Output**        | Yes      | Optional      | Optional               | Optional        | Yes                |
+| **HDF5 Storage**        | Yes      | Yes           | Yes                    | Yes             | No (uses existing) |
+| **Duration**            | Minutes  | Hours         | Hours-Days             | Hours           | Seconds-Minutes    |
 
 ---
 
@@ -369,13 +374,13 @@ Do you need to run a simulation?
 
 ## Performance Considerations
 
-| Mode | CPU Usage | Memory | Disk I/O | Time Complexity |
-|------|-----------|--------|----------|----------------|
-| **Exp** | Single core | Low | Low | O(N_steps) |
-| **Batch** | Multi-core | Medium | High | O(N_sims × N_steps) |
-| **Ga** | Multi-core | Medium-High | High | O(N_gen × N_agents × N_steps) |
-| **Eval** | Multi-core | Medium | Medium | O(N_models × N_runs × N_steps) |
-| **Replay** | Single core | Low | Low | O(N_frames) |
+| Mode       | CPU Usage   | Memory      | Disk I/O | Time Complexity                |
+| ---------- | ----------- | ----------- | -------- | ------------------------------ |
+| **Exp**    | Single core | Low         | Low      | O(N_steps)                     |
+| **Batch**  | Multi-core  | Medium      | High     | O(N_sims × N_steps)            |
+| **Ga**     | Multi-core  | Medium-High | High     | O(N_gen × N_agents × N_steps)  |
+| **Eval**   | Multi-core  | Medium      | Medium   | O(N_models × N_runs × N_steps) |
+| **Replay** | Single core | Low         | Low      | O(N_frames)                    |
 
 ---
 

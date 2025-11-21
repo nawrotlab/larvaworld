@@ -7,6 +7,7 @@ This mind map displays **all 40 direct Python dependencies** of the Larvaworld p
 ### Why This Matters
 
 Understanding the dependency tree shows:
+
 - ✅ **Foundation**: Scientific stack (numpy, pandas, scipy, matplotlib)
 - ✅ **Specialization**: Agent-based modeling (agentpy), physics (box2d-py), neural (nengo)
 - ✅ **Modern tooling**: CLI (typer, rich), web apps (holoviz stack), testing (pytest)
@@ -78,29 +79,30 @@ mindmap
 
 ## Verification Data
 
-**Status:** ✅ VERIFIED with pyproject.toml  
-**Date:** November 18, 2025  
+**Status:** ✅ VERIFIED with pyproject.toml
+**Date:** November 18, 2025
 **Total Dependencies:** 40 packages
 
 ### Breakdown by Purpose
 
-| Purpose | Packages | Count |
-|---------|----------|-------|
-| **Scientific Computing** | numpy, pandas, scipy, matplotlib, seaborn, scikit-learn, powerlaw, statannot | 8 |
-| **Geospatial** | geopandas, shapely, movingpandas | 3 |
-| **Visualization** | holoviews, hvplot, panel, param, pygame, imageio | 6 |
-| **Data Storage** | tables, pypdf | 2 |
-| **CLI/UI** | typer, rich, argparse, docopt, progressbar | 5 |
-| **Agent Modeling** | agentpy | 1 |
-| **Physics (optional)** | box2d-py | 1 |
-| **Neural (optional)** | nengo | 1 |
-| **Utilities** | pint, pint_pandas, typing-extensions, filelock | 4 |
-| **Testing** | pytest, pytest-cov, pytest-xdist | 3 |
-| **Documentation** | sphinx, sphinx-rtd-theme, sphinx-autoapi, sphinx-autobuild, furo, myst-parser | 6 |
+| Purpose                  | Packages                                                                      | Count |
+| ------------------------ | ----------------------------------------------------------------------------- | ----- |
+| **Scientific Computing** | numpy, pandas, scipy, matplotlib, seaborn, scikit-learn, powerlaw, statannot  | 8     |
+| **Geospatial**           | geopandas, shapely, movingpandas                                              | 3     |
+| **Visualization**        | holoviews, hvplot, panel, param, pygame, imageio                              | 6     |
+| **Data Storage**         | tables, pypdf                                                                 | 2     |
+| **CLI/UI**               | typer, rich, argparse, docopt, progressbar                                    | 5     |
+| **Agent Modeling**       | agentpy                                                                       | 1     |
+| **Physics (optional)**   | box2d-py                                                                      | 1     |
+| **Neural (optional)**    | nengo                                                                         | 1     |
+| **Utilities**            | pint, pint_pandas, typing-extensions, filelock                                | 4     |
+| **Testing**              | pytest, pytest-cov, pytest-xdist                                              | 3     |
+| **Documentation**        | sphinx, sphinx-rtd-theme, sphinx-autoapi, sphinx-autobuild, furo, myst-parser | 6     |
 
 ### Direct Dependencies from pyproject.toml
 
 **Main dependencies (29):**
+
 - Scientific: numpy, pandas, scipy, matplotlib, seaborn, scikit-learn, powerlaw, statannot
 - Geospatial: geopandas, shapely, movingpandas
 - Visualization: holoviews, hvplot, panel, param, pygame, imageio
@@ -110,12 +112,15 @@ mindmap
 - Utils: pint, pint_pandas, typing-extensions, filelock
 
 **Dev dependencies (3):**
+
 - pytest, pytest-cov, pytest-xdist
 
 **Docs dependencies (6):**
+
 - sphinx, sphinx-rtd-theme, sphinx-autoapi, sphinx-autobuild, furo, myst-parser
 
 **Optional dependencies (2):**
+
 - box2d-py (physics)
 - nengo (neural)
 
