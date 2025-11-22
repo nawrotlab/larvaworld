@@ -7,18 +7,18 @@ This diagram shows a **simplified view** of the `LarvaSim` class architecture, f
 graph TB
     subgraph LARVASIM ["LarvaSim"]
         AGENT[LarvaSim<br/>Simulated Larva]:::larva
-        
+
         subgraph PHYSICAL ["Physical Body"]
             BODY[Segmented Body<br/>11-13 segments]:::body
             CONTOUR[Body Contour<br/>Collision detection]:::body
         end
-        
+
         subgraph BRAIN_SYS ["Brain System"]
             BRAIN[Brain<br/>DefaultBrain or NengoBrain]:::brain
             SENSORS[Sensors<br/>Olfactor, Toucher<br/>Windsensor, Thermosensor]:::sensors
             MEMORY[Memory<br/>RL or MB<br/>optional]:::neural
         end
-        
+
         subgraph LOCOMOTOR_SYS ["Locomotor System"]
             LOCOMOTOR[Locomotor<br/>Motor coordination]:::motor
             CRAWLER[Crawler<br/>Forward motion]:::behavior
@@ -26,36 +26,36 @@ graph TB
             FEEDER[Feeder<br/>Feeding behavior]:::behavior
             INTERMITTER[Intermitter<br/>State switching]:::behavior
         end
-        
+
         subgraph ENERGY_SYS ["Energy System"]
             DEB[DEB Model<br/>Metabolism]:::energy
             GUT[Gut<br/>Digestion]:::energy
             RESERVES[Reserves<br/>E, E_R, E_H]:::energy
         end
-        
+
         subgraph PHYSICS_SYS ["Physics Control (BaseController)"]
             PHYSICS[Physics<br/>Damping, Spring]:::physics
             MOTION[Motion<br/>Velocity/Force modes]:::physics
         end
     end
-    
+
     AGENT --> BODY
     AGENT --> BRAIN
     AGENT --> LOCOMOTOR
     AGENT --> DEB
     AGENT --> PHYSICS
-    
+
     BRAIN --> SENSORS
     BRAIN -.-> MEMORY
-    
+
     LOCOMOTOR --> CRAWLER
     LOCOMOTOR --> TURNER
     LOCOMOTOR --> FEEDER
     LOCOMOTOR --> INTERMITTER
-    
+
     DEB --> GUT
     DEB --> RESERVES
-    
+
     SENSORS -.->|Sensing| BODY
     LOCOMOTOR -.->|Commands| MOTION
     MOTION -.->|Apply| BODY
@@ -94,15 +94,18 @@ This simplified view groups `LarvaSim` components by **functional purpose** rath
 ### Functional Groups
 
 #### Physical Body (Red)
+
 - **Segmented Body**: 11-13 segments with realistic biomechanics
 - **Body Contour**: Shape representation for collision detection
 
 #### Brain System (Blue/Orange/Purple)
+
 - **Brain**: Central control (DefaultBrain or NengoBrain)
 - **Sensors**: Environmental perception (olfaction, touch, temperature, wind)
 - **Memory**: Optional learning system (RL or model-based)
 
 #### Locomotor System (Cyan/Green)
+
 - **Locomotor**: Coordinates all motor modules
 - **Crawler**: Generates forward peristaltic motion
 - **Turner**: Controls body bending for direction changes
@@ -110,11 +113,13 @@ This simplified view groups `LarvaSim` components by **functional purpose** rath
 - **Intermitter**: Switches between run/pause/turn states
 
 #### Energy System (Yellow)
+
 - **DEB Model**: Dynamic Energy Budget for metabolism
 - **Gut**: Digestive system and food processing
 - **Reserves**: Energy storage (E, E_R, E_H)
 
 #### Physics Control (Pink)
+
 - **Physics**: Body mechanics (damping, torsional spring)
 - **Motion**: Motion control modes (velocity/force/torque)
 
@@ -131,6 +136,7 @@ This simplified view groups `LarvaSim` components by **functional purpose** rath
 ### Key Differences from Detailed View
 
 This simplified view:
+
 - Groups components by function rather than inheritance
 - Hides internal brain structure (modalities dict)
 - Shows high-level data flow instead of method calls

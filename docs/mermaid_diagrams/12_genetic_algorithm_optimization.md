@@ -7,6 +7,7 @@ This flowchart illustrates the **genetic algorithm (GA) optimization process** i
 ### Why This Matters
 
 GA optimization enables:
+
 - ✅ **Automated parameter fitting**: Find optimal parameters without manual tuning
 - ✅ **Multi-parameter optimization**: Simultaneously optimize many parameters
 - ✅ **Behavioral matching**: Evolve models to match real larval behavior
@@ -24,33 +25,33 @@ Larvaworld's GA implements an **evolutionary optimization** strategy where popul
 ```mermaid
 graph TB
     Start([Start GA Optimization]) --> Init[Initialize Population<br/>Random genomes]
-    
+
     Init --> Evaluate[Evaluate Fitness<br/>Run simulations]
-    
+
     Evaluate --> Fitness{Calculate Fitness<br/>vs Reference Data}
-    
+
     Fitness --> Compare[Compare to Target<br/>KS tests on metrics]
-    
+
     Compare --> Rank[Rank Genomes<br/>by Fitness Score]
-    
+
     Rank --> Converge{Converged?<br/>Max gen reached<br/>or fitness plateau}
-    
+
     Converge -->|No| Select[Selection<br/>Keep best genomes]
-    
+
     Select --> Crossover[Crossover<br/>Combine parent genes]
-    
+
     Crossover --> Mutate[Mutation<br/>Random perturbations]
-    
+
     Mutate --> NewGen[New Generation<br/>Next population]
-    
+
     NewGen --> Evaluate
-    
+
     Converge -->|Yes| Best[Best Genome<br/>Optimal parameters]
-    
+
     Best --> Output[Output Results<br/>Best config + history]
-    
+
     Output --> End([End Optimization])
-    
+
     style Start fill:#2196f3,stroke:#1976d2,stroke-width:3px,color:#fff
     style Init fill:#4caf50,stroke:#388e3c,stroke-width:2px,color:#000
     style Fitness fill:#ff9800,stroke:#f57c00,stroke-width:2px,color:#000
@@ -63,8 +64,8 @@ graph TB
 
 ## Verification Data
 
-**Status:** ✅ VERIFIED with actual codebase  
-**Date:** November 19, 2025  
+**Status:** ✅ VERIFIED with actual codebase
+**Date:** November 19, 2025
 **Source:** `/src/larvaworld/lib/sim/genetic_algorithm.py`, `/src/larvaworld/lib/reg/`
 
 ### GA Implementation ✅
@@ -74,6 +75,7 @@ graph TB
 **Inherits from**: `BaseRun` (simulation capabilities)
 
 **Key Attributes**:
+
 - `evaluator`: `GAevaluation` instance (fitness function)
 - `selector`: `GAselector` instance (evolution parameters)
 - `genome_dict`: Current generation genomes
@@ -88,6 +90,7 @@ graph TB
 **Method**: `build_generation()` (`genetic_algorithm.py`)
 
 **Process**:
+
 ```python
 # First generation: random initialization
 if self.generation_num == 0:
@@ -98,6 +101,7 @@ if self.generation_num == 0:
 ```
 
 **Parameters**:
+
 - `Nagents`: Population size (e.g., 30-100 genomes)
 - `parameter_space`: Dict of parameters with ranges
   - Example: `{'interference': [0.0, 1.0], 'turner.amp': [10.0, 50.0]}`
@@ -110,12 +114,14 @@ if self.generation_num == 0:
 **Method**: `evaluate_fitness()` in `GAevaluation` (`generators.py`, line 977)
 
 **Process**:
+
 1. **Run Simulation**: Each genome → `ExpRun` → `LarvaDataset`
 2. **Process Data**: Apply `process()` and `annotate()`
 3. **Compare to Reference**: Compute error metrics vs `refDataset`
 4. **Calculate Fitness**: Aggregate errors across metrics
 
 **Fitness Function**:
+
 ```python
 def evaluate_fitness(self, dataset, mode='default'):
     # Compute error dict (KS tests)
@@ -131,6 +137,7 @@ def evaluate_fitness(self, dataset, mode='default'):
 ```
 
 **Metrics Used** (from `evaluation.py`, lines 496-541):
+
 - **Angular kinematics**: `b`, `fov`, `foa`, `rov`, `roa`, etc. (8 metrics)
 - **Spatial displacement**: `cum_d`, `v_mu`, `dsp_0_40_max`, etc. (9 metrics)
 - **Temporal dynamics**: `run_t`, `pau_t`, `fsv`, `ffov`, etc. (6 metrics)
@@ -144,6 +151,7 @@ def evaluate_fitness(self, dataset, mode='default'):
 **Method**: `sorted_genomes` property (`genetic_algorithm.py`)
 
 **Process**:
+
 ```python
 @property
 def sorted_genomes(self):
@@ -153,6 +161,7 @@ def sorted_genomes(self):
 ```
 
 **Ranking**:
+
 - **Best**: Lowest fitness score (smallest error)
 - **Worst**: Highest fitness score (largest error)
 - **Tracking**: `best_genome` and `best_fitness` updated each generation
@@ -162,6 +171,7 @@ def sorted_genomes(self):
 **Method**: `generation_completed` and `max_generation_completed` properties
 
 **Conditions** (`genetic_algorithm.py`, lines 537-564):
+
 ```python
 @property
 def generation_completed(self):
@@ -176,6 +186,7 @@ def max_generation_completed(self):
 ```
 
 **Termination Criteria**:
+
 - **Max generations reached**: `generation_num >= Ngenerations`
 - **Fitness plateau**: (implicit, can track `best_fitness` changes)
 - **Minimum population**: `len(agents) <= Nagents_min`
@@ -185,6 +196,7 @@ def max_generation_completed(self):
 **Method**: `select_survivors()` in `GAselector` (`generators.py`)
 
 **Strategies**:
+
 - **Elitism**: Keep top `Nelits` genomes unchanged
 - **Tournament selection**: Random subsets compete
 - **Roulette wheel**: Probability proportional to fitness
@@ -193,6 +205,7 @@ def max_generation_completed(self):
 **Default**: Elitism + tournament selection
 
 **Code**:
+
 ```python
 def select_survivors(self, sorted_genomes):
     Nelits = int(self.Nagents * self.elitism_ratio)  # e.g., 10%
@@ -206,6 +219,7 @@ def select_survivors(self, sorted_genomes):
 **Method**: `crossover()` in `GAselector`
 
 **Process**:
+
 - **Parents**: Select two survivors
 - **Crossover point**: Random position in genome
 - **Offspring**: Combine parent genes
@@ -213,11 +227,13 @@ def select_survivors(self, sorted_genomes):
   - Remaining genes from Parent B
 
 **Types**:
+
 - **Single-point**: One crossover point
 - **Two-point**: Two crossover points
 - **Uniform**: Each gene randomly from either parent
 
 **Code**:
+
 ```python
 def crossover(self, parent1, parent2):
     crossover_point = random.randint(1, len(parent1) - 1)
@@ -231,12 +247,14 @@ def crossover(self, parent1, parent2):
 **Method**: `mutate()` in `GAselector`
 
 **Process**:
+
 - **Mutation rate**: Probability per gene (e.g., 5-10%)
 - **Mutation strength**: Magnitude of perturbation
 - **Bounded**: Keep within parameter ranges
 - **Random**: Gaussian noise or uniform random
 
 **Code**:
+
 ```python
 def mutate(self, genome, mutation_rate=0.05, mutation_strength=0.1):
     for key in genome:
@@ -255,6 +273,7 @@ def mutate(self, genome, mutation_rate=0.05, mutation_strength=0.1):
 **Method**: `build_generation()` with sorted genomes
 
 **Process**:
+
 1. **Select survivors** (top performers)
 2. **Generate offspring** (crossover + mutation)
 3. **Fill population** to `Nagents`
@@ -262,13 +281,14 @@ def mutate(self, genome, mutation_rate=0.05, mutation_strength=0.1):
 5. **Increment** `generation_num`
 
 **Code**:
+
 ```python
 def build_generation(self, sorted_genomes):
     self.generation_num += 1
-    
+
     # Selection
     survivors = self.selector.select_survivors(sorted_genomes)
-    
+
     # Crossover + Mutation
     offspring = []
     while len(survivors) + len(offspring) < self.selector.Nagents:
@@ -277,12 +297,12 @@ def build_generation(self, sorted_genomes):
         child1 = self.selector.mutate(child1)
         child2 = self.selector.mutate(child2)
         offspring.extend([child1, child2])
-    
+
     # New generation
     new_genomes = survivors + offspring[:self.selector.Nagents - len(survivors)]
-    self.genome_dict = {f"gen{self.generation_num}_g{i}": g 
+    self.genome_dict = {f"gen{self.generation_num}_g{i}": g
                         for i, g in enumerate(new_genomes)}
-    
+
     # Create agents with new genomes
     self.build_agents(self.genome_dict)
 ```
@@ -292,6 +312,7 @@ def build_generation(self, sorted_genomes):
 **Class**: `GAselector` (`generators.py`)
 
 **Key Parameters**:
+
 ```python
 GAselector(
     Nagents=30,           # Population size
@@ -307,6 +328,7 @@ GAselector(
 **Class**: `GAevaluation` (`generators.py`, line 977)
 
 **Key Parameters**:
+
 ```python
 GAevaluation(
     refID='exploration.30controls',  # Reference dataset
@@ -324,6 +346,7 @@ GAevaluation(
 ### Output Data ✅
 
 **Stored Attributes**:
+
 - `best_genome`: Dict of optimal parameter values
 - `best_fitness`: Fitness score of best genome
 - `fitness_history`: Fitness per generation
@@ -331,11 +354,13 @@ GAevaluation(
 - `generation_num`: Total generations completed
 
 **Files Saved**:
+
 - `best_genome.pkl`: Best parameter set
 - `fitness_history.csv`: Convergence data
 - `generation_X/`: Datasets for each generation
 
 **Example Output**:
+
 ```python
 >>> ga.best_genome
 {
@@ -409,34 +434,34 @@ parameters to real behavioral data.
 **Algorithm Steps:**
 
 1. **Initialize Population**
-   
+
    - Generate random parameter sets ("genomes")
    - Population size: 30-100 genomes
 
 2. **Evaluate Fitness**
-   
+
    - Run simulation for each genome
    - Compare to reference dataset using KS tests
    - Lower fitness = better match
 
 3. **Selection**
-   
+
    - Rank genomes by fitness
    - Keep best performers (elitism)
    - Tournament or roulette wheel selection
 
 4. **Crossover**
-   
+
    - Combine genes from two parents
    - Create offspring with mixed parameters
 
 5. **Mutation**
-   
+
    - Random perturbations (5-10% rate)
    - Maintain diversity in population
 
 6. **Iterate**
-   
+
    - Repeat for N generations (typically 50-200)
    - Stop when fitness plateaus or max generations reached
 
@@ -446,13 +471,13 @@ parameters to real behavioral data.
 
    from larvaworld.lib.sim import GAlauncher
    from larvaworld.lib.reg import GAevaluation
-   
+
    # Define fitness function
    evaluator = GAevaluation(
        refID='exploration.30controls',
        metric_definition='angular'
    )
-   
+
    # Run optimization
    ga = GAlauncher(
        experiment='exploration',
@@ -465,7 +490,7 @@ parameters to real behavioral data.
        }
    )
    ga.simulate()
-   
+
    # Best parameters
    print(ga.best_genome)
 
@@ -492,4 +517,3 @@ Optimization can target specific behavioral aspects:
 The GA automatically discovers parameter values that produce realistic
 *Drosophila* larval behavior, eliminating the need for manual parameter tuning.
 ```
-

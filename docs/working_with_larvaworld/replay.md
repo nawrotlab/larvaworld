@@ -233,6 +233,7 @@ replay.run()
 ```
 
 **Look for**:
+
 - ❌ Missing data (gaps in trajectories)
 - ❌ Tracking errors (jumps, swaps)
 - ❌ Collisions or arena boundary issues

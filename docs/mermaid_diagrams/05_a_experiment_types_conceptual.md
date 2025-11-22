@@ -7,6 +7,7 @@ This mind map illustrates the **11 major experiment categories** available in La
 ### Why This Matters
 
 This diversity demonstrates:
+
 - ✅ **Comprehensive coverage**: From basic exploration to complex multi-agent games
 - ✅ **Multi-sensory**: Chemotaxis, thermotaxis, anemotaxis, tactile detection
 - ✅ **Behavioral complexity**: Learning, foraging strategies, competition
@@ -83,39 +84,41 @@ mindmap
 **For the EXACT CODE STRUCTURE** (actual dictionary keys used in `sim_conf.py`), see `05_b_experiment_types_by_code_structure.md`.
 
 **Key differences:**
+
 - Conceptual: "Learning" → Code: `"odor_preference"`
-- Conceptual: "Competition" → Code: `"games"`  
+- Conceptual: "Competition" → Code: `"games"`
 - Conceptual: "Chemo-anemotaxis" → Code: `"chemanemotaxis"` (no hyphen)
 
 ---
 
 ## Verification Data
 
-**Status:** ✅ VERIFIED with actual codebase  
-**Date:** November 19, 2025  
+**Status:** ✅ VERIFIED with actual codebase
+**Date:** November 19, 2025
 **Source:** `/src/larvaworld/lib/reg/stored_confs/sim_conf.py`
 
 ### Complete Experiment Categories
 
-| Category | Count | Key Experiments | Description |
-|----------|-------|----------------|-------------|
-| **Exploration** | 5 | `dish`, `dispersion`, `focus`, `tethered` | Basic locomotion and spatial patterns |
-| **Chemotaxis** | 9 | `chemotaxis`, `chemorbit`, `chemorbit_x2`, `chemotaxis_RL` | Odor navigation and gradients |
-| **Learning** | 6 | `PItrain`, `PItrain_mini`, `PItest_off`, `PItest_on` | Olfactory conditioning, preference shift |
-| **Foraging** | 11 | `patch_grid`, `double_patch`, `random_food`, `uniform_food` | Food search, exploitation, rover vs sitter |
-| **Growth** | 12 | `growth`, `RvsS`, `RvsS_on`, `RvsS_off`, `RvsS_on_qXX` | DEB simulations, life-history, starvation |
-| **Competition** | 4 | `capture_the_flag`, `keep_the_flag`, `catch_me`, `maze` | Multi-agent games and challenges |
-| **Anemotaxis** | 3 | `anemotaxis`, `anemotaxis_bordered`, `puff_anemotaxis_bordered` | Wind navigation |
-| **Thermotaxis** | 1 | `thermotaxis` | Temperature gradient navigation |
-| **Tactile** | 3 | `tactile_detection`, `tactile_detection_x4`, `multi_tactile_detection` | Touch-based sensing |
-| **Chemo-anemotaxis** | 1 | `single_puff` | Combined odor and wind |
-| **Other** | 2 | `realistic_imitation`, `prey_detection` | Box2D body, zebrafish model |
+| Category             | Count | Key Experiments                                                        | Description                                |
+| -------------------- | ----- | ---------------------------------------------------------------------- | ------------------------------------------ |
+| **Exploration**      | 5     | `dish`, `dispersion`, `focus`, `tethered`                              | Basic locomotion and spatial patterns      |
+| **Chemotaxis**       | 9     | `chemotaxis`, `chemorbit`, `chemorbit_x2`, `chemotaxis_RL`             | Odor navigation and gradients              |
+| **Learning**         | 6     | `PItrain`, `PItrain_mini`, `PItest_off`, `PItest_on`                   | Olfactory conditioning, preference shift   |
+| **Foraging**         | 11    | `patch_grid`, `double_patch`, `random_food`, `uniform_food`            | Food search, exploitation, rover vs sitter |
+| **Growth**           | 12    | `growth`, `RvsS`, `RvsS_on`, `RvsS_off`, `RvsS_on_qXX`                 | DEB simulations, life-history, starvation  |
+| **Competition**      | 4     | `capture_the_flag`, `keep_the_flag`, `catch_me`, `maze`                | Multi-agent games and challenges           |
+| **Anemotaxis**       | 3     | `anemotaxis`, `anemotaxis_bordered`, `puff_anemotaxis_bordered`        | Wind navigation                            |
+| **Thermotaxis**      | 1     | `thermotaxis`                                                          | Temperature gradient navigation            |
+| **Tactile**          | 3     | `tactile_detection`, `tactile_detection_x4`, `multi_tactile_detection` | Touch-based sensing                        |
+| **Chemo-anemotaxis** | 1     | `single_puff`                                                          | Combined odor and wind                     |
+| **Other**            | 2     | `realistic_imitation`, `prey_detection`                                | Box2D body, zebrafish model                |
 
 **Total:** 57 predefined experiments across 11 categories
 
 ### Category Details
 
 #### 1. Exploration (5 experiments)
+
 ```python
 - dish               # Free movement in circular dish
 - dispersion         # Spatial spread in large arena (200mm)
@@ -125,6 +128,7 @@ mindmap
 ```
 
 #### 2. Chemotaxis (9 experiments)
+
 ```python
 - chemotaxis              # Gradient navigation
 - chemorbit               # Gaussian odor source orbiting
@@ -138,6 +142,7 @@ mindmap
 ```
 
 #### 3. Learning (6 experiments)
+
 ```python
 - PItrain               # Full preference training (41 min)
 - PItrain_mini          # Short training (1 min)
@@ -148,6 +153,7 @@ mindmap
 ```
 
 #### 4. Foraging (11 experiments)
+
 ```python
 - patchy_food           # Scattered food patches
 - patch_grid            # Grid of food patches
@@ -163,6 +169,7 @@ mindmap
 ```
 
 #### 5. Growth (12 experiments)
+
 ```python
 - growth                # Full development (24h)
 - RvsS                  # Rover vs Sitter phenotypes (3h)
@@ -179,6 +186,7 @@ mindmap
 ```
 
 #### 6. Competition (4 experiments)
+
 ```python
 - capture_the_flag  # Capture and return flag to base
 - keep_the_flag     # Possess flag as long as possible
@@ -187,6 +195,7 @@ mindmap
 ```
 
 #### 7. Anemotaxis (3 experiments)
+
 ```python
 - anemotaxis          # Wind navigation
 - anemotaxis_bordered # With arena borders
@@ -194,11 +203,13 @@ mindmap
 ```
 
 #### 8. Thermotaxis (1 experiment)
+
 ```python
 - thermotaxis  # Temperature gradient navigation
 ```
 
 #### 9. Tactile (3 experiments)
+
 ```python
 - tactile_detection       # Touch-based patch detection
 - tactile_detection_x4    # 4-model comparison (RL vs control)
@@ -206,11 +217,13 @@ mindmap
 ```
 
 #### 10. Chemo-anemotaxis (1 experiment)
+
 ```python
 - single_puff  # Combined odor puff + wind (2.5s)
 ```
 
 #### 11. Other (2 experiments)
+
 ```python
 - realistic_imitation  # Box2D multi-segment body
 - prey_detection       # Zebrafish prey capture
@@ -251,7 +264,6 @@ Larvaworld provides **57 predefined experiment configurations** across **11 beha
 
 - **Other** (2): Box2D realistic body, zebrafish prey detection
 
-Each experiment is fully configurable through the registry system 
+Each experiment is fully configurable through the registry system
 (``reg.conf.Exp.confIDs``) and can be customized for specific research needs.
 ```
-

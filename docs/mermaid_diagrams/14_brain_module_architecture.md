@@ -7,6 +7,7 @@ This diagram illustrates the **detailed architecture of the Brain module** from 
 ### Why This Matters
 
 Understanding the brain architecture reveals:
+
 - ✅ **Sensorimotor integration**: How multiple sensory modalities are processed
 - ✅ **Memory attachment**: How learning modules attach to sensory modalities
 - ✅ **Locomotor control**: How the brain generates motor commands
@@ -16,6 +17,7 @@ Understanding the brain architecture reveals:
 ### Key Insight
 
 The Brain module implements a **modular sensorimotor control architecture** where:
+
 1. **Sensors** detect environmental stimuli (olfaction, touch, thermo, wind)
 2. **Modalities** process sensory signals and attach optional memory
 3. **Memory** (optional) modulates sensory gains through learning
@@ -31,25 +33,25 @@ graph TB
         BRAIN[Brain<br/>Base class]:::base
         DEFAULT[DefaultBrain<br/>Standard implementation]:::impl
         NENGO[NengoBrain<br/>Nengo neural network]:::impl
-        
+
         BRAIN --> DEFAULT
         BRAIN --> NENGO
     end
-    
+
     subgraph BRAIN_STRUCTURE ["Brain Internal Structure"]
         subgraph SENSORY ["Sensory Modalities (self.modalities)"]
             OLFACTION[olfaction]:::modality
             TOUCH[touch]:::modality
             THERMO[thermosensation]:::modality
             WIND[windsensation]:::modality
-            
+
             subgraph OLF_DETAIL ["olfaction modality"]
                 OLF_SENSOR[sensor: Olfactor]:::sensor
                 OLF_FUNC[func: sense_odors]:::func
                 OLF_A[A: float<br/>sensory signal]:::signal
                 OLF_MEM[mem: Memory<br/>optional]:::memory
             end
-            
+
             subgraph TOUCH_DETAIL ["touch modality"]
                 TOUCH_SENSOR[sensor: Toucher]:::sensor
                 TOUCH_FUNC[func: sense_food_multi]:::func
@@ -57,17 +59,17 @@ graph TB
                 TOUCH_MEM[mem: Memory<br/>optional]:::memory
             end
         end
-        
+
         OLFACTION --> OLF_SENSOR
         OLFACTION --> OLF_FUNC
         OLFACTION --> OLF_A
         OLFACTION -.-> OLF_MEM
-        
+
         TOUCH --> TOUCH_SENSOR
         TOUCH --> TOUCH_FUNC
         TOUCH --> TOUCH_A
         TOUCH -.-> TOUCH_MEM
-        
+
         subgraph LOCO_MODULE ["Locomotor Module"]
             LOCOMOTOR[Locomotor]:::locomotor
             CRAWLER[Crawler]:::locomod
@@ -75,62 +77,62 @@ graph TB
             FEEDER[Feeder]:::locomod
             INTERMITTER[Intermitter]:::locomod
             INTERFERENCE[Interference]:::locomod
-            
+
             LOCOMOTOR --> CRAWLER
             LOCOMOTOR --> TURNER
             LOCOMOTOR --> FEEDER
             LOCOMOTOR --> INTERMITTER
             LOCOMOTOR --> INTERFERENCE
         end
-        
+
         A_IN[A_in<br/>Total sensory input<br/>sum of all modalities.A]:::output
     end
-    
+
     subgraph SENSOR_TYPES ["Sensor Modules (from sensor.py)"]
         SENSOR_BASE[Sensor<br/>Base class]:::sensorclass
         OLFACTOR_CLASS[Olfactor<br/>Odor detection]:::sensorclass
         TOUCHER_CLASS[Toucher<br/>Touch/food detection]:::sensorclass
         WIND_CLASS[WindSensor<br/>Wind direction]:::sensorclass
         THERMO_CLASS[Thermosensor<br/>Temperature gradients]:::sensorclass
-        
+
         SENSOR_BASE --> OLFACTOR_CLASS
         SENSOR_BASE --> TOUCHER_CLASS
         SENSOR_BASE --> WIND_CLASS
         SENSOR_BASE --> THERMO_CLASS
     end
-    
+
     subgraph MEMORY_TYPES ["Memory Modules (from memory.py)"]
         MEMORY_BASE[Memory<br/>Base class]:::memclass
         RL_MEM[RLmemory<br/>Q-learning]:::memclass
         RLOLF_MEM[RLOlfMemory<br/>Olfactory RL]:::memclass
         MB_MEM[RemoteBrianModelMemory<br/>Mushroom Body]:::memclass
-        
+
         MEMORY_BASE --> RL_MEM
         RL_MEM --> RLOLF_MEM
         MEMORY_BASE --> MB_MEM
     end
-    
+
     %% Connections
     DEFAULT --> OLFACTION
     DEFAULT --> TOUCH
     DEFAULT --> THERMO
     DEFAULT --> WIND
     DEFAULT --> LOCOMOTOR
-    
+
     OLF_SENSOR -.->|Modulates<br/>gain| OLF_MEM
     TOUCH_SENSOR -.->|Modulates<br/>gain| TOUCH_MEM
-    
+
     OLF_A --> A_IN
     TOUCH_A --> A_IN
-    
+
     A_IN --> LOCOMOTOR
-    
+
     OLFACTOR_CLASS -.->|Instantiated as| OLF_SENSOR
     TOUCHER_CLASS -.->|Instantiated as| TOUCH_SENSOR
-    
+
     RLOLF_MEM -.->|Can attach to| OLF_MEM
     MB_MEM -.->|Can attach to| TOUCH_MEM
-    
+
     %% Color definitions
     classDef base fill:#2c3e50,stroke:#34495e,stroke-width:3px,color:#ffffff
     classDef impl fill:#3498db,stroke:#2980b9,stroke-width:2px,color:#ffffff
@@ -150,8 +152,8 @@ graph TB
 
 ## Verification Data
 
-**Status:** ✅ VERIFIED with actual codebase  
-**Date:** November 19, 2025  
+**Status:** ✅ VERIFIED with actual codebase
+**Date:** November 19, 2025
 **Source:** `/src/larvaworld/lib/model/modules/brain.py`, `/sensor.py`, `/memory.py`, `/locomotor.py`
 
 ### Brain Class Hierarchy ✅
@@ -188,7 +190,7 @@ class DefaultBrain(Brain):
         kws = {"dt": dt, "brain": self}
         kwargs.update(MD.build_sensormodules(conf=conf, **kws))  # Build sensors
         super().__init__(agent=agent, dt=dt, conf=conf, **kwargs)
-    
+
     def step(self, pos, on_food=False, **kwargs):
         self.sense(pos=pos, reward=on_food)  # Process all sensors
         return self.locomotor.step(A_in=self.A_in, on_food=on_food, **kwargs)
@@ -251,11 +253,12 @@ if m is not None:
 **Base Class**: `Sensor` (`sensor.py`)
 
 **Olfactor** (`sensor.py`, line 163):
+
 ```python
 class Olfactor(Sensor):
     """
     Olfactory sensor for odor detection.
-    
+
     Attributes:
         gain_dict: Dict mapping odor IDs to gain values
         sensed_odors: List of currently detected odors
@@ -263,11 +266,12 @@ class Olfactor(Sensor):
 ```
 
 **Toucher** (`sensor.py`, line 206):
+
 ```python
 class Toucher(Sensor):
     """
     Tactile sensor for food/substrate detection.
-    
+
     Attributes:
         radius: Detection radius
         source_contact: Currently detected food source
@@ -284,7 +288,7 @@ class Toucher(Sensor):
 class Memory(Timer):
     """
     Base memory module for learning.
-    
+
     Attributes:
         brain: Parent brain instance
         modality: Target sensory modality
@@ -292,12 +296,14 @@ class Memory(Timer):
 ```
 
 **RLmemory** (`memory.py`, line 87):
+
 ```python
 class RLmemory(Memory):
     """Q-learning reinforcement learning memory."""
 ```
 
 **RLOlfMemory** (`memory.py`, line 247):
+
 ```python
 class RLOlfMemory(RLmemory):
     """Olfactory-specific RL memory that modulates odor gains."""
@@ -310,6 +316,7 @@ class RLOlfMemory(RLmemory):
 **Class**: `Locomotor` (`locomotor.py`, line 32)
 
 **Attributes**:
+
 - `crawler`: Peristaltic crawling module
 - `turner`: Body bending module
 - `feeder`: Feeding behavior module
@@ -317,6 +324,7 @@ class RLOlfMemory(RLmemory):
 - `interference`: Crawl-bend coupling
 
 **Integration** (`brain.py`, line 89):
+
 ```python
 from .locomotor import Locomotor as _Locomotor
 self.locomotor = _Locomotor(conf=conf, dt=self.dt)
@@ -325,6 +333,7 @@ self.locomotor = _Locomotor(conf=conf, dt=self.dt)
 ### Data Flow ✅
 
 **1. Sensing Phase** (`brain.py`, `sense()` method):
+
 ```python
 def sense(self, pos, reward=False):
     """Process all sensory modalities."""
@@ -332,13 +341,14 @@ def sense(self, pos, reward=False):
         if mod.sensor:
             # Call processing function (e.g., sense_odors, sense_food_multi)
             mod.func(pos=pos)
-            
+
             # Optional memory modulation
             if mod.mem:
                 mod.A = mod.mem.step(A=mod.A, reward=reward)
 ```
 
 **2. Integration** (`brain.py`, properties):
+
 ```python
 @property
 def A_in(self):
@@ -355,6 +365,7 @@ def A_touch(self):
 ```
 
 **3. Motor Generation** (`DefaultBrain.step()`):
+
 ```python
 def step(self, pos, on_food=False, **kwargs):
     self.sense(pos=pos, reward=on_food)  # Process sensors
@@ -378,14 +389,14 @@ brain_conf = {
     },
     'windsensor': None,  # Disabled
     'thermosensor': None,  # Disabled
-    
+
     # Memory (optional)
     'memory': {
         'modality': 'olfaction',  # Attach to olfaction modality
         'type': 'RL',             # RLOlfMemory
         'learning_rate': 0.01
     },
-    
+
     # Locomotor
     'locomotor': {
         'crawler': {'freq': 1.0},
@@ -416,6 +427,7 @@ lin_vel, ang_vel, feeding = brain.step(pos=larva.pos, on_food=False)
 **1. Modality Pattern**
 
 Each sensory modality is a dictionary with:
+
 - `sensor`: Sensor module instance (or None if disabled)
 - `func`: Processing function (method of Brain)
 - `A`: Current sensory signal value
@@ -512,7 +524,7 @@ Memory modules can attach to any modality:
        'type': 'RL',
        'learning_rate': 0.01
    }
-   
+
    # Memory modulates sensor gain during learning
    modality.A = modality.mem.step(A=raw_signal, reward=on_food)
 
@@ -583,4 +595,3 @@ Configuration
 This modular design enables flexible configuration of sensory capabilities,
 learning mechanisms, and motor behaviors.
 ```
-

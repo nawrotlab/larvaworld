@@ -19,6 +19,7 @@ This figure shows the different simulation modes that can be launched from the c
 5. **Replay** (`-rep`): Replay stored or imported datasets
 
 Each mode has:
+
 - **Shortcut**: CLI argument (e.g., `-exp`)
 - **Purpose**: What it's used for
 - **Configuration**: Parameter requirements
@@ -29,6 +30,7 @@ Each mode has:
 ## Purpose
 
 This figure serves to:
+
 - ✅ **Guide users** on available simulation modes
 - ✅ **Show CLI usage** for each mode
 - ✅ **Explain differences** between modes
@@ -52,8 +54,8 @@ Larvaworld provides five main simulation modes, each serving a distinct purpose.
    :alt: CLI Simulation Modes
    :align: center
    :width: 90%
-   
-   **Figure 3**: Available simulation modes in Larvaworld. Each mode can be 
+
+   **Figure 3**: Available simulation modes in Larvaworld. Each mode can be
    launched via the command-line interface using the respective shortcut.
 
 Command-Line Usage
@@ -65,16 +67,16 @@ All simulation modes are accessed through the ``larvaworld`` command:
 
    # Single experiment
    larvaworld -exp <experiment_id>
-   
+
    # Batch run
    larvaworld -batch <batch_id>
-   
+
    # Genetic algorithm
    larvaworld -ga <ga_id>
-   
+
    # Model evaluation
    larvaworld -eval <eval_id>
-   
+
    # Dataset replay
    larvaworld -rep <dataset_id>
 
@@ -82,11 +84,11 @@ Mode Descriptions
 ^^^^^^^^^^^^^^^^^
 
 **Exp (Experiment)**
-   Run a single simulation with specified parameters. Fastest mode for testing 
+   Run a single simulation with specified parameters. Fastest mode for testing
    and exploration.
 
 **Batch**
-   Execute multiple simulations with parameter sweeps. Useful for systematic 
+   Execute multiple simulations with parameter sweeps. Useful for systematic
    exploration of parameter space.
 
 **Ga (Genetic Algorithm)**
@@ -118,4 +120,3 @@ For detailed information on each mode, see :ref:`simulation-modes-detailed`.
 - **Caption** (LaTeX line 445): "CLI simulation modes. The simulation modes available in Larvaworld along with the respective argument to launch them via the command-line interface."
 - **Label**: `fig:sim_modes`
 - **Related text**: Lines 436-439 in main.tex
-

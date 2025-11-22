@@ -4,25 +4,28 @@
 
 ### Lab-specific Experimental Data-formats
 
-| Lab | Framerate (Hz) | Midline (#) | Contour (#) | Source |
-|-----|----------------|-------------|-------------|--------|
-| **Schleyer** | 16 | 12 | 22 | Paisios et al. (2017) |
-| **Jovanic** | 11.27* | 11 | 30** | de Tredern et al. (2024) |
-| **Berni** | 2 | 1 | 0 | Sims et al. (2019) |
-| **Arguello** | 10 | 5 | 0 | Kafle et al. (2025) |
+| Lab          | Framerate (Hz) | Midline (#) | Contour (#) | Source                   |
+| ------------ | -------------- | ----------- | ----------- | ------------------------ |
+| **Schleyer** | 16             | 12          | 22          | Paisios et al. (2017)    |
+| **Jovanic**  | 11.27\*        | 11          | 30\*\*      | de Tredern et al. (2024) |
+| **Berni**    | 2              | 1           | 0           | Sims et al. (2019)       |
+| **Arguello** | 10             | 5           | 0           | Kafle et al. (2025)      |
 
 **Notes:**
-- *Variable framerate; average value used
-- **Variable contour points; convex hull of defined size used instead
+
+- \*Variable framerate; average value used
+- \*\*Variable contour points; convex hull of defined size used instead
 
 ---
 
 ## Detailed Descriptions
 
 ### Schleyer Lab (Paisios et al. 2017)
+
 **Tracking System**: Custom multi-larva tracker with high spatial resolution
 
 **Specifications**:
+
 - **Framerate**: 16 Hz (fixed)
 - **Midline Points**: 12
 - **Contour Points**: 22
@@ -30,6 +33,7 @@
 - **Spatial Resolution**: High-resolution body tracking
 
 **Key Features**:
+
 - Full body contour tracking
 - Detailed midline representation
 - Fixed framerate for consistent temporal analysis
@@ -39,6 +43,7 @@
 **Import API**: `reg.gen.LabFormat(labID="Schleyer")`
 
 **Representative Datasets**:
+
 - Dish exploration experiments
 - Chemotaxis assays
 - Odor preference studies
@@ -48,9 +53,11 @@
 ---
 
 ### Jovanic Lab (de Tredern et al. 2024)
+
 **Tracking System**: Multi-larva tracker with variable framerate
 
 **Specifications**:
+
 - **Framerate**: 11.27 Hz (average; variable)
 - **Midline Points**: 11
 - **Contour Points**: 30 (variable; convex hull)
@@ -58,6 +65,7 @@
 - **Spatial Resolution**: Detailed body and contour tracking
 
 **Key Features**:
+
 - Variable framerate (11.27 Hz is average)
 - Adaptive contour representation using convex hull
 - Comprehensive body shape tracking
@@ -67,6 +75,7 @@
 **Import API**: `reg.gen.LabFormat(labID="Jovanic")`
 
 **Representative Datasets**:
+
 - Feeding-state dependent behavior
 - Metabolic state effects on locomotion
 - Nutritional choice experiments
@@ -74,6 +83,7 @@
 **Reference**: de Tredern, E., et al. (2024). Feeding-state-dependent modulation of Drosophila larval locomotion.
 
 **Technical Notes**:
+
 - Variable framerate handled by averaging or interpolation
 - Convex hull simplifies contour representation
 - Ensures consistent data structure despite variable input
@@ -81,9 +91,11 @@
 ---
 
 ### Berni Lab (Sims et al. 2019)
+
 **Tracking System**: Centroid-only tracker (minimal tracking)
 
 **Specifications**:
+
 - **Framerate**: 2 Hz (low temporal resolution)
 - **Midline Points**: 1 (centroid only)
 - **Contour Points**: 0 (no body shape)
@@ -91,6 +103,7 @@
 - **Spatial Resolution**: Position only (no orientation)
 
 **Key Features**:
+
 - Minimal computational requirements
 - Suitable for large-scale/long-duration experiments
 - Focus on position rather than detailed kinematics
@@ -100,6 +113,7 @@
 **Import API**: `reg.gen.LabFormat(labID="Berni")`
 
 **Representative Datasets**:
+
 - Long-duration behavioral experiments
 - Large-scale population studies
 - Spatial preference assays
@@ -107,6 +121,7 @@
 **Reference**: Sims, D., et al. (2019). Behavioral state switching in Drosophila larvae.
 
 **Analysis Limitations**:
+
 - No body orientation information
 - Cannot compute bend angle or body kinematics
 - Low temporal resolution limits stride detection
@@ -115,9 +130,11 @@
 ---
 
 ### Arguello Lab (Kafle et al. 2025)
+
 **Tracking System**: Multi-point midline tracker (no contour)
 
 **Specifications**:
+
 - **Framerate**: 10 Hz
 - **Midline Points**: 5
 - **Contour Points**: 0 (midline only)
@@ -125,6 +142,7 @@
 - **Spatial Resolution**: Moderate detail
 
 **Key Features**:
+
 - Balanced temporal/spatial resolution
 - Sufficient for body kinematics
 - Reduced computational load (no contour)
@@ -134,6 +152,7 @@
 **Import API**: `reg.gen.LabFormat(labID="Arguello")`
 
 **Representative Datasets**:
+
 - Evolution of chemosensory behavior
 - Inter-species comparisons
 - Genetic variation studies
@@ -149,6 +168,7 @@
 Lab formats are configured via the `LabFormat` configuration class and accessed through the global registry.
 
 **General Pattern:**
+
 ```python
 from larvaworld.lib import reg
 
@@ -167,6 +187,7 @@ print(dataset.e)         # Endpoint metrics
 ```
 
 **Multiple Datasets Example:**
+
 ```python
 from larvaworld.lib import reg
 
@@ -254,7 +275,7 @@ Larvaworld supports direct import from multiple tracking systems used in experim
 
 **Adding Custom Formats:**
 
-Lab formats are configured via `LabFormat` instances and lab-specific import functions in `lab_specific_import_functions.py`.  
+Lab formats are configured via `LabFormat` instances and lab-specific import functions in `lab_specific_import_functions.py`.
 To support a new tracker, add:
 
 1. A new entry in the stored LabFormat configurations (see :mod:`larvaworld.lib.reg.stored_confs.data_conf`).
@@ -270,17 +291,20 @@ For implementation details, see :ref:`api-labformat-custom`.
 ### Framerate Implications
 
 **High Framerate (16 Hz - Schleyer)**:
+
 - ✅ Excellent temporal resolution for stride detection
 - ✅ Smooth velocity/acceleration profiles
 - ❌ Large file sizes
 - ❌ Higher computational cost
 
 **Medium Framerate (10-11 Hz - Jovanic, Arguello)**:
+
 - ✅ Good balance of detail and efficiency
 - ✅ Sufficient for most behavioral metrics
 - ⚠️ May miss very fast events
 
 **Low Framerate (2 Hz - Berni)**:
+
 - ✅ Long-duration experiments feasible
 - ✅ Large populations tractable
 - ❌ Cannot detect individual strides
@@ -289,17 +313,20 @@ For implementation details, see :ref:`api-labformat-custom`.
 ### Spatial Detail Trade-offs
 
 **Full Body (Midline + Contour - Schleyer, Jovanic)**:
+
 - ✅ Complete body kinematics
 - ✅ Bend angle analysis possible
 - ✅ Collision detection accurate
 - ❌ Highest processing cost
 
 **Midline Only (Arguello)**:
+
 - ✅ Good orientation and bending
 - ✅ Moderate computational cost
 - ⚠️ No collision detection
 
 **Centroid Only (Berni)**:
+
 - ✅ Minimal resources
 - ✅ Scalable to hundreds of larvae
 - ❌ No body kinematics
@@ -310,9 +337,11 @@ For implementation details, see :ref:`api-labformat-custom`.
 ## Code Implementation
 
 ### Location
+
 `src/larvaworld/lib/reg/generators.py`
 
 ### Structure (simplified)
+
 ```python
 class LabFormat(NestedConf):
     """Configuration for lab-specific data import formats."""
@@ -345,29 +374,33 @@ gen.LabFormat = LabFormat
 ## References
 
 ### Paisios et al. (2017)
-**Title**: Common microbehavioral "footprint" of two distinct classes of conditioned aversion  
-**Journal**: Learning and Memory, 24(5), 191-198  
-**DOI**: [10.1101/lm.045062.117](https://doi.org/10.1101/lm.045062.117)  
+
+**Title**: Common microbehavioral "footprint" of two distinct classes of conditioned aversion
+**Journal**: Learning and Memory, 24(5), 191-198
+**DOI**: [10.1101/lm.045062.117](https://doi.org/10.1101/lm.045062.117)
 **Authors**: Paisios, E., Rjosk, A., Pamir, E., & Schleyer, M.
 
 ### de Tredern et al. (2024)
-**Title**: Feeding-state dependent neuropeptidergic modulation of behavior in Drosophila larvae  
-**Journal**: bioRxiv (preprint)  
-**DOI**: [10.1101/2023.12.26.573306](https://doi.org/10.1101/2023.12.26.573306)  
-**URL**: https://www.biorxiv.org/content/10.1101/2023.12.26.573306  
+
+**Title**: Feeding-state dependent neuropeptidergic modulation of behavior in Drosophila larvae
+**Journal**: bioRxiv (preprint)
+**DOI**: [10.1101/2023.12.26.573306](https://doi.org/10.1101/2023.12.26.573306)
+**URL**: https://www.biorxiv.org/content/10.1101/2023.12.26.573306
 **Authors**: de Tredern, E., Manceau, D., Blanc, A., Sakagiannis, P., Barre, C., Sus, V., Viscido, F., Hasan, M. A., Autran, S., Nawrot, M., Masson, J.-B., & Jovanic, T.
 
 ### Sims et al. (2019)
-**Title**: Optimal searching behaviour generated intrinsically by the central pattern generator for locomotion  
-**Journal**: eLife, 8, e50316  
-**DOI**: [10.7554/eLife.50316](https://doi.org/10.7554/eLife.50316)  
-**URL**: https://elifesciences.org/articles/50316  
+
+**Title**: Optimal searching behaviour generated intrinsically by the central pattern generator for locomotion
+**Journal**: eLife, 8, e50316
+**DOI**: [10.7554/eLife.50316](https://doi.org/10.7554/eLife.50316)
+**URL**: https://elifesciences.org/articles/50316
 **Authors**: Sims, D. W., Humphries, N. E., Hu, N., Medan, V., & Berni, J.
 
 ### Kafle et al. (2025)
-**Title**: Evolution of temperature preference behaviour among Drosophila species  
-**Journal**: Current Biology (in press), 112809  
-**Note**: Publication pending (2025)  
+
+**Title**: Evolution of temperature preference behaviour among Drosophila species
+**Journal**: Current Biology (in press), 112809
+**Note**: Publication pending (2025)
 **Authors**: Kafle, S., et al.
 
 ---

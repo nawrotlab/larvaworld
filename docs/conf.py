@@ -21,8 +21,8 @@ extensions = [
 # MyST Parser configuration
 myst_enable_extensions = [
     "colon_fence",  # ::: directives
-    "deflist",      # Definition lists
-    "html_image",   # HTML images
+    "deflist",  # Definition lists
+    "html_image",  # HTML images
 ]
 
 # Mermaid configuration

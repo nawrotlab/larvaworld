@@ -7,6 +7,7 @@ This sequence diagram illustrates the **real-time interaction flow during a simu
 ### Why This Matters
 
 This interaction pattern demonstrates:
+
 - ✅ **Agent-based architecture**: Clear separation between simulation control and agent autonomy
 - ✅ **Sensorimotor loop**: Fundamental sense → process → act → update cycle
 - ✅ **Modular brain**: Brain coordinates sensors and locomotor for behavioral control
@@ -31,53 +32,53 @@ sequenceDiagram
     participant Locomotor
     participant Sensors
     participant Environment
-    
+
     User->>CLI: Run simulation command
     CLI->>ExpRun: Initialize ExpRun
     ExpRun->>Environment: Create arena (build_env)
     ExpRun->>LarvaAgent: Create larva agents (build_agents)
-    
+
     loop Simulation Loop (sim_step)
         ExpRun->>Environment: Update environment (step_env)
         Note over Environment: Update odor layers,<br/>windscape, thermoscape
-        
+
         ExpRun->>LarvaAgent: Step agents
-        
+
         LarvaAgent->>LarvaAgent: sense()
         Note over LarvaAgent: Detect food sources
-        
+
         LarvaAgent->>Brain: step(pos, length, on_food)
-        
+
         Brain->>Sensors: sense(pos, reward)
         Note over Sensors: olfactor, toucher,<br/>windsensor, thermosensor
-        
+
         Sensors->>Environment: Query sensory data
         Note over Environment: Odors, food, wind,<br/>temperature, obstacles
         Environment-->>Sensors: Return sensory data
-        
+
         Sensors-->>Brain: Processed sensory input (A_in)
-        
+
         Brain->>Locomotor: step(A_in, on_food, length)
         Note over Locomotor: Integrates crawler,<br/>turner, feeder, intermitter
-        
+
         Locomotor-->>Brain: (lin_vel, ang_vel, feeder_motion)
         Brain-->>LarvaAgent: Motor commands
-        
+
         LarvaAgent->>LarvaAgent: prepare_motion(lin, ang)
         Note over LarvaAgent: Update position,<br/>orientation, velocities
-        
+
         LarvaAgent->>LarvaAgent: feed(food_detected, feeder_motion)
         Note over LarvaAgent: Consume food if detected
-        
+
         LarvaAgent->>LarvaAgent: run_energetics(V)
         Note over LarvaAgent: DEB model update
-        
+
         LarvaAgent-->>ExpRun: State updated
-        
+
         ExpRun->>ExpRun: update() - Record data
         Note over ExpRun: Collect pose, brain,<br/>midline data
     end
-    
+
     ExpRun-->>CLI: Simulation complete
     CLI-->>User: Results available
 ```
@@ -86,13 +87,14 @@ sequenceDiagram
 
 ## Verification Data
 
-**Status:** ✅ VERIFIED with actual codebase  
-**Date:** November 19, 2025  
+**Status:** ✅ VERIFIED with actual codebase
+**Date:** November 19, 2025
 **Source:** `/src/larvaworld/lib/sim/`, `/src/larvaworld/lib/model/`
 
 ### Component Verification
 
 #### 1. ExpRun (Simulation Engine) ✅
+
 - **File**: `single_run.py` (line 22)
 - **Class**: `ExpRun(BaseRun)`
 - **Key Methods**:
@@ -105,6 +107,7 @@ sequenceDiagram
   - `update()`: Data recording (line 80)
 
 #### 2. LarvaAgent (LarvaMotile) ✅
+
 - **File**: `_larva.py` (line 295)
 - **Class**: `LarvaMotile(LarvaSegmented)`
 - **Key Methods**:
@@ -115,6 +118,7 @@ sequenceDiagram
   - `run_energetics(V)`: DEB metabolism update
 
 #### 3. Brain ✅
+
 - **File**: `brain.py` (line 207)
 - **Class**: `DefaultBrain(Brain)`
 - **Attributes**:
@@ -129,6 +133,7 @@ sequenceDiagram
   - `A_in`: Total sensory input (property, line 186)
 
 #### 4. Sensors (Brain Attributes) ✅
+
 - **File**: `sensor.py`, `brain.py`
 - **Implementation**: Sensors are attributes of Brain, not separate modules
 - **Types**:
@@ -139,6 +144,7 @@ sequenceDiagram
 - **Method**: `step(sensory_dict)`: Process sensory input
 
 #### 5. Locomotor ✅
+
 - **File**: `locomotor.py` (line 32)
 - **Class**: `Locomotor(NestedConf)`
 - **Sub-modules**:
@@ -150,6 +156,7 @@ sequenceDiagram
   - `step(A_in, on_food, **kwargs)`: Returns (lin, ang, feed_motion) (line 167)
 
 #### 6. Environment ✅
+
 - **File**: `base_run.py`, `envs/`
 - **Components**:
   - `space`: Arena geometry
@@ -215,7 +222,7 @@ def step(self):
     self.cum_dur += m.dt
     self.sense()  # Detect food
     pos = self.olfactor_pos
-    
+
     # Check accessible sources
     if m.space.accessible_sources:
         self.food_detected = m.space.accessible_sources[self]
@@ -224,20 +231,20 @@ def step(self):
             pos, sources=m.sources, grid=m.food_grid, radius=self.radius
         )
     self.resolve_carrying(self.food_detected)
-    
+
     # Brain processing
     lin, ang, self.feeder_motion = self.brain.step(
         pos, length=self.length, on_food=self.on_food
     )
-    
+
     # Motion execution
     self.prepare_motion(lin=lin, ang=ang)
-    
+
     # Feeding
     V = self.feed(self.food_detected, self.feeder_motion)
     self.amount_eaten += V * 1000
     self.cum_food_detected += int(self.on_food)
-    
+
     # Energetics
     if self.deb is not None:
         self.run_energetics(V)
@@ -269,14 +276,14 @@ def update(self):
 
 ### Key Corrections from Original Diagram
 
-| Original | Corrected | Reason |
-|----------|-----------|--------|
-| SimEngine | ExpRun (extends BaseRun) | Actual class name |
-| Sensor (separate module) | Sensors (Brain attributes) | Sensors are brain.olfactor, brain.toucher, etc. |
-| Crawler (separate) | Locomotor.crawler | Crawler is a sub-module of Locomotor |
-| Feeder (separate) | Locomotor.feeder | Feeder is a sub-module of Locomotor |
-| Brain → Crawler | Brain → Locomotor.step() | Brain calls locomotor.step(), not individual modules |
-| Brain → Feeder | (part of Locomotor) | Feeder is integrated in Locomotor.step() |
+| Original                 | Corrected                  | Reason                                               |
+| ------------------------ | -------------------------- | ---------------------------------------------------- |
+| SimEngine                | ExpRun (extends BaseRun)   | Actual class name                                    |
+| Sensor (separate module) | Sensors (Brain attributes) | Sensors are brain.olfactor, brain.toucher, etc.      |
+| Crawler (separate)       | Locomotor.crawler          | Crawler is a sub-module of Locomotor                 |
+| Feeder (separate)        | Locomotor.feeder           | Feeder is a sub-module of Locomotor                  |
+| Brain → Crawler          | Brain → Locomotor.step()   | Brain calls locomotor.step(), not individual modules |
+| Brain → Feeder           | (part of Locomotor)        | Feeder is integrated in Locomotor.step()             |
 
 ### Timing and Synchronization
 
@@ -328,41 +335,41 @@ The simulation runs in a continuous loop with synchronized timesteps (**dt = 0.1
 **Each Timestep:**
 
 1. **Environment Update** (``step_env()``)
-   
+
    - Odor layers diffuse
    - Wind field updates
    - Temperature field updates
 
 2. **Agent Sensing** (``LarvaAgent.sense()``)
-   
+
    - Detect nearby food sources
    - Update agent internal state
 
 3. **Brain Processing** (``Brain.step()``)
-   
+
    - **Sensors query environment**: olfactor, toucher, windsensor, thermosensor
    - **Process sensory input**: Convert raw data to neural signals (``A_in``)
    - **Locomotor generates commands**: Integrates crawler, turner, feeder, intermitter
    - **Returns**: ``(linear_velocity, angular_velocity, feeder_motion)``
 
 4. **Motion Execution** (``LarvaAgent.prepare_motion()``)
-   
+
    - Update position based on linear velocity
    - Update orientation based on angular velocity
    - Update body bend angle
 
 5. **Feeding** (``LarvaAgent.feed()``)
-   
+
    - Consume food if on food source and feeder active
    - Update ``amount_eaten``
 
 6. **Energetics** (``LarvaAgent.run_energetics()``)
-   
+
    - DEB model updates reserves, structure, maturity
    - Update age, hunger, developmental stage
 
 7. **Data Recording** (``ExpRun.update()``)
-   
+
    - Record pose (position, orientation, velocities)
    - Record brain state (sensory inputs, motor outputs)
    - Record midline (if Box2D enabled)
@@ -381,10 +388,9 @@ The simulation runs in a continuous loop with synchronized timesteps (**dt = 0.1
    # Initialize simulation
    exp = ExpRun(experiment='chemotaxis', duration=5.0)
    exp.simulate()
-   
+
    # Access results
    dataset = exp.datasets[0]
    print(f"Agent trajectories: {dataset.position.shape}")
    print(f"Brain data: {dataset.brain_data.keys()}")
 ```
-

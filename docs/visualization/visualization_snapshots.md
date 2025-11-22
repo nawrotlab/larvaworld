@@ -48,6 +48,7 @@ run.simulate()
 ```
 
 **Features**:
+
 - Real-time rendering
 - Interactive controls (see {doc}`keyboard_controls`)
 - Adjustable drawing options
@@ -138,4 +139,3 @@ screen_kws = {"color_behavior": True}
 - {doc}`keyboard_controls` - Interactive controls
 - {doc}`web_applications` - Web-based dashboards
 - {doc}`plotting_api` - Analysis plots
-

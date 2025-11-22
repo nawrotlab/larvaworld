@@ -4,20 +4,21 @@
 
 ### Larva Group Initial Spatial Placement Parameters
 
-| Parameter | Description |
-|-----------|-------------|
-| **N** | Number of virtual larvae in the group |
-| **location** | Centre of the spatial distribution in the arena |
-| **scale** | Spatial extent of the distribution |
-| **shape** | Shape of the distribution (circular/rectangular/oval) |
-| **placement** | Placement within the distribution's shape (uniform/normal/periphery) |
-| **orientation** | Range of initial spatial body orientations |
+| Parameter       | Description                                                          |
+| --------------- | -------------------------------------------------------------------- |
+| **N**           | Number of virtual larvae in the group                                |
+| **location**    | Centre of the spatial distribution in the arena                      |
+| **scale**       | Spatial extent of the distribution                                   |
+| **shape**       | Shape of the distribution (circular/rectangular/oval)                |
+| **placement**   | Placement within the distribution's shape (uniform/normal/periphery) |
+| **orientation** | Range of initial spatial body orientations                           |
 
 ---
 
 ## Detailed Descriptions
 
 ### N (Number of Larvae)
+
 - **Type**: Integer
 - **Range**: 1 to hundreds
 - **Description**: Total number of virtual larvae in the group
@@ -27,6 +28,7 @@
   - `N=100`: Large population studies
 
 ### location (Center Point)
+
 - **Type**: (x, y) tuple in meters
 - **Range**: Within arena bounds
 - **Description**: Center point of the spatial distribution
@@ -37,6 +39,7 @@
 - **Note**: Coordinates in meters, relative to arena center
 
 ### scale (Distribution Size)
+
 - **Type**: (x_scale, y_scale) tuple in meters
 - **Range**: 0 to arena dimensions
 - **Description**: Spatial extent of the distribution in x and y directions
@@ -47,8 +50,9 @@
 - **Note**: Defines the "spread" of larvae around location center
 
 ### shape (Distribution Shape)
+
 - **Type**: String enum
-- **Options**: 
+- **Options**:
   - `"circular"`: Round distribution
   - `"rectangular"`: Square/rectangular distribution
   - `"oval"`: Elliptical distribution
@@ -59,6 +63,7 @@
   - `oval`: Elongated distributions
 
 ### placement (Distribution Mode)
+
 - **Type**: String enum
 - **Options**:
   - `"uniform"`: Evenly distributed throughout shape
@@ -71,6 +76,7 @@
   - `periphery`: All larvae start at boundary (e.g., arena edge)
 
 ### orientation (Initial Heading)
+
 - **Type**: (min_angle, max_angle) tuple in degrees
 - **Range**: 0-360° or (-180, 180)°
 - **Description**: Range of initial body orientations
@@ -85,6 +91,7 @@
 ## Configuration Examples
 
 ### Example 1: Central Cluster
+
 ```python
 larva_group = {
     'N': 10,
@@ -95,9 +102,11 @@ larva_group = {
     'orientation': (0, 360)
 }
 ```
+
 **Result**: 10 larvae clustered in 1cm radius at arena center, random orientations
 
 ### Example 2: Peripheral Ring
+
 ```python
 larva_group = {
     'N': 20,
@@ -108,9 +117,11 @@ larva_group = {
     'orientation': (0, 360)
 }
 ```
+
 **Result**: 20 larvae arranged in a ring at 4cm radius from center
 
 ### Example 3: Oriented Line
+
 ```python
 larva_group = {
     'N': 5,
@@ -121,9 +132,11 @@ larva_group = {
     'orientation': (90, 90)
 }
 ```
+
 **Result**: 5 larvae in a vertical strip on the left, all facing up
 
 ### Example 4: Chemotaxis Start
+
 ```python
 larva_group = {
     'N': 8,
@@ -134,6 +147,7 @@ larva_group = {
     'orientation': (-30, 30)
 }
 ```
+
 **Result**: 8 larvae starting from left side, Gaussian distribution, mostly facing right toward potential odor source
 
 ---
@@ -170,7 +184,7 @@ Initial spatial placement of larva groups is controlled by six key parameters.
 .. code-block:: python
 
    from larvaworld import reg
-   
+
    # Create larva group with custom placement
    group = reg.gen.LarvaGroup(
        model='explorer',          # Larva model ID
@@ -187,29 +201,29 @@ Initial spatial placement of larva groups is controlled by six key parameters.
 
 **Chemotaxis Experiments:**
    Start larvae on one side, facing potential odor source
-   
+
    .. code-block:: python
-   
+
       location=(-0.04, 0.0)      # Left side
       orientation=(-30, 30)       # Facing right ±30°
 
 **Dispersion Studies:**
    Tight initial cluster to measure spreading
-   
+
    .. code-block:: python
-   
+
       location=(0.0, 0.0)        # Center
       scale=(0.005, 0.005)       # Tight 5mm cluster
       placement='normal'          # Gaussian distribution
 
 **Competition/Games:**
    Two groups on opposite sides
-   
+
    .. code-block:: python
-   
+
       # Group 1 (Left)
       location=(-0.03, 0.0)
-      
+
       # Group 2 (Right)
       location=(0.03, 0.0)
 
@@ -221,20 +235,22 @@ For visual examples, see :ref:`figure-larva-group-params` (Figure 7 from paper).
 ## Code Implementation
 
 ### Location in Codebase
+
 `/src/larvaworld/lib/reg/larvagroup.py`
 
 ### LarvaGroup Class
+
 ```python
 class LarvaGroup:
     """Virtual larva group with spatial distribution parameters."""
-    
+
     N: int  # Number of larvae
     location: tuple  # (x, y) center in meters
     scale: tuple  # (x_scale, y_scale) in meters
     shape: str  # 'circular' | 'rectangular' | 'oval'
     placement: str  # 'uniform' | 'normal' | 'periphery'
     orientation: tuple  # (min_deg, max_deg)
-    
+
     def generate_positions(self):
         """Generate initial positions based on parameters."""
         if self.shape == 'circular':
@@ -261,4 +277,3 @@ class LarvaGroup:
 - **LaTeX**: Lines 806-828 in main.tex
 - **Label**: `tab:distribution`
 - **Related Figure**: Fig 7 (`LarvaGroup.png`)
-

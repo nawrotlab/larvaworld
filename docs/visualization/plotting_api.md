@@ -24,6 +24,7 @@ collection.plot(ids=["trajectories"])
 ```
 
 **Key Functions / IDs**:
+
 - `traj.traj_1group(dataset)`: 2D paths for a single dataset
 - Graph ID `"trajectories"`: grouped trajectories via `LarvaDatasetCollection.plot`
 
@@ -42,6 +43,7 @@ timeplot.plot_dispersal(datasets=[dataset], range=(0, 60))
 ```
 
 **Key Functions / IDs**:
+
 - `timeplot.plot_pathlength(datasets=[...])`: Cumulative distance
 - `timeplot.plot_dispersal(datasets=[...])`: Dispersal over a time window (graph ID `"dispersal"`)
 
@@ -63,6 +65,7 @@ hist.plot_distros(
 ```
 
 **Key Functions / IDs**:
+
 - `hist.plot_distros(datasets=[...])`: Velocity / angular distributions (graph ID `"distros"`)
 
 ---
@@ -82,6 +85,7 @@ bearing.plot_chunk_Dorient2source(
 ```
 
 **Key Functions / IDs**:
+
 - `bearing.plot_chunk_Dorient2source(...)`: Bearing to source during behavioral chunks (graph ID `"bearing to source/epoch"`)
 
 ---

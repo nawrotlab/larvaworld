@@ -1,6 +1,6 @@
 # Larva Agent Architecture
 
-The `LarvaSim` class represents a complete simulated *Drosophila* larva, combining physical morphology, sensorimotor control, energetics, and physics.
+The `LarvaSim` class represents a complete simulated _Drosophila_ larva, combining physical morphology, sensorimotor control, energetics, and physics.
 
 ---
 
@@ -10,18 +10,18 @@ The `LarvaSim` class represents a complete simulated *Drosophila* larva, combini
 graph TB
     subgraph LARVASIM ["LarvaSim"]
         AGENT[LarvaSim<br/>Simulated Larva]:::larva
-        
+
         subgraph PHYSICAL ["Physical Body"]
             BODY[Segmented Body<br/>11-13 segments]:::body
             CONTOUR[Body Contour<br/>Collision detection]:::body
         end
-        
+
         subgraph BRAIN_SYS ["Brain System"]
             BRAIN[Brain<br/>DefaultBrain or NengoBrain]:::brain
             SENSORS[Sensors<br/>Olfactor, Toucher<br/>Wind, Thermo]:::sensors
             MEMORY[Memory<br/>RL or MB<br/>optional]:::neural
         end
-        
+
         subgraph LOCOMOTOR_SYS ["Locomotor System"]
             LOCOMOTOR[Locomotor<br/>Motor coordination]:::motor
             CRAWLER[Crawler<br/>Forward motion]:::behavior
@@ -29,36 +29,36 @@ graph TB
             FEEDER[Feeder<br/>Feeding behavior]:::behavior
             INTERMITTER[Intermitter<br/>State switching]:::behavior
         end
-        
+
         subgraph ENERGY_SYS ["Energy System"]
             DEB[DEB Model<br/>Metabolism]:::energy
             GUT[Gut<br/>Digestion]:::energy
             RESERVES[Reserves<br/>E, E_R, E_H]:::energy
         end
-        
+
         subgraph PHYSICS_SYS ["Physics Control (BaseController)"]
             PHYSICS[Physics<br/>Damping, Spring]:::physics
             MOTION[Motion<br/>Velocity/Force modes]:::physics
         end
     end
-    
+
     AGENT --> BODY
     AGENT --> BRAIN
     AGENT --> LOCOMOTOR
     AGENT --> DEB
     AGENT --> PHYSICS
-    
+
     BRAIN --> SENSORS
     BRAIN -.-> MEMORY
-    
+
     LOCOMOTOR --> CRAWLER
     LOCOMOTOR --> TURNER
     LOCOMOTOR --> FEEDER
     LOCOMOTOR --> INTERMITTER
-    
+
     DEB --> GUT
     DEB --> RESERVES
-    
+
     SENSORS -.->|Sensing| BODY
     LOCOMOTOR -.->|Commands| MOTION
     MOTION -.->|Apply| BODY
@@ -93,6 +93,7 @@ class LarvaSim(LarvaMotile, BaseController):
 **Purpose**: Core agent behavior
 
 **Key Methods**:
+
 - `sense()`: Sensory input
 - `think()`: Brain processing
 - `act()`: Locomotor output
@@ -103,6 +104,7 @@ class LarvaSim(LarvaMotile, BaseController):
 **Purpose**: Physics control (Box2D integration)
 
 **Key Methods**:
+
 - `apply_motion()`: Velocity/force application
 - `apply_damping()`: Resistance
 - `apply_spring()`: Body segment coupling
@@ -116,6 +118,7 @@ class LarvaSim(LarvaMotile, BaseController):
 **Class**: `LarvaSegmented` (base for `LarvaMotile`)
 
 **Attributes**:
+
 - `Nsegs`: Number of segments (11-13)
 - `length`: Body length (mm)
 - `radius`: Body radius (mm)
@@ -132,6 +135,7 @@ class LarvaSim(LarvaMotile, BaseController):
 See {doc}`brain_module_architecture` for details.
 
 **Components**:
+
 - **Sensors**: Olfactor, Toucher, Windsensor, Thermo
 - **Modalities**: Sensory processing channels
 - **Memory** (optional): RL or MB learning
@@ -143,6 +147,7 @@ See {doc}`brain_module_architecture` for details.
 **Class**: `Locomotor`
 
 **Modules**:
+
 - **Crawler**: Forward peristaltic waves
 - **Turner**: Reorientation maneuvers
 - **Feeder**: Food intake
@@ -156,11 +161,13 @@ See {doc}`brain_module_architecture` for details.
 **Class**: `DEB` (Dynamic Energy Budget)
 
 **Reserves**:
+
 - `E`: Energy reserves
 - `E_R`: Reproduction buffer
 - `E_H`: Maturity
 
 **Processes**:
+
 - Assimilation from gut
 - Growth of structure
 - Maturation
@@ -173,6 +180,7 @@ See {doc}`brain_module_architecture` for details.
 **Class**: `BaseController`
 
 **Options**:
+
 - `physics_model`: Box2D multisegment body
 - `body_spring`: Segment coupling stiffness
 - `body_damping`: Resistance coefficient
@@ -220,4 +228,3 @@ run = ExpRun(
 - {doc}`brain_module_architecture` - Brain details
 - {doc}`arenas_and_substrates` - Environments
 - {doc}`../concepts/module_interaction` - Runtime interactions
-

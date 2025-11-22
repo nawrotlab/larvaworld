@@ -4,26 +4,26 @@
 
 ### Data Processing Methods
 
-| Category | Function | Description |
-|----------|----------|-------------|
-| **Preprocessing** | Scaling | x-y scaling by a scalar |
-| | Transposition | x-y transposition |
-| | Alignment | Trajectory alignment e.g. to common origin |
-| | Interpolation | Missing data interpolation |
-| | Exclusion | Data exclusion on condition |
-| | Filtering | Low-pass filtering at a cut-off frequency |
-| **Processing** | Angular analysis | Bend/orientation angle, angular velocity/acceleration |
-| | Spatial analysis | Spatial distance/velocity/acceleration |
-| | Forward components | Spatial metric components along orientation axis |
-| | Dispersal | Larva spatial dispersal during time ranges |
-| | Tortuosity | Trajectory tortuosity for sliding temporal windows |
-| | Odor preference | Olfactory preference index |
-| | Odor concentration | Absolute and perceived odor concentration along trajectory |
-| **Annotation** | Strides/Crawl-runs | Individual strides and uninterrupted chains of concatenated strides |
-| | Crawl-pauses | Immobility epochs without peristaltic strides |
-| | Turns | Turning events based on reorientation amplitude or angular velocity |
-| | Bout analysis | Spatial/angular metric change during bouts |
-| | Bout distribution | Distribution fitting for bout duration/length |
+| Category          | Function           | Description                                                         |
+| ----------------- | ------------------ | ------------------------------------------------------------------- |
+| **Preprocessing** | Scaling            | x-y scaling by a scalar                                             |
+|                   | Transposition      | x-y transposition                                                   |
+|                   | Alignment          | Trajectory alignment e.g. to common origin                          |
+|                   | Interpolation      | Missing data interpolation                                          |
+|                   | Exclusion          | Data exclusion on condition                                         |
+|                   | Filtering          | Low-pass filtering at a cut-off frequency                           |
+| **Processing**    | Angular analysis   | Bend/orientation angle, angular velocity/acceleration               |
+|                   | Spatial analysis   | Spatial distance/velocity/acceleration                              |
+|                   | Forward components | Spatial metric components along orientation axis                    |
+|                   | Dispersal          | Larva spatial dispersal during time ranges                          |
+|                   | Tortuosity         | Trajectory tortuosity for sliding temporal windows                  |
+|                   | Odor preference    | Olfactory preference index                                          |
+|                   | Odor concentration | Absolute and perceived odor concentration along trajectory          |
+| **Annotation**    | Strides/Crawl-runs | Individual strides and uninterrupted chains of concatenated strides |
+|                   | Crawl-pauses       | Immobility epochs without peristaltic strides                       |
+|                   | Turns              | Turning events based on reorientation amplitude or angular velocity |
+|                   | Bout analysis      | Spatial/angular metric change during bouts                          |
+|                   | Bout distribution  | Distribution fitting for bout duration/length                       |
 
 ---
 
@@ -34,36 +34,42 @@
 **Purpose**: Clean and standardize raw trajectory data before analysis
 
 **1. Scaling**
+
 - **Function**: Multiply x-y coordinates by a scalar
 - **Use**: Convert units (e.g., pixels to meters)
 - **Parameters**: Scale factor (float)
 - **Example**: `rescale_by=0.001` converts mm to meters
 
 **2. Transposition**
+
 - **Function**: Shift all trajectories by x-y offset
 - **Use**: Center trajectories, align to origin
 - **Parameters**: `"arena"`, `"origin"`, or `"center"`
 - **Example**: `transposition="center"` moves all to arena center
 
 **3. Alignment**
+
 - **Function**: Align trajectories to common starting point/orientation
 - **Use**: Compare movement patterns independent of start position
 - **Parameters**: Alignment type, reference point
 - **Example**: All trajectories start at (0, 0) facing up
 
 **4. Interpolation**
+
 - **Function**: Fill missing data points
 - **Methods**: Linear interpolation over NaNs
 - **Use**: Handle tracking gaps, ensure continuous data
 - **Parameters**: `interpolate_nans=True`
 
 **5. Exclusion**
+
 - **Function**: Remove data based on conditions
 - **Use**: Filter out artifacts, low-quality tracks
 - **Conditions**: Duration, distance, velocity thresholds
 - **Example**: Remove tracks shorter than 10 seconds
 
 **6. Filtering**
+
 - **Function**: Low-pass Butterworth filter
 - **Use**: Smooth trajectories, remove high-frequency noise
 - **Parameters**: `filter_f` (cutoff frequency in Hz), `recompute`
@@ -76,6 +82,7 @@
 **Purpose**: Compute derived metrics from preprocessed trajectories
 
 **1. Angular Analysis**
+
 - **Computes**:
   - Body bend angle (curvature)
   - Orientation angle (heading)
@@ -84,6 +91,7 @@
 - **Units**: Degrees, degrees/second, degrees/second²
 
 **2. Spatial Analysis**
+
 - **Computes**:
   - Distance traveled
   - Linear velocity (speed)
@@ -92,6 +100,7 @@
 - **Units**: Meters, meters/second, meters/second²
 
 **3. Forward Components**
+
 - **Computes**:
   - Forward velocity (along body axis)
   - Lateral velocity (perpendicular to body)
@@ -99,6 +108,7 @@
 - **Use**: Distinguish forward crawling from lateral drift
 
 **4. Dispersal**
+
 - **Computes**:
   - Spatial spread over time
   - Distance from origin/center
@@ -107,6 +117,7 @@
 - **Parameters**: Time ranges, reference point
 
 **5. Tortuosity**
+
 - **Computes**:
   - Path straightness index
   - Sinuosity
@@ -115,6 +126,7 @@
 - **Parameters**: Window duration
 
 **6. Odor Preference**
+
 - **Computes**:
   - Preference Index (PI)
   - Time spent in odor zones
@@ -123,6 +135,7 @@
 - **Use**: Olfactory learning, chemotaxis experiments
 
 **7. Odor Concentration**
+
 - **Computes**:
   - Absolute concentration at each position
   - Perceived concentration (sensor-weighted)
@@ -136,32 +149,37 @@
 **Purpose**: Identify and characterize behavioral events
 
 **1. Strides/Crawl-runs**
+
 - **Detects**: Individual peristaltic strides
 - **Groups**: Uninterrupted chains of strides (crawl-runs)
 - **Metrics**: Stride frequency, amplitude, duration
 - **Use**: Locomotor pattern analysis
 
 **2. Crawl-pauses**
+
 - **Detects**: Epochs without peristaltic motion
 - **Criteria**: Low velocity, no body waves
 - **Metrics**: Pause duration, frequency
 - **Use**: Intermittency, behavioral switching
 
 **3. Turns**
+
 - **Detects**: Reorientation events
-- **Criteria**: 
+- **Criteria**:
   - Amplitude threshold (e.g., >30°)
   - Angular velocity threshold
 - **Metrics**: Turn angle, duration, frequency
 - **Types**: Head casts vs body bends
 
 **4. Bout Analysis**
+
 - **Function**: Measure changes during behavioral bouts
 - **Bouts**: Crawl-runs, pauses, turns
 - **Metrics**: Distance traveled, angle changed, duration
 - **Use**: Characterize bout structure
 
 **5. Bout Distribution**
+
 - **Function**: Fit distributions to bout durations/lengths
 - **Distributions**: Exponential, power-law, log-normal
 - **Metrics**: Distribution parameters, goodness-of-fit
@@ -172,6 +190,7 @@
 ## Pipeline Configuration
 
 ### Example: Complete Processing
+
 ```python
 from larvaworld.lib import reg
 
@@ -225,7 +244,7 @@ Data cleaning and standardization:
 
 .. list-table::
    :widths: 25 75
-   
+
    * - **Scaling**
      - Unit conversion (e.g., pixels to meters)
    * - **Transposition**
@@ -245,7 +264,7 @@ Metric computation:
 
 .. list-table::
    :widths: 25 75
-   
+
    * - **Angular analysis**
      - Bend angle, orientation, angular velocity/acceleration
    * - **Spatial analysis**
@@ -267,7 +286,7 @@ Behavioral event detection:
 
 .. list-table::
    :widths: 25 75
-   
+
    * - **Strides/Crawl-runs**
      - Peristaltic motion segmentation
    * - **Crawl-pauses**
@@ -284,10 +303,10 @@ Behavioral event detection:
 .. code-block:: python
 
    from larvaworld.lib import reg
-   
+
    # Load dataset from reference registry
    ds = reg.loadRef(id="dish_exploration", load=True)
-   
+
    # Configure and run all pipelines
    ds.preprocess(
        drop_collisions=True,
@@ -296,18 +315,18 @@ Behavioral event detection:
        rescale_by=0.001,
        transposition="center",
    )
-   
+
    ds.process(
        proc_keys=["angular", "spatial"],
        dsp_starts=[0],
        dsp_stops=[40, 60],
        tor_durs=[5, 10, 20],
    )
-   
+
    ds.annotate(
        anot_keys=["bout_detection", "bout_distribution", "interference"],
    )
-   
+
    # Access results
    print(ds.s.columns)  # All metrics
    print(ds.e)          # Summary statistics
@@ -328,9 +347,11 @@ For detailed API documentation, see :ref:`api-dataset-processing`.
 ## Code Implementation
 
 ### Location
+
 `/src/larvaworld/lib/process/dataset.py`
 
 ### Key Methods
+
 ```python
 class LarvaDataset:
     def preprocess(
@@ -344,7 +365,7 @@ class LarvaDataset:
     ):
         """Stage 1: Data cleaning and standardization."""
         ...
-    
+
     def process(
         self,
         proc_keys: list[str] = ["angular", "spatial"],
@@ -356,7 +377,7 @@ class LarvaDataset:
     ):
         """Stage 2: Compute derived metrics (spatial, angular, dispersal, tortuosity, etc.)."""
         ...
-    
+
     def annotate(
         self,
         anot_keys: list[str] = ["bout_detection", "bout_distribution", "interference"],

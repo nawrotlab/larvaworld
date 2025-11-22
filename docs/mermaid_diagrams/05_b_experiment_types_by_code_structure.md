@@ -7,6 +7,7 @@ This mind map shows the **EXACT clustering structure** as defined in `/src/larva
 ### Why This Matters
 
 This is the **true organizational structure** in the codebase:
+
 - ✅ **Exact keys**: Uses actual dictionary keys (`odor_preference`, `games`, `chemanemotaxis`)
 - ✅ **Code-accurate**: Reflects how experiments are organized in `Exp_dict()`
 - ✅ **Registry compatible**: Keys match `reg.conf.Exp.confIDs`
@@ -97,8 +98,8 @@ mindmap
 
 ## Verification Data
 
-**Status:** ✅ VERIFIED with actual codebase  
-**Date:** November 19, 2025  
+**Status:** ✅ VERIFIED with actual codebase
+**Date:** November 19, 2025
 **Source:** `/src/larvaworld/lib/reg/stored_confs/sim_conf.py`, lines 390-556
 
 ### Exact Code Structure
@@ -168,19 +169,19 @@ return AttrDict.merge_dicts(list(d().values()))
 
 ### Category Summary
 
-| Key (Code) | Count | Description |
-|------------|-------|-------------|
-| `exploration` | 5 | Basic locomotion patterns (from `d0`) |
-| `chemotaxis` | 9 | Odor navigation (from `d1`) |
-| `anemotaxis` | 3 | Wind navigation (from `d2`) |
-| `chemanemotaxis` | 1 | Combined odor+wind (from `d3`) |
-| `thermotaxis` | 1 | Temperature gradients |
-| `odor_preference` | 6 | Olfactory learning (PI tests/training) |
-| `foraging` | 11 | Food search and exploitation |
-| `tactile` | 3 | Touch-based sensing |
-| `growth` | 12 | DEB simulations and life-history |
-| `games` | 4 | Multi-agent competitive tasks |
-| `other` | 2 | Box2D body, zebrafish model |
+| Key (Code)        | Count | Description                            |
+| ----------------- | ----- | -------------------------------------- |
+| `exploration`     | 5     | Basic locomotion patterns (from `d0`)  |
+| `chemotaxis`      | 9     | Odor navigation (from `d1`)            |
+| `anemotaxis`      | 3     | Wind navigation (from `d2`)            |
+| `chemanemotaxis`  | 1     | Combined odor+wind (from `d3`)         |
+| `thermotaxis`     | 1     | Temperature gradients                  |
+| `odor_preference` | 6     | Olfactory learning (PI tests/training) |
+| `foraging`        | 11    | Food search and exploitation           |
+| `tactile`         | 3     | Touch-based sensing                    |
+| `growth`          | 12    | DEB simulations and life-history       |
+| `games`           | 4     | Multi-agent competitive tasks          |
+| `other`           | 2     | Box2D body, zebrafish model            |
 
 **Total:** 57 experiments across 10 categories
 
@@ -201,8 +202,8 @@ from larvaworld import reg
 
 # List all categories
 categories = list(reg.conf.Exp.confIDs.keys())
-# ['exploration', 'chemotaxis', 'anemotaxis', 'chemanemotaxis', 
-#  'thermotaxis', 'odor_preference', 'foraging', 'tactile', 
+# ['exploration', 'chemotaxis', 'anemotaxis', 'chemanemotaxis',
+#  'thermotaxis', 'odor_preference', 'foraging', 'tactile',
 #  'growth', 'games', 'other']
 
 # Get experiment from category
@@ -213,23 +214,26 @@ exp_conf = reg.conf.Exp.getID("PItrain")
 
 # List all experiments in a category
 odor_prefs = reg.conf.Exp.confIDs['odor_preference']
-# ['PItest_off', 'PItest_off_OSN', 'PItest_on', 
+# ['PItest_off', 'PItest_off_OSN', 'PItest_on',
 #  'PItrain_mini', 'PItrain', 'PItest_off_RL']
 ```
 
 ### Comparison with Conceptual Diagram
 
 **Conceptual view (05_experiment_types.md):**
+
 - Uses descriptive names (Learning, Competition, etc.)
 - Organized by behavioral/scientific concept
 - Easier for understanding experimental paradigms
 
 **Code structure view (THIS FILE):**
+
 - Uses exact code keys
 - Organized as in `sim_conf.py`
 - Required for programmatic access
 
 Both views are valuable:
+
 - Use **conceptual** for understanding what experiments do
 - Use **code structure** for actually running experiments
 
@@ -277,10 +281,9 @@ Experiments in Larvaworld are organized into **10 categories** in the code:
    experiments = reg.conf.Exp.confIDs['games']
    # ['maze', 'keep_the_flag', 'capture_the_flag', 'catch_me']
 
-**Important:** Use the exact keys as shown above (e.g., ``odor_preference``, 
+**Important:** Use the exact keys as shown above (e.g., ``odor_preference``,
 not "Learning"; ``games``, not "Competition").
 
-For a conceptual overview organized by behavioral paradigms, 
+For a conceptual overview organized by behavioral paradigms,
 see :ref:`experiment-types-conceptual`.
 ```
-

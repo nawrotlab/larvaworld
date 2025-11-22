@@ -6,15 +6,15 @@ Larvaworld can import experimental datasets from diverse tracking systems. Each 
 
 ## Supported Labs
 
-| Lab | Framerate (Hz) | Midline (#) | Contour (#) | Source |
-|-----|----------------|-------------|-------------|--------|
-| **Schleyer** | 16 | 12 | 22 | Paisios et al. (2017) |
-| **Jovanic** | 11.27* | 11 | 30** | de Tredern et al. (2024) |
-| **Berni** | 2 | 1 | 0 | Sims et al. (2019) |
-| **Arguello** | 10 | 5 | 0 | Kafle et al. (2025) |
+| Lab          | Framerate (Hz) | Midline (#) | Contour (#) | Source                   |
+| ------------ | -------------- | ----------- | ----------- | ------------------------ |
+| **Schleyer** | 16             | 12          | 22          | Paisios et al. (2017)    |
+| **Jovanic**  | 11.27\*        | 11          | 30\*\*      | de Tredern et al. (2024) |
+| **Berni**    | 2              | 1           | 0           | Sims et al. (2019)       |
+| **Arguello** | 10             | 5           | 0           | Kafle et al. (2025)      |
 
-*Variable, average framerate  
-**Variable, convex hull used
+\*Variable, average framerate
+\*\*Variable, convex hull used
 
 ---
 
@@ -71,6 +71,7 @@ print(dataset.s.head())  # Step-wise data
 **Tracker**: Custom MATLAB tracker
 
 **Data Structure**:
+
 - 12-point midline
 - 22-point contour
 - 16 Hz framerate
@@ -95,6 +96,7 @@ lab.import_dataset(
 **Tracker**: Custom Python tracker
 
 **Data Structure**:
+
 - 11-point midline
 - Convex hull (variable points)
 - ~11.27 Hz (variable framerate)
@@ -120,6 +122,7 @@ lab.import_datasets(
 **Tracker**: FIM (Frustrated Total Internal Reflection Microscopy)
 
 **Data Structure**:
+
 - Centroid only (no midline)
 - 2 Hz framerate
 
@@ -143,6 +146,7 @@ lab.import_dataset(
 **Tracker**: Custom tracker
 
 **Data Structure**:
+
 - 5-point midline
 - 10 Hz framerate
 
@@ -211,7 +215,7 @@ class MyLabFormat(LabFormat):
             Ncontour=0,     # No contour
             fr=15           # 15 Hz
         )
-    
+
     def read_data(self, filepath):
         # Custom data reading logic
         pass

@@ -9,49 +9,49 @@ Larvaworld provides a **systematic configuration pipeline** that balances ease-o
 ```{mermaid}
 flowchart LR
     Start([Select Experiment Type]) --> LoadTemplate[Load Experiment Template<br/>Predefined configuration]
-    
+
     LoadTemplate --> ConfigEnv{Configure<br/>Environment}
-    
+
     ConfigEnv --> ArenaType[Arena Type<br/>Circular, rectangular, custom]
     ConfigEnv --> OdorSetup[Odorscape Setup<br/>Sources, gradients]
     ConfigEnv --> FoodSetup[Food Setup<br/>Patches, grid, quality]
     ConfigEnv --> Obstacles[Obstacles<br/>Borders, walls]
-    
+
     ArenaType --> ConfigAgents
     OdorSetup --> ConfigAgents
     FoodSetup --> ConfigAgents
     Obstacles --> ConfigAgents
-    
+
     ConfigAgents{Configure<br/>Agents} --> ModelSelect[Select Larva Model<br/>Basic to complex]
     ConfigAgents --> NumAgents[Number of Agents<br/>N larvae]
     ConfigAgents --> InitPos[Initial Positions<br/>Distribution]
     ConfigAgents --> InitState[Initial State<br/>Age, hunger, etc.]
-    
+
     ModelSelect --> ConfigSim
     NumAgents --> ConfigSim
     InitPos --> ConfigSim
     InitState --> ConfigSim
-    
+
     ConfigSim{Configure<br/>Simulation} --> Duration[Duration<br/>Minutes]
     ConfigSim --> Epochs[Epochs<br/>Pre/test/post]
     ConfigSim --> Timestep[Timestep<br/>dt = 0.1 s]
     ConfigSim --> VisMode[Visualization<br/>video/screen/image/none]
-    
+
     Duration --> Analysis
     Epochs --> Analysis
     Timestep --> Analysis
     VisMode --> Analysis
-    
+
     Analysis{Configure<br/>Analysis} --> Metrics[Metrics to Compute<br/>Auto-select by exp type]
     Analysis --> RefData[Reference Data<br/>Compare to real?]
     Analysis --> Output[Output Options<br/>Save location, format]
-    
+
     Metrics --> Ready
     RefData --> Ready
     Output --> Ready
-    
+
     Ready[Ready to Run] --> Execute([Execute Simulation])
-    
+
     style Start fill:#2196f3,stroke:#1976d2,stroke-width:3px,color:#fff
     style ConfigEnv fill:#ff9800,stroke:#f57c00,stroke-width:3px,color:#000
     style ConfigAgents fill:#9c27b0,stroke:#7b1fa2,stroke-width:3px,color:#fff
@@ -159,6 +159,7 @@ env_params = {
 **Purpose**: Place food sources.
 
 **Options**:
+
 - **Patches**: Discrete food patches
 - **Grid**: Regular grid of patches
 - **Uniform**: Continuous substrate
@@ -245,6 +246,7 @@ larva_groups = [
 #### Initial State
 
 **Options**:
+
 - `age`: Initial age in hours (default: 72h = 3rd instar)
 - `hunger`: Hunger level (0-1, default: 0.5)
 - `development_stage`: Larval instar (1, 2, or 3)
@@ -303,6 +305,7 @@ run = ExpRun(experiment="chemotaxis", dt=0.05)  # Finer timestep
 #### Visualization
 
 **Options**:
+
 - `'video'`: Export MP4/AVI
 - `'screen'`: Real-time display
 - `'image'`: Save snapshots

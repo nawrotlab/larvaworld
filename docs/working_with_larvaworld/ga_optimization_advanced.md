@@ -26,33 +26,33 @@ For mode comparison, see {doc}`../concepts/simulation_modes`.
 ```{mermaid}
 graph TB
     Start([Start GA Optimization]) --> Init[Initialize Population<br/>Random genomes]
-    
+
     Init --> Evaluate[Evaluate Fitness<br/>Run simulations]
-    
+
     Evaluate --> Fitness{Calculate Fitness<br/>vs Reference Data}
-    
+
     Fitness --> Compare[Compare to Target<br/>KS tests on metrics]
-    
+
     Compare --> Rank[Rank Genomes<br/>by Fitness Score]
-    
+
     Rank --> Converge{Converged?<br/>Max gen reached<br/>or fitness plateau}
-    
+
     Converge -->|No| Select[Selection<br/>Keep best genomes]
-    
+
     Select --> Crossover[Crossover<br/>Combine parent genes]
-    
+
     Crossover --> Mutate[Mutation<br/>Random perturbations]
-    
+
     Mutate --> NewGen[New Generation<br/>Next population]
-    
+
     NewGen --> Evaluate
-    
+
     Converge -->|Yes| Best[Best Genome<br/>Optimal parameters]
-    
+
     Best --> Output[Output Results<br/>Best config + history]
-    
+
     Output --> End([End Optimization])
-    
+
     style Start fill:#2196f3,stroke:#1976d2,stroke-width:3px,color:#fff
     style Init fill:#4caf50,stroke:#388e3c,stroke-width:2px,color:#000
     style Fitness fill:#ff9800,stroke:#f57c00,stroke-width:2px,color:#000
@@ -192,27 +192,27 @@ best_conf = results["explorer"]   # Optimized model configuration (AttrDict)
 
 ### Population Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `Nagents` | 20 | Population size per generation |
-| `Ngenerations` | 50 | Number of generations |
+| Parameter      | Default | Description                    |
+| -------------- | ------- | ------------------------------ |
+| `Nagents`      | 20      | Population size per generation |
+| `Ngenerations` | 50      | Number of generations          |
 
 ### Evolution Parameters
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `selection_ratio` | 0.3 | Fraction of population kept as parents (top 30%) |
-| `crossover_rate` | 0.7 | Probability of crossover (70%) |
-| `mutation_rate` | 0.1 | Probability of mutation per gene (10%) |
-| `mutation_scale` | 0.2 | Mutation magnitude (±20% of parameter range) |
+| Parameter         | Default | Description                                      |
+| ----------------- | ------- | ------------------------------------------------ |
+| `selection_ratio` | 0.3     | Fraction of population kept as parents (top 30%) |
+| `crossover_rate`  | 0.7     | Probability of crossover (70%)                   |
+| `mutation_rate`   | 0.1     | Probability of mutation per gene (10%)           |
+| `mutation_scale`  | 0.2     | Mutation magnitude (±20% of parameter range)     |
 
 ### Convergence Criteria
 
-| Criterion | Description |
-|-----------|-------------|
-| **Max generations** | Stop after `Ngenerations` |
+| Criterion           | Description                                  |
+| ------------------- | -------------------------------------------- |
+| **Max generations** | Stop after `Ngenerations`                    |
 | **Fitness plateau** | Stop if fitness unchanged for 10 generations |
-| **Target fitness** | Stop if fitness > threshold (e.g., 0.95) |
+| **Target fitness**  | Stop if fitness > threshold (e.g., 0.95)     |
 
 ---
 
@@ -260,10 +260,10 @@ genome = {
 
 Parameters are constrained to biologically realistic ranges:
 
-| Parameter | Min | Max | Unit |
-|-----------|-----|-----|------|
-| `crawler.f` | 0.5 | 3.0 | Hz |
-| `turner.ang_v` | 0.1 | 2.0 | rad/s |
+| Parameter       | Min | Max | Unit          |
+| --------------- | --- | --- | ------------- |
+| `crawler.f`     | 0.5 | 3.0 | Hz            |
+| `turner.ang_v`  | 0.1 | 2.0 | rad/s         |
 | `olfactor.gain` | 0.0 | 2.0 | dimensionless |
 
 **Custom ranges**:
@@ -361,14 +361,14 @@ for phenotype in ["RE", "SI"]:
         refID=f"RvsS_{phenotype}_data",
         metric_definition="all"
     )
-    
+
     results = optimize_mID(
         mID0=phenotype,
         ks=["crawler.f", "feeder.intake_rate"],
         evaluator=evaluator,
         Ngenerations=50
     )
-    
+
     print(f"{phenotype} optimized: {results[phenotype]['fitness']:.3f}")
 ```
 

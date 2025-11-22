@@ -17,33 +17,33 @@ sequenceDiagram
     participant Feeder as Feeder
     participant Sensor as Sensor
     participant Environment as Environment
-    
+
     User->>CLI: Run simulation command
     CLI->>SimEngine: Initialize simulation
     SimEngine->>Environment: Create arena
     SimEngine->>LarvaAgent: Create larva agents
-    
+
     loop Simulation Loop
         SimEngine->>LarvaAgent: Update timestep
         LarvaAgent->>Sensor: Read environment
         Sensor->>Environment: Get sensory input
         Environment-->>Sensor: Return sensory data
         Sensor-->>LarvaAgent: Sensory feedback
-        
+
         LarvaAgent->>Brain: Process sensory input
         Brain->>Crawler: Generate crawling commands
         Brain->>Feeder: Generate feeding commands
-        
+
         Crawler-->>LarvaAgent: Movement commands
         Feeder-->>LarvaAgent: Feeding commands
-        
+
         LarvaAgent->>Environment: Execute actions
         Environment-->>LarvaAgent: Action results
-        
+
         LarvaAgent-->>SimEngine: Update state
         SimEngine->>SimEngine: Record data
     end
-    
+
     SimEngine-->>CLI: Simulation complete
     CLI-->>User: Results available
 ```
@@ -55,6 +55,7 @@ sequenceDiagram
 ### Phase 1: Initialization
 
 **Sequence**:
+
 1. **User Command**: User runs `larvaworld Exp chemotaxis -N 20`
 2. **CLI Parsing**: `argparser.py` parses arguments
 3. **SimEngine Setup**: `ExpRun.__init__()` initializes
@@ -101,6 +102,7 @@ for step in range(self.Nsteps):
 **LarvaAgent → Sensors → Environment**
 
 **Sequence**:
+
 1. Larva queries sensors
 2. Sensors read environment state (odor, food, obstacles)
 3. Environment returns sensory data
@@ -131,7 +133,7 @@ def sense(self):
 def step(self):
     # Get odor concentration at larva position
     odor_value = self.model.odorscape.get_value(self.pos)
-    
+
     # Apply sensory processing (Weber-Fechner law)
     self.sensed_odor = self.process_olfaction(odor_value)
 ```
@@ -141,6 +143,7 @@ def step(self):
 **LarvaAgent → Brain**: "Process sensory input"
 
 **Brain Responsibilities**:
+
 - Integrate multi-sensory information
 - Update memory (reinforcement learning, gain adaptation)
 - Generate locomotor commands
@@ -153,11 +156,11 @@ def step(self):
     # 1. Collect sensory input
     olf = self.olfactor.sensed_odor if self.olfactor else 0
     touch = self.toucher.contacts if self.toucher else []
-    
+
     # 2. Update memory/learning
     if self.memory is not None:
         self.memory.step(reward=self.feeder.amount_eaten)
-    
+
     # 3. Generate locomotor commands
     self.locomotor.compute()  # Activates crawler, turner, feeder
 ```
@@ -169,7 +172,7 @@ def step(self):
 def step(self):
     # Run Nengo neural simulation
     self.sim.run_steps(1)
-    
+
     # Extract motor commands from output neurons
     self.locomotor.compute()
 ```
@@ -186,15 +189,15 @@ def compute(self):
     # Crawling
     if self.crawler is not None:
         self.crawler.step()  # Generate stride
-    
+
     # Turning
     if self.turner is not None:
         self.turner.step()  # Compute angular velocity
-    
+
     # Feeding
     if self.feeder is not None:
         self.feeder.step()  # Attempt to feed
-    
+
     # Interference (crawl-turn coupling)
     if self.interference is not None:
         self.interference.step()  # Modulate crawler based on turner
@@ -208,11 +211,11 @@ def step(self):
     # Check if stride should initiate
     if self.ready_to_stride():
         self.initiate_stride()
-    
+
     # Update stride phase
     if self.striding:
         self.update_stride_phase()
-        
+
         # Compute forward velocity
         self.fov = self.compute_velocity()
 ```
@@ -226,7 +229,7 @@ def step(self):
     # - Sensory input (odor gradient)
     # - Interference from crawler
     # - Random exploration
-    
+
     self.ang_v = self.compute_angular_velocity()
 ```
 
@@ -242,16 +245,16 @@ def move(self):
     # Get locomotor output
     fov = self.locomotor.crawler.fov  # Forward velocity
     ang_v = self.locomotor.turner.ang_v  # Angular velocity
-    
+
     # Update orientation
     self.orientation += ang_v * self.dt
-    
+
     # Update position
     dx = fov * np.cos(self.orientation) * self.dt
     dy = fov * np.sin(self.orientation) * self.dt
     self.pos[0] += dx
     self.pos[1] += dy
-    
+
     # Check collisions
     self.model.space.check_collisions(self)
 ```
@@ -265,7 +268,7 @@ def step(self):
         # Consume food
         amount = self.intake_rate * self.dt
         self.model.food_grid.consume(self.pos, amount)
-        
+
         # Update DEB model
         self.deb.feed(amount)
 ```
@@ -280,7 +283,7 @@ def step(self):
     self.update_reserves()
     self.update_structure()
     self.update_maturity()
-    
+
     # Compute body mass
     self.body_mass = self.compute_mass()
 ```
@@ -298,15 +301,15 @@ def store_data(self):
         # Record pose
         self.data["position"].append(larva.pos)
         self.data["orientation"].append(larva.orientation)
-        
+
         # Record velocities
         self.data["linear_velocity"].append(larva.locomotor.crawler.fov)
         self.data["angular_velocity"].append(larva.locomotor.turner.ang_v)
-        
+
         # Record brain state
         if larva.brain.memory:
             self.data["gain"].append(larva.brain.memory.gain)
-        
+
         # Record energetics
         if larva.deb:
             self.data["body_mass"].append(larva.deb.body_mass)
@@ -317,6 +320,7 @@ def store_data(self):
 ### Phase 3: Finalization
 
 **Sequence**:
+
 1. **SimEngine**: Simulation loop completes
 2. **Data Processing**: Convert raw data to `LarvaDataset`
 3. **Storage**: Save to HDF5
@@ -333,7 +337,7 @@ def simulate(self):
     for step in range(self.Nsteps):
         self.model.step()
         self.store_data()
-    
+
     # Finalize
     self.finalize()  # Convert to datasets
     self.store()     # Save HDF5
@@ -434,6 +438,7 @@ for agent in self.model.agents:
 ### Adding a New Sensor
 
 **Steps**:
+
 1. Create subclass of `Sensor` in `/lib/model/modules/sensor.py`
 2. Implement `update()` method to process sensory input
 3. Register sensor in `Brain` initialization
@@ -449,17 +454,18 @@ class MySensor(Sensor):
     def update(self):
         # Query environment
         value = self.brain.agent.model.environment.get_my_stimulus(self.brain.agent.pos)
-        
+
         # Process sensory input
         input_dict = {'my_stimulus': value}
         self.step(input=input_dict)
-        
+
         # Output is automatically available via self.output
 ```
 
 ### Adding a New Behavioral Module
 
 **Steps**:
+
 1. Create subclass of `Effector` in `/lib/model/modules/`
 2. Implement `update()` method
 3. Register module in `Locomotor` or `Brain`

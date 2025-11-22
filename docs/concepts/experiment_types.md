@@ -67,23 +67,23 @@ mindmap
 
 The following table groups experiments by **behavioral category** (conceptual view):
 
-| Type/Behavior | Experiment | Description | Literature Source |
-|---------------|------------|-------------|-------------------|
-| **exploration** | close-view | Single larva closely inspected in a tiny arena | - |
-| | dish | Exploration of a non-nutritious Petri-dish | - |
-| | dispersion | Larva dispersion from the arena center | - |
-| **chemotaxis** | navigation | Navigation up an odor gradient | [Gomez-Marin et al. (2012)](https://doi.org/10.1016/j.conb.2011.11.008) |
-| | local search | Exploration in the vicinity of an odor source | [Gomez-Marin et al. (2012)](https://doi.org/10.1016/j.conb.2011.11.008) |
-| **odor preference** | train & test | Olfactory associative learning (train & test phase) | The Maggot Learning Manual |
-| | test on/off food | Test in the presence/absence of nutritious substrate | The Maggot Learning Manual |
-| **foraging** | patchy food | Foraging in arena with one/two/multiple food patches | - |
-| | uniform food | Foraging in uniformly distributed nutritious substrate | - |
-| **growth** | rearing | Larva rearing in ad-libitum conditions | - |
-| | rovers VS sitters | Foraging phenotypes compared in diverse conditions | [Kaun et al. (2007)](https://doi.org/10.1242/jeb.006924) |
-| **imitation** | realistic bodies | Multisegment larvae in Box2D physics engine | - |
-| | dataset imitation | Experimental dataset imitation | - |
-| **games** | maze | Navigation in a maze towards an odor source | - |
-| | capture/keep the flag | Larva teams competing for a portable nutritious object | - |
+| Type/Behavior       | Experiment            | Description                                            | Literature Source                                                       |
+| ------------------- | --------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------- |
+| **exploration**     | close-view            | Single larva closely inspected in a tiny arena         | -                                                                       |
+|                     | dish                  | Exploration of a non-nutritious Petri-dish             | -                                                                       |
+|                     | dispersion            | Larva dispersion from the arena center                 | -                                                                       |
+| **chemotaxis**      | navigation            | Navigation up an odor gradient                         | [Gomez-Marin et al. (2012)](https://doi.org/10.1016/j.conb.2011.11.008) |
+|                     | local search          | Exploration in the vicinity of an odor source          | [Gomez-Marin et al. (2012)](https://doi.org/10.1016/j.conb.2011.11.008) |
+| **odor preference** | train & test          | Olfactory associative learning (train & test phase)    | The Maggot Learning Manual                                              |
+|                     | test on/off food      | Test in the presence/absence of nutritious substrate   | The Maggot Learning Manual                                              |
+| **foraging**        | patchy food           | Foraging in arena with one/two/multiple food patches   | -                                                                       |
+|                     | uniform food          | Foraging in uniformly distributed nutritious substrate | -                                                                       |
+| **growth**          | rearing               | Larva rearing in ad-libitum conditions                 | -                                                                       |
+|                     | rovers VS sitters     | Foraging phenotypes compared in diverse conditions     | [Kaun et al. (2007)](https://doi.org/10.1242/jeb.006924)                |
+| **imitation**       | realistic bodies      | Multisegment larvae in Box2D physics engine            | -                                                                       |
+|                     | dataset imitation     | Experimental dataset imitation                         | -                                                                       |
+| **games**           | maze                  | Navigation in a maze towards an odor source            | -                                                                       |
+|                     | capture/keep the flag | Larva teams competing for a portable nutritious object | -                                                                       |
 
 ---
 
@@ -94,6 +94,7 @@ The following table groups experiments by **behavioral category** (conceptual vi
 **Purpose**: Study baseline locomotory behavior without specific targets.
 
 **Experiments**:
+
 - `tethered`: Larva constrained to small area (high-resolution tracking)
 - `focus`: Single larva in tiny arena (close-view)
 - `dish`: Standard Petri dish exploration
@@ -101,6 +102,7 @@ The following table groups experiments by **behavioral category** (conceptual vi
 - `dispersion_x2`: Dispersion with two groups
 
 **Use Cases**:
+
 - Baseline movement statistics
 - Spatial exploration patterns
 - Activity level assessment
@@ -119,6 +121,7 @@ larvaworld Exp dish -N 10 -duration 5.0
 **Purpose**: Navigation along odor gradients.
 
 **Key Experiments**:
+
 - `chemotaxis`: Standard navigation up gradient
 - `chemorbit`: Odor source navigation with orbital search
 - `chemorbit_OSN`: Chemotaxis with olfactory sensory neurons (OSN) model
@@ -128,6 +131,7 @@ larvaworld Exp dish -N 10 -duration 5.0
 - `food_at_bottom`: Navigate to food source at arena bottom
 
 **Literature**:
+
 - Gomez-Marin et al. (2012): Active sensation during orientation
 
 **Example**:
@@ -143,11 +147,13 @@ larvaworld Exp chemotaxis -N 20 -duration 10.0
 **Purpose**: Navigation using wind/airflow cues.
 
 **Experiments**:
+
 - `anemotaxis`: Standard wind-guided navigation
 - `anemotaxis_bordered`: Anemotaxis in bounded arena
 - `puff_anemotaxis_bordered`: Pulsed wind stimuli
 
 **Use Cases**:
+
 - Wind-guided navigation
 - Multi-modal integration (odor + wind)
 
@@ -158,9 +164,11 @@ larvaworld Exp chemotaxis -N 20 -duration 10.0
 **Purpose**: Combined odor and wind navigation.
 
 **Experiments**:
+
 - `single_puff`: Single odor puff release
 
 **Use Cases**:
+
 - Realistic odor plume tracking
 - Multi-sensory integration
 
@@ -171,9 +179,11 @@ larvaworld Exp chemotaxis -N 20 -duration 10.0
 **Purpose**: Temperature-guided navigation.
 
 **Experiments**:
+
 - `thermotaxis`: Navigate along thermal gradient
 
 **Use Cases**:
+
 - Temperature preference
 - Thermal gradient navigation
 
@@ -184,6 +194,7 @@ larvaworld Exp chemotaxis -N 20 -duration 10.0
 **Purpose**: Olfactory associative learning.
 
 **Key Experiments**:
+
 - `PItrain`: Train phase (odor + food pairing)
 - `PItest_off`: Test phase without food
 - `PItest_on`: Test phase with food
@@ -192,9 +203,11 @@ larvaworld Exp chemotaxis -N 20 -duration 10.0
 - `PItest_off_RL`: Test with RL-based learning
 
 **Literature**:
+
 - The Maggot Learning Manual
 
 **Metrics**:
+
 - **Preference Index (PI)**: Quantifies odor preference
 
 **Example**:
@@ -214,6 +227,7 @@ larvaworld Exp PItest_off -N 30 -duration 5.0
 **Purpose**: Food search and consumption.
 
 **Key Experiments**:
+
 - `patchy_food`: Single food patch
 - `patch_grid`: Grid of food patches
 - `MB_patch_grid`: Mushroom body-dependent foraging
@@ -226,9 +240,11 @@ larvaworld Exp PItest_off -N 30 -duration 5.0
 - `4corners`: Four patches in corners
 
 **Literature**:
+
 - Kaun et al. (2007): Rovers vs. sitters phenotypes
 
 **Metrics**:
+
 - Food intake
 - Patch residence time
 - Search efficiency
@@ -246,11 +262,13 @@ larvaworld Exp patchy_food -N 20 -duration 15.0
 **Purpose**: Mechanical sensation and obstacle navigation.
 
 **Experiments**:
+
 - `tactile_detection`: Single obstacle detection
 - `tactile_detection_x4`: Four obstacles
 - `multi_tactile_detection`: Multiple obstacles
 
 **Use Cases**:
+
 - Collision avoidance
 - Tactile-guided navigation
 - Mechanical sensing
@@ -262,6 +280,7 @@ larvaworld Exp patchy_food -N 20 -duration 15.0
 **Purpose**: Long-term development and energetics.
 
 **Key Experiments**:
+
 - `growth`: Standard rearing
 - `RvsS`: Rovers vs. sitters comparison
 - `RvsS_on`: RvsS on food
@@ -270,9 +289,11 @@ larvaworld Exp patchy_food -N 20 -duration 15.0
 - `RvsS_on_*h_prestarved`: RvsS with pre-starvation (1h, 2h, 3h, 4h)
 
 **Literature**:
+
 - Kaun et al. (2007): Foraging phenotypes
 
 **Metrics**:
+
 - Body mass growth (DEB)
 - Feeding rate
 - Activity patterns
@@ -290,12 +311,14 @@ larvaworld Exp growth -N 10 -duration 60.0  # 1 hour simulated time
 **Purpose**: Multi-agent competitive scenarios.
 
 **Experiments**:
+
 - `maze`: Navigate maze to find odor source
 - `keep_the_flag`: One team keeps food, others try to steal
 - `capture_the_flag`: Retrieve food and return to base
 - `catch_me`: One larva escapes, others chase
 
 **Use Cases**:
+
 - Multi-agent dynamics
 - Competitive behaviors
 - Team strategies
@@ -313,6 +336,7 @@ larvaworld Exp maze -N 5 -duration 10.0
 **Purpose**: Specialized experiments.
 
 **Experiments**:
+
 - `realistic_imitation`: Multisegment body with Box2D physics
 - `prey_detection`: Predator-prey interactions
 
