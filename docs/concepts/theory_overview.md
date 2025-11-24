@@ -415,7 +415,7 @@ This theoretical overview has walked through the main blocks of Figure, describi
 The following sections of the documentation show how to:
 
 - **install** Larvaworld and run your first simulations ({doc}`../installation`),
-- **explore** preconfigured experiments ({doc}`../tutorials/index`),
+- **explore** preconfigured experiments (see {doc}`../tutorials/configuration`, {doc}`../tutorials/simulation`, {doc}`../tutorials/data`),
 - **build** or **extend** larva models ({doc}`../agents_environments/larva_agent_architecture`),
 - **import** and **analyze** experimental datasets ({doc}`../data_pipeline/lab_formats_import`), and
 - **optimize** and **evaluate** models ({doc}`../working_with_larvaworld/ga_optimization_advanced`, {doc}`../working_with_larvaworld/model_evaluation`).

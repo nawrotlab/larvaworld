@@ -9,7 +9,7 @@ The Brain module integrates sensory input, memory systems, and locomotor control
 ```{mermaid}
 graph TD
     %% Brain implementations
-    subgraph Brain Implementations
+    subgraph Brain_Impl ["Brain Implementations"]
         BrainBase["Brain"<br/>Base class]:::base
         DefaultBrain["DefaultBrain"<br/>Standard implementation]:::impl
         NengoBrain["NengoBrain"<br/>Nengo-based implementation]:::impl
@@ -37,7 +37,7 @@ graph TD
     NullMem["No memory"]:::memory
 
     %% Locomotor interface
-    subgraph Locomotor System
+    subgraph Locomotor_System ["Locomotor System"]
         Locomotor["Locomotor"<br/>crawl/turn/feed]:::locomotor
         A_in["A_in"<br/>sensory drive]:::signal
         MotorCmds["motor commands"<br/>crawl/turn/feed rates]:::output
