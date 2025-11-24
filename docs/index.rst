@@ -111,27 +111,11 @@ For the scientific background, model assumptions and validation results, please 
 .. toctree::
    :maxdepth: 2
    :caption: Tutorials
-   :hidden:
 
-   "Configuration"
-   tutorials/CONFTYPES.ipynb
-   tutorials/environment_configuration.ipynb
-   tutorials/sensorscapes.ipynb
-
-   "Simulation"
-   tutorials/cli.ipynb
-   tutorials/single_simulation.ipynb
-   tutorials/model_evaluation.ipynb
-   tutorials/genetic_algorithm_optimization.ipynb
-
-   "Data"
-   tutorials/import_datasets.ipynb
-   tutorials/replay.ipynb
-
-   "Development"
-   tutorials/library_interface.ipynb
-   tutorials/custom_module.ipynb
-   tutorials/remote_model_interface.ipynb
+   tutorials/configuration
+   tutorials/simulation
+   tutorials/data
+   tutorials/development
 
 .. toctree::
    :maxdepth: 1
