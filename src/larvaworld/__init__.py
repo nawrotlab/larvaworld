@@ -55,16 +55,29 @@ def vprint(text: str = "", verbose: int = 0) -> None:
 import os
 
 ROOT_DIR: str = os.path.dirname(os.path.abspath(__file__))
+"""Root directory of the larvaworld package."""
+
 DATA_DIR: str = f"{ROOT_DIR}/data"
+"""Relative path to the data directory (data/ relative to package root)."""
+
 SIM_DIR: str = f"{DATA_DIR}/SimGroup"
+"""Relative path to the simulation data directory (data/SimGroup/ relative to package root)."""
+
 BATCH_DIR: str = f"{SIM_DIR}/batch_runs"
+"""Relative path to the batch runs directory (data/SimGroup/batch_runs/ relative to package root)."""
+
 CONF_DIR: str = f"{ROOT_DIR}/lib/reg/confDicts"
+"""Relative path to the configuration dictionaries directory (lib/reg/confDicts/ relative to package root)."""
+
 TEST_DIR: str = f"{ROOT_DIR}/../../tests"
+"""Relative path to the tests directory (../../tests relative to package root)."""
 
 os.makedirs(CONF_DIR, exist_ok=True)
 
 
 SIMTYPES: list[str] = ["Exp", "Batch", "Ga", "Eval", "Replay"]
+"""List of available simulation types."""
+
 CONFTYPES: list[str] = [
     "Env",
     "LabFormat",
@@ -75,6 +88,7 @@ CONFTYPES: list[str] = [
     "Batch",
     "Ga",
 ]
+"""List of available configuration types."""
 # GROUPTYPES = ['LarvaGroup', 'FoodGroup', 'epoch']
 
 

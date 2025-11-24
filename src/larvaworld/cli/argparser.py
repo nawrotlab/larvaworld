@@ -411,11 +411,18 @@ class SimModeParser(ArgumentParser):
                 "GAevaluation": ParserArgumentDict.from_param(d0=reg.gen.GAevaluation),
             }
         )
+        from .. import __version__
         super().__init__(
             prog="larvaworld",
             description="CLI for running larvaworld simulations",
             *args,
             **kwargs,
+        )
+        self.add_argument(
+            "--version",
+            action="version",
+            version=f"%(prog)s {__version__}",
+            help="Show the version number and exit",
         )
         self.add_argument(
             "-verbose",
@@ -518,7 +525,10 @@ class SimModeParser(ArgumentParser):
         :return: The configured simulation run.
         """
         m = args.sim_mode
-        VERBOSE = args.VERBOSE
+        # Propagate CLI verbosity to global vprint setting
+        import larvaworld
+
+        larvaworld.VERBOSE = args.VERBOSE
         kw = AttrDict(
             {
                 "screen_kws": self.eval_parser("screen_kws", args),

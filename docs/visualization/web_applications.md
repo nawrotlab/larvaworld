@@ -95,7 +95,7 @@ larvaworld-app
 
 ![Web App](../figures_tables_from_paper/figures/fig8_web_app.png)
 
-**Figure 8**: Screenshot of Larvaworld web application showing interactive visualization and control panels.
+**Figure**: Screenshot of Larvaworld web application showing interactive visualization and control panels.
 
 ---
 

@@ -79,7 +79,7 @@ evaluator = GAevaluation(
 # 2. Run genetic algorithm to optimize locomotory model
 results = optimize_mID(
     mID0="explorer",                      # Base model to optimize
-    ks=["crawler.f", "turner.ang_v"],     # Parameter keys to vary
+    ks=["crawler", "turner"],             # Module names to optimize
     evaluator=evaluator,
     Ngenerations=50,
 )
@@ -136,26 +136,29 @@ Where $\overline{D_{KS}}$ is the mean KS D-statistic across all metrics.
 
 ### 3. Define Parameter Space
 
-Specify which parameters to optimize:
+Specify which modules to optimize (all parameters within each module will be optimized):
 
 ```python
-# Parameter keys to optimize
+# Module names to optimize
 ks = [
-    "crawler.f",            # Crawling frequency
-    "turner.ang_v",         # Turning angular velocity
-    "olfactor.gain",        # Olfactory gain
-    "crawler.stridechain_dist"  # Stride chain parameters
+    "crawler",      # Crawler module (includes freq, stride_dst_mean, etc.)
+    "turner",       # Turner module (includes ang_v, freq, etc.)
+    "olfactor",     # Olfactor module (includes gain, decay_coef, etc.)
 ]
 ```
 
-**Finding parameter keys**:
+**Finding available modules**:
 
 ```python
 from larvaworld.lib import reg
+from larvaworld.lib.model.modules.module_modes import moduleDB
+
+# List all available modules
+print(moduleDB.AllModules)  # ['crawler', 'turner', 'olfactor', 'intermitter', ...]
 
 # Inspect model configuration
 model_conf = reg.conf.Model.getID("explorer")
-print(model_conf)  # See nested parameter structure
+print(model_conf.brain)  # See nested module structure
 ```
 
 ---
@@ -169,7 +172,7 @@ from larvaworld.lib.sim.genetic_algorithm import optimize_mID
 
 results = optimize_mID(
     mID0="explorer",           # Base model
-    ks=["crawler.f", "turner.ang_v"],
+    ks=["crawler", "turner"],  # Module names to optimize
     evaluator=evaluator,
     Ngenerations=50,           # Number of generations
     Nagents=20,                # Population size per generation
@@ -246,43 +249,29 @@ eval_run.plot_results()
 
 ### Genome Structure
 
-A **genome** is a dictionary mapping parameter keys to values:
+A **genome** is a dictionary mapping full configuration paths to values:
 
 ```python
 genome = {
-    "crawler.f": 1.23,
-    "turner.ang_v": 0.45,
-    "olfactor.gain": 0.78
+    "brain.crawler.freq": 1.23,
+    "brain.turner.freq": 0.58,      # Turner oscillation frequency
+    "brain.turner.amp": 0.45,       # Turner amplitude
+    "brain.olfactor.gain": 0.78
 }
 ```
 
 ### Parameter Ranges
 
-Parameters are constrained to biologically realistic ranges:
+Parameters are constrained to biologically realistic ranges (automatically determined from module parameter definitions):
 
-| Parameter       | Min | Max | Unit          |
-| --------------- | --- | --- | ------------- |
-| `crawler.f`     | 0.5 | 3.0 | Hz            |
-| `turner.ang_v`  | 0.1 | 2.0 | rad/s         |
-| `olfactor.gain` | 0.0 | 2.0 | dimensionless |
+| Configuration Path          | Min | Max | Unit          |
+| --------------------------- | --- | --- | ------------- |
+| `brain.crawler.freq`        | 0.5 | 3.0 | Hz            |
+| `brain.turner.freq`         | 0.0 | 2.0 | Hz            |
+| `brain.turner.amp`          | 0.0 | 1.0 | dimensionless |
+| `brain.olfactor.gain`       | 0.0 | 2.0 | dimensionless |
 
-**Custom ranges**:
-
-```python
-# Define custom parameter ranges
-param_ranges = {
-    "crawler.f": (0.8, 2.5),
-    "turner.ang_v": (0.2, 1.5)
-}
-
-# Pass to optimizer
-results = optimize_mID(
-    mID0="explorer",
-    ks=list(param_ranges.keys()),
-    param_ranges=param_ranges,
-    evaluator=evaluator
-)
-```
+**Note**: When you specify module names in `ks` (e.g., `["crawler", "turner"]`), all parameters within those modules are automatically included in the optimization space. The parameter ranges are determined from the module parameter definitions.
 
 ---
 
@@ -306,9 +295,9 @@ selection_ratio = 0.3
 crossover_rate = 0.7
 
 # Example:
-# Parent 1: {crawler.f: 1.2, turner.ang_v: 0.5}
-# Parent 2: {crawler.f: 1.5, turner.ang_v: 0.3}
-# Offspring: {crawler.f: 1.5, turner.ang_v: 0.5}  # Random mix
+# Parent 1: {brain.crawler.freq: 1.2, brain.turner.freq: 0.58, brain.turner.amp: 0.5}
+# Parent 2: {brain.crawler.freq: 1.5, brain.turner.freq: 0.60, brain.turner.amp: 0.3}
+# Offspring: {brain.crawler.freq: 1.5, brain.turner.freq: 0.60, brain.turner.amp: 0.5}  # Random mix
 ```
 
 ### 3. Mutation
@@ -323,8 +312,8 @@ mutation_rate = 0.1
 mutation_scale = 0.2
 
 # Example:
-# Original: crawler.f = 1.2
-# Mutated: crawler.f = 1.2 + N(0, 0.2 * 1.2) = 1.35
+# Original: brain.crawler.freq = 1.2
+# Mutated: brain.crawler.freq = 1.2 + N(0, 0.2 * 1.2) = 1.35
 ```
 
 ## Use Case Examples
@@ -343,7 +332,7 @@ evaluator = GAevaluation(
 # Optimize navigator model
 results = optimize_mID(
     mID0="navigator",
-    ks=["crawler.f", "turner.ang_v", "olfactor.gain"],
+        ks=["crawler", "turner", "olfactor"],
     evaluator=evaluator,
     Ngenerations=100
 )
@@ -364,7 +353,7 @@ for phenotype in ["RE", "SI"]:
 
     results = optimize_mID(
         mID0=phenotype,
-        ks=["crawler.f", "feeder.intake_rate"],
+        ks=["crawler", "feeder"],
         evaluator=evaluator,
         Ngenerations=50
     )

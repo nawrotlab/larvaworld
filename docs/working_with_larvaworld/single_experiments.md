@@ -79,7 +79,7 @@ run = ExpRun(
     experiment="dish",
     N=10,
     duration=5.0,
-    screen_kws={"show_display": True}
+    screen_kws={"vis_mode": "video"}
 )
 
 # Run simulation

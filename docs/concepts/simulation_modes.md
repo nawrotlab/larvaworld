@@ -192,7 +192,7 @@ evaluator = GAevaluation(
 # Run genetic algorithm to optimize locomotory model
 results = optimize_mID(
     mID0="explorer",                      # Base model to optimize
-    ks=["crawler.f", "turner.ang_v"],     # Parameter keys to vary
+    ks=["crawler", "turner"],             # Module names to optimize
     evaluator=evaluator,
     Ngenerations=50,
 )

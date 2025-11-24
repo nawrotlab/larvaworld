@@ -212,7 +212,7 @@ For details, see {doc}`experiment_configuration_pipeline`.
 
 This layer provides **plotting**, **real-time rendering**, and **video export**.
 
-### Plotting API
+### Plotting
 
 **Modules** (in `plot/`):
 

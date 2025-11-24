@@ -98,7 +98,7 @@ GAlauncher
    evaluator = GAevaluation(refID="exploration.30controls")
    results = optimize_mID(
        mID0="explorer",
-       ks=["crawler.f", "turner.ang_v"],
+       ks=["crawler", "turner"],  # Module names to optimize
        evaluator=evaluator,
        Ngenerations=50
    )

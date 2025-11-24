@@ -117,36 +117,14 @@ pip install larvaworld[all]
 
 ## Development Installation
 
-If you want to modify the source code or contribute to Larvaworld:
+For development and contributing, see the {doc}`contributing` guide which includes:
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/nawrotlab/larvaworld.git
-cd larvaworld
-```
-
-### 2. Install with Poetry (Recommended)
-
-```bash
-poetry install --with dev,docs
-```
-
-This installs the package in editable mode with development and documentation dependencies.
-
-### 3. Activate the Virtual Environment
-
-```bash
-poetry shell
-```
-
-### 4. Install Pre-commit Hooks
-
-```bash
-pre-commit install
-```
-
-This ensures code quality checks run automatically before each commit.
+- Development installation instructions
+- Contribution guidelines
+- Pull request process
+- CI/CD workflow
+- Release process
+- Documentation build instructions
 
 ## Verifying Installation
 

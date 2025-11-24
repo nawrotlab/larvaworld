@@ -1,4 +1,4 @@
-# Plotting API
+# Plotting
 
 Larvaworld provides a comprehensive plotting API in `/lib/plot/` for analyzing behavioral data.
 
