@@ -51,11 +51,37 @@ Simulations operate across sub-millisecond neuronal dynamics, sub-second closed-
 
 ## Installation
 
-Install from PyPI:
+Larvaworld can be installed with `pip` (recommended) or `poetry`. **It is strongly recommended to install Larvaworld in a virtual environment** with Python 3.10 or 3.11.
 
-```shell
-pip install larvaworld
-```
+### Quick Start
+
+1. **Create and activate a virtual environment:**
+
+   ```shell
+   # Linux/macOS
+   python3.10 -m venv larvaworld_env
+   source larvaworld_env/bin/activate
+   
+   # Windows
+   python -m venv larvaworld_env
+   larvaworld_env\Scripts\activate
+   ```
+
+2. **Upgrade build tools** (especially important on Windows):
+
+   ```shell
+   python -m pip install --upgrade pip setuptools wheel
+   ```
+
+3. **Install Larvaworld:**
+
+   ```shell
+   pip install larvaworld
+   ```
+
+For detailed installation instructions, troubleshooting, and optional dependencies, see the [full installation guide](https://larvaworld.readthedocs.io/en/latest/installation.html).
+
+### Video Export (Optional)
 
 If you plan to export simulations or replays as video files, install the ffmpeg extension of `imageio`:
 

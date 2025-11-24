@@ -36,14 +36,14 @@ larvaworld --help
 Run a **dish exploration** experiment with 5 larvae for 3 minutes:
 
 ```bash
-larvaworld Exp dish -N 5 -duration 3.0
+larvaworld Exp dish -N 5 -duration 3.0 -vis_mode video
 ```
 
 **What happens:**
 
 - 5 larvae are placed in a circular arena (Petri dish)
 - The simulation runs for 3 minutes (simulated time)
-- A visualization window opens showing the larvae exploring
+- A visualization window opens showing the larvae exploring (requires `-vis_mode video`)
 - Data is saved to the default output directory
 
 ### Common CLI Options
@@ -53,13 +53,12 @@ larvaworld Exp dish -N 5 -duration 3.0
 | `-N`, `--Nagents` | Number of larvae                 | `-N 20`           |
 | `--duration`      | Simulation duration (minutes)    | `--duration 10.0` |
 | `--dt`            | Simulation timestep (seconds)    | `--dt 0.05`       |
-| `--Box2D`         | Enable Box2D physics engine      | `--Box2D`         |
-| `--show_display`  | Show pygame visualization window | `--show_display`  |
+| `-vis_mode`       | Visualization mode (`video` for real-time display, `image` for snapshots) | `-vis_mode video` |
 
 ### Save Output to a Custom Directory
 
 ```bash
-larvaworld Exp dish -N 5 -duration 3.0 -d /path/to/output
+larvaworld Exp dish -N 5 -duration 3.0 -dir /path/to/output
 ```
 
 For more CLI details, see the full {doc}`CLI tutorial <tutorials/cli>`.
@@ -80,7 +79,7 @@ run = ExpRun(
     experiment="dish",
     N=5,
     duration=3.0,
-    screen_kws={"show_display": True}
+    screen_kws={"vis_mode": "video"}
 )
 
 # Run the simulation
@@ -120,7 +119,12 @@ model_conf = reg.conf.Model.getID("explorer")
 run = ExpRun(
     experiment="dish",
     env_params=env_conf,
-    larva_groups=[{"model": model_conf, "N": 10}],
+    larva_groups={
+        "explorer": {
+            "model": model_conf,
+            "distribution": {"N": 10}
+        }
+    },
     duration=5.0
 )
 run.simulate()

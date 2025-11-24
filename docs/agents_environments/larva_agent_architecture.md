@@ -94,20 +94,19 @@ class LarvaSim(LarvaMotile, BaseController):
 
 **Key Methods**:
 
-- `sense()`: Sensory input
-- `think()`: Brain processing
-- `act()`: Locomotor output
-- `move()`: Physics update
+- `step()`: Perform a single simulation step (sensing, decision-making, motion, feeding)
+- `build_brain()`: Build the brain for the larva agent
+- `feed()`: Feed from a food source
+- `prepare_motion()`: Prepare motion based on brain output (overridden in `LarvaSim`)
+- `run_energetics()`: Update energetics based on food consumed
 
 ### BaseController
 
-**Purpose**: Physics control (Box2D integration)
+**Purpose**: Kinematic/physics control (torque/velocity modes)
 
 **Key Methods**:
 
-- `apply_motion()`: Velocity/force application
-- `apply_damping()`: Resistance
-- `apply_spring()`: Body segment coupling
+- `compute_delta_rear_angle()`: Compute change in rear angle for body bending
 
 ---
 
@@ -123,6 +122,7 @@ class LarvaSim(LarvaMotile, BaseController):
 - `length`: Body length (mm)
 - `radius`: Body radius (mm)
 - `segs`: Collection of body segments
+- `sensors`: Mapping of sensors defined on the body (from `SegmentedBodySensored`)
 
 **Purpose**: Morphology, segments, and sensor placement
 
@@ -136,9 +136,9 @@ See {doc}`brain_module_architecture` for details.
 
 **Components**:
 
-- **Sensors**: Olfactor, Toucher, Windsensor, Thermo
+- **Sensors**: `Olfactor`, `Toucher`, `Windsensor`, `Thermosensor`
 - **Modalities**: Sensory processing channels
-- **Memory** (optional): RL or MB learning
+- **Memory** (optional): `RLmemory` or `RemoteBrianModelMemory` (MB remote Brian2)
 
 ---
 
@@ -152,7 +152,7 @@ See {doc}`brain_module_architecture` for details.
 - **Turner**: Reorientation maneuvers
 - **Feeder**: Food intake
 - **Intermitter**: State switching (run/pause)
-- **Interference**: Crawl-turn coupling
+- **Interference**: Crawl-turn coupling (`crawl_bend_interference.Coupling` via `Locomotor.interference`)
 
 ---
 
@@ -181,9 +181,10 @@ See {doc}`brain_module_architecture` for details.
 
 **Options**:
 
-- `physics_model`: Box2D multisegment body
-- `body_spring`: Segment coupling stiffness
-- `body_damping`: Resistance coefficient
+- `lin_mode` / `ang_mode`: Velocity/force/torque modes
+- `body_spring_k`: Segment coupling stiffness
+- `lin_damping` / `ang_damping`: Resistance coefficients
+- `torque_coef` / `lin_vel_coef` / `ang_vel_coef`: Motion scaling coefficients
 
 ---
 

@@ -103,6 +103,8 @@ class ScreenTextFont(NestedConf):
         self.text = text
 
     def flash_text(self, text: str, t: int = 2) -> None:
+        import pygame
+
         self.set_text(text)
         self.end_time = pygame.time.get_ticks() + t * 1000
         self.start_time = pygame.time.get_ticks() + int(0.1 * 1000)

@@ -38,7 +38,7 @@ Exp (Experiment)
 - ``--duration``: Simulation duration (minutes)
 - ``--dt``: Timestep (seconds)
 - ``--Box2D``: Enable Box2D physics
-- ``--show_display``: Show visualization window
+- ``-vis_mode``: Visualization mode (``video`` for real-time display, ``image`` for snapshots)
 
 ----
 
@@ -96,7 +96,7 @@ Common Options
 
 **Visualization**:
 
-- ``--show_display``: Real-time display
+- ``-vis_mode video``: Real-time display
 - ``--video_name``: Export video
 
 **Physics**:
