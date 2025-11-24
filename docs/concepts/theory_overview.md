@@ -305,12 +305,12 @@ For usage examples, see Figure 2a–b in the companion paper and {doc}`../visual
 
 Web-based applications (launched via `larvaworld-app`) provide browser-based inspection and configuration of models, environments and datasets:
 
-| Application                      | Purpose                                         |
-| -------------------------------- | ----------------------------------------------- |
-| **Experiment Viewer**            | Browse and launch preconfigured experiments     |
-| **Larva Model Inspector**        | Inspect and configure larva model architectures |
-| **Module Inspector**             | Explore behavioral module parameters            |
-| **Track Viewer**                 | Visualize stored datasets                       |
+| Application               | Purpose                                         |
+| ------------------------- | ----------------------------------------------- |
+| **Experiment Viewer**     | Browse and launch preconfigured experiments     |
+| **Larva Model Inspector** | Inspect and configure larva model architectures |
+| **Module Inspector**      | Explore behavioral module parameters            |
+| **Track Viewer**          | Visualize stored datasets                       |
 
 These tools are based on the [HoloViz](https://holoviz.org) ecosystem and expose the [param](https://param.holoviz.org)-based configuration of models and environments via dynamic widgets, making exploration and configuration accessible from the browser and Jupyter notebooks.
 

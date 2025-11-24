@@ -127,12 +127,12 @@ For the scientific background, model assumptions and validation results, please 
    "Data"
    tutorials/import_datasets.ipynb
    tutorials/replay.ipynb
-   
+
    "Development"
    tutorials/library_interface.ipynb
    tutorials/custom_module.ipynb
    tutorials/remote_model_interface.ipynb
-   
+
 
 .. toctree::
    :maxdepth: 1

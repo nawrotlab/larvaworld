@@ -17,12 +17,28 @@ concurrency:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
       - uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --all-files
+      - name: Commit formatting changes
+        if: failure()
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          if ! git diff --staged --quiet; then
+            git commit --amend --no-edit
+            git push --force-with-lease
+          fi
 
   # Make sure commit messages follow the conventional commits convention:
   # https://www.conventionalcommits.org

@@ -61,12 +61,12 @@ larvaworld Batch PItest_off -Nsims 10
 
 Interactive web applications built with **Panel** (Holoviz stack) and **Bokeh**:
 
-| Dashboard                        | Purpose                               |
-| -------------------------------- | ------------------------------------- |
-| **Experiment Viewer**            | View experiment results interactively |
-| **Track Viewer**                 | Inspect larva trajectories            |
-| **Larva-model Inspector**        | Explore larva models                  |
-| **Module Inspector**             | Inspect behavioral modules            |
+| Dashboard                 | Purpose                               |
+| ------------------------- | ------------------------------------- |
+| **Experiment Viewer**     | View experiment results interactively |
+| **Track Viewer**          | Inspect larva trajectories            |
+| **Larva-model Inspector** | Explore larva models                  |
+| **Module Inspector**      | Inspect behavioral modules            |
 
 Launch with:
 
