@@ -30,14 +30,15 @@ jobs:
         with:
           extra_args: --all-files
       - name: Commit formatting changes
-        if: failure()
+        if: failure() && github.event_name != 'pull_request'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add -A
           if ! git diff --staged --quiet; then
+            BRANCH=$(git rev-parse --abbrev-ref HEAD)
             git commit --amend --no-edit
-            git push --force-with-lease
+            git push --force-with-lease origin $BRANCH
           fi
 
   # Make sure commit messages follow the conventional commits convention:
