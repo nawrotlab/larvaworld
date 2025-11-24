@@ -13,7 +13,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-pytestmark = [pytest.mark.integration, pytest.mark.slow]
+pytestmark = [pytest.mark.integration, pytest.mark.heavy]
 
 # Prefer repository "src" layout paths; keep legacy relative as backup
 RAW_ROOTS = [

@@ -6,7 +6,7 @@ import pytest
 import larvaworld
 from larvaworld.lib import reg
 
-pytestmark = [pytest.mark.integration, pytest.mark.slow]
+pytestmark = [pytest.mark.integration, pytest.mark.heavy]
 
 
 def xx_test_plots():

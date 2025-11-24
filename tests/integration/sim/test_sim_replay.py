@@ -3,7 +3,7 @@ import pytest
 import larvaworld
 from larvaworld.lib import reg, sim, util
 
-pytestmark = [pytest.mark.integration, pytest.mark.slow]
+pytestmark = [pytest.mark.integration, pytest.mark.heavy]
 
 larvaworld.VERBOSE = 1
 

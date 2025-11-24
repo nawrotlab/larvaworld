@@ -2,7 +2,7 @@ import pytest
 
 from larvaworld.lib import reg, sim
 
-pytestmark = [pytest.mark.integration, pytest.mark.slow]
+pytestmark = [pytest.mark.integration, pytest.mark.heavy]
 
 
 def test_genetic_algorithm_no_video():

@@ -362,13 +362,13 @@ From the project root, with the Poetry environment active:
 poetry run pytest
 ```
 
-Depending on the local environment and installed extras, some test groups may require optional dependencies or external data. Pytest markers are used to distinguish between different classes of tests (e.g. slower tests, tests requiring network access or tests depending on optional libraries). The current marker configuration is documented in `pyproject.toml`.
+Depending on the local environment and installed extras, some test groups may require optional dependencies or external data. Pytest markers are used to distinguish between different classes of tests (e.g. heavier tests, tests requiring network access or tests depending on optional libraries). The current marker configuration is documented in `pyproject.toml`.
 
 Typical usage patterns include:
 
 ```shell
 # Example: run only quick tests (marker configuration-dependent)
-poetry run pytest -m "not slow"
+poetry run pytest -m "not heavy"
 
 # Example: run tests in a specific module
 poetry run pytest tests/integration/process/test_import_aux.py

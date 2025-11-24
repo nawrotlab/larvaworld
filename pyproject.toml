@@ -148,7 +148,6 @@ lint.isort.known-first-party = [ "larvaworld", "tests" ]
 addopts = """\
     -v
     -Wdefault
-    --slow
     -n auto
     --cov=larvaworld
     --cov-report=xml
@@ -156,7 +155,7 @@ addopts = """\
 pythonpath = [ "src" ]
 markers = [
     "fast: Fast unit/logic tests without heavy simulations or plotting.",
-    "slow: Heavier tests (simulations, GA runs, legacy plotting).",
+    "heavy: Heavier tests (simulations, GA runs, legacy plotting).",
     "integration: Tests that exercise real Larvaworld subsystems (registry, pipelines, simulations).",
     "optional_dep: Tests that rely on optional third-party dependencies (e.g. Box2D).",
     "legacy: Legacy Larvaworld test suite (pre-refactor).",
