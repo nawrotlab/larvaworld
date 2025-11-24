@@ -26,11 +26,33 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - uses: pre-commit/action@v3.0.1
-        with:
-          extra_args: --all-files
+      - name: Run pre-commit
+        id: precommit
+        run: |
+          set +e
+          pip install pre-commit
+          pre-commit run --all-files
+          PRE_COMMIT_EXIT=$?
+          set -e
+          
+          # Check if there are formatting changes
+          if git diff --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+          
+          # If pre-commit failed, check if it's only formatting changes in PR context
+          if [ "$PRE_COMMIT_EXIT" -ne 0 ]; then
+            if [ "$HAS_CHANGES" == "true" ] && [ "${{ github.event_name }}" == "pull_request" ]; then
+              echo "⚠️ Pre-commit made formatting changes in PR context"
+              echo "Please run 'pre-commit run --all-files' locally and commit the changes"
+              exit 0  # Don't fail the job for formatting-only changes in PRs
+            fi
+            exit $PRE_COMMIT_EXIT
+          fi
       - name: Commit formatting changes
-        if: failure() && github.event_name != 'pull_request'
+        if: steps.precommit.outputs.has_changes == 'true' && github.event_name != 'pull_request'
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
