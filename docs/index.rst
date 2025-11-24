@@ -111,7 +111,6 @@ For the scientific background, model assumptions and validation results, please 
 .. toctree::
    :maxdepth: 2
    :caption: Tutorials
-   :hidden:
 
    "Configuration"
    tutorials/CONFTYPES.ipynb
@@ -133,20 +132,15 @@ For the scientific background, model assumptions and validation results, please 
    tutorials/custom_module.ipynb
    tutorials/remote_model_interface.ipynb
 
-
 .. toctree::
    :maxdepth: 1
-   :caption: API reference
-   :hidden:
-
-   api/api_overview
-   autoapi/larvaworld/index
-
-.. toctree::
-   :maxdepth: 1
+   :caption: Reference
 
    concepts/code_structure
    contributing
+   API Reference <autoapi/larvaworld/index>
+
+
 
 .. include:: CITATION.rst
 

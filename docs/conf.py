@@ -54,7 +54,7 @@ exclude_patterns = [
 # Options for HTML output
 html_theme = "furo"
 html_static_path = ["_static"]
-html_css_files = ["custom.css"]
+# html_css_files = ["custom.css"]  # Disabled to use default Furo theme styling
 
 # AutoAPI configuration
 autoapi_dirs = ["../src/larvaworld"]
