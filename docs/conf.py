@@ -15,7 +15,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "autoapi.extension",
     "sphinxcontrib.mermaid",  # Mermaid diagrams
-    "nbsphinx",  # Jupyter notebook support
+    "myst_nb",  # Jupyter notebook support
 ]
 
 # MyST Parser configuration
@@ -29,6 +29,9 @@ myst_enable_extensions = [
 mermaid_output_format = "raw"
 mermaid_version = "10.6.1"  # Latest stable
 
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = "friendly"
+
 # The suffix of source filenames.
 source_suffix = [
     ".rst",
@@ -36,12 +39,11 @@ source_suffix = [
     ".ipynb",  # Jupyter notebooks
 ]
 
-# nbsphinx configuration
-nbsphinx_execute = "never"  # Don't execute notebooks, just render them
-nbsphinx_timeout = 60  # Timeout in seconds (not used when execute=never)
-nbsphinx_allow_errors = True  # Continue even if there are errors
-# Use first H1 or H2 header as title for notebooks
-nbsphinx_requirejs_path = ""
+# MyST-NB configuration
+nb_execution_mode = "off"  # Don't execute notebooks, just render them
+nb_execution_timeout = 60  # Timeout in seconds (not used when mode=off)
+nb_execution_allow_errors = True  # Continue even if there are errors
+myst_footnote_transition = False
 templates_path = [
     "_templates",
 ]
