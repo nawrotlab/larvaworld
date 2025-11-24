@@ -58,7 +58,7 @@ For sensor configuration, see {doc}`../agents_environments/brain_module_architec
 
 ### Behavioral Architecture
 
-Behavioral control is organized in **three layers**, following the subsumption behavioral control paradigm. The behavioral architecture is introduced in ([Sakagiannis et al., 2025](https://doi.org/10.7554/eLife.104262.1))
+Behavioral control is organized in **three layers**, following the subsumption behavioral control paradigm used in behavior-based neurorobotics. The behavioral architecture is introduced in ([Sakagiannis et al., 2025](https://doi.org/10.7554/eLife.104262.1))
 
 #### 1. Locomotory layer
 
@@ -86,18 +86,19 @@ Each layer follows the **subsumption** principle: top-down modulation from highe
 
 Each control layer is composed of interconnected **modules**, specialized for processing specific sensory inputs, generating motor outputs or performing modulatory sensorimotor integration. This toolkit-like, modular design:
 
-- offers a high degree of **configurability**, enabling researchers to compare models by adding, removing or replacing modules {cite}`Sun2020`,
+- offers a high degree of **configurability**, enabling researchers to compare models by adding, removing or replacing modules
 - facilitates **expansion** through the seamless integration of new modules, and
 - imposes minimal constraints on the modeling detail within individual modules.
 
 Modules can be:
 
 - deterministic or stochastic,
-- rule-based, rate-coded neural models, or neuron-level spiking models (Nengo, Brian2),
+- rule-based, equation-based,
+- rate-coded neural, or neuron-level spiking models (Nengo, Brian2),
 
 as long as they conform to standardized **input–output interfaces**.
 
-This **hybrid** nature allows neuropile-specific models that lack motor components to be embedded within Larvaworld's behavioral output framework, and enables direct comparison of competing hypotheses for the same function (e.g. different chemotaxis strategies).
+This **hybrid** nature allows neuropile-specific models that lack motor components to be embedded within Larvaworld's behavioral output framework, and enables direct comparison of competing hypotheses for the same behavioral domain (e.g. different chemotaxis strategies).
 
 For architectural diagrams and runtime interactions, see {doc}`module_interaction` and {doc}`../agents_environments/brain_module_architecture`.
 
@@ -120,16 +121,16 @@ For configuration examples, see the tutorials on {doc}`../working_with_larvaworl
 
 ### Age, life history and energetics
 
-Each group can be associated with a **life history**: the DEB model is run forward to a chosen age on a defined rearing substrate, including possible starvation or partial deprivation periods. The resulting energetic state (energy reserve density, structural volume, maturity, etc.) is used as the **initial condition** when the behavioral simulation starts.
+Each simulated larva group can be associated with a **life history**: the DEB model is run forward to a chosen age on a defined rearing substrate, including possible starvation or partial deprivation periods. The resulting energetic state (energy reserve density, structural volume, maturity, etc.) is used as the **initial condition** of the metabolic model when the behavioral simulation starts.
 
-This decouples the **rearing phase** (typically days to weeks) from the **behavioral assay phase** (typically minutes to hours) and allows systematic exploration of how developmental and nutritional history shapes behavior.
+This decouples the **rearing phase** (typically 3 days for third-instar larvae) from the **behavioral assay phase** (typically minutes to hours) and allows systematic exploration of how developmental and nutritional history shapes behavior.
 
 ### Individuality and parameter sampling
 
-Groups can be linked to **reference datasets** from which parameters are sampled. The sampling mode controls individuality and variability, with options to:
+Groups can be linked to real experimental **reference datasets** from which parameters are sampled. The sampling mode controls individuality and variability, with options to:
 
 - optimize for an **"average"** individual (mean or median parameter values),
-- preserve **inter-individual variability** by sampling from empirical distributions, or
+- preserve **inter-individual variability** by sampling sets of parameters from empirical distributions, or
 - replicate the reference dataset on an **individual-by-individual basis** for selected parameters (e.g. match each simulated larva's crawling frequency to a specific tracked larva).
 
 This supports controlled experiments on individuality and variability, as detailed in the Results section of the companion paper.
@@ -142,9 +143,9 @@ The **Environment** block includes the arena, sensory landscapes and sources/obs
 
 ### Arena
 
-The simulation environment is a 2D arena with configurable geometry (e.g. circular Petri dishes, rectangular arenas, or custom shapes) and boundaries. This matches typical behavioral setups and provides the spatial scaffold for sources, obstacles and sensory fields.
+The simulation environment is a 2D arena with configurable geometry (e.g. circular Petri dishes, rectangular arenas, or custom shapes) and boundaries. This matches typical behavioral setups and provides the spatial scaffold for sources, obstacles and sensory gradients.
 
-Boundaries can be:
+Arena boundaries can be:
 
 - **impassable** (larvae cannot cross),
 - **torus-wrapped** (larvae that leave one edge reappear at the opposite edge), or
@@ -156,15 +157,18 @@ For arena configuration, see {doc}`../agents_environments/arenas_and_substrates`
 
 Sensory landscapes consist of:
 
-- **Odorscapes** generated by odor sources (Gaussian plumes, gradients, or uniform fields),
+- **Odorscapes** generated by odor sources (simple Gaussian gradients or plumes generated via a diffusion-algorithm),
 - **Thermoscapes** representing temperature gradients, and
-- **Windscapes** representing airflow and wind direction.
+- **Windscapes** representing airflow (configurable air-puffs) and wind direction.
+
+Using diffusable odorscapes within windy environments creates dynamic real-world conditions as odorants are carried by wind createing plumes.
 
 Users can adjust:
 
 - the **position** and **intensity** of sensory sources,
-- the **spatial distribution** of gradients (e.g. diffusion coefficient, plume width), and
-- the **arena boundaries** and internal obstacles (e.g. walls, compartments).
+- the **spatial distribution** of gradients (e.g. diffusion coefficient, gradient extend),
+- the **arena boundaries**,
+- any internal **obstacles** (e.g. walls, compartments).
 
 Multiple odor sources with different valences can coexist, enabling preference tests, associative learning assays and navigation tasks.
 
@@ -182,17 +186,17 @@ Substrate can be:
 - arranged as one or more **patches**, or
 - stored in a **grid** where each cell holds a consumable amount that depletes over time as larvae feed.
 
-Each substrate is associated with a **DEB absorption efficiency**, determining how feeding rate translates into energy reserve gain. This enables realistic foraging simulations where larvae grow, mature and modulate their behavior based on feeding history.
+Substrate type and quality defines the external food density (or substrate concentration) in the environment, denoted as **X** in DEB. This affects the larva's **energy assimilation** according to a number of DEB parameters like **ingestion efficiency**, determining how feeding rate translates into energy reserve gain. This enables realistic foraging simulations where larvae grow, mature and modulate their behavior based on feeding history.
 
 For substrate definitions and nutritional parameters, see Table 3 in the companion paper and {doc}`../agents_environments/arenas_and_substrates`.
 
 ## Setup and Agent-Based Simulation
 
-The **Setup** and **Agent-based simulation** blocks in Figure 1 describe how larva models, larva groups and environments are combined into a concrete virtual experiment and how the simulation is executed.
+The **Setup** and **Agent-based simulation** blocks in the Figure describe how larva models, larva groups and environments are combined into a concrete virtual experiment and how the simulation is executed.
 
 ### Agent-based backbone
 
-Larvaworld uses an **agent-based modeling (ABM)** approach built on the [agentpy](https://agentpy.readthedocs.io) library {cite}`foramitti_agentpy_2021`. Core `Model`, `Space` and `Object` classes are adapted to support nested-dictionary parameterization and modular biological agents.
+Larvaworld uses an **agent-based modeling (ABM)** approach built on the [agentpy](https://agentpy.readthedocs.io) library. Core `Model`, `Space` and `Object` classes are adapted to support nested-dictionary parameterization and modular biological agents.
 
 ABM provides:
 
@@ -215,15 +219,13 @@ Larvaworld supports **nested timescales**:
 
 - **Fast neural or synaptic processes** (e.g. a spiking MB) at sub-millisecond resolution (e.g. 0.1 ms),
 - **Behavioral control** at sub-second resolution (default 0.1 s), and
-- **Energetics** at circadian scale (e.g. 1 simulation step = 1 minute real time for DEB).
+- **Energetics** simulated as a background DEB metabolic model running at longer, even circadian, timestep.
 
-These processes run in parallel, allowing slow developmental and energetic constraints to regulate fast sensorimotor behavior. This multi-timescale approach is depicted in the "Timescales" panel of Figure 1.
-
-For simulation modes and configuration, see {doc}`simulation_modes` and {doc}`experiment_configuration_pipeline`.
+These processes run in parallel, allowing slow developmental and energetic constraints to regulate fast sensorimotor behavior. This multi-timescale approach is depicted in the "Timescales" panel of the paper.
 
 ## Larva Datasets and Data Collection
 
-The **Larva Datasets** block in Figure 1 covers how data are collected during simulations and how experimental locomotion data are integrated into the same standardized format.
+The **Larva Datasets** block in the Figure covers how data are collected during simulations and how experimental locomotion data are integrated into the same standardized format.
 
 ### Standardized dataset structure
 
@@ -241,7 +243,7 @@ Both simulated and experimental data are stored as `LarvaDataset` instances, wit
 3. **Metadata**
    A nested dictionary describing experimental conditions, tracking settings, animal groups and storage paths.
 
-DataFrames are stored in **HDF5 files** under different keys (e.g. `midline`, `contour`, `trajectory`), and metadata are stored in accompanying configuration files. Datasets can optionally be **registered as reference datasets** under a unique ID for reuse in optimization, evaluation and batch runs.
+DataFrames are stored in **HDF5 files** under different keys (e.g. `midline`, `contour`, `trajectory`), and metadata are stored in an accompanying configuration file. Datasets can optionally be **registered as reference datasets** under a unique ID for reuse in optimization, evaluation and batch runs.
 
 For storage and retrieval workflows, see {doc}`../data_pipeline/data_processing`.
 
@@ -249,12 +251,12 @@ For storage and retrieval workflows, see {doc}`../data_pipeline/data_processing`
 
 Larvaworld imports tracked datasets from several lab-specific formats, including:
 
-- **Schleyer lab** (FIM tracker, 12-point midline) {cite}`Dataset_Schleyer`,
-- **Jovanic lab** (custom tracker) {cite}`Dataset_Jovanic`,
-- **Berni lab** (high frame rate, multi-contour) {cite}`Dataset_Berni`,
-- **Arguello lab** (preference assays) {cite}`Dataset_Arguello`.
+- **Schleyer lab** (12-point midline, constant framerate),
+- **Jovanic lab** (11-point midline, variable framerate),
+- **Berni lab** (single-point, low frame rate, suitable for light-weight long recordings),
+- **Arguello lab** (FIM tracker, configurable spatiotemporal resolution).
 
-Each format has its own frame rate and midline/contour resolution. **Conversion functions** map these formats into the standardized `LarvaDataset` structure.
+Each format has its own framerate and midline/contour resolution. **Conversion functions** map these formats into the standardized `LarvaDataset` structure.
 
 **Only primary coordinates are imported**; all secondary metrics (angular velocity, path length, bout annotations, etc.) are computed within Larvaworld to ensure transparent, reproducible comparisons across datasets.
 
@@ -262,7 +264,7 @@ For import workflows and supported formats, see {doc}`../data_pipeline/lab_forma
 
 ## Visualization and Experiment Replay
 
-The **Visualization** block in Figure 1 comprises interactive display, media generation and experiment replay, enabling real-time inspection and post-hoc visualization of both simulated and experimental datasets.
+The **Visualization** block in the Figure comprises interactive display, media generation and experiment replay, enabling real-time inspection and post-hoc visualization of both simulated and experimental datasets.
 
 ### Real-time rendering with Pygame
 
@@ -271,7 +273,7 @@ Larvaworld uses the [pygame](https://www.pygame.org) library for real-time 2D vi
 - Larvae and arena objects (odor/food sources, borders) are rendered with **spatial scale** and **timer**.
 - **Midline** and **contour** can be toggled.
 - **Trajectories** can be displayed with adjustable history length.
-- **IDs**, head/centroid markers and scale bar can be shown or hidden.
+- **IDs**, **head/centroid** markers and **scale bar** can be shown or hidden.
 - Larvae can be colored by ID, randomly, or according to **behavioral/kinematic quantities** (e.g. angular velocity, feeding state).
 - **Odorscapes** can be rendered as heatmaps overlaid on the arena.
 
@@ -306,11 +308,9 @@ Web-based applications (launched via `larvaworld-app`) provide browser-based ins
 | Application                      | Purpose                                         |
 | -------------------------------- | ----------------------------------------------- |
 | **Experiment Viewer**            | Browse and launch preconfigured experiments     |
-| **Larva Models**                 | Inspect and configure larva model architectures |
-| **Locomotory Modules**           | Explore behavioral module parameters            |
+| **Larva Model Inspector**        | Inspect and configure larva model architectures |
+| **Module Inspector**             | Explore behavioral module parameters            |
 | **Track Viewer**                 | Visualize stored datasets                       |
-| **Neural Oscillator Inspector**  | Visualize neural oscillator dynamics            |
-| **Lateral Oscillator Inspector** | Examine lateral bending oscillator              |
 
 These tools are based on the [HoloViz](https://holoviz.org) ecosystem and expose the [param](https://param.holoviz.org)-based configuration of models and environments via dynamic widgets, making exploration and configuration accessible from the browser and Jupyter notebooks.
 
@@ -318,7 +318,7 @@ For web app details, see {doc}`../visualization/web_applications` and Table 5 in
 
 ## Analysis and Model Evaluation
 
-The **Analysis** block in Figure 1 includes data processing, plotting and model evaluation, closing the loop from raw simulation/tracking output to quantitative behavioral metrics and comparative statistics.
+The **Analysis** block in the Figure includes data processing, plotting and model evaluation, closing the loop from raw simulation/tracking output to quantitative behavioral metrics and comparative statistics.
 
 ### Data processing
 
@@ -365,20 +365,20 @@ For plotting API details, see {doc}`../visualization/plotting_api`.
 
 ### Model evaluation
 
-**Model evaluation** uses the same metrics to compare simulated groups and experimental reference datasets. Larvaworld exposes a **panel of kinematic and behavioral metrics** rather than collapsing everything into a single score, making it explicit which aspects of the behavior are captured well by a given model and which are not.
+**Model evaluation** uses the same metrics to compare different larva-model, simulated as different larva-groups, and optionally compared to experimental reference datasets. Larvaworld exposes a **panel of kinematic and behavioral metrics** rather than collapsing everything into a single score, making it explicit which aspects of the behavior are captured well by a given model and which are not.
 
 Evaluation typically involves:
 
 - loading a **reference dataset** (experimental or simulated),
 - running simulations with one or more **candidate models**,
 - computing **endpoint metrics** and **time-series derived measures** for both reference and simulated datasets, and
-- calculating **distances** between their distributions (e.g. Kolmogorov–Smirnov distances, Wasserstein distances).
+- calculating **error distances** between their distributions (e.g. Kolmogorov–Smirnov distances).
 
 For evaluation workflows, see {doc}`../working_with_larvaworld/model_evaluation` and the "Model evaluation" section in the companion paper.
 
 ## Genetic Algorithm Optimization
 
-The **Genetic Algorithm Optimization** block in Figure 1 closes the loop by tuning models before evaluation, ensuring that model comparisons reflect genuine differences in structure and assumptions rather than arbitrary parameter choices.
+The **Genetic Algorithm Optimization** block in the Figure closes the loop by tuning models before evaluation, ensuring that model comparisons reflect genuine differences in structure and assumptions rather than arbitrary parameter choices.
 
 ### GA configuration
 
@@ -388,7 +388,7 @@ GA optimization takes three main groups of settings:
 
 - **Population size** (number of agents per generation),
 - **Number of generations**,
-- **Selection rules** (e.g. top-k, roulette wheel, tournament),
+- **Selection rules**,
 - **Mutation rules** (e.g. Gaussian perturbation, uniform resampling), and
 - **Termination conditions** (e.g. maximum generations, fitness threshold).
 
@@ -427,4 +427,4 @@ For architectural deep-dives, see:
 - {doc}`module_interaction` – Runtime module interactions
 - {doc}`simulation_modes` – Detailed simulation mode comparison
 
-For scientific applications and case studies, see the **Results** section of the [companion paper](https://doi.org/10.1371/journal.pcbi.XXXXXXX).
+For scientific applications and case studies, see the **Results** section of the [companion paper](https://doi.org/10.1101/2025.06.15.659765).

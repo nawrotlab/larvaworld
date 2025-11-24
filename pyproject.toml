@@ -77,13 +77,19 @@ pytest-cov = "^5.0.0"
 pytest-xdist = "^3.5.0"  # Parallel test execution
 
 [tool.poetry.group.nengo]
-optional = false
+optional = true
 
 [tool.poetry.group.nengo.dependencies]
 nengo = "4.0"
 
+[tool.poetry.group.brian2]
+optional = true
+
+[tool.poetry.group.brian2.dependencies]
+brian2 = "2.*"
+
 [tool.poetry.group.box2d]
-optional = false
+optional = true
 
 [tool.poetry.group.box2d.dependencies]
 box2d-py = "2.3.8"

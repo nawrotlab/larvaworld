@@ -110,23 +110,29 @@ For the scientific background, model assumptions and validation results, please 
 
 .. toctree::
    :maxdepth: 2
-   :caption: Step-by-step workflows
+   :caption: Tutorials
    :hidden:
 
-   tutorials/index.md
-   Theoretical Background <tutorials/theoretical_background.ipynb>
-   Single Simulation <tutorials/single_simulation.ipynb>
-   CLI Interface <tutorials/cli.ipynb>
-   Environment Configuration <tutorials/environment_configuration.ipynb>
-   Import Datasets <tutorials/import_datasets.ipynb>
-   Dataset Replay <tutorials/replay.ipynb>
-   Model Evaluation <tutorials/model_evaluation.ipynb>
-   Genetic Algorithm Optimization <tutorials/genetic_algorithm_optimization.ipynb>
-   Library Interface <tutorials/library_interface.ipynb>
-   Custom Module <tutorials/custom_module.ipynb>
-   Sensorscapes <tutorials/sensorscapes.ipynb>
-   Remote Model Interface <tutorials/remote_model_interface.ipynb>
-   Configuration Types <tutorials/CONFTYPES.ipynb>
+   "Configuration"
+   tutorials/CONFTYPES.ipynb
+   tutorials/environment_configuration.ipynb
+   tutorials/sensorscapes.ipynb
+
+   "Simulation"
+   tutorials/cli.ipynb
+   tutorials/single_simulation.ipynb
+   tutorials/model_evaluation.ipynb
+   tutorials/genetic_algorithm_optimization.ipynb
+
+   "Data"
+   tutorials/import_datasets.ipynb
+   tutorials/replay.ipynb
+   
+   "Development"
+   tutorials/library_interface.ipynb
+   tutorials/custom_module.ipynb
+   tutorials/remote_model_interface.ipynb
+   
 
 .. toctree::
    :maxdepth: 1
@@ -138,16 +144,9 @@ For the scientific background, model assumptions and validation results, please 
 
 .. toctree::
    :maxdepth: 1
-   :caption: Project information
-   :hidden:
 
-   citation
    concepts/code_structure
-   changelog
    contributing
-
-
-
 
 .. include:: CITATION.rst
 
