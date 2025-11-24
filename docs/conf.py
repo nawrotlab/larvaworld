@@ -11,11 +11,10 @@ release = "1.0.0"
 
 # General configuration
 extensions = [
-    "myst_parser",
     "sphinx.ext.autodoc",
     "autoapi.extension",
     "sphinxcontrib.mermaid",  # Mermaid diagrams
-    "myst_nb",  # Jupyter notebook support
+    "myst_nb",  # Jupyter notebook support (includes myst_parser)
 ]
 
 # MyST Parser configuration
