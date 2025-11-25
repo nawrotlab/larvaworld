@@ -412,6 +412,7 @@ class SimModeParser(ArgumentParser):
             }
         )
         from .. import __version__
+
         super().__init__(
             prog="larvaworld",
             description="CLI for running larvaworld simulations",
@@ -467,6 +468,7 @@ class SimModeParser(ArgumentParser):
                 type=int,
                 help="The number of simulated larvae in each larva group",
             )
+        if m == "Batch":
             sp.add_argument(
                 "-mIDs",
                 "--modelIDs",
@@ -541,15 +543,27 @@ class SimModeParser(ArgumentParser):
         if m == "Batch":
             kw.mode = "batch"
             kw.experiment = args.experiment
-            kw.conf = reg.conf.Batch.getID(args.experiment)
-            kw.conf.N = args.Nagents
-            kw.conf.modelIDs = args.modelIDs
-            kw.conf.groupIDs = args.groupIDs
-            run = sim.BatchRun(**kw)
+            conf = reg.conf.Batch.getID(args.experiment)
+            Nagents = getattr(args, "Nagents", None)
+            modelIDs = getattr(args, "modelIDs", None)
+            groupIDs = getattr(args, "groupIDs", None)
+            if Nagents is not None:
+                conf.N = args.Nagents
+            if modelIDs is not None:
+                conf.modelIDs = modelIDs
+            if groupIDs is not None:
+                conf.groupIDs = groupIDs
+            run = sim.BatchRun(**kw, **conf)
         elif m == "Exp":
             kw.N = args.Nagents
-            kw.modelIDs = args.modelIDs
-            kw.groupIDs = args.modelIDs
+            modelIDs = getattr(args, "modelIDs", None)
+            groupIDs = getattr(args, "groupIDs", None)
+            if groupIDs is None and modelIDs is not None:
+                groupIDs = modelIDs
+            if modelIDs is not None:
+                kw.modelIDs = modelIDs
+            if groupIDs is not None:
+                kw.groupIDs = groupIDs
             run = sim.ExpRun(**kw)
         elif m == "Ga":
             p = reg.conf.Ga.expand(kw.experiment)

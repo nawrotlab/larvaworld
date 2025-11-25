@@ -123,7 +123,7 @@ dataset = exp.datasets[0]
 - **Agents**: Multiple agent configurations
 - **Parameters**: Varied across runs (e.g., `N=[10, 20, 30]`)
 - **Parallelization**: Uses `agentpy.Experiment` for parallel execution
-- **Iterations**: `Nsims` repetitions per parameter combination
+- **Iterations**: `N` repetitions per parameter combination
 - **Sampling**: Parameter combinations via `sample_space`
 
 **Outputs**:
@@ -142,7 +142,7 @@ dataset = exp.datasets[0]
 
 > **Note**: `BatchRun` is an advanced feature that relies on preconfigured Batch entries in the registry (`reg.conf.Batch`). CLI and configuration options may evolve; for most users, starting with `Exp` and `Eval` modes is recommended before moving to Batch-based parameter sweeps.
 
-**CLI**: `larvaworld Batch PItest_off -Nsims 10`
+**CLI**: `larvaworld Batch PItest_off -N 10`
 
 **Code**:
 
@@ -247,7 +247,7 @@ best_conf = results["explorer"]  # Optimized model configuration
 - Behavioral fingerprinting
 - Hypothesis testing
 
-**CLI**: `larvaworld Eval -refID exploration.30controls -mIDs explorer navigator`
+**CLI**: `larvaworld Eval -refID exploration.30controls --modelIDs explorer navigator`
 
 **Code**:
 
@@ -323,7 +323,7 @@ replay.run()  # No simulation, just visualization
 
 | Feature                 | Exp         | Batch           | Ga                     | Eval            | Replay             |
 | ----------------------- | ----------- | --------------- | ---------------------- | --------------- | ------------------ |
-| **# Simulations**       | 1           | N × M × Nsims   | Ngenerations × Nagents | Nmodels × Nruns | 0 (replay only)    |
+| **# Simulations**       | 1           | N × M × N       | Ngenerations × Nagents | Nmodels × Nruns | 0 (replay only)    |
 | **Parameter Variation** | Fixed       | Sweep           | Evolving               | Fixed per model | N/A                |
 | **Parallel Execution**  | No          | Yes             | Yes                    | Yes             | N/A                |
 | **Optimization**        | No          | No              | Yes                    | No              | No                 |

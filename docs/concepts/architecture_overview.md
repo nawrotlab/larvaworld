@@ -41,8 +41,8 @@ The CLI provides direct access to all simulation modes through an `argparse`-bas
 
 ```bash
 larvaworld Exp dish -N 5 -duration 3.0
-larvaworld Eval -refID exploration.30controls -mIDs explorer navigator
-larvaworld Batch PItest_off -Nsims 10
+larvaworld Eval -refID exploration.30controls --modelIDs explorer navigator
+larvaworld Batch PItest_off -N 10
 ```
 
 **Key Components**:

@@ -62,14 +62,29 @@ class BaseRun(ABModel):
         Proceeds the simulation by one step, incrementing `Model.t` by 1
         and then calling :func:`Model.step` and :func:`Model.update`.
         """
-        if not self.is_paused:
-            self.step_env()
-            self.step()
-            self.screen_manager.step()
-            self.update()
-            self.t += 1
-            if self.t >= self._steps or self.end_condition_met:
-                self.running = False
+        # If the screen was closed by the user, stop immediately.
+        if getattr(self.screen_manager, "closed", False):
+            self.running = False
+            return
+
+        if self.is_paused:
+            # Still process user input while paused so shortcuts (e.g., space) work.
+            if self.screen_manager.show_display:
+                self.screen_manager.evaluate_input()
+                # Render once so the pause/unpause message is visible.
+                try:
+                    self.screen_manager.render()
+                except Exception:
+                    pass
+            return
+
+        self.step_env()
+        self.step()
+        self.screen_manager.step()
+        self.update()
+        self.t += 1
+        if self.t >= self._steps or self.end_condition_met:
+            self.running = False
 
     def step_env(self) -> None:
         for id, layer in self.odor_layers.items():

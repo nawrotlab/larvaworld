@@ -155,16 +155,16 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
         # Local import to avoid sim/__init__ indirection and potential cycles
         from .single_run import ExpRun  # type: ignore
 
+        reg.generators.SimConfiguration.__init__(
+            self, runtype="Batch", experiment=experiment, id=id, store_data=store_data
+        )
+
         ap.Experiment.__init__(
             self,
             model_class=ExpRun,
             sample=space_search_sample(space_search, **space_kws),
             store_data=False,
             **kwargs,
-        )
-
-        reg.generators.SimConfiguration.__init__(
-            self, runtype="Batch", experiment=experiment, id=id, store_data=store_data
         )
         self.df_path = f"{self.dir}/results.h5"
         self.exp_conf = reg.conf.Exp.expand(exp) if isinstance(exp, str) else exp

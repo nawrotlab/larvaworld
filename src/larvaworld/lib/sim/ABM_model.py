@@ -329,6 +329,10 @@ class BasicABModel:
         while self.running:
             self.sim_step()
             vprint(f"\rCompleted: {self.t} steps", 0)
+        if getattr(self, "aborted", False):
+            vprint("Simulation aborted by user", 1)
+            return self.output
+
         self.end()
         self.create_output()
 

@@ -37,7 +37,7 @@ __all__: list[str] = [
     "CONFTYPES",
 ]
 
-VERBOSE: int = 2
+VERBOSE: int = 2  #: Global verbosity level for vprint function.
 
 
 def vprint(text: str = "", verbose: int = 0) -> None:
@@ -54,31 +54,21 @@ def vprint(text: str = "", verbose: int = 0) -> None:
         print(text)
 
 
-# Root directory of the larvaworld package.
-ROOT_DIR: str = os.path.dirname(os.path.abspath(__file__))
-
-# Relative path to the data directory (data/ relative to package root).
-DATA_DIR: str = f"{ROOT_DIR}/data"
-
-# Relative path to the simulation data directory (data/SimGroup/ relative to package root).
-SIM_DIR: str = f"{DATA_DIR}/SimGroup"
-
-# Relative path to the batch runs directory (data/SimGroup/batch_runs/ relative to package root).
-BATCH_DIR: str = f"{SIM_DIR}/batch_runs"
-
-# Relative path to the configuration dictionaries directory (lib/reg/confDicts/ relative to package root).
-CONF_DIR: str = f"{ROOT_DIR}/lib/reg/confDicts"
-
-# Relative path to the tests directory (../../tests relative to package root).
-TEST_DIR: str = f"{ROOT_DIR}/../../tests"
+ROOT_DIR: str = os.path.dirname(os.path.abspath(__file__))  #: Package root directory.
+DATA_DIR: str = f"{ROOT_DIR}/data"  #: Data directory (data/ relative to package root).
+SIM_DIR: str = f"{DATA_DIR}/SimGroup"  #: Simulation data directory.
+BATCH_DIR: str = f"{SIM_DIR}/batch_runs"  #: Batch runs directory.
+CONF_DIR: str = (
+    f"{ROOT_DIR}/lib/reg/confDicts"  #: Configuration dictionaries directory.
+)
+TEST_DIR: str = f"{ROOT_DIR}/../../tests"  #: Tests directory (relative).
 
 os.makedirs(CONF_DIR, exist_ok=True)
 
 
-# List of available simulation types.
 SIMTYPES: list[str] = ["Exp", "Batch", "Ga", "Eval", "Replay"]
+#: List of available simulation types for CLI and API usage.
 
-# List of available configuration types.
 CONFTYPES: list[str] = [
     "Env",
     "LabFormat",
@@ -89,6 +79,7 @@ CONFTYPES: list[str] = [
     "Batch",
     "Ga",
 ]
+#: List of available configuration types in the registry.
 # GROUPTYPES = ['LarvaGroup', 'FoodGroup', 'epoch']
 
 

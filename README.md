@@ -61,7 +61,7 @@ Larvaworld can be installed with `pip` (recommended) or `poetry`. **It is strong
    # Linux/macOS
    python3.10 -m venv larvaworld_env
    source larvaworld_env/bin/activate
-   
+
    # Windows
    python -m venv larvaworld_env
    larvaworld_env\Scripts\activate
@@ -224,7 +224,7 @@ The platform is mainly accessed via the command line interface (CLI) using the `
 The available simulation modes include:
 
 - `Exp` – single experiment,
-- `Batch` – batch runs of an experiment (advanced/experimental feature),
+- `Batch` – batch runs of an experiment (advanced feature, currently under development),
 - `Ga` – genetic algorithm optimization,
 - `Replay` – replay of existing datasets,
 - `Eval` – model evaluation against real data.
@@ -256,7 +256,7 @@ Example: batch odor-preference experiments with different valences of the two od
 larvaworld Batch PItest_off -N 5 -duration 1.0
 ```
 
-> **Note**: Batch runs are primarily intended for advanced parameter sweeps and are mostly exercised via the Python API (`BatchRun`). CLI support is still evolving, so some use cases may require custom configuration or direct Python use.
+> **Note**: Batch runs are currently under active development and may require debugging. This feature is primarily intended for advanced parameter sweeps and is mostly exercised via the Python API (`BatchRun`). CLI support is still evolving, so some use cases may require custom configuration or direct Python use.
 
 ### Genetic Algorithm optimization
 
@@ -293,7 +293,7 @@ Example: evaluate two models against a reference experimental dataset:
 ```shell
 larvaworld Eval \
   -refID exploration.30controls \
-  -modelIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF \
+  --modelIDs RE_NEU_PHI_DEF RE_SIN_PHI_DEF \
   -N 10
 ```
 

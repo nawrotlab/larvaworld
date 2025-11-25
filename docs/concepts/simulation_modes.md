@@ -113,6 +113,10 @@ dataset = exp.datasets[0]
 
 ## 2. Batch Run (Batch)
 
+:::{warning}
+**Status**: Batch mode is currently under active development and may require debugging. Some features may not work as expected. For production use, we recommend using `Exp` mode for single simulations or `Eval` mode for model comparisons.
+:::
+
 ### Purpose
 
 Run **multiple simulations** with parameter variations to explore parameter space.
@@ -120,8 +124,12 @@ Run **multiple simulations** with parameter variations to explore parameter spac
 ### Command-Line Usage
 
 ```bash
-larvaworld Batch PItest_off -Nsims 10
+larvaworld Batch PItest_off -N 10
 ```
+
+:::{note}
+**Configuration Note**: The `space_search` parameter (which defines the parameter space to explore) is extracted from the predefined Batch configuration in `sim_conf.py` and should not be specified in the CLI command. Each Batch experiment ID has its own preconfigured `space_search` that defines which parameters to vary and their ranges.
+:::
 
 ### Python Usage
 
@@ -143,7 +151,7 @@ par_df, figs = batch.simulate(n_jobs=4)
 - **Agents**: Multiple agent configurations
 - **Parameters**: Varied across runs
 - **Parallelization**: Uses `agentpy.Experiment` for multi-core execution
-- **Iterations**: `Nsims` repetitions per parameter combination
+- **Iterations**: `N` repetitions per parameter combination
 - **Duration**: Hours
 
 ### Outputs
@@ -161,7 +169,7 @@ par_df, figs = batch.simulate(n_jobs=4)
 - ✅ Statistical power analysis
 
 :::{note}
-`BatchRun` is an **advanced feature** that relies on preconfigured Batch entries in the registry (`reg.conf.Batch`). For most users, starting with `Exp` and `Eval` modes is recommended before moving to Batch-based parameter sweeps.
+`BatchRun` is an **advanced feature** that relies on preconfigured Batch entries in the registry (`reg.conf.Batch`). This feature is currently under active development and may require debugging. For most users, starting with `Exp` and `Eval` modes is recommended before moving to Batch-based parameter sweeps.
 :::
 
 ---
@@ -175,7 +183,7 @@ par_df, figs = batch.simulate(n_jobs=4)
 ### Command-Line Usage
 
 ```bash
-larvaworld Ga exploration -Ngenerations 50
+larvaworld Ga exploration -Ngenerations 50 -duration 3
 ```
 
 ### Python Usage
@@ -237,7 +245,7 @@ For detailed workflows, see {doc}`../working_with_larvaworld/ga_optimization_adv
 ### Command-Line Usage
 
 ```bash
-larvaworld Eval -refID exploration.30controls -mIDs explorer navigator
+larvaworld Eval -refID exploration.30controls --modelIDs explorer navigator
 ```
 
 ### Python Usage
@@ -344,17 +352,17 @@ For detailed workflows, see {doc}`../working_with_larvaworld/replay`.
 
 ## Comparison Table
 
-| Feature                 | Exp      | Batch         | Ga                     | Eval            | Replay             |
-| ----------------------- | -------- | ------------- | ---------------------- | --------------- | ------------------ |
-| **# Simulations**       | 1        | N × M × Nsims | Ngenerations × Nagents | Nmodels × Nruns | 0 (replay only)    |
-| **Parameter Variation** | Fixed    | Sweep         | Evolving               | Fixed per model | N/A                |
-| **Parallel Execution**  | No       | Yes           | Yes                    | Yes             | N/A                |
-| **Optimization**        | No       | No            | Yes                    | No              | No                 |
-| **Reference Data**      | Optional | Optional      | Required               | Required        | Required           |
-| **Statistical Tests**   | No       | Optional      | Yes (fitness)          | Yes (KS tests)  | No                 |
-| **Video Output**        | Yes      | Optional      | Optional               | Optional        | Yes                |
-| **HDF5 Storage**        | Yes      | Yes           | Yes                    | Yes             | No (uses existing) |
-| **Duration**            | Minutes  | Hours         | Hours-Days             | Hours           | Seconds-Minutes    |
+| Feature                 | Exp      | Batch     | Ga                     | Eval            | Replay             |
+| ----------------------- | -------- | --------- | ---------------------- | --------------- | ------------------ |
+| **# Simulations**       | 1        | N × M × N | Ngenerations × Nagents | Nmodels × Nruns | 0 (replay only)    |
+| **Parameter Variation** | Fixed    | Sweep     | Evolving               | Fixed per model | N/A                |
+| **Parallel Execution**  | No       | Yes       | Yes                    | Yes             | N/A                |
+| **Optimization**        | No       | No        | Yes                    | No              | No                 |
+| **Reference Data**      | Optional | Optional  | Required               | Required        | Required           |
+| **Statistical Tests**   | No       | Optional  | Yes (fitness)          | Yes (KS tests)  | No                 |
+| **Video Output**        | Yes      | Optional  | Optional               | Optional        | Yes                |
+| **HDF5 Storage**        | Yes      | Yes       | Yes                    | Yes             | No (uses existing) |
+| **Duration**            | Minutes  | Hours     | Hours-Days             | Hours           | Seconds-Minutes    |
 
 ---
 

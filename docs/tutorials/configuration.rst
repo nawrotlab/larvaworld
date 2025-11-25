@@ -7,4 +7,3 @@ Configuration
    CONFTYPES.ipynb
    environment_configuration.ipynb
    sensorscapes.ipynb
-
