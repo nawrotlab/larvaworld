@@ -37,18 +37,24 @@ jobs:
           
           # Check if there are formatting changes
           if git diff --quiet; then
+            HAS_CHANGES=false
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
+            HAS_CHANGES=true
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
           
           # If pre-commit failed, check if it's only formatting changes in PR context
           if [ "$PRE_COMMIT_EXIT" -ne 0 ]; then
+            # In PR context, if there are formatting changes, allow it to pass with a warning
+            # (linting errors will still be visible in the pre-commit output above)
             if [ "$HAS_CHANGES" == "true" ] && [ "${{ github.event_name }}" == "pull_request" ]; then
               echo "⚠️ Pre-commit made formatting changes in PR context"
               echo "Please run 'pre-commit run --all-files' locally and commit the changes"
-              exit 0  # Don't fail the job for formatting-only changes in PRs
+              echo "Note: If there are linting errors above, they must be fixed before merging"
+              exit 0  # Don't fail the job for formatting changes in PRs
             fi
+            # No changes or not a PR - fail on any errors
             exit $PRE_COMMIT_EXIT
           fi
       - name: Commit formatting changes
