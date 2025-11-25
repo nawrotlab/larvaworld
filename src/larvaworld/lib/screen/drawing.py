@@ -406,7 +406,6 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
         if self.show_display:
             v = pygame.display.set_mode((self.w + self.panel_width, self.h), flags)
             pygame.display.set_caption(self.caption)
-            pygame.event.set_allowed(pygame.QUIT)
         else:
             v = pygame.Surface(self.display_size, flags)
         return v
@@ -622,6 +621,7 @@ class ScreenManager(ScreenAreaPygame):
         self.vid_writer = None
         self.img_writer = None
         self.initialized = False
+        self.closed = False
 
     def increase_fps(self) -> None:
         if self._fps < 60:
@@ -670,7 +670,14 @@ class ScreenManager(ScreenAreaPygame):
             vprint("Screen closed", 1)
             if user_requested and self.model is not None:
                 self.model.running = False
+                try:
+                    self.model.aborted = True
+                except Exception:
+                    pass
                 vprint("Terminated by the user", 3)
+            self.closed = True
+            self.show_display = False
+            self.initialized = False
         
         # Only quit pygame display if it was initialized
         # This prevents errors when running headless
@@ -718,19 +725,24 @@ class ScreenManager(ScreenAreaPygame):
         """
         Draw the display and evaluate user-input
         """
-        if self.active:
-            self.check(**kwargs)
-            if not self.overlap_mode:
-                self.draw_arena()
+        if not self.active or self.closed:
+            return
 
-            self.draw_agents()
-            if self.show_display:
-                self.evaluate_input()
-                self.evaluate_graphs()
-            if not self.overlap_mode:
-                self._draw_arena(self.tank_color, self.screen_color)
-                self.draw_aux()
-                self._render()
+        self.check(**kwargs)
+        if not self.overlap_mode:
+            self.draw_arena()
+
+        self.draw_agents()
+        if self.show_display:
+            self.evaluate_input()
+            # If display was closed during input handling, abort rendering to avoid surface errors.
+            if self.closed or not pygame.display.get_init():
+                return
+            self.evaluate_graphs()
+        if not self.overlap_mode:
+            self._draw_arena(self.tank_color, self.screen_color)
+            self.draw_aux()
+            self._render()
 
     def _render(self) -> Any:
         if self.show_display:
@@ -1190,6 +1202,8 @@ class ScreenManager(ScreenAreaPygame):
         )
 
         self.side_panel = _side_panel.SidePanel(self) if self.panel_width > 0 else None
+        # Ensure the spatial scale is initialized (visible by default) before first render.
+        self.update_scale()
 
     def capture_snapshot(self) -> None:
         """

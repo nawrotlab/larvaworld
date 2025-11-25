@@ -84,6 +84,8 @@ Quick links to rendered Larvaworld simulations. Click a thumbnail to open the MP
   </div>
 </div>
 
+<div style="height: 24px;"></div>
+
 ### Foraging & growth simulations
 
 <div class="video-grid">
@@ -107,6 +109,8 @@ Quick links to rendered Larvaworld simulations. Click a thumbnail to open the MP
   </div>
 </div>
 
+<div style="height: 24px;"></div>
+
 ### GUI usage videos (deprecated)
 
 <div class="video-grid">
@@ -123,6 +127,8 @@ Quick links to rendered Larvaworld simulations. Click a thumbnail to open the MP
     </a>
   </div>
 </div>
+
+<div style="height: 24px;"></div>
 
 ### Dynamic sensory landscapes (windscape & odorscape)
 

@@ -2,6 +2,8 @@ from __future__ import annotations
 from typing import Any, Optional
 import os
 import time
+import contextlib
+import io
 
 import agentpy
 import numpy as np
@@ -99,18 +101,24 @@ class ExpRun(BaseRun):
         vprint(f"--- Simulation {self.id} initialized!--- ", 2)
         start = time.time()
         self.run(**kwargs)
+        if getattr(self, "aborted", False):
+            self.datasets = []
+            return self.datasets
         self.data_collection = LarvaDatasetCollection.from_agentpy_output(self.output)
         self.datasets = self.data_collection.datasets
         end = time.time()
         dur = np.round(end - start).astype(int)
         vprint(f"--- Simulation {self.id} completed in {dur} seconds!--- ", 2)
+        if getattr(self, "aborted", False):
+            return self.datasets
+
         if self.p.enrichment:
             for d in self.datasets:
                 vprint(f"--- Enriching dataset {d.id} ---", 2)
                 d.enrich(**self.p.enrichment, is_last=False)
                 vprint(f"--- Dataset {d.id} enriched ---", 2)
                 vprint("--------------------------------", 2)
-        if self.store_data:
+        if self.store_data and not getattr(self, "aborted", False):
             self.store()
         return self.datasets
 
@@ -277,9 +285,11 @@ class ExpRun(BaseRun):
         Raises:
             Any exceptions raised during the creation of the directory or saving of datasets are not handled and will propagate.
         """
+        # Save agentpy output silently (suppress stdout from agentpy).
         try:
-            self.output.save(**self.p.agentpy_output_kws)
-        except:
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.output.save(**self.p.agentpy_output_kws)
+        except Exception:
             pass
         os.makedirs(self.data_dir, exist_ok=True)
         for d in self.datasets:
