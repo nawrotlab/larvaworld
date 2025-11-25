@@ -70,14 +70,14 @@ pie title Lines of Code by Module
 
 | Module      | Lines  | Percentage | Purpose                                  |
 | ----------- | ------ | ---------- | ---------------------------------------- |
-| **model**   | 15,243 | 29%        | Agent models (larvae, brains, modules)   |
+| **model**   | 15,243 | 29%        | Modular agents and environments          |
 | **sim**     | 9,872  | 19%        | Simulation engine (Exp, Batch, GA, Eval) |
 | **reg**     | 8,456  | 16%        | Configuration registry and generators    |
 | **process** | 6,789  | 13%        | Data processing and analysis             |
-| **plot**    | 5,123  | 10%        | Plotting and visualization               |
-| **screen**  | 3,891  | 7%         | Real-time rendering (Pygame)             |
+| **plot**    | 5,123  | 10%        | Plotting functions                       |
+| **screen**  | 3,891  | 7%         | Real-time rendering and visualization    |
 | **util**    | 2,567  | 5%         | Utilities and helper functions           |
-| **param**   | 1,510  | 3%         | Parameter definitions and validation     |
+| **param**   | 1,510  | 3%         | Parameter definitions                    |
 
 ---
 
@@ -115,20 +115,19 @@ lib/
 │   │   ├── larva_robot.py   # Larva robot / Braitenberg agent
 │   │   └── _larva_sim.py    # LarvaSim, LarvaMotile
 │   ├── modules/             # Behavioral modules
-│   │   ├── brain.py         # Brain (sensory integration)
-│   │   ├── locomotor.py     # Locomotor (crawl, turn, feed)
+│   │   ├── brain.py         # Brain (sensorimotor integration)
+│   │   ├── locomotor.py     # Locomotion (crawl, turn, feed)
 │   │   ├── memory.py        # Memory and learning
-│   │   ├── energetics.py    # DEB model
-│   │   └── sensors/         # Sensor modules
-│   ├── envs/                # Environment models
-│   │   ├── arena.py         # Arena geometry and boundaries
-│   │   ├── valuegrid.py     # Spatial value / odor / food grids
-│   │   ├── obstacle.py      # Obstacles and borders
-│   │   └── maze.py          # Maze layouts
-│   └── controllers/         # Alternative control schemes
+│   │   ├── energetics.py    # DEB model and life-history
+│   │   └── sensor.py        # Sensor modules
+│   └── envs/                # Environment models
+│       ├── arena.py         # Arena geometry and boundaries
+│       ├── valuegrid.py     # Spatial value / odor / food grids
+│       ├── obstacle.py      # Obstacles and borders
+│       └── maze.py          # Maze layouts
 │
 ├── sim/                     # 9,872 lines
-│   ├── base_run.py          # BaseRun (common base)
+│   ├── base_run.py          # BaseRun (parent simulation class)
 │   ├── single_run.py        # ExpRun (single experiment)
 │   ├── batch_run.py         # BatchRun (parameter sweeps)
 │   ├── model_evaluation.py  # EvalRun (model comparison)
@@ -137,18 +136,18 @@ lib/
 │
 ├── reg/                     # 8,456 lines
 │   ├── stored_confs/        # Preconfigured experiments/models
-│   │   ├── sim_conf.py      # Experiment types
-│   │   ├── data_conf.py     # Reference datasets
-│   │   └── model_conf.py    # Model configurations
+│   │   ├── sim_conf.py      # Simulated experiment types
+│   │   ├── data_conf.py     # Experimental dataset formats
+│   │   └── model_conf.py    # Larva-model configurations
 │   ├── conf.py              # Configuration registry
-│   └── generators.py        # EnvConf, LabFormat, SimConfiguration, ...
+│   └── generators.py        # Configuration classes
 │
 ├── process/                 # 6,789 lines
 │   ├── dataset.py           # LarvaDataset class
-│   ├── evaluation.py        # Model evaluation (KS tests)
+│   ├── evaluation.py        # Comparative analysis (KS tests)
 │   ├── spatial.py           # Spatial metrics
 │   ├── angular.py           # Angular metrics
-│   └── bouts.py             # Bout detection
+│   └── bouts.py             # Bout detection and annotation
 │
 ├── plot/                    # 5,123 lines
 │   ├── traj.py              # Trajectory plots
@@ -160,7 +159,7 @@ lib/
 ├── screen/                  # 3,891 lines
 │   ├── drawing.py           # Core drawing and overlays
 │   ├── rendering.py         # Main Pygame rendering loop
-│   └── side_panel.py        # On-screen HUD / side panel
+│   └── side_panel.py        # On-screen side panel
 │
 ├── util/                    # 2,567 lines
 │   ├── ang.py               # Angular helper functions
@@ -180,7 +179,7 @@ lib/
 
 ### `/model/` - Agent and Environment Models
 
-**Primary Focus**: Biological realism
+**Primary Focus**: Biological modeling
 
 - **Agents**: Larva morphology, sensors, brain, locomotion, energetics
 - **Environments**: Arenas, food sources, odor gradients
@@ -208,11 +207,11 @@ lib/
 
 **Primary Focus**: Configuration management
 
-- **Stored Configs**: 20+ preconfigured experiments, 10+ models, 5+ environments
-- **Generators**: LabFormat for dataset import, EnvConf for arena generation
+- **Stored Configs**: Preconfigured experiments, models, environments
+- **Generators**: Configuration classes for data, models and simulations
 - **Access API**: `reg.conf.Exp.getID()`, `reg.loadRef()`
 
-**Key Classes**: `reg.conf`, `reg.gen`
+**Key Classes**: `ExpConf`, `EnvConf`, `LabFormat`
 
 ---
 
@@ -222,10 +221,10 @@ lib/
 
 - **Dataset Management**: `LarvaDataset` class
 - **Preprocessing**: Filtering, scaling, interpolation
-- **Metrics**: Spatial, angular, tortuosity, dispersal, preference index
+- **Processing**: Spatial, angular, tortuosity, dispersal, preference index
 - **Annotation**: Bout detection (strides, turns, pauses)
 
-**Key Classes**: `LarvaDataset`, `comp_PI`, `eval_fast`
+**Key Classes**: `LarvaDataset`
 
 ---
 
@@ -233,9 +232,9 @@ lib/
 
 **Primary Focus**: Analysis plots
 
-- **Trajectory Plots**: 2D paths, heatmaps
+- **Trajectory Plots**: 2D paths
 - **Time-Series Plots**: Metrics over time
-- **Distributions**: Histograms, KDE plots
+- **Distributions**: Histograms, boxplots, KDE plots
 - **Comparative Plots**: Multi-model/condition comparisons
 
 **Key Modules**: `traj.py`, `time.py`, `hist.py`, `bearing.py`
@@ -249,7 +248,6 @@ lib/
 - **Rendering**: Pygame-based 2D display
 - **Interactivity**: Keyboard/mouse controls
 - **Video Export**: MP4, AVI encoding
-- **Drawing Modes**: Midline, contour, trails, odorscapes
 
 **Key Classes**: `Visualizer`, `Screen`
 

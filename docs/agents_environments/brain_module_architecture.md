@@ -9,10 +9,10 @@ The Brain module integrates sensory input, memory systems, and locomotor control
 ```{mermaid}
 graph TD
     %% Brain implementations
-    subgraph Brain Implementations
-        BrainBase[\"Brain\"<br/>Base class]:::base
-        DefaultBrain[\"DefaultBrain\"<br/>Standard implementation]:::impl
-        NengoBrain[\"NengoBrain\"<br/>Nengo-based implementation]:::impl
+    subgraph Brain_Impl ["Brain Implementations"]
+        BrainBase["Brain"<br/>Base class]:::base
+        DefaultBrain["DefaultBrain"<br/>Standard implementation]:::impl
+        NengoBrain["NengoBrain"<br/>Nengo-based implementation]:::impl
     end
 
     BrainBase --> DefaultBrain
@@ -20,27 +20,27 @@ graph TD
 
     %% Modalities
     subgraph Modalities
-        OlfMod[\"olfaction\"<br/>odor sensing]:::modality
-        TouchMod[\"touch\"<br/>mechanoreception/feeding]:::modality
-        ThermoMod[\"thermosensation\"<br/>temperature]:::modality
-        WindMod[\"windsensation\"<br/>wind/airflow]:::modality
+        OlfMod["olfaction"<br/>odor sensing]:::modality
+        TouchMod["touch"<br/>mechanoreception/feeding]:::modality
+        ThermoMod["thermosensation"<br/>temperature]:::modality
+        WindMod["windsensation"<br/>wind/airflow]:::modality
     end
 
     %% Sensors
-    OlfSensor[\"Olfactor\"<br/>odor sensor]:::sensor
-    TouchSensor[\"Toucher\"<br/>contact/food sensor]:::sensor
-    ThermoSensor[\"Thermo\"<br/>temperature sensor]:::sensor
-    WindSensor[\"Windsensor\"<br/>wind sensor]:::sensor
+    OlfSensor["Olfactor"<br/>odor sensor]:::sensor
+    TouchSensor["Toucher"<br/>contact/food sensor]:::sensor
+    ThermoSensor["Thermo"<br/>temperature sensor]:::sensor
+    WindSensor["Windsensor"<br/>wind sensor]:::sensor
 
     %% Memory modules
-    RLmem[\"RLmemory\"<br/>reinforcement learning]:::memory
-    NullMem[\"No memory\"]:::memory
+    RLmem["RLmemory"<br/>reinforcement learning]:::memory
+    NullMem["No memory"]:::memory
 
     %% Locomotor interface
-    subgraph Locomotor System
-        Locomotor[\"Locomotor\"<br/>crawl/turn/feed]:::locomotor
-        A_in[\"A_in\"<br/>sensory drive]:::signal
-        MotorCmds[\"motor commands\"<br/>crawl/turn/feed rates]:::output
+    subgraph Locomotor_System ["Locomotor System"]
+        Locomotor["Locomotor"<br/>crawl/turn/feed]:::locomotor
+        A_in["A_in"<br/>sensory drive]:::signal
+        MotorCmds["motor commands"<br/>crawl/turn/feed rates]:::output
     end
 
     %% Wiring: Brain -> Modalities

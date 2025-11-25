@@ -2,7 +2,7 @@
 
 # Installation
 
-Larvaworld is published on [PyPI](https://pypi.org/project/larvaworld/) and can be installed with `pip` or `poetry`.
+Larvaworld is published on [PyPI](https://pypi.org/project/larvaworld/) and can be installed with `pip` (recommended) or `poetry`.
 
 ## System Requirements
 
@@ -11,15 +11,53 @@ Larvaworld is published on [PyPI](https://pypi.org/project/larvaworld/) and can 
 - **RAM**: Minimum 4 GB (8+ GB recommended for large simulations)
 - **Disk Space**: ~100 MB for core installation
 
+## Recommended Installation Setup
+
+**It is strongly recommended to install Larvaworld in a virtual environment** to avoid conflicts with other Python packages and ensure a clean installation.
+
+### Create a Virtual Environment
+
+First, ensure you have Python 3.10 or 3.11 installed. Then create and activate a virtual environment:
+
+**On Linux/macOS:**
+```bash
+python3.10 -m venv larvaworld_env
+# or
+python3.11 -m venv larvaworld_env
+
+source larvaworld_env/bin/activate
+```
+
+**On Windows:**
+```bash
+python -m venv larvaworld_env
+# or
+py -3.10 -m venv larvaworld_env
+# or
+py -3.11 -m venv larvaworld_env
+
+larvaworld_env\Scripts\activate
+```
+
+### Upgrade pip, setuptools, and wheel
+
+Before installing Larvaworld, upgrade the build tools (especially important on Windows):
+
+```bash
+python -m pip install --upgrade pip setuptools wheel
+```
+
 ## Basic Installation
 
-### Using pip
+### Using pip (Recommended)
 
-The simplest way to install Larvaworld:
+Once your virtual environment is activated, install Larvaworld:
 
 ```bash
 pip install larvaworld
 ```
+
+This is the recommended method for most users as it's simple and doesn't require additional tools.
 
 ### Using Poetry
 
@@ -28,6 +66,8 @@ If you're managing your project with [Poetry](https://python-poetry.org/):
 ```bash
 poetry add larvaworld
 ```
+
+Poetry is recommended for developers and contributors who need advanced dependency management.
 
 ## Optional Dependencies
 
@@ -77,36 +117,14 @@ pip install larvaworld[all]
 
 ## Development Installation
 
-If you want to modify the source code or contribute to Larvaworld:
+For development and contributing, see the {doc}`contributing` guide which includes:
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/nawrotlab/larvaworld.git
-cd larvaworld
-```
-
-### 2. Install with Poetry (Recommended)
-
-```bash
-poetry install --with dev,docs
-```
-
-This installs the package in editable mode with development and documentation dependencies.
-
-### 3. Activate the Virtual Environment
-
-```bash
-poetry shell
-```
-
-### 4. Install Pre-commit Hooks
-
-```bash
-pre-commit install
-```
-
-This ensures code quality checks run automatically before each commit.
+- Development installation instructions
+- Contribution guidelines
+- Pull request process
+- CI/CD workflow
+- Release process
+- Documentation build instructions
 
 ## Verifying Installation
 
@@ -158,6 +176,25 @@ pip install larvaworld[box2d]
 
 ```bash
 pip install --user larvaworld
+```
+
+### Issue: `BackendUnavailable: Cannot import 'setuptools.build_meta'` on Windows
+
+**Issue**: When installing on Windows, pip may fail to build dependencies from source if setuptools and wheel are not up to date.
+
+**Solution**: Upgrade pip, setuptools, and wheel before installing:
+
+```bash
+python -m pip install --upgrade pip setuptools wheel
+pip install larvaworld
+```
+
+If the issue persists, try installing build tools explicitly:
+
+```bash
+pip install --upgrade pip
+pip install setuptools wheel
+pip install larvaworld
 ```
 
 ### Issue: PyTables on Windows

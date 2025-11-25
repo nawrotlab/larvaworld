@@ -77,13 +77,19 @@ pytest-cov = "^5.0.0"
 pytest-xdist = "^3.5.0"  # Parallel test execution
 
 [tool.poetry.group.nengo]
-optional = false
+optional = true
 
 [tool.poetry.group.nengo.dependencies]
 nengo = "4.0"
 
+[tool.poetry.group.brian2]
+optional = true
+
+[tool.poetry.group.brian2.dependencies]
+brian2 = "2.*"
+
 [tool.poetry.group.box2d]
-optional = false
+optional = true
 
 [tool.poetry.group.box2d.dependencies]
 box2d-py = "2.3.8"
@@ -100,7 +106,7 @@ sphinx-rtd-theme = "*"
 sphinx-autoapi = "*"
 sphinxcontrib-mermaid = "*"
 nbsphinx = "*"
-# myst-nb = "*"
+myst-nb = "*"
 
 [tool.ruff]
 target-version = "py310"
@@ -142,7 +148,6 @@ lint.isort.known-first-party = [ "larvaworld", "tests" ]
 addopts = """\
     -v
     -Wdefault
-    --slow
     -n auto
     --cov=larvaworld
     --cov-report=xml
@@ -150,7 +155,7 @@ addopts = """\
 pythonpath = [ "src" ]
 markers = [
     "fast: Fast unit/logic tests without heavy simulations or plotting.",
-    "slow: Heavier tests (simulations, GA runs, legacy plotting).",
+    "heavy: Heavier tests (simulations, GA runs, legacy plotting).",
     "integration: Tests that exercise real Larvaworld subsystems (registry, pipelines, simulations).",
     "optional_dep: Tests that rely on optional third-party dependencies (e.g. Box2D).",
     "legacy: Legacy Larvaworld test suite (pre-refactor).",

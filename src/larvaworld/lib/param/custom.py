@@ -46,6 +46,22 @@ __all__: list[str] = [
 __displayname__ = "Custom parameters"
 
 
+def _is_null_value(val: Any) -> bool:
+    """
+    Robust check for None/nan/empty-string without triggering array truthiness.
+    """
+    if val is None:
+        return True
+    if isinstance(val, str):
+        return val == ""
+    if np.isscalar(val):
+        try:
+            return bool(np.isnan(val))
+        except Exception:
+            return False
+    return False
+
+
 class StringRobust(param.String):
     """
     Robust string parameter that converts any input to string.
@@ -450,12 +466,12 @@ class RandomizedPhase(Phase):
     """
 
     def __init__(self, default=None, **kwargs):
-        if default in [None, np.nan]:
+        if _is_null_value(default):
             default = np.random.uniform(0, 2 * np.pi)
         super().__init__(default=default, allow_None=True, **kwargs)
 
     def _validate_value(self, val, allow_None):
-        if val in [None, np.nan]:
+        if _is_null_value(val):
             val = np.random.uniform(0, 2 * np.pi)
         super(RandomizedPhase, self)._validate_value(val, allow_None)
 
@@ -486,7 +502,7 @@ class RandomizedColor(param.Color):
         per_instance=True,
         **kwargs,
     ):
-        if default in [None, np.nan, ""]:
+        if _is_null_value(default):
             default = random.choice(super()._named_colors)
         super().__init__(
             default=default,
@@ -497,7 +513,7 @@ class RandomizedColor(param.Color):
         )
 
     def _validate_value(self, val, allow_None):
-        if val in [None, np.nan, ""]:
+        if _is_null_value(val):
             val = random.choice(super()._named_colors)
         super(RandomizedColor, self)._validate_value(val, allow_None)
 

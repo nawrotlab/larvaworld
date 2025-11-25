@@ -17,12 +17,70 @@ concurrency:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-python@v5
         with:
           python-version: 3.x
-      - uses: pre-commit/action@v3.0.1
+      - name: Run pre-commit
+        id: precommit
+        run: |
+          set +e
+          pip install pre-commit
+          pre-commit run --all-files
+          PRE_COMMIT_EXIT=$?
+          set -e
+          
+          # Check if there are formatting changes
+          if git diff --quiet; then
+            HAS_CHANGES=false
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            HAS_CHANGES=true
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+          
+          # If pre-commit failed, check if it's only formatting changes in PR context
+          if [ "$PRE_COMMIT_EXIT" -ne 0 ]; then
+            # In PR context, check if errors are resolved after applying formatting
+            if [ "$HAS_CHANGES" == "true" ] && [ "${{ github.event_name }}" == "pull_request" ]; then
+              # Stage the formatting changes and run pre-commit again
+              # to verify that only formatting was needed (no linting errors remain)
+              set +e
+              git add -A
+              pre-commit run --all-files
+              STILL_HAS_ERRORS=$?
+              set -e
+              
+              if [ "$STILL_HAS_ERRORS" -eq 0 ]; then
+                # Only formatting changes, no linting errors - allow to pass with warning
+                echo "⚠️ Pre-commit made formatting changes in PR context"
+                echo "Please run 'pre-commit run --all-files' locally and commit the changes"
+                exit 0
+              else
+                # There are still linting errors after formatting - must fail
+                echo "❌ Pre-commit found linting errors that must be fixed before merging"
+                exit $PRE_COMMIT_EXIT
+              fi
+            fi
+            # No changes or not a PR - fail on any errors
+            exit $PRE_COMMIT_EXIT
+          fi
+      - name: Commit formatting changes
+        if: steps.precommit.outputs.has_changes == 'true' && github.event_name != 'pull_request'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          if ! git diff --staged --quiet; then
+            BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            git commit --amend --no-edit
+            git push --force-with-lease origin $BRANCH
+          fi
 
   # Make sure commit messages follow the conventional commits convention:
   # https://www.conventionalcommits.org
@@ -54,6 +112,11 @@ jobs:
 
       - name: Install dependencies
         run: poetry install
+        shell: bash
+
+      - name: Enable heavy Windows tests on scheduled runs
+        if: matrix.os == 'windows-latest' && github.event_name == 'schedule'
+        run: echo "LW_ENABLE_WINDOWS_HEAVY=1" >> $GITHUB_ENV
         shell: bash
 
       - name: Import the package

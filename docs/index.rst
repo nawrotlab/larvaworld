@@ -110,42 +110,22 @@ For the scientific background, model assumptions and validation results, please 
 
 .. toctree::
    :maxdepth: 2
-   :caption: Step-by-step workflows
+   :caption: Tutorials
    :hidden:
 
-   tutorials/index.md
-   Theoretical Background <tutorials/theoretical_background.ipynb>
-   Single Simulation <tutorials/single_simulation.ipynb>
-   CLI Interface <tutorials/cli.ipynb>
-   Environment Configuration <tutorials/environment_configuration.ipynb>
-   Import Datasets <tutorials/import_datasets.ipynb>
-   Dataset Replay <tutorials/replay.ipynb>
-   Model Evaluation <tutorials/model_evaluation.ipynb>
-   Genetic Algorithm Optimization <tutorials/genetic_algorithm_optimization.ipynb>
-   Library Interface <tutorials/library_interface.ipynb>
-   Custom Module <tutorials/custom_module.ipynb>
-   Sensorscapes <tutorials/sensorscapes.ipynb>
-   Remote Model Interface <tutorials/remote_model_interface.ipynb>
-   Configuration Types <tutorials/CONFTYPES.ipynb>
+   tutorials/configuration
+   tutorials/simulation
+   tutorials/data
+   tutorials/development
 
 .. toctree::
    :maxdepth: 1
-   :caption: API reference
+   :caption: Reference
    :hidden:
-
-   api/api_overview
-   autoapi/larvaworld/index
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Project information
-   :hidden:
-
-   citation
+   
    concepts/code_structure
-   changelog
    contributing
-
+   API Reference <autoapi/larvaworld/index>
 
 
 

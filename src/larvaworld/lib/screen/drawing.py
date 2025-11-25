@@ -360,7 +360,12 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
         import pygame
 
         pygame.init()
-        os.environ["SDL_VIDEO_WINDOW_POS"] = "%d,%d" % (1550, 400)
+        # Avoid hard-coding window position; center by default unless user overrides
+        if (
+            "SDL_VIDEO_WINDOW_POS" not in os.environ
+            and "SDL_VIDEO_CENTERED" not in os.environ
+        ):
+            os.environ["SDL_VIDEO_CENTERED"] = "1"
         self.v = self.init_screen()
         # self._t = pygame.time.Clock()
 
@@ -644,29 +649,69 @@ class ScreenManager(ScreenAreaPygame):
         # if self.v is None:
         if self.active and not self.initialized:
             self.initialize(**kwargs)
-        elif self.close_requested():
-            self.close()
+        elif self.show_display and self.close_requested():
+            # Only check for close requests if display is actually shown
+            self.close(user_requested=True)
 
-    def close(self) -> None:
+    def close(self, user_requested: bool = False) -> None:
         """
-        Close the pygame display
+        Close the pygame display.
+        
+        Parameters
+        ----------
+        user_requested
+            True when the close was triggered by a user (e.g., clicking the window
+            close button). Only in that case we set `running=False` and print the
+            "Terminated by the user" message.
         """
-        pygame.display.quit()
+        # Only set running=False if display was actually shown (user closed window)
+        # This prevents premature termination when running headless
+        if self.show_display and self.initialized:
+            vprint("Screen closed", 1)
+            if user_requested and self.model is not None:
+                self.model.running = False
+                vprint("Terminated by the user", 3)
+        
+        # Only quit pygame display if it was initialized
+        # This prevents errors when running headless
+        import pygame
+        if pygame.display.get_init():
+            pygame.display.quit()
+        
+        # Clean up video/image writers
         if self.vid_writer:
             self.vid_writer.close()
+            self.vid_writer = None
         if self.img_writer:
             self.img_writer.close()
-        vprint("Screen closed", 1)
-        self.model.running = False
-        vprint("Terminated by the user", 3)
+            self.img_writer = None
         return
 
-    @staticmethod
-    def close_requested() -> bool:
+    def close_requested(self) -> bool:
+        """
+        Check if the user requested to close the display.
+        
+        Only checks for QUIT events if show_display is True and a display
+        window is actually open, to avoid premature termination when
+        running headless (without display).
+        """
         import pygame
 
-        if pygame.display.get_init():
-            return pygame.event.peek(pygame.QUIT)
+        # Only check for QUIT events if:
+        # 1. show_display is True (user wants to see the window)
+        # 2. Screen manager is initialized (display window has been opened)
+        # 3. pygame display is initialized
+        # 4. A display window is actually open (not just a Surface)
+        if self.show_display and self.initialized and pygame.display.get_init():
+            try:
+                # Check if a display window is actually open
+                # pygame.display.get_surface() returns None if no window is open
+                surface = pygame.display.get_surface()
+                if surface is not None:
+                    return pygame.event.peek(pygame.QUIT)
+            except Exception:
+                # If get_surface() fails, assume no window is open
+                pass
         return False
 
     def render(self, **kwargs: Any) -> None:
@@ -709,6 +754,12 @@ class ScreenManager(ScreenAreaPygame):
         """
         Initialize the pygame display
         """
+        import pygame
+        
+        # Clear any old events before initializing to prevent false QUIT detection
+        if pygame.display.get_init():
+            pygame.event.clear()
+        
         self.vid_writer = self.new_video_writer(fps=self._fps)
         self.img_writer = self.new_image_writer()
         if self.scene is not None:
@@ -835,6 +886,9 @@ class ScreenManager(ScreenAreaPygame):
                 color = (
                     util.random_colors(1)[0] if self.random_colors else f.default_color
                 )
+                # param.Color expects a string or tuple; normalize arrays to hex string
+                if not isinstance(color, str):
+                    color = util.colortuple2str(tuple(np.array(color).tolist()))
                 f.set_default_color(color)
         elif name == "black_background":
             for a in (
@@ -859,8 +913,10 @@ class ScreenManager(ScreenAreaPygame):
         ev = pygame.event.get()
         for e in ev:
             if e.type == pygame.QUIT:
-                self.close()
-                sys.exit()
+                # Only close if display is actually shown
+                if self.show_display:
+                    self.close(user_requested=True)
+                    sys.exit()
 
             elif e.type == pygame.KEYDOWN and (e.key == 93 or e.key == 270):
                 self.increase_fps()
@@ -1286,7 +1342,10 @@ class ScreenManager(ScreenAreaPygame):
                 pygame.time.wait(5000)
             elif self.image_mode == "final":
                 self.capture_snapshot()
-        self.close()
+        # Only close if screen was actually initialized/active
+        # This prevents "Terminated by the user" message when running headless
+        if self.active or self.initialized:
+            self.close()
 
 
 class GA_ScreenManager(ScreenManager):

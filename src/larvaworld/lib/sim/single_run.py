@@ -96,20 +96,20 @@ class ExpRun(BaseRun):
         Returns:
             list: A list of datasets collected during the simulation.
         """
-        vprint(f"--- Simulation {self.id} initialized!--- ", 1)
+        vprint(f"--- Simulation {self.id} initialized!--- ", 2)
         start = time.time()
         self.run(**kwargs)
         self.data_collection = LarvaDatasetCollection.from_agentpy_output(self.output)
         self.datasets = self.data_collection.datasets
         end = time.time()
         dur = np.round(end - start).astype(int)
-        vprint(f"--- Simulation {self.id} completed in {dur} seconds!--- ", 1)
+        vprint(f"--- Simulation {self.id} completed in {dur} seconds!--- ", 2)
         if self.p.enrichment:
             for d in self.datasets:
-                vprint(f"--- Enriching dataset {d.id} ---", 1)
+                vprint(f"--- Enriching dataset {d.id} ---", 2)
                 d.enrich(**self.p.enrichment, is_last=False)
-                vprint(f"--- Dataset {d.id} enriched ---", 1)
-                vprint("--------------------------------", 1)
+                vprint(f"--- Dataset {d.id} enriched ---", 2)
+                vprint("--------------------------------", 2)
         if self.store_data:
             self.store()
         return self.datasets

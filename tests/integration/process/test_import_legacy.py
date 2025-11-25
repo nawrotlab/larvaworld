@@ -8,7 +8,7 @@ import larvaworld.lib.reg as reg
 
 pytestmark = [
     pytest.mark.integration,
-    pytest.mark.slow,
+    pytest.mark.heavy,
     pytest.mark.skip(reason="legacy integration tests kept for manual execution"),
 ]
 

@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Larvaworld follows a **layered architecture** pattern that separates concerns and enables flexible extension. This modular design allows users to access the platform through multiple interfaces while maintaining a unified core engine for simulation and analysis.
+Larvaworld follows a **layered architecture** pattern that separates concerns and enables flexible extension. This design allows users to access the platform through multiple interfaces while maintaining a unified core engine for simulation and analysis.
 
 ---
 
@@ -51,7 +51,7 @@ larvaworld Batch PItest_off -Nsims 10
 - `argparser.py`: `SimModeParser` class for argument parsing
 - **Modes**: Exp, Batch, Ga, Eval, Replay
 
-**Use case**: Quick testing, scripting, batch processing
+**Use case**: Quick simulation launching
 
 ---
 
@@ -61,14 +61,12 @@ larvaworld Batch PItest_off -Nsims 10
 
 Interactive web applications built with **Panel** (Holoviz stack) and **Bokeh**:
 
-| Dashboard                        | Purpose                               |
-| -------------------------------- | ------------------------------------- |
-| **Experiment Viewer**            | View experiment results interactively |
-| **Track Viewer**                 | Inspect larva trajectories            |
-| **Model Inspector**              | Explore locomotory models             |
-| **Module Inspector**             | Inspect behavioral modules            |
-| **Neural Oscillator Inspector**  | Visualize neural oscillators          |
-| **Lateral Oscillator Inspector** | Examine lateral dynamics              |
+| Dashboard                 | Purpose                               |
+| ------------------------- | ------------------------------------- |
+| **Experiment Viewer**     | View experiment results interactively |
+| **Track Viewer**          | Inspect larva trajectories            |
+| **Larva-model Inspector** | Explore larva models                  |
+| **Module Inspector**      | Inspect behavioral modules            |
 
 Launch with:
 
@@ -87,7 +85,7 @@ Access via: `http://localhost:5006`
 **Location**: `/src/larvaworld/gui/`
 
 :::{warning}
-The desktop GUI built with **PySimpleGUI** is **deprecated** but still present for backward compatibility. It is not included in PyPI entry points and may not be fully supported in current releases. **Use CLI or Web apps instead**.
+The desktop GUI built with **PySimpleGUI** is **deprecated** but still present for backward compatibility. It is not included in the accessible entry points and may not be fully supported in current releases. **Use CLI or Web apps instead**.
 :::
 
 ---
@@ -115,8 +113,8 @@ The simulation engine provides **five specialized modes**, each optimized for di
 
 - `simulate()`: Run the simulation loop
 - `store()`: Save results to HDF5
+- `analyze()`: Perform data analysis
 - `plot()`: Generate analysis plots
-- `analyze()`: Compute metrics
 
 For detailed information on simulation modes, see {doc}`simulation_modes`.
 
@@ -151,9 +149,9 @@ For detailed architecture, see {doc}`../agents_environments/larva_agent_architec
 
 **Key Classes**:
 
-- **Env**: Arena with borders, food sources, odorscapes
-- **FoodSource**: Patches, gradients, or uniform substrates
-- **Odorscape**: Gaussian plumes, gradients, or thermal fields
+- **Arena**: Arena with food/odor sources, borders
+- **Source**: Single/distributed food/odor sources
+- **Odorscape**: Gaussian or diffusion-generated gradients
 
 **Configuration**:
 
@@ -192,7 +190,7 @@ For detailed workflows, see {doc}`../data_pipeline/data_processing`.
 **LabFormat** (`reg/generators.py`):
 
 - Import experimental datasets from diverse tracking systems
-- **Supported labs**: Schleyer, Jovanic, Berni, Arguello
+- **Supported lab-specific formats**: Schleyer, Jovanic, Berni, Arguello
 
 For details, see {doc}`../data_pipeline/lab_formats_import`.
 
@@ -214,7 +212,7 @@ For details, see {doc}`experiment_configuration_pipeline`.
 
 This layer provides **plotting**, **real-time rendering**, and **video export**.
 
-### Plotting API
+### Plotting
 
 **Modules** (in `plot/`):
 

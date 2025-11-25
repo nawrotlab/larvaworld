@@ -4,6 +4,8 @@ Larvaworld : A Drosophila larva behavioral analysis and simulation platform
 
 from __future__ import annotations
 
+import os
+
 __author__ = "Panagiotis Sakagiannis"
 __license__ = "MIT License"
 __copyright__ = "2024, Panagiotis Sakagiannis"
@@ -52,19 +54,31 @@ def vprint(text: str = "", verbose: int = 0) -> None:
         print(text)
 
 
-import os
-
+# Root directory of the larvaworld package.
 ROOT_DIR: str = os.path.dirname(os.path.abspath(__file__))
+
+# Relative path to the data directory (data/ relative to package root).
 DATA_DIR: str = f"{ROOT_DIR}/data"
+
+# Relative path to the simulation data directory (data/SimGroup/ relative to package root).
 SIM_DIR: str = f"{DATA_DIR}/SimGroup"
+
+# Relative path to the batch runs directory (data/SimGroup/batch_runs/ relative to package root).
 BATCH_DIR: str = f"{SIM_DIR}/batch_runs"
+
+# Relative path to the configuration dictionaries directory (lib/reg/confDicts/ relative to package root).
 CONF_DIR: str = f"{ROOT_DIR}/lib/reg/confDicts"
+
+# Relative path to the tests directory (../../tests relative to package root).
 TEST_DIR: str = f"{ROOT_DIR}/../../tests"
 
 os.makedirs(CONF_DIR, exist_ok=True)
 
 
+# List of available simulation types.
 SIMTYPES: list[str] = ["Exp", "Batch", "Ga", "Eval", "Replay"]
+
+# List of available configuration types.
 CONFTYPES: list[str] = [
     "Env",
     "LabFormat",

@@ -98,5 +98,5 @@ Related Documentation
 
 - :doc:`../usage` - Basic usage guide
 - :doc:`../concepts/architecture_overview` - Platform architecture
-- :doc:`../working_with_larvaworld/index` - Workflow guides
-- :doc:`../tutorials/index` - Step-by-step tutorials
+- Workflow guides: :doc:`../working_with_larvaworld/single_experiments`, :doc:`../working_with_larvaworld/model_evaluation`, :doc:`../working_with_larvaworld/replay`, :doc:`../working_with_larvaworld/ga_optimization_advanced`
+- Tutorials: :doc:`../tutorials/configuration`, :doc:`../tutorials/simulation`, :doc:`../tutorials/data`, :doc:`../tutorials/development`

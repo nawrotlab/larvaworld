@@ -3,7 +3,7 @@ from larvaworld.lib import reg
 from larvaworld.lib.process import Evaluation
 from larvaworld.lib.sim import EvalRun
 
-pytestmark = [pytest.mark.integration, pytest.mark.slow]
+pytestmark = [pytest.mark.integration, pytest.mark.heavy]
 
 
 @pytest.mark.usefixtures("ensure_datasets_ready")

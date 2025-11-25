@@ -5,7 +5,7 @@ from larvaworld.lib.process import LarvaDataset
 
 # NOTE :    This test requires the box2d-py package
 
-pytestmark = [pytest.mark.integration, pytest.mark.slow, pytest.mark.optional_dep]
+pytestmark = [pytest.mark.integration, pytest.mark.heavy, pytest.mark.optional_dep]
 
 pytest.importorskip("Box2D")
 

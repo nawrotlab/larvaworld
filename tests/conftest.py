@@ -37,7 +37,7 @@ LEGACY_TEST_REL_PATHS = {
     "unit/util/test_util_fft.py",
 }
 
-INTEGRATION_SLOW_PATHS = {
+INTEGRATION_HEAVY_PATHS = {
     "integration/test_analysis.py",
     "integration/test_evaluation.py",
     "integration/test_calibration_real.py",
@@ -66,7 +66,7 @@ def pytest_configure(config: pytest.Config) -> None:
     """Register custom markers for marker-aware filtering."""
     marker_definitions = {
         "fast": "Fast unit/logic tests without heavy sims or plotting.",
-        "slow": "Heavier tests (simulations, GA runs, or end-to-end plotting).",
+        "heavy": "Heavier tests (simulations, GA runs, or end-to-end plotting).",
         "integration": "Tests that exercise real Larvaworld subsystems (registry, pipelines, simulations).",
         "optional_dep": "Tests that rely on optional third-party dependencies.",
         "legacy": "Legacy Larvaworld test suite (pre-refactor).",
@@ -94,8 +94,8 @@ def pytest_collection_modifyitems(
         if rel_path.startswith("integration/"):
             if item.get_closest_marker("integration") is None:
                 item.add_marker("integration")
-            if rel_path in INTEGRATION_SLOW_PATHS:
-                item.add_marker("slow")
+            if rel_path in INTEGRATION_HEAVY_PATHS:
+                item.add_marker("heavy")
             elif (
                 rel_path in INTEGRATION_FAST_PATHS
                 or item.get_closest_marker("fast") is None
