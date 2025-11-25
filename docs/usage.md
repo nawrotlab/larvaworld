@@ -48,11 +48,11 @@ larvaworld Exp dish -N 5 -duration 3.0 -vis_mode video
 
 ### Common CLI Options
 
-| Option            | Description                      | Example           |
-| ----------------- | -------------------------------- | ----------------- |
-| `-N`, `--Nagents` | Number of larvae                 | `-N 20`           |
-| `--duration`      | Simulation duration (minutes)    | `--duration 10.0` |
-| `--dt`            | Simulation timestep (seconds)    | `--dt 0.05`       |
+| Option            | Description                                                               | Example           |
+| ----------------- | ------------------------------------------------------------------------- | ----------------- |
+| `-N`, `--Nagents` | Number of larvae                                                          | `-N 20`           |
+| `--duration`      | Simulation duration (minutes)                                             | `--duration 10.0` |
+| `--dt`            | Simulation timestep (seconds)                                             | `--dt 0.05`       |
 | `-vis_mode`       | Visualization mode (`video` for real-time display, `image` for snapshots) | `-vis_mode video` |
 
 ### Save Output to a Custom Directory

@@ -323,7 +323,7 @@ replay.run()  # No simulation, just visualization
 
 | Feature                 | Exp         | Batch           | Ga                     | Eval            | Replay             |
 | ----------------------- | ----------- | --------------- | ---------------------- | --------------- | ------------------ |
-| **# Simulations**       | 1           | N × M × N   | Ngenerations × Nagents | Nmodels × Nruns | 0 (replay only)    |
+| **# Simulations**       | 1           | N × M × N       | Ngenerations × Nagents | Nmodels × Nruns | 0 (replay only)    |
 | **Parameter Variation** | Fixed       | Sweep           | Evolving               | Fixed per model | N/A                |
 | **Parallel Execution**  | No          | Yes             | Yes                    | Yes             | N/A                |
 | **Optimization**        | No          | No              | Yes                    | No              | No                 |

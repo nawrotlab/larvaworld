@@ -34,7 +34,7 @@ jobs:
           pre-commit run --all-files
           PRE_COMMIT_EXIT=$?
           set -e
-          
+
           # Check if there are formatting changes
           if git diff --quiet; then
             HAS_CHANGES=false
@@ -43,7 +43,7 @@ jobs:
             HAS_CHANGES=true
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
-          
+
           # If pre-commit failed, check if it's only formatting changes in PR context
           if [ "$PRE_COMMIT_EXIT" -ne 0 ]; then
             # In PR context, check if errors are resolved after applying formatting
@@ -55,7 +55,7 @@ jobs:
               pre-commit run --all-files
               STILL_HAS_ERRORS=$?
               set -e
-              
+
               if [ "$STILL_HAS_ERRORS" -eq 0 ]; then
                 # Only formatting changes, no linting errors - allow to pass with warning
                 echo "⚠️ Pre-commit made formatting changes in PR context"

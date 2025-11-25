@@ -352,17 +352,17 @@ For detailed workflows, see {doc}`../working_with_larvaworld/replay`.
 
 ## Comparison Table
 
-| Feature                 | Exp      | Batch         | Ga                     | Eval            | Replay             |
-| ----------------------- | -------- | ------------- | ---------------------- | --------------- | ------------------ |
+| Feature                 | Exp      | Batch     | Ga                     | Eval            | Replay             |
+| ----------------------- | -------- | --------- | ---------------------- | --------------- | ------------------ |
 | **# Simulations**       | 1        | N × M × N | Ngenerations × Nagents | Nmodels × Nruns | 0 (replay only)    |
-| **Parameter Variation** | Fixed    | Sweep         | Evolving               | Fixed per model | N/A                |
-| **Parallel Execution**  | No       | Yes           | Yes                    | Yes             | N/A                |
-| **Optimization**        | No       | No            | Yes                    | No              | No                 |
-| **Reference Data**      | Optional | Optional      | Required               | Required        | Required           |
-| **Statistical Tests**   | No       | Optional      | Yes (fitness)          | Yes (KS tests)  | No                 |
-| **Video Output**        | Yes      | Optional      | Optional               | Optional        | Yes                |
-| **HDF5 Storage**        | Yes      | Yes           | Yes                    | Yes             | No (uses existing) |
-| **Duration**            | Minutes  | Hours         | Hours-Days             | Hours           | Seconds-Minutes    |
+| **Parameter Variation** | Fixed    | Sweep     | Evolving               | Fixed per model | N/A                |
+| **Parallel Execution**  | No       | Yes       | Yes                    | Yes             | N/A                |
+| **Optimization**        | No       | No        | Yes                    | No              | No                 |
+| **Reference Data**      | Optional | Optional  | Required               | Required        | Required           |
+| **Statistical Tests**   | No       | Optional  | Yes (fitness)          | Yes (KS tests)  | No                 |
+| **Video Output**        | Yes      | Optional  | Optional               | Optional        | Yes                |
+| **HDF5 Storage**        | Yes      | Yes       | Yes                    | Yes             | No (uses existing) |
+| **Duration**            | Minutes  | Hours     | Hours-Days             | Hours           | Seconds-Minutes    |
 
 ---
 

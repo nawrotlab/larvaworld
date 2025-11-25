@@ -264,12 +264,12 @@ genome = {
 
 Parameters are constrained to biologically realistic ranges (automatically determined from module parameter definitions):
 
-| Configuration Path          | Min | Max | Unit          |
-| --------------------------- | --- | --- | ------------- |
-| `brain.crawler.freq`        | 0.5 | 3.0 | Hz            |
-| `brain.turner.freq`         | 0.0 | 2.0 | Hz            |
-| `brain.turner.amp`          | 0.0 | 1.0 | dimensionless |
-| `brain.olfactor.gain`       | 0.0 | 2.0 | dimensionless |
+| Configuration Path    | Min | Max | Unit          |
+| --------------------- | --- | --- | ------------- |
+| `brain.crawler.freq`  | 0.5 | 3.0 | Hz            |
+| `brain.turner.freq`   | 0.0 | 2.0 | Hz            |
+| `brain.turner.amp`    | 0.0 | 1.0 | dimensionless |
+| `brain.olfactor.gain` | 0.0 | 2.0 | dimensionless |
 
 **Note**: When you specify module names in `ks` (e.g., `["crawler", "turner"]`), all parameters within those modules are automatically included in the optimization space. The parameter ranges are determined from the module parameter definitions.
 

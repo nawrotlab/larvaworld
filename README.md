@@ -61,7 +61,7 @@ Larvaworld can be installed with `pip` (recommended) or `poetry`. **It is strong
    # Linux/macOS
    python3.10 -m venv larvaworld_env
    source larvaworld_env/bin/activate
-   
+
    # Windows
    python -m venv larvaworld_env
    larvaworld_env\Scripts\activate

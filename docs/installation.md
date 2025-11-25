@@ -20,6 +20,7 @@ Larvaworld is published on [PyPI](https://pypi.org/project/larvaworld/) and can 
 First, ensure you have Python 3.10 or 3.11 installed. Then create and activate a virtual environment:
 
 **On Linux/macOS:**
+
 ```bash
 python3.10 -m venv larvaworld_env
 # or
@@ -29,6 +30,7 @@ source larvaworld_env/bin/activate
 ```
 
 **On Windows:**
+
 ```bash
 python -m venv larvaworld_env
 # or
