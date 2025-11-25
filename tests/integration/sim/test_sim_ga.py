@@ -1,8 +1,20 @@
+import os
+import sys
+
 import pytest
 
 from larvaworld.lib import reg, sim
 
-pytestmark = [pytest.mark.integration, pytest.mark.heavy]
+RUN_WINDOWS_HEAVY = os.environ.get("LW_ENABLE_WINDOWS_HEAVY") == "1"
+
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.heavy,
+    pytest.mark.skipif(
+        sys.platform.startswith("win") and not RUN_WINDOWS_HEAVY,
+        reason="Slow on Windows CI (enabled weekly)",
+    ),
+]
 
 
 def test_genetic_algorithm_no_video():

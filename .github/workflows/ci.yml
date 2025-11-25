@@ -114,6 +114,11 @@ jobs:
         run: poetry install
         shell: bash
 
+      - name: Enable heavy Windows tests on scheduled runs
+        if: matrix.os == 'windows-latest' && github.event_name == 'schedule'
+        run: echo "LW_ENABLE_WINDOWS_HEAVY=1" >> $GITHUB_ENV
+        shell: bash
+
       - name: Import the package
         run: poetry run python -c "import larvaworld"
         shell: bash
