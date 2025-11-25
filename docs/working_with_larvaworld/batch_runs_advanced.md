@@ -3,7 +3,7 @@
 The **Batch** simulation mode enables **parameter sweeps** with parallel execution, allowing you to systematically explore parameter space and assess model robustness.
 
 :::{warning}
-`BatchRun` is an **advanced feature** that requires preconfigured Batch entries in the registry. For most users, starting with `Exp` and `Eval` modes is recommended.
+**Status**: Batch mode is currently under active development and may require debugging. Some features may not work as expected. This is an **advanced feature** that requires preconfigured Batch entries in the registry. For most users, starting with `Exp` and `Eval` modes is recommended.
 :::
 
 ---
@@ -26,8 +26,12 @@ For mode comparison, see {doc}`../concepts/simulation_modes`.
 ### CLI
 
 ```bash
-larvaworld Batch PItest_off -Nsims 10
+larvaworld Batch PItest_off -N 10
 ```
+
+:::{note}
+**Configuration Note**: The `space_search` parameter (which defines the parameter space to explore) is extracted from the predefined Batch configuration in `sim_conf.py` and should not be specified in the CLI command. Each Batch experiment ID (e.g., `PItest_off`) has its own preconfigured `space_search` that defines which parameters to vary and their ranges. See `larvaworld/src/larvaworld/lib/reg/stored_confs/sim_conf.py` (around lines 660-670) for the specific configuration definitions.
+:::
 
 ### Python
 
@@ -110,7 +114,7 @@ batch = BatchRun(
         "Npoints": [5, 10, 15, 20, 25, 30]
     },
     fixed={"duration": 5.0, "model": "explorer"},
-    Nsims=20
+    N=20
 )
 
 par_df, figs = batch.simulate()
@@ -131,7 +135,7 @@ batch = BatchRun(
         "env_params.odorscape.odor_layers[0].intensity": [0.5, 1.0, 2.0]
     },
     fixed={"Npoints": 20, "duration": 5.0},
-    Nsims=10
+    N=10
 )
 
 par_df, figs = batch.simulate()

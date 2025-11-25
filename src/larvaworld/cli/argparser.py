@@ -467,6 +467,7 @@ class SimModeParser(ArgumentParser):
                 type=int,
                 help="The number of simulated larvae in each larva group",
             )
+        if m == "Batch":
             sp.add_argument(
                 "-mIDs",
                 "--modelIDs",
@@ -541,11 +542,14 @@ class SimModeParser(ArgumentParser):
         if m == "Batch":
             kw.mode = "batch"
             kw.experiment = args.experiment
-            kw.conf = reg.conf.Batch.getID(args.experiment)
-            kw.conf.N = args.Nagents
-            kw.conf.modelIDs = args.modelIDs
-            kw.conf.groupIDs = args.groupIDs
-            run = sim.BatchRun(**kw)
+            conf = reg.conf.Batch.getID(args.experiment)
+            if args.Nagents is not None:
+                conf.N = args.Nagents
+            if args.modelIDs is not None:
+                conf.modelIDs = args.modelIDs
+            if args.groupIDs is not None:
+                conf.groupIDs = args.groupIDs
+            run = sim.BatchRun(**kw, **conf)
         elif m == "Exp":
             kw.N = args.Nagents
             kw.modelIDs = args.modelIDs

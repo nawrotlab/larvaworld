@@ -1,9 +1,21 @@
+import os
+import sys
+
 import pytest
 
 import larvaworld
 from larvaworld.lib import reg, sim, util
 
-pytestmark = [pytest.mark.integration, pytest.mark.heavy]
+RUN_WINDOWS_HEAVY = os.environ.get("LW_ENABLE_WINDOWS_HEAVY") == "1"
+
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.heavy,
+    pytest.mark.skipif(
+        sys.platform.startswith("win") and not RUN_WINDOWS_HEAVY,
+        reason="Slow on Windows CI (enabled weekly)",
+    ),
+]
 
 larvaworld.VERBOSE = 1
 

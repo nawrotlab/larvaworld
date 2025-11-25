@@ -58,6 +58,7 @@ For the scientific background, model assumptions and validation results, please 
    installation
    concepts/dependencies
    usage
+   video_examples
 
 .. toctree::
    :maxdepth: 1

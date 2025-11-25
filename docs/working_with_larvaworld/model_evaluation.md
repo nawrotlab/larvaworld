@@ -22,7 +22,7 @@ For mode comparison, see {doc}`../concepts/simulation_modes`.
 ### CLI
 
 ```bash
-larvaworld Eval -refID exploration.30controls -mIDs explorer navigator
+larvaworld Eval -refID exploration.30controls --modelIDs explorer navigator
 ```
 
 ### Python
