@@ -412,6 +412,7 @@ class SimModeParser(ArgumentParser):
             }
         )
         from .. import __version__
+
         super().__init__(
             prog="larvaworld",
             description="CLI for running larvaworld simulations",

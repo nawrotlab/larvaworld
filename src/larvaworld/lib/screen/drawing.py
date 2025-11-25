@@ -656,7 +656,7 @@ class ScreenManager(ScreenAreaPygame):
     def close(self, user_requested: bool = False) -> None:
         """
         Close the pygame display.
-        
+
         Parameters
         ----------
         user_requested
@@ -678,13 +678,14 @@ class ScreenManager(ScreenAreaPygame):
             self.closed = True
             self.show_display = False
             self.initialized = False
-        
+
         # Only quit pygame display if it was initialized
         # This prevents errors when running headless
         import pygame
+
         if pygame.display.get_init():
             pygame.display.quit()
-        
+
         # Clean up video/image writers
         if self.vid_writer:
             self.vid_writer.close()
@@ -697,7 +698,7 @@ class ScreenManager(ScreenAreaPygame):
     def close_requested(self) -> bool:
         """
         Check if the user requested to close the display.
-        
+
         Only checks for QUIT events if show_display is True and a display
         window is actually open, to avoid premature termination when
         running headless (without display).
@@ -767,11 +768,11 @@ class ScreenManager(ScreenAreaPygame):
         Initialize the pygame display
         """
         import pygame
-        
+
         # Clear any old events before initializing to prevent false QUIT detection
         if pygame.display.get_init():
             pygame.event.clear()
-        
+
         self.vid_writer = self.new_video_writer(fps=self._fps)
         self.img_writer = self.new_image_writer()
         if self.scene is not None:

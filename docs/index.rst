@@ -123,7 +123,7 @@ For the scientific background, model assumptions and validation results, please 
    :maxdepth: 1
    :caption: Reference
    :hidden:
-   
+
    concepts/code_structure
    contributing
    API Reference <autoapi/larvaworld/index>

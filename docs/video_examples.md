@@ -165,4 +165,4 @@ Quick links to rendered Larvaworld simulations. Click a thumbnail to open the MP
   </div>
 </div>
 
-*Credits: Sakagiannis PP. Larvaworld platform generated videos, 2025.*
+_Credits: Sakagiannis PP. Larvaworld platform generated videos, 2025._

@@ -60,6 +60,7 @@ poetry install --with dev,docs
 ```
 
 This installs:
+
 - The package in editable mode (changes are immediately available)
 - Development dependencies (pytest, pre-commit, linting tools)
 - Documentation dependencies (Sphinx, extensions)
@@ -79,6 +80,7 @@ pre-commit install
 ```
 
 This will run:
+
 - Code formatting (ruff, black)
 - Linting (ruff, flake8)
 - File checks (end of files, trailing whitespace)
@@ -103,6 +105,7 @@ git checkout -b name-of-your-bugfix-or-feature
 ```
 
 **Branch naming conventions:**
+
 - `fix/` for bug fixes
 - `feat/` for new features
 - `docs/` for documentation changes
@@ -155,6 +158,7 @@ git commit -m "feat(module): your detailed description of your changes"
 ```
 
 **Commit message format:**
+
 - `feat(module): description` - New feature
 - `fix(module): description` - Bug fix
 - `docs(module): description` - Documentation changes
@@ -174,12 +178,14 @@ git push origin name-of-your-bugfix-or-feature
 Then create a pull request:
 
 **Via GitHub website:**
+
 1. Go to the repository on GitHub
 2. Click "New Pull Request"
 3. Select your branch
 4. Fill in the PR description
 
 **Via GitHub CLI:**
+
 ```bash
 gh pr create --fill
 ```
@@ -203,12 +209,14 @@ We encourage opening pull requests as early as possible, even for work in progre
 ### PR Review Process
 
 1. **Automated checks**: CI will automatically run:
+
    - Linting and formatting checks
    - Commit message validation
    - Full test suite on multiple platforms (Linux, macOS, Windows)
    - Code coverage reporting
 
 2. **Review**: Maintainers will review your PR. Address any feedback by:
+
    - Making requested changes
    - Pushing new commits to the same branch
    - Discussing any concerns in the PR comments
@@ -231,12 +239,14 @@ Larvaworld uses GitHub Actions for continuous integration. The CI pipeline runs 
 The CI pipeline includes:
 
 1. **Lint**: Code formatting and linting checks
+
    - Runs `pre-commit` with all hooks
    - Automatically commits formatting fixes if needed
 
 2. **Commitlint**: Validates commit messages follow Conventional Commits
 
 3. **Full Test Suite** (Ubuntu, Python 3.11):
+
    - Installs dependencies with Poetry
    - Runs full test suite with coverage
    - Uploads coverage to Codecov
@@ -277,11 +287,13 @@ Releases are automated using [python-semantic-release](https://python-semantic-r
 ### How Releases Work
 
 1. **Version Detection**: The next version is determined automatically based on commit messages:
+
    - `feat:` commits → minor version bump
    - `fix:` commits → patch version bump
    - `BREAKING CHANGE:` → major version bump
 
 2. **Release Job**: The release job runs after all CI checks pass:
+
    - Creates a new Git tag
    - Updates version in `pyproject.toml`
    - Creates a GitHub Release
