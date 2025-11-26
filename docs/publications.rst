@@ -19,3 +19,4 @@ Jürgensen, A.-M., Sakagiannis, P., Schleyer, M., Gerber, B., & Nawrot, M. P. (2
 Kafle, T., Grub, M., Sakagiannis, P., Nawrot, M. P., & Arguello, J. R. (2025). Evolution of temperature preference behaviour among Drosophila larvae. *iScience*. https://doi.org/10.1016/j.isci.2025.112809
 
 de Tredern, E., Manceau, D., Blanc, A., Parameswaran, A., Sakagiannis, P., Barre, C., Sus, V., Viscido, F., Akiki, P., Hasan, M. A., Autran, S., Laurent, F., Nawrot, M. P., Masson, J.-B., & Jovanic, T. (2025). Feeding state-dependent neuropeptidergic modulation of reciprocally interconnected inhibitory neurons biases sensorimotor decisions in Drosophila. *Nature Communications*. https://doi.org/10.1038/s41467-025-61805-y
+
