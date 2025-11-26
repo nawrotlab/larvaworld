@@ -126,6 +126,7 @@ For the scientific background, model assumptions and validation results, please 
 
    concepts/code_structure
    contributing
+   publications
    API Reference <autoapi/larvaworld/index>
 
 

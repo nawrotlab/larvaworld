@@ -31,6 +31,30 @@ View available commands and options:
 larvaworld --help
 ```
 
+### Command Structure
+
+The CLI follows a specific argument order:
+
+```bash
+larvaworld [general-args] [mode] [mode-specific-args]
+```
+
+**Important**: General arguments (like `-verbose`, `--version`) must come **before** the simulation mode, while mode-specific arguments (like `-N`, `-duration`) come **after** the mode.
+
+**Examples:**
+
+```bash
+# General args before mode, mode-specific args after
+larvaworld -verbose 1 Exp dish -N 3 -duration 2.0
+
+# Correct: general args first
+larvaworld --version
+larvaworld -verbose 2 Exp dish -N 5
+
+# Incorrect: general args after mode (will fail)
+larvaworld Exp dish -N 5 -verbose 2  # ❌ Wrong order
+```
+
 ### Run a Simple Experiment
 
 Run a **dish exploration** experiment with 5 larvae for 3 minutes:
