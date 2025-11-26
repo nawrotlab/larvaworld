@@ -37,7 +37,8 @@ __all__: list[str] = [
     "CONFTYPES",
 ]
 
-VERBOSE: int = 2  #: Global verbosity level for vprint function.
+VERBOSE: int = 2
+"""Global verbosity level for vprint function. Messages with verbose level >= VERBOSE will be printed."""
 
 
 def vprint(text: str = "", verbose: int = 0) -> None:
@@ -54,20 +55,29 @@ def vprint(text: str = "", verbose: int = 0) -> None:
         print(text)
 
 
-ROOT_DIR: str = os.path.dirname(os.path.abspath(__file__))  #: Package root directory.
-DATA_DIR: str = f"{ROOT_DIR}/data"  #: Data directory (data/ relative to package root).
-SIM_DIR: str = f"{DATA_DIR}/SimGroup"  #: Simulation data directory.
-BATCH_DIR: str = f"{SIM_DIR}/batch_runs"  #: Batch runs directory.
-CONF_DIR: str = (
-    f"{ROOT_DIR}/lib/reg/confDicts"  #: Configuration dictionaries directory.
-)
-TEST_DIR: str = f"{ROOT_DIR}/../../tests"  #: Tests directory (relative).
+ROOT_DIR: str = os.path.dirname(os.path.abspath(__file__))
+"""Root directory of the larvaworld package."""
+
+DATA_DIR: str = f"{ROOT_DIR}/data"
+"""Path to the data directory (data/ relative to package root)."""
+
+SIM_DIR: str = f"{DATA_DIR}/SimGroup"
+"""Path to the simulation data directory (data/SimGroup/ relative to package root)."""
+
+BATCH_DIR: str = f"{SIM_DIR}/batch_runs"
+"""Path to the batch runs directory (data/SimGroup/batch_runs/ relative to package root)."""
+
+CONF_DIR: str = f"{ROOT_DIR}/lib/reg/confDicts"
+"""Path to the configuration dictionaries directory (lib/reg/confDicts/ relative to package root)."""
+
+TEST_DIR: str = f"{ROOT_DIR}/../../tests"
+"""Path to the tests directory (../../tests relative to package root)."""
 
 os.makedirs(CONF_DIR, exist_ok=True)
 
 
 SIMTYPES: list[str] = ["Exp", "Batch", "Ga", "Eval", "Replay"]
-#: List of available simulation types for CLI and API usage.
+"""List of available simulation types for CLI and API usage."""
 
 CONFTYPES: list[str] = [
     "Env",
@@ -79,7 +89,7 @@ CONFTYPES: list[str] = [
     "Batch",
     "Ga",
 ]
-#: List of available configuration types in the registry.
+"""List of available configuration types in the registry."""
 # GROUPTYPES = ['LarvaGroup', 'FoodGroup', 'epoch']
 
 
