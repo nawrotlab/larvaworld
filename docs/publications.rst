@@ -8,7 +8,7 @@ This page lists scientific publications related to Larvaworld and its applicatio
 Larvaworld-related Publications
 --------------------------------
 
-Sakagiannis, P., Aguilera, M., & Nawrot, M. P. (2020). A Plausible Mechanism for Drosophila Larva Intermittent Behavior. *Lecture Notes in Computer Science*. https://doi.org/10.1007/978-3-030-64313-3
+Sakagiannis, P., Aguilera, M., & Nawrot, M. P. (2020). A Plausible Mechanism for Drosophila Larva Intermittent Behavior. *Lecture Notes in Computer Science*. https://link.springer.com/chapter/10.1007/978-3-030-64313-3_28
 
 Sakagiannis, P., Jürgensen, A.-M., & Nawrot, M. P. (2025). A behavioral architecture for realistic simulations of Drosophila larva locomotion and foraging. *eLife*. https://doi.org/10.7554/eLife.104262.1
 
