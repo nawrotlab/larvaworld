@@ -58,7 +58,7 @@ pint_pandas = ">=0.3,<1.0"
 powerlaw = "1.5"
 progressbar = "2.5"
 pygame = ">=2.6,<3.0"
-pypdf = ">=5.0,<6.0"
+pypdf = ">=5.0,<7.0"
 # PySimpleGUI is now located on a private PyPI server.  Please add to your pip command: -i https://PySimpleGUI.net/install
 #PySimpleGUI = "*"
 seaborn = ">=0.13,<1.0"
