@@ -1848,6 +1848,10 @@ class ParamLarvaDataset(param.Parameterized):
         else:
             s, e, c = self.data
             if c.bend == "from_vectors":
+                if "front" not in c.vector_dict or "rear" not in c.vector_dict:
+                    raise ValueError(
+                        "Front and rear vectors must be defined to compute bend from vectors."
+                    )
                 vprint(
                     "Computing bending angle as the difference between front and rear orients"
                 )

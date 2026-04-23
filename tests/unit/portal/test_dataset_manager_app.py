@@ -56,7 +56,9 @@ def _write_dataset(
     )
 
 
-def _select_first_row(controller: dataset_manager_app._DatasetManagerController) -> None:
+def _select_first_row(
+    controller: dataset_manager_app._DatasetManagerController,
+) -> None:
     controller.table.selection = [0]
     controller._on_table_selection_change()
 
@@ -74,7 +76,9 @@ def test_dataset_manager_empty_state_points_to_import_app(tmp_path: Path) -> Non
 
     controller = dataset_manager_app._DatasetManagerController()
 
-    assert "No imported datasets found in this workspace" in controller.empty_state.object
+    assert (
+        "No imported datasets found in this workspace" in controller.empty_state.object
+    )
     assert "/wf.open_dataset" in controller.empty_state.object
 
 
@@ -84,12 +88,17 @@ def test_dataset_manager_renders_records_from_workspace_index(
     workspace = initialize_workspace(tmp_path / "workspace")
     set_active_workspace_path(workspace.root)
     alpha = _write_dataset(workspace, dataset_slug="alpha", dataset_id="alpha")
-    monkeypatch.setattr(dataset_manager_app, "list_workspace_datasets", lambda workspace=None: [alpha])
+    monkeypatch.setattr(
+        dataset_manager_app, "list_workspace_datasets", lambda workspace=None: [alpha]
+    )
 
     controller = dataset_manager_app._DatasetManagerController()
 
     assert controller.table.value.iloc[0]["Dataset ID"] == "alpha"
-    assert controller.table.value.iloc[0]["Location"] == "imported/Schleyer/exploration/alpha"
+    assert (
+        controller.table.value.iloc[0]["Location"]
+        == "imported/Schleyer/exploration/alpha"
+    )
 
 
 def test_dataset_manager_search_filters_by_dataset_group_and_ref_id(
@@ -120,13 +129,19 @@ def test_dataset_manager_search_filters_by_dataset_group_and_ref_id(
     controller = dataset_manager_app._DatasetManagerController()
 
     controller.search_input.value = "controls"
-    assert [record.dataset_id for record in controller._filtered_records] == ["alpha_dataset"]
+    assert [record.dataset_id for record in controller._filtered_records] == [
+        "alpha_dataset"
+    ]
 
     controller.search_input.value = "ref.beta"
-    assert [record.dataset_id for record in controller._filtered_records] == ["beta_dataset"]
+    assert [record.dataset_id for record in controller._filtered_records] == [
+        "beta_dataset"
+    ]
 
     controller.search_input.value = "alpha_dataset"
-    assert [record.dataset_id for record in controller._filtered_records] == ["alpha_dataset"]
+    assert [record.dataset_id for record in controller._filtered_records] == [
+        "alpha_dataset"
+    ]
 
 
 def test_dataset_manager_lab_filter_narrows_catalog(
@@ -154,7 +169,9 @@ def test_dataset_manager_selection_populates_details_and_actions(
     workspace = initialize_workspace(tmp_path / "workspace")
     set_active_workspace_path(workspace.root)
     record = _write_dataset(workspace, dataset_slug="alpha", ref_id="ref.alpha")
-    monkeypatch.setattr(dataset_manager_app, "list_workspace_datasets", lambda workspace=None: [record])
+    monkeypatch.setattr(
+        dataset_manager_app, "list_workspace_datasets", lambda workspace=None: [record]
+    )
 
     controller = dataset_manager_app._DatasetManagerController()
     _select_first_row(controller)
@@ -198,7 +215,9 @@ def test_dataset_manager_copy_feedback_handles_success_and_fallback(
     workspace = initialize_workspace(tmp_path / "workspace")
     set_active_workspace_path(workspace.root)
     record = _write_dataset(workspace, dataset_slug="alpha")
-    monkeypatch.setattr(dataset_manager_app, "list_workspace_datasets", lambda workspace=None: [record])
+    monkeypatch.setattr(
+        dataset_manager_app, "list_workspace_datasets", lambda workspace=None: [record]
+    )
 
     controller = dataset_manager_app._DatasetManagerController()
     _select_first_row(controller)
@@ -219,7 +238,9 @@ def test_dataset_manager_delete_requires_confirmation(
     workspace = initialize_workspace(tmp_path / "workspace")
     set_active_workspace_path(workspace.root)
     record = _write_dataset(workspace, dataset_slug="alpha")
-    monkeypatch.setattr(dataset_manager_app, "list_workspace_datasets", lambda workspace=None: [record])
+    monkeypatch.setattr(
+        dataset_manager_app, "list_workspace_datasets", lambda workspace=None: [record]
+    )
 
     controller = dataset_manager_app._DatasetManagerController()
     _select_first_row(controller)
@@ -231,7 +252,9 @@ def test_dataset_manager_delete_requires_confirmation(
     assert str(record.dataset_dir) in controller.delete_confirm_text.object
 
 
-def test_dataset_manager_confirm_delete_removes_selected_dataset(tmp_path: Path) -> None:
+def test_dataset_manager_confirm_delete_removes_selected_dataset(
+    tmp_path: Path,
+) -> None:
     workspace = initialize_workspace(tmp_path / "workspace")
     set_active_workspace_path(workspace.root)
     record = _write_dataset(workspace, dataset_slug="alpha")
@@ -280,7 +303,9 @@ def test_dataset_manager_delete_rejects_records_outside_imported_root(
         ref_id=None,
         n_agents=1,
     )
-    monkeypatch.setattr(dataset_manager_app, "list_workspace_datasets", lambda workspace=None: [record])
+    monkeypatch.setattr(
+        dataset_manager_app, "list_workspace_datasets", lambda workspace=None: [record]
+    )
 
     controller = dataset_manager_app._DatasetManagerController()
     controller._selected_record = rogue_record
@@ -288,4 +313,6 @@ def test_dataset_manager_delete_rejects_records_outside_imported_root(
 
     controller._handle_confirm_delete()
 
-    assert "outside the active workspace imported root" in controller.action_status.object
+    assert (
+        "outside the active workspace imported root" in controller.action_status.object
+    )

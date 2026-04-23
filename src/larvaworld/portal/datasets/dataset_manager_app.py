@@ -218,9 +218,7 @@ def _empty_state_html(title: str, copy: str, *, cta_href: str | None = None) -> 
     )
 
 
-def _records_frame(
-    records: list[WorkspaceDatasetRecord], workspace
-) -> pd.DataFrame:
+def _records_frame(records: list[WorkspaceDatasetRecord], workspace) -> pd.DataFrame:
     rows = []
     for record in records:
         rows.append(
@@ -386,7 +384,9 @@ class _DatasetManagerController:
 
         self._all_records = list_workspace_datasets(workspace=self.workspace)
         lab_options = {"All": ""}
-        for lab_id in sorted({record.lab_id for record in self._all_records if record.lab_id}):
+        for lab_id in sorted(
+            {record.lab_id for record in self._all_records if record.lab_id}
+        ):
             lab_options[str(lab_id)] = str(lab_id)
         self.lab_filter.options = lab_options
         if self.lab_filter.value not in set(lab_options.values()):
@@ -418,7 +418,9 @@ class _DatasetManagerController:
             ).lower()
             return query in haystack
 
-        self._filtered_records = [record for record in self._all_records if matches(record)]
+        self._filtered_records = [
+            record for record in self._all_records if matches(record)
+        ]
         if self.workspace is None:
             frame = pd.DataFrame(columns=TABLE_COLUMNS)
         else:
@@ -430,7 +432,9 @@ class _DatasetManagerController:
         label = f"{shown} dataset{'s' if shown != 1 else ''}"
         if shown != total:
             label = f"{shown} of {total} datasets"
-        self.count_pane.object = f'<div class="lw-dataset-manager-count">{escape(label)}</div>'
+        self.count_pane.object = (
+            f'<div class="lw-dataset-manager-count">{escape(label)}</div>'
+        )
         self._refresh_body()
 
     def _refresh_body(self) -> None:

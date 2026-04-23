@@ -112,6 +112,46 @@ IMPORT_DATASETS_RAW_CSS = """
   margin-top: 0;
 }
 
+.lw-import-datasets-config-intro {
+  border-left: 4px solid #c1b0c2;
+  background: rgba(193, 176, 194, 0.16);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0 0 10px 0;
+}
+
+.lw-import-datasets-config-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lw-import-datasets-config-family {
+  background: rgba(248, 248, 250, 0.96);
+  border: 1px solid rgba(90, 71, 96, 0.12);
+  border-radius: 10px;
+  padding: 10px 12px 8px 12px;
+  margin-top: 4px;
+}
+
+.lw-import-datasets-config-family-title {
+  margin: 0 0 6px 0;
+  color: #4f2f5f;
+  font-weight: 700;
+}
+
+.lw-import-datasets-config-field {
+  margin: 0 0 4px 0;
+}
+
+.lw-import-datasets-config-help {
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(63, 51, 73, 0.82);
+  margin-top: 4px;
+}
+
 """.strip()
 
 
@@ -172,17 +212,58 @@ def _flow_section(title: str, *children: object) -> pn.Column:
     )
 
 
+def _config_family_box(title: str, *children: object) -> pn.Column:
+    return pn.Column(
+        pn.pane.Markdown(
+            f"**{title}**",
+            css_classes=["lw-import-datasets-config-family-title"],
+            margin=(0, 0, 4, 0),
+        ),
+        *children,
+        css_classes=["lw-import-datasets-config-family"],
+        sizing_mode="stretch_width",
+        margin=0,
+    )
+
+
 class _ImportDatasetsController:
     def __init__(self) -> None:
         self.workspace = get_active_workspace()
         self._candidate_by_key: dict[str, RawDatasetCandidate] = {}
         self._selected_record_path: Path | None = None
+        self._working_lab_id: str | None = None
+        self._working_lab = None
+        self._tracker_widget_syncing = False
 
         self.lab_select = pn.widgets.Select(
             name="Lab format",
             options=self._lab_options(),
             value=self._default_lab_value(),
             width=260,
+        )
+        self.lab_config_name_input = pn.widgets.TextInput(
+            name="Configuration ID",
+            width=260,
+        )
+        self.lab_load_button = pn.widgets.Button(
+            name="Load",
+            button_type="default",
+            width=90,
+        )
+        self.lab_save_button = pn.widgets.Button(
+            name="Save",
+            button_type="primary",
+            width=90,
+        )
+        self.lab_delete_button = pn.widgets.Button(
+            name="Delete",
+            button_type="danger",
+            width=90,
+        )
+        self.lab_reset_button = pn.widgets.Button(
+            name="Reset",
+            button_type="default",
+            width=90,
         )
         self.raw_root_input = pn.widgets.TextInput(
             name="Raw root",
@@ -221,7 +302,6 @@ class _ImportDatasetsController:
             name="Color",
             value="#000000",
             width=52,
-            sizing_mode="fixed",
             css_classes=["lw-import-datasets-color-picker"],
         )
         self.import_button = pn.widgets.Button(
@@ -233,16 +313,23 @@ class _ImportDatasetsController:
         self.candidate_summary = pn.pane.HTML(
             _candidate_summary_html(None), margin=(0, 0, 0, 0)
         )
+        self.lab_status = pn.pane.HTML("", margin=0)
+        self.lab_editor_sections = pn.Column(sizing_mode="stretch_width", margin=0)
         self.status = pn.pane.HTML("", margin=0)
 
-        self.lab_select.param.watch(self._on_source_change, "value")
-        self.raw_root_input.param.watch(self._on_source_change, "value")
+        self.lab_select.param.watch(self._on_lab_select_change, "value")
+        self.raw_root_input.param.watch(self._on_raw_root_change, "value")
         self.candidate_select.param.watch(self._on_candidate_change, "value")
+        self.lab_load_button.on_click(self._handle_lab_load)
+        self.lab_save_button.on_click(self._handle_lab_save)
+        self.lab_delete_button.on_click(self._handle_lab_delete)
+        self.lab_reset_button.on_click(self._handle_lab_reset)
         self.browse_raw_root_button.on_click(self._handle_browse_raw_root)
         self.reset_button.on_click(self._handle_reset)
         self.discover_button.on_click(self._handle_discover)
         self.import_button.on_click(self._handle_import)
 
+        self._load_working_lab(self.lab_select.value)
         self._refresh_workspace_summary()
         if self.workspace is None:
             self._set_status(
@@ -262,6 +349,260 @@ class _ImportDatasetsController:
         if not options:
             return None
         return next(iter(options.values()))
+
+    def _set_lab_status(
+        self, text: str, *, tone: str = "neutral", detail: str | None = None
+    ) -> None:
+        self.lab_status.object = _status_html(text, tone=tone, detail=detail)
+
+    def _refresh_lab_options(self, *, select_id: str | None = None) -> None:
+        options = self._lab_options()
+        current = select_id or self.lab_select.value
+        self.lab_select.options = options
+        if current in options.values():
+            self.lab_select.value = current
+        elif options:
+            self.lab_select.value = next(iter(options.values()))
+        else:
+            self.lab_select.value = None
+
+    @staticmethod
+    def _widget_has_native_help(widget: object) -> bool:
+        description = getattr(widget, "description", None)
+        return isinstance(description, str) and description.strip() != ""
+
+    @staticmethod
+    def _doc_pane(doc: str | None) -> pn.pane.HTML | None:
+        if not doc:
+            return None
+        return pn.pane.HTML(
+            f'<div class="lw-import-datasets-config-help">{escape(doc)}</div>',
+            margin=0,
+        )
+
+    @classmethod
+    def _widget_block(cls, widget: object, *, doc: str | None = None) -> pn.Column:
+        children = [widget]
+        doc_pane = None if cls._widget_has_native_help(widget) else cls._doc_pane(doc)
+        if doc_pane is not None:
+            children.append(doc_pane)
+        return pn.Column(*children, sizing_mode="stretch_width", margin=0)
+
+    @classmethod
+    def _param_controls(
+        cls,
+        obj: object,
+        *,
+        parameters: list[str],
+        widget_overrides: dict[str, dict[str, object]] | None = None,
+    ) -> pn.Column:
+        param_pane = pn.Param(
+            obj,
+            parameters=parameters,
+            widgets=widget_overrides or {},
+            sizing_mode="stretch_width",
+            show_name=False,
+            expand_button=False,
+            expand=False,
+        )
+        controls = []
+        for name in parameters:
+            widget = param_pane._widgets.get(name)
+            if widget is None:
+                continue
+            controls.append(
+                cls._widget_block(widget, doc=getattr(obj.param[name], "doc", None))
+            )
+        container = pn.Column(*controls, sizing_mode="stretch_width", margin=0)
+        container._param_pane = param_pane
+        return container
+
+    @staticmethod
+    def _param_section(
+        title: str,
+        obj: object,
+        *,
+        parameters: list[str] | None = None,
+        widget_overrides: dict[str, dict[str, object]] | None = None,
+    ) -> pn.Column:
+        if parameters is None:
+            parameters = [name for name in obj.param if name != "name"]
+        return _config_family_box(
+            title,
+            _ImportDatasetsController._param_controls(
+                obj,
+                parameters=parameters,
+                widget_overrides=widget_overrides,
+            ),
+        )
+
+    def _sync_tracker_vector_widgets(self, *_events) -> None:
+        if self._working_lab is None or not hasattr(
+            self, "_tracker_front_vector_slider"
+        ):
+            return
+        tracker = self._working_lab.tracker
+        if tracker.Npoints > 0 and tracker.bend == "from_vectors":
+            updates = {}
+            if tracker.front_vector is None:
+                updates["front_vector"] = (1, min(2, tracker.Npoints))
+            if tracker.rear_vector is None:
+                updates["rear_vector"] = (-min(2, tracker.Npoints), -1)
+            if updates:
+                tracker.param.update(**updates)
+                return
+        self._tracker_widget_syncing = True
+        try:
+            if tracker.Npoints > 0:
+                front_value = tracker.front_vector or (1, min(2, tracker.Npoints))
+                rear_tail = min(2, tracker.Npoints)
+                rear_value = tracker.rear_vector or (-rear_tail, -1)
+                self._tracker_front_vector_slider.start = 1
+                self._tracker_front_vector_slider.end = tracker.Npoints
+                self._tracker_front_vector_slider.value = front_value
+                self._tracker_rear_vector_slider.start = -tracker.Npoints
+                self._tracker_rear_vector_slider.end = -1
+                self._tracker_rear_vector_slider.value = rear_value
+            else:
+                self._tracker_front_vector_slider.start = 1
+                self._tracker_front_vector_slider.end = 1
+                self._tracker_front_vector_slider.value = (1, 1)
+                self._tracker_rear_vector_slider.start = -1
+                self._tracker_rear_vector_slider.end = -1
+                self._tracker_rear_vector_slider.value = (-1, -1)
+            sliders_disabled = tracker.Npoints <= 0 or tracker.bend != "from_vectors"
+            self._tracker_front_vector_slider.disabled = sliders_disabled
+            self._tracker_rear_vector_slider.disabled = sliders_disabled
+        finally:
+            self._tracker_widget_syncing = False
+
+    def _handle_tracker_front_vector_change(self, event) -> None:
+        if self._tracker_widget_syncing or self._working_lab is None:
+            return
+        tracker = self._working_lab.tracker
+        if tracker.Npoints <= 0 or tracker.bend != "from_vectors":
+            return
+        tracker.front_vector = tuple(event.new)
+
+    def _handle_tracker_rear_vector_change(self, event) -> None:
+        if self._tracker_widget_syncing or self._working_lab is None:
+            return
+        tracker = self._working_lab.tracker
+        if tracker.Npoints <= 0 or tracker.bend != "from_vectors":
+            return
+        tracker.rear_vector = tuple(event.new)
+
+    def _build_tracker_metric_section(self) -> pn.Column:
+        tracker = self._working_lab.tracker
+        tracker_top_controls = self._param_controls(
+            tracker,
+            parameters=[
+                "XY_unit",
+                "Npoints",
+                "Ncontour",
+                "point_idx",
+            ],
+            widget_overrides={
+                "Npoints": {"type": pn.widgets.IntInput},
+                "Ncontour": {"type": pn.widgets.IntInput},
+                "point_idx": {"type": pn.widgets.IntInput},
+            },
+        )
+        bend_control = self._param_controls(tracker, parameters=["bend"])
+        tracker_tail_controls = self._param_controls(
+            tracker,
+            parameters=["front_body_ratio", "use_component_vel"],
+        )
+        self._tracker_front_vector_slider = pn.widgets.RangeSlider(name="Front vector")
+        self._tracker_rear_vector_slider = pn.widgets.RangeSlider(name="Rear vector")
+        self._tracker_front_vector_slider.param.watch(
+            self._handle_tracker_front_vector_change, "value"
+        )
+        self._tracker_rear_vector_slider.param.watch(
+            self._handle_tracker_rear_vector_change, "value"
+        )
+        tracker.param.watch(
+            self._sync_tracker_vector_widgets,
+            ["Npoints", "bend", "front_vector", "rear_vector"],
+        )
+        self._sync_tracker_vector_widgets()
+        return _config_family_box(
+            "Tracker Metrics",
+            tracker_top_controls,
+            bend_control,
+            self._widget_block(
+                self._tracker_front_vector_slider,
+                doc=getattr(tracker.param["front_vector"], "doc", None),
+            ),
+            self._widget_block(
+                self._tracker_rear_vector_slider,
+                doc=getattr(tracker.param["rear_vector"], "doc", None),
+            ),
+            tracker_tail_controls,
+        )
+
+    def _build_tracker_framerate_section(self) -> pn.Column:
+        tracker = self._working_lab.tracker
+        return _config_family_box(
+            "Tracker Framerate",
+            self._param_controls(
+                tracker,
+                parameters=["fr", "dt", "constant_framerate"],
+                widget_overrides={
+                    "fr": {"type": pn.widgets.FloatInput},
+                    "dt": {"type": pn.widgets.FloatInput},
+                },
+            ),
+        )
+
+    def _rebuild_lab_editor(self) -> None:
+        if self._working_lab is None:
+            self.lab_editor_sections.objects = [
+                _config_family_box(
+                    "Lab Format Configuration",
+                    pn.pane.HTML(
+                        '<div class="lw-import-datasets-summary">No LabFormat configuration is loaded.</div>',
+                        margin=0,
+                    ),
+                )
+            ]
+            return
+        self.lab_editor_sections.objects = [
+            self._param_section("General", self._working_lab, parameters=["labID"]),
+            self._build_tracker_metric_section(),
+            self._build_tracker_framerate_section(),
+            self._param_section("Filesystem", self._working_lab.filesystem),
+            self._param_section("Environment", self._working_lab.env_params),
+            self._param_section(
+                "Preprocess",
+                self._working_lab.preprocess,
+                widget_overrides={
+                    "rescale_by": {"type": pn.widgets.FloatInput},
+                    "filter_f": {"type": pn.widgets.FloatInput},
+                },
+            ),
+        ]
+
+    def _load_working_lab(self, lab_id: str | None) -> None:
+        if not lab_id:
+            self._working_lab_id = None
+            self._working_lab = None
+            self.lab_config_name_input.value = ""
+            self._rebuild_lab_editor()
+            return
+        self._working_lab_id = lab_id
+        self._working_lab = reg.conf.LabFormat.get(lab_id)
+        self.lab_config_name_input.value = lab_id
+        self._rebuild_lab_editor()
+        self._set_lab_status(f'Loaded LabFormat "{lab_id}".')
+
+    def _build_working_lab_conf(self):
+        if self._working_lab_id is None:
+            raise RuntimeError("No LabFormat configuration is loaded.")
+        rebuilt = self._working_lab.nestedConf.get_copy()
+        target_id = self.lab_config_name_input.value.strip() or self._working_lab_id
+        rebuilt["labID"] = target_id
+        return rebuilt
 
     def _active_workspace_ready(self) -> bool:
         return self.workspace is not None
@@ -344,8 +685,24 @@ class _ImportDatasetsController:
         self.reset_button.disabled = not (
             workspace_ready and (self._raw_root_text() or self._candidate_by_key)
         )
+        lab_ready = bool(self.lab_select.options)
+        self.lab_config_name_input.disabled = not lab_ready
+        self.lab_load_button.disabled = not lab_ready
+        self.lab_save_button.disabled = not lab_ready
+        self.lab_delete_button.disabled = not lab_ready or not self.lab_select.value
+        self.lab_reset_button.disabled = not lab_ready or self._working_lab is None
 
-    def _on_source_change(self, *_events) -> None:
+    def _on_lab_select_change(self, *_events) -> None:
+        self._load_working_lab(self.lab_select.value)
+        self._clear_candidates()
+        self._refresh_workspace_summary()
+        if self.workspace is not None:
+            self._set_status(
+                "Source changed. Discover datasets again to refresh the candidate list."
+            )
+        self._sync_controls()
+
+    def _on_raw_root_change(self, *_events) -> None:
         self._clear_candidates()
         self._refresh_workspace_summary()
         if self.workspace is not None:
@@ -366,6 +723,63 @@ class _ImportDatasetsController:
         self._set_status(
             "Candidate selected. Review the import options and start the workspace import."
         )
+        self._sync_controls()
+
+    def _handle_lab_load(self, _event=None) -> None:
+        self._load_working_lab(self.lab_select.value)
+        self._sync_controls()
+
+    def _handle_lab_save(self, _event=None) -> None:
+        config_id = self.lab_config_name_input.value.strip()
+        if not config_id:
+            self._set_lab_status(
+                "Enter a configuration ID before saving.", tone="warning"
+            )
+            return
+        try:
+            conf = self._build_working_lab_conf()
+            reg.conf.LabFormat.setID(config_id, conf)
+        except Exception as exc:
+            self._set_lab_status(str(exc), tone="danger")
+            return
+        self._refresh_lab_options(select_id=config_id)
+        self._load_working_lab(config_id)
+        self._set_lab_status(
+            f'LabFormat "{config_id}" saved to the registry.',
+            tone="success",
+        )
+        self._refresh_workspace_summary()
+        self._sync_controls()
+
+    def _handle_lab_delete(self, _event=None) -> None:
+        lab_id = self.lab_select.value
+        if not lab_id:
+            self._set_lab_status(
+                "Select a LabFormat configuration first.", tone="warning"
+            )
+            return
+        try:
+            reg.conf.LabFormat.delete(lab_id)
+        except Exception as exc:
+            self._set_lab_status(str(exc), tone="danger")
+            return
+        self._set_lab_status(
+            f'LabFormat "{lab_id}" deleted from the registry.',
+            tone="success",
+        )
+        self._refresh_lab_options()
+        self._load_working_lab(self.lab_select.value)
+        self._clear_candidates()
+        self._refresh_workspace_summary()
+        self._sync_controls()
+
+    def _handle_lab_reset(self, _event=None) -> None:
+        self._load_working_lab(self.lab_select.value)
+        if self.lab_select.value:
+            self._set_lab_status(
+                f'LabFormat "{self.lab_select.value}" reset to the stored registry version.',
+                tone="success",
+            )
         self._sync_controls()
 
     def _handle_reset(self, _event=None) -> None:
@@ -477,6 +891,41 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def view(self) -> pn.viewable.Viewable:
+        config_intro = pn.pane.HTML(
+            (
+                '<div class="lw-import-datasets-config-intro">'
+                "Inspect and edit the selected `LabFormat` configuration before running dataset discovery and import. "
+                "This embedded panel exposes the registry-backed tracker, filesystem, environment, and preprocess structure used by the import lane."
+                "</div>"
+            ),
+            margin=0,
+        )
+        config_section = pn.Card(
+            pn.Column(
+                config_intro,
+                pn.Row(
+                    self.lab_select,
+                    self.lab_config_name_input,
+                    sizing_mode="stretch_width",
+                    margin=0,
+                ),
+                pn.Row(
+                    self.lab_load_button,
+                    self.lab_save_button,
+                    self.lab_delete_button,
+                    self.lab_reset_button,
+                    css_classes=["lw-import-datasets-config-actions"],
+                    sizing_mode="stretch_width",
+                    margin=(4, 0, 0, 0),
+                ),
+                self.lab_status,
+                self.lab_editor_sections,
+                sizing_mode="stretch_width",
+            ),
+            title="Lab Format Configuration",
+            collapsed=False,
+            sizing_mode="stretch_width",
+        )
         raw_root_row = pn.Row(
             self.raw_root_input,
             self.browse_raw_root_button,
@@ -539,6 +988,7 @@ class _ImportDatasetsController:
         )
         return pn.Column(
             intro,
+            config_section,
             workflow_section,
             css_classes=["lw-import-datasets-root"],
             sizing_mode="stretch_width",

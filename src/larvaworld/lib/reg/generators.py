@@ -3,7 +3,7 @@ Configuration and Generator classes for higher-order objects in the larvaworld p
 """
 
 from __future__ import annotations
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import inspect
 import os
@@ -50,6 +50,9 @@ from ..param import (
 from .larvagroup import LarvaGroup
 from ..util import AttrDict, nam
 
+if TYPE_CHECKING:
+    from ..process.dataset import LarvaDataset
+
 __all__: list[str] = [
     "gen",
     "SimConfiguration",
@@ -71,7 +74,7 @@ class _GenProxy(AttrDict):
     the corresponding module to register it and then return it.
     """
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> Any:
         try:
             return super().__getitem__(name)
         except KeyError:
@@ -121,7 +124,7 @@ _LAZY_GEN_REGISTRATIONS = {
 }
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
     module_path = _LAZY_GEN_REGISTRATIONS.get(name)
     if module_path is not None:
         from importlib import import_module
@@ -160,7 +163,7 @@ class SimConfiguration(RuntimeOps, SimMetricOps, SimOps):
 
     runtype = param.Selector(objects=SIMTYPES, doc="The simulation mode")
 
-    def __init__(self, runtype: str, **kwargs: Any):
+    def __init__(self, runtype: str, **kwargs: Any) -> None:
         self.param.add_parameter("experiment", self.exp_selector_param(runtype))
         super().__init__(runtype=runtype, **kwargs)
 
@@ -280,7 +283,7 @@ def source_generator(
     qs: Optional[list[float]] = None,
     type: str = "standard",
     **kwargs: Any,
-):
+) -> dict[str, Any]:
     """
     Generate a list of source units or groups.
 
@@ -371,14 +374,14 @@ class FoodConf(NestedConf):
     @classmethod
     def CS_UCS(
         cls,
-        grid=None,
-        sg={},
+        grid: Any = None,
+        sg: dict[str, Any] = {},
         N: int = 1,
         x: float = 0.04,
         colors: list[str] = ["red", "blue"],
         o: str = "G",
         **kwargs: Any,
-    ):
+    ) -> FoodConf:
         F = gen.Food
         CS_kws = {"odor": Odor.oO(o=o, id="CS"), "c": colors[0], **kwargs}
         UCS_kws = {"odor": Odor.oO(o=o, id="UCS"), "c": colors[1], **kwargs}
@@ -403,8 +406,8 @@ class FoodConf(NestedConf):
     @classmethod
     def double_patch(
         cls,
-        grid=None,
-        sg={},
+        grid: Any = None,
+        sg: dict[str, Any] = {},
         type: str = "standard",
         q: float = 1.0,
         c: str = "green",
@@ -413,7 +416,7 @@ class FoodConf(NestedConf):
         a: float = 0.1,
         o: str = "G",
         **kwargs: Any,
-    ):
+    ) -> FoodConf:
         F = gen.Food
         kws = {"odor": Odor.oO(o=o), "c": c, "r": r, "a": a, "sub": [q, type], **kwargs}
         su = {
@@ -425,8 +428,8 @@ class FoodConf(NestedConf):
     @classmethod
     def patch(
         cls,
-        grid=None,
-        sg={},
+        grid: Any = None,
+        sg: dict[str, Any] = {},
         id: str = "Patch",
         type: str = "standard",
         q: float = 1.0,
@@ -434,18 +437,29 @@ class FoodConf(NestedConf):
         r: float = 0.01,
         a: float = 0.1,
         **kwargs: Any,
-    ):
+    ) -> FoodConf:
         kws = {"c": c, "r": r, "a": a, "sub": [q, type], **kwargs}
         return cls.su(id=id, grid=grid, sg=sg, **kws)
 
     @classmethod
-    def su(cls, id: str = "Source", grid=None, sg={}, **kwargs: Any):
+    def su(
+        cls,
+        id: str = "Source",
+        grid: Any = None,
+        sg: dict[str, Any] = {},
+        **kwargs: Any,
+    ) -> FoodConf:
         return cls(
             source_groups=sg, source_units=gen.Food(**kwargs).entry(id), food_grid=grid
         )
 
     @classmethod
-    def sus(cls, grid=None, sg={}, **kwargs: Any):
+    def sus(
+        cls,
+        grid: Any = None,
+        sg: dict[str, Any] = {},
+        **kwargs: Any,
+    ) -> FoodConf:
         return cls(
             source_groups=sg,
             source_units=source_generator(genmode="Unit", **kwargs),
@@ -453,7 +467,13 @@ class FoodConf(NestedConf):
         )
 
     @classmethod
-    def sg(cls, id: str = "SourceGroup", grid=None, su={}, **kwargs: Any):
+    def sg(
+        cls,
+        id: str = "SourceGroup",
+        grid: Any = None,
+        su: dict[str, Any] = {},
+        **kwargs: Any,
+    ) -> FoodConf:
         return cls(
             source_groups=gen.FoodGroup(**kwargs).entry(id),
             source_units=su,
@@ -461,7 +481,12 @@ class FoodConf(NestedConf):
         )
 
     @classmethod
-    def sgs(cls, grid=None, su={}, **kwargs: Any):
+    def sgs(
+        cls,
+        grid: Any = None,
+        su: dict[str, Any] = {},
+        **kwargs: Any,
+    ) -> FoodConf:
         return cls(
             source_groups=source_generator(genmode="Group", **kwargs),
             source_units=su,
@@ -471,13 +496,13 @@ class FoodConf(NestedConf):
     @classmethod
     def foodNodor_4corners(
         cls,
-        d=0.05,
-        colors=["blue", "red", "green", "magenta"],
-        grid=None,
-        sg={},
-        o="D",
-        **kwargs,
-    ):
+        d: float = 0.05,
+        colors: list[str] = ["blue", "red", "green", "magenta"],
+        grid: Any = None,
+        sg: dict[str, Any] = {},
+        o: str = "D",
+        **kwargs: Any,
+    ) -> FoodConf:
         ps = [(-d, -d), (-d, d), (d, -d), (d, d)]
         l = [
             gen.Food(
@@ -538,7 +563,7 @@ class EnvConf(NestedConf):
         gen.ThermoScape, default=None, doc="The thermal landscape in the arena"
     )
 
-    def __init__(self, odorscape=None, **kwargs: Any):
+    def __init__(self, odorscape: Any = None, **kwargs: Any) -> None:
         if odorscape is not None and isinstance(odorscape, AttrDict):
             mode = odorscape.odorscape
             odorscape_classes = list(EnvConf.param.odorscape.class_)
@@ -559,16 +584,23 @@ class EnvConf(NestedConf):
         BaseRun.visualize_Env(envConf=self.nestedConf, envID=self.name, **kwargs)
 
     @classmethod
-    def food_params_class(cls):
+    def food_params_class(cls) -> Any:
         return EnvConf.param.food_params.class_
 
     @classmethod
-    def arena_class(cls):
+    def arena_class(cls) -> Any:
         return EnvConf.param.arena.class_
 
     @classmethod
-    def maze(cls, n: int = 15, h: float = 0.1, o: str = "G", **kwargs: Any):
-        def get_maze(nx=15, ny=15, ix=0, iy=0, h=0.1, return_points=False):
+    def maze(cls, n: int = 15, h: float = 0.1, o: str = "G", **kwargs: Any) -> EnvConf:
+        def get_maze(
+            nx: int = 15,
+            ny: int = 15,
+            ix: int = 0,
+            iy: int = 0,
+            h: float = 0.1,
+            return_points: bool = False,
+        ) -> Any:
             from ..model.envs.maze import Maze
 
             m = Maze(nx, ny, ix, iy, height=h)
@@ -608,7 +640,7 @@ class EnvConf(NestedConf):
         y: float = 0.0,
         o: str = "G",
         **kwargs: Any,
-    ):
+    ) -> EnvConf:
         x = np.round(x * dim, 3)
         y = np.round(y * dim, 3)
         F = gen.Food
@@ -630,7 +662,9 @@ class EnvConf(NestedConf):
         return cls.rect(dim, f=cls.food_params_class()(source_units=sus), o=o, **kwargs)
 
     @classmethod
-    def foodNodor_4corners(cls, dim: float = 0.2, o: str = "D", **kwargs: Any):
+    def foodNodor_4corners(
+        cls, dim: float = 0.2, o: str = "D", **kwargs: Any
+    ) -> EnvConf:
         return cls.rect(
             dim,
             f=cls.food_params_class().foodNodor_4corners(d=dim / 4, o=o, **kwargs),
@@ -638,13 +672,13 @@ class EnvConf(NestedConf):
         )
 
     @classmethod
-    def CS_UCS(cls, dim: float = 0.1, o: str = "G", **kwargs: Any):
+    def CS_UCS(cls, dim: float = 0.1, o: str = "G", **kwargs: Any) -> EnvConf:
         return cls.dish(
             dim, f=cls.food_params_class().CS_UCS(x=0.4 * dim, o=o, **kwargs), o=o
         )
 
     @classmethod
-    def double_patch(cls, dim: float = 0.24, o: str = "G", **kwargs: Any):
+    def double_patch(cls, dim: float = 0.24, o: str = "G", **kwargs: Any) -> EnvConf:
         return cls.rect(
             dim,
             f=cls.food_params_class().double_patch(x=0.25 * dim, o=o, **kwargs),
@@ -658,20 +692,20 @@ class EnvConf(NestedConf):
         o: str = "G",
         c: int = 1,
         **kwargs: Any,
-    ):
+    ) -> EnvConf:
         return cls.rect(
             dim, f=cls.food_params_class().su(odor=Odor.oO(o=o, c=c), **kwargs), o=o
         )
 
     @classmethod
-    def dish(cls, xy: float = 0.1, **kwargs: Any):
+    def dish(cls, xy: float = 0.1, **kwargs: Any) -> EnvConf:
         assert isinstance(xy, float)
         return cls.scapes(
             arena=cls.arena_class()(geometry="circular", dims=(xy, xy)), **kwargs
         )
 
     @classmethod
-    def rect(cls, xy: float | tuple[float, float] = 0.1, **kwargs: Any):
+    def rect(cls, xy: float | tuple[float, float] = 0.1, **kwargs: Any) -> EnvConf:
         if isinstance(xy, float):
             dims = (xy, xy)
         elif isinstance(xy, tuple):
@@ -685,13 +719,13 @@ class EnvConf(NestedConf):
     @classmethod
     def scapes(
         cls,
-        o: Optional[str] = None,
+        o: Any = None,
         w: Optional[dict] = None,
         th: Optional[dict] = None,
-        f=None,
-        bl: dict = {},
+        f: Any = None,
+        bl: dict[str, Any] = {},
         **kwargs: Any,
-    ):
+    ) -> EnvConf:
         if f is None:
             f = cls.food_params_class()()
         if o == "D":
@@ -758,7 +792,9 @@ class LabFormat(NestedConf):
     def processed_folder(self) -> str:
         return f"{self.path}/processed"
 
-    def get_source_dir(self, parent_dir, raw_folder=None, merged=False):
+    def get_source_dir(
+        self, parent_dir: str, raw_folder: Optional[str] = None, merged: bool = False
+    ) -> str | list[str]:
         if raw_folder is None:
             raw_folder = self.raw_folder
         source_dir = f"{raw_folder}/{parent_dir}"
@@ -766,7 +802,7 @@ class LabFormat(NestedConf):
             source_dir = [f"{source_dir}/{f}" for f in os.listdir(source_dir)]
         return source_dir
 
-    def get_store_sequence(self, mode="semifull"):
+    def get_store_sequence(self, mode: str = "semifull") -> list[str]:
         if mode == "full":
             return self.filesystem.read_sequence[1:]
         elif mode == "minimal":
@@ -783,14 +819,19 @@ class LabFormat(NestedConf):
             raise
 
     @property
-    def import_func(self):
+    def import_func(self) -> Any:
         from ..process import lab_specific_import_functions as d
 
         return d[self.labID]
 
     def import_data_to_dfs(
-        self, parent_dir, raw_folder=None, merged=False, save_mode="semifull", **kwargs
-    ):
+        self,
+        parent_dir: str,
+        raw_folder: Optional[str] = None,
+        merged: bool = False,
+        save_mode: str = "semifull",
+        **kwargs: Any,
+    ) -> tuple[pd.DataFrame | None, pd.DataFrame | None]:
         source_dir = self.get_source_dir(parent_dir, raw_folder, merged)
         if self.filesystem.structure == "per_larva":
             read_sequence = self.filesystem.read_sequence
@@ -816,18 +857,18 @@ class LabFormat(NestedConf):
 
     def build_dataset(
         self,
-        step,
-        end,
-        parent_dir,
-        proc_folder=None,
-        group_id=None,
-        id=None,
-        sample=None,
-        color="black",
-        epochs=[],
-        age=0.0,
-        refID=None,
-    ):
+        step: pd.DataFrame,
+        end: pd.DataFrame,
+        parent_dir: str,
+        proc_folder: Optional[str] = None,
+        group_id: Optional[str] = None,
+        id: Optional[str] = None,
+        sample: Optional[str] = None,
+        color: str = "black",
+        epochs: list[Epoch] = [],
+        age: float = 0.0,
+        refID: Optional[str] = None,
+    ) -> LarvaDataset:
         if group_id is None:
             group_id = parent_dir
         if id is None:
@@ -867,21 +908,21 @@ class LabFormat(NestedConf):
 
     def import_dataset(
         self,
-        parent_dir,
-        raw_folder=None,
-        merged=False,
-        proc_folder=None,
-        group_id=None,
-        id=None,
-        sample=None,
-        color="black",
-        epochs=[],
-        age=0.0,
-        refID=None,
-        enrich_conf=None,
-        save_dataset=False,
-        **kwargs,
-    ):
+        parent_dir: str,
+        raw_folder: Optional[str] = None,
+        merged: bool = False,
+        proc_folder: Optional[str] = None,
+        group_id: Optional[str] = None,
+        id: Optional[str] = None,
+        sample: Optional[str] = None,
+        color: str = "black",
+        epochs: list[Epoch] = [],
+        age: float = 0.0,
+        refID: Optional[str] = None,
+        enrich_conf: Optional[AttrDict | dict[str, Any]] = None,
+        save_dataset: bool = False,
+        **kwargs: Any,
+    ) -> LarvaDataset | None:
         """
          Imports a single experimental dataset defined by their ID from a source folder.
 
@@ -976,7 +1017,14 @@ class LabFormat(NestedConf):
                 d.save()
             return d
 
-    def import_datasets(self, source_ids, ids=None, colors=None, refIDs=None, **kwargs):
+    def import_datasets(
+        self,
+        source_ids: list[str],
+        ids: Optional[list[str]] = None,
+        colors: Optional[list[str]] = None,
+        refIDs: Optional[list[Optional[str]]] = None,
+        **kwargs: Any,
+    ) -> list[LarvaDataset | None]:
         """
         Imports multiple experimental datasets defined by their IDs.
 
@@ -1026,8 +1074,12 @@ class LabFormat(NestedConf):
         ]
 
     def read_timeseries_from_raw_files_per_larva(
-        self, files, read_sequence, store_sequence, inv_x=False
-    ):
+        self,
+        files: list[str],
+        read_sequence: list[str],
+        store_sequence: list[str],
+        inv_x: bool = False,
+    ) -> list[pd.DataFrame]:
         """
         Reads timeseries data stored in txt files of the lab-specific Jovanic format and returns them as a pd.Dataframe.
 
@@ -1102,11 +1154,11 @@ class ExpConf(SimOps):
     )
     enrichment = ClassAttr(gen.EnrichConf, doc="The post-simulation processing")
 
-    def __init__(self, id=None, **kwargs):
+    def __init__(self, id: Optional[str] = None, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
     @classmethod
-    def imitation_exp(cls, refID, mID="explorer", **kwargs):
+    def imitation_exp(cls, refID: str, mID: str = "explorer", **kwargs: Any) -> ExpConf:
         c = reg.conf.Ref.getRef(refID)
         kws = {
             "sample": refID,
@@ -1125,7 +1177,7 @@ class ExpConf(SimOps):
         )
 
     @property
-    def agent_confs(self):
+    def agent_confs(self) -> list[Any]:
         confs = []
         for gID, gConf in self.larva_groups.items():
             lg = LarvaGroup(**gConf, id=gID)

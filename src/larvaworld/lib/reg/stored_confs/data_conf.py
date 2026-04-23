@@ -25,7 +25,7 @@ def LabFormat_dict() -> util.AttrDict:
                 Npoints=12,
                 Ncontour=22,
                 front_vector=(2, 6),
-                rear_vector=(7, 11),
+                rear_vector=(-5, -1),
                 point_idx=9,
             ),
             "filesystem": Filesystem(
@@ -65,7 +65,7 @@ def LabFormat_dict() -> util.AttrDict:
                 Npoints=11,
                 Ncontour=0,
                 front_vector=(2, 6),
-                rear_vector=(6, 10),
+                rear_vector=(-5, -1),
                 point_idx=9,
             ),
             "filesystem": Filesystem(
@@ -84,7 +84,11 @@ def LabFormat_dict() -> util.AttrDict:
         },
         "Berni": {
             "tracker": TrackerOps(
-                fr=2.0, Npoints=1, front_vector=(1, 1), rear_vector=(1, 1), point_idx=1
+                fr=2.0,
+                Npoints=1,
+                front_vector=(1, 1),
+                rear_vector=(-1, -1),
+                point_idx=1,
             ),
             "filesystem": Filesystem(
                 **{"read_sequence": ["Date"] + nam.traj_xy, "file_sep": "_-_"}
@@ -99,7 +103,7 @@ def LabFormat_dict() -> util.AttrDict:
                 fr=10.0,
                 Npoints=5,
                 front_vector=(1, 3),
-                rear_vector=(3, 5),
+                rear_vector=(-2, -1),
                 point_idx=-1,
             ),
             "filesystem": Filesystem(

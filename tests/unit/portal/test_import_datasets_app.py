@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from html import unescape
 from pathlib import Path
 
+import panel as pn
 import pytest
 
 from larvaworld.portal.datasets import import_datasets_app
@@ -34,12 +36,187 @@ def _record(path: Path) -> WorkspaceDatasetRecord:
     )
 
 
+def _section_widgets(section: pn.viewable.Viewable) -> dict[str, pn.widgets.Widget]:
+    return {
+        widget.name: widget
+        for widget in section.select(pn.widgets.Widget)
+        if getattr(widget, "name", None)
+    }
+
+
+def _find_section_with_widget(
+    controller: import_datasets_app._ImportDatasetsController, widget_name: str
+) -> pn.viewable.Viewable:
+    for section in controller.lab_editor_sections.objects:
+        widgets = _section_widgets(section)
+        if widget_name in widgets:
+            return section
+    raise AssertionError(f"Could not find section containing widget {widget_name!r}")
+
+
 def test_import_datasets_controller_requires_active_workspace() -> None:
     controller = import_datasets_app._ImportDatasetsController()
 
     assert controller.discover_button.disabled is True
     assert controller.import_button.disabled is True
     assert "Configure an active workspace" in controller.status.object
+
+
+def test_import_datasets_lab_config_panel_loads_selected_configuration() -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+
+    assert controller.lab_config_name_input.value == controller.lab_select.value
+    assert len(controller.lab_editor_sections.objects) == 6
+    assert "Loaded LabFormat" in controller.lab_status.object
+
+
+def test_import_datasets_tracker_panel_uses_safe_numeric_widgets() -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+    metric_section = _find_section_with_widget(controller, "Front vector")
+    framerate_section = _find_section_with_widget(controller, "framerate")
+
+    float_inputs = {
+        widget.name for widget in framerate_section.select(pn.widgets.FloatInput)
+    }
+    int_inputs = {widget.name for widget in metric_section.select(pn.widgets.IntInput)}
+
+    assert "framerate" in float_inputs
+    assert "timestep" in float_inputs
+    assert "# midline 2D points" in int_inputs
+    assert "# contour 2D points" in int_inputs
+
+
+def test_import_datasets_tracker_vector_sliders_follow_points_and_bend() -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+    tracker = controller._working_lab.tracker
+    tracker_section = _find_section_with_widget(controller, "Front vector")
+    widgets = _section_widgets(tracker_section)
+    front_slider = widgets["Front vector"]
+    rear_slider = widgets["Rear vector"]
+
+    tracker.Npoints = 6
+    tracker.front_vector = (1, 3)
+    tracker.rear_vector = (-2, -1)
+    assert front_slider.start == 1
+    assert front_slider.end == 6
+    assert front_slider.value == (1, 3)
+    assert rear_slider.start == -6
+    assert rear_slider.end == -1
+    assert rear_slider.value == (-2, -1)
+
+    tracker.Npoints = 2
+    assert front_slider.end == 2
+    assert front_slider.value == (1, 2)
+    assert rear_slider.start == -2
+    assert rear_slider.end == -1
+    assert rear_slider.value == (-2, -1)
+
+    tracker.bend = "from_angles"
+    assert front_slider.disabled is True
+    assert rear_slider.disabled is True
+
+    tracker.Npoints = 0
+    assert tracker.front_vector is None
+    assert tracker.rear_vector is None
+    assert front_slider.disabled is True
+    assert rear_slider.disabled is True
+
+    tracker.Npoints = 5
+    tracker.bend = "from_vectors"
+    assert tracker.front_vector == (1, 2)
+    assert tracker.rear_vector == (-2, -1)
+    assert front_slider.end == 5
+    assert rear_slider.start == -5
+
+    tracker.bend = "from_vectors"
+    assert front_slider.disabled is False
+    assert rear_slider.disabled is False
+
+
+def test_import_datasets_tracker_panel_surfaces_param_docs() -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+    tracker_section = _find_section_with_widget(controller, "Front vector")
+    docs = unescape(
+        " ".join(
+            pane.object
+            for pane in tracker_section.select(pn.pane.HTML)
+            if isinstance(pane.object, str)
+        )
+    )
+
+    assert "The initial & final segment of the front body vector." in docs
+    assert "The initial & final segment of the rear body vector." in docs
+    assert "Whether to use the component velocity" in docs
+    assert "Whether bending angle is computed" not in docs
+
+
+def test_import_datasets_tracker_places_bend_above_vector_sliders() -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+    tracker_section = _find_section_with_widget(controller, "Front vector")
+    widget_names = [
+        widget.name
+        for widget in tracker_section.select(pn.widgets.Widget)
+        if getattr(widget, "name", None)
+    ]
+
+    assert widget_names == [
+        "XY unit",
+        "# midline 2D points",
+        "# contour 2D points",
+        "Point idx",
+        "Bend",
+        "Front vector",
+        "Rear vector",
+        "Front body ratio",
+        "Use component vel",
+    ]
+
+
+def test_import_datasets_tracker_framerate_panel_is_separate() -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+    framerate_section = _find_section_with_widget(controller, "framerate")
+
+    assert list(_section_widgets(framerate_section)) == [
+        "framerate",
+        "timestep",
+        "Constant framerate",
+    ]
+
+
+def test_import_datasets_lab_config_save_and_delete_use_registry_contract(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+    saved: list[tuple[str, object]] = []
+    deleted: list[str] = []
+    original_lab_id = controller._working_lab.labID
+    controller._working_lab.labID = "EditedLab"
+
+    monkeypatch.setattr(
+        import_datasets_app.reg.conf.LabFormat,
+        "setID",
+        lambda config_id, conf: saved.append((config_id, conf)),
+    )
+    monkeypatch.setattr(
+        import_datasets_app.reg.conf.LabFormat,
+        "delete",
+        lambda config_id: deleted.append(config_id),
+    )
+    monkeypatch.setattr(controller, "_refresh_lab_options", lambda **kwargs: None)
+    monkeypatch.setattr(controller, "_load_working_lab", lambda _lab_id: None)
+
+    controller.lab_config_name_input.value = "LabCopy"
+    controller._handle_lab_save()
+    controller._handle_lab_delete()
+
+    assert saved[0][0] == "LabCopy"
+    assert saved[0][1].labID == "LabCopy"
+    assert original_lab_id != "EditedLab"
+    assert deleted == [controller.lab_select.value]
+    assert (
+        "saved to the registry" in controller.lab_status.object
+        or "deleted from the registry" in controller.lab_status.object
+    )
 
 
 def test_import_datasets_controller_discovers_candidates_and_enables_import(

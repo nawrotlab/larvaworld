@@ -59,7 +59,7 @@ class TestDataConfContracts:
         assert tracker["Npoints"] == 12
         assert tracker["Ncontour"] == 22
         assert tracker["front_vector"] == (2, 6)
-        assert tracker["rear_vector"] == (7, 11)
+        assert tracker["rear_vector"] == (-5, -1)
         assert tracker["point_idx"] == 9
 
     def test_labformat_dict_jovanic_config(self):
@@ -75,7 +75,7 @@ class TestDataConfContracts:
         assert tracker["Npoints"] == 11
         assert tracker["Ncontour"] == 0
         assert tracker["front_vector"] == (2, 6)
-        assert tracker["rear_vector"] == (6, 10)
+        assert tracker["rear_vector"] == (-5, -1)
         assert tracker["point_idx"] == 9
 
     def test_labformat_dict_berni_config(self):
@@ -88,7 +88,7 @@ class TestDataConfContracts:
         assert tracker["fr"] == 2.0
         assert tracker["Npoints"] == 1
         assert tracker["front_vector"] == (1, 1)
-        assert tracker["rear_vector"] == (1, 1)
+        assert tracker["rear_vector"] == (-1, -1)
         assert tracker["point_idx"] == 1
 
     def test_labformat_dict_arguello_config(self):
@@ -101,7 +101,7 @@ class TestDataConfContracts:
         assert tracker["fr"] == 10.0
         assert tracker["Npoints"] == 5
         assert tracker["front_vector"] == (1, 3)
-        assert tracker["rear_vector"] == (3, 5)
+        assert tracker["rear_vector"] == (-2, -1)
         assert tracker["point_idx"] == -1
 
     def test_labformat_dict_filesystem_configs(self):

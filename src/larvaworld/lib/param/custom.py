@@ -31,6 +31,8 @@ __all__: list[str] = [
     "PositiveIntegerRange",
     "PositiveIntegerRangeOrdered",
     "NegativeIntegerRangeOrdered",
+    "OptionalPositiveIntegerRangeOrdered",
+    "OptionalNegativeIntegerRangeOrdered",
     "NumericTuple2DRobust",
     "IntegerTuple2DRobust",
     "ListXYcoordinates",
@@ -838,6 +840,70 @@ class NegativeIntegerRangeOrdered(IntegerRangeOrdered):
             bounds=(hardmin, hardmax),
             **kwargs,
         )
+
+
+class OptionalPositiveIntegerRangeOrdered(PositiveIntegerRangeOrdered):
+    """
+    Optional ordered positive integer range parameter.
+
+    Accepts either an ordered positive integer tuple or ``None``.
+    """
+
+    def __init__(
+        self,
+        default=None,
+        softmin=0,
+        softmax=None,
+        hardmin=0,
+        hardmax=None,
+        **kwargs,
+    ):
+        super().__init__(
+            default=default,
+            softmin=softmin,
+            softmax=softmax,
+            hardmin=hardmin,
+            hardmax=hardmax,
+            allow_None=True,
+            **kwargs,
+        )
+
+    def _validate_value(self, val, allow_None):
+        if val is None and allow_None:
+            return
+        super()._validate_value(val, allow_None)
+
+
+class OptionalNegativeIntegerRangeOrdered(NegativeIntegerRangeOrdered):
+    """
+    Optional ordered negative integer range parameter.
+
+    Accepts either an ordered negative integer tuple or ``None``.
+    """
+
+    def __init__(
+        self,
+        default=None,
+        softmin=None,
+        softmax=0,
+        hardmin=None,
+        hardmax=0,
+        **kwargs,
+    ):
+        super().__init__(
+            default=default,
+            softmin=softmin,
+            softmax=softmax,
+            hardmin=hardmin,
+            hardmax=hardmax,
+            allow_None=True,
+            **kwargs,
+        )
+
+    def _validate_value(self, val, allow_None):
+        if val is None and allow_None:
+            return
+        super()._validate_value(val, allow_None)
 
 
 class NumericTuple2DRobust(param.NumericTuple):
