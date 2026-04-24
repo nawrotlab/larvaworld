@@ -6,6 +6,7 @@ from pathlib import Path
 import panel as pn
 
 from larvaworld.lib import reg
+from larvaworld.portal.config_widgets import build_env_params_widget
 from larvaworld.portal.landing_registry import DOCS_DATA_PROCESSING
 from larvaworld.portal.datasets.discovery import (
     RawDatasetCandidate,
@@ -150,6 +151,64 @@ IMPORT_DATASETS_RAW_CSS = """
   line-height: 1.4;
   color: rgba(63, 51, 73, 0.82);
   margin-top: 4px;
+}
+
+.lw-import-datasets-config-subfamily {
+  background: rgba(243, 245, 248, 0.92);
+  border: 1px solid rgba(90, 71, 96, 0.10);
+  border-radius: 9px;
+  padding: 9px 10px 8px 10px;
+  margin-top: 6px;
+}
+
+.lw-import-datasets-config-subfamily-title {
+  margin: 0 0 6px 0;
+  color: #5c4668;
+  font-weight: 700;
+}
+
+.lw-import-datasets-config-subfamily-card {
+  margin-top: 6px;
+}
+
+.lw-import-datasets-config-compact-card .bk-card-header,
+.lw-import-datasets-config-compact-card .bk-Card-header,
+.lw-import-datasets-config-compact-card .card-header {
+  font-size: 12px;
+}
+
+.lw-import-datasets-config-compact-card .bk-card-title,
+.lw-import-datasets-config-compact-card .bk-Card-title,
+.lw-import-datasets-config-compact-card .card-title,
+.lw-import-datasets-config-compact-card .bk-btn-group > .bk-btn,
+.lw-import-datasets-config-compact-card .bk-btn-group > button,
+.lw-import-datasets-config-compact-card button.bk-btn {
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+}
+
+.lw-import-datasets-config-compact-card .bk-card-header .bk-btn,
+.lw-import-datasets-config-compact-card .bk-Card-header .bk-btn,
+.lw-import-datasets-config-compact-card .card-header .bk-btn {
+  font-size: 12px;
+}
+
+.lw-import-datasets-config-family-header {
+  align-items: center;
+}
+
+.lw-import-datasets-inline-action-row {
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.lw-import-datasets-config-grid {
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.lw-import-datasets-config-grid-col {
+  flex: 1 1 0;
 }
 
 """.strip()
@@ -567,12 +626,27 @@ class _ImportDatasetsController:
                 )
             ]
             return
+        top_grid = pn.Row(
+            pn.Column(
+                self._param_section("General", self._working_lab, parameters=["labID"]),
+                self._build_tracker_metric_section(),
+                css_classes=["lw-import-datasets-config-grid-col"],
+                sizing_mode="stretch_width",
+                margin=0,
+            ),
+            pn.Column(
+                self._build_tracker_framerate_section(),
+                self._param_section("Filesystem", self._working_lab.filesystem),
+                css_classes=["lw-import-datasets-config-grid-col"],
+                sizing_mode="stretch_width",
+                margin=0,
+            ),
+            css_classes=["lw-import-datasets-config-grid"],
+            sizing_mode="stretch_width",
+            margin=0,
+        )
         self.lab_editor_sections.objects = [
-            self._param_section("General", self._working_lab, parameters=["labID"]),
-            self._build_tracker_metric_section(),
-            self._build_tracker_framerate_section(),
-            self._param_section("Filesystem", self._working_lab.filesystem),
-            self._param_section("Environment", self._working_lab.env_params),
+            top_grid,
             self._param_section(
                 "Preprocess",
                 self._working_lab.preprocess,
@@ -580,6 +654,10 @@ class _ImportDatasetsController:
                     "rescale_by": {"type": pn.widgets.FloatInput},
                     "filter_f": {"type": pn.widgets.FloatInput},
                 },
+            ),
+            _config_family_box(
+                "Environment",
+                build_env_params_widget(self._working_lab.env_params, wrap=False),
             ),
         ]
 
@@ -600,6 +678,20 @@ class _ImportDatasetsController:
         if self._working_lab_id is None:
             raise RuntimeError("No LabFormat configuration is loaded.")
         rebuilt = self._working_lab.nestedConf.get_copy()
+        thermoscape = self._working_lab.env_params.thermoscape
+        if thermoscape is not None:
+            thermoscape_payload = rebuilt["env_params"].get("thermoscape") or {}
+            if hasattr(thermoscape, "plate_temp"):
+                thermoscape_payload["plate_temp"] = thermoscape.plate_temp
+            if hasattr(thermoscape, "thermo_spread"):
+                thermoscape_payload["spread"] = thermoscape.thermo_spread
+            if hasattr(thermoscape, "thermo_sources"):
+                thermoscape_payload["thermo_sources"] = thermoscape.thermo_sources
+            if hasattr(thermoscape, "thermo_source_dTemps"):
+                thermoscape_payload["thermo_source_dTemps"] = (
+                    thermoscape.thermo_source_dTemps
+                )
+            rebuilt["env_params"]["thermoscape"] = thermoscape_payload
         target_id = self.lab_config_name_input.value.strip() or self._working_lab_id
         rebuilt["labID"] = target_id
         return rebuilt
@@ -891,30 +983,29 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def view(self) -> pn.viewable.Viewable:
-        config_intro = pn.pane.HTML(
-            (
-                '<div class="lw-import-datasets-config-intro">'
-                "Inspect and edit the selected `LabFormat` configuration before running dataset discovery and import. "
-                "This embedded panel exposes the registry-backed tracker, filesystem, environment, and preprocess structure used by the import lane."
-                "</div>"
-            ),
-            margin=0,
-        )
         config_section = pn.Card(
             pn.Column(
-                config_intro,
-                pn.Row(
+                pn.Column(
                     self.lab_select,
                     self.lab_config_name_input,
                     sizing_mode="stretch_width",
                     margin=0,
                 ),
-                pn.Row(
-                    self.lab_load_button,
-                    self.lab_save_button,
-                    self.lab_delete_button,
-                    self.lab_reset_button,
-                    css_classes=["lw-import-datasets-config-actions"],
+                pn.Column(
+                    pn.Row(
+                        self.lab_load_button,
+                        self.lab_save_button,
+                        css_classes=["lw-import-datasets-config-actions"],
+                        sizing_mode="stretch_width",
+                        margin=0,
+                    ),
+                    pn.Row(
+                        self.lab_delete_button,
+                        self.lab_reset_button,
+                        css_classes=["lw-import-datasets-config-actions"],
+                        sizing_mode="stretch_width",
+                        margin=0,
+                    ),
                     sizing_mode="stretch_width",
                     margin=(4, 0, 0, 0),
                 ),
@@ -978,9 +1069,10 @@ class _ImportDatasetsController:
         intro = pn.pane.HTML(
             (
                 '<div class="lw-import-datasets-intro">'
-                "Import one experimental raw dataset into the active workspace through a small workspace-first pipeline. "
-                "Use the Source step to choose a lab format and point the app at a local raw-data folder, then run Discovery to resolve one import candidate and review its candidate-specific warnings before importing. "
-                "The app writes into workspace-owned dataset storage, reuses the central Larvaworld import backend, and does not register references or set global active-dataset state. "
+                "Import one experimental raw dataset into the active workspace through a small workspace-first pipeline, while editing the active `LabFormat` configuration in place before discovery and import. "
+                "The configuration panel exposes the registry-backed general, tracker, filesystem, preprocess, and environment sections used by the import lane, so the selected preset can be adjusted without leaving the app. "
+                "Then use the Source and Discovery steps to point the app at a local raw-data folder, resolve one import candidate, inspect warnings, and import the dataset into workspace-owned storage through the central Larvaworld backend. "
+                "The app does not register references or set global active-dataset state. "
                 f'See the data-processing documentation on Read the Docs for the broader dataset pipeline: <a href="{escape(DOCS_DATA_PROCESSING)}" target="_blank">Read the Docs</a>.'
                 "</div>"
             ),

@@ -44,14 +44,49 @@ def _section_widgets(section: pn.viewable.Viewable) -> dict[str, pn.widgets.Widg
     }
 
 
+def _contains_widget(section: pn.viewable.Viewable, widget_name: str) -> bool:
+    return widget_name in _section_widgets(section)
+
+
+def _is_config_family_section(section: pn.viewable.Viewable) -> bool:
+    css_classes = getattr(section, "css_classes", None) or []
+    return "lw-import-datasets-config-family" in css_classes
+
+
 def _find_section_with_widget(
     controller: import_datasets_app._ImportDatasetsController, widget_name: str
 ) -> pn.viewable.Viewable:
+    def _descend(section: pn.viewable.Viewable) -> pn.viewable.Viewable | None:
+        children = getattr(section, "objects", None) or []
+        for child in children:
+            if hasattr(child, "select") and _contains_widget(child, widget_name):
+                nested = _descend(child)
+                if nested is not None:
+                    return nested
+                if _is_config_family_section(child):
+                    return child
+        return None
+
     for section in controller.lab_editor_sections.objects:
-        widgets = _section_widgets(section)
-        if widget_name in widgets:
+        if _contains_widget(section, widget_name):
+            nested = _descend(section)
+            if nested is not None:
+                return nested
+            if _is_config_family_section(section):
+                return section
             return section
     raise AssertionError(f"Could not find section containing widget {widget_name!r}")
+
+
+def _find_widget(
+    controller: import_datasets_app._ImportDatasetsController, widget_name: str
+) -> pn.widgets.Widget:
+    section = _find_section_with_widget(controller, widget_name)
+    return _section_widgets(section)[widget_name]
+
+
+def _scape_switches(section: pn.viewable.Viewable) -> list[pn.widgets.Switch]:
+    return [widget for widget in section.select(pn.widgets.Switch)]
 
 
 def test_import_datasets_controller_requires_active_workspace() -> None:
@@ -66,8 +101,45 @@ def test_import_datasets_lab_config_panel_loads_selected_configuration() -> None
     controller = import_datasets_app._ImportDatasetsController()
 
     assert controller.lab_config_name_input.value == controller.lab_select.value
-    assert len(controller.lab_editor_sections.objects) == 6
+    assert len(controller.lab_editor_sections.objects) == 3
     assert "Loaded LabFormat" in controller.lab_status.object
+
+
+def test_import_datasets_environment_panel_uses_typed_env_helpers() -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+    environment_section = _find_section_with_widget(controller, "Arena width")
+
+    assert _find_section_with_widget(controller, "Arena width") is environment_section
+    assert (
+        _find_section_with_widget(controller, "Enable Food grid") is environment_section
+    )
+    assert _find_section_with_widget(controller, "New border ID") is environment_section
+    assert len(_scape_switches(environment_section)) == 3
+
+
+def test_import_datasets_environment_panel_updates_working_lab() -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+    environment_section = _find_section_with_widget(controller, "Arena width")
+    env_conf = controller._working_lab.env_params
+
+    width_widget = _section_widgets(environment_section)["Arena width"]
+    height_widget = _section_widgets(environment_section)["Arena height"]
+    enable_grid = _section_widgets(environment_section)["Enable Food grid"]
+    enable_odorscape = _scape_switches(environment_section)[0]
+    new_border_id = _section_widgets(environment_section)["New border ID"]
+    add_border = _section_widgets(environment_section)["Add border"]
+
+    width_widget.value = 0.27
+    height_widget.value = 0.19
+    enable_grid.value = True
+    enable_odorscape.value = True
+    new_border_id.value = "import_border"
+    add_border.clicks += 1
+
+    assert env_conf.arena.dims == pytest.approx((0.27, 0.19))
+    assert env_conf.food_params.food_grid is not None
+    assert env_conf.odorscape is not None
+    assert "import_border" in env_conf.border_list
 
 
 def test_import_datasets_tracker_panel_uses_safe_numeric_widgets() -> None:

@@ -41,7 +41,9 @@ def _matches_conftype_class(
     if candidate_cls is config_cls:
         return True
     try:
-        if issubclass(config_cls, candidate_cls) or issubclass(candidate_cls, config_cls):
+        if issubclass(config_cls, candidate_cls) or issubclass(
+            candidate_cls, config_cls
+        ):
             return True
     except TypeError:
         pass
@@ -95,7 +97,9 @@ def _serialize_value(value: Any) -> Any:
     if isinstance(value, param.Parameterized):
         return _serialize_parameterized(value)
     if isinstance(value, dict):
-        return util.AttrDict({key: _serialize_value(item) for key, item in value.items()})
+        return util.AttrDict(
+            {key: _serialize_value(item) for key, item in value.items()}
+        )
     if isinstance(value, list):
         return [_serialize_value(item) for item in value]
     return value
@@ -114,7 +118,9 @@ def _serialize_parameterized(instance: param.Parameterized) -> util.AttrDict:
 
 
 def _instantiate_classattr(parameter: ClassAttr) -> param.Parameterized:
-    nested_cls = parameter.class_[0] if isinstance(parameter.class_, tuple) else parameter.class_
+    nested_cls = (
+        parameter.class_[0] if isinstance(parameter.class_, tuple) else parameter.class_
+    )
     return nested_cls()
 
 
@@ -130,7 +136,9 @@ def _widget_overrides(
             widgets[name] = {"type": pn.widgets.IntInput}
         elif isinstance(parameter, param.Number):
             widgets[name] = {"type": pn.widgets.FloatInput}
-        elif isinstance(parameter, (param.Range, param.NumericTuple, param.Dict, param.List)):
+        elif isinstance(
+            parameter, (param.Range, param.NumericTuple, param.Dict, param.List)
+        ):
             widgets[name] = {"type": pn.widgets.LiteralInput}
     return widgets
 
@@ -438,7 +446,9 @@ class ConftypeWidgetController:
                 try:
                     setattr(owner, name, _instantiate_classattr(parameter))
                 except Exception as exc:
-                    self._set_status(f'Could not initialize "{title}": {exc}', tone="danger")
+                    self._set_status(
+                        f'Could not initialize "{title}": {exc}', tone="danger"
+                    )
                     return
                 self._render_editor()
                 self._set_status(f'Initialized "{title}".', tone="success")
@@ -506,7 +516,9 @@ class ConftypeWidgetController:
             current_item = items[current_key]
             if isinstance(current_item, param.Parameterized):
                 editor_host.objects = [
-                    self._build_parameterized_section(current_item, title=str(current_key))
+                    self._build_parameterized_section(
+                        current_item, title=str(current_key)
+                    )
                 ]
             else:
                 editor_host.objects = [
@@ -516,10 +528,14 @@ class ConftypeWidgetController:
         def _add_item(_event: Any = None) -> None:
             item_key = key_input.value.strip()
             if not item_key:
-                self._set_status(f'Enter a key before adding to "{title}".', tone="warning")
+                self._set_status(
+                    f'Enter a key before adding to "{title}".', tone="warning"
+                )
                 return
             if item_key in items:
-                self._set_status(f'"{item_key}" already exists in "{title}".', tone="warning")
+                self._set_status(
+                    f'"{item_key}" already exists in "{title}".', tone="warning"
+                )
                 return
             item_cls = parameter.item_type
             if not _is_parameterized_class(item_cls):
@@ -541,7 +557,9 @@ class ConftypeWidgetController:
         def _delete_item(_event: Any = None) -> None:
             item_key = select.value
             if item_key is None:
-                self._set_status(f'Select an item to delete from "{title}".', tone="warning")
+                self._set_status(
+                    f'Select an item to delete from "{title}".', tone="warning"
+                )
                 return
             items.pop(item_key, None)
             _refresh_nested_editor()
