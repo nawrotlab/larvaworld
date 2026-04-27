@@ -291,6 +291,37 @@ def test_import_datasets_lab_config_save_and_delete_use_registry_contract(
     )
 
 
+def test_import_datasets_lab_config_reset_recreates_registry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+    selected_lab_id = controller.lab_select.value
+    reset_calls: list[dict[str, object]] = []
+    refreshed: list[dict[str, object]] = []
+    loaded: list[str | None] = []
+
+    monkeypatch.setattr(
+        import_datasets_app.reg.conf.LabFormat,
+        "reset",
+        lambda **kwargs: reset_calls.append(kwargs),
+    )
+    monkeypatch.setattr(
+        controller,
+        "_refresh_lab_options",
+        lambda **kwargs: refreshed.append(kwargs),
+    )
+    monkeypatch.setattr(
+        controller, "_load_working_lab", lambda lab_id: loaded.append(lab_id)
+    )
+
+    controller._handle_lab_reset()
+
+    assert reset_calls == [{"recreate": True}]
+    assert refreshed == [{"select_id": selected_lab_id}]
+    assert loaded == [selected_lab_id]
+    assert "registry recreated" in controller.lab_status.object
+
+
 def test_import_datasets_controller_discovers_candidates_and_enables_import(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

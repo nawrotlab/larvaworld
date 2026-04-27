@@ -16,7 +16,8 @@ from larvaworld.portal.config_widgets import (
 def _find_widget(
     viewable: pn.viewable.Viewable,
     name: str,
-    widget_type: type[pn.widgets.Widget] | tuple[type[pn.widgets.Widget], ...] = pn.widgets.Widget,
+    widget_type: type[pn.widgets.Widget]
+    | tuple[type[pn.widgets.Widget], ...] = pn.widgets.Widget,
 ):
     for widget in viewable.select(widget_type):
         if getattr(widget, "name", None) == name:

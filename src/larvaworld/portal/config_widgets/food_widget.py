@@ -23,7 +23,14 @@ def _build_food_grid_editor(food_grid: param.Parameterized) -> object:
         food_grid,
         parameter_order=_ordered_names(
             food_grid,
-            ["unique_id", "color", "grid_dims", "initial_value", "fixed_max", "substrate"],
+            [
+                "unique_id",
+                "color",
+                "grid_dims",
+                "initial_value",
+                "fixed_max",
+                "substrate",
+            ],
         ),
     )
 
@@ -76,9 +83,9 @@ def _build_food_group_item(group: param.Parameterized, key: str) -> object:
                 ],
             ),
             custom_builders={
-                "distribution": lambda inst, name, _parameter: build_distribution_widget(
-                    getattr(inst, name)
-                )
+                "distribution": lambda inst,
+                name,
+                _parameter: build_distribution_widget(getattr(inst, name))
             },
         ),
     )

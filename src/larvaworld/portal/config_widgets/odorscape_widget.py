@@ -18,13 +18,15 @@ def _ordered_names(instance: param.Parameterized, preferred: list[str]) -> list[
 def _build_odorscape_editor(layer: param.Parameterized) -> object:
     custom_builders = {}
     if "grid_dims" in layer.param:
-        custom_builders["grid_dims"] = lambda inst, name, _parameter: numeric_tuple_param_control(
-            inst,
-            parameter_name=name,
-            labels=("Odorscape grid X", "Odorscape grid Y"),
-            numeric_type=int,
-            doc=getattr(inst.param[name], "doc", None),
-            step=1,
+        custom_builders["grid_dims"] = (
+            lambda inst, name, _parameter: numeric_tuple_param_control(
+                inst,
+                parameter_name=name,
+                labels=("Odorscape grid X", "Odorscape grid Y"),
+                numeric_type=int,
+                doc=getattr(inst.param[name], "doc", None),
+                step=1,
+            )
         )
     if "gaussian_sigma" in layer.param:
         custom_builders["gaussian_sigma"] = (

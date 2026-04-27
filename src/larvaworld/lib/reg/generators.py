@@ -920,7 +920,7 @@ class LabFormat(NestedConf):
         age: float = 0.0,
         refID: Optional[str] = None,
         enrich_conf: Optional[AttrDict | dict[str, Any]] = None,
-        save_dataset: bool = False,
+        save_dataset: bool = True,
         **kwargs: Any,
     ) -> LarvaDataset | None:
         """

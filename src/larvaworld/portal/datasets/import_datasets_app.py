@@ -782,7 +782,7 @@ class _ImportDatasetsController:
         self.lab_load_button.disabled = not lab_ready
         self.lab_save_button.disabled = not lab_ready
         self.lab_delete_button.disabled = not lab_ready or not self.lab_select.value
-        self.lab_reset_button.disabled = not lab_ready or self._working_lab is None
+        self.lab_reset_button.disabled = False
 
     def _on_lab_select_change(self, *_events) -> None:
         self._load_working_lab(self.lab_select.value)
@@ -866,12 +866,22 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def _handle_lab_reset(self, _event=None) -> None:
-        self._load_working_lab(self.lab_select.value)
-        if self.lab_select.value:
+        current_lab_id = self.lab_select.value
+        try:
+            reg.conf.LabFormat.reset(recreate=True)
+        except Exception as exc:
             self._set_lab_status(
-                f'LabFormat "{self.lab_select.value}" reset to the stored registry version.',
-                tone="success",
+                f"LabFormat registry reset failed: {exc}", tone="danger"
             )
+            return
+        self._refresh_lab_options(select_id=current_lab_id)
+        self._load_working_lab(self.lab_select.value)
+        self._clear_candidates()
+        self._refresh_workspace_summary()
+        self._set_lab_status(
+            "LabFormat registry recreated from the built-in defaults.",
+            tone="success",
+        )
         self._sync_controls()
 
     def _handle_reset(self, _event=None) -> None:

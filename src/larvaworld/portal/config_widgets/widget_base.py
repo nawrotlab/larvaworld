@@ -162,7 +162,9 @@ def param_control(
     widget = param_pane._widgets.get(parameter_name)
     if widget is None:
         return pn.Column(sizing_mode="stretch_width", margin=0)
-    container = widget_block(widget, doc=getattr(obj.param[parameter_name], "doc", None))
+    container = widget_block(
+        widget, doc=getattr(obj.param[parameter_name], "doc", None)
+    )
     container._param_pane = param_pane
     container._widgets = {parameter_name: widget}
     return container
@@ -209,8 +211,12 @@ def numeric_tuple_param_control(
     raw_value = _normalize_two_tuple(getattr(obj, parameter_name))
     state = {"syncing": False}
     widgets = [
-        input_type(name=labels[0], value=raw_value[0], step=step, sizing_mode="stretch_width"),
-        input_type(name=labels[1], value=raw_value[1], step=step, sizing_mode="stretch_width"),
+        input_type(
+            name=labels[0], value=raw_value[0], step=step, sizing_mode="stretch_width"
+        ),
+        input_type(
+            name=labels[1], value=raw_value[1], step=step, sizing_mode="stretch_width"
+        ),
     ]
 
     def _coerce_values() -> tuple[Any, Any]:
@@ -232,6 +238,7 @@ def numeric_tuple_param_control(
         widget.param.watch(_push_to_owner, "value")
 
     if isinstance(obj, param.Parameterized):
+
         def _sync_from_owner(*_events: Any) -> None:
             state["syncing"] = True
             try:
@@ -292,7 +299,9 @@ def instantiate_classattr(
         if name not in new_instance.param:
             continue
         target_parameter = new_instance.param[name]
-        if target_parameter.readonly or isinstance(target_parameter, (ClassAttr, ClassDict)):
+        if target_parameter.readonly or isinstance(
+            target_parameter, (ClassAttr, ClassDict)
+        ):
             continue
         try:
             setattr(new_instance, name, getattr(source_instance, name))
@@ -315,11 +324,14 @@ def parameterized_editor(
     *,
     parameter_order: list[str] | None = None,
     exclude: set[str] | None = None,
-    custom_builders: dict[str, Callable[[param.Parameterized, str, Any], object]] | None = None,
+    custom_builders: dict[str, Callable[[param.Parameterized, str, Any], object]]
+    | None = None,
 ) -> pn.Column:
     custom = custom_builders or {}
     params = instance.param.objects(instance=False)
-    ordered_names = parameter_order or editable_parameter_names(instance, exclude=exclude)
+    ordered_names = parameter_order or editable_parameter_names(
+        instance, exclude=exclude
+    )
     children: list[object] = []
     for name in ordered_names:
         parameter = params.get(name)
@@ -378,7 +390,9 @@ def classattr_section(
     use_switch_header = optional and enable_control == "switch"
 
     if enable_control == "switch":
-        enabled = pn.widgets.Switch(name="", value=current_value is not None, width=18, margin=0)
+        enabled = pn.widgets.Switch(
+            name="", value=current_value is not None, width=18, margin=0
+        )
     else:
         enabled = pn.widgets.Checkbox(
             name=f"Enable {section_title}",
@@ -428,9 +442,7 @@ def classattr_section(
         if current is None:
             current = instantiate_classattr(parameter, target_class=_selected_class())
             setattr(owner, name, current)
-        builder = build_editor or (
-            lambda instance: parameterized_editor(instance)
-        )
+        builder = build_editor or (lambda instance: parameterized_editor(instance))
         objects: list[object] = []
         if len(choices) > 1:
             objects.append(class_select)
