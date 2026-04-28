@@ -16,7 +16,7 @@ try:
 
     __version__ = importlib.metadata.version("larvaworld")
 except:
-    __version__ = "2.1.1"
+    __version__ = "2.2.0"
 
 __displayname__ = "larvaworld"
 __name__ = "larvaworld"
