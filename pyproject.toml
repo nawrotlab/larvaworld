@@ -30,7 +30,9 @@ packages = [
 larvaworld = "larvaworld.cli.main:main"
 # Currently GUI is not functional
 # larvaworld-gui = "larvaworld.gui.main:main"
+larvaworld-gui-v2 = "larvaworld.gui_v2.main:main"
 larvaworld-app = "larvaworld.dashboards.main:main"
+larvaworld-portal = "larvaworld.portal.serve:main"
 
 [tool.setuptools.package-data]
 "*" = ["*.sh", "*.png", "*.pdf", "*.txt", "*.csv"]
@@ -47,6 +49,8 @@ holoviews = ">=1.17,<2.0"
 hvplot = ">=0.10,<1.0"
 imageio = {extras = ["ffmpeg"], version = ">=2.35,<3.0"}
 #importlib = "1.0.*"
+ipykernel = ">=6.0,<7.0"
+jupyterlab = ">=4.0,<5.0"
 matplotlib = ">=3.7,<4.0"
 movingpandas = ">=0.19,<1.0"
 numpy = ">=1.24,<2.0"
@@ -58,6 +62,7 @@ pint_pandas = ">=0.3,<1.0"
 powerlaw = "1.5"
 progressbar = "2.5"
 pygame = ">=2.6,<3.0"
+PySide6 = ">=6.8,<7.0"
 pypdf = ">=5.0,<6.0"
 # PySimpleGUI is now located on a private PyPI server.  Please add to your pip command: -i https://PySimpleGUI.net/install
 #PySimpleGUI = "*"
@@ -73,6 +78,7 @@ docopt = "0.6.*"
 filelock = "^3.12.0"
 
 [tool.poetry.group.dev.dependencies]
+pre-commit = "^4.2.0"
 pytest = "^8.0.0"
 pytest-cov = "^5.0.0"
 pytest-xdist = "^3.5.0"  # Parallel test execution

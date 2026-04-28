@@ -73,51 +73,107 @@ Poetry is recommended for developers and contributors who need advanced dependen
 
 Web dashboards (`larvaworld-app`) are included in the default install. The options below are truly optional and enable specific features:
 
-### Neural Simulators
+### Installing optional features (PyPI / `pip`)
 
-For neural network-based brain models:
+If you installed Larvaworld from PyPI using `pip install larvaworld`, install optional features by installing the relevant _third-party packages_ into the same environment (Larvaworld does not currently expose `pip` “extras” like `larvaworld[nengo]`).
 
 ```bash
-# Nengo (spiking neural networks)
-pip install larvaworld[nengo]
+# Neural simulators
+pip install nengo
+pip install brian2
 
-# Brian2 (alternative neural simulator)
-pip install larvaworld[brian2]
+# Physics engine (multisegment body simulation)
+pip install box2d-py
 ```
 
-**Use case**: Required for experiments using `NengoBrain` or `Brian2Brain` controllers.
+**Use cases**:
 
-### Physics Engine
+- Neural simulators: required for experiments using `NengoBrain` or `Brian2Brain` controllers.
+- Box2D: required for experiments with `physics_model=True` (multisegment larvae with Box2D).
 
-For realistic multisegment body simulation:
+**Note (Linux/WSL/macOS)**: Installing `box2d-py` from source may require system build tools and `swig`. On Ubuntu/Debian:
 
 ```bash
-pip install larvaworld[box2d]
+sudo apt update
+sudo apt install -y swig build-essential
 ```
 
-**Use case**: Required for experiments with `physics_model=True` (multisegment larvae with Box2D).
+### Installing optional dependency groups (source / `poetry`)
 
-### Development Tools
-
-For contributors and developers:
+If you're working from source, Larvaworld uses Poetry dependency groups (including optional groups). From the Poetry project root (folder containing `pyproject.toml`), install any combination of groups:
 
 ```bash
-pip install larvaworld[dev]
-```
-
-Includes: `pytest`, `pre-commit`, documentation and linting utilities.
-
-### All Extras
-
-To install **everything** at once:
-
-```bash
-pip install larvaworld[all]
+# Common developer setup (tests + all optional feature groups)
+poetry install --with dev,docs,nengo,brian2,box2d
 ```
 
 ## Development Installation
 
-For development and contributing, see the {doc}`contributing` guide which includes:
+### Editable install from source (recommended for repo changes)
+
+If you want to modify the repo and have changes reflected immediately, use a dedicated virtual environment and install Larvaworld from the local source tree.
+
+#### Option 1: Poetry-managed environment (recommended for contributors)
+
+From the Poetry project root (folder containing `pyproject.toml`):
+
+```bash
+# Installs the project + selected dependency groups into Poetry's virtual environment
+poetry install --with dev,docs,nengo,brian2,box2d
+```
+
+Run commands inside that environment using `poetry run`:
+
+```bash
+poetry run larvaworld --version
+poetry run larvaworld-app
+poetry run pytest
+```
+
+If you need Poetry to use a specific Python interpreter version (e.g., 3.13), select it explicitly:
+
+```bash
+poetry env use python3.13
+poetry install --with dev,docs,nengo,brian2,box2d
+```
+
+#### Option 2: Your own virtual environment + Poetry (advanced)
+
+Create and activate a virtual environment, then point Poetry at that environment's Python before installing dependency groups.
+
+**On Linux/macOS (example uses Python 3.13):**
+
+```bash
+python3.13 -m venv /path/to/venvs/larvaworld_p313
+source /path/to/venvs/larvaworld_p313/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+```
+
+**On Windows (PowerShell; example uses Python 3.13):**
+
+```powershell
+py -3.13 -m venv C:\path\to\venvs\larvaworld_p313
+C:\path\to\venvs\larvaworld_p313\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+```
+
+Then, from the Poetry project root (folder containing `pyproject.toml`):
+
+```bash
+# Install into the *currently active* environment (disable Poetry's own venv management)
+POETRY_VIRTUALENVS_CREATE=false poetry install --with dev,docs,nengo,brian2,box2d
+```
+
+If you specifically require a strict `pip` editable install, install dependencies without the root project and then install the project in editable mode:
+
+```bash
+POETRY_VIRTUALENVS_CREATE=false poetry install --no-root --with dev,docs,nengo,brian2,box2d
+python -m pip install -e .
+```
+
+If an optional group fails to install on your platform/Python version, omit it (the project targets Python 3.10–3.13 where feasible, subject to third-party availability).
+
+For general development and contributing, see the {doc}`contributing` guide which includes:
 
 - Development installation instructions
 - Contribution guidelines
@@ -158,7 +214,7 @@ larvaworld --version
 **Solution**: Install the optional dependency:
 
 ```bash
-pip install larvaworld[nengo]
+pip install nengo
 ```
 
 ### Issue: Box2D installation fails on macOS
@@ -167,7 +223,7 @@ pip install larvaworld[nengo]
 
 ```bash
 brew install swig
-pip install larvaworld[box2d]
+pip install box2d-py
 ```
 
 ### Issue: Permission errors during `pip install`

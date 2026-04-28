@@ -12,7 +12,7 @@ from ... import util
 from ...param import (
     ClassAttr,
     Phase,
-    PositiveIntegerRange,
+    PositiveIntegerTuple,
     PositiveNumber,
     Substrate,
     Viewable,
@@ -86,7 +86,7 @@ class Grid(SpatialEntity):
         >>> print(grid.X, grid.Y)  # 100 100
     """
 
-    grid_dims = PositiveIntegerRange(
+    grid_dims = PositiveIntegerTuple(
         (51, 51), softmax=500, doc="The spatial resolution of the food grid."
     )
 

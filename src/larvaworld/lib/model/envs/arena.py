@@ -106,9 +106,19 @@ class Arena(ViewableBoundedArea, agentpy.Space):
     ) -> None:
         self.source_positions_in_array()
         if positive_amount:
-            idx = np.array([s.amount > 0 for s in self.sources])
+            idx = np.array([s.amount > 0 for s in self.sources], dtype=bool)
             self.sources = self.sources[idx]
             self.source_positions = self.source_positions[idx]
+        if len(self.sources) == 0:
+            self.accessible_sources_sorted = {
+                a: {"sources": np.array([], dtype=object), "dsts": np.array([])}
+                for a in agents
+            }
+            if return_closest:
+                self.accessible_sources = {a: None for a in agents}
+            else:
+                self.accessible_sources = {a: [] for a in agents}
+            return
         ps = np.array(agents.pos)
         ds = util.eudiNxN(self.source_positions, ps)
         self.accessible_sources_sorted = {
@@ -122,7 +132,11 @@ class Arena(ViewableBoundedArea, agentpy.Space):
             }
         else:
             dic = {
-                a: dic["sources"][0] if dic["dsts"][0] <= a.radius else None
+                a: (
+                    dic["sources"][0]
+                    if len(dic["dsts"]) > 0 and dic["dsts"][0] <= a.radius
+                    else None
+                )
                 for a, dic in self.accessible_sources_sorted.items()
             }
         self.accessible_sources = dic

@@ -214,11 +214,12 @@ class ConfType(param.Parameterized):
         self.dict = d
         self.save()
 
-    def reset(self, init: bool = False) -> None:
+    def reset(self, init: bool = False, recreate: bool = False) -> None:
         """
         Resets the configuration dictionary from the built-in dictionary of predefined configurations.
 
         If the configuration dictionary file exists:
+            - If `recreate` is True, removes the persisted file and recreates it from the built-in stored dictionary.
             - If `init` is True, prints the current number of entries and returns.
             - If `init` is False, updates the current dictionary with the stored dictionary and prints the updated number of entries.
 
@@ -227,8 +228,19 @@ class ConfType(param.Parameterized):
 
         Args:
             init (bool): Flag to indicate if the reset is for initialization purposes. Defaults to False.
+            recreate (bool): Flag to force recreation of the persisted configuration dictionary from the built-in defaults.
 
         """
+        if recreate:
+            if os.path.isfile(self.path_to_dict):
+                os.remove(self.path_to_dict)
+            self.set_dict(util.AttrDict(self.stored_dict).get_copy())
+            vprint(
+                f"{self.conftype} configuration dict recreated with {len(self.dict)} entries",
+                1,
+            )
+            return
+
         if os.path.isfile(self.path_to_dict):
             if init:
                 vprint(

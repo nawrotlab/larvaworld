@@ -55,6 +55,7 @@ coverage.xml
 .pytest_cache/
 .pytest_datasets_build.lock
 .pytest_datasets_ready
+.logs/
 cover/
 .ruff_cache/
 
@@ -158,6 +159,8 @@ cython_debug/
 
 # Test output media files
 /media/
+/.portal_notebooks/
+/portal_notebooks/
 
 #Poetry
 # poetry.lock

@@ -31,10 +31,10 @@ class Spatial_Distro(NestedConf):
     2D spatial distribution configuration for agent placement.
 
     Defines how agents are distributed in 2D space using various shapes
-    (circle, rectangle, oval) and placement modes (uniform, normal, periphery, grid).
+    (circle, rect, oval) and placement modes (uniform, normal, periphery, grid).
 
     Attributes:
-        shape: Distribution shape ('circle', 'rect', 'oval', 'rectangular')
+        shape: Distribution shape ('circle', 'rect', 'oval')
         mode: Placement mode ('uniform', 'normal', 'periphery', 'grid')
         N: Number of agents to place
         loc: Center coordinates (x, y) of the distribution
@@ -46,7 +46,7 @@ class Spatial_Distro(NestedConf):
     """
 
     shape = param.Selector(
-        objects=["circle", "rect", "oval", "rectangular"],
+        objects=["circle", "rect", "oval"],
         doc="The shape of the spatial distribution",
     )
     mode = param.Selector(
@@ -242,7 +242,7 @@ def generate_xy_distro(
 
     Args:
         mode: Placement mode ('uniform', 'normal', 'periphery', 'grid')
-        shape: Distribution shape ('circle', 'oval', 'rect', 'rectangular')
+        shape: Distribution shape ('circle', 'oval', 'rect')
         N: Number of points (or grid dimensions for grid mode)
         loc: Center coordinates (x, y)
         scale: Spread/radius in (x, y) dimensions

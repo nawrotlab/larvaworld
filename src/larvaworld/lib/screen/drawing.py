@@ -683,8 +683,22 @@ class ScreenManager(ScreenAreaPygame):
         # This prevents errors when running headless
         import pygame
 
+        try:
+            pygame.event.clear()
+        except Exception:
+            pass
+
+        # Release the display/surface references before shutting pygame down.
+        self.v = None
+        self.bgimage = None
+
         if pygame.display.get_init():
             pygame.display.quit()
+        # On macOS/SDL, display.quit() alone can leave the window around
+        # after a successful run. Fully quitting pygame clears the app window
+        # while still allowing later runs to reinitialize it via pygame.init().
+        if pygame.get_init():
+            pygame.quit()
 
         # Clean up video/image writers
         if self.vid_writer:
@@ -746,15 +760,16 @@ class ScreenManager(ScreenAreaPygame):
             self._render()
 
     def _render(self) -> Any:
-        if self.show_display:
-            import pygame
+        import pygame
 
+        if self.show_display:
             pygame.display.flip()
-            image = pygame.surfarray.pixels3d(self.v)
+            # Avoid using pixels3d() on the live display surface here.
+            # It returns a view that can keep the SDL surface locked and
+            # has proven unstable in long display+video runs on macOS.
+            image = pygame.surfarray.array3d(self.v)
             # self._t.tick(self.manager._fps)
         else:
-            import pygame
-
             image = pygame.surfarray.array3d(self.v)
         if self.vid_writer:
             self.vid_writer.append_data(np.flipud(np.rot90(image)))

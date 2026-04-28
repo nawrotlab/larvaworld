@@ -25,11 +25,14 @@ __all__: list[str] = [
     "OptionalPhaseRange",
     "OptionalSelector",
     "IntegerTuple",
+    "PositiveIntegerTuple",
     "IntegerRange",
     "IntegerRangeOrdered",
     "PositiveIntegerRange",
     "PositiveIntegerRangeOrdered",
     "NegativeIntegerRangeOrdered",
+    "OptionalPositiveIntegerRangeOrdered",
+    "OptionalNegativeIntegerRangeOrdered",
     "NumericTuple2DRobust",
     "IntegerTuple2DRobust",
     "ListXYcoordinates",
@@ -672,6 +675,57 @@ class IntegerRange(RangeRobust):
             )
 
 
+class PositiveIntegerTuple(IntegerTuple):
+    """
+    Integer tuple parameter constrained to non-negative values.
+
+    Extends IntegerTuple with automatic positive bounds enforcement
+    for every tuple element.
+
+    Args:
+        default: Default integer tuple (all values >= 0)
+        softmin: Soft lower bound (default: 0)
+        softmax: Soft upper bound (default: None)
+        hardmin: Hard lower bound (default: 0, enforced)
+        hardmax: Hard upper bound (default: None)
+        **kwargs: Additional keyword arguments passed to IntegerTuple
+
+    Example:
+        >>> grid_dims = PositiveIntegerTuple(default=(51, 51), length=2, softmax=500)
+    """
+
+    __slots__ = ["softmin", "softmax", "hardmin", "hardmax"]
+
+    def __init__(
+        self,
+        default=(0, 0),
+        softmin=0,
+        softmax=None,
+        hardmin=0,
+        hardmax=None,
+        **kwargs,
+    ):
+        self.softmin = softmin
+        self.softmax = softmax
+        self.hardmin = hardmin
+        self.hardmax = hardmax
+        super().__init__(default=default, **kwargs)
+
+    def _validate_value(self, val, allow_None):
+        super()._validate_value(val, allow_None)
+        for n in val:
+            if self.hardmin is not None and n < self.hardmin:
+                raise ValueError(
+                    "PositiveIntegerTuple parameter %r only takes values >= %r."
+                    % (self.name, self.hardmin)
+                )
+            if self.hardmax is not None and n > self.hardmax:
+                raise ValueError(
+                    "PositiveIntegerTuple parameter %r only takes values <= %r."
+                    % (self.name, self.hardmax)
+                )
+
+
 class IntegerRangeOrdered(IntegerRange):
     """
     Ordered integer range parameter enforcing lower <= upper.
@@ -786,6 +840,70 @@ class NegativeIntegerRangeOrdered(IntegerRangeOrdered):
             bounds=(hardmin, hardmax),
             **kwargs,
         )
+
+
+class OptionalPositiveIntegerRangeOrdered(PositiveIntegerRangeOrdered):
+    """
+    Optional ordered positive integer range parameter.
+
+    Accepts either an ordered positive integer tuple or ``None``.
+    """
+
+    def __init__(
+        self,
+        default=None,
+        softmin=0,
+        softmax=None,
+        hardmin=0,
+        hardmax=None,
+        **kwargs,
+    ):
+        super().__init__(
+            default=default,
+            softmin=softmin,
+            softmax=softmax,
+            hardmin=hardmin,
+            hardmax=hardmax,
+            allow_None=True,
+            **kwargs,
+        )
+
+    def _validate_value(self, val, allow_None):
+        if val is None and allow_None:
+            return
+        super()._validate_value(val, allow_None)
+
+
+class OptionalNegativeIntegerRangeOrdered(NegativeIntegerRangeOrdered):
+    """
+    Optional ordered negative integer range parameter.
+
+    Accepts either an ordered negative integer tuple or ``None``.
+    """
+
+    def __init__(
+        self,
+        default=None,
+        softmin=None,
+        softmax=0,
+        hardmin=None,
+        hardmax=0,
+        **kwargs,
+    ):
+        super().__init__(
+            default=default,
+            softmin=softmin,
+            softmax=softmax,
+            hardmin=hardmin,
+            hardmax=hardmax,
+            allow_None=True,
+            **kwargs,
+        )
+
+    def _validate_value(self, val, allow_None):
+        if val is None and allow_None:
+            return
+        super()._validate_value(val, allow_None)
 
 
 class NumericTuple2DRobust(param.NumericTuple):

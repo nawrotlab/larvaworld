@@ -8,11 +8,11 @@ import param
 
 from .. import util
 from .custom import (
-    IntegerRangeOrdered,
+    OptionalNegativeIntegerRangeOrdered,
     OptionalPositiveInteger,
+    OptionalPositiveIntegerRangeOrdered,
     OptionalPositiveNumber,
     PositiveInteger,
-    PositiveIntegerRangeOrdered,
     PositiveNumber,
 )
 from .nested_parameter_group import NestedConf
@@ -78,14 +78,35 @@ class FramerateOps(NestedConf):
         elif "fr" in kwargs:
             self.update_timestep()
 
+    def _safe_framerate_value(self) -> float:
+        if self.fr > 0:
+            return float(self.fr)
+        if self.dt > 0:
+            return float(1 / self.dt)
+        return float(self.param.fr.default)
+
+    def _safe_timestep_value(self) -> float:
+        if self.dt > 0:
+            return float(self.dt)
+        if self.fr > 0:
+            return float(1 / self.fr)
+        return float(self.param.dt.default)
+
     @param.depends("dt", watch=True)
     def update_framerate(self) -> None:
-        self.fr = 1 / self.dt
+        safe_dt = self._safe_timestep_value()
+        if safe_dt != self.dt:
+            self.dt = safe_dt
+            return
+        self.fr = 1 / safe_dt
 
     @param.depends("fr", watch=True)
     def update_timestep(self) -> None:
-        self.dt = 1 / self.fr
-        # raise
+        safe_fr = self._safe_framerate_value()
+        if safe_fr != self.fr:
+            self.fr = safe_fr
+            return
+        self.dt = 1 / safe_fr
 
 
 class XYops(NestedConf):
@@ -182,10 +203,10 @@ class XYops(NestedConf):
         )
 
     def get_track_point(self, idx: int) -> str:
-        if idx == -1:
+        if idx <= 0 or self.Npoints <= 0:
             return "centroid"
-        else:
-            return self.midline_points[idx - 1]
+        idx = min(idx, self.Npoints)
+        return self.midline_points[idx - 1]
 
     def get_midline_xy_data(self, s: Any) -> np.ndarray:
         xy = self.midline_xy
@@ -427,7 +448,7 @@ class TrackedPointIdx(XYops):
     reference, with automatic point name synchronization.
 
     Attributes:
-        point_idx: Midline point index (-1=centroid, 0 to Npoints-1, default: -1)
+        point_idx: Midline point index (-1=centroid, 1 to Npoints, default: -1)
         point: Point name string (auto-synced with point_idx)
 
     Example:
@@ -449,10 +470,20 @@ class TrackedPointIdx(XYops):
         super().__init__(**kwargs)
         self.update_tracked_point()
 
+    def _normalize_point_idx(self, point_idx: int) -> int:
+        if self.Npoints <= 0:
+            return -1
+        if point_idx <= 0:
+            return -1
+        return int(np.clip(point_idx, a_min=1, a_max=self.Npoints))
+
     @param.depends("Npoints", "point_idx", watch=True)
     def update_tracked_point(self) -> None:
-        self.param.point_idx.bounds = (hardmin, hardmax) = (-1, self.Npoints)
-        self.point_idx = self.param.point_idx.crop_to_bounds(self.point_idx)
+        self.param.point_idx.bounds = (-1, self.Npoints)
+        normalized_idx = self._normalize_point_idx(self.point_idx)
+        if normalized_idx != self.point_idx:
+            self.point_idx = normalized_idx
+            return
         self.point = self.get_track_point(self.point_idx)
 
     @property
@@ -491,12 +522,11 @@ class SimMetricOps(TrackedPointIdx):
         objects=["from_vectors", "from_angles"],
         doc="Whether bending angle is computed as a sum of sequential segmental angles or as the angle between front and rear body vectors.",
     )
-    front_vector = PositiveIntegerRangeOrdered(
-        (1, 2), softmax=12, doc="The initial & final segment of the front body vector."
+    front_vector = OptionalPositiveIntegerRangeOrdered(
+        (1, 2), doc="The initial & final segment of the front body vector."
     )
-    rear_vector = IntegerRangeOrdered(
+    rear_vector = OptionalNegativeIntegerRangeOrdered(
         (-2, -1),
-        softbounds=(-12, 12),
         doc="The initial & final segment of the rear body vector.",
     )
     front_body_ratio = param.Magnitude(
@@ -509,16 +539,72 @@ class SimMetricOps(TrackedPointIdx):
         doc="Whether to use the component velocity ralative to the axis of forward motion.",
     )
 
+    @staticmethod
+    def _normalize_legacy_rear_vector(
+        rear_vector: tuple[int, int] | None, Npoints: int
+    ) -> tuple[int, int] | None:
+        if rear_vector is None or Npoints <= 0:
+            return None if Npoints <= 0 else rear_vector
+        r1, r2 = rear_vector
+        if r1 > 0 and r2 > 0:
+            rear_vector = (r1 - Npoints, r2 - Npoints)
+        return SimMetricOps._clamp_ordered_range(rear_vector, lower=-Npoints, upper=-1)
+
+    def __init__(self, **kwargs):
+        Npoints = kwargs.get("Npoints")
+        if Npoints is not None:
+            if Npoints <= 0:
+                kwargs["front_vector"] = None
+                kwargs["rear_vector"] = None
+            elif "rear_vector" in kwargs:
+                kwargs["rear_vector"] = self._normalize_legacy_rear_vector(
+                    kwargs.get("rear_vector"), Npoints
+                )
+        super().__init__(**kwargs)
+        self.update_vectors()
+
+    @staticmethod
+    def _clamp_ordered_range(
+        value: tuple[int, int] | None, lower: int, upper: int
+    ) -> tuple[int, int] | None:
+        if value is None or lower > upper:
+            return None
+        low, high = value
+        low = int(np.clip(low, a_min=lower, a_max=upper))
+        high = int(np.clip(high, a_min=lower, a_max=upper))
+        if low > high:
+            low, high = high, low
+        return low, high
+
     @param.depends("Npoints", watch=True)
     def update_vectors(self) -> None:
         N = self.Npoints
-        # self.param.params('front_vector').softbounds = (-N,N)
-        # self.param.front_vector.bounds = (-N,N)
-        self.param.params("front_vector").bounds = (0, N)
+        front_param = self.param["front_vector"]
+        rear_param = self.param["rear_vector"]
+        if N > 0:
+            front_param.bounds = (1, N)
+            front_param.softbounds = (1, N)
+            rear_param.bounds = (-N, -1)
+            rear_param.softbounds = (-N, -1)
+        else:
+            front_param.bounds = (None, None)
+            front_param.softbounds = (None, None)
+            rear_param.bounds = (None, None)
+            rear_param.softbounds = (None, None)
 
-        self.param.params("front_vector")._validate(self.front_vector)
-        self.param.params("rear_vector").bounds = (-N, N)
-        self.param.params("rear_vector")._validate(self.rear_vector)
+        front_vector = self._clamp_ordered_range(self.front_vector, lower=1, upper=N)
+        rear_vector = self._clamp_ordered_range(self.rear_vector, lower=-N, upper=-1)
+        updates = {}
+        if front_vector != self.front_vector:
+            updates["front_vector"] = front_vector
+        if rear_vector != self.rear_vector:
+            updates["rear_vector"] = rear_vector
+        if updates:
+            self.param.update(**updates)
+            return
+
+        front_param._validate(self.front_vector)
+        rear_param._validate(self.rear_vector)
 
     @property
     def Nbend_angles(self) -> int:
@@ -526,16 +612,21 @@ class SimMetricOps(TrackedPointIdx):
 
     @property
     def vector_dict(self) -> util.AttrDict:
-        f1, f2 = self.front_vector
-        r1, r2 = self.rear_vector
-        return util.AttrDict(
-            {
-                "front": (f2 - 1, f1 - 1),
-                "rear": (r2 - 1, r1 - 1),
-                "head": (1, 0),
-                "tail": (-1, -2),
-            }
-        )
+        vectors = {
+            "head": (1, 0),
+            "tail": (-1, -2),
+        }
+        if self.front_vector is not None:
+            f1, f2 = self.front_vector
+            vectors["front"] = (f2 - 1, f1 - 1)
+        if self.rear_vector is not None:
+            r1, r2 = self.rear_vector
+            vectors["rear"] = (r2 - 1, r1 - 1)
+        ordered = {}
+        for key in ("front", "rear", "head", "tail"):
+            if key in vectors:
+                ordered[key] = vectors[key]
+        return util.AttrDict(ordered)
 
 
 class TrackerOps(SimMetricOps, FramerateOps):
