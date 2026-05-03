@@ -951,14 +951,32 @@ class _SingleExperimentController:
             disabled=True,
         )
         self.video_fps = pn.widgets.IntInput(
-            name="Video fps",
-            value=30,
+            name="Video speed-up",
+            value=1,
             step=1,
             start=1,
             end=120,
             disabled=True,
+            description=(
+                "Controls video playback speed, not the encoder frame rate. "
+                "1x keeps the saved video close to simulated real time. 2x plays "
+                "twice as fast and makes the video about half as long; 5x plays "
+                "five times as fast and makes it about one fifth as long."
+            ),
         )
         self.show_display = pn.widgets.Checkbox(name="Show display", value=False)
+        self.display_every_n_steps = pn.widgets.IntInput(
+            name="Display every N steps",
+            value=1,
+            step=1,
+            start=1,
+            end=20,
+            disabled=True,
+            description=(
+                "Live display redraw cadence. 1 updates every simulation step; "
+                "higher values redraw less often to reduce display overhead."
+            ),
+        )
         self.prepare_btn.width = None
         self.prepare_btn.sizing_mode = "stretch_width"
         self.simulation_preview_btn.width = None
@@ -1055,11 +1073,13 @@ class _SingleExperimentController:
         self.environment_select.param.watch(self._on_parameter_override_change, "value")
         self.parameter_group.param.watch(self._on_parameter_group_change, "value")
         self.save_video.param.watch(self._on_save_video_change, "value")
+        self.show_display.param.watch(self._on_show_display_change, "value")
         self.refresh_environments_btn.on_click(self._on_refresh_environments)
         self.prepare_btn.on_click(self._on_prepare_preview)
         self.simulation_preview_btn.on_click(self._on_generate_simulation_preview)
         self.run_btn.on_click(self._on_run_experiment)
 
+        self._on_show_display_change()
         self._refresh_environment_options()
         self._refresh_summary()
         self._refresh_parameter_editor()
@@ -1983,6 +2003,9 @@ class _SingleExperimentController:
         self.video_filename.disabled = not enabled
         self.video_fps.disabled = not enabled
 
+    def _on_show_display_change(self, *_: object) -> None:
+        self.display_every_n_steps.disabled = not bool(self.show_display.value)
+
     def _on_parameter_override_change(self, *_: object) -> None:
         self._parameter_seed_overrides = util.AttrDict()
         self._refresh_parameter_editor()
@@ -2043,7 +2066,10 @@ class _SingleExperimentController:
     def _runtime_screen_kws(self, run_dir: Path) -> dict[str, Any]:
         kws: dict[str, Any] = {
             "show_display": bool(self.show_display.value),
+            "display_every_n_steps": int(self.display_every_n_steps.value),
         }
+        if self.show_display.value:
+            kws["vis_mode"] = "video"
         if self.save_video.value:
             video_name = _safe_slug(
                 (self.video_filename.value or "").strip() or run_dir.name
@@ -2064,6 +2090,9 @@ class _SingleExperimentController:
         self.simulation_preview_btn.disabled = disabled
         self.run_btn.disabled = disabled
         self.preview_frames_input.disabled = disabled
+        self.display_every_n_steps.disabled = disabled or not bool(
+            self.show_display.value
+        )
         self.refresh_environments_btn.disabled = disabled
 
     def _execute_run_experiment(
@@ -2378,6 +2407,7 @@ class _SingleExperimentController:
             self.video_filename,
             self.video_fps,
             self.show_display,
+            self.display_every_n_steps,
             css_classes=["lw-single-exp-media"],
             sizing_mode="stretch_width",
             margin=0,

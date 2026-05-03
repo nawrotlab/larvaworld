@@ -706,17 +706,37 @@ def test_single_experiment_runtime_screen_kws_include_video_when_enabled(
     controller = _SingleExperimentController()
     controller.save_video.value = True
     controller.video_filename.value = "dish_video"
-    controller.video_fps.value = 24
+    controller.video_fps.value = 3
     controller.show_display.value = True
+    controller.display_every_n_steps.value = 4
 
     kws = controller._runtime_screen_kws(workspace_root / "experiments" / "dish_demo")
 
+    assert controller.video_fps.name == "Video speed-up"
     assert kws["save_video"] is True
     assert kws["vis_mode"] == "video"
     assert kws["video_file"] == "dish_video"
-    assert kws["fps"] == 24
+    assert kws["fps"] == 3
     assert kws["show_display"] is True
+    assert kws["display_every_n_steps"] == 4
     assert kws["media_dir"] == str(workspace_root / "experiments" / "dish_demo")
+
+
+def test_single_experiment_show_display_uses_video_render_mode(tmp_path: Path) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.show_display.value = True
+    controller.display_every_n_steps.value = 3
+
+    kws = controller._runtime_screen_kws(workspace_root / "experiments" / "dish_demo")
+
+    assert kws["show_display"] is True
+    assert kws["vis_mode"] == "video"
+    assert kws["display_every_n_steps"] == 3
+    assert "save_video" not in kws
 
 
 def test_single_experiment_run_experiment_passes_video_screen_kws(
@@ -745,13 +765,36 @@ def test_single_experiment_run_experiment_passes_video_screen_kws(
     controller.run_name.value = "dish_demo"
     controller.save_video.value = True
     controller.video_filename.value = "dish_capture"
-    controller.video_fps.value = 25
+    controller.video_fps.value = 5
+    controller.display_every_n_steps.value = 6
     controller._on_run_experiment()
 
     assert captured["screen_kws"]["save_video"] is True
     assert captured["screen_kws"]["video_file"] == "dish_capture"
-    assert captured["screen_kws"]["fps"] == 25
+    assert captured["screen_kws"]["fps"] == 5
+    assert captured["screen_kws"]["display_every_n_steps"] == 6
     assert "dish_capture.mp4" in controller.status.object
+
+
+def test_single_experiment_video_speed_up_defaults_to_realtime() -> None:
+    controller = _SingleExperimentController()
+
+    assert controller.video_fps.name == "Video speed-up"
+    assert controller.video_fps.value == 1
+    assert "simulated real time" in controller.video_fps.description
+    assert "twice as fast" in controller.video_fps.description
+    assert "one fifth as long" in controller.video_fps.description
+
+
+def test_single_experiment_display_every_n_steps_follows_show_display() -> None:
+    controller = _SingleExperimentController()
+
+    assert controller.display_every_n_steps.value == 1
+    assert controller.display_every_n_steps.disabled is True
+    controller.show_display.value = True
+    assert controller.display_every_n_steps.disabled is False
+    controller.show_display.value = False
+    assert controller.display_every_n_steps.disabled is True
 
 
 def test_single_experiment_run_experiment_explicitly_closes_screen_manager(

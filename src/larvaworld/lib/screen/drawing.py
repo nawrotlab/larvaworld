@@ -89,6 +89,11 @@ class MediaDrawOps(NestedConf):
     save_video = Boolean(False, doc="Whether to save a video.")
     vis_mode = OptionalSelector(objects=["video", "image"], doc="Screen mode.")
     show_display = Boolean(False, doc="Whether to launch the pygame-visualization.")
+    display_every_n_steps = PositiveInteger(
+        1,
+        softmax=20,
+        doc="Live display redraw cadence in simulation steps (display-only mode).",
+    )
 
     @property
     def active(self) -> bool:
@@ -744,16 +749,17 @@ class ScreenManager(ScreenAreaPygame):
             return
 
         self.check(**kwargs)
-        if not self.overlap_mode:
-            self.draw_arena()
-
-        self.draw_agents()
         if self.show_display:
             self.evaluate_input()
             # If display was closed during input handling, abort rendering to avoid surface errors.
             if self.closed or not pygame.display.get_init():
                 return
             self.evaluate_graphs()
+        if self.display_only_mode and not self.should_draw_live_frame:
+            return
+        if not self.overlap_mode:
+            self.draw_arena()
+        self.draw_agents()
         if not self.overlap_mode:
             self._draw_arena(self.tank_color, self.screen_color)
             self.draw_aux()
@@ -764,19 +770,33 @@ class ScreenManager(ScreenAreaPygame):
 
         if self.show_display:
             pygame.display.flip()
-            # Avoid using pixels3d() on the live display surface here.
-            # It returns a view that can keep the SDL surface locked and
-            # has proven unstable in long display+video runs on macOS.
-            image = pygame.surfarray.array3d(self.v)
-            # self._t.tick(self.manager._fps)
-        else:
-            image = pygame.surfarray.array3d(self.v)
+        if self.vid_writer is None and self.img_writer is None:
+            return None
+        # Avoid using pixels3d() on the live display surface here.
+        # It returns a view that can keep the SDL surface locked and
+        # has proven unstable in long display+video runs on macOS.
+        image = pygame.surfarray.array3d(self.v)
         if self.vid_writer:
             self.vid_writer.append_data(np.flipud(np.rot90(image)))
         if self.img_writer:
             self.img_writer.append_data(np.flipud(np.rot90(image)))
             self.img_writer = None
         return image
+
+    @property
+    def display_only_mode(self) -> bool:
+        return (
+            self.show_display
+            and not self.save_video
+            and self.image_mode is None
+            and self.vid_writer is None
+            and self.img_writer is None
+        )
+
+    @property
+    def should_draw_live_frame(self) -> bool:
+        cadence = max(1, int(self.display_every_n_steps))
+        return cadence == 1 or self.model.Nticks % cadence == 0
 
     def initialize(self, **kwargs: Any) -> None:
         """
