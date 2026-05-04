@@ -1192,6 +1192,7 @@ def test_generate_preview_uses_show_group_shapes_false(
             return pn.pane.HTML("canvas")
 
     def fake_mapping(env_params, *, larva_groups=None, show_group_shapes=True):
+        captured["larva_groups"] = larva_groups
         captured["show_group_shapes"] = show_group_shapes
         return EnvironmentCanvasState(arena=CanvasArena("rectangular", (0.1, 0.1)))
 
@@ -1217,6 +1218,7 @@ def test_generate_preview_uses_show_group_shapes_false(
     controller = _SingleExperimentController()
     controller._on_generate_simulation_preview()
 
+    assert captured["larva_groups"] is None
     assert captured["show_group_shapes"] is False
 
 

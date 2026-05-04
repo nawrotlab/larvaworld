@@ -926,7 +926,7 @@ class _SingleExperimentController:
             button_type="default",
         )
         self.prepare_btn = pn.widgets.Button(
-            name="Prepare configuration preview",
+            name="Arena Preview",
             button_type="primary",
         )
         self.simulation_preview_btn = pn.widgets.Button(
@@ -1033,7 +1033,7 @@ class _SingleExperimentController:
             "font-size": "12px",
             "line-height": "1.55",
             "color": "rgba(17, 17, 17, 0.76)",
-            "padding": "0 6px",
+            "padding": "0 6px 0 12px",
         }
         self.status = pn.pane.Markdown(
             "",
@@ -2298,7 +2298,7 @@ class _SingleExperimentController:
                 raise ValueError("No preview frames were generated.")
             state = env_params_to_canvas_state(
                 parameters.env_params,
-                larva_groups=parameters.get("larva_groups", {}),
+                larva_groups=None,
                 show_group_shapes=False,
             )
             canvas = EnvironmentCanvas(editable=False)
@@ -2418,11 +2418,11 @@ class _SingleExperimentController:
                 self.run_name,
                 self.environment_select,
                 self.refresh_environments_btn,
-                media_controls,
                 self.summary,
                 self.preview_action_row,
                 self.preview_options_row,
                 self.preview_generate_row,
+                media_controls,
                 self.execution_action_row,
                 self.status,
                 sizing_mode="stretch_width",

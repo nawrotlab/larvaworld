@@ -23,6 +23,7 @@ LANE_MODELS_COLOR_DARK = "#5a4760"
 DEFAULT_SOURCE_COLOR = "#4caf50"
 DEFAULT_LARVA_COLOR = "#2f4858"
 HIGHLIGHT_COLOR = "#f97316"
+STATIC_LARVA_GROUP_MEMBER_HALF_LENGTH = 0.0015
 ENV_CANVAS_WIDTH = 760
 ENV_CANVAS_HEIGHT = 620
 ENV_CANVAS_Y_HALF_RANGE = 0.30
@@ -1757,12 +1758,11 @@ class EnvironmentCanvas:
         fill_color = _mix_hex_colors(base_color, "#ffffff", 0.18)
         line_color = _mix_hex_colors(base_color, "#111111", 0.04)
         if obj.object_type == "larva_group":
-            half_len = 0.00045
             rows: list[dict[str, Any]] = []
             for idx, (member_x, member_y) in enumerate(positions):
                 angle = _stable_member_angle(obj, idx)
-                dx = half_len * math.cos(angle)
-                dy = half_len * math.sin(angle)
+                dx = STATIC_LARVA_GROUP_MEMBER_HALF_LENGTH * math.cos(angle)
+                dy = STATIC_LARVA_GROUP_MEMBER_HALF_LENGTH * math.sin(angle)
                 rows.append(
                     {
                         "x0": member_x - dx,
