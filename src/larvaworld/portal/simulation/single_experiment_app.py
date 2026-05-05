@@ -1143,7 +1143,9 @@ class _SingleExperimentController:
 
         # Explicit exact match first.
         parameters = reg.conf.Exp.getID(experiment_id)
-        env_params = parameters.get("env_params") if isinstance(parameters, dict) else None
+        env_params = (
+            parameters.get("env_params") if isinstance(parameters, dict) else None
+        )
         if isinstance(env_params, str) and env_params in env_conf_ids:
             return env_params
         if isinstance(env_params, dict):
@@ -2379,7 +2381,9 @@ class _SingleExperimentController:
             )
         ]
         experiment = self._selected_experiment()
-        self.status.object = f'Generating simulation preview for "{experiment}" using {selected_env}.'
+        self.status.object = (
+            f'Generating simulation preview for "{experiment}" using {selected_env}.'
+        )
         self._set_run_controls_disabled(True)
         launcher = None
         try:

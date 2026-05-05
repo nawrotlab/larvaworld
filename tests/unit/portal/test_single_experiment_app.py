@@ -57,7 +57,8 @@ def test_single_experiment_lists_workspace_environment_presets(tmp_path: Path) -
     controller = _SingleExperimentController()
 
     assert (
-        controller.environment_select.options["Template default: dish"] == "__template__"
+        controller.environment_select.options["Template default: dish"]
+        == "__template__"
     )
     assert (
         controller.environment_select.options["Registry / dish [template default]"]
