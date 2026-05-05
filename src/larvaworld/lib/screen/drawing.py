@@ -60,6 +60,8 @@ class MediaDrawOps(NestedConf):
         save_video: Whether to save video output
         vis_mode: Screen visualization mode ('video' or 'image')
         show_display: Whether to launch pygame visualization
+        display_every_n_steps: Live display redraw cadence in simulation steps
+            (used only in display-only mode)
 
     Example:
         >>> media_ops = MediaDrawOps(save_video=True, fps=30, video_file='sim')

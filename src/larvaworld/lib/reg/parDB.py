@@ -1276,13 +1276,24 @@ class ParamRegistry(ParamClass):
         O = output_dict
         if cs is None:
             cs = ["pose"]
+        step_ks = []
+        endpoint_ks = []
+        for c in cs:
+            entry = O[c]
+            if isinstance(entry, dict) or hasattr(entry, "get"):
+                step_ks.append(entry["step"])
+                endpoint_ks.append(entry["endpoint"])
+            else:
+                # Backward-compatible support for entries stored directly as step-key lists
+                step_ks.append(entry)
+                endpoint_ks.append([])
         return AttrDict(
             {
                 "step": self.output_reporters(
-                    ks=SuperList(O[c]["step"] for c in cs).flatten.unique, agents=agents
+                    ks=SuperList(step_ks).flatten.unique, agents=agents
                 ),
                 "end": self.output_reporters(
-                    ks=SuperList(O[c]["endpoint"] for c in cs).flatten.unique,
+                    ks=SuperList(endpoint_ks).flatten.unique,
                     agents=agents,
                 ),
             }

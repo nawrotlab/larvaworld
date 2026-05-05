@@ -159,6 +159,7 @@ _ENRICHMENT_ANOT_KEY_OPTIONS = [
 _ODORSCAPE_OPTIONS = ["Analytical", "Gaussian", "Diffusion"]
 _PREVIEW_STEP_CAP = 300
 _REGISTRY_ENV_PRESET_PREFIX = "__registry__:"
+_WORKSPACE_ENV_PRESET_PREFIX = "__workspace__:"
 _NONE_OPTION_LABEL = "None"
 
 
@@ -170,6 +171,46 @@ def _safe_slug(value: str) -> str:
 def _default_run_name(experiment_id: str) -> str:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     return f"{_safe_slug(experiment_id)}_{stamp}"
+
+
+def _default_experiment_template() -> str | None:
+    experiment_ids = list(reg.conf.Exp.confIDs)
+    if not experiment_ids:
+        return None
+    return "dish" if "dish" in experiment_ids else experiment_ids[0]
+
+
+class _SingleExperimentSelection(param.Parameterized):
+    experiment_template = reg.conf.Exp.confID_selector(
+        default=_default_experiment_template()
+    )
+    environment_preset = param.Selector(
+        default="__template__",
+        objects={"Template default environment": "__template__"},
+        doc=(
+            "Environment preset from the template default, workspace JSON presets, "
+            "or registry Env configurations."
+        ),
+    )
+
+    def __init__(
+        self,
+        *,
+        experiment_ids: list[str],
+        default_experiment: str,
+        environment_options: dict[str, str] | None = None,
+    ) -> None:
+        super().__init__(experiment_template=default_experiment)
+        self.param["experiment_template"].objects = experiment_ids
+        self.param["experiment_template"].label = "Experiment template"
+        self.param["environment_preset"].label = "Environment preset"
+        if environment_options is not None:
+            self.set_environment_options(environment_options)
+
+    def set_environment_options(self, options: dict[str, str]) -> None:
+        self.param["environment_preset"].objects = options
+        if self.environment_preset not in options.values():
+            self.environment_preset = "__template__"
 
 
 def _editor_group_title(key: str) -> str:
@@ -907,19 +948,19 @@ class _SingleExperimentController:
     def __init__(self) -> None:
         experiment_ids = list(reg.conf.Exp.confIDs)
         default_experiment = "dish" if "dish" in experiment_ids else experiment_ids[0]
-        self.experiment = pn.widgets.Select(
-            name="Experiment template",
-            value=default_experiment,
-            options=experiment_ids,
+        self.selection = _SingleExperimentSelection(
+            experiment_ids=experiment_ids,
+            default_experiment=default_experiment,
+        )
+        self.experiment = pn.widgets.Select.from_param(
+            self.selection.param.experiment_template
         )
         self.run_name = pn.widgets.TextInput(
             name="Run name",
-            value=_default_run_name(self.experiment.value),
+            value=_default_run_name(self.selection.experiment_template),
         )
-        self.environment_select = pn.widgets.Select(
-            name="Environment preset",
-            options={},
-            value="__template__",
+        self.environment_select = pn.widgets.Select.from_param(
+            self.selection.param.environment_preset
         )
         self.refresh_environments_btn = pn.widgets.Button(
             name="Refresh environment",
@@ -1068,9 +1109,11 @@ class _SingleExperimentController:
             sizing_mode="stretch_width",
         )
 
-        self.experiment.param.watch(self._on_experiment_change, "value")
+        self.selection.param.watch(self._on_experiment_change, "experiment_template")
         self.run_name.param.watch(self._on_run_name_change, "value")
-        self.environment_select.param.watch(self._on_parameter_override_change, "value")
+        self.selection.param.watch(
+            self._on_parameter_override_change, "environment_preset"
+        )
         self.parameter_group.param.watch(self._on_parameter_group_change, "value")
         self.save_video.param.watch(self._on_save_video_change, "value")
         self.show_display.param.watch(self._on_show_display_change, "value")
@@ -1091,26 +1134,72 @@ class _SingleExperimentController:
     def _experiment_dir(self) -> Path:
         return get_workspace_dir("experiments")
 
+    def _selected_experiment(self) -> str:
+        return str(self.selection.experiment_template)
+
+    def _template_default_env_id(self) -> str | None:
+        experiment_id = self._selected_experiment()
+        env_conf_ids = set(str(env_id) for env_id in reg.conf.Env.confIDs)
+
+        # Explicit exact match first.
+        parameters = reg.conf.Exp.getID(experiment_id)
+        env_params = parameters.get("env_params") if isinstance(parameters, dict) else None
+        if isinstance(env_params, str) and env_params in env_conf_ids:
+            return env_params
+        if isinstance(env_params, dict):
+            for key in (
+                "id",
+                "name",
+                "confID",
+                "config_id",
+                "configuration_id",
+                "env_id",
+                "default_env_id",
+            ):
+                value = env_params.get(key)
+                if isinstance(value, str) and value in env_conf_ids:
+                    return value
+
+        # Convention fallback for templates that share ID with Env presets.
+        if experiment_id in env_conf_ids:
+            return experiment_id
+
+        return None
+
     def _environment_options(self) -> dict[str, str]:
-        options = {"Template default environment": "__template__"}
+        template_default_env_id = self._template_default_env_id()
+        template_label = (
+            f"Template default: {template_default_env_id}"
+            if template_default_env_id is not None
+            else "Template default environment"
+        )
+        options = {template_label: "__template__"}
         preset_dir = self._environment_dir()
         preset_dir.mkdir(parents=True, exist_ok=True)
         workspace_labels: set[str] = set()
         for path in sorted(preset_dir.glob("*.json")):
             workspace_labels.add(path.stem)
             options[path.stem] = path.name
-        registry_options = {
-            f"Registry / {name}": f"{_REGISTRY_ENV_PRESET_PREFIX}{name}"
-            for name in sorted(str(key) for key in reg.conf.Env.dict.keys())
-            if name not in workspace_labels
-        }
+        registry_options = {}
+        for name in sorted(str(key) for key in reg.conf.Env.dict.keys()):
+            if name in workspace_labels:
+                continue
+            label = f"Registry / {name}"
+            if template_default_env_id is not None and name == template_default_env_id:
+                label += " [template default]"
+            registry_options[label] = f"{_REGISTRY_ENV_PRESET_PREFIX}{name}"
         options.update(registry_options)
         return options
 
     def _load_selected_environment(self) -> util.AttrDict | None:
-        selected = self.environment_select.value
+        selected = self.selection.environment_preset
         if selected in {None, "", "__template__"}:
             return None
+        if str(selected).startswith(_WORKSPACE_ENV_PRESET_PREFIX):
+            filename = str(selected)[len(_WORKSPACE_ENV_PRESET_PREFIX) :]
+            preset_path = self._environment_dir() / filename
+            payload = json.loads(preset_path.read_text(encoding="utf-8"))
+            return util.AttrDict(payload)
         if str(selected).startswith(_REGISTRY_ENV_PRESET_PREFIX):
             registry_id = str(selected)[len(_REGISTRY_ENV_PRESET_PREFIX) :]
             return util.AttrDict(reg.conf.Env.getID(registry_id)).get_copy()
@@ -1119,9 +1208,14 @@ class _SingleExperimentController:
         return util.AttrDict(payload)
 
     def _selected_environment_label(self) -> str:
-        selected = self.environment_select.value
+        selected = self.selection.environment_preset
         if selected == "__template__":
             return "template default"
+        if selected is not None and str(selected).startswith(
+            _WORKSPACE_ENV_PRESET_PREFIX
+        ):
+            filename = str(selected)[len(_WORKSPACE_ENV_PRESET_PREFIX) :]
+            return Path(filename).stem
         if selected is not None and str(selected).startswith(
             _REGISTRY_ENV_PRESET_PREFIX
         ):
@@ -1189,7 +1283,7 @@ class _SingleExperimentController:
         return merged
 
     def _build_parameters(self) -> util.AttrDict:
-        parameters = reg.conf.Exp.getID(self.experiment.value).get_copy()
+        parameters = reg.conf.Exp.getID(self._selected_experiment()).get_copy()
         parameters["duration"] = float(parameters.get("duration", 5.0))
         environment_payload = self._load_selected_environment()
         if environment_payload is not None:
@@ -1212,28 +1306,31 @@ class _SingleExperimentController:
         try:
             options = self._environment_options()
         except WorkspaceError as exc:
-            self.environment_select.options = {"Workspace unavailable": "__template__"}
-            self.environment_select.value = "__template__"
+            self.selection.set_environment_options(
+                {"Workspace unavailable": "__template__"}
+            )
+            self.selection.environment_preset = "__template__"
             self.environment_select.disabled = True
             self.refresh_environments_btn.disabled = True
             self.status.object = f"Cannot load workspace environment presets: {exc}"
             return
-        selected = self.environment_select.value
-        self.environment_select.options = options
+        selected = self.selection.environment_preset
+        self.selection.set_environment_options(options)
         self.environment_select.disabled = False
         self.refresh_environments_btn.disabled = False
-        self.environment_select.value = (
+        self.selection.environment_preset = (
             selected if selected in options.values() else "__template__"
         )
 
     def _refresh_summary(self) -> None:
-        parameters = reg.conf.Exp.getID(self.experiment.value).get_copy()
+        experiment = self._selected_experiment()
+        parameters = reg.conf.Exp.getID(experiment).get_copy()
         larva_groups = list(parameters.get("larva_groups", {}).keys())
         env = util.AttrDict(parameters.env_params)
         epochs = parameters.get("trials", {}).get("epochs", {})
         self.summary.object = (
             '<div class="lw-single-exp-summary">'
-            f"<strong>Template:</strong> <code>{self.experiment.value}</code><br>"
+            f"<strong>Template:</strong> <code>{experiment}</code><br>"
             f"<strong>Default duration:</strong> {float(parameters.get('duration', 0.0)):.2f} min<br>"
             f"<strong>Arena geometry:</strong> {env.arena.geometry}<br>"
             f"<strong>Larva groups:</strong> {', '.join(larva_groups) if larva_groups else 'None'}<br>"
@@ -1243,7 +1340,7 @@ class _SingleExperimentController:
         )
 
     def _editable_flat_parameters(self) -> util.AttrDict:
-        parameters = reg.conf.Exp.getID(self.experiment.value).get_copy()
+        parameters = reg.conf.Exp.getID(self._selected_experiment()).get_copy()
         environment_payload = self._load_selected_environment()
         if environment_payload is not None:
             env_params = util.AttrDict(parameters.env_params).get_copy()
@@ -1985,17 +2082,19 @@ class _SingleExperimentController:
         self._render_parameter_group()
 
     def _on_experiment_change(self, *_: object) -> None:
+        experiment = self._selected_experiment()
         self._parameter_seed_overrides = util.AttrDict()
-        self.run_name.value = _default_run_name(self.experiment.value)
+        self.run_name.value = _default_run_name(experiment)
+        self._refresh_environment_options()
         self._refresh_summary()
         self._refresh_parameter_editor()
-        self.status.object = f'Template "{self.experiment.value}" loaded.'
+        self.status.object = f'Template "{experiment}" loaded.'
 
     def _on_run_name_change(self, *_: object) -> None:
         current = (self.video_filename.value or "").strip()
         if not current or current == _safe_slug(current):
             self.video_filename.value = _safe_slug(
-                self.run_name.value or self.experiment.value
+                self.run_name.value or self._selected_experiment()
             )
 
     def _on_save_video_change(self, *_: object) -> None:
@@ -2019,7 +2118,7 @@ class _SingleExperimentController:
         self.status.object = "Refreshed workspace environment presets."
 
     def _build_run_directory(self) -> Path:
-        run_id = _safe_slug(self.run_name.value or self.experiment.value)
+        run_id = _safe_slug(self.run_name.value or self._selected_experiment())
         base_dir = self._experiment_dir()
         candidate = base_dir / run_id
         if not candidate.exists():
@@ -2055,7 +2154,7 @@ class _SingleExperimentController:
         run_dir.mkdir(parents=True, exist_ok=False)
         plan_path = run_dir / "resolved_experiment.json"
         payload = self._resolved_plan_payload(
-            experiment=self.experiment.value,
+            experiment=self._selected_experiment(),
             run_name=self.run_name.value or run_dir.name,
             selected_env=selected_env,
             parameters=parameters,
@@ -2111,7 +2210,7 @@ class _SingleExperimentController:
             )
             screen_kws = self._runtime_screen_kws(run_dir)
             launcher = sim.ExpRun(
-                experiment=self.experiment.value,
+                experiment=self._selected_experiment(),
                 parameters=parameters,
                 id=run_dir.name,
                 dir=str(run_dir),
@@ -2132,7 +2231,7 @@ class _SingleExperimentController:
 
         dataset_count = len(datasets or [])
         self.status.object = (
-            f'Completed run "{self.experiment.value}". '
+            f'Completed run "{self._selected_experiment()}". '
             f"Stored outputs in <code>{run_dir}</code>. "
             f"Saved resolved config to <code>{plan_path.name}</code>. "
             f"Datasets produced: {dataset_count}."
@@ -2253,7 +2352,7 @@ class _SingleExperimentController:
         self.preview_meta.object = self._preview_metadata_html(parameters, selected_env)
         self.preview[:] = [canvas.view()]
         self.status.object = (
-            f'Prepared configuration preview for "{self.experiment.value}" using '
+            f'Prepared configuration preview for "{self._selected_experiment()}" using '
             f"{selected_env}. Reserved output directory for a future run: "
             f"<code>{run_dir}</code>. No simulation has been run."
         )
@@ -2279,12 +2378,13 @@ class _SingleExperimentController:
                 margin=0,
             )
         ]
-        self.status.object = f'Generating simulation preview for "{self.experiment.value}" using {selected_env}.'
+        experiment = self._selected_experiment()
+        self.status.object = f'Generating simulation preview for "{experiment}" using {selected_env}.'
         self._set_run_controls_disabled(True)
         launcher = None
         try:
             launcher, fallback_note = self._prepare_preview_launcher(
-                self.experiment.value,
+                experiment,
                 parameters,
                 run_dir,
             )
@@ -2334,7 +2434,7 @@ class _SingleExperimentController:
         self.preview[:] = [preview]
         displayed_end = frames[-1].tick * float(launcher.dt)
         status = (
-            f'Generated simulation preview for "{self.experiment.value}" using {selected_env}. '
+            f'Generated simulation preview for "{experiment}" using {selected_env}. '
             f"Reserved output directory for a future run: <code>{run_dir}</code>. "
             f"Simulation preview ready: {len(frames)} frames generated. "
             f"Displayed range: 0.0-{displayed_end:.1f} s simulated time. "
@@ -2354,8 +2454,9 @@ class _SingleExperimentController:
             return
 
         selected_env = self._selected_environment_label()
+        experiment = self._selected_experiment()
         self.status.object = (
-            f'Running "{self.experiment.value}" using {selected_env}. '
+            f'Running "{experiment}" using {selected_env}. '
             f"Outputs will be stored under <code>{run_dir}</code>. "
             "The UI will be unresponsive until the simulation finishes."
         )
@@ -2363,7 +2464,7 @@ class _SingleExperimentController:
             pn.pane.HTML(
                 (
                     '<div class="lw-single-exp-preview-placeholder">'
-                    f'Running "{html.escape(self.experiment.value)}" and writing outputs to '
+                    f'Running "{html.escape(experiment)}" and writing outputs to '
                     f"<code>{html.escape(str(run_dir))}</code>. "
                     "This view will update again after the simulation finishes."
                     "</div>"

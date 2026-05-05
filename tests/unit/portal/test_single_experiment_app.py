@@ -8,7 +8,7 @@ import numpy as np
 import panel as pn
 import pytest
 
-from larvaworld.lib import util
+from larvaworld.lib import reg, util
 from larvaworld.lib.reg.larvagroup import LarvaGroup
 from larvaworld.portal.canvas_widgets.environment_models import (
     CanvasArena,
@@ -57,8 +57,11 @@ def test_single_experiment_lists_workspace_environment_presets(tmp_path: Path) -
     controller = _SingleExperimentController()
 
     assert (
-        controller.environment_select.options["Template default environment"]
-        == "__template__"
+        controller.environment_select.options["Template default: dish"] == "__template__"
+    )
+    assert (
+        controller.environment_select.options["Registry / dish [template default]"]
+        == "__registry__:dish"
     )
     assert controller.environment_select.options["dish_custom"] == "dish_custom.json"
 
@@ -83,6 +86,41 @@ def test_single_experiment_lists_and_loads_registry_environment_presets(
     assert parameters.env_params.arena.geometry == "rectangular"
     assert "Maze" in parameters.env_params.border_list
     assert controller._selected_environment_label() == "registry / maze"
+
+
+def test_single_experiment_template_change_auto_refreshes_environment_presets(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    current_template = str(controller.experiment.value)
+    env_ids = set(str(env_id) for env_id in reg.conf.Env.confIDs)
+    candidate = next(
+        (
+            exp_id
+            for exp_id in (str(exp_id) for exp_id in reg.conf.Exp.confIDs)
+            if exp_id in env_ids and exp_id != current_template
+        ),
+        None,
+    )
+    if candidate is None:
+        pytest.skip("No experiment template with matching environment ID available")
+
+    controller.experiment.value = candidate
+
+    assert (
+        controller.environment_select.options[f"Template default: {candidate}"]
+        == "__template__"
+    )
+    assert (
+        controller.environment_select.options[
+            f"Registry / {candidate} [template default]"
+        ]
+        == f"__registry__:{candidate}"
+    )
 
 
 def test_single_experiment_build_parameters_applies_environment_override(

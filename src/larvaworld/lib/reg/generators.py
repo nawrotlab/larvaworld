@@ -252,7 +252,9 @@ class SimConfigurationParams(SimConfiguration):
 
         if parameters is not None:
             for k in set(parameters).intersection(set(SimOps().nestedConf)):
-                if k in kwargs:
+                # CLI parsers often pass optional args as None; treat None as
+                # "not provided" so stored experiment defaults are preserved.
+                if k in kwargs and kwargs[k] is not None:
                     parameters[k] = kwargs[k]
                 else:
                     kwargs[k] = parameters[k]
