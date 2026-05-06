@@ -6,6 +6,7 @@ import pytest
 from larvaworld.portal.canvas_widgets.environment_canvas import (
     DEFAULT_LARVA_COLOR,
     EnvironmentCanvas,
+    STATIC_LARVA_GROUP_MEMBER_HALF_LENGTH,
 )
 from larvaworld.portal.canvas_widgets.environment_models import (
     CanvasArena,
@@ -207,7 +208,7 @@ def test_environment_canvas_set_larva_frame_populates_dynamic_sources() -> None:
         LarvaPreviewFrame(
             tick=5,
             centroids=((0.0, 0.0), (0.01, 0.02)),
-            heads=((0.001, 0.0),),
+            heads=((0.0016, 0.0),),
             midlines=(((0.0, 0.0), (0.001, 0.0), (0.002, 0.0)),),
             trails=(((0.0, 0.0), (0.0, 0.003)), ((0.01, 0.02), (0.011, 0.021))),
             colors=("#111111",),
@@ -219,9 +220,41 @@ def test_environment_canvas_set_larva_frame_populates_dynamic_sources() -> None:
         "#111111",
         DEFAULT_LARVA_COLOR,
     ]
-    assert canvas.sim_larva_head_source.data["x"] == [0.001]
+    assert canvas.sim_larva_head_source.data["x"] == [0.0016]
     assert canvas.sim_larva_midline_source.data["xs"] == [[0.0, 0.001, 0.002]]
     assert canvas.sim_larva_trail_source.data["ys"] == [[0.0, 0.003], [0.02, 0.021]]
+
+
+def test_environment_canvas_head_snapping_can_be_disabled() -> None:
+    canvas = EnvironmentCanvas(snap_heads_to_midline=False)
+    canvas.set_larva_frame(
+        LarvaPreviewFrame(
+            tick=2,
+            centroids=((0.0, 0.0),),
+            heads=((0.0016, 0.0),),
+            midlines=(((0.0, 0.0), (0.001, 0.0), (0.002, 0.0)),),
+            colors=("#111111",),
+        )
+    )
+
+    assert canvas.sim_larva_head_source.data["x"] == [0.0016]
+    assert canvas.sim_larva_midline_source.data["xs"] == [[0.0, 0.001, 0.002]]
+
+
+def test_environment_canvas_head_snapping_can_be_enabled() -> None:
+    canvas = EnvironmentCanvas(snap_heads_to_midline=True)
+    canvas.set_larva_frame(
+        LarvaPreviewFrame(
+            tick=2,
+            centroids=((0.0, 0.0),),
+            heads=((0.0016, 0.0),),
+            midlines=(((0.0, 0.0), (0.001, 0.0), (0.002, 0.0)),),
+            colors=("#111111",),
+        )
+    )
+
+    assert canvas.sim_larva_head_source.data["x"] == [0.002]
+    assert canvas.sim_larva_midline_source.data["xs"] == [[0.0, 0.001, 0.002]]
 
 
 def test_environment_canvas_set_larva_frame_skips_invalid_optional_data() -> None:
@@ -479,7 +512,7 @@ def test_environment_canvas_named_colors_do_not_fallback_to_green() -> None:
         length = ((x1[i] - x0[i]) ** 2 + (y1[i] - y0[i]) ** 2) ** 0.5
         assert cx == pytest.approx(-0.04)
         assert cy == pytest.approx(0.0)
-        assert length == pytest.approx(0.0009)
+        assert length == pytest.approx(2.0 * STATIC_LARVA_GROUP_MEMBER_HALF_LENGTH)
     assert "r" not in canvas.larva_group_member_source.data
     assert "size" not in canvas.larva_group_member_source.data
     assert canvas.larva_group_member_source.data["fill_color"] == [

@@ -86,6 +86,17 @@ def _valid_path(value: Any) -> tuple[tuple[float, float], ...]:
     return points if len(points) >= 2 else ()
 
 
+def _nearest_endpoint(
+    point: tuple[float, float],
+    path: tuple[tuple[float, float], ...],
+) -> tuple[float, float]:
+    first = path[0]
+    last = path[-1]
+    first_dist_sq = (point[0] - first[0]) ** 2 + (point[1] - first[1]) ** 2
+    last_dist_sq = (point[0] - last[0]) ** 2 + (point[1] - last[1]) ** 2
+    return first if first_dist_sq <= last_dist_sq else last
+
+
 def _optional_float(value: Any, default: float) -> float:
     if value is None:
         return default
@@ -286,10 +297,12 @@ class EnvironmentCanvas:
         width: int = ENV_CANVAS_WIDTH,
         height: int = ENV_CANVAS_HEIGHT,
         editable: bool = False,
+        snap_heads_to_midline: bool = False,
     ) -> None:
         self.width = int(width)
         self.height = int(height)
         self.editable = bool(editable)
+        self.snap_heads_to_midline = bool(snap_heads_to_midline)
         self._state: EnvironmentCanvasState | None = None
         self._arena = CanvasArena("rectangular", (0.2, 0.2))
 
@@ -915,17 +928,7 @@ class EnvironmentCanvas:
                     "id": larva_id,
                 }
             )
-            if index < len(frame.heads):
-                head_xy = _valid_xy(frame.heads[index])
-                if head_xy is not None:
-                    head_rows.append(
-                        {
-                            "x": head_xy[0],
-                            "y": head_xy[1],
-                            "color": color,
-                            "id": larva_id,
-                        }
-                    )
+            midline_points: tuple[tuple[float, float], ...] = ()
             if index < len(frame.midlines):
                 midline_points = _valid_path(frame.midlines[index])
                 if midline_points:
@@ -933,6 +936,23 @@ class EnvironmentCanvas:
                         {
                             "xs": [point[0] for point in midline_points],
                             "ys": [point[1] for point in midline_points],
+                            "color": color,
+                            "id": larva_id,
+                        }
+                    )
+            if index < len(frame.heads):
+                head_xy = _valid_xy(frame.heads[index])
+                if (
+                    head_xy is not None
+                    and self.snap_heads_to_midline
+                    and midline_points
+                ):
+                    head_xy = _nearest_endpoint(head_xy, midline_points)
+                if head_xy is not None:
+                    head_rows.append(
+                        {
+                            "x": head_xy[0],
+                            "y": head_xy[1],
                             "color": color,
                             "id": larva_id,
                         }
