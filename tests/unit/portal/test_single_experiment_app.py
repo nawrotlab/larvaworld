@@ -57,12 +57,11 @@ def test_single_experiment_lists_workspace_environment_presets(tmp_path: Path) -
     controller = _SingleExperimentController()
 
     assert (
-        controller.environment_select.options["Template default: dish"]
+        controller.environment_select.options["Template default environment"]
         == "__template__"
     )
     assert (
-        controller.environment_select.options["Registry / dish [template default]"]
-        == "__registry__:dish"
+        controller.environment_select.options["Registry / dish"] == "__registry__:dish"
     )
     assert controller.environment_select.options["dish_custom"] == "dish_custom.json"
 
@@ -113,13 +112,11 @@ def test_single_experiment_template_change_auto_refreshes_environment_presets(
     controller.experiment.value = candidate
 
     assert (
-        controller.environment_select.options[f"Template default: {candidate}"]
+        controller.environment_select.options["Template default environment"]
         == "__template__"
     )
     assert (
-        controller.environment_select.options[
-            f"Registry / {candidate} [template default]"
-        ]
+        controller.environment_select.options[f"Registry / {candidate}"]
         == f"__registry__:{candidate}"
     )
 
