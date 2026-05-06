@@ -1314,14 +1314,48 @@ def test_single_experiment_parameter_editor_exposes_template_fields(
 
     assert "duration" in controller._parameter_widgets
     assert "env_params.arena.geometry" in controller._parameter_widgets
+    assert not any(path == "enrichment" for path in controller._parameter_widgets)
+    assert not any(
+        path.startswith("enrichment.") for path in controller._parameter_widgets
+    )
     assert not any(
         path.startswith("larva_groups.") for path in controller._parameter_widgets
     )
     assert "collections" in controller._parameter_widgets
     assert "parameter_dict" not in controller._parameter_widgets
+    assert controller.parameter_group.options["Enrichment"] == "enrichment"
     assert controller.parameter_group.options["Larva Groups"] == "larva_groups"
     assert controller.parameter_group.value == "larva_groups"
     assert len(controller.parameters_editor.objects) > 0
+
+
+def test_single_experiment_enrichment_uses_typed_widget_builder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    sentinel = pn.pane.Markdown("typed-enrichment")
+    captured: dict[str, object] = {}
+
+    def fake_build(owner, *, wrap=True):
+        captured["owner"] = owner
+        captured["wrap"] = wrap
+        return sentinel
+
+    monkeypatch.setattr(
+        "larvaworld.portal.simulation.single_experiment_app.build_enrichment_widget",
+        fake_build,
+    )
+
+    controller = _SingleExperimentController()
+
+    assert captured["owner"] is controller._typed_experiment_for_enrichment.enrichment
+    assert captured["wrap"] is False
+    controller.parameter_group.value = "enrichment"
+    assert controller.parameters_editor.objects == [sentinel]
 
 
 def test_single_experiment_larva_groups_uses_typed_widget_builder(
@@ -1379,6 +1413,52 @@ def test_single_experiment_mixed_flattened_and_typed_edits_survive_build_paramet
     assert flat[f"larva_groups.{group_id}.distribution.N"] == 11
 
 
+def test_single_experiment_enrichment_typed_edits_feed_build_parameters(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = "dish"
+    controller._on_experiment_change()
+
+    typed_owner = controller._typed_experiment_for_enrichment
+    assert typed_owner is not None
+    typed_owner.enrichment.mode = "full"
+    typed_owner.enrichment.recompute = True
+    typed_owner.enrichment.pre_kws.rescale_by = 0.002
+
+    parameters = controller._build_parameters()
+
+    assert parameters.enrichment.mode == "full"
+    assert parameters.enrichment.recompute is True
+    assert parameters.enrichment.pre_kws.rescale_by == pytest.approx(0.002)
+
+
+def test_single_experiment_mixed_flattened_and_typed_enrichment_edits_survive_build_parameters(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = "dish"
+    controller._on_experiment_change()
+
+    controller._parameter_widgets["duration"][1].value = 2.0
+    typed_owner = controller._typed_experiment_for_enrichment
+    assert typed_owner is not None
+    typed_owner.enrichment.mode = "full"
+
+    parameters = controller._build_parameters()
+
+    assert parameters.duration == pytest.approx(2.0)
+    assert parameters.enrichment.mode == "full"
+
+
 def test_single_experiment_build_parameters_falls_back_to_base_larva_groups_when_typed_owner_missing(
     tmp_path: Path,
 ) -> None:
@@ -1394,6 +1474,23 @@ def test_single_experiment_build_parameters_falls_back_to_base_larva_groups_when
 
     assert "larva_groups" in parameters
     assert len(parameters.larva_groups) > 0
+
+
+def test_single_experiment_build_parameters_falls_back_to_base_enrichment_when_typed_owner_missing(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller._typed_experiment_for_enrichment = None
+    controller._enrichment_group_view = None
+
+    parameters = controller._build_parameters()
+
+    assert "enrichment" in parameters
+    assert parameters.enrichment.mode in {"minimal", "full"}
 
 
 @pytest.mark.skip(reason=SINGLE_EXPERIMENT_APP_INCOMPLETE_REASON)
@@ -1726,16 +1823,10 @@ def test_single_experiment_sequence_widgets_use_semantic_component_labels(
     controller._on_experiment_change()
 
     dims_kind, dims_control = controller._parameter_widgets["env_params.arena.dims"]
-    tor_kind, tor_control = controller._parameter_widgets["enrichment.tor_durs"]
 
     assert dims_kind == "sequence"
     assert [widget.name for widget in dims_control["widgets"]] == ["x", "y"]
-    assert tor_kind == "sequence"
-    assert [widget.name for widget in tor_control["widgets"]] == [
-        "Duration 1",
-        "Duration 2",
-        "Duration 3",
-    ]
+    assert "enrichment.tor_durs" not in controller._parameter_widgets
 
 
 def test_single_experiment_display_labels_hide_redundant_family_prefixes() -> None:

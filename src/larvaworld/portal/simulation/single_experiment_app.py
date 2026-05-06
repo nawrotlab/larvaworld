@@ -23,6 +23,7 @@ from larvaworld.portal.landing_registry import (
     DOCS_SINGLE_EXPERIMENTS,
 )
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
+from larvaworld.portal.config_widgets.enrichment_widget import build_enrichment_widget
 from larvaworld.portal.config_widgets.larvagroup_widget import (
     build_larva_groups_widget,
 )
@@ -928,6 +929,8 @@ class _SingleExperimentController:
         ] = {}
         self._typed_experiment_for_larva_groups: Any | None = None
         self._larva_groups_group_view: pn.viewable.Viewable | None = None
+        self._typed_experiment_for_enrichment: Any | None = None
+        self._enrichment_group_view: pn.viewable.Viewable | None = None
         self._editor_context: dict[str, list[str]] = {"odor_ids": []}
         self._parameter_seed_overrides = util.AttrDict()
         self._optional_family_meta: dict[str, dict[str, Any]] = {}
@@ -1074,6 +1077,13 @@ class _SingleExperimentController:
             larva_groups = nested_conf.get("larva_groups")
             if larva_groups is not None:
                 resolved["larva_groups"] = util.AttrDict(larva_groups)
+        if self._typed_experiment_for_enrichment is not None:
+            nested_conf = util.AttrDict(
+                self._typed_experiment_for_enrichment.nestedConf
+            )
+            enrichment = nested_conf.get("enrichment")
+            if enrichment is not None:
+                resolved["enrichment"] = util.AttrDict(enrichment)
         return util.AttrDict(_coerce_xy_sequences(resolved))
 
     def _resolve_experiment_parameters(self) -> util.AttrDict:
@@ -1772,6 +1782,12 @@ class _SingleExperimentController:
 
     def _render_parameter_group(self) -> None:
         group_key = self.parameter_group.value
+        if group_key == "enrichment":
+            if self._enrichment_group_view is None:
+                self.parameters_editor[:] = []
+            else:
+                self.parameters_editor[:] = [self._enrichment_group_view]
+            return
         if group_key == "larva_groups":
             if self._larva_groups_group_view is None:
                 self.parameters_editor[:] = []
@@ -1823,6 +1839,7 @@ class _SingleExperimentController:
     def _refresh_parameter_editor(self) -> None:
         flat = self._editable_flat_parameters()
         self._refresh_typed_larva_groups_owner()
+        self._refresh_typed_enrichment_owner()
         self._editor_context = {
             "odor_ids": sorted(
                 {
@@ -1841,6 +1858,8 @@ class _SingleExperimentController:
         # (e.g. source units/groups) appear close to their family instead of
         # being appended at the end of the editor after factory activation.
         for path in sorted(flat.keys()):
+            if path == "enrichment" or path.startswith("enrichment."):
+                continue
             if path.startswith("larva_groups."):
                 continue
             value = flat[path]
@@ -1849,6 +1868,7 @@ class _SingleExperimentController:
             grouped.setdefault(group_key, []).append(path)
             self._parameter_widgets[path] = (kind, control)
             self._parameter_widget_specs[path] = (kind, control, view)
+        grouped.setdefault("enrichment", [])
         grouped.setdefault("larva_groups", [])
         self._parameter_groups = grouped
         options = {_editor_group_title(group): group for group in grouped.keys()}
@@ -1875,6 +1895,19 @@ class _SingleExperimentController:
         self._typed_experiment_for_larva_groups = ExpConf(**dict(parameters))
         self._larva_groups_group_view = build_larva_groups_widget(
             self._typed_experiment_for_larva_groups
+        )
+
+    def _refresh_typed_enrichment_owner(self) -> None:
+        from larvaworld.lib.reg.generators import ExpConf
+
+        parameters = resolve_base_experiment_parameters(
+            self._selected_experiment(),
+            self._load_selected_environment(),
+        )
+        self._typed_experiment_for_enrichment = ExpConf(**dict(parameters))
+        self._enrichment_group_view = build_enrichment_widget(
+            self._typed_experiment_for_enrichment.enrichment,
+            wrap=False,
         )
 
     def _on_experiment_change(self, *_: object) -> None:
