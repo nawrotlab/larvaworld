@@ -1311,19 +1311,89 @@ def test_single_experiment_parameter_editor_exposes_template_fields(
     controller = _SingleExperimentController()
     controller.experiment.value = "dish"
     controller._on_experiment_change()
-    population_path = next(
-        path
-        for path in controller._parameter_widgets
-        if path.endswith(".distribution.N")
-    )
 
     assert "duration" in controller._parameter_widgets
     assert "env_params.arena.geometry" in controller._parameter_widgets
-    assert population_path in controller._parameter_widgets
+    assert not any(
+        path.startswith("larva_groups.") for path in controller._parameter_widgets
+    )
     assert "collections" in controller._parameter_widgets
     assert "parameter_dict" not in controller._parameter_widgets
+    assert controller.parameter_group.options["Larva Groups"] == "larva_groups"
     assert controller.parameter_group.value == "larva_groups"
     assert len(controller.parameters_editor.objects) > 0
+
+
+def test_single_experiment_larva_groups_uses_typed_widget_builder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    sentinel = pn.pane.Markdown("typed-larva-groups")
+    captured: dict[str, object] = {}
+
+    def fake_build(owner, *, parameter_name="larva_groups", wrap=True):
+        captured["owner"] = owner
+        captured["parameter_name"] = parameter_name
+        captured["wrap"] = wrap
+        return sentinel
+
+    monkeypatch.setattr(
+        "larvaworld.portal.simulation.single_experiment_app.build_larva_groups_widget",
+        fake_build,
+    )
+
+    controller = _SingleExperimentController()
+
+    assert captured["owner"] is controller._typed_experiment_for_larva_groups
+    assert captured["parameter_name"] == "larva_groups"
+    assert captured["wrap"] is True
+    assert controller.parameter_group.value == "larva_groups"
+    assert controller.parameters_editor.objects == [sentinel]
+
+
+def test_single_experiment_mixed_flattened_and_typed_edits_survive_build_parameters(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = "dish"
+    controller._on_experiment_change()
+
+    controller._parameter_widgets["duration"][1].value = 2.0
+    typed_owner = controller._typed_experiment_for_larva_groups
+    assert typed_owner is not None
+    group_id = next(iter(typed_owner.larva_groups.keys()))
+    typed_owner.larva_groups[group_id].distribution.N = 11
+
+    parameters = controller._build_parameters()
+    flat = parameters.flatten()
+
+    assert parameters.duration == pytest.approx(2.0)
+    assert flat[f"larva_groups.{group_id}.distribution.N"] == 11
+
+
+def test_single_experiment_build_parameters_falls_back_to_base_larva_groups_when_typed_owner_missing(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller._typed_experiment_for_larva_groups = None
+    controller._larva_groups_group_view = None
+
+    parameters = controller._build_parameters()
+
+    assert "larva_groups" in parameters
+    assert len(parameters.larva_groups) > 0
 
 
 @pytest.mark.skip(reason=SINGLE_EXPERIMENT_APP_INCOMPLETE_REASON)
@@ -1565,29 +1635,14 @@ def test_single_experiment_epoch_families_use_toggle_based_activation(
     controller.experiment.value = "dish"
     controller._on_experiment_change()
 
-    life_history_epochs_path = next(
-        path
-        for path in controller._parameter_widgets
-        if path.endswith(".life_history.epochs")
-    )
-
     assert controller._parameter_widgets["trials.epochs"][0] == "toggle_factory"
-    assert (
-        controller._parameter_widgets[life_history_epochs_path][0] == "toggle_factory"
-    )
     assert controller._parameter_widgets["trials.epochs"][1]["enabled"].value is False
-    assert (
-        controller._parameter_widgets[life_history_epochs_path][1]["enabled"].value
-        is False
-    )
 
     controller._parameter_widgets["trials.epochs"][1]["enabled"].value = True
-    controller._parameter_widgets[life_history_epochs_path][1]["enabled"].value = True
 
     parameters = controller._build_parameters()
 
     assert len(parameters.trials.epochs) == 1
-    assert len(parameters.flatten()[life_history_epochs_path]) == 1
 
 
 def test_single_experiment_source_unit_toggle_enables_nested_controls_near_source_family(

@@ -47,6 +47,16 @@ def _coerce_classdict_items(
     setattr(owner, parameter_name, coerced)
 
 
+def _build_life_history_widget(life_history: param.Parameterized) -> object:
+    return parameterized_editor(
+        life_history,
+        parameter_order=_ordered_names(
+            life_history,
+            ["age", "reach_pupation"],
+        ),
+    )
+
+
 def build_larva_group_widget(
     group_conf: param.Parameterized | dict[str, Any],
     *,
@@ -77,7 +87,12 @@ def build_larva_group_widget(
                 lambda inst, name, _parameter: build_distribution_widget(
                     getattr(inst, name)
                 )
-            )
+            ),
+            "life_history": (
+                lambda inst, name, _parameter: _build_life_history_widget(
+                    getattr(inst, name)
+                )
+            ),
         },
     )
     if not wrap:
