@@ -11,6 +11,7 @@ from .distribution_widget import build_distribution_widget
 from .env_widget import build_env_params_widget
 from .enrichment_widget import build_enrichment_widget, build_preprocess_conf_widget
 from .food_widget import build_food_conf_widget
+from .larvagroup_widget import build_larva_group_widget, build_larva_groups_widget
 from .odorscape_widget import build_odorscape_widget
 from .thermoscape_widget import build_thermoscape_widget
 from .widget_base import collapsible_family_box
@@ -27,6 +28,8 @@ __all__ = [
     "build_env_params_widget",
     "build_enrichment_widget",
     "build_food_conf_widget",
+    "build_larva_group_widget",
+    "build_larva_groups_widget",
     "build_preprocess_conf_widget",
     "build_odorscape_widget",
     "collapsible_family_box",
