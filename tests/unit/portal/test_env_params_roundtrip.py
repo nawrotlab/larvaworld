@@ -13,9 +13,6 @@ from larvaworld.portal.canvas_widgets.environment_mapping import (
 from larvaworld.portal.simulation.parameter_resolution import (
     resolve_base_experiment_parameters,
 )
-from larvaworld.portal.simulation.single_experiment_app import (
-    _SingleExperimentController,
-)
 from larvaworld.portal.workspace import (
     clear_active_workspace_path,
     initialize_workspace,
@@ -159,16 +156,3 @@ def test_env_params_roundtrip_registry_override_preserves_invariants(
     ]
     assert len(border_objects) > 0
     assert any(obj.object_id.startswith("Maze") for obj in border_objects)
-
-
-def test_env_params_phase5a_keeps_flattened_widget_ownership(tmp_path: Path) -> None:
-    workspace_root = tmp_path / "workspace"
-    initialize_workspace(workspace_root)
-    set_active_workspace_path(workspace_root)
-
-    controller = _SingleExperimentController()
-
-    assert "env_params.arena.geometry" in controller._parameter_widgets
-    assert any(
-        path.startswith("env_params.") for path in controller._parameter_widgets.keys()
-    )

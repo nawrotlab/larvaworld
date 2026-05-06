@@ -45,6 +45,22 @@ def workspace_config_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     clear_active_workspace_path()
 
 
+def _find_widget(
+    viewable: pn.viewable.Viewable,
+    name: str,
+    widget_type: type[pn.widgets.Widget]
+    | tuple[type[pn.widgets.Widget], ...] = pn.widgets.Widget,
+):
+    for widget in viewable.select(widget_type):
+        if getattr(widget, "name", None) == name:
+            return widget
+    raise AssertionError(f"Could not find widget {name!r}.")
+
+
+def _switches(viewable: pn.viewable.Viewable) -> list[pn.widgets.Switch]:
+    return [widget for widget in viewable.select(pn.widgets.Switch)]
+
+
 def test_single_experiment_lists_workspace_environment_presets(tmp_path: Path) -> None:
     workspace_root = tmp_path / "workspace"
     initialize_workspace(workspace_root)
@@ -1313,7 +1329,10 @@ def test_single_experiment_parameter_editor_exposes_template_fields(
     controller._on_experiment_change()
 
     assert "duration" in controller._parameter_widgets
-    assert "env_params.arena.geometry" in controller._parameter_widgets
+    assert not any(path == "env_params" for path in controller._parameter_widgets)
+    assert not any(
+        path.startswith("env_params.") for path in controller._parameter_widgets
+    )
     assert not any(path == "enrichment" for path in controller._parameter_widgets)
     assert not any(
         path.startswith("enrichment.") for path in controller._parameter_widgets
@@ -1323,10 +1342,40 @@ def test_single_experiment_parameter_editor_exposes_template_fields(
     )
     assert "collections" in controller._parameter_widgets
     assert "parameter_dict" not in controller._parameter_widgets
+    assert controller.parameter_group.options["Env Params"] == "env_params"
     assert controller.parameter_group.options["Enrichment"] == "enrichment"
     assert controller.parameter_group.options["Larva Groups"] == "larva_groups"
     assert controller.parameter_group.value == "larva_groups"
     assert len(controller.parameters_editor.objects) > 0
+
+
+def test_single_experiment_env_params_uses_typed_widget_builder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    sentinel = pn.pane.Markdown("typed-env-params")
+    captured: dict[str, object] = {}
+
+    def fake_build(owner, *, wrap=True):
+        captured["owner"] = owner
+        captured["wrap"] = wrap
+        return sentinel
+
+    monkeypatch.setattr(
+        "larvaworld.portal.simulation.single_experiment_app.build_env_params_widget",
+        fake_build,
+    )
+
+    controller = _SingleExperimentController()
+
+    assert captured["owner"] is controller._typed_experiment_for_env_params.env_params
+    assert captured["wrap"] is False
+    controller.parameter_group.value = "env_params"
+    assert controller.parameters_editor.objects == [sentinel]
 
 
 def test_single_experiment_enrichment_uses_typed_widget_builder(
@@ -1413,6 +1462,175 @@ def test_single_experiment_mixed_flattened_and_typed_edits_survive_build_paramet
     assert flat[f"larva_groups.{group_id}.distribution.N"] == 11
 
 
+def test_single_experiment_env_params_typed_edits_feed_build_parameters(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = "dish"
+    controller._on_experiment_change()
+
+    typed_owner = controller._typed_experiment_for_env_params
+    assert typed_owner is not None
+    typed_owner.env_params.arena.geometry = "rectangular"
+    typed_owner.env_params.arena.dims = (0.2, 0.1)
+
+    parameters = controller._build_parameters()
+
+    assert parameters.env_params.arena.geometry == "rectangular"
+    assert parameters.env_params.arena.dims == pytest.approx((0.2, 0.1))
+
+
+def test_single_experiment_mixed_flattened_and_typed_env_params_edits_survive_build_parameters(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = "dish"
+    controller._on_experiment_change()
+
+    controller._parameter_widgets["duration"][1].value = 2.0
+    typed_owner = controller._typed_experiment_for_env_params
+    assert typed_owner is not None
+    typed_owner.env_params.arena.geometry = "rectangular"
+
+    parameters = controller._build_parameters()
+
+    assert parameters.duration == pytest.approx(2.0)
+    assert parameters.env_params.arena.geometry == "rectangular"
+
+
+def test_single_experiment_workspace_environment_override_survives_typed_env_ownership(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    (workspace_root / "environments" / "rect_env.json").write_text(
+        json.dumps(
+            {
+                "arena": {"geometry": "rectangular", "dims": [0.2, 0.1]},
+                "food_params": {
+                    "source_units": {
+                        "patch": {
+                            "pos": [0.02, 0.0],
+                            "radius": 0.005,
+                            "amount": 2.0,
+                            "color": "#44aa55",
+                            "odor": {"id": "apple", "intensity": 1.0, "spread": 0.02},
+                        }
+                    },
+                    "source_groups": {},
+                    "food_grid": {},
+                },
+                "border_list": {},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = "dish"
+    controller.environment_select.value = "rect_env.json"
+    typed_owner = controller._typed_experiment_for_env_params
+    assert typed_owner is not None
+    typed_owner.env_params.arena.torus = True
+
+    parameters = controller._build_parameters()
+
+    assert parameters.env_params.arena.geometry == "rectangular"
+    assert parameters.env_params.arena.dims == pytest.approx((0.2, 0.1))
+    assert parameters.env_params.arena.torus is True
+    assert "patch" in parameters.env_params.food_params.source_units
+    assert parameters.env_params.food_params.source_units["patch"].pos == pytest.approx(
+        (0.02, 0.0)
+    )
+
+
+def test_single_experiment_registry_environment_override_survives_typed_env_ownership(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = "dish"
+    controller.environment_select.value = controller.environment_select.options[
+        "Registry / maze"
+    ]
+    typed_owner = controller._typed_experiment_for_env_params
+    assert typed_owner is not None
+    typed_owner.env_params.arena.torus = True
+
+    parameters = controller._build_parameters()
+
+    assert parameters.env_params.arena.geometry == "rectangular"
+    assert parameters.env_params.arena.torus is True
+    assert "Maze" in parameters.env_params.border_list
+    assert len(parameters.env_params.border_list.Maze.vertices) > 0
+
+
+def test_single_experiment_final_typed_env_params_remain_canvas_compatible(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    captured: dict[str, object] = {}
+    mapped_state = EnvironmentCanvasState(arena=CanvasArena("rectangular", (0.2, 0.1)))
+    canvas_view = pn.pane.HTML("canvas-view")
+
+    class DummyCanvas:
+        def __init__(self, *, editable=False):
+            pass
+
+        def set_state(self, state):
+            captured["state"] = state
+
+        def view(self):
+            return canvas_view
+
+    def fake_mapping(env_params, *, larva_groups=None, show_group_shapes=True):
+        captured["env_params"] = env_params
+        captured["larva_groups"] = larva_groups
+        captured["show_group_shapes"] = show_group_shapes
+        return mapped_state
+
+    monkeypatch.setattr(
+        "larvaworld.portal.simulation.single_experiment_app.EnvironmentCanvas",
+        DummyCanvas,
+    )
+    monkeypatch.setattr(
+        "larvaworld.portal.simulation.single_experiment_app.env_params_to_canvas_state",
+        fake_mapping,
+    )
+
+    controller = _SingleExperimentController()
+    typed_owner = controller._typed_experiment_for_env_params
+    assert typed_owner is not None
+    typed_owner.env_params.arena.geometry = "rectangular"
+    typed_owner.env_params.arena.dims = (0.2, 0.1)
+
+    controller._on_prepare_preview()
+
+    assert captured["state"] is mapped_state
+    env_params = util.AttrDict(captured["env_params"])
+    assert env_params.arena.geometry == "rectangular"
+    assert env_params.arena.dims == pytest.approx((0.2, 0.1))
+    assert captured["larva_groups"] is not None
+    assert captured["show_group_shapes"] is False
+
+
 def test_single_experiment_enrichment_typed_edits_feed_build_parameters(
     tmp_path: Path,
 ) -> None:
@@ -1474,6 +1692,23 @@ def test_single_experiment_build_parameters_falls_back_to_base_larva_groups_when
 
     assert "larva_groups" in parameters
     assert len(parameters.larva_groups) > 0
+
+
+def test_single_experiment_build_parameters_falls_back_to_base_env_params_when_typed_owner_missing(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller._typed_experiment_for_env_params = None
+    controller._env_params_group_view = None
+
+    parameters = controller._build_parameters()
+
+    assert "env_params" in parameters
+    assert parameters.env_params.arena.geometry in {"circular", "rectangular"}
 
 
 def test_single_experiment_build_parameters_falls_back_to_base_enrichment_when_typed_owner_missing(
@@ -1682,39 +1917,18 @@ def test_single_experiment_optional_family_toggles_seed_disabled_controls(
     controller = _SingleExperimentController()
     controller.experiment.value = "dish"
     controller._on_experiment_change()
+    controller.parameter_group.value = "env_params"
+    env_view = controller.parameters_editor[0]
 
-    assert controller._parameter_widgets["env_params.odorscape"][0] == "toggle_factory"
-    assert (
-        controller._parameter_widgets["env_params.food_params.food_grid"][0]
-        == "toggle_factory"
-    )
-    assert (
-        controller._parameter_widgets["env_params.odorscape"][1]["enabled"].value
-        is False
-    )
-    assert (
-        controller._parameter_widgets["env_params.food_params.food_grid"][1][
-            "enabled"
-        ].value
-        is False
-    )
-    assert "env_params.odorscape.odorscape" in controller._parameter_widgets
-    assert "env_params.food_params.food_grid.unique_id" in controller._parameter_widgets
-    assert (
-        controller._parameter_widgets["env_params.odorscape.odorscape"][1].disabled
-        is True
-    )
-    assert (
-        controller._parameter_widgets["env_params.food_params.food_grid.color"][
-            1
-        ].disabled
-        is True
-    )
+    typed_owner = controller._typed_experiment_for_env_params
+    assert typed_owner is not None
+    assert typed_owner.env_params.odorscape is None
+    assert typed_owner.env_params.food_params.food_grid is None
 
-    controller._parameter_widgets["env_params.odorscape"][1]["enabled"].value = True
-    controller._parameter_widgets["env_params.food_params.food_grid"][1][
-        "enabled"
-    ].value = True
+    enable_food_grid = _find_widget(env_view, "Enable Food grid", pn.widgets.Checkbox)
+    enable_food_grid.value = True
+    enable_odorscape, *_ = _switches(env_view)
+    enable_odorscape.value = True
 
     parameters = controller._build_parameters()
     assert parameters.env_params.odorscape.odorscape == "Gaussian"
@@ -1752,29 +1966,23 @@ def test_single_experiment_source_unit_toggle_enables_nested_controls_near_sourc
     controller = _SingleExperimentController()
     controller.experiment.value = "dish"
     controller._on_experiment_change()
+    controller.parameter_group.value = "env_params"
+    env_view = controller.parameters_editor[0]
 
-    assert (
-        controller._parameter_widgets["env_params.food_params.source_units"][0]
-        == "toggle_factory"
-    )
+    add_source_unit = _find_widget(env_view, "Add source unit", pn.widgets.Button)
+    source_unit_id = _find_widget(env_view, "New source unit ID", pn.widgets.TextInput)
+    source_unit_id.value = "Source"
+    add_source_unit.clicks += 1
+    source_color = _find_widget(env_view, "Color", pn.widgets.ColorPicker)
 
-    env_paths = controller._parameter_groups["env_params"]
-    source_amount_path = "env_params.food_params.source_units.Source.amount"
-    source_color_path = "env_params.food_params.source_units.Source.color"
+    typed_owner = controller._typed_experiment_for_env_params
+    assert typed_owner is not None
+    assert "Source" in typed_owner.env_params.food_params.source_units
 
-    assert source_amount_path in controller._parameter_widgets
-    assert source_color_path in controller._parameter_widgets
-    assert controller._parameter_widgets[source_amount_path][1].disabled is True
-    assert controller._parameter_widgets[source_color_path][1].disabled is True
-    assert env_paths.index(source_amount_path) < env_paths.index("env_params.odorscape")
-    assert env_paths.index(source_color_path) < env_paths.index("env_params.odorscape")
+    source_color.value = "#112233"
+    parameters = controller._build_parameters()
 
-    controller._parameter_widgets["env_params.food_params.source_units"][1][
-        "enabled"
-    ].value = True
-
-    assert controller._parameter_widgets[source_amount_path][1].disabled is False
-    assert controller._parameter_widgets[source_color_path][1].disabled is False
+    assert parameters.env_params.food_params.source_units.Source.color == "#112233"
 
 
 def test_single_experiment_uses_color_and_nested_odorscape_widgets(
@@ -1787,28 +1995,26 @@ def test_single_experiment_uses_color_and_nested_odorscape_widgets(
     controller = _SingleExperimentController()
     controller.experiment.value = "chemotaxis"
     controller._on_experiment_change()
+    controller.parameter_group.value = "env_params"
+    env_view = controller.parameters_editor[0]
 
-    color_path = next(
-        path
-        for path in controller._parameter_widgets
-        if path.endswith(".source_units.Source.color")
-    )
-    odorscape_mode_path = next(
-        path
-        for path in controller._parameter_widgets
-        if path.endswith(".odorscape.odorscape")
-    )
+    add_source_unit = _find_widget(env_view, "Add source unit", pn.widgets.Button)
+    source_unit_id = _find_widget(env_view, "New source unit ID", pn.widgets.TextInput)
+    source_unit_id.value = "Source"
+    add_source_unit.clicks += 1
+    source_color = _find_widget(env_view, "Color", pn.widgets.ColorPicker)
 
-    assert controller._parameter_widgets[color_path][0] == "color"
-    assert controller._parameter_widgets[odorscape_mode_path][0] == "option"
+    enable_odorscape, *_ = _switches(env_view)
+    enable_odorscape.value = True
+    odorscape_mode = _find_widget(env_view, "Odorscape type", pn.widgets.Select)
 
-    controller._parameter_widgets[color_path][1].value = "#112233"
-    controller._parameter_widgets[odorscape_mode_path][1].value = "Gaussian"
+    source_color.value = "#112233"
+    odorscape_mode.value = "DiffusionValueLayer"
 
     parameters = controller._build_parameters()
 
-    assert parameters.flatten()[color_path] == "#112233"
-    assert parameters.flatten()[odorscape_mode_path] == "Gaussian"
+    assert parameters.env_params.food_params.source_units.Source.color == "#112233"
+    assert parameters.env_params.odorscape.odorscape == "Diffusion"
 
 
 def test_single_experiment_sequence_widgets_use_semantic_component_labels(
@@ -1821,11 +2027,13 @@ def test_single_experiment_sequence_widgets_use_semantic_component_labels(
     controller = _SingleExperimentController()
     controller.experiment.value = "dish"
     controller._on_experiment_change()
+    controller.parameter_group.value = "env_params"
+    env_view = controller.parameters_editor[0]
 
-    dims_kind, dims_control = controller._parameter_widgets["env_params.arena.dims"]
-
-    assert dims_kind == "sequence"
-    assert [widget.name for widget in dims_control["widgets"]] == ["x", "y"]
+    width = _find_widget(env_view, "Arena width", pn.widgets.FloatInput)
+    height = _find_widget(env_view, "Arena height", pn.widgets.FloatInput)
+    assert width.name == "Arena width"
+    assert height.name == "Arena height"
     assert "enrichment.tor_durs" not in controller._parameter_widgets
 
 
