@@ -1137,45 +1137,8 @@ class _SingleExperimentController:
     def _selected_experiment(self) -> str:
         return str(self.selection.experiment_template)
 
-    def _template_default_env_id(self) -> str | None:
-        experiment_id = self._selected_experiment()
-        env_conf_ids = set(str(env_id) for env_id in reg.conf.Env.confIDs)
-
-        # Explicit exact match first.
-        parameters = reg.conf.Exp.getID(experiment_id)
-        env_params = (
-            parameters.get("env_params") if isinstance(parameters, dict) else None
-        )
-        if isinstance(env_params, str) and env_params in env_conf_ids:
-            return env_params
-        if isinstance(env_params, dict):
-            for key in (
-                "id",
-                "name",
-                "confID",
-                "config_id",
-                "configuration_id",
-                "env_id",
-                "default_env_id",
-            ):
-                value = env_params.get(key)
-                if isinstance(value, str) and value in env_conf_ids:
-                    return value
-
-        # Convention fallback for templates that share ID with Env presets.
-        if experiment_id in env_conf_ids:
-            return experiment_id
-
-        return None
-
     def _environment_options(self) -> dict[str, str]:
-        template_default_env_id = self._template_default_env_id()
-        template_label = (
-            f"Template default: {template_default_env_id}"
-            if template_default_env_id is not None
-            else "Template default environment"
-        )
-        options = {template_label: "__template__"}
+        options = {"Template default environment": "__template__"}
         preset_dir = self._environment_dir()
         preset_dir.mkdir(parents=True, exist_ok=True)
         workspace_labels: set[str] = set()
@@ -1186,10 +1149,9 @@ class _SingleExperimentController:
         for name in sorted(str(key) for key in reg.conf.Env.dict.keys()):
             if name in workspace_labels:
                 continue
-            label = f"Registry / {name}"
-            if template_default_env_id is not None and name == template_default_env_id:
-                label += " [template default]"
-            registry_options[label] = f"{_REGISTRY_ENV_PRESET_PREFIX}{name}"
+            registry_options[f"Registry / {name}"] = (
+                f"{_REGISTRY_ENV_PRESET_PREFIX}{name}"
+            )
         options.update(registry_options)
         return options
 
