@@ -28,6 +28,7 @@ from larvaworld.portal.config_widgets.enrichment_widget import build_enrichment_
 from larvaworld.portal.config_widgets.larvagroup_widget import (
     build_larva_groups_widget,
 )
+from larvaworld.portal.config_widgets.sim_ops_widget import build_sim_ops_widget
 from larvaworld.portal.simulation.parameter_resolution import (
     _builder_obstacle_border_vertices,
     _coerce_xy_sequences,
@@ -171,6 +172,15 @@ _PREVIEW_STEP_CAP = 300
 _REGISTRY_ENV_PRESET_PREFIX = "__registry__:"
 _WORKSPACE_ENV_PRESET_PREFIX = "__workspace__:"
 _NONE_OPTION_LABEL = "None"
+_SIM_OPS_FIELDS = (
+    "duration",
+    "Nsteps",
+    "fr",
+    "dt",
+    "constant_framerate",
+    "Box2D",
+    "larva_collisions",
+)
 
 
 def _safe_slug(value: str) -> str:
@@ -224,6 +234,8 @@ class _SingleExperimentSelection(param.Parameterized):
 
 
 def _editor_group_title(key: str) -> str:
+    if key == "sim_ops":
+        return "Simulation Settings"
     return key.replace("_", " ").title()
 
 
@@ -934,6 +946,8 @@ class _SingleExperimentController:
         self._enrichment_group_view: pn.viewable.Viewable | None = None
         self._typed_experiment_for_env_params: Any | None = None
         self._env_params_group_view: pn.viewable.Viewable | None = None
+        self._typed_experiment_for_sim_ops: Any | None = None
+        self._sim_ops_group_view: pn.viewable.Viewable | None = None
         self._editor_context: dict[str, list[str]] = {"odor_ids": []}
         self._parameter_seed_overrides = util.AttrDict()
         self._optional_family_meta: dict[str, dict[str, Any]] = {}
@@ -1094,6 +1108,11 @@ class _SingleExperimentController:
             env_params = nested_conf.get("env_params")
             if env_params is not None:
                 resolved["env_params"] = util.AttrDict(env_params)
+        if self._typed_experiment_for_sim_ops is not None:
+            nested_conf = util.AttrDict(self._typed_experiment_for_sim_ops.nestedConf)
+            for key in _SIM_OPS_FIELDS:
+                if key in nested_conf:
+                    resolved[key] = _normalize_scalar(nested_conf[key])
         return util.AttrDict(_coerce_xy_sequences(resolved))
 
     def _resolve_experiment_parameters(self) -> util.AttrDict:
@@ -1792,6 +1811,12 @@ class _SingleExperimentController:
 
     def _render_parameter_group(self) -> None:
         group_key = self.parameter_group.value
+        if group_key == "sim_ops":
+            if self._sim_ops_group_view is None:
+                self.parameters_editor[:] = []
+            else:
+                self.parameters_editor[:] = [self._sim_ops_group_view]
+            return
         if group_key == "env_params":
             if self._env_params_group_view is None:
                 self.parameters_editor[:] = []
@@ -1857,6 +1882,7 @@ class _SingleExperimentController:
         self._refresh_typed_larva_groups_owner()
         self._refresh_typed_enrichment_owner()
         self._refresh_typed_env_params_owner()
+        self._refresh_typed_sim_ops_owner()
         self._editor_context = {
             "odor_ids": sorted(
                 {
@@ -1875,6 +1901,8 @@ class _SingleExperimentController:
         # (e.g. source units/groups) appear close to their family instead of
         # being appended at the end of the editor after factory activation.
         for path in sorted(flat.keys()):
+            if path in _SIM_OPS_FIELDS:
+                continue
             if path == "env_params" or path.startswith("env_params."):
                 continue
             if path == "enrichment" or path.startswith("enrichment."):
@@ -1890,6 +1918,7 @@ class _SingleExperimentController:
         grouped.setdefault("enrichment", [])
         grouped.setdefault("larva_groups", [])
         grouped.setdefault("env_params", [])
+        grouped.setdefault("sim_ops", [])
         self._parameter_groups = grouped
         options = {_editor_group_title(group): group for group in grouped.keys()}
         current_group = self.parameter_group.value
@@ -1940,6 +1969,19 @@ class _SingleExperimentController:
         self._typed_experiment_for_env_params = ExpConf(**dict(parameters))
         self._env_params_group_view = build_env_params_widget(
             self._typed_experiment_for_env_params.env_params,
+            wrap=False,
+        )
+
+    def _refresh_typed_sim_ops_owner(self) -> None:
+        from larvaworld.lib.reg.generators import ExpConf
+
+        parameters = resolve_base_experiment_parameters(
+            self._selected_experiment(),
+            self._load_selected_environment(),
+        )
+        self._typed_experiment_for_sim_ops = ExpConf(**dict(parameters))
+        self._sim_ops_group_view = build_sim_ops_widget(
+            self._typed_experiment_for_sim_ops,
             wrap=False,
         )
 

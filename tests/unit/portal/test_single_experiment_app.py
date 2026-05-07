@@ -171,7 +171,9 @@ def test_single_experiment_build_parameters_applies_environment_override(
     controller = _SingleExperimentController()
     controller.experiment.value = "dish"
     controller.environment_select.value = "rect_env.json"
-    controller._parameter_widgets["duration"][1].value = 1.5
+    typed_sim_owner = controller._typed_experiment_for_sim_ops
+    assert typed_sim_owner is not None
+    typed_sim_owner.duration = 1.5
 
     parameters = controller._build_parameters()
 
@@ -1328,7 +1330,16 @@ def test_single_experiment_parameter_editor_exposes_template_fields(
     controller.experiment.value = "dish"
     controller._on_experiment_change()
 
-    assert "duration" in controller._parameter_widgets
+    for key in (
+        "duration",
+        "Nsteps",
+        "fr",
+        "dt",
+        "constant_framerate",
+        "Box2D",
+        "larva_collisions",
+    ):
+        assert key not in controller._parameter_widgets
     assert not any(path == "env_params" for path in controller._parameter_widgets)
     assert not any(
         path.startswith("env_params.") for path in controller._parameter_widgets
@@ -1342,6 +1353,7 @@ def test_single_experiment_parameter_editor_exposes_template_fields(
     )
     assert "collections" in controller._parameter_widgets
     assert "parameter_dict" not in controller._parameter_widgets
+    assert controller.parameter_group.options["Simulation Settings"] == "sim_ops"
     assert controller.parameter_group.options["Env Params"] == "env_params"
     assert controller.parameter_group.options["Enrichment"] == "enrichment"
     assert controller.parameter_group.options["Larva Groups"] == "larva_groups"
@@ -1375,6 +1387,35 @@ def test_single_experiment_env_params_uses_typed_widget_builder(
     assert captured["owner"] is controller._typed_experiment_for_env_params.env_params
     assert captured["wrap"] is False
     controller.parameter_group.value = "env_params"
+    assert controller.parameters_editor.objects == [sentinel]
+
+
+def test_single_experiment_sim_ops_uses_typed_widget_builder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    sentinel = pn.pane.Markdown("typed-sim-ops")
+    captured: dict[str, object] = {}
+
+    def fake_build(owner, *, wrap=True):
+        captured["owner"] = owner
+        captured["wrap"] = wrap
+        return sentinel
+
+    monkeypatch.setattr(
+        "larvaworld.portal.simulation.single_experiment_app.build_sim_ops_widget",
+        fake_build,
+    )
+
+    controller = _SingleExperimentController()
+
+    assert captured["owner"] is controller._typed_experiment_for_sim_ops
+    assert captured["wrap"] is False
+    controller.parameter_group.value = "sim_ops"
     assert controller.parameters_editor.objects == [sentinel]
 
 
@@ -1449,7 +1490,10 @@ def test_single_experiment_mixed_flattened_and_typed_edits_survive_build_paramet
     controller.experiment.value = "dish"
     controller._on_experiment_change()
 
-    controller._parameter_widgets["duration"][1].value = 2.0
+    collections_widget = controller._parameter_widgets["collections"][1]
+    option_values = list(collections_widget.options)
+    selected = option_values[:2] if len(option_values) > 1 else option_values[:1]
+    collections_widget.value = selected
     typed_owner = controller._typed_experiment_for_larva_groups
     assert typed_owner is not None
     group_id = next(iter(typed_owner.larva_groups.keys()))
@@ -1458,7 +1502,7 @@ def test_single_experiment_mixed_flattened_and_typed_edits_survive_build_paramet
     parameters = controller._build_parameters()
     flat = parameters.flatten()
 
-    assert parameters.duration == pytest.approx(2.0)
+    assert list(parameters.collections) == selected
     assert flat[f"larva_groups.{group_id}.distribution.N"] == 11
 
 
@@ -1495,15 +1539,71 @@ def test_single_experiment_mixed_flattened_and_typed_env_params_edits_survive_bu
     controller.experiment.value = "dish"
     controller._on_experiment_change()
 
-    controller._parameter_widgets["duration"][1].value = 2.0
+    collections_widget = controller._parameter_widgets["collections"][1]
+    option_values = list(collections_widget.options)
+    selected = option_values[:2] if len(option_values) > 1 else option_values[:1]
+    collections_widget.value = selected
     typed_owner = controller._typed_experiment_for_env_params
     assert typed_owner is not None
     typed_owner.env_params.arena.geometry = "rectangular"
 
     parameters = controller._build_parameters()
 
-    assert parameters.duration == pytest.approx(2.0)
+    assert list(parameters.collections) == selected
     assert parameters.env_params.arena.geometry == "rectangular"
+
+
+def test_single_experiment_sim_ops_typed_edits_feed_build_parameters(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = "dish"
+    controller._on_experiment_change()
+
+    typed_owner = controller._typed_experiment_for_sim_ops
+    assert typed_owner is not None
+    typed_owner.duration = 3.0
+    typed_owner.dt = 0.2
+    typed_owner.Box2D = True
+    typed_owner.larva_collisions = False
+
+    parameters = controller._build_parameters()
+
+    assert parameters.duration == pytest.approx(3.0)
+    assert parameters.dt == pytest.approx(0.2)
+    assert parameters.fr == pytest.approx(1 / parameters.dt)
+    assert parameters.Nsteps == int(parameters.duration * 60 / parameters.dt)
+    assert parameters.Box2D is True
+    assert parameters.larva_collisions is False
+
+
+def test_single_experiment_mixed_typed_sim_and_flattened_trials_survive_build_parameters(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = "dish"
+    controller._on_experiment_change()
+
+    trials_kind, trials_control = controller._parameter_widgets["trials.epochs"]
+    assert trials_kind == "toggle_factory"
+    trials_control["enabled"].value = True
+
+    typed_owner = controller._typed_experiment_for_sim_ops
+    assert typed_owner is not None
+    typed_owner.duration = 2.4
+
+    parameters = controller._build_parameters()
+
+    assert parameters.duration == pytest.approx(2.4)
+    assert len(parameters.trials.epochs) == 1
 
 
 def test_single_experiment_workspace_environment_override_survives_typed_env_ownership(
@@ -1666,14 +1766,52 @@ def test_single_experiment_mixed_flattened_and_typed_enrichment_edits_survive_bu
     controller.experiment.value = "dish"
     controller._on_experiment_change()
 
-    controller._parameter_widgets["duration"][1].value = 2.0
+    collections_widget = controller._parameter_widgets["collections"][1]
+    option_values = list(collections_widget.options)
+    selected = option_values[:2] if len(option_values) > 1 else option_values[:1]
+    collections_widget.value = selected
     typed_owner = controller._typed_experiment_for_enrichment
     assert typed_owner is not None
     typed_owner.enrichment.mode = "full"
 
     parameters = controller._build_parameters()
 
-    assert parameters.duration == pytest.approx(2.0)
+    assert list(parameters.collections) == selected
+    assert parameters.enrichment.mode == "full"
+
+
+def test_single_experiment_typed_sim_edits_do_not_reset_other_typed_groups(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = "dish"
+    controller._on_experiment_change()
+
+    sim_owner = controller._typed_experiment_for_sim_ops
+    env_owner = controller._typed_experiment_for_env_params
+    larva_owner = controller._typed_experiment_for_larva_groups
+    enrich_owner = controller._typed_experiment_for_enrichment
+
+    assert sim_owner is not None
+    assert env_owner is not None
+    assert larva_owner is not None
+    assert enrich_owner is not None
+
+    group_id = next(iter(larva_owner.larva_groups.keys()))
+    sim_owner.duration = 2.2
+    env_owner.env_params.arena.geometry = "rectangular"
+    larva_owner.larva_groups[group_id].distribution.N = 9
+    enrich_owner.enrichment.mode = "full"
+
+    parameters = controller._build_parameters()
+
+    assert parameters.duration == pytest.approx(2.2)
+    assert parameters.env_params.arena.geometry == "rectangular"
+    assert parameters.flatten()[f"larva_groups.{group_id}.distribution.N"] == 9
     assert parameters.enrichment.mode == "full"
 
 
@@ -1726,6 +1864,31 @@ def test_single_experiment_build_parameters_falls_back_to_base_enrichment_when_t
 
     assert "enrichment" in parameters
     assert parameters.enrichment.mode in {"minimal", "full"}
+
+
+def test_single_experiment_build_parameters_falls_back_to_base_sim_ops_when_typed_owner_missing(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller._typed_experiment_for_sim_ops = None
+    controller._sim_ops_group_view = None
+
+    parameters = controller._build_parameters()
+
+    for key in (
+        "duration",
+        "Nsteps",
+        "fr",
+        "dt",
+        "constant_framerate",
+        "Box2D",
+        "larva_collisions",
+    ):
+        assert key in parameters
 
 
 @pytest.mark.skip(reason=SINGLE_EXPERIMENT_APP_INCOMPLETE_REASON)
