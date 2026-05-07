@@ -7,6 +7,7 @@ from .conftype_widget import (
     resolve_conftype,
 )
 from .conftypes_demo_app import conftypes_demo_app
+from .collections_widget import build_collections_widget
 from .distribution_widget import build_distribution_widget
 from .env_widget import build_env_params_widget
 from .enrichment_widget import build_enrichment_widget, build_preprocess_conf_widget
@@ -24,6 +25,7 @@ __all__ = [
     "ConftypeActionsController",
     "ConftypeWidgetController",
     "build_conftype_actions",
+    "build_collections_widget",
     "build_conftype_widget",
     "build_distribution_widget",
     "build_env_params_widget",

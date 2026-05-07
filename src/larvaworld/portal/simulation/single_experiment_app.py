@@ -23,6 +23,9 @@ from larvaworld.portal.landing_registry import (
     DOCS_SINGLE_EXPERIMENTS,
 )
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
+from larvaworld.portal.config_widgets.collections_widget import (
+    build_collections_widget,
+)
 from larvaworld.portal.config_widgets.env_widget import build_env_params_widget
 from larvaworld.portal.config_widgets.enrichment_widget import build_enrichment_widget
 from larvaworld.portal.config_widgets.larvagroup_widget import (
@@ -948,6 +951,8 @@ class _SingleExperimentController:
         self._env_params_group_view: pn.viewable.Viewable | None = None
         self._typed_experiment_for_sim_ops: Any | None = None
         self._sim_ops_group_view: pn.viewable.Viewable | None = None
+        self._typed_experiment_for_collections: Any | None = None
+        self._collections_group_view: pn.viewable.Viewable | None = None
         self._editor_context: dict[str, list[str]] = {"odor_ids": []}
         self._parameter_seed_overrides = util.AttrDict()
         self._optional_family_meta: dict[str, dict[str, Any]] = {}
@@ -1113,6 +1118,13 @@ class _SingleExperimentController:
             for key in _SIM_OPS_FIELDS:
                 if key in nested_conf:
                     resolved[key] = _normalize_scalar(nested_conf[key])
+        if self._typed_experiment_for_collections is not None:
+            nested_conf = util.AttrDict(
+                self._typed_experiment_for_collections.nestedConf
+            )
+            collections = nested_conf.get("collections")
+            if collections is not None:
+                resolved["collections"] = list(collections)
         return util.AttrDict(_coerce_xy_sequences(resolved))
 
     def _resolve_experiment_parameters(self) -> util.AttrDict:
@@ -1817,6 +1829,12 @@ class _SingleExperimentController:
             else:
                 self.parameters_editor[:] = [self._sim_ops_group_view]
             return
+        if group_key == "collections":
+            if self._collections_group_view is None:
+                self.parameters_editor[:] = []
+            else:
+                self.parameters_editor[:] = [self._collections_group_view]
+            return
         if group_key == "env_params":
             if self._env_params_group_view is None:
                 self.parameters_editor[:] = []
@@ -1883,6 +1901,7 @@ class _SingleExperimentController:
         self._refresh_typed_enrichment_owner()
         self._refresh_typed_env_params_owner()
         self._refresh_typed_sim_ops_owner()
+        self._refresh_typed_collections_owner()
         self._editor_context = {
             "odor_ids": sorted(
                 {
@@ -1909,6 +1928,8 @@ class _SingleExperimentController:
                 continue
             if path.startswith("larva_groups."):
                 continue
+            if path == "collections" or path.startswith("collections."):
+                continue
             value = flat[path]
             group_key = path.split(".", 1)[0]
             kind, control, view = self._widget_for_value(path, value)
@@ -1919,6 +1940,7 @@ class _SingleExperimentController:
         grouped.setdefault("larva_groups", [])
         grouped.setdefault("env_params", [])
         grouped.setdefault("sim_ops", [])
+        grouped.setdefault("collections", [])
         self._parameter_groups = grouped
         options = {_editor_group_title(group): group for group in grouped.keys()}
         current_group = self.parameter_group.value
@@ -1982,6 +2004,19 @@ class _SingleExperimentController:
         self._typed_experiment_for_sim_ops = ExpConf(**dict(parameters))
         self._sim_ops_group_view = build_sim_ops_widget(
             self._typed_experiment_for_sim_ops,
+            wrap=False,
+        )
+
+    def _refresh_typed_collections_owner(self) -> None:
+        from larvaworld.lib.reg.generators import ExpConf
+
+        parameters = resolve_base_experiment_parameters(
+            self._selected_experiment(),
+            self._load_selected_environment(),
+        )
+        self._typed_experiment_for_collections = ExpConf(**dict(parameters))
+        self._collections_group_view = build_collections_widget(
+            self._typed_experiment_for_collections,
             wrap=False,
         )
 
