@@ -16,6 +16,9 @@ from larvaworld.portal.canvas_widgets.environment_models import (
     LarvaPreviewFrame,
 )
 from larvaworld.portal.landing_registry import ITEMS
+from larvaworld.portal.simulation.parameter_resolution import (
+    resolve_base_experiment_parameters,
+)
 from larvaworld.portal.simulation.single_experiment_app import (
     _ExperimentPreview,
     _FrameSimulationPreview,
@@ -1355,9 +1358,12 @@ def test_single_experiment_parameter_editor_exposes_template_fields(
     assert not any(
         path.startswith("collections.") for path in controller._parameter_widgets
     )
+    assert "trials" not in controller._parameter_widgets
+    assert not any(path.startswith("trials.") for path in controller._parameter_widgets)
     assert "parameter_dict" not in controller._parameter_widgets
     assert controller.parameter_group.options["Simulation Settings"] == "sim_ops"
     assert controller.parameter_group.options["Collections"] == "collections"
+    assert controller.parameter_group.options["Trials"] == "trials"
     assert controller.parameter_group.options["Env Params"] == "env_params"
     assert controller.parameter_group.options["Enrichment"] == "enrichment"
     assert controller.parameter_group.options["Larva Groups"] == "larva_groups"
@@ -1449,6 +1455,35 @@ def test_single_experiment_collections_uses_typed_widget_builder(
     assert captured["owner"] is controller._typed_experiment_for_collections
     assert captured["wrap"] is False
     controller.parameter_group.value = "collections"
+    assert controller.parameters_editor.objects == [sentinel]
+
+
+def test_single_experiment_trials_uses_typed_widget_builder(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    sentinel = pn.pane.Markdown("typed-trials")
+    captured: dict[str, object] = {}
+
+    def fake_build(owner, *, wrap=True):
+        captured["owner"] = owner
+        captured["wrap"] = wrap
+        return sentinel
+
+    monkeypatch.setattr(
+        "larvaworld.portal.simulation.single_experiment_app.build_trials_widget",
+        fake_build,
+    )
+
+    controller = _SingleExperimentController()
+
+    assert captured["owner"] is controller._typed_experiment_for_trials
+    assert captured["wrap"] is False
+    controller.parameter_group.value = "trials"
     assert controller.parameters_editor.objects == [sentinel]
 
 
@@ -1573,9 +1608,9 @@ def test_single_experiment_mixed_flattened_and_typed_env_params_edits_survive_bu
     controller.experiment.value = "dish"
     controller._on_experiment_change()
 
-    trials_kind, trials_control = controller._parameter_widgets["trials.epochs"]
-    assert trials_kind == "toggle_factory"
-    trials_control["enabled"].value = True
+    typed_trials_owner = controller._typed_experiment_for_trials
+    assert typed_trials_owner is not None
+    typed_trials_owner.trials["epochs"] = util.ItemList([reg.gen.Epoch().nestedConf])
     typed_owner = controller._typed_experiment_for_env_params
     assert typed_owner is not None
     typed_owner.env_params.arena.geometry = "rectangular"
@@ -1625,9 +1660,9 @@ def test_single_experiment_mixed_typed_sim_and_flattened_trials_survive_build_pa
     controller.experiment.value = "dish"
     controller._on_experiment_change()
 
-    trials_kind, trials_control = controller._parameter_widgets["trials.epochs"]
-    assert trials_kind == "toggle_factory"
-    trials_control["enabled"].value = True
+    typed_trials_owner = controller._typed_experiment_for_trials
+    assert typed_trials_owner is not None
+    typed_trials_owner.trials["epochs"] = util.ItemList([reg.gen.Epoch().nestedConf])
 
     typed_owner = controller._typed_experiment_for_sim_ops
     assert typed_owner is not None
@@ -1799,9 +1834,9 @@ def test_single_experiment_mixed_flattened_and_typed_enrichment_edits_survive_bu
     controller.experiment.value = "dish"
     controller._on_experiment_change()
 
-    trials_kind, trials_control = controller._parameter_widgets["trials.epochs"]
-    assert trials_kind == "toggle_factory"
-    trials_control["enabled"].value = True
+    typed_trials_owner = controller._typed_experiment_for_trials
+    assert typed_trials_owner is not None
+    typed_trials_owner.trials["epochs"] = util.ItemList([reg.gen.Epoch().nestedConf])
     typed_owner = controller._typed_experiment_for_enrichment
     assert typed_owner is not None
     typed_owner.enrichment.mode = "full"
@@ -1844,9 +1879,9 @@ def test_single_experiment_mixed_typed_collections_and_flattened_trials_survive_
     controller.experiment.value = "dish"
     controller._on_experiment_change()
 
-    trials_kind, trials_control = controller._parameter_widgets["trials.epochs"]
-    assert trials_kind == "toggle_factory"
-    trials_control["enabled"].value = True
+    typed_trials_owner = controller._typed_experiment_for_trials
+    assert typed_trials_owner is not None
+    typed_trials_owner.trials["epochs"] = util.ItemList([reg.gen.Epoch().nestedConf])
 
     typed_owner = controller._typed_experiment_for_collections
     assert typed_owner is not None
@@ -1871,12 +1906,14 @@ def test_single_experiment_typed_sim_edits_do_not_reset_other_typed_groups(
     controller._on_experiment_change()
 
     sim_owner = controller._typed_experiment_for_sim_ops
+    trials_owner = controller._typed_experiment_for_trials
     env_owner = controller._typed_experiment_for_env_params
     collections_owner = controller._typed_experiment_for_collections
     larva_owner = controller._typed_experiment_for_larva_groups
     enrich_owner = controller._typed_experiment_for_enrichment
 
     assert sim_owner is not None
+    assert trials_owner is not None
     assert env_owner is not None
     assert collections_owner is not None
     assert larva_owner is not None
@@ -1886,6 +1923,7 @@ def test_single_experiment_typed_sim_edits_do_not_reset_other_typed_groups(
     option_values = list(collections_owner.param["collections"].objects)
     selected = option_values[:2] if len(option_values) > 1 else option_values[:1]
     sim_owner.duration = 2.2
+    trials_owner.trials["epochs"] = util.ItemList([reg.gen.Epoch().nestedConf])
     env_owner.env_params.arena.geometry = "rectangular"
     collections_owner.collections = selected
     larva_owner.larva_groups[group_id].distribution.N = 9
@@ -1894,6 +1932,7 @@ def test_single_experiment_typed_sim_edits_do_not_reset_other_typed_groups(
     parameters = controller._build_parameters()
 
     assert parameters.duration == pytest.approx(2.2)
+    assert len(parameters.trials.epochs) == 1
     assert parameters.env_params.arena.geometry == "rectangular"
     assert list(parameters.collections) == selected
     assert parameters.flatten()[f"larva_groups.{group_id}.distribution.N"] == 9
@@ -1991,6 +2030,70 @@ def test_single_experiment_build_parameters_falls_back_to_base_collections_when_
 
     assert "collections" in parameters
     assert isinstance(parameters.collections, list)
+
+
+def test_single_experiment_build_parameters_falls_back_to_base_trials_when_typed_owner_missing(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller._typed_experiment_for_trials = None
+    controller._trials_group_view = None
+
+    parameters = controller._build_parameters()
+    base = resolve_base_experiment_parameters(
+        str(controller.experiment.value),
+        controller._load_selected_environment(),
+    )
+
+    assert util.AttrDict(parameters.trials) == util.AttrDict(base.trials)
+
+
+def test_single_experiment_trials_preserve_unknown_keys_in_build_parameters(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = "dish"
+    controller._on_experiment_change()
+
+    typed_trials_owner = controller._typed_experiment_for_trials
+    assert typed_trials_owner is not None
+    typed_trials_owner.trials["custom_key"] = "keep-me"
+    typed_trials_owner.trials["epochs"] = util.ItemList([reg.gen.Epoch().nestedConf])
+
+    parameters = controller._build_parameters()
+    assert parameters.trials.custom_key == "keep-me"
+    assert len(parameters.trials.epochs) == 1
+
+
+def test_single_experiment_trials_edits_survive_group_switching(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = "dish"
+    controller._on_experiment_change()
+
+    typed_trials_owner = controller._typed_experiment_for_trials
+    assert typed_trials_owner is not None
+    typed_trials_owner.trials["epochs"] = util.ItemList([reg.gen.Epoch().nestedConf])
+    typed_trials_owner.trials["epochs"][0]["age_range"] = (1.0, 2.0)
+
+    controller.parameter_group.value = "env_params"
+    controller.parameter_group.value = "trials"
+
+    parameters = controller._build_parameters()
+    assert tuple(parameters.trials.epochs[0].age_range) == pytest.approx((1.0, 2.0))
 
 
 @pytest.mark.skip(reason=SINGLE_EXPERIMENT_APP_INCOMPLETE_REASON)
@@ -2200,7 +2303,7 @@ def test_single_experiment_optional_family_toggles_seed_disabled_controls(
     assert parameters.env_params.food_params.food_grid.unique_id == "FoodGrid"
 
 
-def test_single_experiment_epoch_families_use_toggle_based_activation(
+def test_single_experiment_trials_group_uses_typed_owner_for_activation(
     tmp_path: Path,
 ) -> None:
     workspace_root = tmp_path / "workspace"
@@ -2211,10 +2314,13 @@ def test_single_experiment_epoch_families_use_toggle_based_activation(
     controller.experiment.value = "dish"
     controller._on_experiment_change()
 
-    assert controller._parameter_widgets["trials.epochs"][0] == "toggle_factory"
-    assert controller._parameter_widgets["trials.epochs"][1]["enabled"].value is False
+    assert "trials" not in controller._parameter_widgets
+    assert not any(path.startswith("trials.") for path in controller._parameter_widgets)
+    assert controller.parameter_group.options["Trials"] == "trials"
 
-    controller._parameter_widgets["trials.epochs"][1]["enabled"].value = True
+    typed_trials_owner = controller._typed_experiment_for_trials
+    assert typed_trials_owner is not None
+    typed_trials_owner.trials["epochs"] = util.ItemList([reg.gen.Epoch().nestedConf])
 
     parameters = controller._build_parameters()
 

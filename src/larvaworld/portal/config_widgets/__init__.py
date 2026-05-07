@@ -16,6 +16,7 @@ from .larvagroup_widget import build_larva_group_widget, build_larva_groups_widg
 from .odorscape_widget import build_odorscape_widget
 from .sim_ops_widget import build_sim_ops_widget
 from .thermoscape_widget import build_thermoscape_widget
+from .trials_widget import build_trials_widget
 from .widget_base import collapsible_family_box
 from .windscape_widget import build_windscape_widget
 
@@ -39,6 +40,7 @@ __all__ = [
     "collapsible_family_box",
     "resolve_conftype",
     "build_thermoscape_widget",
+    "build_trials_widget",
     "build_windscape_widget",
     "conftypes_demo_app",
 ]
