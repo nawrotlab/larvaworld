@@ -59,15 +59,15 @@ SINGLE_EXPERIMENT_RAW_CSS = """
 }
 
 .lw-single-exp-intro {
-  border-left: 4px solid #7aa6c2;
-  background: rgba(122, 166, 194, 0.16);
+  border-left: 4px solid #b5c2b0;
+  background: rgba(181,194,176,0.14);
   border-radius: 10px;
   padding: 10px 12px;
   margin: 0 0 10px 0;
 }
 
 .lw-single-exp-intro a {
-  color: #284b63;
+  color: #2f4858;
 }
 
 .lw-single-exp-preview-placeholder {
@@ -77,6 +77,55 @@ SINGLE_EXPERIMENT_RAW_CSS = """
   background: rgba(248, 250, 252, 0.9);
   color: rgba(17, 17, 17, 0.72);
   line-height: 1.55;
+}
+
+.lw-single-exp-preview-body {
+  min-height: 480px;
+}
+
+.lw-single-exp-preview-canvas-row {
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.lw-single-exp-display-legend {
+  width: 220px;
+  min-width: 220px;
+  border-radius: 10px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  background: rgba(181,194,176,0.14);
+  padding: 12px 12px 10px 12px;
+  color: rgba(17, 17, 17, 0.82);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lw-single-exp-display-legend h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.lw-single-exp-display-legend table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lw-single-exp-display-legend td {
+  padding: 3px 0;
+  vertical-align: top;
+}
+
+.lw-single-exp-display-legend kbd {
+  display: inline-block;
+  min-width: 28px;
+  border-radius: 5px;
+  border: 1px solid rgba(17, 17, 17, 0.18);
+  background: rgba(255, 255, 255, 0.82);
+  padding: 1px 5px;
+  text-align: center;
+  font: 11px/1.35 monospace;
+  color: rgba(17, 17, 17, 0.78);
 }
 
 .lw-single-exp-media {
@@ -156,6 +205,36 @@ SINGLE_EXPERIMENT_RAW_CSS = """
 .lw-single-exp-param-family--trials {
   background: rgba(250, 251, 247, 0.96);
 }
+
+.lw-single-exp-param-group-card {
+  margin: 0 0 10px 0;
+  background: rgba(181,194,176,0.14);
+}
+
+.lw-single-exp-params-columns {
+  gap: 6px;
+}
+
+.lw-single-exp-env-preset-box {
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 0 0 8px 0;
+}
+
+.lw-single-exp-env-save-hint {
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(17, 17, 17, 0.62);
+  margin-top: 6px;
+}
+
+.lw-single-exp-env-save-inline {
+  font-size: 11px;
+  line-height: 1.4;
+  margin-top: 6px;
+}
 """.strip()
 
 _EDITOR_EXCLUDED_PATHS = {"experiment", "parameter_dict"}
@@ -173,6 +252,8 @@ _ENRICHMENT_ANOT_KEY_OPTIONS = [
 ]
 _ODORSCAPE_OPTIONS = ["Analytical", "Gaussian", "Diffusion"]
 _PREVIEW_STEP_CAP = 300
+_PREVIEW_CANVAS_WIDTH = 920
+_PREVIEW_CANVAS_HEIGHT = 760
 _REGISTRY_ENV_PRESET_PREFIX = "__registry__:"
 _WORKSPACE_ENV_PRESET_PREFIX = "__workspace__:"
 _NONE_OPTION_LABEL = "None"
@@ -190,6 +271,11 @@ _SIM_OPS_FIELDS = (
 def _safe_slug(value: str) -> str:
     cleaned = re.sub(r"[^a-zA-Z0-9._-]+", "_", value.strip()).strip("._-")
     return cleaned or "single_experiment"
+
+
+def _safe_preset_slug(value: str) -> str:
+    cleaned = re.sub(r"[^a-zA-Z0-9._-]+", "_", value.strip()).strip("._-")
+    return cleaned
 
 
 def _default_run_name(experiment_id: str) -> str:
@@ -460,6 +546,45 @@ def _is_absent_optional_value(value: Any, absent_value: Any) -> bool:
 
 def _summary_label(text: str) -> str:
     return f'<div class="lw-single-exp-param-summary">{text}</div>'
+
+
+def _display_shortcuts_legend() -> pn.pane.HTML:
+    return pn.pane.HTML(
+        """
+        <div class="lw-single-exp-display-legend">
+          <h4>Run display shortcuts</h4>
+          <table>
+            <tr><td><kbd>Space</kbd></td><td>Pause / resume</td></tr>
+            <tr><td><kbd>Wheel</kbd></td><td>Zoom around cursor</td></tr>
+            <tr><td><kbd>Arrows</kbd></td><td>Pan display</td></tr>
+            <tr><td><kbd>]</kbd> <kbd>/</kbd></td><td>FPS up / down</td></tr>
+            <tr><td><kbd>T</kbd></td><td>Clock</td></tr>
+            <tr><td><kbd>N</kbd></td><td>Scale</td></tr>
+            <tr><td><kbd>S</kbd></td><td>State overlay</td></tr>
+            <tr><td><kbd>Tab</kbd></td><td>Agent IDs</td></tr>
+            <tr><td><kbd>P</kbd></td><td>Toggle trails</td></tr>
+            <tr><td><kbd>+</kbd> <kbd>-</kbd></td><td>Trail duration</td></tr>
+            <tr><td><kbd>X</kbd></td><td>Trail color</td></tr>
+            <tr><td><kbd>G</kbd></td><td>Black background</td></tr>
+            <tr><td><kbd>R</kbd></td><td>Random colors</td></tr>
+            <tr><td><kbd>B</kbd></td><td>Color by behavior</td></tr>
+            <tr><td><kbd>I</kbd></td><td>Snapshot</td></tr>
+            <tr><td><kbd>Y</kbd></td><td>Larva collisions</td></tr>
+          </table>
+        </div>
+        """,
+        margin=0,
+    )
+
+
+def _preview_canvas_row(canvas_view: pn.viewable.Viewable) -> pn.Row:
+    return pn.Row(
+        canvas_view,
+        _display_shortcuts_legend(),
+        css_classes=["lw-single-exp-preview-canvas-row"],
+        sizing_mode="stretch_width",
+        margin=0,
+    )
 
 
 def _field_label_html(label: str) -> str:
@@ -814,7 +939,7 @@ class _FrameSimulationPreview:
 
     def view(self) -> pn.viewable.Viewable:
         return pn.Column(
-            self.canvas.view(),
+            _preview_canvas_row(self.canvas.view()),
             pn.Row(pn.Column("Frame", self.frame_player), sizing_mode="stretch_width"),
             self.metadata,
             sizing_mode="stretch_width",
@@ -822,6 +947,37 @@ class _FrameSimulationPreview:
 
 
 class _SingleExperimentController:
+    @staticmethod
+    def _new_preview_canvas() -> EnvironmentCanvas:
+        try:
+            return EnvironmentCanvas(
+                editable=False,
+                width=_PREVIEW_CANVAS_WIDTH,
+                height=_PREVIEW_CANVAS_HEIGHT,
+                snap_heads_to_midline=True,
+            )
+        except TypeError:
+            return EnvironmentCanvas(editable=False)
+
+    @staticmethod
+    def _initial_preview_content() -> list[pn.viewable.Viewable]:
+        canvas = _SingleExperimentController._new_preview_canvas()
+        clear = getattr(canvas, "clear", None)
+        if callable(clear):
+            clear()
+        return [
+            _preview_canvas_row(canvas.view()),
+            pn.pane.HTML(
+                (
+                    '<div class="lw-single-exp-preview-placeholder">'
+                    "Choose an experiment template, optionally apply a workspace environment preset, "
+                    "and prepare the configuration preview here."
+                    "</div>"
+                ),
+                margin=(8, 0, 0, 0),
+            ),
+        ]
+
     def __init__(self) -> None:
         experiment_ids = list(reg.conf.Exp.confIDs)
         default_experiment = "dish" if "dish" in experiment_ids else experiment_ids[0]
@@ -841,7 +997,35 @@ class _SingleExperimentController:
         )
         self.refresh_environments_btn = pn.widgets.Button(
             name="Refresh environment",
+            button_type="warning",
+        )
+        self.environment_save_name = pn.widgets.TextInput(
+            name="Preset name",
+            placeholder="my_environment",
+            disabled=True,
+        )
+        self.environment_save_btn = pn.widgets.Button(
+            name="Save environment preset",
+            button_type="primary",
+            disabled=True,
+        )
+        self.environment_confirm_overwrite_btn = pn.widgets.Button(
+            name="Confirm overwrite",
+            button_type="warning",
+            disabled=True,
+            visible=False,
+        )
+        self.environment_cancel_overwrite_btn = pn.widgets.Button(
+            name="Cancel",
             button_type="default",
+            disabled=True,
+            visible=False,
+        )
+        self.environment_save_hint = pn.pane.HTML(
+            "", css_classes=["lw-single-exp-env-save-hint"], margin=0
+        )
+        self.environment_save_inline = pn.pane.HTML(
+            "", css_classes=["lw-single-exp-env-save-inline"], margin=0
         )
         self.prepare_btn = pn.widgets.Button(
             name="Arena Preview",
@@ -849,7 +1033,7 @@ class _SingleExperimentController:
         )
         self.simulation_preview_btn = pn.widgets.Button(
             name="Generate simulation preview",
-            button_type="default",
+            button_type="primary",
         )
         self.run_btn = pn.widgets.Button(
             name="Run experiment",
@@ -926,11 +1110,6 @@ class _SingleExperimentController:
         self.summary = pn.pane.HTML(
             "", sizing_mode="stretch_width", margin=(0, 0, 4, 0)
         )
-        self.parameter_group = pn.widgets.Select(
-            name="Parameter group",
-            options=[],
-            value=None,
-        )
         self.parameters_editor = pn.Column(
             sizing_mode="stretch_width",
             margin=0,
@@ -938,6 +1117,10 @@ class _SingleExperimentController:
                 "font-size": "12px",
                 "line-height": "1.45",
             },
+        )
+        self.environment_parameters_editor = pn.Column(
+            sizing_mode="stretch_width",
+            margin=0,
         )
         self._parameter_groups: dict[str, list[str]] = {}
         self._parameter_widgets: dict[str, tuple[str, Any]] = {}
@@ -962,51 +1145,53 @@ class _SingleExperimentController:
         self.summary.styles = {
             "font-size": "12px",
             "line-height": "1.55",
-            "color": "rgba(17, 17, 17, 0.76)",
-            "padding": "0 6px 0 12px",
+            "color": "rgba(17, 17, 17, 0.82)",
+            "padding": "10px 12px",
+            "background": "rgba(181,194,176,0.14)",
+            "border-left": "3px solid #b5c2b0",
+            "border-radius": "8px",
         }
         self.status = pn.pane.Markdown(
             "",
             styles={
                 "font-size": "12px",
                 "line-height": "1.55",
-            },
-        )
-        self.preview_meta = pn.pane.HTML(
-            "",
-            styles={
-                "font-size": "12px",
-                "line-height": "1.55",
-                "color": "rgba(17, 17, 17, 0.78)",
-                "background": "rgba(193, 176, 194, 0.12)",
-                "border-left": "3px solid #c1b0c2",
+                "color": "rgba(17, 17, 17, 0.82)",
+                "padding": "10px 12px",
+                "background": "rgba(181,194,176,0.14)",
+                "border-left": "3px solid #b5c2b0",
                 "border-radius": "8px",
-                "padding": "8px 10px",
             },
-            margin=(0, 0, 8, 0),
         )
         self.preview = pn.Column(
-            pn.pane.HTML(
-                (
-                    '<div class="lw-single-exp-preview-placeholder">'
-                    "Choose an experiment template, optionally apply a workspace environment preset, "
-                    "and prepare the configuration preview here."
-                    "</div>"
-                ),
-                margin=0,
-            ),
+            *self._initial_preview_content(),
             sizing_mode="stretch_width",
+            css_classes=["lw-single-exp-preview-body"],
         )
+        self._parameter_group_views: dict[str, pn.viewable.Viewable] = {}
+        self._environment_baseline_signature: str | None = None
+        self._pending_environment_overwrite_name: str | None = None
+        self._environment_watcher_handles: list[Any] = []
+        self._run_controls_locked = False
 
         self.selection.param.watch(self._on_experiment_change, "experiment_template")
         self.run_name.param.watch(self._on_run_name_change, "value")
         self.selection.param.watch(
             self._on_parameter_override_change, "environment_preset"
         )
-        self.parameter_group.param.watch(self._on_parameter_group_change, "value")
         self.save_video.param.watch(self._on_save_video_change, "value")
         self.show_display.param.watch(self._on_show_display_change, "value")
+        self.environment_save_name.param.watch(
+            self._on_environment_save_name_change, "value"
+        )
         self.refresh_environments_btn.on_click(self._on_refresh_environments)
+        self.environment_save_btn.on_click(self._on_save_environment_preset)
+        self.environment_confirm_overwrite_btn.on_click(
+            self._on_confirm_overwrite_environment
+        )
+        self.environment_cancel_overwrite_btn.on_click(
+            self._on_cancel_overwrite_environment
+        )
         self.prepare_btn.on_click(self._on_prepare_preview)
         self.simulation_preview_btn.on_click(self._on_generate_simulation_preview)
         self.run_btn.on_click(self._on_run_experiment)
@@ -1033,7 +1218,7 @@ class _SingleExperimentController:
         workspace_labels: set[str] = set()
         for path in sorted(preset_dir.glob("*.json")):
             workspace_labels.add(path.stem)
-            options[path.stem] = path.name
+            options[f"Workspace / {path.stem}"] = path.name
         registry_options = {}
         for name in sorted(str(key) for key in reg.conf.Env.dict.keys()):
             if name in workspace_labels:
@@ -1068,13 +1253,161 @@ class _SingleExperimentController:
             _WORKSPACE_ENV_PRESET_PREFIX
         ):
             filename = str(selected)[len(_WORKSPACE_ENV_PRESET_PREFIX) :]
-            return Path(filename).stem
+            return f"Workspace / {Path(filename).stem}"
         if selected is not None and str(selected).startswith(
             _REGISTRY_ENV_PRESET_PREFIX
         ):
             registry_id = str(selected)[len(_REGISTRY_ENV_PRESET_PREFIX) :]
             return f"registry / {registry_id}"
-        return str(selected)
+        selected_text = str(selected)
+        if selected_text.endswith(".json"):
+            return f"Workspace / {Path(selected_text).stem}"
+        return selected_text
+
+    def _environment_payload_from_owner(self) -> util.AttrDict:
+        if self._typed_experiment_for_env_params is not None:
+            nested = util.AttrDict(self._typed_experiment_for_env_params.nestedConf)
+            env_payload = nested.get("env_params")
+            if env_payload is not None:
+                return util.AttrDict(_coerce_xy_sequences(util.AttrDict(env_payload)))
+        parameters = resolve_base_experiment_parameters(
+            self._selected_experiment(),
+            self._load_selected_environment(),
+        )
+        return util.AttrDict(_coerce_xy_sequences(util.AttrDict(parameters.env_params)))
+
+    @staticmethod
+    def _canonical_env_signature(env_payload: util.AttrDict) -> str:
+        return json.dumps(
+            _json_ready(env_payload), sort_keys=True, separators=(",", ":")
+        )
+
+    def _clear_environment_watchers(self) -> None:
+        while self._environment_watcher_handles:
+            watcher = self._environment_watcher_handles.pop()
+            owner = getattr(watcher, "inst", None)
+            if owner is None:
+                continue
+            try:
+                owner.param.unwatch(watcher)
+            except Exception:
+                continue
+
+    def _clear_pending_environment_overwrite(self) -> None:
+        self._pending_environment_overwrite_name = None
+        self.environment_confirm_overwrite_btn.visible = False
+        self.environment_cancel_overwrite_btn.visible = False
+        self.environment_confirm_overwrite_btn.disabled = True
+        self.environment_cancel_overwrite_btn.disabled = True
+        self.environment_save_inline.object = ""
+
+    def _refresh_environment_save_state(self, *, reset_baseline: bool = False) -> None:
+        current_payload = self._environment_payload_from_owner()
+        current_signature = self._canonical_env_signature(current_payload)
+        if reset_baseline or self._environment_baseline_signature is None:
+            self._environment_baseline_signature = current_signature
+            self.environment_save_name.disabled = True
+            self.environment_save_btn.disabled = True
+            self.environment_save_hint.object = ""
+            self._clear_pending_environment_overwrite()
+            return
+
+        dirty = current_signature != self._environment_baseline_signature
+        safe_name = _safe_preset_slug((self.environment_save_name.value or "").strip())
+        self.environment_save_name.disabled = not dirty or self._run_controls_locked
+        if dirty:
+            self.environment_save_hint.object = (
+                f"Will be saved as: <code>{safe_name}.json</code>"
+                if safe_name
+                else "Enter a preset name to save this environment."
+            )
+        else:
+            self.environment_save_hint.object = ""
+            self._clear_pending_environment_overwrite()
+        self.environment_save_btn.disabled = (
+            (not dirty)
+            or (not safe_name)
+            or self._run_controls_locked
+            or (self._pending_environment_overwrite_name is not None)
+        )
+
+    def _bind_environment_watchers(self) -> None:
+        self._clear_environment_watchers()
+        env_view = self._env_params_group_view
+        if env_view is None:
+            return
+        widgets = env_view.select(pn.widgets.Widget)
+        for widget in widgets:
+            if not hasattr(widget, "param"):
+                continue
+            if "value" not in widget.param:
+                continue
+            try:
+                watcher = widget.param.watch(
+                    self._on_environment_parameter_widget_change, "value"
+                )
+            except Exception:
+                continue
+            self._environment_watcher_handles.append(watcher)
+
+    def _save_environment_payload_to_workspace(self, safe_name: str) -> Path:
+        env_payload = self._environment_payload_from_owner()
+        target = self._environment_dir() / f"{safe_name}.json"
+        target.write_text(
+            json.dumps(_json_ready(env_payload), indent=2) + "\n", encoding="utf-8"
+        )
+        return target
+
+    def _on_environment_parameter_widget_change(self, *_: object) -> None:
+        self._refresh_environment_save_state(reset_baseline=False)
+
+    def _on_environment_save_name_change(self, *_: object) -> None:
+        self._refresh_environment_save_state(reset_baseline=False)
+
+    def _on_save_environment_preset(self, *_: object) -> None:
+        safe_name = _safe_preset_slug((self.environment_save_name.value or "").strip())
+        if not safe_name:
+            self.environment_save_inline.object = (
+                "Preset name is required and must contain at least one valid character."
+            )
+            self.environment_save_btn.disabled = True
+            return
+        target = self._environment_dir() / f"{safe_name}.json"
+        if target.exists():
+            self._pending_environment_overwrite_name = safe_name
+            self.environment_save_inline.object = f"Preset <code>{safe_name}.json</code> already exists. Confirm overwrite?"
+            self.environment_confirm_overwrite_btn.visible = True
+            self.environment_cancel_overwrite_btn.visible = True
+            self.environment_confirm_overwrite_btn.disabled = self._run_controls_locked
+            self.environment_cancel_overwrite_btn.disabled = self._run_controls_locked
+            self.environment_save_btn.disabled = True
+            return
+        written = self._save_environment_payload_to_workspace(safe_name)
+        self.environment_save_name.value = safe_name
+        self._refresh_environment_options()
+        self.selection.environment_preset = written.name
+        self._refresh_summary()
+        self._refresh_parameter_editor()
+        self._refresh_environment_save_state(reset_baseline=True)
+        self.status.object = f"Saved environment preset to <code>{written.name}</code>."
+
+    def _on_confirm_overwrite_environment(self, *_: object) -> None:
+        safe_name = self._pending_environment_overwrite_name
+        if not safe_name:
+            return
+        written = self._save_environment_payload_to_workspace(safe_name)
+        self.environment_save_name.value = safe_name
+        self._refresh_environment_options()
+        self.selection.environment_preset = written.name
+        self._refresh_summary()
+        self._refresh_parameter_editor()
+        self._refresh_environment_save_state(reset_baseline=True)
+        self.status.object = f"Overwrote environment preset <code>{written.name}</code> in the workspace."
+
+    def _on_cancel_overwrite_environment(self, *_: object) -> None:
+        self._clear_pending_environment_overwrite()
+        self._refresh_environment_save_state(reset_baseline=False)
+        self.status.object = "Environment preset overwrite cancelled."
 
     @staticmethod
     def _apply_environment_payload(
@@ -1160,18 +1493,42 @@ class _SingleExperimentController:
 
     def _refresh_summary(self) -> None:
         experiment = self._selected_experiment()
-        parameters = reg.conf.Exp.getID(experiment).get_copy()
+        parameters = resolve_base_experiment_parameters(
+            experiment,
+            self._load_selected_environment(),
+        )
         larva_groups = list(parameters.get("larva_groups", {}).keys())
         env = util.AttrDict(parameters.env_params)
         epochs = parameters.get("trials", {}).get("epochs", {})
+        dims = getattr(env.arena, "dims", ("?", "?"))
+        geometry = str(getattr(env.arena, "geometry", ""))
+        if isinstance(dims, (list, tuple)) and len(dims) >= 2:
+            dims_text = f"{float(dims[0]):.3f} x {float(dims[1]):.3f} m"
+            if geometry == "circular":
+                radius_text = f"{(float(dims[0]) / 2.0):.3f} m"
+            else:
+                radius_text = None
+        else:
+            dims_text = str(dims)
+            radius_text = None
+        if radius_text is not None:
+            arena_size_line = (
+                f"<strong>Arena radius:</strong> {radius_text} "
+                f"(<strong>diameter:</strong> {float(dims[0]):.3f} m)<br>"
+            )
+        else:
+            arena_size_line = f"<strong>Arena dims:</strong> {dims_text}<br>"
+        selected_env = self._selected_environment_label()
         self.summary.object = (
             '<div class="lw-single-exp-summary">'
             f"<strong>Template:</strong> <code>{experiment}</code><br>"
+            f"<strong>Environment source:</strong> {selected_env}<br>"
             f"<strong>Default duration:</strong> {float(parameters.get('duration', 0.0)):.2f} min<br>"
             f"<strong>Arena geometry:</strong> {env.arena.geometry}<br>"
+            f"{arena_size_line}"
             f"<strong>Larva groups:</strong> {', '.join(larva_groups) if larva_groups else 'None'}<br>"
             f"<strong>Epochs:</strong> {len(epochs)}<br>"
-            "<strong>Parameter editing:</strong> all resolved experiment parameters are editable below."
+            "<strong>Parameter editing:</strong> all resolved experiment parameters are editable below; preview uses this resolved configuration."
             "</div>"
         )
 
@@ -1829,48 +2186,26 @@ class _SingleExperimentController:
             return list(value)
         raise ValueError(f"Unsupported widget kind: {kind}")
 
-    def _render_parameter_group(self) -> None:
-        group_key = self.parameter_group.value
+    def _render_single_parameter_group(
+        self, group_key: str
+    ) -> pn.viewable.Viewable | None:
         if group_key == "sim_ops":
-            if self._sim_ops_group_view is None:
-                self.parameters_editor[:] = []
-            else:
-                self.parameters_editor[:] = [self._sim_ops_group_view]
-            return
+            return self._sim_ops_group_view
         if group_key == "collections":
-            if self._collections_group_view is None:
-                self.parameters_editor[:] = []
-            else:
-                self.parameters_editor[:] = [self._collections_group_view]
-            return
+            return self._collections_group_view
         if group_key == "trials":
-            if self._trials_group_view is None:
-                self.parameters_editor[:] = []
-            else:
-                self.parameters_editor[:] = [self._trials_group_view]
-            return
+            return self._trials_group_view
         if group_key == "env_params":
             if self._env_params_group_view is None:
-                self.parameters_editor[:] = []
-            else:
-                self.parameters_editor[:] = [self._env_params_group_view]
-            return
+                return None
+            return self._env_params_group_view
         if group_key == "enrichment":
-            if self._enrichment_group_view is None:
-                self.parameters_editor[:] = []
-            else:
-                self.parameters_editor[:] = [self._enrichment_group_view]
-            return
+            return self._enrichment_group_view
         if group_key == "larva_groups":
-            if self._larva_groups_group_view is None:
-                self.parameters_editor[:] = []
-            else:
-                self.parameters_editor[:] = [self._larva_groups_group_view]
-            return
+            return self._larva_groups_group_view
         paths = self._parameter_groups.get(group_key, [])
         if not paths:
-            self.parameters_editor[:] = []
-            return
+            return None
         families: dict[str, dict[str, Any]] = {}
         ordered_family_ids: list[str] = []
         for path in paths:
@@ -1892,7 +2227,7 @@ class _SingleExperimentController:
                 continue
             families[family_id]["views"].append(view)
 
-        self.parameters_editor[:] = [
+        family_views = [
             pn.Column(
                 _family_title_row(
                     families[family_id]["title"],
@@ -1908,6 +2243,108 @@ class _SingleExperimentController:
             )
             for family_id in ordered_family_ids
         ]
+        return pn.Column(
+            *family_views,
+            sizing_mode="stretch_width",
+            margin=0,
+        )
+
+    @staticmethod
+    def _apply_parameter_group_card_style(view: pn.viewable.Viewable) -> None:
+        for child in getattr(view, "objects", []):
+            if not isinstance(child, pn.Card):
+                continue
+            if "lw-single-exp-param-group-card" not in child.css_classes:
+                child.css_classes.append("lw-single-exp-param-group-card")
+
+    def _render_all_parameter_groups(self) -> None:
+        self._parameter_group_views = {}
+        environment_column = pn.Column(sizing_mode="stretch_width", margin=0)
+        experiment_columns = [
+            pn.Column(sizing_mode="stretch_width", margin=0),
+            pn.Column(sizing_mode="stretch_width", margin=0),
+        ]
+        used_keys: set[str] = set()
+
+        def _add_group(
+            group_key: str,
+            column_index: int | None = None,
+            *,
+            target: list[pn.Column] | pn.Column,
+        ) -> None:
+            if group_key in used_keys or group_key not in self._parameter_groups:
+                return
+            group_view = self._render_single_parameter_group(group_key)
+            if group_view is None:
+                return
+            title = _editor_group_title(group_key)
+            if group_key == "env_params":
+                self._apply_parameter_group_card_style(group_view)
+                group_view = pn.Column(
+                    pn.Column(
+                        self.environment_select,
+                        self.refresh_environments_btn,
+                        self.environment_save_name,
+                        pn.Row(
+                            self.environment_save_btn,
+                            self.environment_confirm_overwrite_btn,
+                            self.environment_cancel_overwrite_btn,
+                            sizing_mode="stretch_width",
+                            margin=(6, 0, 0, 0),
+                        ),
+                        self.environment_save_hint,
+                        self.environment_save_inline,
+                        css_classes=["lw-single-exp-env-preset-box"],
+                        sizing_mode="stretch_width",
+                        margin=(0, 0, 8, 0),
+                    ),
+                    group_view,
+                    css_classes=["lw-single-exp-env-params-content"],
+                    sizing_mode="stretch_width",
+                    margin=0,
+                )
+            used_keys.add(group_key)
+            self._parameter_group_views[group_key] = group_view
+            if group_key == "env_params" and not isinstance(target, list):
+                target.append(group_view)
+                return
+            card = pn.Card(
+                group_view,
+                title=title,
+                collapsed=False,
+                sizing_mode="stretch_width",
+                css_classes=["lw-single-exp-param-group-card"],
+            )
+            if isinstance(target, list):
+                assert column_index is not None
+                target[column_index].append(card)
+            else:
+                target.append(card)
+
+        _add_group("env_params", target=environment_column)
+        for key in ["larva_groups", "trials"]:
+            _add_group(key, 0, target=experiment_columns)
+        for key in ["enrichment", "sim_ops", "collections"]:
+            _add_group(key, 1, target=experiment_columns)
+
+        fallback_column = 0
+        for group_key in self._parameter_groups:
+            if group_key in used_keys:
+                continue
+            _add_group(group_key, fallback_column, target=experiment_columns)
+            fallback_column = (fallback_column + 1) % len(experiment_columns)
+        self.environment_parameters_editor[:] = [environment_column]
+        self.parameters_editor[:] = [
+            pn.Row(
+                *experiment_columns,
+                css_classes=["lw-single-exp-params-columns"],
+                sizing_mode="stretch_width",
+                margin=0,
+            )
+        ]
+
+    def _get_parameter_group_view(self, group_key: str) -> pn.viewable.Viewable | None:
+        return self._parameter_group_views.get(group_key)
 
     def _refresh_parameter_editor(self) -> None:
         flat = self._editable_flat_parameters()
@@ -1960,19 +2397,10 @@ class _SingleExperimentController:
         grouped.setdefault("collections", [])
         grouped.setdefault("trials", [])
         self._parameter_groups = grouped
-        options = {_editor_group_title(group): group for group in grouped.keys()}
-        current_group = self.parameter_group.value
-        self.parameter_group.options = options
-        if current_group not in options.values():
-            if "larva_groups" in grouped:
-                preferred = "larva_groups"
-            elif "env_params" in grouped:
-                preferred = "env_params"
-            else:
-                preferred = next(iter(grouped), None)
-            self.parameter_group.value = preferred
         self._wire_optional_family_toggles()
-        self._render_parameter_group()
+        self._render_all_parameter_groups()
+        self._bind_environment_watchers()
+        self._refresh_environment_save_state(reset_baseline=True)
 
     def _refresh_typed_larva_groups_owner(self) -> None:
         from larvaworld.lib.reg.generators import ExpConf
@@ -2056,6 +2484,7 @@ class _SingleExperimentController:
         self._parameter_seed_overrides = util.AttrDict()
         self.run_name.value = _default_run_name(experiment)
         self._refresh_environment_options()
+        self.selection.environment_preset = "__template__"
         self._refresh_summary()
         self._refresh_parameter_editor()
         self.status.object = f'Template "{experiment}" loaded.'
@@ -2077,13 +2506,12 @@ class _SingleExperimentController:
 
     def _on_parameter_override_change(self, *_: object) -> None:
         self._parameter_seed_overrides = util.AttrDict()
+        self._refresh_summary()
         self._refresh_parameter_editor()
-
-    def _on_parameter_group_change(self, *_: object) -> None:
-        self._render_parameter_group()
 
     def _on_refresh_environments(self, *_: object) -> None:
         self._refresh_environment_options()
+        self._refresh_summary()
         self._refresh_parameter_editor()
         self.status.object = "Refreshed workspace environment presets."
 
@@ -2155,6 +2583,7 @@ class _SingleExperimentController:
         return kws
 
     def _set_run_controls_disabled(self, disabled: bool) -> None:
+        self._run_controls_locked = bool(disabled)
         self.prepare_btn.disabled = disabled
         self.simulation_preview_btn.disabled = disabled
         self.run_btn.disabled = disabled
@@ -2163,6 +2592,13 @@ class _SingleExperimentController:
             self.show_display.value
         )
         self.refresh_environments_btn.disabled = disabled
+        if disabled:
+            self.environment_save_name.disabled = True
+            self.environment_save_btn.disabled = True
+            self.environment_confirm_overwrite_btn.disabled = True
+            self.environment_cancel_overwrite_btn.disabled = True
+        else:
+            self._refresh_environment_save_state(reset_baseline=False)
 
     def _execute_run_experiment(
         self,
@@ -2301,10 +2737,9 @@ class _SingleExperimentController:
                 larva_groups=parameters.get("larva_groups", {}),
                 show_group_shapes=False,
             )
-            canvas = EnvironmentCanvas(editable=False)
+            canvas = self._new_preview_canvas()
             canvas.set_state(state)
         except Exception as exc:
-            self.preview_meta.object = ""
             self.preview[:] = [
                 pn.pane.HTML(
                     (
@@ -2319,8 +2754,7 @@ class _SingleExperimentController:
             self._set_run_controls_disabled(False)
             return
 
-        self.preview_meta.object = self._preview_metadata_html(parameters, selected_env)
-        self.preview[:] = [canvas.view()]
+        self.preview[:] = [_preview_canvas_row(canvas.view())]
         self.status.object = (
             f'Prepared configuration preview for "{self._selected_experiment()}" using '
             f"{selected_env}. Reserved output directory for a future run: "
@@ -2337,7 +2771,6 @@ class _SingleExperimentController:
             return
 
         selected_env = self._selected_environment_label()
-        self.preview_meta.object = self._preview_metadata_html(parameters, selected_env)
         self.preview[:] = [
             pn.pane.HTML(
                 (
@@ -2373,7 +2806,7 @@ class _SingleExperimentController:
                 larva_groups=None,
                 show_group_shapes=False,
             )
-            canvas = EnvironmentCanvas(editable=False)
+            canvas = self._new_preview_canvas()
             canvas.set_state(state)
             preview = _FrameSimulationPreview(
                 canvas=canvas,
@@ -2381,7 +2814,6 @@ class _SingleExperimentController:
                 dt=float(launcher.dt),
             ).view()
         except Exception as exc:
-            self.preview_meta.object = ""
             self.preview[:] = [
                 pn.pane.HTML(
                     (
@@ -2402,7 +2834,6 @@ class _SingleExperimentController:
             except Exception:
                 pass
 
-        self.preview_meta.object = self._preview_metadata_html(parameters, selected_env)
         self.preview[:] = [preview]
         displayed_end = frames[-1].tick * float(launcher.dt)
         status = (
@@ -2488,14 +2919,12 @@ class _SingleExperimentController:
         controls = pn.Card(
             pn.Column(
                 self.experiment,
-                self.run_name,
-                self.environment_select,
-                self.refresh_environments_btn,
                 self.summary,
                 self.preview_action_row,
                 self.preview_options_row,
                 self.preview_generate_row,
                 media_controls,
+                self.run_name,
                 self.execution_action_row,
                 self.status,
                 sizing_mode="stretch_width",
@@ -2506,15 +2935,24 @@ class _SingleExperimentController:
             sizing_mode="stretch_width",
         )
         preview = pn.Card(
-            self.preview_meta,
             self.preview,
             title="Preview",
             collapsed=False,
             sizing_mode="stretch_width",
         )
-        parameters = pn.Card(
+        environment_parameters = pn.Card(
             pn.Column(
-                self.parameter_group,
+                self.environment_parameters_editor,
+                sizing_mode="stretch_width",
+                margin=0,
+            ),
+            title="Environment Parameters",
+            collapsed=False,
+            sizing_mode="stretch_width",
+            css_classes=["lw-single-exp-params-group"],
+        )
+        experiment_parameters = pn.Card(
+            pn.Column(
                 self.parameters_editor,
                 sizing_mode="stretch_width",
                 margin=0,
@@ -2524,11 +2962,7 @@ class _SingleExperimentController:
             sizing_mode="stretch_width",
             css_classes=["lw-single-exp-params-group"],
         )
-        left_column = pn.Column(
-            controls,
-            parameters,
-            sizing_mode="stretch_width",
-        )
+        left_column = pn.Column(controls, sizing_mode="stretch_width")
         content = pn.GridSpec(
             ncols=4,
             nrows=1,
@@ -2536,9 +2970,18 @@ class _SingleExperimentController:
         )
         content[0, 0] = left_column
         content[0, 1:4] = preview
+        lower = pn.GridSpec(
+            ncols=3,
+            nrows=1,
+            sizing_mode="stretch_width",
+            margin=(8, 0, 0, 0),
+        )
+        lower[0, 0] = environment_parameters
+        lower[0, 1:3] = experiment_parameters
         return pn.Column(
             intro,
             content,
+            lower,
             css_classes=["lw-single-exp-root"],
             sizing_mode="stretch_width",
         )
@@ -2551,7 +2994,7 @@ def single_experiment_app() -> pn.viewable.Viewable:
 
     template = pn.template.MaterialTemplate(
         title="",
-        header_background="#c1b0c2",
+        header_background="#b5c2b0",
         header_color="#111111",
     )
     template.header.append(build_app_header(title="Single Experiment"))

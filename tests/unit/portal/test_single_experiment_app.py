@@ -82,7 +82,10 @@ def test_single_experiment_lists_workspace_environment_presets(tmp_path: Path) -
     assert (
         controller.environment_select.options["Registry / dish"] == "__registry__:dish"
     )
-    assert controller.environment_select.options["dish_custom"] == "dish_custom.json"
+    assert (
+        controller.environment_select.options["Workspace / dish_custom"]
+        == "dish_custom.json"
+    )
 
 
 def test_single_experiment_lists_and_loads_registry_environment_presets(
@@ -1361,14 +1364,178 @@ def test_single_experiment_parameter_editor_exposes_template_fields(
     assert "trials" not in controller._parameter_widgets
     assert not any(path.startswith("trials.") for path in controller._parameter_widgets)
     assert "parameter_dict" not in controller._parameter_widgets
-    assert controller.parameter_group.options["Simulation Settings"] == "sim_ops"
-    assert controller.parameter_group.options["Collections"] == "collections"
-    assert controller.parameter_group.options["Trials"] == "trials"
-    assert controller.parameter_group.options["Env Params"] == "env_params"
-    assert controller.parameter_group.options["Enrichment"] == "enrichment"
-    assert controller.parameter_group.options["Larva Groups"] == "larva_groups"
-    assert controller.parameter_group.value == "larva_groups"
+    assert "sim_ops" in controller._parameter_groups
+    assert "collections" in controller._parameter_groups
+    assert "trials" in controller._parameter_groups
+    assert "env_params" in controller._parameter_groups
+    assert "enrichment" in controller._parameter_groups
+    assert "larva_groups" in controller._parameter_groups
     assert len(controller.parameters_editor.objects) > 0
+
+
+def test_single_experiment_view_hides_parameter_group_dropdown(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    view = controller.view()
+
+    assert not any(
+        isinstance(widget, pn.widgets.Select) and widget.name == "Parameter group"
+        for widget in view.select(pn.widgets.Select)
+    )
+
+
+def test_single_experiment_parameter_groups_render_in_three_columns(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+
+    assert len(controller.environment_parameters_editor.objects) == 1
+    assert isinstance(controller.environment_parameters_editor[0], pn.Column)
+    assert len(controller.parameters_editor.objects) == 1
+    row = controller.parameters_editor[0]
+    assert isinstance(row, pn.Row)
+    assert len(row.objects) == 2
+    assert all(isinstance(column, pn.Column) for column in row.objects)
+
+
+def test_single_experiment_preview_container_is_stable_before_generation(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+
+    assert "lw-single-exp-preview-body" in controller.preview.css_classes
+    assert len(controller.preview.objects) >= 1
+    placeholders = [
+        pane
+        for pane in controller.preview.objects
+        if isinstance(pane, pn.pane.HTML)
+        and "prepare the configuration preview" in str(getattr(pane, "object", ""))
+    ]
+    assert placeholders
+
+
+def test_single_experiment_environment_preset_box_is_first_in_environment_parameters(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+
+    env_section = controller.environment_parameters_editor[0]
+    assert isinstance(env_section, pn.Column)
+    env_content = env_section[0]
+    assert isinstance(env_content, pn.Column)
+    preset_box = env_content[0]
+    assert isinstance(preset_box, pn.Column)
+    assert controller.environment_select in preset_box.objects
+    assert controller.refresh_environments_btn in preset_box.select(pn.widgets.Button)
+
+
+def test_single_experiment_environment_save_controls_dirty_and_name_gating(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
+
+    assert controller.environment_save_name.disabled is True
+    assert controller.environment_save_btn.disabled is True
+
+    arena_width = _find_widget(env_view, "Arena width", pn.widgets.FloatInput)
+    arena_width.value = float(arena_width.value) + 0.001
+
+    assert controller.environment_save_name.disabled is False
+    assert controller.environment_save_btn.disabled is True
+    controller.environment_save_name.value = "My nice arena!"
+    assert "My_nice_arena.json" in str(controller.environment_save_hint.object)
+    assert controller.environment_save_btn.disabled is False
+
+
+def test_single_experiment_environment_save_writes_env_params_only(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
+    arena_width = _find_widget(env_view, "Arena width", pn.widgets.FloatInput)
+    arena_width.value = float(arena_width.value) + 0.002
+
+    controller.environment_save_name.value = "saved_env"
+    controller._on_save_environment_preset()
+
+    target = workspace_root / "environments" / "saved_env.json"
+    assert target.exists()
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    assert isinstance(payload, dict)
+    assert "arena" in payload
+    assert "food_params" in payload
+    assert "border_list" in payload
+    assert "larva_groups" not in payload
+    assert "enrichment" not in payload
+    assert "trials" not in payload
+    assert (
+        controller.environment_select.options["Workspace / saved_env"]
+        == "saved_env.json"
+    )
+    assert controller.selection.environment_preset == "saved_env.json"
+
+
+def test_single_experiment_environment_save_collision_requires_confirmation(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    target = workspace_root / "environments" / "saved_env.json"
+    target.write_text(
+        json.dumps({"arena": {"geometry": "circular", "dims": [0.3, 0.3]}}) + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
+    arena_width = _find_widget(env_view, "Arena width", pn.widgets.FloatInput)
+    arena_width.value = float(arena_width.value) + 0.003
+    controller.environment_save_name.value = "saved_env"
+
+    initial_payload = target.read_text(encoding="utf-8")
+    controller._on_save_environment_preset()
+
+    assert controller.environment_confirm_overwrite_btn.visible is True
+    assert controller.environment_cancel_overwrite_btn.visible is True
+    assert target.read_text(encoding="utf-8") == initial_payload
+
+    controller._on_cancel_overwrite_environment()
+    assert controller.environment_confirm_overwrite_btn.visible is False
+    assert target.read_text(encoding="utf-8") == initial_payload
+
+    controller._on_save_environment_preset()
+    controller._on_confirm_overwrite_environment()
+    assert target.read_text(encoding="utf-8") != initial_payload
 
 
 def test_single_experiment_env_params_uses_typed_widget_builder(
@@ -1396,8 +1563,12 @@ def test_single_experiment_env_params_uses_typed_widget_builder(
 
     assert captured["owner"] is controller._typed_experiment_for_env_params.env_params
     assert captured["wrap"] is False
-    controller.parameter_group.value = "env_params"
-    assert controller.parameters_editor.objects == [sentinel]
+    env_group_view = controller._get_parameter_group_view("env_params")
+    assert env_group_view is not None
+    if hasattr(env_group_view, "objects"):
+        assert sentinel in env_group_view.objects
+    else:
+        assert env_group_view is sentinel
 
 
 def test_single_experiment_sim_ops_uses_typed_widget_builder(
@@ -1425,8 +1596,7 @@ def test_single_experiment_sim_ops_uses_typed_widget_builder(
 
     assert captured["owner"] is controller._typed_experiment_for_sim_ops
     assert captured["wrap"] is False
-    controller.parameter_group.value = "sim_ops"
-    assert controller.parameters_editor.objects == [sentinel]
+    assert controller._get_parameter_group_view("sim_ops") is sentinel
 
 
 def test_single_experiment_collections_uses_typed_widget_builder(
@@ -1454,8 +1624,7 @@ def test_single_experiment_collections_uses_typed_widget_builder(
 
     assert captured["owner"] is controller._typed_experiment_for_collections
     assert captured["wrap"] is False
-    controller.parameter_group.value = "collections"
-    assert controller.parameters_editor.objects == [sentinel]
+    assert controller._get_parameter_group_view("collections") is sentinel
 
 
 def test_single_experiment_trials_uses_typed_widget_builder(
@@ -1483,8 +1652,7 @@ def test_single_experiment_trials_uses_typed_widget_builder(
 
     assert captured["owner"] is controller._typed_experiment_for_trials
     assert captured["wrap"] is False
-    controller.parameter_group.value = "trials"
-    assert controller.parameters_editor.objects == [sentinel]
+    assert controller._get_parameter_group_view("trials") is sentinel
 
 
 def test_single_experiment_enrichment_uses_typed_widget_builder(
@@ -1512,8 +1680,7 @@ def test_single_experiment_enrichment_uses_typed_widget_builder(
 
     assert captured["owner"] is controller._typed_experiment_for_enrichment.enrichment
     assert captured["wrap"] is False
-    controller.parameter_group.value = "enrichment"
-    assert controller.parameters_editor.objects == [sentinel]
+    assert controller._get_parameter_group_view("enrichment") is sentinel
 
 
 def test_single_experiment_larva_groups_uses_typed_widget_builder(
@@ -1543,8 +1710,7 @@ def test_single_experiment_larva_groups_uses_typed_widget_builder(
     assert captured["owner"] is controller._typed_experiment_for_larva_groups
     assert captured["parameter_name"] == "larva_groups"
     assert captured["wrap"] is True
-    assert controller.parameter_group.value == "larva_groups"
-    assert controller.parameters_editor.objects == [sentinel]
+    assert controller._get_parameter_group_view("larva_groups") is sentinel
 
 
 def test_single_experiment_mixed_flattened_and_typed_edits_survive_build_parameters(
@@ -2089,8 +2255,8 @@ def test_single_experiment_trials_edits_survive_group_switching(
     typed_trials_owner.trials["epochs"] = util.ItemList([reg.gen.Epoch().nestedConf])
     typed_trials_owner.trials["epochs"][0]["age_range"] = (1.0, 2.0)
 
-    controller.parameter_group.value = "env_params"
-    controller.parameter_group.value = "trials"
+    assert controller._get_parameter_group_view("env_params") is not None
+    assert controller._get_parameter_group_view("trials") is not None
 
     parameters = controller._build_parameters()
     assert tuple(parameters.trials.epochs[0].age_range) == pytest.approx((1.0, 2.0))
@@ -2285,8 +2451,8 @@ def test_single_experiment_optional_family_toggles_seed_disabled_controls(
     controller = _SingleExperimentController()
     controller.experiment.value = "dish"
     controller._on_experiment_change()
-    controller.parameter_group.value = "env_params"
-    env_view = controller.parameters_editor[0]
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
 
     typed_owner = controller._typed_experiment_for_env_params
     assert typed_owner is not None
@@ -2316,7 +2482,7 @@ def test_single_experiment_trials_group_uses_typed_owner_for_activation(
 
     assert "trials" not in controller._parameter_widgets
     assert not any(path.startswith("trials.") for path in controller._parameter_widgets)
-    assert controller.parameter_group.options["Trials"] == "trials"
+    assert "trials" in controller._parameter_groups
 
     typed_trials_owner = controller._typed_experiment_for_trials
     assert typed_trials_owner is not None
@@ -2337,8 +2503,8 @@ def test_single_experiment_source_unit_toggle_enables_nested_controls_near_sourc
     controller = _SingleExperimentController()
     controller.experiment.value = "dish"
     controller._on_experiment_change()
-    controller.parameter_group.value = "env_params"
-    env_view = controller.parameters_editor[0]
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
 
     add_source_unit = _find_widget(env_view, "Add source unit", pn.widgets.Button)
     source_unit_id = _find_widget(env_view, "New source unit ID", pn.widgets.TextInput)
@@ -2366,8 +2532,8 @@ def test_single_experiment_uses_color_and_nested_odorscape_widgets(
     controller = _SingleExperimentController()
     controller.experiment.value = "chemotaxis"
     controller._on_experiment_change()
-    controller.parameter_group.value = "env_params"
-    env_view = controller.parameters_editor[0]
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
 
     add_source_unit = _find_widget(env_view, "Add source unit", pn.widgets.Button)
     source_unit_id = _find_widget(env_view, "New source unit ID", pn.widgets.TextInput)
@@ -2398,8 +2564,8 @@ def test_single_experiment_sequence_widgets_use_semantic_component_labels(
     controller = _SingleExperimentController()
     controller.experiment.value = "dish"
     controller._on_experiment_change()
-    controller.parameter_group.value = "env_params"
-    env_view = controller.parameters_editor[0]
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
 
     width = _find_widget(env_view, "Arena width", pn.widgets.FloatInput)
     height = _find_widget(env_view, "Arena height", pn.widgets.FloatInput)
