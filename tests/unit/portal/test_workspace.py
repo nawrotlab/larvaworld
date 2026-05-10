@@ -50,6 +50,8 @@ def test_initialize_workspace_creates_expected_layout(tmp_path: Path) -> None:
     assert state.datasets_dir.is_dir()
     assert state.analysis_dir.is_dir()
     assert state.metadata_dir.is_dir()
+    assert state.experiments_dir.name == "simulations"
+    assert state.datasets_dir.name == "experiments"
     assert state.metadata_path.is_file()
 
     metadata = json.loads(state.metadata_path.read_text(encoding="utf-8"))

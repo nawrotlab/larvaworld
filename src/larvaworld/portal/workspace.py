@@ -14,8 +14,8 @@ WorkspaceKind = Literal[
 
 WORKSPACE_DIR_NAMES: dict[WorkspaceKind, str] = {
     "environments": "environments",
-    "experiments": "experiments",
-    "datasets": "datasets",
+    "experiments": "simulations",
+    "datasets": "experiments",
     "analysis": "analysis",
     "metadata": "metadata",
 }

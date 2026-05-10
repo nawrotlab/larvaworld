@@ -19,16 +19,21 @@ def _normalize_group_id(value: Any) -> str | None:
     return normalized or None
 
 
-def _path_parts_after_datasets(dataset_dir: Path) -> tuple[str, ...] | None:
+def _path_parts_after_workspace_experiments(
+    dataset_dir: Path,
+) -> tuple[str, ...] | None:
     parts = dataset_dir.resolve().parts
-    try:
-        datasets_idx = len(parts) - 1 - parts[::-1].index("datasets")
-    except ValueError:
-        logger.debug(
-            "Ignoring dataset directory outside a datasets root: %s", dataset_dir
-        )
-        return None
-    return parts[datasets_idx + 1 :]
+    for marker in ("experiments", "datasets"):
+        try:
+            marker_idx = len(parts) - 1 - parts[::-1].index(marker)
+            return parts[marker_idx + 1 :]
+        except ValueError:
+            continue
+    logger.debug(
+        "Ignoring dataset directory outside an experiments/datasets root: %s",
+        dataset_dir,
+    )
+    return None
 
 
 def _record_from_dataset_dir(dataset_dir: Path) -> WorkspaceDatasetRecord | None:
@@ -47,7 +52,7 @@ def _record_from_dataset_dir(dataset_dir: Path) -> WorkspaceDatasetRecord | None
         logger.debug("Ignoring dataset without data.h5: %s", dataset_dir)
         return None
 
-    relative_parts = _path_parts_after_datasets(dataset_dir)
+    relative_parts = _path_parts_after_workspace_experiments(dataset_dir)
     if relative_parts is None:
         return None
     if len(relative_parts) < 3 or relative_parts[0] != "imported":

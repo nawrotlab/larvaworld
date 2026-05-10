@@ -88,35 +88,86 @@ SINGLE_EXPERIMENT_RAW_CSS = """
   gap: 12px;
 }
 
-.lw-single-exp-display-legend {
-  width: 220px;
-  min-width: 220px;
-  border-radius: 10px;
-  border: 1px solid rgba(17, 17, 17, 0.1);
-  background: rgba(181,194,176,0.14);
-  padding: 12px 12px 10px 12px;
-  color: rgba(17, 17, 17, 0.82);
+.lw-single-exp-run-info-box {
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.55;
+  color: rgba(17, 17, 17, 0.82);
+  padding: 10px 12px;
+  background: rgba(181,194,176,0.14);
+  border-left: 3px solid #b5c2b0;
+  border-radius: 8px;
 }
 
-.lw-single-exp-display-legend h4 {
+.lw-inline-help-link .bk-btn {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #2f4858 !important;
+  font-size: 11px !important;
+  line-height: 1.3 !important;
+  padding: 0 !important;
+  min-height: 0 !important;
+  text-decoration: underline;
+}
+
+.lw-inline-help-link .bk-btn:hover,
+.lw-inline-help-link .bk-btn:focus {
+  color: #1f3542 !important;
+  text-decoration: underline;
+}
+
+.lw-single-exp-shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(15, 23, 42, 0.36);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.lw-single-exp-shortcuts-dialog {
+  width: min(560px, 95vw);
+  max-height: 85vh;
+  overflow: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(17, 17, 17, 0.14);
+  background: #fff;
+  color: rgba(17, 17, 17, 0.86);
+  padding: 12px 14px;
+}
+
+.lw-single-exp-shortcuts-note {
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0 0 8px 0;
+}
+
+.lw-single-exp-shortcuts-table-wrap {
+  border-radius: 8px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  background: rgba(181,194,176,0.14);
+  padding: 10px 10px 8px 10px;
+}
+
+.lw-single-exp-shortcuts-table-wrap h4 {
   margin: 0 0 8px 0;
   font-size: 13px;
   line-height: 1.2;
 }
 
-.lw-single-exp-display-legend table {
+.lw-single-exp-shortcuts-table-wrap table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.lw-single-exp-display-legend td {
+.lw-single-exp-shortcuts-table-wrap td {
   padding: 3px 0;
   vertical-align: top;
 }
 
-.lw-single-exp-display-legend kbd {
+.lw-single-exp-shortcuts-table-wrap kbd {
   display: inline-block;
   min-width: 28px;
   border-radius: 5px;
@@ -548,10 +599,10 @@ def _summary_label(text: str) -> str:
     return f'<div class="lw-single-exp-param-summary">{text}</div>'
 
 
-def _display_shortcuts_legend() -> pn.pane.HTML:
+def _display_shortcuts_content() -> pn.pane.HTML:
     return pn.pane.HTML(
         """
-        <div class="lw-single-exp-display-legend">
+        <div class="lw-single-exp-shortcuts-table-wrap">
           <h4>Run display shortcuts</h4>
           <table>
             <tr><td><kbd>Space</kbd></td><td>Pause / resume</td></tr>
@@ -580,7 +631,6 @@ def _display_shortcuts_legend() -> pn.pane.HTML:
 def _preview_canvas_row(canvas_view: pn.viewable.Viewable) -> pn.Row:
     return pn.Row(
         canvas_view,
-        _display_shortcuts_legend(),
         css_classes=["lw-single-exp-preview-canvas-row"],
         sizing_mode="stretch_width",
         margin=0,
@@ -1151,17 +1201,47 @@ class _SingleExperimentController:
             "border-left": "3px solid #b5c2b0",
             "border-radius": "8px",
         }
-        self.status = pn.pane.Markdown(
-            "",
-            styles={
-                "font-size": "12px",
-                "line-height": "1.55",
-                "color": "rgba(17, 17, 17, 0.82)",
-                "padding": "10px 12px",
-                "background": "rgba(181,194,176,0.14)",
-                "border-left": "3px solid #b5c2b0",
-                "border-radius": "8px",
-            },
+        self.status = pn.pane.Markdown("", margin=0)
+        self.display_shortcuts_link = pn.widgets.Button(
+            name="Display Shortcuts",
+            button_type="light",
+            css_classes=["lw-inline-help-link"],
+            margin=(4, 0, 0, 0),
+            width_policy="min",
+        )
+        self.display_shortcuts_close_btn = pn.widgets.Button(
+            name="Close",
+            button_type="default",
+            width=88,
+            margin=(8, 0, 0, 0),
+        )
+        self.display_shortcuts_dialog = pn.Column(
+            pn.Column(
+                pn.pane.Markdown(
+                    (
+                        "These shortcuts apply only to the live pygame display opened by "
+                        "Run experiment when Show display is enabled. "
+                        "They do not control the preview canvas."
+                    ),
+                    css_classes=["lw-single-exp-shortcuts-note"],
+                    margin=0,
+                ),
+                _display_shortcuts_content(),
+                self.display_shortcuts_close_btn,
+                css_classes=["lw-single-exp-shortcuts-dialog"],
+                sizing_mode="fixed",
+            ),
+            visible=False,
+            css_classes=["lw-single-exp-shortcuts-overlay"],
+            sizing_mode="stretch_width",
+            margin=0,
+        )
+        self.run_info = pn.Column(
+            self.status,
+            self.display_shortcuts_link,
+            css_classes=["lw-single-exp-run-info-box"],
+            sizing_mode="stretch_width",
+            margin=0,
         )
         self.preview = pn.Column(
             *self._initial_preview_content(),
@@ -1195,6 +1275,8 @@ class _SingleExperimentController:
         self.prepare_btn.on_click(self._on_prepare_preview)
         self.simulation_preview_btn.on_click(self._on_generate_simulation_preview)
         self.run_btn.on_click(self._on_run_experiment)
+        self.display_shortcuts_link.on_click(self._on_open_display_shortcuts)
+        self.display_shortcuts_close_btn.on_click(self._on_close_display_shortcuts)
 
         self._on_show_display_change()
         self._refresh_environment_options()
@@ -2285,8 +2367,8 @@ class _SingleExperimentController:
                         self.environment_select,
                         self.refresh_environments_btn,
                         self.environment_save_name,
+                        self.environment_save_btn,
                         pn.Row(
-                            self.environment_save_btn,
                             self.environment_confirm_overwrite_btn,
                             self.environment_cancel_overwrite_btn,
                             sizing_mode="stretch_width",
@@ -2588,6 +2670,10 @@ class _SingleExperimentController:
         self.simulation_preview_btn.disabled = disabled
         self.run_btn.disabled = disabled
         self.preview_frames_input.disabled = disabled
+        self.display_shortcuts_link.disabled = disabled
+        self.display_shortcuts_close_btn.disabled = disabled
+        if disabled:
+            self.display_shortcuts_dialog.visible = False
         self.display_every_n_steps.disabled = disabled or not bool(
             self.show_display.value
         )
@@ -2892,6 +2978,12 @@ class _SingleExperimentController:
             selected_env=selected_env,
         )
 
+    def _on_open_display_shortcuts(self, *_: object) -> None:
+        self.display_shortcuts_dialog.visible = True
+
+    def _on_close_display_shortcuts(self, *_: object) -> None:
+        self.display_shortcuts_dialog.visible = False
+
     def view(self) -> pn.viewable.Viewable:
         intro = pn.pane.Markdown(
             (
@@ -2926,7 +3018,7 @@ class _SingleExperimentController:
                 media_controls,
                 self.run_name,
                 self.execution_action_row,
-                self.status,
+                self.run_info,
                 sizing_mode="stretch_width",
                 margin=0,
             ),
@@ -2980,6 +3072,7 @@ class _SingleExperimentController:
         lower[0, 1:3] = experiment_parameters
         return pn.Column(
             intro,
+            self.display_shortcuts_dialog,
             content,
             lower,
             css_classes=["lw-single-exp-root"],

@@ -34,7 +34,7 @@ def _validate_proc_root(proc_root: Path, datasets_root: Path) -> Path:
         proc_root.relative_to(datasets_root)
     except ValueError as exc:
         raise RuntimeError(
-            "Import failed: workspace proc folder resolved outside the workspace datasets directory"
+            "Import failed: workspace proc folder resolved outside the workspace experiments directory"
         ) from exc
     return proc_root
 

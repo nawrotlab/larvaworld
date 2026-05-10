@@ -230,7 +230,8 @@ def test_single_experiment_configuration_preview_does_not_call_exp_run(
 
     assert captured["editable"] is False
     assert "state" in captured
-    assert controller.preview[0] is canvas_view
+    assert isinstance(controller.preview[0], pn.Row)
+    assert controller.preview[0][0] is canvas_view
     assert "No simulation has been run" in controller.status.object
 
 
@@ -278,7 +279,8 @@ def test_single_experiment_configuration_preview_uses_mapped_canvas_state(
     assert captured["env_params"] is not None
     assert captured["larva_groups"] is not None
     assert captured["show_group_shapes"] is False
-    assert controller.preview[0] is canvas_view
+    assert isinstance(controller.preview[0], pn.Row)
+    assert controller.preview[0][0] is canvas_view
 
 
 def test_single_experiment_prepare_preview_uses_resolved_parameters_boundary(
@@ -313,7 +315,8 @@ def test_single_experiment_prepare_preview_uses_resolved_parameters_boundary(
     )
 
     controller._on_prepare_preview()
-    assert isinstance(controller.preview[0], pn.pane.HTML)
+    assert isinstance(controller.preview[0], pn.Row)
+    assert isinstance(controller.preview[0][0], pn.pane.HTML)
 
 
 def test_single_experiment_configuration_preview_uses_environment_preset_override(
@@ -689,7 +692,7 @@ def test_single_experiment_run_experiment_writes_plan_and_reports_storage(
     controller.run_name.value = "dish_demo"
     controller._on_run_experiment()
 
-    run_dir = workspace_root / "experiments" / "dish_demo"
+    run_dir = workspace_root / "simulations" / "dish_demo"
     plan_path = run_dir / "resolved_experiment.json"
 
     assert simulated["store_data"] is True
@@ -770,7 +773,7 @@ def test_single_experiment_runtime_screen_kws_include_video_when_enabled(
     controller.show_display.value = True
     controller.display_every_n_steps.value = 4
 
-    kws = controller._runtime_screen_kws(workspace_root / "experiments" / "dish_demo")
+    kws = controller._runtime_screen_kws(workspace_root / "simulations" / "dish_demo")
 
     assert controller.video_fps.name == "Video speed-up"
     assert kws["save_video"] is True
@@ -779,7 +782,7 @@ def test_single_experiment_runtime_screen_kws_include_video_when_enabled(
     assert kws["fps"] == 3
     assert kws["show_display"] is True
     assert kws["display_every_n_steps"] == 4
-    assert kws["media_dir"] == str(workspace_root / "experiments" / "dish_demo")
+    assert kws["media_dir"] == str(workspace_root / "simulations" / "dish_demo")
 
 
 def test_single_experiment_show_display_uses_video_render_mode(tmp_path: Path) -> None:
@@ -791,7 +794,7 @@ def test_single_experiment_show_display_uses_video_render_mode(tmp_path: Path) -
     controller.show_display.value = True
     controller.display_every_n_steps.value = 3
 
-    kws = controller._runtime_screen_kws(workspace_root / "experiments" / "dish_demo")
+    kws = controller._runtime_screen_kws(workspace_root / "simulations" / "dish_demo")
 
     assert kws["show_display"] is True
     assert kws["vis_mode"] == "video"
@@ -887,7 +890,7 @@ def test_single_experiment_run_experiment_explicitly_closes_screen_manager(
     controller.run_name.value = "dish_demo"
     controller._execute_run_experiment(
         parameters=controller._build_parameters(),
-        run_dir=workspace_root / "experiments" / "dish_demo",
+        run_dir=workspace_root / "simulations" / "dish_demo",
         selected_env="template default",
     )
 
@@ -1223,6 +1226,41 @@ def test_single_experiment_action_rows_separate_preview_and_execution() -> None:
     assert controller.run_btn in controller.execution_action_row.objects
 
 
+def test_single_experiment_preview_canvas_row_excludes_display_shortcuts_legend() -> (
+    None
+):
+    controller = _SingleExperimentController()
+
+    assert isinstance(controller.preview[0], pn.Row)
+    assert len(controller.preview[0].objects) == 1
+    assert "Run display shortcuts" not in str(controller.preview[0])
+
+
+def test_single_experiment_run_info_contains_display_shortcuts_link() -> None:
+    controller = _SingleExperimentController()
+
+    assert controller.display_shortcuts_link in controller.run_info.objects
+    assert controller.display_shortcuts_link.name == "Display Shortcuts"
+    assert "lw-single-exp-run-info-box" in controller.run_info.css_classes
+
+
+def test_single_experiment_display_shortcuts_dialog_open_close_and_note() -> None:
+    controller = _SingleExperimentController()
+
+    assert controller.display_shortcuts_dialog.visible is False
+    controller._on_open_display_shortcuts()
+    assert controller.display_shortcuts_dialog.visible is True
+    dialog_text = str(controller.display_shortcuts_dialog[0][0].object)
+    assert "live pygame display opened by Run experiment" in dialog_text
+    assert "They do not control the preview canvas." in dialog_text
+    assert "Run display shortcuts" in str(
+        controller.display_shortcuts_dialog[0][1].object
+    )
+
+    controller._on_close_display_shortcuts()
+    assert controller.display_shortcuts_dialog.visible is False
+
+
 def test_generate_preview_uses_show_group_shapes_false(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1293,7 +1331,7 @@ def test_single_experiment_preview_launcher_falls_back_when_overlap_elimination_
     controller = _SingleExperimentController()
     parameters = controller._build_parameters()
     parameters["larva_collisions"] = False
-    run_dir = workspace_root / "experiments" / "preview_case"
+    run_dir = workspace_root / "simulations" / "preview_case"
 
     calls: list[bool] = []
 

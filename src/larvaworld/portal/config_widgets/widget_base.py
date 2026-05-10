@@ -376,6 +376,7 @@ def classattr_section(
     name: str,
     parameter: ClassAttr,
     title: str | None = None,
+    show_title: bool = True,
     build_editor: Callable[[param.Parameterized], object] | None = None,
     controls_layout: str = "row",
     box_css_classes: list[str] | None = None,
@@ -509,6 +510,13 @@ def classattr_section(
             )
     header_right = enabled if use_switch_header else None
     children.append(editor_host)
+    if not show_title:
+        return pn.Column(
+            *children,
+            css_classes=box_css_classes or [],
+            sizing_mode="stretch_width",
+            margin=0,
+        )
     return family_box(
         section_title,
         *children,

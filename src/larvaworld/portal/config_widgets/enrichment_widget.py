@@ -34,14 +34,22 @@ def build_enrichment_widget(
     wrap: bool = True,
 ) -> object:
     children = [
-        classattr_section(
-            enrichment_conf,
-            name="pre_kws",
-            parameter=enrichment_conf.param["pre_kws"],
-            title="Preprocessing",
-            build_editor=build_preprocess_conf_widget,
-            box_css_classes=["lw-import-datasets-config-subfamily"],
-            title_css_classes=["lw-import-datasets-config-subfamily-title"],
+        collapsible_family_box(
+            "Preprocessing",
+            classattr_section(
+                enrichment_conf,
+                name="pre_kws",
+                parameter=enrichment_conf.param["pre_kws"],
+                title="Preprocessing",
+                show_title=False,
+                build_editor=build_preprocess_conf_widget,
+                box_css_classes=["lw-import-datasets-config-subfamily"],
+                title_css_classes=["lw-import-datasets-config-subfamily-title"],
+            ),
+            css_classes=[
+                "lw-import-datasets-config-subfamily-card",
+                "lw-import-datasets-config-compact-card",
+            ],
         ),
         collapsible_family_box(
             "Processing",
@@ -54,12 +62,28 @@ def build_enrichment_widget(
                         "dsp_starts",
                         "dsp_stops",
                         "tor_durs",
+                    ],
+                ),
+                exclude={"pre_kws", "anot_keys", "recompute", "mode"},
+            ),
+            css_classes=[
+                "lw-import-datasets-config-subfamily-card",
+                "lw-import-datasets-config-compact-card",
+            ],
+        ),
+        collapsible_family_box(
+            "Annotations",
+            parameterized_editor(
+                enrichment_conf,
+                parameter_order=_ordered_names(
+                    enrichment_conf,
+                    [
                         "anot_keys",
                         "recompute",
                         "mode",
                     ],
                 ),
-                exclude={"pre_kws"},
+                exclude={"pre_kws", "proc_keys", "dsp_starts", "dsp_stops", "tor_durs"},
             ),
             css_classes=[
                 "lw-import-datasets-config-subfamily-card",
