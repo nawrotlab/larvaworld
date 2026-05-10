@@ -1576,6 +1576,411 @@ def test_single_experiment_environment_save_collision_requires_confirmation(
     assert target.read_text(encoding="utf-8") != initial_payload
 
 
+def test_single_experiment_template_save_box_in_configuration_and_disabled_initially(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    view = controller.view()
+    config_card = next(
+        card
+        for card in view.select(pn.Card)
+        if getattr(card, "title", "") == "Configuration"
+    )
+    config_column = config_card.objects[0]
+
+    assert controller.experiment_template_save_box in config_column.objects
+    assert (
+        config_column.objects.index(controller.experiment_template_save_box)
+        == config_column.objects.index(controller.experiment) + 1
+    )
+    assert controller.experiment_template_save_name.disabled is True
+    assert controller.experiment_template_save_btn.disabled is True
+
+
+def test_single_experiment_template_save_dirty_state_from_env_and_experiment_edits(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    assert controller.experiment_template_save_name.disabled is True
+    assert controller.experiment_template_save_btn.disabled is True
+
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
+    arena_width = _find_widget(env_view, "Arena width", pn.widgets.FloatInput)
+    arena_width.value = float(arena_width.value) + 0.001
+    controller.experiment_template_save_name.value = "env_dirty_template"
+    assert controller.experiment_template_save_name.disabled is False
+    assert controller.experiment_template_save_btn.disabled is False
+
+    controller._refresh_parameter_editor()
+    assert controller.experiment_template_save_name.disabled is True
+    assert controller.experiment_template_save_btn.disabled is True
+    experiment_view = controller._get_parameter_group_view("sim_ops")
+    assert experiment_view is not None
+    larva_collisions = _find_widget(
+        experiment_view, "Larva collisions", pn.widgets.Checkbox
+    )
+    larva_collisions.value = not bool(larva_collisions.value)
+    controller.experiment_template_save_name.value = "exp_dirty_template"
+    assert controller.experiment_template_save_name.disabled is False
+    assert controller.experiment_template_save_btn.disabled is False
+
+
+def test_single_experiment_template_save_writes_whitelisted_payload(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
+    arena_width = _find_widget(env_view, "Arena width", pn.widgets.FloatInput)
+    arena_width.value = float(arena_width.value) + 0.004
+    controller.experiment_template_save_name.value = "saved_template"
+    controller._on_save_experiment_template()
+
+    target = (
+        workspace_root / "metadata" / "experiment_templates" / "saved_template.json"
+    )
+    assert target.exists()
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    assert payload["experiment"] == "dish"
+    for key in (
+        "env_params",
+        "larva_groups",
+        "trials",
+        "enrichment",
+        "collections",
+        "duration",
+        "Nsteps",
+        "fr",
+        "dt",
+        "constant_framerate",
+        "Box2D",
+        "larva_collisions",
+    ):
+        assert key in payload
+    for key in (
+        "__workspace__",
+        "run_name",
+        "save_video",
+        "video_filename",
+        "video_fps",
+        "show_display",
+        "display_every_n_steps",
+        "preview_frames",
+        "status",
+        "dir",
+        "screen_kws",
+    ):
+        assert key not in payload
+
+
+def test_single_experiment_selector_lists_registry_and_workspace_templates(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    templates_dir = workspace_root / "metadata" / "experiment_templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    (templates_dir / "my_template.json").write_text(
+        json.dumps({"experiment": "dish"}) + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    controller._refresh_experiment_template_options()
+
+    assert "Registry / dish" in controller.experiment.options
+    assert controller.experiment.options["Registry / dish"] == "__registry__:dish"
+    assert "Workspace / my_template" in controller.experiment.options
+    assert (
+        controller.experiment.options["Workspace / my_template"]
+        == "__workspace__:my_template.json"
+    )
+
+
+def test_single_experiment_workspace_template_load_uses_payload_experiment_id(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    templates_dir = workspace_root / "metadata" / "experiment_templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    (templates_dir / "my_template.json").write_text(
+        json.dumps(
+            {
+                "experiment": "dish",
+                "env_params": {"arena": {"geometry": "circular", "dims": [0.2, 0.2]}},
+                "larva_collisions": False,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = controller.experiment.options[
+        "Workspace / my_template"
+    ]
+    parameters = controller._build_parameters()
+
+    assert controller._selected_experiment() == "dish"
+    assert parameters.env_params.arena.dims == (0.2, 0.2)
+    assert bool(parameters.larva_collisions) is False
+    assert controller.experiment_template_save_name.value == "my_template"
+    assert controller.experiment_template_save_btn.disabled is True
+
+
+def test_single_experiment_workspace_template_load_refreshes_typed_ui_sections(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    templates_dir = workspace_root / "metadata" / "experiment_templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    (templates_dir / "dish_1.json").write_text(
+        json.dumps(
+            {
+                "experiment": "dish",
+                "env_params": {
+                    "arena": {"geometry": "rectangular", "dims": [0.21, 0.11]}
+                },
+                "larva_groups": {
+                    "explorer": {
+                        "distribution": {"N": 13, "mode": "uniform", "shape": "rect"}
+                    }
+                },
+                "enrichment": {"mode": "full"},
+                "duration": 4.0,
+                "larva_collisions": False,
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = controller.experiment.options["Workspace / dish_1"]
+
+    env_owner = controller._typed_experiment_for_env_params
+    larva_owner = controller._typed_experiment_for_larva_groups
+    enrich_owner = controller._typed_experiment_for_enrichment
+    sim_owner = controller._typed_experiment_for_sim_ops
+    assert env_owner is not None
+    assert larva_owner is not None
+    assert enrich_owner is not None
+    assert sim_owner is not None
+
+    assert env_owner.env_params.arena.geometry == "rectangular"
+    assert tuple(env_owner.env_params.arena.dims) == pytest.approx((0.21, 0.11))
+    assert larva_owner.larva_groups["explorer"].distribution.N == 13
+    assert larva_owner.larva_groups["explorer"].distribution.mode == "uniform"
+    assert larva_owner.larva_groups["explorer"].distribution.shape == "rect"
+    assert enrich_owner.enrichment.mode == "full"
+    assert sim_owner.duration == pytest.approx(4.0)
+
+
+def test_single_experiment_workspace_template_missing_experiment_is_rejected(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    templates_dir = workspace_root / "metadata" / "experiment_templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    (templates_dir / "bad_template.json").write_text(
+        json.dumps({"env_params": {"arena": {"dims": [0.3, 0.3]}}}) + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    previous = controller.experiment.value
+    controller.experiment.value = controller.experiment.options[
+        "Workspace / bad_template"
+    ]
+
+    assert controller.experiment.value == "__workspace__:bad_template.json"
+    assert controller._selected_experiment() == "dish"
+    assert previous == "__registry__:dish"
+    assert "missing required field: experiment" in str(controller.status.object)
+
+
+def test_single_experiment_template_save_refreshes_selector_options(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
+    arena_width = _find_widget(env_view, "Arena width", pn.widgets.FloatInput)
+    arena_width.value = float(arena_width.value) + 0.01
+    controller.experiment_template_save_name.value = "new_selector_template"
+    controller._on_save_experiment_template()
+
+    assert "Workspace / new_selector_template" in controller.experiment.options
+    assert (
+        controller.experiment.options["Workspace / new_selector_template"]
+        == "__workspace__:new_selector_template.json"
+    )
+
+
+def test_single_experiment_template_save_collision_requires_confirmation(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    target = (
+        workspace_root / "metadata" / "experiment_templates" / "saved_template.json"
+    )
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        json.dumps({"env_params": {"arena": {"dims": [0.1, 0.1]}}}) + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
+    arena_width = _find_widget(env_view, "Arena width", pn.widgets.FloatInput)
+    arena_width.value = float(arena_width.value) + 0.005
+    controller.experiment_template_save_name.value = "saved_template"
+    initial_payload = target.read_text(encoding="utf-8")
+    controller._on_save_experiment_template()
+
+    assert controller.experiment_template_confirm_overwrite_btn.visible is True
+    assert controller.experiment_template_cancel_overwrite_btn.visible is True
+    assert target.read_text(encoding="utf-8") == initial_payload
+
+
+def test_single_experiment_template_save_cancel_and_confirm_overwrite(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    target = (
+        workspace_root / "metadata" / "experiment_templates" / "saved_template.json"
+    )
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        json.dumps({"env_params": {"arena": {"dims": [0.1, 0.1]}}}) + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
+    arena_width = _find_widget(env_view, "Arena width", pn.widgets.FloatInput)
+    arena_width.value = float(arena_width.value) + 0.006
+    controller.experiment_template_save_name.value = "saved_template"
+    initial_payload = target.read_text(encoding="utf-8")
+
+    controller._on_save_experiment_template()
+    controller._on_cancel_overwrite_experiment_template()
+    assert target.read_text(encoding="utf-8") == initial_payload
+    assert controller.experiment_template_confirm_overwrite_btn.visible is False
+
+    controller._on_save_experiment_template()
+    controller._on_confirm_overwrite_experiment_template()
+    assert target.read_text(encoding="utf-8") != initial_payload
+    assert controller.experiment_template_save_name.disabled is True
+    assert controller.experiment_template_save_btn.disabled is True
+
+
+def test_single_experiment_workspace_load_edit_save_requires_overwrite_confirmation(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    templates_dir = workspace_root / "metadata" / "experiment_templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    target = templates_dir / "my_template.json"
+    target.write_text(
+        json.dumps({"experiment": "dish", "larva_collisions": True}) + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = controller.experiment.options[
+        "Workspace / my_template"
+    ]
+    sim_ops_view = controller._get_parameter_group_view("sim_ops")
+    assert sim_ops_view is not None
+    larva_collisions = _find_widget(
+        sim_ops_view, "Larva collisions", pn.widgets.Checkbox
+    )
+    larva_collisions.value = not bool(larva_collisions.value)
+
+    assert controller.experiment_template_save_name.disabled is False
+    assert controller.experiment_template_save_btn.disabled is False
+    controller._on_save_experiment_template()
+
+    assert controller.experiment_template_confirm_overwrite_btn.visible is True
+    assert controller.experiment_template_cancel_overwrite_btn.visible is True
+
+
+def test_single_experiment_workspace_load_larva_edit_enables_template_save(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    templates_dir = workspace_root / "metadata" / "experiment_templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    target = templates_dir / "dish_1.json"
+    target.write_text(
+        json.dumps(
+            {
+                "experiment": "dish",
+                "larva_groups": {
+                    "explorer": {
+                        "distribution": {
+                            "N": 35,
+                            "mode": "grid",
+                            "shape": "rect",
+                        }
+                    }
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    controller.experiment.value = controller.experiment.options["Workspace / dish_1"]
+    assert controller.experiment_template_save_name.disabled is True
+    assert controller.experiment_template_save_btn.disabled is True
+
+    larva_owner = controller._typed_experiment_for_larva_groups
+    assert larva_owner is not None
+    larva_owner.larva_groups["explorer"].distribution.N = 36
+    controller._refresh_experiment_template_save_state(reset_baseline=False)
+
+    assert controller.experiment_template_save_name.value == "dish_1"
+    assert controller.experiment_template_save_name.disabled is False
+    assert controller.experiment_template_save_btn.disabled is False
+
+
 def test_single_experiment_env_params_uses_typed_widget_builder(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

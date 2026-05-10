@@ -3,6 +3,7 @@ from __future__ import annotations
 import html
 import json
 import re
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -286,6 +287,14 @@ SINGLE_EXPERIMENT_RAW_CSS = """
   line-height: 1.4;
   margin-top: 6px;
 }
+
+.lw-single-exp-template-save-box {
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 0 0 8px 0;
+}
 """.strip()
 
 _EDITOR_EXCLUDED_PATHS = {"experiment", "parameter_dict"}
@@ -307,6 +316,8 @@ _PREVIEW_CANVAS_WIDTH = 920
 _PREVIEW_CANVAS_HEIGHT = 760
 _REGISTRY_ENV_PRESET_PREFIX = "__registry__:"
 _WORKSPACE_ENV_PRESET_PREFIX = "__workspace__:"
+_REGISTRY_EXPERIMENT_PREFIX = "__registry__:"
+_WORKSPACE_EXPERIMENT_PREFIX = "__workspace__:"
 _NONE_OPTION_LABEL = "None"
 _SIM_OPS_FIELDS = (
     "duration",
@@ -316,6 +327,13 @@ _SIM_OPS_FIELDS = (
     "constant_framerate",
     "Box2D",
     "larva_collisions",
+)
+_EXPERIMENT_TEMPLATE_SAVE_KEYS = (
+    "env_params",
+    "larva_groups",
+    "trials",
+    "enrichment",
+    "collections",
 )
 
 
@@ -341,9 +359,22 @@ def _default_experiment_template() -> str | None:
     return "dish" if "dish" in experiment_ids else experiment_ids[0]
 
 
+@dataclass(frozen=True)
+class WorkspaceExperimentTemplateRecord:
+    name: str
+    filename: str
+    path: Path
+
+
 class _SingleExperimentSelection(param.Parameterized):
-    experiment_template = reg.conf.Exp.confID_selector(
-        default=_default_experiment_template()
+    experiment_template = param.Selector(
+        default=(
+            f"{_REGISTRY_EXPERIMENT_PREFIX}{_default_experiment_template()}"
+            if _default_experiment_template() is not None
+            else None
+        ),
+        objects={},
+        doc="Selected experiment template value.",
     )
     environment_preset = param.Selector(
         default="__template__",
@@ -357,12 +388,14 @@ class _SingleExperimentSelection(param.Parameterized):
     def __init__(
         self,
         *,
-        experiment_ids: list[str],
+        experiment_options: dict[str, str],
         default_experiment: str,
         environment_options: dict[str, str] | None = None,
     ) -> None:
-        super().__init__(experiment_template=default_experiment)
-        self.param["experiment_template"].objects = experiment_ids
+        super().__init__(
+            experiment_template=f"{_REGISTRY_EXPERIMENT_PREFIX}{default_experiment}"
+        )
+        self.param["experiment_template"].objects = experiment_options
         self.param["experiment_template"].label = "Experiment template"
         self.param["environment_preset"].label = "Environment preset"
         if environment_options is not None:
@@ -372,6 +405,18 @@ class _SingleExperimentSelection(param.Parameterized):
         self.param["environment_preset"].objects = options
         if self.environment_preset not in options.values():
             self.environment_preset = "__template__"
+
+    def set_experiment_options(self, options: dict[str, str]) -> None:
+        self.param["experiment_template"].objects = options
+        if self.experiment_template not in options.values():
+            registry_values = [
+                value
+                for value in options.values()
+                if str(value).startswith(_REGISTRY_EXPERIMENT_PREFIX)
+            ]
+            self.experiment_template = (
+                registry_values[0] if registry_values else next(iter(options.values()))
+            )
 
 
 def _editor_group_title(key: str) -> str:
@@ -703,6 +748,18 @@ def _json_ready(value: Any) -> Any:
     return value
 
 
+def _deep_merge_attrdict(base: Any, override: Any) -> Any:
+    if isinstance(base, dict) and isinstance(override, dict):
+        merged = util.AttrDict(base).get_copy()
+        for key, value in override.items():
+            if key in merged:
+                merged[key] = _deep_merge_attrdict(merged[key], value)
+            else:
+                merged[key] = util.AttrDict(value) if isinstance(value, dict) else value
+        return util.AttrDict(merged)
+    return util.AttrDict(override) if isinstance(override, dict) else override
+
+
 def _join_help_parts(*parts: str | None) -> str | None:
     cleaned = []
     seen = set()
@@ -1031,8 +1088,12 @@ class _SingleExperimentController:
     def __init__(self) -> None:
         experiment_ids = list(reg.conf.Exp.confIDs)
         default_experiment = "dish" if "dish" in experiment_ids else experiment_ids[0]
+        experiment_options = {
+            f"Registry / {name}": f"{_REGISTRY_EXPERIMENT_PREFIX}{name}"
+            for name in experiment_ids
+        }
         self.selection = _SingleExperimentSelection(
-            experiment_ids=experiment_ids,
+            experiment_options=experiment_options,
             default_experiment=default_experiment,
         )
         self.experiment = pn.widgets.Select.from_param(
@@ -1076,6 +1137,50 @@ class _SingleExperimentController:
         )
         self.environment_save_inline = pn.pane.HTML(
             "", css_classes=["lw-single-exp-env-save-inline"], margin=0
+        )
+        self.experiment_template_save_name = pn.widgets.TextInput(
+            name="Template name",
+            placeholder="my_template",
+            disabled=True,
+        )
+        self.experiment_template_save_btn = pn.widgets.Button(
+            name="Save experiment template",
+            button_type="primary",
+            disabled=True,
+        )
+        self.experiment_template_confirm_overwrite_btn = pn.widgets.Button(
+            name="Confirm overwrite",
+            button_type="warning",
+            disabled=True,
+            visible=False,
+        )
+        self.experiment_template_cancel_overwrite_btn = pn.widgets.Button(
+            name="Cancel",
+            button_type="default",
+            disabled=True,
+            visible=False,
+        )
+        self.experiment_template_save_hint = pn.pane.HTML(
+            "", css_classes=["lw-single-exp-env-save-hint"], margin=0
+        )
+        self.experiment_template_save_inline = pn.pane.HTML(
+            "", css_classes=["lw-single-exp-env-save-inline"], margin=0
+        )
+        self.experiment_template_save_box = pn.Column(
+            pn.pane.Markdown("#### Save Experiment Template", margin=(0, 0, 6, 0)),
+            self.experiment_template_save_name,
+            self.experiment_template_save_btn,
+            pn.Row(
+                self.experiment_template_confirm_overwrite_btn,
+                self.experiment_template_cancel_overwrite_btn,
+                sizing_mode="stretch_width",
+                margin=(6, 0, 0, 0),
+            ),
+            self.experiment_template_save_hint,
+            self.experiment_template_save_inline,
+            css_classes=["lw-single-exp-template-save-box"],
+            sizing_mode="stretch_width",
+            margin=(6, 0, 4, 0),
         )
         self.prepare_btn = pn.widgets.Button(
             name="Arena Preview",
@@ -1252,6 +1357,15 @@ class _SingleExperimentController:
         self._environment_baseline_signature: str | None = None
         self._pending_environment_overwrite_name: str | None = None
         self._environment_watcher_handles: list[Any] = []
+        self._experiment_template_baseline_signature: str | None = None
+        self._pending_experiment_template_overwrite_name: str | None = None
+        self._experiment_template_watcher_handles: list[Any] = []
+        self._active_workspace_template_payload: util.AttrDict | None = None
+        self._active_workspace_template_filename: str | None = None
+        self._last_valid_experiment_template: str | None = str(
+            self.selection.experiment_template
+        )
+        self._suspend_experiment_change = False
         self._run_controls_locked = False
 
         self.selection.param.watch(self._on_experiment_change, "experiment_template")
@@ -1264,6 +1378,9 @@ class _SingleExperimentController:
         self.environment_save_name.param.watch(
             self._on_environment_save_name_change, "value"
         )
+        self.experiment_template_save_name.param.watch(
+            self._on_experiment_template_save_name_change, "value"
+        )
         self.refresh_environments_btn.on_click(self._on_refresh_environments)
         self.environment_save_btn.on_click(self._on_save_environment_preset)
         self.environment_confirm_overwrite_btn.on_click(
@@ -1271,6 +1388,13 @@ class _SingleExperimentController:
         )
         self.environment_cancel_overwrite_btn.on_click(
             self._on_cancel_overwrite_environment
+        )
+        self.experiment_template_save_btn.on_click(self._on_save_experiment_template)
+        self.experiment_template_confirm_overwrite_btn.on_click(
+            self._on_confirm_overwrite_experiment_template
+        )
+        self.experiment_template_cancel_overwrite_btn.on_click(
+            self._on_cancel_overwrite_experiment_template
         )
         self.prepare_btn.on_click(self._on_prepare_preview)
         self.simulation_preview_btn.on_click(self._on_generate_simulation_preview)
@@ -1280,6 +1404,7 @@ class _SingleExperimentController:
 
         self._on_show_display_change()
         self._refresh_environment_options()
+        self._refresh_experiment_template_options()
         self._refresh_summary()
         self._refresh_parameter_editor()
         self.status.object = "Select a template and prepare a single-run preview."
@@ -1290,8 +1415,82 @@ class _SingleExperimentController:
     def _experiment_dir(self) -> Path:
         return get_workspace_dir("experiments")
 
+    @staticmethod
+    def _registry_experiment_from_token(selected: str) -> str | None:
+        if selected.startswith(_REGISTRY_EXPERIMENT_PREFIX):
+            return selected[len(_REGISTRY_EXPERIMENT_PREFIX) :]
+        return None
+
+    @staticmethod
+    def _workspace_experiment_filename_from_token(selected: str) -> str | None:
+        if selected.startswith(_WORKSPACE_EXPERIMENT_PREFIX):
+            return selected[len(_WORKSPACE_EXPERIMENT_PREFIX) :]
+        return None
+
+    def _list_workspace_experiment_templates(
+        self,
+    ) -> list[WorkspaceExperimentTemplateRecord]:
+        templates_dir = self._workspace_experiment_templates_dir()
+        if not templates_dir.is_dir():
+            return []
+        records: list[WorkspaceExperimentTemplateRecord] = []
+        for path in sorted(templates_dir.glob("*.json"), key=lambda p: p.stem.lower()):
+            records.append(
+                WorkspaceExperimentTemplateRecord(
+                    name=path.stem,
+                    filename=path.name,
+                    path=path,
+                )
+            )
+        return records
+
+    def _experiment_template_options(self) -> dict[str, str]:
+        options: dict[str, str] = {
+            f"Registry / {name}": f"{_REGISTRY_EXPERIMENT_PREFIX}{name}"
+            for name in sorted(str(exp_id) for exp_id in reg.conf.Exp.confIDs)
+        }
+        for record in self._list_workspace_experiment_templates():
+            options[f"Workspace / {record.name}"] = (
+                f"{_WORKSPACE_EXPERIMENT_PREFIX}{record.filename}"
+            )
+        return options
+
+    def _refresh_experiment_template_options(self) -> None:
+        selected = str(self.selection.experiment_template)
+        options = self._experiment_template_options()
+        self.selection.set_experiment_options(options)
+        if selected in options.values():
+            self.selection.experiment_template = selected
+
     def _selected_experiment(self) -> str:
-        return str(self.selection.experiment_template)
+        selected = str(self.selection.experiment_template)
+        registry_experiment = self._registry_experiment_from_token(selected)
+        if registry_experiment is not None:
+            return registry_experiment
+        workspace_filename = self._workspace_experiment_filename_from_token(selected)
+        if workspace_filename is not None:
+            if self._active_workspace_template_payload:
+                experiment = self._active_workspace_template_payload.get("experiment")
+                if isinstance(experiment, str) and experiment.strip():
+                    return experiment.strip()
+            if self._last_valid_experiment_template is not None:
+                registry_experiment = self._registry_experiment_from_token(
+                    self._last_valid_experiment_template
+                )
+                if registry_experiment is not None:
+                    return registry_experiment
+            default_experiment = _default_experiment_template()
+            if default_experiment is not None:
+                return default_experiment
+        # Backward-compatible fallback for legacy unprefixed values.
+        return selected
+
+    def _parameters_from_selected_template(self) -> util.AttrDict:
+        base_parameters = resolve_base_experiment_parameters(
+            self._selected_experiment(),
+            self._load_selected_environment(),
+        )
+        return util.AttrDict(base_parameters.get_copy())
 
     def _environment_options(self) -> dict[str, str]:
         options = {"Template default environment": "__template__"}
@@ -1352,10 +1551,7 @@ class _SingleExperimentController:
             env_payload = nested.get("env_params")
             if env_payload is not None:
                 return util.AttrDict(_coerce_xy_sequences(util.AttrDict(env_payload)))
-        parameters = resolve_base_experiment_parameters(
-            self._selected_experiment(),
-            self._load_selected_environment(),
-        )
+        parameters = self._parameters_from_selected_template()
         return util.AttrDict(_coerce_xy_sequences(util.AttrDict(parameters.env_params)))
 
     @staticmethod
@@ -1491,6 +1687,319 @@ class _SingleExperimentController:
         self._refresh_environment_save_state(reset_baseline=False)
         self.status.object = "Environment preset overwrite cancelled."
 
+    def _workspace_experiment_templates_dir(self) -> Path:
+        metadata_dir = get_workspace_dir("metadata")
+        return metadata_dir / "experiment_templates"
+
+    def _load_workspace_experiment_template_payload(
+        self, filename: str
+    ) -> util.AttrDict:
+        path = self._workspace_experiment_templates_dir() / filename
+        if not path.is_file():
+            raise ValueError("Workspace template file not found.")
+        try:
+            raw_payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError("Workspace template is not valid JSON.") from exc
+        payload = util.AttrDict(raw_payload)
+        experiment = payload.get("experiment")
+        if not isinstance(experiment, str) or not experiment.strip():
+            raise ValueError(
+                "Workspace experiment template is missing required field: experiment."
+            )
+        experiment = experiment.strip()
+        if experiment not in [str(exp_id) for exp_id in reg.conf.Exp.confIDs]:
+            raise ValueError(
+                f"Workspace experiment template refers to unknown registry experiment: {experiment}."
+            )
+        payload["experiment"] = experiment
+        return payload
+
+    @staticmethod
+    def _apply_workspace_template_overrides(
+        base_parameters: util.AttrDict, payload: util.AttrDict
+    ) -> util.AttrDict:
+        merged = util.AttrDict(base_parameters.get_copy())
+        for key in _EXPERIMENT_TEMPLATE_SAVE_KEYS:
+            if key in payload:
+                value = payload[key]
+                if key == "collections" and isinstance(value, list):
+                    merged[key] = list(value)
+                else:
+                    merged[key] = _deep_merge_attrdict(merged.get(key), value)
+        for key in _SIM_OPS_FIELDS:
+            if key in payload:
+                merged[key] = _normalize_scalar(payload[key])
+        return util.AttrDict(merged)
+
+    @staticmethod
+    def _workspace_template_seed_overrides(payload: util.AttrDict) -> util.AttrDict:
+        flat = util.AttrDict()
+        for key in _EXPERIMENT_TEMPLATE_SAVE_KEYS:
+            if key not in payload:
+                continue
+            if key == "collections":
+                flat[key] = (
+                    list(payload[key])
+                    if isinstance(payload[key], list)
+                    else payload[key]
+                )
+                continue
+            value = payload[key]
+            if isinstance(value, dict):
+                nested = util.AttrDict(value).flatten()
+                for nested_key, nested_value in nested.items():
+                    flat[f"{key}.{nested_key}"] = _normalize_scalar(nested_value)
+            else:
+                flat[key] = _normalize_scalar(value)
+        for key in _SIM_OPS_FIELDS:
+            if key in payload:
+                flat[key] = _normalize_scalar(payload[key])
+        return flat
+
+    @staticmethod
+    def _workspace_override_value(existing: Any, value: Any) -> Any:
+        normalized = _normalize_scalar(value)
+        if normalized == "empty_dict":
+            if isinstance(existing, dict):
+                return {}
+            if existing is None:
+                return None
+        if isinstance(existing, tuple) and isinstance(normalized, (list, tuple)):
+            return tuple(normalized)
+        return normalized
+
+    @staticmethod
+    def _set_nested_value(target: Any, path: list[str], value: Any) -> None:
+        current = target
+        for part in path[:-1]:
+            if isinstance(current, dict):
+                if part not in current:
+                    return
+                current = current[part]
+                continue
+            if not hasattr(current, part):
+                return
+            current = getattr(current, part)
+        leaf = path[-1]
+        if isinstance(current, dict):
+            existing = current.get(leaf)
+            current[leaf] = _SingleExperimentController._workspace_override_value(
+                existing, value
+            )
+            return
+        if hasattr(current, leaf):
+            existing = getattr(current, leaf)
+            setattr(
+                current,
+                leaf,
+                _SingleExperimentController._workspace_override_value(existing, value),
+            )
+
+    def _apply_workspace_overrides_to_typed_owner(
+        self,
+        *,
+        exp_owner: Any,
+        section: str,
+    ) -> None:
+        payload = self._active_workspace_template_payload
+        if payload is None or section not in payload:
+            return
+        section_payload = payload.get(section)
+        if section == "collections":
+            if isinstance(section_payload, list) and hasattr(exp_owner, "collections"):
+                exp_owner.collections = list(section_payload)
+            return
+        if not isinstance(section_payload, dict):
+            return
+        section_target = getattr(exp_owner, section, None)
+        if section_target is None:
+            return
+        flat = util.AttrDict(section_payload).flatten()
+        for path, value in flat.items():
+            self._set_nested_value(
+                section_target,
+                path.split("."),
+                _normalize_scalar(value),
+            )
+
+    def _apply_workspace_sim_settings_to_typed_owner(self, exp_owner: Any) -> None:
+        payload = self._active_workspace_template_payload
+        if payload is None:
+            return
+        for key in _SIM_OPS_FIELDS:
+            if key in payload and hasattr(exp_owner, key):
+                setattr(exp_owner, key, _normalize_scalar(payload[key]))
+
+    def _experiment_template_payload(self) -> dict[str, Any]:
+        parameters = self._resolve_experiment_parameters()
+        payload: dict[str, Any] = {"experiment": self._selected_experiment()}
+        for key in _EXPERIMENT_TEMPLATE_SAVE_KEYS:
+            if key in parameters:
+                payload[key] = _json_ready(_normalize_scalar(parameters[key]))
+        for key in _SIM_OPS_FIELDS:
+            if key in parameters:
+                payload[key] = _json_ready(_normalize_scalar(parameters[key]))
+        return payload
+
+    @staticmethod
+    def _canonical_experiment_template_signature(payload: dict[str, Any]) -> str:
+        return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+    @staticmethod
+    def _experiment_template_relative_path(filename: str) -> str:
+        return f"metadata/experiment_templates/{filename}"
+
+    def _clear_pending_experiment_template_overwrite(self) -> None:
+        self._pending_experiment_template_overwrite_name = None
+        self.experiment_template_confirm_overwrite_btn.visible = False
+        self.experiment_template_cancel_overwrite_btn.visible = False
+        self.experiment_template_confirm_overwrite_btn.disabled = True
+        self.experiment_template_cancel_overwrite_btn.disabled = True
+        self.experiment_template_save_inline.object = ""
+
+    def _refresh_experiment_template_save_state(
+        self, *, reset_baseline: bool = False
+    ) -> None:
+        try:
+            current_payload = self._experiment_template_payload()
+        except (WorkspaceError, OSError, json.JSONDecodeError) as exc:
+            self.experiment_template_save_name.disabled = True
+            self.experiment_template_save_btn.disabled = True
+            self.experiment_template_save_hint.object = (
+                f"Cannot prepare template payload: {exc}"
+            )
+            self._clear_pending_experiment_template_overwrite()
+            return
+
+        current_signature = self._canonical_experiment_template_signature(
+            current_payload
+        )
+        if reset_baseline or self._experiment_template_baseline_signature is None:
+            self._experiment_template_baseline_signature = current_signature
+            self.experiment_template_save_name.disabled = True
+            self.experiment_template_save_btn.disabled = True
+            self.experiment_template_save_hint.object = ""
+            self._clear_pending_experiment_template_overwrite()
+            return
+
+        dirty = current_signature != self._experiment_template_baseline_signature
+        safe_name = _safe_preset_slug(
+            (self.experiment_template_save_name.value or "").strip()
+        )
+        filename = f"{safe_name}.json" if safe_name else ""
+        self.experiment_template_save_name.disabled = (
+            not dirty or self._run_controls_locked
+        )
+        if dirty:
+            if filename:
+                self.experiment_template_save_hint.object = (
+                    "Will save as: "
+                    f"<code>{self._experiment_template_relative_path(filename)}</code>"
+                )
+            else:
+                self.experiment_template_save_hint.object = (
+                    "Enter a template name to save this experiment template."
+                )
+        else:
+            self.experiment_template_save_hint.object = ""
+            self._clear_pending_experiment_template_overwrite()
+        self.experiment_template_save_btn.disabled = (
+            (not dirty)
+            or (not safe_name)
+            or self._run_controls_locked
+            or (self._pending_experiment_template_overwrite_name is not None)
+        )
+
+    def _clear_experiment_template_watchers(self) -> None:
+        while self._experiment_template_watcher_handles:
+            watcher = self._experiment_template_watcher_handles.pop()
+            owner = getattr(watcher, "inst", None)
+            if owner is None:
+                continue
+            try:
+                owner.param.unwatch(watcher)
+            except Exception:
+                continue
+
+    def _bind_experiment_template_watchers(self) -> None:
+        self._clear_experiment_template_watchers()
+        for root in (self.environment_parameters_editor, self.parameters_editor):
+            widgets = root.select(pn.widgets.Widget)
+            for widget in widgets:
+                if not hasattr(widget, "param") or "value" not in widget.param:
+                    continue
+                try:
+                    watcher = widget.param.watch(
+                        self._on_experiment_template_parameter_widget_change, "value"
+                    )
+                except Exception:
+                    continue
+                self._experiment_template_watcher_handles.append(watcher)
+
+    def _save_experiment_template_payload_to_workspace(self, safe_name: str) -> Path:
+        payload = self._experiment_template_payload()
+        templates_dir = self._workspace_experiment_templates_dir()
+        templates_dir.mkdir(parents=True, exist_ok=True)
+        target = templates_dir / f"{safe_name}.json"
+        target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        return target
+
+    def _on_experiment_template_parameter_widget_change(self, *_: object) -> None:
+        self._refresh_experiment_template_save_state(reset_baseline=False)
+
+    def _on_experiment_template_save_name_change(self, *_: object) -> None:
+        self._refresh_experiment_template_save_state(reset_baseline=False)
+
+    def _on_save_experiment_template(self, *_: object) -> None:
+        safe_name = _safe_preset_slug(
+            (self.experiment_template_save_name.value or "").strip()
+        )
+        if not safe_name:
+            self.experiment_template_save_inline.object = "Template name is required and must contain at least one valid character."
+            self.experiment_template_save_btn.disabled = True
+            return
+
+        target = self._workspace_experiment_templates_dir() / f"{safe_name}.json"
+        if target.exists():
+            self._pending_experiment_template_overwrite_name = safe_name
+            self.experiment_template_save_inline.object = f"Template <code>{safe_name}.json</code> already exists. Confirm overwrite?"
+            self.experiment_template_confirm_overwrite_btn.visible = True
+            self.experiment_template_cancel_overwrite_btn.visible = True
+            self.experiment_template_confirm_overwrite_btn.disabled = (
+                self._run_controls_locked
+            )
+            self.experiment_template_cancel_overwrite_btn.disabled = (
+                self._run_controls_locked
+            )
+            self.experiment_template_save_btn.disabled = True
+            return
+
+        written = self._save_experiment_template_payload_to_workspace(safe_name)
+        self.experiment_template_save_name.value = safe_name
+        self._refresh_experiment_template_options()
+        self._refresh_experiment_template_save_state(reset_baseline=True)
+        rel_path = self._experiment_template_relative_path(written.name)
+        self.status.object = f"Saved experiment template to <code>{rel_path}</code>."
+
+    def _on_confirm_overwrite_experiment_template(self, *_: object) -> None:
+        safe_name = self._pending_experiment_template_overwrite_name
+        if not safe_name:
+            return
+        written = self._save_experiment_template_payload_to_workspace(safe_name)
+        self.experiment_template_save_name.value = safe_name
+        self._refresh_experiment_template_options()
+        self._refresh_experiment_template_save_state(reset_baseline=True)
+        rel_path = self._experiment_template_relative_path(written.name)
+        self.status.object = (
+            f"Overwrote experiment template <code>{rel_path}</code> in the workspace."
+        )
+
+    def _on_cancel_overwrite_experiment_template(self, *_: object) -> None:
+        self._clear_pending_experiment_template_overwrite()
+        self._refresh_experiment_template_save_state(reset_baseline=False)
+        self.status.object = "Experiment template overwrite cancelled."
+
     @staticmethod
     def _apply_environment_payload(
         env_params: util.AttrDict,
@@ -1499,10 +2008,7 @@ class _SingleExperimentController:
         return apply_environment_payload(env_params, environment_payload)
 
     def _build_parameters(self) -> util.AttrDict:
-        parameters = resolve_base_experiment_parameters(
-            self._selected_experiment(),
-            self._load_selected_environment(),
-        )
+        parameters = self._parameters_from_selected_template()
         flat = self._merge_seed_overrides(parameters.flatten())
         for path, (kind, widget) in self._parameter_widgets.items():
             if kind == "toggle_factory":
@@ -1575,10 +2081,7 @@ class _SingleExperimentController:
 
     def _refresh_summary(self) -> None:
         experiment = self._selected_experiment()
-        parameters = resolve_base_experiment_parameters(
-            experiment,
-            self._load_selected_environment(),
-        )
+        parameters = self._parameters_from_selected_template()
         larva_groups = list(parameters.get("larva_groups", {}).keys())
         env = util.AttrDict(parameters.env_params)
         epochs = parameters.get("trials", {}).get("epochs", {})
@@ -1615,10 +2118,7 @@ class _SingleExperimentController:
         )
 
     def _editable_flat_parameters(self) -> util.AttrDict:
-        parameters = resolve_base_experiment_parameters(
-            self._selected_experiment(),
-            self._load_selected_environment(),
-        )
+        parameters = self._parameters_from_selected_template()
         flat = parameters.flatten()
         flat = self._merge_seed_overrides(flat)
         flat = self._augment_optional_family_entries(flat)
@@ -2482,16 +2982,19 @@ class _SingleExperimentController:
         self._wire_optional_family_toggles()
         self._render_all_parameter_groups()
         self._bind_environment_watchers()
+        self._bind_experiment_template_watchers()
         self._refresh_environment_save_state(reset_baseline=True)
+        self._refresh_experiment_template_save_state(reset_baseline=True)
 
     def _refresh_typed_larva_groups_owner(self) -> None:
         from larvaworld.lib.reg.generators import ExpConf
 
-        parameters = resolve_base_experiment_parameters(
-            self._selected_experiment(),
-            self._load_selected_environment(),
-        )
+        parameters = self._parameters_from_selected_template()
         self._typed_experiment_for_larva_groups = ExpConf(**dict(parameters))
+        self._apply_workspace_overrides_to_typed_owner(
+            exp_owner=self._typed_experiment_for_larva_groups,
+            section="larva_groups",
+        )
         self._larva_groups_group_view = build_larva_groups_widget(
             self._typed_experiment_for_larva_groups
         )
@@ -2499,11 +3002,12 @@ class _SingleExperimentController:
     def _refresh_typed_enrichment_owner(self) -> None:
         from larvaworld.lib.reg.generators import ExpConf
 
-        parameters = resolve_base_experiment_parameters(
-            self._selected_experiment(),
-            self._load_selected_environment(),
-        )
+        parameters = self._parameters_from_selected_template()
         self._typed_experiment_for_enrichment = ExpConf(**dict(parameters))
+        self._apply_workspace_overrides_to_typed_owner(
+            exp_owner=self._typed_experiment_for_enrichment,
+            section="enrichment",
+        )
         self._enrichment_group_view = build_enrichment_widget(
             self._typed_experiment_for_enrichment.enrichment,
             wrap=False,
@@ -2512,11 +3016,12 @@ class _SingleExperimentController:
     def _refresh_typed_env_params_owner(self) -> None:
         from larvaworld.lib.reg.generators import ExpConf
 
-        parameters = resolve_base_experiment_parameters(
-            self._selected_experiment(),
-            self._load_selected_environment(),
-        )
+        parameters = self._parameters_from_selected_template()
         self._typed_experiment_for_env_params = ExpConf(**dict(parameters))
+        self._apply_workspace_overrides_to_typed_owner(
+            exp_owner=self._typed_experiment_for_env_params,
+            section="env_params",
+        )
         self._env_params_group_view = build_env_params_widget(
             self._typed_experiment_for_env_params.env_params,
             wrap=False,
@@ -2525,11 +3030,11 @@ class _SingleExperimentController:
     def _refresh_typed_sim_ops_owner(self) -> None:
         from larvaworld.lib.reg.generators import ExpConf
 
-        parameters = resolve_base_experiment_parameters(
-            self._selected_experiment(),
-            self._load_selected_environment(),
-        )
+        parameters = self._parameters_from_selected_template()
         self._typed_experiment_for_sim_ops = ExpConf(**dict(parameters))
+        self._apply_workspace_sim_settings_to_typed_owner(
+            self._typed_experiment_for_sim_ops
+        )
         self._sim_ops_group_view = build_sim_ops_widget(
             self._typed_experiment_for_sim_ops,
             wrap=False,
@@ -2538,11 +3043,12 @@ class _SingleExperimentController:
     def _refresh_typed_collections_owner(self) -> None:
         from larvaworld.lib.reg.generators import ExpConf
 
-        parameters = resolve_base_experiment_parameters(
-            self._selected_experiment(),
-            self._load_selected_environment(),
-        )
+        parameters = self._parameters_from_selected_template()
         self._typed_experiment_for_collections = ExpConf(**dict(parameters))
+        self._apply_workspace_overrides_to_typed_owner(
+            exp_owner=self._typed_experiment_for_collections,
+            section="collections",
+        )
         self._collections_group_view = build_collections_widget(
             self._typed_experiment_for_collections,
             wrap=False,
@@ -2551,22 +3057,52 @@ class _SingleExperimentController:
     def _refresh_typed_trials_owner(self) -> None:
         from larvaworld.lib.reg.generators import ExpConf
 
-        parameters = resolve_base_experiment_parameters(
-            self._selected_experiment(),
-            self._load_selected_environment(),
-        )
+        parameters = self._parameters_from_selected_template()
         self._typed_experiment_for_trials = ExpConf(**dict(parameters))
+        self._apply_workspace_overrides_to_typed_owner(
+            exp_owner=self._typed_experiment_for_trials,
+            section="trials",
+        )
         self._trials_group_view = build_trials_widget(
             self._typed_experiment_for_trials,
             wrap=False,
         )
 
     def _on_experiment_change(self, *_: object) -> None:
+        if self._suspend_experiment_change:
+            return
+        selected_value = str(self.selection.experiment_template)
+        workspace_filename = self._workspace_experiment_filename_from_token(
+            selected_value
+        )
+        payload: util.AttrDict | None = None
+        if workspace_filename is not None:
+            try:
+                payload = self._load_workspace_experiment_template_payload(
+                    workspace_filename
+                )
+            except (WorkspaceError, OSError, ValueError) as exc:
+                self.status.object = str(exc)
+                return
+            self._active_workspace_template_payload = payload
+            self._active_workspace_template_filename = workspace_filename
+            self.experiment_template_save_name.value = Path(workspace_filename).stem
+        else:
+            self._active_workspace_template_payload = None
+            self._active_workspace_template_filename = None
+
         experiment = self._selected_experiment()
-        self._parameter_seed_overrides = util.AttrDict()
+        self._last_valid_experiment_template = selected_value
         self.run_name.value = _default_run_name(experiment)
         self._refresh_environment_options()
+        self._refresh_experiment_template_options()
         self.selection.environment_preset = "__template__"
+        if payload is not None:
+            self._parameter_seed_overrides = self._workspace_template_seed_overrides(
+                payload
+            )
+        else:
+            self._parameter_seed_overrides = util.AttrDict()
         self._refresh_summary()
         self._refresh_parameter_editor()
         self.status.object = f'Template "{experiment}" loaded.'
@@ -2670,6 +3206,10 @@ class _SingleExperimentController:
         self.simulation_preview_btn.disabled = disabled
         self.run_btn.disabled = disabled
         self.preview_frames_input.disabled = disabled
+        self.experiment_template_save_name.disabled = disabled
+        self.experiment_template_save_btn.disabled = disabled
+        self.experiment_template_confirm_overwrite_btn.disabled = disabled
+        self.experiment_template_cancel_overwrite_btn.disabled = disabled
         self.display_shortcuts_link.disabled = disabled
         self.display_shortcuts_close_btn.disabled = disabled
         if disabled:
@@ -2685,6 +3225,7 @@ class _SingleExperimentController:
             self.environment_cancel_overwrite_btn.disabled = True
         else:
             self._refresh_environment_save_state(reset_baseline=False)
+            self._refresh_experiment_template_save_state(reset_baseline=False)
 
     def _execute_run_experiment(
         self,
@@ -3011,6 +3552,7 @@ class _SingleExperimentController:
         controls = pn.Card(
             pn.Column(
                 self.experiment,
+                self.experiment_template_save_box,
                 self.summary,
                 self.preview_action_row,
                 self.preview_options_row,
