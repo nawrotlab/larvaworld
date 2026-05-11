@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 
@@ -64,6 +65,14 @@ def _switches(viewable: pn.viewable.Viewable) -> list[pn.widgets.Switch]:
     return [widget for widget in viewable.select(pn.widgets.Switch)]
 
 
+def _set_registry_experiment(
+    controller: _SingleExperimentController, experiment_name: str
+) -> None:
+    controller.experiment.value = controller.experiment.options[
+        f"Registry / {experiment_name}"
+    ]
+
+
 def test_single_experiment_lists_workspace_environment_presets(tmp_path: Path) -> None:
     workspace_root = tmp_path / "workspace"
     initialize_workspace(workspace_root)
@@ -75,17 +84,31 @@ def test_single_experiment_lists_workspace_environment_presets(tmp_path: Path) -
 
     controller = _SingleExperimentController()
 
-    assert (
-        controller.environment_select.options["Template default environment"]
-        == "__template__"
-    )
-    assert (
-        controller.environment_select.options["Registry / dish"] == "__registry__:dish"
+    assert controller.selection.environment_preset == "__template__"
+    assert controller.environment_select.options["Registry / dish"].startswith(
+        "registry:Env:"
     )
     assert (
         controller.environment_select.options["Workspace / dish_custom"]
-        == "dish_custom.json"
+        == "workspace:single-experiment-environments:dish_custom.json"
     )
+
+
+def test_single_experiment_keeps_registry_and_workspace_same_name_visible(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    (workspace_root / "environments" / "dish.json").write_text(
+        json.dumps({"arena": {"geometry": "circular", "dims": [0.12, 0.12]}}) + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+
+    assert "Registry / dish" in controller.environment_select.options
+    assert "Workspace / dish" in controller.environment_select.options
 
 
 def test_single_experiment_lists_and_loads_registry_environment_presets(
@@ -98,16 +121,17 @@ def test_single_experiment_lists_and_loads_registry_environment_presets(
     controller = _SingleExperimentController()
 
     assert "Registry / maze" in controller.environment_select.options
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller.environment_select.value = controller.environment_select.options[
         "Registry / maze"
     ]
+    assert controller.environment_preset_controls.load_selected() is True
 
     parameters = controller._build_parameters()
 
     assert parameters.env_params.arena.geometry == "rectangular"
     assert "Maze" in parameters.env_params.border_list
-    assert controller._selected_environment_label() == "registry / maze"
+    assert controller._selected_environment_label() == "Registry / maze"
 
 
 def test_single_experiment_template_change_auto_refreshes_environment_presets(
@@ -131,15 +155,12 @@ def test_single_experiment_template_change_auto_refreshes_environment_presets(
     if candidate is None:
         pytest.skip("No experiment template with matching environment ID available")
 
-    controller.experiment.value = candidate
+    _set_registry_experiment(controller, candidate)
 
-    assert (
-        controller.environment_select.options["Template default environment"]
-        == "__template__"
-    )
-    assert (
-        controller.environment_select.options[f"Registry / {candidate}"]
-        == f"__registry__:{candidate}"
+    assert controller.selection.environment_preset == "__template__"
+    assert controller._selected_environment_label() == "template default"
+    assert controller.environment_select.options[f"Registry / {candidate}"].startswith(
+        "registry:Env:"
     )
 
 
@@ -175,8 +196,11 @@ def test_single_experiment_build_parameters_applies_environment_override(
     )
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
-    controller.environment_select.value = "rect_env.json"
+    _set_registry_experiment(controller, "dish")
+    controller.environment_select.value = controller.environment_select.options[
+        "Workspace / rect_env"
+    ]
+    assert controller.environment_preset_controls.load_selected() is True
     typed_sim_owner = controller._typed_experiment_for_sim_ops
     assert typed_sim_owner is not None
     typed_sim_owner.duration = 1.5
@@ -349,7 +373,10 @@ def test_single_experiment_configuration_preview_uses_environment_preset_overrid
     )
 
     controller = _SingleExperimentController()
-    controller.environment_select.value = "rect_env.json"
+    controller.environment_select.value = controller.environment_select.options[
+        "Workspace / rect_env"
+    ]
+    assert controller.environment_preset_controls.load_selected() is True
     controller._on_prepare_preview()
 
     state = captured["state"]
@@ -387,7 +414,10 @@ def test_single_experiment_builder_obstacles_are_translated_into_border_entries(
     )
 
     controller = _SingleExperimentController()
-    controller.environment_select.value = "builder_scene.json"
+    controller.environment_select.value = controller.environment_select.options[
+        "Workspace / builder_scene"
+    ]
+    assert controller.environment_preset_controls.load_selected() is True
 
     parameters = controller._build_parameters()
     border_list = parameters.env_params.border_list
@@ -609,7 +639,7 @@ def test_single_experiment_preview_metadata_summarizes_applied_settings(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
     population_path = next(
         path
@@ -1371,7 +1401,7 @@ def test_single_experiment_parameter_editor_exposes_template_fields(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     for key in (
@@ -1480,8 +1510,10 @@ def test_single_experiment_environment_preset_box_is_first_in_environment_parame
     assert isinstance(env_content, pn.Column)
     preset_box = env_content[0]
     assert isinstance(preset_box, pn.Column)
-    assert controller.environment_select in preset_box.objects
+    assert controller.environment_template_default_btn in preset_box.objects
+    assert controller.environment_preset_controls.view in preset_box.objects
     assert controller.refresh_environments_btn in preset_box.select(pn.widgets.Button)
+    assert controller.environment_preset_controls.reset_button is None
 
 
 def test_single_experiment_environment_save_controls_dirty_and_name_gating(
@@ -1504,7 +1536,6 @@ def test_single_experiment_environment_save_controls_dirty_and_name_gating(
     assert controller.environment_save_name.disabled is False
     assert controller.environment_save_btn.disabled is True
     controller.environment_save_name.value = "My nice arena!"
-    assert "My_nice_arena.json" in str(controller.environment_save_hint.object)
     assert controller.environment_save_btn.disabled is False
 
 
@@ -1536,9 +1567,13 @@ def test_single_experiment_environment_save_writes_env_params_only(
     assert "trials" not in payload
     assert (
         controller.environment_select.options["Workspace / saved_env"]
-        == "saved_env.json"
+        == "workspace:single-experiment-environments:saved_env.json"
     )
-    assert controller.selection.environment_preset == "saved_env.json"
+    assert (
+        controller.selection.environment_preset
+        == "workspace:single-experiment-environments:saved_env.json"
+    )
+    assert controller.environment_save_btn.disabled is True
 
 
 def test_single_experiment_environment_save_collision_requires_confirmation(
@@ -1563,17 +1598,44 @@ def test_single_experiment_environment_save_collision_requires_confirmation(
     initial_payload = target.read_text(encoding="utf-8")
     controller._on_save_environment_preset()
 
-    assert controller.environment_confirm_overwrite_btn.visible is True
-    assert controller.environment_cancel_overwrite_btn.visible is True
+    assert controller.environment_preset_controls.confirmation_host.objects
     assert target.read_text(encoding="utf-8") == initial_payload
 
     controller._on_cancel_overwrite_environment()
-    assert controller.environment_confirm_overwrite_btn.visible is False
+    assert not controller.environment_preset_controls.confirmation_host.objects
     assert target.read_text(encoding="utf-8") == initial_payload
 
     controller._on_save_environment_preset()
     controller._on_confirm_overwrite_environment()
     assert target.read_text(encoding="utf-8") != initial_payload
+
+
+def test_single_experiment_registry_load_then_workspace_save_same_name_keeps_registry(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    before_registry = copy.deepcopy(reg.conf.Env.getID("dish"))
+    controller = _SingleExperimentController()
+    controller.environment_select.value = controller.environment_select.options[
+        "Registry / dish"
+    ]
+    assert controller.environment_preset_controls.load_selected() is True
+
+    env_view = controller._get_parameter_group_view("env_params")
+    assert env_view is not None
+    arena_width = _find_widget(env_view, "Arena width", pn.widgets.FloatInput)
+    arena_width.value = float(arena_width.value) + 0.002
+    controller.environment_save_name.value = "dish"
+
+    assert controller._on_save_environment_preset() is None
+    target = workspace_root / "environments" / "dish.json"
+    assert target.exists()
+    assert "Registry / dish" in controller.environment_select.options
+    assert "Workspace / dish" in controller.environment_select.options
+    assert copy.deepcopy(reg.conf.Env.getID("dish")) == before_registry
 
 
 def test_single_experiment_template_save_box_in_configuration_and_disabled_initially(
@@ -2164,7 +2226,7 @@ def test_single_experiment_mixed_flattened_and_typed_edits_survive_build_paramet
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     typed_collections_owner = controller._typed_experiment_for_collections
@@ -2192,7 +2254,7 @@ def test_single_experiment_env_params_typed_edits_feed_build_parameters(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     typed_owner = controller._typed_experiment_for_env_params
@@ -2214,7 +2276,7 @@ def test_single_experiment_mixed_flattened_and_typed_env_params_edits_survive_bu
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     typed_trials_owner = controller._typed_experiment_for_trials
@@ -2238,7 +2300,7 @@ def test_single_experiment_sim_ops_typed_edits_feed_build_parameters(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     typed_owner = controller._typed_experiment_for_sim_ops
@@ -2266,7 +2328,7 @@ def test_single_experiment_mixed_typed_sim_and_flattened_trials_survive_build_pa
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     typed_trials_owner = controller._typed_experiment_for_trials
@@ -2314,8 +2376,11 @@ def test_single_experiment_workspace_environment_override_survives_typed_env_own
     )
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
-    controller.environment_select.value = "rect_env.json"
+    _set_registry_experiment(controller, "dish")
+    controller.environment_select.value = controller.environment_select.options[
+        "Workspace / rect_env"
+    ]
+    assert controller.environment_preset_controls.load_selected() is True
     typed_owner = controller._typed_experiment_for_env_params
     assert typed_owner is not None
     typed_owner.env_params.arena.torus = True
@@ -2339,10 +2404,11 @@ def test_single_experiment_registry_environment_override_survives_typed_env_owne
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller.environment_select.value = controller.environment_select.options[
         "Registry / maze"
     ]
+    assert controller.environment_preset_controls.load_selected() is True
     typed_owner = controller._typed_experiment_for_env_params
     assert typed_owner is not None
     typed_owner.env_params.arena.torus = True
@@ -2416,7 +2482,7 @@ def test_single_experiment_enrichment_typed_edits_feed_build_parameters(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     typed_owner = controller._typed_experiment_for_enrichment
@@ -2440,7 +2506,7 @@ def test_single_experiment_mixed_flattened_and_typed_enrichment_edits_survive_bu
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     typed_trials_owner = controller._typed_experiment_for_trials
@@ -2464,7 +2530,7 @@ def test_single_experiment_collections_typed_edits_feed_build_parameters(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     typed_owner = controller._typed_experiment_for_collections
@@ -2485,7 +2551,7 @@ def test_single_experiment_mixed_typed_collections_and_flattened_trials_survive_
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     typed_trials_owner = controller._typed_experiment_for_trials
@@ -2511,7 +2577,7 @@ def test_single_experiment_typed_sim_edits_do_not_reset_other_typed_groups(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     sim_owner = controller._typed_experiment_for_sim_ops
@@ -2654,7 +2720,7 @@ def test_single_experiment_build_parameters_falls_back_to_base_trials_when_typed
 
     parameters = controller._build_parameters()
     base = resolve_base_experiment_parameters(
-        str(controller.experiment.value),
+        controller._selected_experiment(),
         controller._load_selected_environment(),
     )
 
@@ -2669,7 +2735,7 @@ def test_single_experiment_trials_preserve_unknown_keys_in_build_parameters(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     typed_trials_owner = controller._typed_experiment_for_trials
@@ -2690,7 +2756,7 @@ def test_single_experiment_trials_edits_survive_group_switching(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     typed_trials_owner = controller._typed_experiment_for_trials
@@ -2714,7 +2780,7 @@ def test_single_experiment_parameter_editor_values_feed_build_parameters(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
     population_path = next(
         path
@@ -2753,7 +2819,7 @@ def test_single_experiment_distribution_tuple_fields_stay_typed(tmp_path: Path) 
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
     population_path = next(
         path
@@ -2780,7 +2846,7 @@ def test_single_experiment_uses_typed_widgets_for_model_and_optional_odor_fields
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "chemotaxis"
+    _set_registry_experiment(controller, "chemotaxis")
     controller._on_experiment_change()
 
     model_path = next(
@@ -2829,8 +2895,8 @@ def test_single_experiment_parameter_editor_has_no_text_fallback_widgets(
 
     controller = _SingleExperimentController()
     raw_kinds = set()
-    for exp_id in controller.experiment.options:
-        controller.experiment.value = exp_id
+    for exp_token in controller.experiment.options.values():
+        controller.experiment.value = exp_token
         controller._on_experiment_change()
         raw_kinds.update(
             kind
@@ -2892,7 +2958,7 @@ def test_single_experiment_optional_family_toggles_seed_disabled_controls(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
     env_view = controller._get_parameter_group_view("env_params")
     assert env_view is not None
@@ -2920,7 +2986,7 @@ def test_single_experiment_trials_group_uses_typed_owner_for_activation(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
 
     assert "trials" not in controller._parameter_widgets
@@ -2944,7 +3010,7 @@ def test_single_experiment_source_unit_toggle_enables_nested_controls_near_sourc
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
     env_view = controller._get_parameter_group_view("env_params")
     assert env_view is not None
@@ -2973,7 +3039,7 @@ def test_single_experiment_uses_color_and_nested_odorscape_widgets(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "chemotaxis"
+    _set_registry_experiment(controller, "chemotaxis")
     controller._on_experiment_change()
     env_view = controller._get_parameter_group_view("env_params")
     assert env_view is not None
@@ -3005,7 +3071,7 @@ def test_single_experiment_sequence_widgets_use_semantic_component_labels(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
+    _set_registry_experiment(controller, "dish")
     controller._on_experiment_change()
     env_view = controller._get_parameter_group_view("env_params")
     assert env_view is not None

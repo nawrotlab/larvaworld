@@ -258,6 +258,7 @@ class PresetControlsController:
         build_workspace_payload: Callable[[str], Any],
         build_registry_payload: Callable[[str], Any] | None = None,
         on_load: Callable[[PresetRef, Any], None] | None = None,
+        on_save: Callable[[PresetRef, Any], None] | None = None,
         on_status: Callable[..., None] | None = None,
         title: str = "Stored Configurations",
         confirm_destructive: bool = True,
@@ -269,6 +270,7 @@ class PresetControlsController:
         self.build_workspace_payload = build_workspace_payload
         self.build_registry_payload = build_registry_payload or build_workspace_payload
         self.on_load = on_load
+        self.on_save = on_save
         self.on_status = on_status
         self.confirm_destructive = bool(confirm_destructive)
         self.catalog = PresetCatalog(refs=tuple(), by_token={})
@@ -426,6 +428,25 @@ class PresetControlsController:
     def _selected_ref(self) -> PresetRef | None:
         return self.catalog.resolve(str(self.preset_select.value or ""))
 
+    def _resolve_saved_ref(self, *, source: str, token: str) -> PresetRef | None:
+        ref = self.catalog.resolve(token)
+        if ref is None or ref.source != source:
+            return None
+        return ref
+
+    def _run_on_save_callback(self, ref: PresetRef, payload: Any) -> bool:
+        if self.on_save is None:
+            return True
+        try:
+            self.on_save(ref, payload)
+        except Exception as exc:
+            self._set_status(
+                f"Saved preset, but post-save update failed: {exc}",
+                tone="warning",
+            )
+            return False
+        return True
+
     def _request_confirmation(self, message: str, execute: Callable[[], bool]) -> None:
         self._pending_confirmation = _PendingConfirmation(
             message=message, execute=execute
@@ -520,6 +541,15 @@ class PresetControlsController:
             token = self._token_for_workspace(target.name)
             if token in self.catalog.by_token:
                 self.preset_select.value = token
+            ref = self._resolve_saved_ref(source=PresetSource.WORKSPACE, token=token)
+            if ref is None:
+                self._set_status(
+                    "Workspace preset saved, but the refreshed catalog could not resolve it.",
+                    tone="warning",
+                )
+                return True
+            if not self._run_on_save_callback(ref, payload):
+                return True
             self._set_status(f'Saved workspace preset "{target.stem}".', tone="success")
             return True
 
@@ -546,6 +576,15 @@ class PresetControlsController:
             token = self._token_for_registry(target_name)
             if token in self.catalog.by_token:
                 self.preset_select.value = token
+            ref = self._resolve_saved_ref(source=PresetSource.REGISTRY, token=token)
+            if ref is None:
+                self._set_status(
+                    "Registry preset saved, but the refreshed catalog could not resolve it.",
+                    tone="warning",
+                )
+                return True
+            if not self._run_on_save_callback(ref, payload):
+                return True
             self._set_status(f'Saved registry preset "{target_name}".', tone="success")
             return True
 
@@ -649,6 +688,7 @@ def build_user_preset_controls(
     directory_key: str,
     build_workspace_payload: Callable[[str], Any],
     on_load: Callable[[PresetRef, Any], None] | None = None,
+    on_save: Callable[[PresetRef, Any], None] | None = None,
     on_status: Callable[..., None] | None = None,
 ) -> pn.Column:
     controller = PresetControlsController(
@@ -660,6 +700,7 @@ def build_user_preset_controls(
         policy=USER_PRESET_POLICY,
         build_workspace_payload=build_workspace_payload,
         on_load=on_load,
+        on_save=on_save,
         on_status=on_status,
         title="Stored Configurations",
     )
@@ -674,6 +715,7 @@ def build_advanced_preset_controls(
     build_workspace_payload: Callable[[str], Any],
     build_registry_payload: Callable[[str], Any] | None = None,
     on_load: Callable[[PresetRef, Any], None] | None = None,
+    on_save: Callable[[PresetRef, Any], None] | None = None,
     on_status: Callable[..., None] | None = None,
 ) -> pn.Column:
     controller = PresetControlsController(
@@ -686,6 +728,7 @@ def build_advanced_preset_controls(
         build_workspace_payload=build_workspace_payload,
         build_registry_payload=build_registry_payload,
         on_load=on_load,
+        on_save=on_save,
         on_status=on_status,
         title="Advanced Stored Configurations",
     )

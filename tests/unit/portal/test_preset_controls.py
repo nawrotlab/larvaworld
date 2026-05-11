@@ -45,6 +45,7 @@ def _new_controller(
     *,
     policy=USER_PRESET_POLICY,
     on_load=None,
+    on_save=None,
     on_status=None,
     build_workspace_payload=None,
     build_registry_payload=None,
@@ -60,6 +61,7 @@ def _new_controller(
         or (lambda _name: _env_payload()),
         build_registry_payload=build_registry_payload,
         on_load=on_load,
+        on_save=on_save,
         on_status=on_status,
         title="Stored Configurations",
     )
@@ -245,6 +247,57 @@ def test_on_load_callback_receives_ref_and_raw_payload(
     assert seen[0][0] == PresetSource.REGISTRY
     assert seen[0][1] == "dish"
     assert isinstance(seen[0][2], dict)
+
+
+def test_on_save_callback_receives_workspace_ref_from_refreshed_catalog(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    seen: list[tuple[str, str, object]] = []
+
+    def _on_save(ref, payload):
+        seen.append((ref.source, ref.name, payload))
+
+    controller = _new_controller(tmp_path / "presets", on_save=_on_save)
+    controller.preset_name.value = "dish_ws"
+
+    assert controller.save_current() is True
+    assert seen == [(PresetSource.WORKSPACE, "dish_ws", _env_payload())]
+
+
+def test_on_save_callback_receives_registry_ref_from_refreshed_catalog(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    seen: list[tuple[str, str, object]] = []
+
+    def _on_save(ref, payload):
+        seen.append((ref.source, ref.name, payload))
+
+    controller = _new_controller(
+        tmp_path / "presets",
+        policy=ADVANCED_PRESET_POLICY,
+        on_save=_on_save,
+    )
+    controller.save_target.value = "Registry"
+    controller.preset_name.value = "dish_registry"
+
+    assert controller.save_current() is True
+    assert seen == [(PresetSource.REGISTRY, "dish_registry", _env_payload())]
+
+
+def test_on_save_exception_keeps_successful_write_and_returns_true(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    workspace_dir = tmp_path / "presets"
+
+    def _on_save(_ref, _payload):
+        raise RuntimeError("post-save failure")
+
+    controller = _new_controller(workspace_dir, on_save=_on_save)
+    controller.preset_name.value = "dish_ws"
+
+    assert controller.save_current() is True
+    assert (workspace_dir / "dish_ws.json").is_file()
+    assert "post-save update failed" in str(controller.status.object)
 
 
 def test_regression_registry_load_then_workspace_save_keeps_both_visible(

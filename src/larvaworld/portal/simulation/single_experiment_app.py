@@ -33,6 +33,13 @@ from larvaworld.portal.config_widgets.larvagroup_widget import (
     build_larva_groups_widget,
 )
 from larvaworld.portal.config_widgets.sim_ops_widget import build_sim_ops_widget
+from larvaworld.portal.config_widgets.preset_controls import (
+    USER_PRESET_POLICY,
+    PresetControlsController,
+    PresetRef,
+    PresetSource,
+    WorkspacePresetStore,
+)
 from larvaworld.portal.config_widgets.trials_widget import build_trials_widget
 from larvaworld.portal.simulation.parameter_resolution import (
     _builder_obstacle_border_vertices,
@@ -1103,41 +1110,29 @@ class _SingleExperimentController:
             name="Run name",
             value=_default_run_name(self.selection.experiment_template),
         )
-        self.environment_select = pn.widgets.Select.from_param(
-            self.selection.param.environment_preset
-        )
-        self.refresh_environments_btn = pn.widgets.Button(
-            name="Refresh environment",
-            button_type="warning",
-        )
-        self.environment_save_name = pn.widgets.TextInput(
-            name="Preset name",
-            placeholder="my_environment",
-            disabled=True,
-        )
-        self.environment_save_btn = pn.widgets.Button(
-            name="Save environment preset",
-            button_type="primary",
-            disabled=True,
-        )
-        self.environment_confirm_overwrite_btn = pn.widgets.Button(
-            name="Confirm overwrite",
-            button_type="warning",
-            disabled=True,
-            visible=False,
-        )
-        self.environment_cancel_overwrite_btn = pn.widgets.Button(
-            name="Cancel",
+        self.environment_template_default_btn = pn.widgets.Button(
+            name="Template default environment",
             button_type="default",
-            disabled=True,
-            visible=False,
         )
-        self.environment_save_hint = pn.pane.HTML(
-            "", css_classes=["lw-single-exp-env-save-hint"], margin=0
+        self.environment_preset_controls = PresetControlsController(
+            conftype="Env",
+            workspace_store=WorkspacePresetStore(
+                Path.cwd(),
+                directory_key="single-experiment-environments",
+            ),
+            policy=USER_PRESET_POLICY,
+            build_workspace_payload=lambda _name: _json_ready(
+                self._environment_payload_from_owner()
+            ),
+            on_load=self._on_environment_preset_loaded,
+            on_save=self._on_environment_preset_saved,
+            on_status=self._on_environment_preset_status,
+            title="Stored Configurations",
         )
-        self.environment_save_inline = pn.pane.HTML(
-            "", css_classes=["lw-single-exp-env-save-inline"], margin=0
-        )
+        self.environment_select = self.environment_preset_controls.preset_select
+        self.refresh_environments_btn = self.environment_preset_controls.refresh_button
+        self.environment_save_name = self.environment_preset_controls.preset_name
+        self.environment_save_btn = self.environment_preset_controls.save_button
         self.experiment_template_save_name = pn.widgets.TextInput(
             name="Template name",
             placeholder="my_template",
@@ -1355,8 +1350,9 @@ class _SingleExperimentController:
         )
         self._parameter_group_views: dict[str, pn.viewable.Viewable] = {}
         self._environment_baseline_signature: str | None = None
-        self._pending_environment_overwrite_name: str | None = None
         self._environment_watcher_handles: list[Any] = []
+        self._active_environment_preset_ref: PresetRef | None = None
+        self._active_environment_preset_payload: util.AttrDict | None = None
         self._experiment_template_baseline_signature: str | None = None
         self._pending_experiment_template_overwrite_name: str | None = None
         self._experiment_template_watcher_handles: list[Any] = []
@@ -1381,14 +1377,10 @@ class _SingleExperimentController:
         self.experiment_template_save_name.param.watch(
             self._on_experiment_template_save_name_change, "value"
         )
+        self.environment_template_default_btn.on_click(
+            self._on_use_template_default_environment
+        )
         self.refresh_environments_btn.on_click(self._on_refresh_environments)
-        self.environment_save_btn.on_click(self._on_save_environment_preset)
-        self.environment_confirm_overwrite_btn.on_click(
-            self._on_confirm_overwrite_environment
-        )
-        self.environment_cancel_overwrite_btn.on_click(
-            self._on_cancel_overwrite_environment
-        )
         self.experiment_template_save_btn.on_click(self._on_save_experiment_template)
         self.experiment_template_confirm_overwrite_btn.on_click(
             self._on_confirm_overwrite_experiment_template
@@ -1430,7 +1422,10 @@ class _SingleExperimentController:
     def _list_workspace_experiment_templates(
         self,
     ) -> list[WorkspaceExperimentTemplateRecord]:
-        templates_dir = self._workspace_experiment_templates_dir()
+        try:
+            templates_dir = self._workspace_experiment_templates_dir()
+        except WorkspaceError:
+            return []
         if not templates_dir.is_dir():
             return []
         records: list[WorkspaceExperimentTemplateRecord] = []
@@ -1494,42 +1489,63 @@ class _SingleExperimentController:
 
     def _environment_options(self) -> dict[str, str]:
         options = {"Template default environment": "__template__"}
-        preset_dir = self._environment_dir()
-        preset_dir.mkdir(parents=True, exist_ok=True)
-        workspace_labels: set[str] = set()
-        for path in sorted(preset_dir.glob("*.json")):
-            workspace_labels.add(path.stem)
-            options[f"Workspace / {path.stem}"] = path.name
-        registry_options = {}
-        for name in sorted(str(key) for key in reg.conf.Env.dict.keys()):
-            if name in workspace_labels:
-                continue
-            registry_options[f"Registry / {name}"] = (
-                f"{_REGISTRY_ENV_PRESET_PREFIX}{name}"
-            )
-        options.update(registry_options)
+        for ref in self.environment_preset_controls.catalog.refs:
+            options[ref.display_label] = ref.token
         return options
+
+    def _sync_environment_selection_options(self) -> None:
+        self.selection.param.environment_preset.objects = self._environment_options()
 
     def _load_selected_environment(self) -> util.AttrDict | None:
         selected = self.selection.environment_preset
         if selected in {None, "", "__template__"}:
             return None
-        if str(selected).startswith(_WORKSPACE_ENV_PRESET_PREFIX):
-            filename = str(selected)[len(_WORKSPACE_ENV_PRESET_PREFIX) :]
-            preset_path = self._environment_dir() / filename
-            payload = json.loads(preset_path.read_text(encoding="utf-8"))
+        selected_text = str(selected)
+        if (
+            self._active_environment_preset_ref is not None
+            and self._active_environment_preset_payload is not None
+            and self._active_environment_preset_ref.token == selected_text
+        ):
+            return util.AttrDict(self._active_environment_preset_payload.get_copy())
+        ref = self.environment_preset_controls.catalog.resolve(selected_text)
+        if ref is None:
+            if str(selected).startswith(_WORKSPACE_ENV_PRESET_PREFIX):
+                filename = str(selected)[len(_WORKSPACE_ENV_PRESET_PREFIX) :]
+                payload = self.environment_preset_controls.workspace_store.load(
+                    filename
+                )
+                return util.AttrDict(payload)
+            if str(selected).startswith(_REGISTRY_ENV_PRESET_PREFIX):
+                registry_id = str(selected)[len(_REGISTRY_ENV_PRESET_PREFIX) :]
+                return util.AttrDict(reg.conf.Env.getID(registry_id)).get_copy()
+            if selected_text.endswith(".json"):
+                payload = self.environment_preset_controls.workspace_store.load(
+                    selected_text
+                )
+                return util.AttrDict(payload)
+            return None
+        if ref.source == PresetSource.WORKSPACE:
+            assert ref.workspace_filename is not None
+            payload = self.environment_preset_controls.workspace_store.load(
+                ref.workspace_filename
+            )
             return util.AttrDict(payload)
-        if str(selected).startswith(_REGISTRY_ENV_PRESET_PREFIX):
-            registry_id = str(selected)[len(_REGISTRY_ENV_PRESET_PREFIX) :]
-            return util.AttrDict(reg.conf.Env.getID(registry_id)).get_copy()
-        preset_path = self._environment_dir() / str(selected)
-        payload = json.loads(preset_path.read_text(encoding="utf-8"))
+        payload = self.environment_preset_controls.registry_store.load(ref.name)
         return util.AttrDict(payload)
 
     def _selected_environment_label(self) -> str:
         selected = self.selection.environment_preset
         if selected == "__template__":
             return "template default"
+        selected_text = str(selected)
+        if (
+            self._active_environment_preset_ref is not None
+            and self._active_environment_preset_ref.token == selected_text
+        ):
+            return self._active_environment_preset_ref.display_label
+        ref = self.environment_preset_controls.catalog.resolve(selected_text)
+        if ref is not None:
+            return ref.display_label
         if selected is not None and str(selected).startswith(
             _WORKSPACE_ENV_PRESET_PREFIX
         ):
@@ -1539,7 +1555,7 @@ class _SingleExperimentController:
             _REGISTRY_ENV_PRESET_PREFIX
         ):
             registry_id = str(selected)[len(_REGISTRY_ENV_PRESET_PREFIX) :]
-            return f"registry / {registry_id}"
+            return f"Registry / {registry_id}"
         selected_text = str(selected)
         if selected_text.endswith(".json"):
             return f"Workspace / {Path(selected_text).stem}"
@@ -1572,12 +1588,8 @@ class _SingleExperimentController:
                 continue
 
     def _clear_pending_environment_overwrite(self) -> None:
-        self._pending_environment_overwrite_name = None
-        self.environment_confirm_overwrite_btn.visible = False
-        self.environment_cancel_overwrite_btn.visible = False
-        self.environment_confirm_overwrite_btn.disabled = True
-        self.environment_cancel_overwrite_btn.disabled = True
-        self.environment_save_inline.object = ""
+        if self.environment_preset_controls._pending_confirmation is not None:
+            self.environment_preset_controls.cancel_pending_action()
 
     def _refresh_environment_save_state(self, *, reset_baseline: bool = False) -> None:
         current_payload = self._environment_payload_from_owner()
@@ -1586,27 +1598,13 @@ class _SingleExperimentController:
             self._environment_baseline_signature = current_signature
             self.environment_save_name.disabled = True
             self.environment_save_btn.disabled = True
-            self.environment_save_hint.object = ""
-            self._clear_pending_environment_overwrite()
             return
 
         dirty = current_signature != self._environment_baseline_signature
         safe_name = _safe_preset_slug((self.environment_save_name.value or "").strip())
         self.environment_save_name.disabled = not dirty or self._run_controls_locked
-        if dirty:
-            self.environment_save_hint.object = (
-                f"Will be saved as: <code>{safe_name}.json</code>"
-                if safe_name
-                else "Enter a preset name to save this environment."
-            )
-        else:
-            self.environment_save_hint.object = ""
-            self._clear_pending_environment_overwrite()
         self.environment_save_btn.disabled = (
-            (not dirty)
-            or (not safe_name)
-            or self._run_controls_locked
-            or (self._pending_environment_overwrite_name is not None)
+            (not dirty) or (not safe_name) or self._run_controls_locked
         )
 
     def _bind_environment_watchers(self) -> None:
@@ -1629,12 +1627,8 @@ class _SingleExperimentController:
             self._environment_watcher_handles.append(watcher)
 
     def _save_environment_payload_to_workspace(self, safe_name: str) -> Path:
-        env_payload = self._environment_payload_from_owner()
-        target = self._environment_dir() / f"{safe_name}.json"
-        target.write_text(
-            json.dumps(_json_ready(env_payload), indent=2) + "\n", encoding="utf-8"
-        )
-        return target
+        payload = _json_ready(self._environment_payload_from_owner())
+        return self.environment_preset_controls.workspace_store.save(safe_name, payload)
 
     def _on_environment_parameter_widget_change(self, *_: object) -> None:
         self._refresh_environment_save_state(reset_baseline=False)
@@ -1643,49 +1637,47 @@ class _SingleExperimentController:
         self._refresh_environment_save_state(reset_baseline=False)
 
     def _on_save_environment_preset(self, *_: object) -> None:
-        safe_name = _safe_preset_slug((self.environment_save_name.value or "").strip())
-        if not safe_name:
-            self.environment_save_inline.object = (
-                "Preset name is required and must contain at least one valid character."
-            )
-            self.environment_save_btn.disabled = True
-            return
-        target = self._environment_dir() / f"{safe_name}.json"
-        if target.exists():
-            self._pending_environment_overwrite_name = safe_name
-            self.environment_save_inline.object = f"Preset <code>{safe_name}.json</code> already exists. Confirm overwrite?"
-            self.environment_confirm_overwrite_btn.visible = True
-            self.environment_cancel_overwrite_btn.visible = True
-            self.environment_confirm_overwrite_btn.disabled = self._run_controls_locked
-            self.environment_cancel_overwrite_btn.disabled = self._run_controls_locked
-            self.environment_save_btn.disabled = True
-            return
-        written = self._save_environment_payload_to_workspace(safe_name)
-        self.environment_save_name.value = safe_name
-        self._refresh_environment_options()
-        self.selection.environment_preset = written.name
-        self._refresh_summary()
-        self._refresh_parameter_editor()
-        self._refresh_environment_save_state(reset_baseline=True)
-        self.status.object = f"Saved environment preset to <code>{written.name}</code>."
+        self.environment_preset_controls.save_current()
 
     def _on_confirm_overwrite_environment(self, *_: object) -> None:
-        safe_name = self._pending_environment_overwrite_name
-        if not safe_name:
-            return
-        written = self._save_environment_payload_to_workspace(safe_name)
-        self.environment_save_name.value = safe_name
-        self._refresh_environment_options()
-        self.selection.environment_preset = written.name
-        self._refresh_summary()
-        self._refresh_parameter_editor()
-        self._refresh_environment_save_state(reset_baseline=True)
-        self.status.object = f"Overwrote environment preset <code>{written.name}</code> in the workspace."
+        self.environment_preset_controls.confirm_pending_action()
 
     def _on_cancel_overwrite_environment(self, *_: object) -> None:
-        self._clear_pending_environment_overwrite()
-        self._refresh_environment_save_state(reset_baseline=False)
-        self.status.object = "Environment preset overwrite cancelled."
+        self.environment_preset_controls.cancel_pending_action()
+
+    def _on_environment_preset_status(
+        self, message: str, *, tone: str = "neutral"
+    ) -> None:
+        if hasattr(self, "status"):
+            self.status.object = message
+
+    def _on_environment_preset_loaded(self, ref: PresetRef, payload: Any) -> None:
+        self._active_environment_preset_ref = ref
+        self._active_environment_preset_payload = util.AttrDict(payload).get_copy()
+        self._sync_environment_selection_options()
+        self.selection.environment_preset = ref.token
+        self.environment_save_name.value = ref.name
+        self._parameter_seed_overrides = util.AttrDict()
+        self._refresh_summary()
+        self._refresh_parameter_editor()
+
+    def _on_environment_preset_saved(self, ref: PresetRef, payload: Any) -> None:
+        self._active_environment_preset_ref = ref
+        self._active_environment_preset_payload = util.AttrDict(payload).get_copy()
+        self._sync_environment_selection_options()
+        self.selection.environment_preset = ref.token
+        self.environment_save_name.value = ref.name
+        self._parameter_seed_overrides = util.AttrDict()
+        self._refresh_summary()
+        self._refresh_parameter_editor()
+
+    def _on_use_template_default_environment(self, *_: object) -> None:
+        self._active_environment_preset_ref = None
+        self._active_environment_preset_payload = None
+        self.selection.environment_preset = "__template__"
+        self._parameter_seed_overrides = util.AttrDict()
+        self._refresh_summary()
+        self._refresh_parameter_editor()
 
     def _workspace_experiment_templates_dir(self) -> Path:
         metadata_dir = get_workspace_dir("metadata")
@@ -2061,20 +2053,28 @@ class _SingleExperimentController:
 
     def _refresh_environment_options(self) -> None:
         try:
-            options = self._environment_options()
+            self.environment_preset_controls.workspace_store = WorkspacePresetStore(
+                self._environment_dir(),
+                directory_key="single-experiment-environments",
+            )
         except WorkspaceError as exc:
+            self.environment_preset_controls.load_button.disabled = True
+            self.environment_preset_controls.save_button.disabled = True
+            self.environment_preset_controls.delete_button.disabled = True
             self.selection.set_environment_options(
                 {"Workspace unavailable": "__template__"}
             )
             self.selection.environment_preset = "__template__"
-            self.environment_select.disabled = True
-            self.refresh_environments_btn.disabled = True
+            self._active_environment_preset_ref = None
+            self._active_environment_preset_payload = None
             self.status.object = f"Cannot load workspace environment presets: {exc}"
             return
+        self.environment_preset_controls.load_button.disabled = False
+        self.environment_preset_controls.delete_button.disabled = False
+        self.environment_preset_controls.refresh_list()
+        options = self._environment_options()
         selected = self.selection.environment_preset
         self.selection.set_environment_options(options)
-        self.environment_select.disabled = False
-        self.refresh_environments_btn.disabled = False
         self.selection.environment_preset = (
             selected if selected in options.values() else "__template__"
         )
@@ -2864,18 +2864,8 @@ class _SingleExperimentController:
                 self._apply_parameter_group_card_style(group_view)
                 group_view = pn.Column(
                     pn.Column(
-                        self.environment_select,
-                        self.refresh_environments_btn,
-                        self.environment_save_name,
-                        self.environment_save_btn,
-                        pn.Row(
-                            self.environment_confirm_overwrite_btn,
-                            self.environment_cancel_overwrite_btn,
-                            sizing_mode="stretch_width",
-                            margin=(6, 0, 0, 0),
-                        ),
-                        self.environment_save_hint,
-                        self.environment_save_inline,
+                        self.environment_template_default_btn,
+                        self.environment_preset_controls.view,
                         css_classes=["lw-single-exp-env-preset-box"],
                         sizing_mode="stretch_width",
                         margin=(0, 0, 8, 0),
@@ -2987,10 +2977,9 @@ class _SingleExperimentController:
         self._refresh_experiment_template_save_state(reset_baseline=True)
 
     def _refresh_typed_larva_groups_owner(self) -> None:
-        from larvaworld.lib.reg.generators import ExpConf
-
-        parameters = self._parameters_from_selected_template()
-        self._typed_experiment_for_larva_groups = ExpConf(**dict(parameters))
+        self._typed_experiment_for_larva_groups = (
+            self._build_typed_experiment_from_selected_template()
+        )
         self._apply_workspace_overrides_to_typed_owner(
             exp_owner=self._typed_experiment_for_larva_groups,
             section="larva_groups",
@@ -2999,11 +2988,43 @@ class _SingleExperimentController:
             self._typed_experiment_for_larva_groups
         )
 
-    def _refresh_typed_enrichment_owner(self) -> None:
+    def _build_typed_experiment_from_selected_template(self) -> Any:
         from larvaworld.lib.reg.generators import ExpConf
 
-        parameters = self._parameters_from_selected_template()
-        self._typed_experiment_for_enrichment = ExpConf(**dict(parameters))
+        parameters = util.AttrDict(self._parameters_from_selected_template().get_copy())
+        larva_groups = parameters.get("larva_groups")
+        if isinstance(larva_groups, dict):
+            typed_larva_groups = util.AttrDict()
+            for group_id, group_payload in larva_groups.items():
+                if isinstance(group_payload, reg.gen.LarvaGroup):
+                    typed_larva_groups[group_id] = group_payload
+                    continue
+                if isinstance(group_payload, dict):
+                    group_kwargs = dict(group_payload)
+                    model_payload = group_kwargs.pop("model", None)
+                    if "group_id" not in group_kwargs:
+                        group_kwargs["group_id"] = str(group_id)
+                    if isinstance(model_payload, dict):
+                        group_obj = reg.gen.LarvaGroup(**group_kwargs)
+                        group_obj.param.model.check_on_set = False
+                        group_obj.model = model_payload
+                        group_obj.param.model.check_on_set = True
+                        typed_larva_groups[group_id] = group_obj
+                    else:
+                        if model_payload is not None:
+                            group_kwargs["model"] = model_payload
+                        typed_larva_groups[group_id] = reg.gen.LarvaGroup(
+                            **group_kwargs
+                        )
+                    continue
+                typed_larva_groups[group_id] = group_payload
+            parameters["larva_groups"] = typed_larva_groups
+        return ExpConf(**dict(parameters))
+
+    def _refresh_typed_enrichment_owner(self) -> None:
+        self._typed_experiment_for_enrichment = (
+            self._build_typed_experiment_from_selected_template()
+        )
         self._apply_workspace_overrides_to_typed_owner(
             exp_owner=self._typed_experiment_for_enrichment,
             section="enrichment",
@@ -3014,10 +3035,9 @@ class _SingleExperimentController:
         )
 
     def _refresh_typed_env_params_owner(self) -> None:
-        from larvaworld.lib.reg.generators import ExpConf
-
-        parameters = self._parameters_from_selected_template()
-        self._typed_experiment_for_env_params = ExpConf(**dict(parameters))
+        self._typed_experiment_for_env_params = (
+            self._build_typed_experiment_from_selected_template()
+        )
         self._apply_workspace_overrides_to_typed_owner(
             exp_owner=self._typed_experiment_for_env_params,
             section="env_params",
@@ -3028,10 +3048,9 @@ class _SingleExperimentController:
         )
 
     def _refresh_typed_sim_ops_owner(self) -> None:
-        from larvaworld.lib.reg.generators import ExpConf
-
-        parameters = self._parameters_from_selected_template()
-        self._typed_experiment_for_sim_ops = ExpConf(**dict(parameters))
+        self._typed_experiment_for_sim_ops = (
+            self._build_typed_experiment_from_selected_template()
+        )
         self._apply_workspace_sim_settings_to_typed_owner(
             self._typed_experiment_for_sim_ops
         )
@@ -3041,10 +3060,9 @@ class _SingleExperimentController:
         )
 
     def _refresh_typed_collections_owner(self) -> None:
-        from larvaworld.lib.reg.generators import ExpConf
-
-        parameters = self._parameters_from_selected_template()
-        self._typed_experiment_for_collections = ExpConf(**dict(parameters))
+        self._typed_experiment_for_collections = (
+            self._build_typed_experiment_from_selected_template()
+        )
         self._apply_workspace_overrides_to_typed_owner(
             exp_owner=self._typed_experiment_for_collections,
             section="collections",
@@ -3055,10 +3073,9 @@ class _SingleExperimentController:
         )
 
     def _refresh_typed_trials_owner(self) -> None:
-        from larvaworld.lib.reg.generators import ExpConf
-
-        parameters = self._parameters_from_selected_template()
-        self._typed_experiment_for_trials = ExpConf(**dict(parameters))
+        self._typed_experiment_for_trials = (
+            self._build_typed_experiment_from_selected_template()
+        )
         self._apply_workspace_overrides_to_typed_owner(
             exp_owner=self._typed_experiment_for_trials,
             section="trials",
@@ -3094,6 +3111,8 @@ class _SingleExperimentController:
         experiment = self._selected_experiment()
         self._last_valid_experiment_template = selected_value
         self.run_name.value = _default_run_name(experiment)
+        self._active_environment_preset_ref = None
+        self._active_environment_preset_payload = None
         self._refresh_environment_options()
         self._refresh_experiment_template_options()
         self.selection.environment_preset = "__template__"
@@ -3131,7 +3150,7 @@ class _SingleExperimentController:
         self._refresh_environment_options()
         self._refresh_summary()
         self._refresh_parameter_editor()
-        self.status.object = "Refreshed workspace environment presets."
+        self.status.object = "Refreshed environment presets."
 
     def _build_run_directory(self) -> Path:
         run_id = _safe_slug(self.run_name.value or self._selected_experiment())
@@ -3221,9 +3240,11 @@ class _SingleExperimentController:
         if disabled:
             self.environment_save_name.disabled = True
             self.environment_save_btn.disabled = True
-            self.environment_confirm_overwrite_btn.disabled = True
-            self.environment_cancel_overwrite_btn.disabled = True
+            self.environment_preset_controls.load_button.disabled = True
+            self.environment_preset_controls.delete_button.disabled = True
         else:
+            self.environment_preset_controls.load_button.disabled = False
+            self.environment_preset_controls.delete_button.disabled = False
             self._refresh_environment_save_state(reset_baseline=False)
             self._refresh_experiment_template_save_state(reset_baseline=False)
 
