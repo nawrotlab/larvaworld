@@ -14,6 +14,19 @@ from .enrichment_widget import build_enrichment_widget, build_preprocess_conf_wi
 from .food_widget import build_food_conf_widget
 from .larvagroup_widget import build_larva_group_widget, build_larva_groups_widget
 from .odorscape_widget import build_odorscape_widget
+from .preset_controls import (
+    ADVANCED_PRESET_POLICY,
+    USER_PRESET_POLICY,
+    PresetActionPolicy,
+    PresetCatalog,
+    PresetControlsController,
+    PresetRef,
+    PresetSource,
+    RegistryPresetStore,
+    WorkspacePresetStore,
+    build_advanced_preset_controls,
+    build_user_preset_controls,
+)
 from .sim_ops_widget import build_sim_ops_widget
 from .thermoscape_widget import build_thermoscape_widget
 from .trials_widget import build_trials_widget
@@ -32,15 +45,26 @@ __all__ = [
     "build_env_params_widget",
     "build_enrichment_widget",
     "build_food_conf_widget",
+    "build_advanced_preset_controls",
     "build_larva_group_widget",
     "build_larva_groups_widget",
     "build_preprocess_conf_widget",
+    "build_user_preset_controls",
     "build_sim_ops_widget",
     "build_odorscape_widget",
     "collapsible_family_box",
+    "PresetActionPolicy",
+    "PresetCatalog",
+    "PresetControlsController",
+    "PresetRef",
+    "PresetSource",
+    "RegistryPresetStore",
+    "WorkspacePresetStore",
     "resolve_conftype",
+    "ADVANCED_PRESET_POLICY",
     "build_thermoscape_widget",
     "build_trials_widget",
+    "USER_PRESET_POLICY",
     "build_windscape_widget",
     "conftypes_demo_app",
 ]
