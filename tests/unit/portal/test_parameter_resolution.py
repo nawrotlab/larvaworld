@@ -33,7 +33,6 @@ def test_parameter_resolution_default_template_matches_controller_base(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
     controller.environment_select.value = "__template__"
 
     resolved = resolve_base_experiment_parameters(
@@ -80,8 +79,10 @@ def test_parameter_resolution_workspace_environment_override_preserves_behavior(
     )
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
-    controller.environment_select.value = "rect_env.json"
+    controller.environment_select.value = controller.environment_select.options[
+        "Workspace / rect_env"
+    ]
+    assert controller.environment_preset_controls.load_selected() is True
     payload = controller._load_selected_environment()
 
     resolved = resolve_base_experiment_parameters("dish", payload)
@@ -100,10 +101,10 @@ def test_parameter_resolution_registry_environment_override_preserves_behavior(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    controller.experiment.value = "dish"
     controller.environment_select.value = controller.environment_select.options[
         "Registry / maze"
     ]
+    assert controller.environment_preset_controls.load_selected() is True
     payload = controller._load_selected_environment()
 
     resolved = resolve_base_experiment_parameters("dish", payload)

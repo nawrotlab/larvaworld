@@ -1528,8 +1528,10 @@ def test_single_experiment_environment_preset_box_is_first_in_environment_parame
     assert isinstance(env_content, pn.Column)
     preset_box = env_content[0]
     assert isinstance(preset_box, pn.Column)
-    assert controller.environment_template_default_btn in preset_box.objects
-    assert controller.environment_preset_controls.view in preset_box.objects
+    assert controller.environment_preset_view in preset_box.objects
+    assert controller.environment_template_default_btn in preset_box.select(
+        pn.widgets.Button
+    )
     assert controller.refresh_environments_btn in preset_box.select(pn.widgets.Button)
     assert controller.environment_preset_controls.reset_button is None
 
