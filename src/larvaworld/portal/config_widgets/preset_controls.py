@@ -260,7 +260,8 @@ class PresetControlsController:
         on_load: Callable[[PresetRef, Any], None] | None = None,
         on_save: Callable[[PresetRef, Any], None] | None = None,
         on_status: Callable[..., None] | None = None,
-        title: str = "Stored Configurations",
+        title: str | None = "Stored Configurations",
+        preset_name_after_refresh: bool = False,
         confirm_destructive: bool = True,
     ) -> None:
         self.conftype = str(conftype)
@@ -272,11 +273,12 @@ class PresetControlsController:
         self.on_load = on_load
         self.on_save = on_save
         self.on_status = on_status
+        self.preset_name_after_refresh = bool(preset_name_after_refresh)
         self.confirm_destructive = bool(confirm_destructive)
         self.catalog = PresetCatalog(refs=tuple(), by_token={})
         self._pending_confirmation: _PendingConfirmation | None = None
 
-        self.title = pn.pane.Markdown(f"### {title}")
+        self.title = pn.pane.Markdown(f"### {title}") if title else None
         self.preset_name = pn.widgets.TextInput(
             name=(
                 "Workspace preset name"
@@ -284,29 +286,26 @@ class PresetControlsController:
                 else "Preset name"
             ),
             placeholder="my_preset",
+            sizing_mode="stretch_width",
         )
-        self.preset_select = pn.widgets.Select(name="Preset to load", options={})
+        self.preset_select = pn.widgets.Select(
+            name="Preset to load", options={}, sizing_mode="stretch_width"
+        )
         self.refresh_button = pn.widgets.Button(
-            name="Refresh list", button_type="warning"
+            name="Refresh list", button_type="default", sizing_mode="stretch_width"
         )
         self.load_button = pn.widgets.Button(
-            name="Load selected", button_type="primary"
+            name="Load", button_type="primary", sizing_mode="stretch_width"
         )
         self.save_button = pn.widgets.Button(
-            name=(
-                "Save to workspace"
-                if not self.policy.can_save_registry
-                else "Save to selected target"
-            ),
+            name="Save",
             button_type="primary",
+            sizing_mode="stretch_width",
         )
         self.delete_button = pn.widgets.Button(
-            name=(
-                "Delete workspace preset"
-                if not self.policy.can_delete_registry
-                else "Delete selected preset"
-            ),
+            name="Delete",
             button_type="warning",
+            sizing_mode="stretch_width",
         )
         self.save_target = (
             pn.widgets.RadioButtonGroup(
@@ -327,6 +326,7 @@ class PresetControlsController:
             else None
         )
         self.status = pn.pane.HTML("", sizing_mode="stretch_width")
+        self.status.visible = False
         self.storage_info = pn.pane.Markdown("", sizing_mode="stretch_width")
         self.confirmation_host = pn.Column(sizing_mode="stretch_width")
 
@@ -337,29 +337,47 @@ class PresetControlsController:
         if self.reset_button is not None:
             self.reset_button.on_click(lambda _event: self.request_reset_registry())
 
-        controls: list[Any] = [
-            self.title,
-            self.preset_name,
-            self.preset_select,
-            self.refresh_button,
-        ]
+        controls: list[Any] = []
+        if self.title is not None:
+            controls.append(self.title)
+        if self.preset_name_after_refresh:
+            controls.extend(
+                [
+                    self.preset_select,
+                    self.refresh_button,
+                    self.preset_name,
+                ]
+            )
+        else:
+            controls.extend(
+                [
+                    self.preset_name,
+                    self.preset_select,
+                    self.refresh_button,
+                ]
+            )
         if self.save_target is not None:
             controls.append(self.save_target)
         controls.extend(
             [
-                pn.Row(self.save_button, self.load_button, sizing_mode="stretch_width"),
-                self.delete_button,
+                pn.Row(
+                    self.save_button,
+                    self.load_button,
+                    self.delete_button,
+                    sizing_mode="stretch_width",
+                ),
             ]
         )
         if self.reset_button is not None:
             controls.append(self.reset_button)
-        controls.extend([self.confirmation_host, self.storage_info, self.status])
+        controls.extend([self.confirmation_host, self.status])
         self.view = pn.Column(*controls, sizing_mode="stretch_width")
 
         self.refresh_list()
 
     def _set_status(self, message: str, *, tone: str = "neutral") -> None:
         self.status.object = f"<div>{message}</div>"
+        self.status.visible = tone in {"warning", "danger"}
         if self.on_status is not None:
             self.on_status(message, tone=tone)
 
@@ -501,7 +519,11 @@ class PresetControlsController:
             return False
 
         if self.on_load is not None:
-            self.on_load(ref, payload)
+            try:
+                self.on_load(ref, payload)
+            except Exception as exc:
+                self._set_status(f"Load failed: {exc}", tone="danger")
+                return False
         self._set_status(f"Loaded {ref.display_label}.", tone="success")
         return True
 

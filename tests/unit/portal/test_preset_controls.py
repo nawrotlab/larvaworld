@@ -249,6 +249,19 @@ def test_on_load_callback_receives_ref_and_raw_payload(
     assert isinstance(seen[0][2], dict)
 
 
+def test_on_load_callback_exception_returns_false_with_status(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    def _on_load(_ref, _payload):
+        raise RuntimeError("bad payload")
+
+    controller = _new_controller(tmp_path / "presets", on_load=_on_load)
+    controller.preset_select.value = controller.preset_select.options["Registry / dish"]
+
+    assert controller.load_selected() is False
+    assert "Load failed: bad payload" in str(controller.status.object)
+
+
 def test_on_save_callback_receives_workspace_ref_from_refreshed_catalog(
     tmp_path: Path, isolated_env_conf_dir: Path
 ) -> None:

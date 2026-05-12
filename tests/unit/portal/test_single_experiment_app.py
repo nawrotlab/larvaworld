@@ -73,6 +73,24 @@ def _set_registry_experiment(
     ]
 
 
+def _load_registry_template(
+    controller: _SingleExperimentController, template_name: str
+) -> None:
+    controller.experiment_template_select.value = (
+        controller.experiment_template_select.options[f"Registry / {template_name}"]
+    )
+    assert controller.experiment_template_preset_controls.load_selected() is True
+
+
+def _load_workspace_template(
+    controller: _SingleExperimentController, template_name: str
+) -> None:
+    controller.experiment_template_select.value = (
+        controller.experiment_template_select.options[f"Workspace / {template_name}"]
+    )
+    assert controller.experiment_template_preset_controls.load_selected() is True
+
+
 def test_single_experiment_lists_workspace_environment_presets(tmp_path: Path) -> None:
     workspace_root = tmp_path / "workspace"
     initialize_workspace(workspace_root)
@@ -1534,7 +1552,8 @@ def test_single_experiment_environment_save_controls_dirty_and_name_gating(
     arena_width.value = float(arena_width.value) + 0.001
 
     assert controller.environment_save_name.disabled is False
-    assert controller.environment_save_btn.disabled is True
+    assert controller.environment_save_name.value == "my_environment"
+    assert controller.environment_save_btn.disabled is False
     controller.environment_save_name.value = "My nice arena!"
     assert controller.environment_save_btn.disabled is False
 
@@ -1655,10 +1674,10 @@ def test_single_experiment_template_save_box_in_configuration_and_disabled_initi
     config_column = config_card.objects[0]
 
     assert controller.experiment_template_save_box in config_column.objects
-    assert (
-        config_column.objects.index(controller.experiment_template_save_box)
-        == config_column.objects.index(controller.experiment) + 1
+    assert controller.experiment_template_preset_controls.view in (
+        controller.experiment_template_save_box.objects
     )
+    assert controller.experiment_template_preset_controls.reset_button is None
     assert controller.experiment_template_save_name.disabled is True
     assert controller.experiment_template_save_btn.disabled is True
 
@@ -1681,6 +1700,7 @@ def test_single_experiment_template_save_dirty_state_from_env_and_experiment_edi
     controller.experiment_template_save_name.value = "env_dirty_template"
     assert controller.experiment_template_save_name.disabled is False
     assert controller.experiment_template_save_btn.disabled is False
+    assert "Will save as:" not in str(controller.experiment_template_save_hint.object)
 
     controller._refresh_parameter_editor()
     assert controller.experiment_template_save_name.disabled is True
@@ -1694,6 +1714,7 @@ def test_single_experiment_template_save_dirty_state_from_env_and_experiment_edi
     controller.experiment_template_save_name.value = "exp_dirty_template"
     assert controller.experiment_template_save_name.disabled is False
     assert controller.experiment_template_save_btn.disabled is False
+    assert "Will save as:" not in str(controller.experiment_template_save_hint.object)
 
 
 def test_single_experiment_template_save_writes_whitelisted_payload(
@@ -1764,13 +1785,107 @@ def test_single_experiment_selector_lists_registry_and_workspace_templates(
     controller = _SingleExperimentController()
     controller._refresh_experiment_template_options()
 
-    assert "Registry / dish" in controller.experiment.options
-    assert controller.experiment.options["Registry / dish"] == "__registry__:dish"
-    assert "Workspace / my_template" in controller.experiment.options
-    assert (
-        controller.experiment.options["Workspace / my_template"]
-        == "__workspace__:my_template.json"
+    assert "Registry / dish" in controller.experiment_template_select.options
+    assert controller.experiment_template_select.options["Registry / dish"].startswith(
+        "registry:Exp:"
     )
+    assert "Workspace / my_template" in controller.experiment_template_select.options
+    assert (
+        controller.experiment_template_select.options["Workspace / my_template"]
+        == "workspace:single-experiment-templates:my_template.json"
+    )
+
+
+def test_single_experiment_template_helper_select_does_not_mutate_state(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    before = controller.selection.experiment_template
+    controller.experiment_template_select.value = (
+        controller.experiment_template_select.options["Registry / chemotaxis"]
+    )
+
+    assert controller.selection.experiment_template == before
+    assert controller._selected_experiment() == "dish"
+
+
+def test_single_experiment_template_helper_hides_registry_reset_action(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    assert controller.experiment_template_preset_controls.reset_button is None
+
+
+def test_single_experiment_template_helper_registry_actions_are_read_only(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    assert (
+        controller.experiment_template_preset_controls.policy.can_save_registry is False
+    )
+    assert (
+        controller.experiment_template_preset_controls.policy.can_delete_registry
+        is False
+    )
+    assert (
+        controller.experiment_template_preset_controls.policy.can_reset_registry
+        is False
+    )
+    controller.experiment_template_select.value = (
+        controller.experiment_template_select.options["Registry / dish"]
+    )
+    assert controller.experiment_template_preset_controls.delete_selected() is False
+    assert "read-only" in str(
+        controller.experiment_template_preset_controls.status.object
+    )
+
+
+def test_single_experiment_template_same_name_registry_and_workspace_coexist(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    templates_dir = workspace_root / "metadata" / "experiment_templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    (templates_dir / "dish.json").write_text(
+        json.dumps({"experiment": "dish"}) + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    assert "Registry / dish" in controller.experiment_template_select.options
+    assert "Workspace / dish" in controller.experiment_template_select.options
+
+
+def test_single_experiment_registry_template_load_resets_env_preset_to_default(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.environment_select.value = controller.environment_select.options[
+        "Registry / maze"
+    ]
+    assert controller.environment_preset_controls.load_selected() is True
+    assert controller.selection.environment_preset != "__template__"
+
+    _load_registry_template(controller, "dish")
+    assert controller.selection.environment_preset == "__template__"
 
 
 def test_single_experiment_workspace_template_load_uses_payload_experiment_id(
@@ -1794,9 +1909,7 @@ def test_single_experiment_workspace_template_load_uses_payload_experiment_id(
     )
 
     controller = _SingleExperimentController()
-    controller.experiment.value = controller.experiment.options[
-        "Workspace / my_template"
-    ]
+    _load_workspace_template(controller, "my_template")
     parameters = controller._build_parameters()
 
     assert controller._selected_experiment() == "dish"
@@ -1836,7 +1949,7 @@ def test_single_experiment_workspace_template_load_refreshes_typed_ui_sections(
     )
 
     controller = _SingleExperimentController()
-    controller.experiment.value = controller.experiment.options["Workspace / dish_1"]
+    _load_workspace_template(controller, "dish_1")
 
     env_owner = controller._typed_experiment_for_env_params
     larva_owner = controller._typed_experiment_for_larva_groups
@@ -1870,14 +1983,15 @@ def test_single_experiment_workspace_template_missing_experiment_is_rejected(
     )
 
     controller = _SingleExperimentController()
-    previous = controller.experiment.value
-    controller.experiment.value = controller.experiment.options[
-        "Workspace / bad_template"
-    ]
+    previous = controller.selection.experiment_template
+    controller.experiment_template_select.value = (
+        controller.experiment_template_select.options["Workspace / bad_template"]
+    )
+    assert controller.experiment_template_preset_controls.load_selected() is False
 
-    assert controller.experiment.value == "__workspace__:bad_template.json"
+    assert controller.selection.experiment_template == previous
     assert controller._selected_experiment() == "dish"
-    assert previous == "__registry__:dish"
+    assert previous.startswith("registry:Exp:")
     assert "missing required field: experiment" in str(controller.status.object)
 
 
@@ -1896,10 +2010,15 @@ def test_single_experiment_template_save_refreshes_selector_options(
     controller.experiment_template_save_name.value = "new_selector_template"
     controller._on_save_experiment_template()
 
-    assert "Workspace / new_selector_template" in controller.experiment.options
     assert (
-        controller.experiment.options["Workspace / new_selector_template"]
-        == "__workspace__:new_selector_template.json"
+        "Workspace / new_selector_template"
+        in controller.experiment_template_select.options
+    )
+    assert (
+        controller.experiment_template_select.options[
+            "Workspace / new_selector_template"
+        ]
+        == "workspace:single-experiment-templates:new_selector_template.json"
     )
 
 
@@ -1927,8 +2046,7 @@ def test_single_experiment_template_save_collision_requires_confirmation(
     initial_payload = target.read_text(encoding="utf-8")
     controller._on_save_experiment_template()
 
-    assert controller.experiment_template_confirm_overwrite_btn.visible is True
-    assert controller.experiment_template_cancel_overwrite_btn.visible is True
+    assert controller.experiment_template_preset_controls.confirmation_host.objects
     assert target.read_text(encoding="utf-8") == initial_payload
 
 
@@ -1958,7 +2076,7 @@ def test_single_experiment_template_save_cancel_and_confirm_overwrite(
     controller._on_save_experiment_template()
     controller._on_cancel_overwrite_experiment_template()
     assert target.read_text(encoding="utf-8") == initial_payload
-    assert controller.experiment_template_confirm_overwrite_btn.visible is False
+    assert not controller.experiment_template_preset_controls.confirmation_host.objects
 
     controller._on_save_experiment_template()
     controller._on_confirm_overwrite_experiment_template()
@@ -1982,9 +2100,7 @@ def test_single_experiment_workspace_load_edit_save_requires_overwrite_confirmat
     )
 
     controller = _SingleExperimentController()
-    controller.experiment.value = controller.experiment.options[
-        "Workspace / my_template"
-    ]
+    _load_workspace_template(controller, "my_template")
     sim_ops_view = controller._get_parameter_group_view("sim_ops")
     assert sim_ops_view is not None
     larva_collisions = _find_widget(
@@ -1996,8 +2112,7 @@ def test_single_experiment_workspace_load_edit_save_requires_overwrite_confirmat
     assert controller.experiment_template_save_btn.disabled is False
     controller._on_save_experiment_template()
 
-    assert controller.experiment_template_confirm_overwrite_btn.visible is True
-    assert controller.experiment_template_cancel_overwrite_btn.visible is True
+    assert controller.experiment_template_preset_controls.confirmation_host.objects
 
 
 def test_single_experiment_workspace_load_larva_edit_enables_template_save(
@@ -2029,7 +2144,7 @@ def test_single_experiment_workspace_load_larva_edit_enables_template_save(
     )
 
     controller = _SingleExperimentController()
-    controller.experiment.value = controller.experiment.options["Workspace / dish_1"]
+    _load_workspace_template(controller, "dish_1")
     assert controller.experiment_template_save_name.disabled is True
     assert controller.experiment_template_save_btn.disabled is True
 
