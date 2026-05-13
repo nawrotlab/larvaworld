@@ -257,6 +257,7 @@ class PresetControlsController:
         policy: PresetActionPolicy,
         build_workspace_payload: Callable[[str], Any],
         build_registry_payload: Callable[[str], Any] | None = None,
+        before_save: Callable[[str, str], None] | None = None,
         on_load: Callable[[PresetRef, Any], None] | None = None,
         on_save: Callable[[PresetRef, Any], None] | None = None,
         on_status: Callable[..., None] | None = None,
@@ -270,6 +271,7 @@ class PresetControlsController:
         self.policy = policy
         self.build_workspace_payload = build_workspace_payload
         self.build_registry_payload = build_registry_payload or build_workspace_payload
+        self.before_save = before_save
         self.on_load = on_load
         self.on_save = on_save
         self.on_status = on_status
@@ -544,6 +546,13 @@ class PresetControlsController:
         if not self.policy.can_save(target_source):
             self._set_status("Saving to this source is not allowed.", tone="warning")
             return False
+
+        if self.before_save is not None:
+            try:
+                self.before_save(target_name, target_source)
+            except Exception as exc:
+                self._set_status(str(exc), tone="warning")
+                return False
 
         if target_source == PresetSource.WORKSPACE:
             return self._save_workspace(target_name)

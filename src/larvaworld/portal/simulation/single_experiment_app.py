@@ -14,6 +14,11 @@ import param
 
 from larvaworld.lib import reg, screen, sim, util
 from larvaworld.lib.param.custom import ClassAttr, ClassDict
+from larvaworld.lib.sim.validation import (
+    CompatibilityIssue,
+    CompatibilityReport,
+    validate_experiment_environment_compatibility,
+)
 from larvaworld.portal.canvas_widgets import (
     EnvironmentCanvas,
     LarvaPreviewFrame,
@@ -1111,7 +1116,7 @@ class _SingleExperimentController:
             value=_default_run_name(self.selection.experiment_template),
         )
         self.environment_template_default_btn = pn.widgets.Button(
-            name="Template default environment",
+            name="Reset to defaults",
             button_type="default",
         )
         self.environment_preset_controls = PresetControlsController(
@@ -1132,8 +1137,12 @@ class _SingleExperimentController:
         )
         self.environment_select = self.environment_preset_controls.preset_select
         self.refresh_environments_btn = self.environment_preset_controls.refresh_button
+        self.refresh_environments_btn.width = None
+        self.refresh_environments_btn.sizing_mode = "stretch_width"
         self.environment_save_name = self.environment_preset_controls.preset_name
         self.environment_save_btn = self.environment_preset_controls.save_button
+        self.environment_template_default_btn.width = None
+        self.environment_template_default_btn.sizing_mode = "stretch_width"
         self.environment_preset_view = pn.Column(
             self.environment_preset_controls.preset_select,
             pn.Row(
@@ -1160,6 +1169,7 @@ class _SingleExperimentController:
             ),
             policy=USER_PRESET_POLICY,
             build_workspace_payload=lambda _name: self._experiment_template_payload(),
+            before_save=self._before_save_experiment_template_preset,
             on_load=self._on_experiment_template_preset_loaded,
             on_save=self._on_experiment_template_preset_saved,
             on_status=self._on_experiment_template_preset_status,
@@ -1379,6 +1389,8 @@ class _SingleExperimentController:
         )
         self._suspend_experiment_change = False
         self._run_controls_locked = False
+        self._pending_run_warning_note = ""
+        self._pending_template_save_warning_note = ""
 
         self.selection.param.watch(self._on_experiment_change, "experiment_template")
         self.run_name.param.watch(self._on_run_name_change, "value")
@@ -1904,6 +1916,72 @@ class _SingleExperimentController:
             if key in payload and hasattr(exp_owner, key):
                 setattr(exp_owner, key, _normalize_scalar(payload[key]))
 
+    @staticmethod
+    def _compatibility_summary(issues: tuple[CompatibilityIssue, ...]) -> str:
+        if not issues:
+            return ""
+        rendered: list[str] = []
+        for issue in issues[:3]:
+            if issue.path:
+                rendered.append(f"{issue.path}: {issue.message}")
+            else:
+                rendered.append(issue.message)
+        if len(issues) > 3:
+            rendered.append(f"... and {len(issues) - 3} more")
+        return "; ".join(rendered)
+
+    def _compatibility_warning_suffix(self, report: CompatibilityReport) -> str:
+        if not report.warnings:
+            return ""
+        return f" Warning: {self._compatibility_summary(report.warnings)}"
+
+    def _validate_resolved_parameters_for_action(
+        self,
+        *,
+        parameters: util.AttrDict,
+        action_label: str,
+        show_preview_failure: bool,
+    ) -> tuple[bool, str]:
+        report = validate_experiment_environment_compatibility(parameters)
+        if report.has_errors:
+            message = (
+                f"Experiment configuration is incompatible for {action_label}: "
+                f"{self._compatibility_summary(report.errors)}"
+            )
+            self.status.object = message
+            if show_preview_failure:
+                self.preview[:] = [
+                    pn.pane.HTML(
+                        (
+                            '<div class="lw-single-exp-preview-placeholder">'
+                            f"{html.escape(message)}"
+                            "</div>"
+                        ),
+                        margin=0,
+                    )
+                ]
+            return False, ""
+        return True, self._compatibility_warning_suffix(report)
+
+    def _before_save_experiment_template_preset(
+        self,
+        _target_name: str,
+        target_source: str,
+    ) -> None:
+        self._pending_template_save_warning_note = ""
+        if target_source != PresetSource.WORKSPACE:
+            return
+        parameters = self._resolve_experiment_parameters()
+        report = validate_experiment_environment_compatibility(parameters)
+        if report.has_errors:
+            raise ValueError(
+                "Experiment configuration is incompatible for saving this "
+                f"template: {self._compatibility_summary(report.errors)}"
+            )
+        self._pending_template_save_warning_note = self._compatibility_warning_suffix(
+            report
+        )
+
     def _experiment_template_payload(self) -> dict[str, Any]:
         parameters = self._resolve_experiment_parameters()
         payload: dict[str, Any] = {"experiment": self._selected_experiment()}
@@ -2120,6 +2198,11 @@ class _SingleExperimentController:
         self.selection.experiment_template = ref.token
         self.experiment_template_save_name.value = ref.name
         self._refresh_experiment_template_save_state(reset_baseline=True)
+        warning_note = self._pending_template_save_warning_note
+        self._pending_template_save_warning_note = ""
+        self.status.object = f'Experiment template "{ref.name}" saved.' + (
+            warning_note if warning_note else ""
+        )
 
     @staticmethod
     def _apply_environment_payload(
@@ -3395,6 +3478,8 @@ class _SingleExperimentController:
         selected_env: str,
     ) -> None:
         launcher = None
+        warning_note = self._pending_run_warning_note
+        self._pending_run_warning_note = ""
         try:
             plan_path = self._write_resolved_plan(
                 run_dir=run_dir,
@@ -3412,7 +3497,7 @@ class _SingleExperimentController:
             )
             datasets = launcher.simulate()
         except Exception as exc:
-            self.status.object = f"Single experiment run failed: {exc}"
+            self.status.object = f"Single experiment run failed: {exc}{warning_note}"
             self._set_run_controls_disabled(False)
             return
         finally:
@@ -3433,6 +3518,7 @@ class _SingleExperimentController:
                 if self.save_video.value
                 else ""
             )
+            + warning_note
         )
         self._set_run_controls_disabled(False)
 
@@ -3511,6 +3597,17 @@ class _SingleExperimentController:
     def _on_prepare_preview(self, *_: object) -> None:
         try:
             parameters = self._resolve_experiment_parameters()
+        except (WorkspaceError, OSError, json.JSONDecodeError, ValueError) as exc:
+            self.status.object = f"Cannot prepare the configuration preview: {exc}"
+            return
+        ok, warning_note = self._validate_resolved_parameters_for_action(
+            parameters=parameters,
+            action_label="Arena Preview",
+            show_preview_failure=True,
+        )
+        if not ok:
+            return
+        try:
             run_dir = self._build_run_directory()
         except (WorkspaceError, OSError, json.JSONDecodeError) as exc:
             self.status.object = f"Cannot prepare the configuration preview: {exc}"
@@ -3546,12 +3643,24 @@ class _SingleExperimentController:
             f'Prepared configuration preview for "{self._selected_experiment()}" using '
             f"{selected_env}. Reserved output directory for a future run: "
             f"<code>{run_dir}</code>. No simulation has been run."
+            f"{warning_note}"
         )
         self._set_run_controls_disabled(False)
 
     def _on_generate_simulation_preview(self, *_: object) -> None:
         try:
             parameters = self._resolve_experiment_parameters()
+        except (WorkspaceError, OSError, json.JSONDecodeError, ValueError) as exc:
+            self.status.object = f"Cannot generate the simulation preview: {exc}"
+            return
+        ok, warning_note = self._validate_resolved_parameters_for_action(
+            parameters=parameters,
+            action_label="Generate simulation preview",
+            show_preview_failure=True,
+        )
+        if not ok:
+            return
+        try:
             run_dir = self._build_run_directory()
         except (WorkspaceError, OSError, json.JSONDecodeError) as exc:
             self.status.object = f"Cannot generate the simulation preview: {exc}"
@@ -3632,12 +3741,24 @@ class _SingleExperimentController:
         )
         if fallback_note:
             status = f"{status} {fallback_note}"
-        self.status.object = status
+        self.status.object = f"{status}{warning_note}"
         self._set_run_controls_disabled(False)
 
     def _on_run_experiment(self, *_: object) -> None:
+        self._pending_run_warning_note = ""
         try:
             parameters = self._resolve_experiment_parameters()
+        except (WorkspaceError, OSError, json.JSONDecodeError, ValueError) as exc:
+            self.status.object = f"Cannot start the single experiment run: {exc}"
+            return
+        ok, warning_note = self._validate_resolved_parameters_for_action(
+            parameters=parameters,
+            action_label="Run experiment",
+            show_preview_failure=False,
+        )
+        if not ok:
+            return
+        try:
             run_dir = self._build_run_directory()
         except (WorkspaceError, OSError, json.JSONDecodeError) as exc:
             self.status.object = f"Cannot start the single experiment run: {exc}"
@@ -3649,6 +3770,7 @@ class _SingleExperimentController:
             f'Running "{experiment}" using {selected_env}. '
             f"Outputs will be stored under <code>{run_dir}</code>. "
             "The UI will be unresponsive until the simulation finishes."
+            f"{warning_note}"
         )
         self.preview[:] = [
             pn.pane.HTML(
@@ -3662,6 +3784,7 @@ class _SingleExperimentController:
                 margin=0,
             )
         ]
+        self._pending_run_warning_note = warning_note
         self._set_run_controls_disabled(True)
         document = pn.state.curdoc
         if document is not None:

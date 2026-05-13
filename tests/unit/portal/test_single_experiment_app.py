@@ -11,6 +11,7 @@ import pytest
 
 from larvaworld.lib import reg, util
 from larvaworld.lib.reg.larvagroup import LarvaGroup
+from larvaworld.lib.sim.validation import CompatibilityIssue, CompatibilityReport
 from larvaworld.portal.canvas_widgets.environment_models import (
     CanvasArena,
     EnvironmentCanvasState,
@@ -89,6 +90,35 @@ def _load_workspace_template(
         controller.experiment_template_select.options[f"Workspace / {template_name}"]
     )
     assert controller.experiment_template_preset_controls.load_selected() is True
+
+
+def _incompatible_parameters() -> util.AttrDict:
+    return util.AttrDict(
+        {
+            "env_params": {
+                "arena": {"geometry": "rectangular", "dims": (0.2, 0.2)},
+                "food_params": {
+                    "food_grid": None,
+                    "source_groups": {},
+                    "source_units": {},
+                },
+                "border_list": {},
+                "odorscape": None,
+                "windscape": None,
+                "thermoscape": None,
+            },
+            "larva_groups": {
+                "explorer": {
+                    "distribution": {
+                        "loc": (0.11, 0.0),
+                        "scale": (0.01, 0.01),
+                        "mode": "uniform",
+                        "shape": "rect",
+                    }
+                }
+            },
+        }
+    )
 
 
 def test_single_experiment_lists_workspace_environment_presets(tmp_path: Path) -> None:
@@ -400,6 +430,36 @@ def test_single_experiment_configuration_preview_uses_environment_preset_overrid
     state = captured["state"]
     assert state.arena.geometry == "rectangular"
     assert state.arena.dims == (0.2, 0.1)
+
+
+def test_single_experiment_prepare_preview_blocks_on_incompatible_configuration(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    monkeypatch.setattr(
+        controller,
+        "_resolve_experiment_parameters",
+        lambda: _incompatible_parameters(),
+    )
+    monkeypatch.setattr(
+        controller,
+        "_build_run_directory",
+        lambda: (_ for _ in ()).throw(
+            AssertionError("run directory should not be created")
+        ),
+    )
+
+    controller._on_prepare_preview()
+
+    assert "Experiment configuration is incompatible for Arena Preview" in str(
+        controller.status.object
+    )
+    assert "incompatible" in str(getattr(controller.preview[0], "object", "")).lower()
 
 
 def test_single_experiment_builder_obstacles_are_translated_into_border_entries(
@@ -981,6 +1041,76 @@ def test_single_experiment_run_experiment_uses_resolved_parameters_boundary(
     assert str(captured["run_dir"]).endswith("dish_boundary")
 
 
+def test_single_experiment_run_experiment_blocks_on_incompatible_configuration(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    monkeypatch.setattr(
+        controller,
+        "_resolve_experiment_parameters",
+        lambda: _incompatible_parameters(),
+    )
+    monkeypatch.setattr(
+        controller,
+        "_build_run_directory",
+        lambda: (_ for _ in ()).throw(
+            AssertionError("run directory should not be created")
+        ),
+    )
+    monkeypatch.setattr(
+        _SingleExperimentController,
+        "_execute_run_experiment",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("run execution should not start")
+        ),
+    )
+
+    controller._on_run_experiment()
+
+    assert "Experiment configuration is incompatible for Run experiment" in str(
+        controller.status.object
+    )
+
+
+def test_single_experiment_run_experiment_appends_compatibility_warning(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    warning_report = CompatibilityReport(
+        issues=(
+            CompatibilityIssue(
+                severity="warning",
+                path="larva_groups.explorer.distribution",
+                message="Normal distribution 3-sigma envelope extends outside the arena.",
+            ),
+        )
+    )
+    monkeypatch.setattr(
+        "larvaworld.portal.simulation.single_experiment_app.validate_experiment_environment_compatibility",
+        lambda _parameters: warning_report,
+    )
+    monkeypatch.setattr(
+        _SingleExperimentController,
+        "_execute_run_experiment",
+        lambda *args, **kwargs: None,
+    )
+
+    controller.run_name.value = "dish_warning"
+    controller._on_run_experiment()
+
+    assert "Warning:" in str(controller.status.object)
+
+
 def test_single_experiment_preview_status_uses_reserved_run_directory_wording(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1093,6 +1223,43 @@ def test_single_experiment_generate_preview_uses_resolved_parameters_boundary(
     )
 
     controller._on_generate_simulation_preview()
+
+
+def test_single_experiment_generate_preview_blocks_on_incompatible_configuration(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    monkeypatch.setattr(
+        controller,
+        "_resolve_experiment_parameters",
+        lambda: _incompatible_parameters(),
+    )
+    monkeypatch.setattr(
+        controller,
+        "_build_run_directory",
+        lambda: (_ for _ in ()).throw(
+            AssertionError("run directory should not be created")
+        ),
+    )
+    monkeypatch.setattr(
+        _SingleExperimentController,
+        "_prepare_preview_launcher",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("preview launcher should not be created")
+        ),
+    )
+
+    controller._on_generate_simulation_preview()
+
+    assert (
+        "Experiment configuration is incompatible for Generate simulation preview"
+        in str(controller.status.object)
+    )
 
 
 def test_frame_simulation_preview_player_is_random_access() -> None:
@@ -2050,6 +2217,41 @@ def test_single_experiment_template_save_collision_requires_confirmation(
 
     assert controller.experiment_template_preset_controls.confirmation_host.objects
     assert target.read_text(encoding="utf-8") == initial_payload
+
+
+def test_single_experiment_template_save_blocks_before_overwrite_confirmation_when_incompatible(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    target = (
+        workspace_root / "metadata" / "experiment_templates" / "saved_template.json"
+    )
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        json.dumps(
+            {"experiment": "dish", "env_params": {"arena": {"dims": [0.1, 0.1]}}}
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    controller.experiment_template_save_name.value = "saved_template"
+    initial_payload = target.read_text(encoding="utf-8")
+    monkeypatch.setattr(
+        controller,
+        "_resolve_experiment_parameters",
+        lambda: _incompatible_parameters(),
+    )
+
+    controller._on_save_experiment_template()
+
+    assert not controller.experiment_template_preset_controls.confirmation_host.objects
+    assert target.read_text(encoding="utf-8") == initial_payload
+    assert "incompatible" in str(controller.status.object).lower()
 
 
 def test_single_experiment_template_save_cancel_and_confirm_overwrite(
