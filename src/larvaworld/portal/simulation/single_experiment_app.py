@@ -1942,7 +1942,15 @@ class _SingleExperimentController:
         action_label: str,
         show_preview_failure: bool,
     ) -> tuple[bool, str]:
-        report = validate_experiment_environment_compatibility(parameters)
+        selected_token = str(self.selection.experiment_template)
+        is_registry_selection = (
+            self._registry_experiment_from_token(selected_token) is not None
+        )
+        report = validate_experiment_environment_compatibility(
+            parameters,
+            allow_registry_legacy=is_registry_selection,
+            experiment_id=self._selected_experiment(),
+        )
         if report.has_errors:
             message = (
                 f"Experiment configuration is incompatible for {action_label}: "
@@ -1972,7 +1980,15 @@ class _SingleExperimentController:
         if target_source != PresetSource.WORKSPACE:
             return
         parameters = self._resolve_experiment_parameters()
-        report = validate_experiment_environment_compatibility(parameters)
+        selected_token = str(self.selection.experiment_template)
+        is_registry_selection = (
+            self._registry_experiment_from_token(selected_token) is not None
+        )
+        report = validate_experiment_environment_compatibility(
+            parameters,
+            allow_registry_legacy=is_registry_selection,
+            experiment_id=self._selected_experiment(),
+        )
         if report.has_errors:
             raise ValueError(
                 "Experiment configuration is incompatible for saving this "

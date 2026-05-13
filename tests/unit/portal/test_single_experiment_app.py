@@ -462,6 +462,49 @@ def test_single_experiment_prepare_preview_blocks_on_incompatible_configuration(
     assert "incompatible" in str(getattr(controller.preview[0], "object", "")).lower()
 
 
+def test_single_experiment_registry_template_uses_legacy_validation_context(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    captured: dict[str, object] = {}
+    warning_report = CompatibilityReport(
+        issues=(
+            CompatibilityIssue(
+                severity="warning",
+                path="larva_groups.toucher.distribution",
+                message="Distribution envelope extends outside the arena.",
+            ),
+        )
+    )
+
+    def fake_validate(parameters, *, allow_registry_legacy=False, experiment_id=None):
+        captured["allow_registry_legacy"] = allow_registry_legacy
+        captured["experiment_id"] = experiment_id
+        return warning_report
+
+    monkeypatch.setattr(
+        "larvaworld.portal.simulation.single_experiment_app.validate_experiment_environment_compatibility",
+        fake_validate,
+    )
+
+    controller = _SingleExperimentController()
+    _load_registry_template(controller, "tactile_detection")
+    ok, warning_note = controller._validate_resolved_parameters_for_action(
+        parameters=controller._resolve_experiment_parameters(),
+        action_label="Arena Preview",
+        show_preview_failure=False,
+    )
+
+    assert ok is True
+    assert "Warning:" in warning_note
+    assert captured["allow_registry_legacy"] is True
+    assert captured["experiment_id"] == "tactile_detection"
+
+
 def test_single_experiment_builder_obstacles_are_translated_into_border_entries(
     tmp_path: Path,
 ) -> None:

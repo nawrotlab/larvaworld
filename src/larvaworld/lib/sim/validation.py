@@ -19,6 +19,7 @@ _DETERMINISTIC_MODES = {"uniform", "periphery", "grid"}
 _RECT_SHAPES = {"rect", "rectangular"}
 _CIRCLE_SHAPES = {"circle"}
 _OVAL_SHAPES = {"oval"}
+_LEGACY_REGISTRY_ENVELOPE_WARNING_EXPERIMENTS = {"tactile_detection"}
 
 
 @dataclass(frozen=True)
@@ -47,6 +48,9 @@ class CompatibilityReport:
 
 def validate_experiment_environment_compatibility(
     parameters: Any,
+    *,
+    allow_registry_legacy: bool = False,
+    experiment_id: str | None = None,
 ) -> CompatibilityReport:
     issues: list[CompatibilityIssue] = []
 
@@ -141,7 +145,7 @@ def validate_experiment_environment_compatibility(
                 CompatibilityIssue(
                     severity="warning",
                     path=f"{group_path}.distribution.loc",
-                    message="Distribution center is missing or non-numeric.",
+                    message="Distribution center must contain two numeric values.",
                 )
             )
             continue
@@ -165,7 +169,7 @@ def validate_experiment_environment_compatibility(
                     severity="warning",
                     path=f"{group_path}.distribution.scale",
                     message=(
-                        "Distribution scale is missing or non-numeric; skipped envelope check."
+                        "Distribution scale must contain two numeric values; skipped envelope check."
                     ),
                 )
             )
@@ -235,9 +239,13 @@ def validate_experiment_environment_compatibility(
             )
             continue
         if any(not _point_in_arena(arena, point) for point in points):
+            legacy_envelope_warning = (
+                allow_registry_legacy
+                and experiment_id in _LEGACY_REGISTRY_ENVELOPE_WARNING_EXPERIMENTS
+            )
             issues.append(
                 CompatibilityIssue(
-                    severity="error",
+                    severity="warning" if legacy_envelope_warning else "error",
                     path=f"{group_path}.distribution",
                     message="Distribution envelope extends outside the arena.",
                 )
@@ -276,7 +284,7 @@ def _pair(value: Any) -> tuple[float, float] | None:
             value = list(value)
         except Exception:
             return None
-    if not isinstance(value, (list, tuple)) or len(value) < 2:
+    if not isinstance(value, (list, tuple)) or len(value) != 2:
         return None
     try:
         return (float(value[0]), float(value[1]))
@@ -317,12 +325,11 @@ def _distribution_boundary_points(
             (x0 + sx, y0 + sy),
         ]
     if shape in _CIRCLE_SHAPES:
-        radius = max(sx, sy)
         return [
-            (x0 + radius, y0),
-            (x0 - radius, y0),
-            (x0, y0 + radius),
-            (x0, y0 - radius),
+            (x0 + sx, y0),
+            (x0 - sx, y0),
+            (x0, y0 + sy),
+            (x0, y0 - sy),
         ]
     if shape in _OVAL_SHAPES:
         return [
