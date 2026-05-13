@@ -1933,7 +1933,10 @@ class _SingleExperimentController:
     def _compatibility_warning_suffix(self, report: CompatibilityReport) -> str:
         if not report.warnings:
             return ""
-        return f" Warning: {self._compatibility_summary(report.warnings)}"
+        return (
+            '<br><span style="color:#d97706;"><strong>Warning:</strong> '
+            f"{html.escape(self._compatibility_summary(report.warnings))}</span>"
+        )
 
     def _validate_resolved_parameters_for_action(
         self,
@@ -3657,8 +3660,9 @@ class _SingleExperimentController:
         self.preview[:] = [_preview_canvas_row(canvas.view())]
         self.status.object = (
             f'Prepared configuration preview for "{self._selected_experiment()}" using '
-            f"{selected_env}. Reserved output directory for a future run: "
-            f"<code>{run_dir}</code>. No simulation has been run."
+            f"{selected_env}. Output directory for a future run:"
+            f"<br><code>{run_dir}</code>."
+            "<br>No simulation has been run."
             f"{warning_note}"
         )
         self._set_run_controls_disabled(False)
@@ -3750,7 +3754,8 @@ class _SingleExperimentController:
         displayed_end = frames[-1].tick * float(launcher.dt)
         status = (
             f'Generated simulation preview for "{experiment}" using {selected_env}. '
-            f"Reserved output directory for a future run: <code>{run_dir}</code>. "
+            "Output directory for a future run:"
+            f"<br><code>{run_dir}</code>. "
             f"Simulation preview ready: {len(frames)} frames generated. "
             f"Displayed range: 0.0-{displayed_end:.1f} s simulated time. "
             "Generated from the actual simulation engine. Outputs are not stored; use Run experiment for the full run."
