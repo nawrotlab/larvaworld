@@ -1140,7 +1140,7 @@ def test_single_experiment_run_experiment_appends_compatibility_warning(
     )
     monkeypatch.setattr(
         "larvaworld.portal.simulation.single_experiment_app.validate_experiment_environment_compatibility",
-        lambda _parameters: warning_report,
+        lambda _parameters, **_kwargs: warning_report,
     )
     monkeypatch.setattr(
         _SingleExperimentController,

@@ -174,3 +174,190 @@ def test_validation_registry_tactile_detection_legacy_mode_warns() -> None:
     assert any(
         issue.path == "larva_groups.toucher.distribution" for issue in report.warnings
     )
+
+
+def test_validation_accepts_missing_food_params() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"].pop("food_params")
+    report = validate_experiment_environment_compatibility(parameters)
+    assert not report.has_errors
+
+
+def test_validation_accepts_source_unit_inside_arena() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"]["food_params"]["source_units"] = {
+        "patch": {"pos": (0.02, 0.01), "radius": 0.005}
+    }
+    report = validate_experiment_environment_compatibility(parameters)
+    assert not report.has_errors
+
+
+def test_validation_accepts_source_unit_center_on_boundary() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"]["food_params"]["source_units"] = {
+        "patch": {"pos": (0.1, 0.0)}
+    }
+    report = validate_experiment_environment_compatibility(parameters)
+    assert not report.has_errors
+
+
+def test_validation_rejects_source_unit_with_invalid_pos() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"]["food_params"]["source_units"] = {
+        "patch": {"pos": (0.01, 0.01, 0.0)}
+    }
+    report = validate_experiment_environment_compatibility(parameters)
+    assert report.has_errors
+    assert any(
+        issue.path == "env_params.food_params.source_units.patch.pos"
+        for issue in report.errors
+    )
+
+
+def test_validation_rejects_source_unit_center_outside_arena() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"]["food_params"]["source_units"] = {
+        "patch": {"pos": (0.11, 0.0)}
+    }
+    report = validate_experiment_environment_compatibility(parameters)
+    assert report.has_errors
+    assert any(
+        issue.path == "env_params.food_params.source_units.patch.pos"
+        for issue in report.errors
+    )
+
+
+def test_validation_warns_when_source_unit_radius_envelope_leaves_arena() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"]["food_params"]["source_units"] = {
+        "patch": {"pos": (0.097, 0.0), "radius": 0.01}
+    }
+    report = validate_experiment_environment_compatibility(parameters)
+    assert not report.has_errors
+    assert any(
+        issue.path == "env_params.food_params.source_units.patch"
+        for issue in report.warnings
+    )
+
+
+def test_validation_warns_on_source_unit_negative_radius() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"]["food_params"]["source_units"] = {
+        "patch": {"pos": (0.0, 0.0), "radius": -0.01}
+    }
+    report = validate_experiment_environment_compatibility(parameters)
+    assert not report.has_errors
+    assert any(
+        issue.path == "env_params.food_params.source_units.patch.radius"
+        for issue in report.warnings
+    )
+
+
+def test_validation_warns_on_source_unit_non_numeric_radius() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"]["food_params"]["source_units"] = {
+        "patch": {"pos": (0.0, 0.0), "radius": "bad"}
+    }
+    report = validate_experiment_environment_compatibility(parameters)
+    assert not report.has_errors
+    assert any(
+        issue.path == "env_params.food_params.source_units.patch.radius"
+        for issue in report.warnings
+    )
+
+
+def test_validation_accepts_valid_source_group_distribution() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"]["food_params"]["source_groups"] = {
+        "cluster": {
+            "distribution": {
+                "loc": (0.0, 0.0),
+                "scale": (0.02, 0.02),
+                "mode": "uniform",
+                "shape": "circle",
+            }
+        }
+    }
+    report = validate_experiment_environment_compatibility(parameters)
+    assert not report.has_errors
+
+
+def test_validation_rejects_source_group_center_outside_arena() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"]["food_params"]["source_groups"] = {
+        "cluster": {
+            "distribution": {
+                "loc": (0.12, 0.0),
+                "scale": (0.02, 0.02),
+                "mode": "uniform",
+                "shape": "circle",
+            }
+        }
+    }
+    report = validate_experiment_environment_compatibility(parameters)
+    assert report.has_errors
+    assert any(
+        issue.path == "env_params.food_params.source_groups.cluster.distribution.loc"
+        for issue in report.errors
+    )
+
+
+def test_validation_rejects_source_group_deterministic_envelope_outside_arena() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"]["food_params"]["source_groups"] = {
+        "cluster": {
+            "distribution": {
+                "loc": (0.095, 0.0),
+                "scale": (0.02, 0.02),
+                "mode": "uniform",
+                "shape": "circle",
+            }
+        }
+    }
+    report = validate_experiment_environment_compatibility(parameters)
+    assert report.has_errors
+    assert any(
+        issue.path == "env_params.food_params.source_groups.cluster.distribution"
+        for issue in report.errors
+    )
+
+
+def test_validation_warns_when_source_group_normal_3sigma_leaves_arena() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"]["food_params"]["source_groups"] = {
+        "cluster": {
+            "distribution": {
+                "loc": (0.0, 0.0),
+                "scale": (0.2, 0.2),
+                "mode": "normal",
+                "shape": "rect",
+            }
+        }
+    }
+    report = validate_experiment_environment_compatibility(parameters)
+    assert not report.has_errors
+    assert any(
+        issue.path == "env_params.food_params.source_groups.cluster.distribution"
+        for issue in report.warnings
+    )
+
+
+def test_validation_warns_for_ambiguous_source_group_shape_mode_combo() -> None:
+    parameters = _base_parameters()
+    parameters["env_params"]["food_params"]["source_groups"] = {
+        "cluster": {
+            "distribution": {
+                "loc": (0.0, 0.0),
+                "scale": (0.02, 0.02),
+                "mode": "uniform",
+                "shape": "triangle",
+            }
+        }
+    }
+    report = validate_experiment_environment_compatibility(parameters)
+    assert not report.has_errors
+    assert any(
+        issue.path == "env_params.food_params.source_groups.cluster.distribution"
+        and "Ambiguous distribution shape/mode" in issue.message
+        for issue in report.warnings
+    )
