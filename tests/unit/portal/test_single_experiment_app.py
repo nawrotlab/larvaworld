@@ -933,6 +933,7 @@ def test_single_experiment_runtime_screen_kws_include_video_when_enabled(
     assert kws["fps"] == 3
     assert kws["show_display"] is True
     assert kws["display_every_n_steps"] == 4
+    assert kws["pygame_keys"]["pause"] == "K_SPACE"
     assert kws["media_dir"] == str(workspace_root / "simulations" / "dish_demo")
 
 
@@ -950,6 +951,7 @@ def test_single_experiment_show_display_uses_video_render_mode(tmp_path: Path) -
     assert kws["show_display"] is True
     assert kws["vis_mode"] == "video"
     assert kws["display_every_n_steps"] == 3
+    assert "pygame_keys" in kws
     assert "save_video" not in kws
 
 
@@ -1154,6 +1156,48 @@ def test_single_experiment_run_experiment_appends_compatibility_warning(
     assert "Warning:" in str(controller.status.object)
 
 
+def test_single_experiment_run_experiment_blocks_on_invalid_shortcuts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    monkeypatch.setattr(
+        controller.display_shortcuts,
+        "validate",
+        lambda: ['simulation.pause: unsupported key "nope".'],
+    )
+    monkeypatch.setattr(
+        controller,
+        "_resolve_experiment_parameters",
+        lambda: (_ for _ in ()).throw(
+            AssertionError("parameter resolution should not start")
+        ),
+    )
+    monkeypatch.setattr(
+        controller,
+        "_build_run_directory",
+        lambda: (_ for _ in ()).throw(
+            AssertionError("run directory should not be created")
+        ),
+    )
+    monkeypatch.setattr(
+        _SingleExperimentController,
+        "_execute_run_experiment",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("run execution should not start")
+        ),
+    )
+
+    controller._on_run_experiment()
+
+    assert "display shortcuts are invalid" in str(controller.status.object)
+    assert "unsupported key" in str(controller.status.object)
+
+
 def test_single_experiment_preview_status_uses_reserved_run_directory_wording(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -1210,7 +1254,7 @@ def test_single_experiment_preview_status_uses_reserved_run_directory_wording(
     controller.run_name.value = "dish_preview"
     controller._on_generate_simulation_preview()
 
-    assert "Reserved output directory for a future run" in controller.status.object
+    assert "Output directory for a future run:" in controller.status.object
     assert "Simulation preview ready: 2 frames generated." in controller.status.object
     assert "Displayed range: 0.0-0.1 s simulated time." in controller.status.object
     assert "Outputs are not stored" in controller.status.object
@@ -1491,7 +1535,7 @@ def test_single_experiment_preview_canvas_row_excludes_display_shortcuts_legend(
 
     assert isinstance(controller.preview[0], pn.Row)
     assert len(controller.preview[0].objects) == 1
-    assert "Run display shortcuts" not in str(controller.preview[0])
+    assert "Pause / resume" not in str(controller.preview[0])
 
 
 def test_single_experiment_run_info_contains_display_shortcuts_link() -> None:
@@ -1511,9 +1555,11 @@ def test_single_experiment_display_shortcuts_dialog_open_close_and_note() -> Non
     dialog_text = str(controller.display_shortcuts_dialog[0][0].object)
     assert "live pygame display opened by Run experiment" in dialog_text
     assert "They do not control the preview canvas." in dialog_text
-    assert "Run display shortcuts" in str(
-        controller.display_shortcuts_dialog[0][1].object
-    )
+    markdowns = controller.display_shortcuts_dialog[0][1].select(pn.pane.Markdown)
+    shortcuts_body = "\n".join(str(pane.object) for pane in markdowns)
+    assert "Pause / resume" in shortcuts_body
+    assert "Trail duration +" in shortcuts_body
+    assert "]" not in shortcuts_body
 
     controller._on_close_display_shortcuts()
     assert controller.display_shortcuts_dialog.visible is False

@@ -53,6 +53,9 @@ from larvaworld.portal.simulation.parameter_resolution import (
     apply_environment_payload,
     resolve_base_experiment_parameters,
 )
+from larvaworld.portal.simulation.display_shortcuts import (
+    DisplayShortcutsController,
+)
 from larvaworld.portal.simulation.preview_frames import generate_preview_frames
 from larvaworld.portal.workspace import WorkspaceError, get_workspace_dir
 
@@ -654,35 +657,6 @@ def _is_absent_optional_value(value: Any, absent_value: Any) -> bool:
 
 def _summary_label(text: str) -> str:
     return f'<div class="lw-single-exp-param-summary">{text}</div>'
-
-
-def _display_shortcuts_content() -> pn.pane.HTML:
-    return pn.pane.HTML(
-        """
-        <div class="lw-single-exp-shortcuts-table-wrap">
-          <h4>Run display shortcuts</h4>
-          <table>
-            <tr><td><kbd>Space</kbd></td><td>Pause / resume</td></tr>
-            <tr><td><kbd>Wheel</kbd></td><td>Zoom around cursor</td></tr>
-            <tr><td><kbd>Arrows</kbd></td><td>Pan display</td></tr>
-            <tr><td><kbd>]</kbd> <kbd>/</kbd></td><td>FPS up / down</td></tr>
-            <tr><td><kbd>T</kbd></td><td>Clock</td></tr>
-            <tr><td><kbd>N</kbd></td><td>Scale</td></tr>
-            <tr><td><kbd>S</kbd></td><td>State overlay</td></tr>
-            <tr><td><kbd>Tab</kbd></td><td>Agent IDs</td></tr>
-            <tr><td><kbd>P</kbd></td><td>Toggle trails</td></tr>
-            <tr><td><kbd>+</kbd> <kbd>-</kbd></td><td>Trail duration</td></tr>
-            <tr><td><kbd>X</kbd></td><td>Trail color</td></tr>
-            <tr><td><kbd>G</kbd></td><td>Black background</td></tr>
-            <tr><td><kbd>R</kbd></td><td>Random colors</td></tr>
-            <tr><td><kbd>B</kbd></td><td>Color by behavior</td></tr>
-            <tr><td><kbd>I</kbd></td><td>Snapshot</td></tr>
-            <tr><td><kbd>Y</kbd></td><td>Larva collisions</td></tr>
-          </table>
-        </div>
-        """,
-        margin=0,
-    )
 
 
 def _preview_canvas_row(canvas_view: pn.viewable.Viewable) -> pn.Row:
@@ -1340,6 +1314,7 @@ class _SingleExperimentController:
             width=88,
             margin=(8, 0, 0, 0),
         )
+        self.display_shortcuts = DisplayShortcutsController()
         self.display_shortcuts_dialog = pn.Column(
             pn.Column(
                 pn.pane.Markdown(
@@ -1351,7 +1326,7 @@ class _SingleExperimentController:
                     css_classes=["lw-single-exp-shortcuts-note"],
                     margin=0,
                 ),
-                _display_shortcuts_content(),
+                self.display_shortcuts.view(),
                 self.display_shortcuts_close_btn,
                 css_classes=["lw-single-exp-shortcuts-dialog"],
                 sizing_mode="fixed",
@@ -3440,6 +3415,7 @@ class _SingleExperimentController:
         kws: dict[str, Any] = {
             "show_display": bool(self.show_display.value),
             "display_every_n_steps": int(self.display_every_n_steps.value),
+            "pygame_keys": self.display_shortcuts.runtime_pygame_keys(),
         }
         if self.show_display.value:
             kws["vis_mode"] = "video"
@@ -3767,6 +3743,14 @@ class _SingleExperimentController:
 
     def _on_run_experiment(self, *_: object) -> None:
         self._pending_run_warning_note = ""
+        shortcut_errors = self.display_shortcuts.validate()
+        if shortcut_errors:
+            bullet_list = "\n".join(f"- {msg}" for msg in shortcut_errors)
+            self.status.object = (
+                "Cannot start the single experiment run: display shortcuts are invalid.\n"
+                f"{bullet_list}"
+            )
+            return
         try:
             parameters = self._resolve_experiment_parameters()
         except (WorkspaceError, OSError, json.JSONDecodeError, ValueError) as exc:

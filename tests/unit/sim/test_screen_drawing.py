@@ -204,3 +204,47 @@ def test_screen_manager_display_mode_helpers() -> None:
 
     manager.save_video = True
     assert ScreenManager.display_only_mode.fget(manager) is False
+
+
+def test_screen_manager_evaluate_input_uses_injected_pygame_keys(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    load_calls = {"count": 0}
+    monkeypatch.setattr("pygame.event.get", lambda: [])
+    monkeypatch.setattr(
+        "larvaworld.lib.screen.drawing.reg.controls.load",
+        lambda: load_calls.__setitem__("count", load_calls["count"] + 1) or {},
+    )
+
+    manager = SimpleNamespace(
+        pygame_keys={"pause": "K_SPACE"},
+        allow_clicks=False,
+        focus_mode=False,
+        selected_agents=[],
+    )
+
+    ScreenManager.evaluate_input(manager)
+
+    assert load_calls["count"] == 0
+    assert manager.pygame_keys["pause"] == "K_SPACE"
+
+
+def test_screen_manager_evaluate_input_falls_back_to_registry_controls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("pygame.event.get", lambda: [])
+    monkeypatch.setattr(
+        "larvaworld.lib.screen.drawing.reg.controls.load",
+        lambda: {"pygame_keys": {"pause": "K_SPACE"}},
+    )
+
+    manager = SimpleNamespace(
+        pygame_keys=None,
+        allow_clicks=False,
+        focus_mode=False,
+        selected_agents=[],
+    )
+
+    ScreenManager.evaluate_input(manager)
+
+    assert manager.pygame_keys["pause"] == "K_SPACE"

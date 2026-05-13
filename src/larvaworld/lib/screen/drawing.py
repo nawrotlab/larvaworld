@@ -91,6 +91,10 @@ class MediaDrawOps(NestedConf):
     save_video = Boolean(False, doc="Whether to save a video.")
     vis_mode = OptionalSelector(objects=["video", "image"], doc="Screen mode.")
     show_display = Boolean(False, doc="Whether to launch the pygame-visualization.")
+    pygame_keys = param.Parameter(
+        default=None,
+        doc="Optional action-to-pygame-key mapping injected at runtime.",
+    )
     display_every_n_steps = PositiveInteger(
         1,
         softmax=20,
@@ -622,8 +626,6 @@ class ScreenManager(ScreenAreaPygame):
 
         self.snapshot_counter = 0
         self.odorscape_counter = 0
-
-        self.pygame_keys = None
 
         self.vid_writer = None
         self.img_writer = None
