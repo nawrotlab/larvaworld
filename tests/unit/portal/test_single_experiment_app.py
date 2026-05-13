@@ -1552,14 +1552,28 @@ def test_single_experiment_display_shortcuts_dialog_open_close_and_note() -> Non
     assert controller.display_shortcuts_dialog.visible is False
     controller._on_open_display_shortcuts()
     assert controller.display_shortcuts_dialog.visible is True
-    dialog_text = str(controller.display_shortcuts_dialog[0][0].object)
+    dialog_text = str(controller.display_shortcuts_dialog[0][1].object)
     assert "live pygame display opened by Run experiment" in dialog_text
     assert "They do not control the preview canvas." in dialog_text
-    markdowns = controller.display_shortcuts_dialog[0][1].select(pn.pane.Markdown)
+    dialog_card = controller.display_shortcuts_dialog[0]
+    drag_headers = [
+        row
+        for row in dialog_card.select(pn.Row)
+        if "lw-single-exp-shortcuts-drag-handle" in getattr(row, "css_classes", [])
+    ]
+    assert len(drag_headers) == 1
+    assert controller.display_shortcuts_close_btn in drag_headers[0].objects
+    shortcuts_panel = controller.display_shortcuts_dialog[0][2]
+    buttons = shortcuts_panel.select(pn.widgets.Button)
+    names = [button.name for button in buttons]
+    assert "Edit shortcuts" in names
+    assert "Save shortcuts" in names
+    assert "Reset all to defaults" in names
+    markdowns = shortcuts_panel.select(pn.pane.Markdown)
     shortcuts_body = "\n".join(str(pane.object) for pane in markdowns)
-    assert "Pause / resume" in shortcuts_body
-    assert "Trail duration +" in shortcuts_body
     assert "]" not in shortcuts_body
+    text_inputs = shortcuts_panel.select(pn.widgets.TextInput)
+    assert all(widget.visible is False for widget in text_inputs)
 
     controller._on_close_display_shortcuts()
     assert controller.display_shortcuts_dialog.visible is False

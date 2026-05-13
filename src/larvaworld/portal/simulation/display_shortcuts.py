@@ -101,6 +101,8 @@ class DisplayShortcutsController(param.Parameterized):
     config = param.ClassSelector(class_=DisplayShortcutsConfig, constant=True)
     dirty = param.Boolean(default=False)
     status = param.String(default="")
+    editing = param.Boolean(default=False)
+    capturing_field = param.String(default="")
 
     def __init__(self, **params: Any) -> None:
         super().__init__(config=DisplayShortcutsConfig(), **params)
@@ -109,6 +111,13 @@ class DisplayShortcutsController(param.Parameterized):
             self._defaults.get("keys", {})
         )
         self._status_pane = pn.pane.Markdown("", margin=(6, 0, 0, 0))
+        self._capture_bridge = pn.widgets.TextInput(value="", visible=False)
+        self._editing_bridge = pn.widgets.TextInput(value="0", visible=False)
+        self._edit_btn = pn.widgets.Button(
+            name="Edit shortcuts",
+            button_type="default",
+            width=120,
+        )
         self._save_btn = pn.widgets.Button(
             name="Save shortcuts",
             button_type="primary",
@@ -119,8 +128,12 @@ class DisplayShortcutsController(param.Parameterized):
             button_type="default",
             width=164,
         )
+        self._key_buttons: dict[str, pn.widgets.Button] = {}
+        self._view_obj: pn.viewable.Viewable | None = None
+        self._edit_btn.on_click(self._toggle_editing)
         self._save_btn.on_click(self._on_save)
         self._reset_btn.on_click(self._on_reset)
+        self._capture_bridge.param.watch(self._on_capture_payload, "value")
         self._watchers = [
             self.config.param.watch(self._on_config_change, spec.field)
             for spec in _SHORTCUT_FIELDS
@@ -180,12 +193,160 @@ class DisplayShortcutsController(param.Parameterized):
         workspace_ok = self._workspace_available()
         self._save_btn.disabled = (not self.dirty) or (not workspace_ok)
         self._reset_btn.disabled = not workspace_ok
+        self._edit_btn.disabled = not workspace_ok
+        self._edit_btn.name = "Done editing" if self.editing else "Edit shortcuts"
+        self._editing_bridge.value = "1" if self.editing else "0"
+        self._refresh_key_buttons()
 
     def _on_config_change(self, *_: Any) -> None:
         self.dirty = True
         self.status = ""
         self._status_pane.object = ""
         self._update_controls_state()
+
+    @staticmethod
+    def _normalize_browser_key(raw_key: str) -> str | None:
+        key_raw = str(raw_key)
+        if key_raw in {" ", "Space", "Spacebar"}:
+            return "space"
+        key = key_raw.strip()
+        if not key:
+            return None
+        if key in {"Escape", "Esc"}:
+            return "__cancel__"
+        fixed = {
+            "Tab": "tab",
+            "Delete": "del",
+            "ArrowUp": "UP",
+            "ArrowDown": "DOWN",
+            "ArrowLeft": "LEFT",
+            "ArrowRight": "RIGHT",
+        }.get(key)
+        if fixed is not None:
+            return fixed
+        if len(key) == 1:
+            if key.isalpha():
+                return key.lower()
+            if key.isdigit() or key in {"+", "-"}:
+                return key
+        return key
+
+    @staticmethod
+    def _format_key_label(key: str) -> str:
+        value = str(key)
+        if value == "":
+            return ""
+        value = value.strip()
+        mapping = {"space": "Space", "tab": "Tab", "del": "Delete"}
+        if value in mapping:
+            return mapping[value]
+        if len(value) == 1 and value.isalpha():
+            return value.upper()
+        return value
+
+    def _find_duplicate_assignment(
+        self, key: str, excluding_field: str
+    ) -> ShortcutFieldSpec | None:
+        for spec in _SHORTCUT_FIELDS:
+            if spec.field == excluding_field:
+                continue
+            current = str(getattr(self.config, spec.field))
+            if current == key:
+                return spec
+        return None
+
+    def _refresh_key_buttons(self) -> None:
+        for field, button in self._key_buttons.items():
+            spec = _FIELD_TO_SPEC[field]
+            if self.capturing_field == field:
+                button.name = "Press key..."
+                button.button_type = "primary"
+            else:
+                current = getattr(self.config, field)
+                button.name = self._format_key_label(str(current))
+                button.button_type = "default"
+            button.disabled = not self.editing
+            button.tooltip = spec.label
+
+    def _cancel_capture(self, *, clear_status: bool = False) -> None:
+        self.capturing_field = ""
+        self._refresh_key_buttons()
+        if clear_status:
+            self.status = ""
+            self._status_pane.object = ""
+
+    def _toggle_editing(self, *_: Any) -> None:
+        if self.editing:
+            self._cancel_capture(clear_status=True)
+            self.editing = False
+        else:
+            self.editing = True
+            self.status = "Edit mode enabled. Click a shortcut and press a key."
+            self._status_pane.object = self.status
+        self._update_controls_state()
+
+    def _start_capture(self, field: str) -> None:
+        if not self.editing:
+            return
+        spec = _FIELD_TO_SPEC.get(field)
+        if spec is None:
+            return
+        self.capturing_field = field
+        self.status = f'Press a key for "{spec.label}". Press Esc to cancel.'
+        self._status_pane.object = self.status
+        self._refresh_key_buttons()
+
+    def _on_capture_payload(self, event: param.parameterized.Event) -> None:
+        payload = str(event.new).strip()
+        if not payload:
+            return
+        try:
+            data = json.loads(payload)
+        except json.JSONDecodeError:
+            return
+        field = str(data.get("field", "")).strip()
+        key_value = data.get("key", "")
+        key = key_value if isinstance(key_value, str) else str(key_value)
+        if not field or key == "":
+            return
+        self._apply_captured_key(field, key)
+
+    def _apply_captured_key(self, field: str, raw_key: str) -> None:
+        if field != self.capturing_field or field not in _FIELD_TO_SPEC:
+            return
+        normalized = self._normalize_browser_key(raw_key)
+        if normalized == "__cancel__":
+            self.status = "Shortcut capture cancelled."
+            self._status_pane.object = self.status
+            self._cancel_capture()
+            return
+        if not normalized or not keymap.validate_key_name(normalized):
+            setattr(self.config, field, "")
+            self.status = (
+                f'Unsupported key "{raw_key}". Shortcut cleared; '
+                "choose a supported key before saving."
+            )
+            self._status_pane.object = self.status
+            self._cancel_capture()
+            return
+        duplicate_spec = self._find_duplicate_assignment(
+            normalized, excluding_field=field
+        )
+        if duplicate_spec is not None:
+            self.status = (
+                f"Cannot assign {self._format_key_label(normalized)} to "
+                f"{_FIELD_TO_SPEC[field].label}: already used by {duplicate_spec.label}."
+            )
+            self._status_pane.object = self.status
+            self._cancel_capture()
+            return
+        setattr(self.config, field, normalized)
+        self.status = (
+            f"{_FIELD_TO_SPEC[field].label} updated to "
+            f"{self._format_key_label(normalized)}."
+        )
+        self._status_pane.object = self.status
+        self._cancel_capture()
 
     def load_from_workspace(self) -> None:
         keys = self._defaults_subset
@@ -257,15 +418,55 @@ class DisplayShortcutsController(param.Parameterized):
         self._update_controls_state()
 
     def view(self) -> pn.viewable.Viewable:
+        if self._view_obj is not None:
+            return self._view_obj
         groups: list[pn.viewable.Viewable] = []
         for section in _SECTION_ORDER:
             rows: list[pn.viewable.Viewable] = []
             for spec in _SECTION_TO_FIELDS[section]:
-                widget = pn.widgets.TextInput.from_param(
-                    self.config.param[spec.field],
-                    name="",
-                    width=84,
+                button = pn.widgets.Button(
+                    name=self._format_key_label(str(getattr(self.config, spec.field))),
+                    button_type="default",
+                    width=100,
                     margin=0,
+                )
+                self._key_buttons[spec.field] = button
+                button.on_click(
+                    lambda _event, field=spec.field: self._start_capture(field)
+                )
+                button.jscallback(
+                    args={
+                        "bridge": self._capture_bridge,
+                        "editingBridge": self._editing_bridge,
+                        "fieldName": spec.field,
+                    },
+                    clicks="""
+if (editingBridge.value !== "1") {
+  return;
+}
+if (window.__larvaworldShortcutCaptureCleanup) {
+  window.__larvaworldShortcutCaptureCleanup();
+}
+setTimeout(() => {
+  const handler = (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    bridge.value = JSON.stringify({
+      field: fieldName,
+      key: ev.key,
+      nonce: Date.now(),
+    });
+    bridge.change.emit();
+    window.removeEventListener("keydown", handler, true);
+    window.__larvaworldShortcutCaptureCleanup = null;
+  };
+  window.addEventListener("keydown", handler, true);
+  window.__larvaworldShortcutCaptureCleanup = () => {
+    window.removeEventListener("keydown", handler, true);
+    window.__larvaworldShortcutCaptureCleanup = null;
+  };
+}, 0);
+""",
                 )
                 default_value = self._defaults_subset.get(spec.section, {}).get(
                     spec.action, ""
@@ -273,9 +474,9 @@ class DisplayShortcutsController(param.Parameterized):
                 rows.append(
                     pn.Row(
                         pn.pane.Markdown(spec.label, width=170, margin=(3, 0, 0, 0)),
-                        widget,
+                        button,
                         pn.pane.Markdown(
-                            f'<span style="font-size:11px;color:#6b7280;">Default: {default_value}</span>',
+                            f'<span style="font-size:11px;color:#6b7280;">Default: {self._format_key_label(default_value)}</span>',
                             margin=(3, 0, 0, 0),
                         ),
                         sizing_mode="stretch_width",
@@ -292,11 +493,21 @@ class DisplayShortcutsController(param.Parameterized):
                     sizing_mode="stretch_width",
                 )
             )
-        actions = pn.Row(self._save_btn, self._reset_btn, sizing_mode="stretch_width")
-        return pn.Column(
+        actions = pn.Row(
+            self._edit_btn,
+            self._save_btn,
+            self._reset_btn,
+            sizing_mode="stretch_width",
+        )
+        self._view_obj = pn.Column(
             *groups,
             actions,
             self._status_pane,
+            self._capture_bridge,
+            self._editing_bridge,
             sizing_mode="stretch_width",
             margin=0,
         )
+        self._refresh_key_buttons()
+        self._update_controls_state()
+        return self._view_obj

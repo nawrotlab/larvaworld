@@ -136,20 +136,22 @@ SINGLE_EXPERIMENT_RAW_CSS = """
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: rgba(15, 23, 42, 0.36);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: rgba(15, 23, 42, 0.58);
   padding: 24px;
 }
 
 .lw-single-exp-shortcuts-dialog {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   width: min(560px, 95vw);
   max-height: 85vh;
   overflow: auto;
   border-radius: 10px;
-  border: 1px solid rgba(17, 17, 17, 0.14);
-  background: #fff;
+  border: 1px solid rgba(60, 60, 60, 0.26);
+  background: #dddddd;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.34);
   color: rgba(17, 17, 17, 0.86);
   padding: 12px 14px;
 }
@@ -158,6 +160,25 @@ SINGLE_EXPERIMENT_RAW_CSS = """
   font-size: 12px;
   line-height: 1.45;
   margin: 0 0 8px 0;
+}
+
+.lw-single-exp-shortcuts-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: default;
+  user-select: none;
+  margin: -2px -4px 10px -4px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(60, 60, 60, 0.1);
+}
+
+.lw-single-exp-shortcuts-dialog-title {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 600;
 }
 
 .lw-single-exp-shortcuts-table-wrap {
@@ -1312,11 +1333,22 @@ class _SingleExperimentController:
             name="Close",
             button_type="default",
             width=88,
-            margin=(8, 0, 0, 0),
+            margin=0,
         )
         self.display_shortcuts = DisplayShortcutsController()
         self.display_shortcuts_dialog = pn.Column(
             pn.Column(
+                pn.Row(
+                    pn.pane.Markdown(
+                        "<p class='lw-single-exp-shortcuts-dialog-title'>Display Shortcuts</p>",
+                        margin=0,
+                    ),
+                    pn.Spacer(sizing_mode="stretch_width"),
+                    self.display_shortcuts_close_btn,
+                    css_classes=["lw-single-exp-shortcuts-drag-handle"],
+                    sizing_mode="stretch_width",
+                    margin=0,
+                ),
                 pn.pane.Markdown(
                     (
                         "These shortcuts apply only to the live pygame display opened by "
@@ -1327,7 +1359,6 @@ class _SingleExperimentController:
                     margin=0,
                 ),
                 self.display_shortcuts.view(),
-                self.display_shortcuts_close_btn,
                 css_classes=["lw-single-exp-shortcuts-dialog"],
                 sizing_mode="fixed",
             ),
