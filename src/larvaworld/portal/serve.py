@@ -27,7 +27,7 @@ APP_ID_TO_FACTORY_PATH: dict[str, str] = {
     "wf.environment_builder": "larvaworld.portal.models_architecture.environment_builder_app:environment_builder_app",
     "dev.conftypes": "larvaworld.portal.config_widgets.conftypes_demo_app:conftypes_demo_app",
     # Legacy destinations (served as-is)
-    "track_viewer": "larvaworld.dashboards.track_viewer:track_viewer_app",
+    "track_viewer": "larvaworld.portal.datasets.dataset_replay_app:dataset_replay_app",
     "experiment_viewer": "larvaworld.dashboards.experiment_viewer:experiment_viewer_app",
     "larva_models": "larvaworld.dashboards.model_inspector:model_inspector_app",
     "locomotory_modules": "larvaworld.dashboards.module_inspector:module_inspector_app",

@@ -10,6 +10,7 @@ from larvaworld.portal.canvas_widgets.environment_canvas import (
 )
 from larvaworld.portal.canvas_widgets.environment_models import (
     CanvasArena,
+    CanvasRingOverlay,
     CanvasObject,
     EnvironmentCanvasState,
     LarvaPreviewFrame,
@@ -223,6 +224,36 @@ def test_environment_canvas_set_larva_frame_populates_dynamic_sources() -> None:
     assert canvas.sim_larva_head_source.data["x"] == [0.0016]
     assert canvas.sim_larva_midline_source.data["xs"] == [[0.0, 0.001, 0.002]]
     assert canvas.sim_larva_trail_source.data["ys"] == [[0.0, 0.003], [0.02, 0.021]]
+
+
+def test_environment_canvas_set_larva_frame_populates_labels() -> None:
+    canvas = EnvironmentCanvas()
+    canvas.set_larva_frame(
+        LarvaPreviewFrame(
+            tick=1,
+            centroids=((0.0, 0.0), (0.01, 0.02)),
+            colors=("#111111", "#222222"),
+            labels=("A0", "A1"),
+        )
+    )
+
+    assert canvas.sim_larva_label_source.data["label"] == ["A0", "A1"]
+    assert canvas.sim_larva_label_source.data["x"] == [0.0, 0.01]
+
+
+def test_environment_canvas_dynamic_ring_overlays_roundtrip() -> None:
+    canvas = EnvironmentCanvas()
+    canvas.set_dynamic_overlays(
+        rings=(
+            CanvasRingOverlay(x=0.0, y=0.0, radius=0.02, color="#ff0000"),
+            CanvasRingOverlay(x=0.01, y=0.02, radius=0.01, color="#00ff00"),
+        )
+    )
+    assert canvas.dynamic_ring_source.data["r"] == [0.02, 0.01]
+    assert canvas.dynamic_ring_source.data["color"] == ["#ff0000", "#00ff00"]
+
+    canvas.clear_dynamic_overlays()
+    assert canvas.dynamic_ring_source.data["r"] == []
 
 
 def test_environment_canvas_head_snapping_can_be_disabled() -> None:

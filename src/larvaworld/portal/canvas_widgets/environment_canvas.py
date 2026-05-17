@@ -6,13 +6,14 @@ from typing import Any, Iterable
 import numpy as np
 import panel as pn
 from bokeh.colors import named as named_colors
-from bokeh.models import ColumnDataSource, LegendItem, WheelZoomTool
+from bokeh.models import ColumnDataSource, LabelSet, LegendItem, WheelZoomTool
 from bokeh.plotting import figure
 
 from larvaworld.lib.param.xy_distro import Spatial_Distro
 
 from .environment_models import (
     CanvasArena,
+    CanvasRingOverlay,
     CanvasObject,
     EnvironmentCanvasState,
     LarvaPreviewFrame,
@@ -447,6 +448,12 @@ class EnvironmentCanvas:
         self.sim_larva_trail_source = ColumnDataSource(
             _empty(["xs", "ys", "color", "id"])
         )
+        self.sim_larva_label_source = ColumnDataSource(
+            _empty(["x", "y", "label", "color", "id"])
+        )
+        self.dynamic_ring_source = ColumnDataSource(
+            _empty(["x", "y", "r", "color", "line_width", "line_alpha", "line_dash"])
+        )
 
         self.fig = figure(
             title="Environment canvas",
@@ -754,6 +761,29 @@ class EnvironmentCanvas:
             fill_alpha=1.0,
             line_alpha=0.80,
         )
+        self._sim_larva_label_renderer = self.fig.add_layout(
+            LabelSet(
+                x="x",
+                y="y",
+                text="label",
+                source=self.sim_larva_label_source,
+                text_font_size="8pt",
+                text_color="color",
+                x_offset=6,
+                y_offset=4,
+            )
+        )
+        self._dynamic_ring_renderer = self.fig.circle(
+            x="x",
+            y="y",
+            radius="r",
+            source=self.dynamic_ring_source,
+            line_color="color",
+            line_width="line_width",
+            line_alpha="line_alpha",
+            line_dash="line_dash",
+            fill_alpha=0.0,
+        )
         self._food_highlight_renderer = self.fig.circle(
             x="x",
             y="y",
@@ -912,6 +942,7 @@ class EnvironmentCanvas:
         head_rows: list[dict[str, Any]] = []
         midline_rows: list[dict[str, Any]] = []
         trail_rows: list[dict[str, Any]] = []
+        label_rows: list[dict[str, Any]] = []
 
         for index, centroid in enumerate(frame.centroids):
             centroid_xy = _valid_xy(centroid)
@@ -928,6 +959,18 @@ class EnvironmentCanvas:
                     "id": larva_id,
                 }
             )
+            if index < len(frame.labels):
+                label = str(frame.labels[index]).strip()
+                if label:
+                    label_rows.append(
+                        {
+                            "x": centroid_xy[0],
+                            "y": centroid_xy[1],
+                            "label": label,
+                            "color": color,
+                            "id": larva_id,
+                        }
+                    )
             midline_points: tuple[tuple[float, float], ...] = ()
             if index < len(frame.midlines):
                 midline_points = _valid_path(frame.midlines[index])
@@ -981,12 +1024,45 @@ class EnvironmentCanvas:
         self.sim_larva_trail_source.data = _rows_to_data(
             trail_rows, ["xs", "ys", "color", "id"]
         )
+        self.sim_larva_label_source.data = _rows_to_data(
+            label_rows, ["x", "y", "label", "color", "id"]
+        )
+
+    def set_dynamic_overlays(
+        self, *, rings: tuple[CanvasRingOverlay, ...] = ()
+    ) -> None:
+        ring_rows: list[dict[str, Any]] = []
+        for ring in rings:
+            if not (math.isfinite(ring.x) and math.isfinite(ring.y)):
+                continue
+            if not math.isfinite(ring.radius) or ring.radius <= 0.0:
+                continue
+            ring_rows.append(
+                {
+                    "x": float(ring.x),
+                    "y": float(ring.y),
+                    "r": float(ring.radius),
+                    "color": str(ring.color or DEFAULT_LARVA_COLOR),
+                    "line_width": max(float(ring.line_width), 0.5),
+                    "line_alpha": max(0.0, min(float(ring.line_alpha), 1.0)),
+                    "line_dash": str(ring.line_dash or "solid"),
+                }
+            )
+        self.dynamic_ring_source.data = _rows_to_data(
+            ring_rows, ["x", "y", "r", "color", "line_width", "line_alpha", "line_dash"]
+        )
+
+    def clear_dynamic_overlays(self) -> None:
+        self.dynamic_ring_source.data = _empty(
+            ["x", "y", "r", "color", "line_width", "line_alpha", "line_dash"]
+        )
 
     def clear_larva_frame(self) -> None:
         self.sim_larva_centroid_source.data = _empty(["x", "y", "color", "id"])
         self.sim_larva_head_source.data = _empty(["x", "y", "color", "id"])
         self.sim_larva_midline_source.data = _empty(["xs", "ys", "color", "id"])
         self.sim_larva_trail_source.data = _empty(["xs", "ys", "color", "id"])
+        self.sim_larva_label_source.data = _empty(["x", "y", "label", "color", "id"])
 
     def clear(self) -> None:
         self.arena_source.data = {"x": [], "y": [], "w": [], "h": []}
@@ -1088,6 +1164,7 @@ class EnvironmentCanvas:
             ]
         )
         self.clear_larva_frame()
+        self.clear_dynamic_overlays()
         self.set_selected_object(None)
         self._state = None
 

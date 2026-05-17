@@ -35,3 +35,12 @@ def test_dataset_manager_is_a_ready_panel_app() -> None:
     assert item.status == "ready"
     assert item.panel_app_id == "wf.dataset_manager"
     assert item.panel_app_id in SERVED_APP_IDS
+
+
+def test_track_viewer_is_a_ready_panel_app() -> None:
+    item = ITEMS["track_viewer"]
+
+    assert item.kind == "panel_app"
+    assert item.status == "ready"
+    assert item.panel_app_id == "track_viewer"
+    assert item.panel_app_id in SERVED_APP_IDS

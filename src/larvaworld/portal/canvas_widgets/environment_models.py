@@ -59,3 +59,15 @@ class LarvaPreviewFrame:
     midlines: tuple[tuple[tuple[float, float], ...], ...] = ()
     trails: tuple[tuple[tuple[float, float], ...], ...] = ()
     colors: tuple[str, ...] = ()
+    labels: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class CanvasRingOverlay:
+    x: float
+    y: float
+    radius: float
+    color: str = "#2f4858"
+    line_width: float = 3.0
+    line_alpha: float = 0.95
+    line_dash: str = "solid"
