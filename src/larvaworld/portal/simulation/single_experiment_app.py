@@ -1850,7 +1850,7 @@ class _SingleExperimentController:
 
     @staticmethod
     def _workspace_override_value(existing: Any, value: Any) -> Any:
-        normalized = _normalize_scalar(value)
+        normalized = _coerce_xy_sequences(_normalize_scalar(value))
         if normalized == "empty_dict":
             if isinstance(existing, dict):
                 return {}
@@ -1887,6 +1887,117 @@ class _SingleExperimentController:
                 _SingleExperimentController._workspace_override_value(existing, value),
             )
 
+    @staticmethod
+    def _classdict_item_from_payload(
+        parameter: ClassDict,
+        item_key: str,
+        item_payload: Any,
+    ) -> Any:
+        item_type = parameter.item_type
+        if item_type is None:
+            return (
+                util.AttrDict(item_payload)
+                if isinstance(item_payload, dict)
+                else item_payload
+            )
+        if isinstance(item_payload, item_type):
+            return item_payload
+        if not isinstance(item_payload, dict):
+            return item_payload
+        kwargs = dict(_coerce_xy_sequences(util.AttrDict(item_payload)))
+        if (
+            issubclass(item_type, param.Parameterized)
+            and "group_id" in item_type.param
+            and "group_id" not in kwargs
+        ):
+            kwargs["group_id"] = str(item_key)
+        for name, item_parameter in item_type.param.objects(instance=False).items():
+            if (
+                name in kwargs
+                and isinstance(item_parameter, ClassAttr)
+                and isinstance(kwargs[name], dict)
+            ):
+                kwargs[name] = item_parameter.class_(
+                    **_coerce_xy_sequences(util.AttrDict(kwargs[name]))
+                )
+        model_payload = kwargs.pop("model", None)
+        if isinstance(model_payload, dict):
+            item = item_type(**kwargs)
+            if isinstance(item, param.Parameterized) and "model" in item.param:
+                item.param.model.check_on_set = False
+                item.model = model_payload
+                item.param.model.check_on_set = True
+                return item
+            kwargs["model"] = model_payload
+            return item_type(**kwargs)
+        if model_payload is not None:
+            kwargs["model"] = model_payload
+        return item_type(**kwargs)
+
+    def _apply_workspace_classdict_overrides_to_typed_owner(
+        self,
+        *,
+        exp_owner: Any,
+        section: str,
+        parameter: ClassDict,
+        section_payload: dict[str, Any],
+    ) -> None:
+        section_target = getattr(exp_owner, section, None)
+        if section_target is None:
+            return
+        updated = util.AttrDict(section_target)
+        for item_key, item_payload in section_payload.items():
+            item_key = str(item_key)
+            if item_key not in updated:
+                updated[item_key] = self._classdict_item_from_payload(
+                    parameter,
+                    item_key,
+                    item_payload,
+                )
+                continue
+            if isinstance(item_payload, dict):
+                flat = util.AttrDict(item_payload).flatten()
+                for path, value in flat.items():
+                    self._set_nested_value(
+                        updated[item_key],
+                        path.split("."),
+                        _normalize_scalar(value),
+                    )
+            else:
+                updated[item_key] = self._workspace_override_value(
+                    updated[item_key],
+                    item_payload,
+                )
+        setattr(exp_owner, section, updated)
+
+    def _materialize_nested_classdict_overrides(
+        self,
+        target: Any,
+        payload: dict[str, Any],
+    ) -> None:
+        if not isinstance(target, param.Parameterized):
+            return
+        parameters = target.param.objects(instance=False)
+        for name, value in payload.items():
+            parameter = parameters.get(name)
+            if parameter is None or not isinstance(value, dict):
+                continue
+            if isinstance(parameter, ClassDict):
+                updated = util.AttrDict(getattr(target, name, {}) or {})
+                for item_key, item_payload in value.items():
+                    item_key = str(item_key)
+                    if item_key not in updated:
+                        updated[item_key] = self._classdict_item_from_payload(
+                            parameter,
+                            item_key,
+                            item_payload,
+                        )
+                setattr(target, name, updated)
+                continue
+            child = getattr(target, name, None)
+            if child is not None:
+                self._materialize_nested_classdict_overrides(child, value)
+
     def _apply_workspace_overrides_to_typed_owner(
         self,
         *,
@@ -1903,9 +2014,19 @@ class _SingleExperimentController:
             return
         if not isinstance(section_payload, dict):
             return
+        parameter = exp_owner.param.objects(instance=False).get(section)
+        if isinstance(parameter, ClassDict):
+            self._apply_workspace_classdict_overrides_to_typed_owner(
+                exp_owner=exp_owner,
+                section=section,
+                parameter=parameter,
+                section_payload=section_payload,
+            )
+            return
         section_target = getattr(exp_owner, section, None)
         if section_target is None:
             return
+        self._materialize_nested_classdict_overrides(section_target, section_payload)
         flat = util.AttrDict(section_payload).flatten()
         for path, value in flat.items():
             self._set_nested_value(

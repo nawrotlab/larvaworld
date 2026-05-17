@@ -601,6 +601,11 @@ def classdict_editor(
                 item.unique_id = item_key
             except Exception:
                 pass
+        if hasattr(item, "param") and "group_id" in item.param:
+            try:
+                item.group_id = item_key
+            except Exception:
+                pass
         return item
 
     def _handle_add(_event: Any) -> None:

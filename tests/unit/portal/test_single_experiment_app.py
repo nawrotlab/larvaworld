@@ -2241,6 +2241,105 @@ def test_single_experiment_workspace_template_load_refreshes_typed_ui_sections(
     assert sim_owner.duration == pytest.approx(4.0)
 
 
+def test_single_experiment_template_save_load_preserves_added_larva_group(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    larva_view = controller._get_parameter_group_view("larva_groups")
+    assert larva_view is not None
+    key_input = _find_widget(larva_view, "New larva group ID", pn.widgets.TextInput)
+    add_button = _find_widget(larva_view, "Add larva group", pn.widgets.Button)
+
+    key_input.value = "added_group"
+    add_button.clicks += 1
+    controller.experiment_template_save_name.value = "dish_with_added_group"
+    controller._on_save_experiment_template()
+
+    target = (
+        workspace_root
+        / "metadata"
+        / "experiment_templates"
+        / "dish_with_added_group.json"
+    )
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    assert payload["larva_groups"]["added_group"]["group_id"] == "added_group"
+
+    reloaded = _SingleExperimentController()
+    _load_workspace_template(reloaded, "dish_with_added_group")
+    larva_owner = reloaded._typed_experiment_for_larva_groups
+    assert larva_owner is not None
+    assert "added_group" in larva_owner.larva_groups
+    assert larva_owner.larva_groups["added_group"].group_id == "added_group"
+
+
+def test_single_experiment_workspace_template_load_materializes_nested_env_items(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    templates_dir = workspace_root / "metadata" / "experiment_templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    (templates_dir / "dish_nested_items.json").write_text(
+        json.dumps(
+            {
+                "experiment": "dish",
+                "env_params": {
+                    "food_params": {
+                        "source_units": {
+                            "new_source": {
+                                "pos": [0.0, 0.0],
+                                "radius": 0.01,
+                                "color": "red",
+                            }
+                        },
+                        "source_groups": {
+                            "new_group": {
+                                "distribution": {
+                                    "N": 2,
+                                    "loc": [0.0, 0.0],
+                                    "scale": [0.0, 0.0],
+                                },
+                                "radius": 0.008,
+                            }
+                        },
+                    },
+                    "border_list": {
+                        "new_border": {
+                            "vertices": [[-0.01, 0.0], [0.01, 0.0]],
+                            "width": 0.002,
+                        }
+                    },
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    _load_workspace_template(controller, "dish_nested_items")
+
+    env_owner = controller._typed_experiment_for_env_params
+    assert env_owner is not None
+    food_params = env_owner.env_params.food_params
+    assert "new_source" in food_params.source_units
+    assert food_params.source_units["new_source"].pos == pytest.approx((0.0, 0.0))
+    assert food_params.source_units["new_source"].radius == pytest.approx(0.01)
+    assert "new_group" in food_params.source_groups
+    assert food_params.source_groups["new_group"].distribution.N == 2
+    assert "new_border" in env_owner.env_params.border_list
+    assert env_owner.env_params.border_list["new_border"].width == pytest.approx(0.002)
+    assert env_owner.env_params.border_list["new_border"].vertices == [
+        (-0.01, 0.0),
+        (0.01, 0.0),
+    ]
+
+
 def test_single_experiment_workspace_template_missing_experiment_is_rejected(
     tmp_path: Path,
 ) -> None:

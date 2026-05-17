@@ -84,3 +84,17 @@ def test_larva_groups_widget_coerces_dict_payloads_and_roundtrips_nested_conf() 
     assert group.distribution.N == 5
     assert nested["distribution"]["N"] == 5
     assert nested["sample"] is None
+
+
+def test_larva_groups_widget_adds_group_with_matching_group_id() -> None:
+    exp = ExpConf()
+    widget = build_larva_groups_widget(exp)
+
+    key_input = _find_widget(widget, "New larva group ID", pn.widgets.TextInput)
+    add_button = _find_widget(widget, "Add larva group", pn.widgets.Button)
+
+    key_input.value = "new_group"
+    add_button.clicks += 1
+
+    assert "new_group" in exp.larva_groups
+    assert exp.larva_groups["new_group"].group_id == "new_group"
