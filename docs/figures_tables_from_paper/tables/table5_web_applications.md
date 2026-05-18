@@ -46,11 +46,13 @@
 - View configuration of 4 basic locomotor modules:
   - **Crawler**: Peristaltic crawling parameters
   - **Turner**: Body bending/turning parameters
-  - **Feeder**: Feeding behavior parameters
+  - **Interference**: Crawl-bend coupling parameters
   - **Intermitter**: Run/pause switching parameters
-- Real-time simulation with dynamic plotting
-- Input/output variable visualization
-- Module parameter adjustment
+- Read-only module parameter cards for baseline modules
+- Optional visibility for configured feeder/sensor/memory modules
+- Finite locomotor probe output visualization (read-only)
+- Finite reporter plots for `A_T` and `A_C` when available
+- Side-by-side comparison of model presets
 
 **Use Cases**:
 

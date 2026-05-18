@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from larvaworld.portal.landing_registry import ITEMS
 from larvaworld.portal.registry_logic import validate_registry
-from larvaworld.portal.serve import SERVED_APP_IDS
+from larvaworld.portal.serve import APP_ID_TO_FACTORY_PATH, SERVED_APP_IDS
 
 
 def test_validate_registry_strict_passes() -> None:
@@ -44,3 +44,18 @@ def test_track_viewer_is_a_ready_panel_app() -> None:
     assert item.status == "ready"
     assert item.panel_app_id == "track_viewer"
     assert item.panel_app_id in SERVED_APP_IDS
+
+
+def test_larva_models_is_a_ready_panel_app() -> None:
+    item = ITEMS["larva_models"]
+
+    assert item.kind == "panel_app"
+    assert item.status == "ready"
+    assert item.panel_app_id == "larva_models"
+    assert item.panel_app_id in SERVED_APP_IDS
+
+
+def test_larva_models_route_points_to_portal_model_inspector() -> None:
+    assert APP_ID_TO_FACTORY_PATH["larva_models"] == (
+        "larvaworld.portal.models_architecture.model_inspector_app:model_inspector_app"
+    )
