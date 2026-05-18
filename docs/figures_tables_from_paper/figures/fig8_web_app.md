@@ -63,14 +63,14 @@ Model Inspector
    preconfigured locomotory model from a dropdown menu and inspect the
    configuration of its baseline locomotor modules (Crawler, Turner,
    Interference, Intermitter), optionally compare against a second preset,
-   and run a finite locomotor probe with reporter plots in the central panel.
+   and run a live locomotor preview with reporter plots in the central panel.
 
 **Features:**
 
 - **Model Selection**: Choose from all available preconfigured models
-- **Module Configuration**: View read-only module parameter cards for each baseline behavioral module
-- **Finite Probe**: Read-only locomotor output preview over a bounded horizon
-- **Reporter Plots**: Finite `A_T` / `A_C` plots when reporters are available
+- **Module Configuration**: Edit baseline module parameters in-session (not persisted)
+- **Live Preview**: Run/pause local locomotor preview over a bounded live window
+- **Reporter Plots**: Live `A_T` / `A_C` plots when reporters are available
 - **Comparison View**: Optional side-by-side comparison of two model presets
 
 **Available Applications:**

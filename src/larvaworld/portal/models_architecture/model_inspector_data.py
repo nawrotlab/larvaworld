@@ -71,7 +71,7 @@ def inspect_model(model_id: str) -> ModelInspection:
 def build_inspection_brain(model_id: str, *, dt: float = 0.1) -> DefaultBrain:
     model = _get_model_conf(model_id)
     brain_conf = _get_brain_conf(model_id, model)
-    return DefaultBrain(conf=brain_conf, dt=dt)
+    return DefaultBrain(conf=brain_conf, agent=_inspection_agent(model_id, dt), dt=dt)
 
 
 def compare_model_inspections(
@@ -126,7 +126,7 @@ def run_model_probe(
         )
     model = _get_model_conf(model_id)
     brain_conf = _get_brain_conf(model_id, model)
-    brain = DefaultBrain(conf=brain_conf, dt=dt)
+    brain = DefaultBrain(conf=brain_conf, agent=_inspection_agent(model_id, dt), dt=dt)
     runtime = SimpleNamespace(brain=brain)
 
     available_from_registry = reg.par.output_reporters(
@@ -233,6 +233,19 @@ def _get_brain_conf(model_id: str, model_conf: Any) -> Any:
             context={"model_id": model_id, "error": str(exc)},
         ) from exc
     return brain_conf.get_copy() if hasattr(brain_conf, "get_copy") else brain_conf
+
+
+def _inspection_agent(model_id: str, dt: float) -> SimpleNamespace:
+    model_stub = SimpleNamespace(id=model_id, dt=dt)
+    return SimpleNamespace(
+        model=model_stub,
+        radius=0.0,
+        pos=(0.0, 0.0),
+        olfactor_pos=(0.0, 0.0),
+        touch_sensorIDs=(),
+        add_touch_sensors=lambda *_args, **_kwargs: None,
+        get_sensor_position=lambda *_args, **_kwargs: (0.0, 0.0),
+    )
 
 
 def _module_conf(brain_conf: Any, module_id: str) -> Any | None:

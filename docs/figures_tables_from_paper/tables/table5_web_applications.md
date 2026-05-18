@@ -48,10 +48,10 @@
   - **Turner**: Body bending/turning parameters
   - **Interference**: Crawl-bend coupling parameters
   - **Intermitter**: Run/pause switching parameters
-- Read-only module parameter cards for baseline modules
+- Editable in-session parameter cards for baseline modules
 - Optional visibility for configured feeder/sensor/memory modules
-- Finite locomotor probe output visualization (read-only)
-- Finite reporter plots for `A_T` and `A_C` when available
+- Live locomotor preview with Run/Pause controls
+- Live reporter plots for `A_T` and `A_C` when available
 - Side-by-side comparison of model presets
 
 **Use Cases**:

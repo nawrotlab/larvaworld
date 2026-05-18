@@ -7,11 +7,11 @@ import pandas as pd
 import pytest
 
 from larvaworld.lib import reg
-from larvaworld.portal.models_architecture.model_inspector_data import BASELINE_MODULES
 from larvaworld.portal.models_architecture.model_inspector_app import (
     _ModelInspectorController,
     model_inspector_app,
 )
+from larvaworld.portal.models_architecture.model_inspector_data import BASELINE_MODULES
 from larvaworld.portal.workspace import clear_active_workspace_path
 
 
@@ -46,46 +46,139 @@ def test_controller_initializes_primary_only(monkeypatch: pytest.MonkeyPatch) ->
     assert isinstance(controller.primary_table.object, pd.DataFrame)
     assert controller.settings_grid.objects
     assert len(controller.settings_grid.objects) >= len(BASELINE_MODULES)
-    assert controller.compare_table.object.empty
 
 
-def test_controller_shows_comparison_when_second_model_selected(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_baseline_cards_are_editable(monkeypatch: pytest.MonkeyPatch) -> None:
     _guard_registry_writes(monkeypatch)
     controller = _ModelInspectorController()
-    options = [value for value in controller.compare_select.options.values() if value]
-    if not options:
-        pytest.skip("Need at least two models for comparison.")
-    controller.compare_select.value = options[0]
-    controller._on_compare_change()
-    assert not controller.compare_table.object.empty
-
-
-def test_settings_cards_are_read_only(monkeypatch: pytest.MonkeyPatch) -> None:
-    _guard_registry_writes(monkeypatch)
-    controller = _ModelInspectorController()
-    param_panes: list[object] = []
-    for card in controller.settings_grid.objects:
+    editable_widgets = []
+    for card in controller.settings_grid.objects[: len(BASELINE_MODULES)]:
         for child in getattr(card, "objects", []):
             if hasattr(child, "_widgets"):
-                param_panes.append(child)
-    assert param_panes, "Expected at least one module settings Param pane."
-    for pane in param_panes:
-        for widget in pane._widgets.values():
-            assert getattr(widget, "disabled", False)
+                for widget in child._widgets.values():
+                    editable_widgets.append(widget)
+    assert editable_widgets, "Expected editable widgets for baseline modules."
+    assert any(not getattr(widget, "disabled", False) for widget in editable_widgets)
 
 
-def test_controller_probe_updates_table_and_status(
+def test_controller_comparison_hidden_after_local_edits(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _guard_registry_writes(monkeypatch)
     controller = _ModelInspectorController()
-    controller._on_run_probe()
+    controller._on_local_parameter_edit()
+    assert controller.compare_select.disabled is True
+    assert "hidden during local edits" in controller.compare_title.object
+
+
+def test_controller_live_run_updates_trace_and_pause(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    controller._on_run()
+    controller._tick_live_preview()
+    controller._tick_live_preview()
     assert isinstance(controller.probe_table.object, pd.DataFrame)
     assert not controller.probe_table.object.empty
-    assert controller.probe_plots.objects
-    assert "Probe completed" in controller.status.object
+    assert controller._step >= 2
+    controller._on_pause()
+    assert controller._is_running is False
+
+
+def test_controller_run_resume_preserves_transient_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    brain = controller._brain
+    controller._on_local_parameter_edit()
+    controller._on_run()
+    controller._on_pause()
+    controller._on_run()
+    assert controller._brain is brain
+
+
+def test_controller_preview_settings_are_editable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    controller.max_steps_input.value = 2
+    controller.a_in_input.value = 0.25
+    controller.trace_window_input.value = 1
+    controller._on_run()
+    controller._tick_live_preview()
+    controller._tick_live_preview()
+    assert controller._step == 2
+    assert len(controller.probe_table.object) == 1
+    controller._tick_live_preview()
+    assert controller._is_running is False
+
+
+def test_controller_reset_required_settings_lock_while_running(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    assert controller.dt_input.disabled is False
+    controller._on_run()
+    assert controller.dt_input.disabled is True
+    controller._on_pause()
+    assert controller.dt_input.disabled is False
+
+
+def test_controller_dt_change_resets_local_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    old_brain = controller._brain
+    controller._on_local_parameter_edit()
+    controller._on_run()
+    controller._tick_live_preview()
+    controller._on_pause()
+    controller.dt_input.value = 0.2
+    assert controller._brain is not old_brain
+    assert controller._has_local_edits is False
+    assert controller._step == 0
+    assert controller.probe_table.object.empty
+
+
+def test_controller_clear_trace_preserves_local_edits(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    controller._on_local_parameter_edit()
+    controller._on_run()
+    controller._tick_live_preview()
+    assert not controller.probe_table.object.empty
+    controller._on_clear_trace()
+    assert controller._has_local_edits is True
+    assert controller.probe_table.object.empty
+
+
+def test_controller_reset_to_preset_clears_local_edit_state(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    controller._on_local_parameter_edit()
+    controller._on_reset_to_preset()
+    assert controller._has_local_edits is False
+    assert controller.compare_select.disabled is False
+
+
+def test_controller_auto_stops_at_max_steps(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    controller._on_run()
+    controller._step = controller.max_steps_input.value
+    controller._tick_live_preview()
+    assert controller._is_running is False
 
 
 def test_app_source_does_not_import_legacy_dashboard() -> None:

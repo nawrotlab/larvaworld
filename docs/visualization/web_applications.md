@@ -172,10 +172,10 @@ configuration, source selection, discovery, and workspace import controls.
 **Features**:
 
 - Browse available model configurations
-- Inspect read-only module parameter cards for baseline locomotor modules
+- Edit baseline locomotor module parameters in-session (not persisted)
 - Inspect optional configured feeder/sensor/memory modules
-- Run a finite locomotor response probe (read-only)
-- View finite reporter plots for `A_T` and `A_C` when available
+- Run and pause a live locomotor preview
+- View live reporter plots for `A_T` and `A_C` when available
 - Compare model presets as a supplemental view
 
 **Access**: `larva_models`
