@@ -12,6 +12,7 @@ from larvaworld.portal.datasets.replay_data import (
     build_environment_state_for_member,
     build_render_state,
     build_source_catalog,
+    parse_agent_indices,
     prepare_replay_source,
 )
 from larvaworld.portal.datasets.replay_models import PreparedReplaySource, ReplaySource
@@ -79,6 +80,11 @@ class _DatasetReplayController:
             value="origin" if "origin" in transposition_options.values() else None,
         )
         self.track_point = pn.widgets.IntInput(name="Track point", value=-1, step=1)
+        self.agent_indices = pn.widgets.TextInput(
+            name="Agent indices",
+            placeholder="empty = all; e.g. 0,1,2",
+            value="",
+        )
         self.tick_player = pn.widgets.Player(
             name="Tick", start=0, end=1, step=1, value=0, interval=100
         )
@@ -101,6 +107,7 @@ class _DatasetReplayController:
             self.trail_length,
             self.transposition,
             self.track_point,
+            self.agent_indices,
             self.tick_player,
             self.time_start,
             self.time_end,
@@ -203,19 +210,29 @@ class _DatasetReplayController:
             )
             if time_range[1] < time_range[0]:
                 time_range = (time_range[1], time_range[0])
-        state = build_render_state(
-            self._prepared,
-            tick=int(self.tick_player.value),
-            member_tokens=visible_tokens,
-            show_positions=bool(self.show_positions.value),
-            show_ids=bool(self.show_ids.value),
-            show_tracks=bool(self.show_tracks.value),
-            trail_length=int(self.trail_length.value),
-            transposition=transposition,
-            track_point=int(self.track_point.value),
-            time_range=time_range,
-            show_dispersal_ring=bool(self.show_dispersal.value),
-        )
+        try:
+            agent_indices = parse_agent_indices(self.agent_indices.value)
+        except ValueError as exc:
+            self._set_status(f"Invalid Agent indices: {exc}")
+            return
+        try:
+            state = build_render_state(
+                self._prepared,
+                tick=int(self.tick_player.value),
+                member_tokens=visible_tokens,
+                show_positions=bool(self.show_positions.value),
+                show_ids=bool(self.show_ids.value),
+                show_tracks=bool(self.show_tracks.value),
+                trail_length=int(self.trail_length.value),
+                transposition=transposition,
+                track_point=int(self.track_point.value),
+                agent_indices=agent_indices,
+                time_range=time_range,
+                show_dispersal_ring=bool(self.show_dispersal.value),
+            )
+        except ValueError as exc:
+            self._set_status(f"Replay render error: {exc}")
+            return
 
         allow_static_layers = transposition == "arena"
         if self._prepared.members:
@@ -274,6 +291,7 @@ class _DatasetReplayController:
             pn.layout.Divider(),
             self.transposition,
             self.track_point,
+            self.agent_indices,
             self.use_time_range,
             self.time_start,
             self.time_end,

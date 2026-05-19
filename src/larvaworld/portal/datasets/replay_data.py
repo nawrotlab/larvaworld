@@ -193,6 +193,7 @@ def build_render_state(
     trail_length: int,
     transposition: str | None,
     track_point: int,
+    agent_indices: tuple[int, ...] | None,
     time_range: tuple[float, float] | None,
     show_dispersal_ring: bool,
 ) -> ReplayRenderState:
@@ -206,17 +207,26 @@ def build_render_state(
         member = prepared.members.get(token)
         if member is None:
             continue
-        xy = _aligned_xy(
-            member.xy_default,
-            transposition=transposition,
-            track_point=track_point,
-            arena_dims=member.arena_dims,
-            coordinate_origin=member.coordinate_origin,
+        xy = select_member_xy(member, track_point=track_point)
+        xy = filter_xy_by_agent_indices(
+            xy,
+            member.agent_ids,
+            agent_indices=agent_indices,
         )
+        if xy.empty:
+            continue
         if time_range is not None and member.dt > 0:
             s0 = int(time_range[0] / member.dt)
             s1 = int(time_range[1] / member.dt)
             xy = xy.loc[(slice(s0, s1), slice(None)), :]
+        if xy.empty:
+            continue
+        xy = _aligned_xy(
+            xy,
+            transposition=transposition,
+            arena_dims=member.arena_dims,
+            coordinate_origin=member.coordinate_origin,
+        )
         try:
             at_tick = xy.xs(tick, level="Step")
         except KeyError:
@@ -277,11 +287,15 @@ def _prepare_member(member: ReplaySourceMember) -> PreparedReplayMember:
     dataset.load(step=True)
     xy = dataset.s[_resolve_xy_columns(dataset, dataset.s, track_point=-1)].copy()
     xy.columns = ["x", "y"]
+    xy_by_track_point = _build_registry_xy_by_track_point(dataset, dataset.s)
     arena_dims = _resolve_arena_dims(dataset)
     dt = float(dataset.c.dt or 0.1)
     nticks = int(dataset.c.Nticks or (int(xy.index.unique("Step").max()) + 1))
     color = str(dataset.c.color or "#2f4858")
     env_conf_id = None
+    agent_ids = tuple(dataset.c.agent_ids or ())
+    if not agent_ids:
+        agent_ids = _agent_ids_from_step_index(xy)
     return PreparedReplayMember(
         token=member.token,
         label=member.label,
@@ -292,6 +306,8 @@ def _prepare_member(member: ReplaySourceMember) -> PreparedReplayMember:
         nticks=nticks,
         env_conf_id=env_conf_id,
         coordinate_origin="corner",
+        xy_by_track_point=xy_by_track_point,
+        agent_ids=agent_ids,
     )
 
 
@@ -311,6 +327,12 @@ def _prepare_workspace_member(member: ReplaySourceMember) -> PreparedReplayMembe
             )
     xy = step[[x_name, y_name]].copy()
     xy.columns = ["x", "y"]
+    xy_by_track_point = _build_workspace_xy_by_track_point(step, conf)
+    conf_agent_ids = conf.get("agent_ids") if isinstance(conf, dict) else None
+    if isinstance(conf_agent_ids, list) and conf_agent_ids:
+        agent_ids = tuple(conf_agent_ids)
+    else:
+        agent_ids = _agent_ids_from_step_index(step)
     dt = float(conf.get("dt") or (1.0 / float(conf.get("fr") or 10.0)))
     nticks = int(conf.get("Nticks") or (int(xy.index.unique("Step").max()) + 1))
     env_conf = conf.get("env_params") if isinstance(conf, dict) else None
@@ -336,6 +358,8 @@ def _prepare_workspace_member(member: ReplaySourceMember) -> PreparedReplayMembe
             if getattr(record, "origin", None) == "simulation_run"
             else "corner"
         ),
+        xy_by_track_point=xy_by_track_point,
+        agent_ids=agent_ids,
     )
 
 
@@ -356,10 +380,13 @@ def _resolve_arena_dims(dataset: LarvaDataset) -> tuple[float, float]:
 def _resolve_xy_columns(
     dataset: LarvaDataset, df: pd.DataFrame, *, track_point: int
 ) -> list[str]:
-    candidates: list[list[str]] = []
     if track_point >= 0:
         point = dataset.c.get_track_point(track_point)
-        candidates.append(list(util.nam.xy(point)))
+        exact = list(util.nam.xy(point))
+        if all(col in df.columns for col in exact):
+            return exact
+        raise ValueError(f"Missing exact xy columns for track_point={track_point}.")
+    candidates: list[list[str]] = []
     candidates.extend(
         [
             list(dataset.c.traj_xy),
@@ -385,17 +412,16 @@ def _plain_mapping(value: Any) -> dict[str, Any] | None:
 
 
 def _aligned_xy(
-    xy_default: pd.DataFrame,
+    xy: pd.DataFrame,
     *,
     transposition: str | None,
-    track_point: int,
     arena_dims: tuple[float, float],
     coordinate_origin: str = "corner",
 ) -> pd.DataFrame:
     mode = transposition
     if mode in {"", "none", "stored"}:
         mode = None
-    xy = xy_default.copy()
+    xy = xy.copy()
     if mode is None:
         return xy
     assert mode in {"origin", "center", "arena"}
@@ -423,3 +449,90 @@ def _aligned_xy(
     if not out:
         return xy
     return pd.concat(out).sort_index()
+
+
+def parse_agent_indices(raw: str) -> tuple[int, ...] | None:
+    text = str(raw).strip()
+    if text == "":
+        return None
+    parts = [part.strip() for part in text.split(",")]
+    if any(part == "" for part in parts):
+        raise ValueError("Agent indices must be a comma-separated integer list.")
+    values: list[int] = []
+    for part in parts:
+        if not part.isdigit():
+            raise ValueError(f"Invalid agent index: {part!r}")
+        value = int(part)
+        if value < 0:
+            raise ValueError(f"Agent index must be non-negative: {value}")
+        values.append(value)
+    return tuple(values)
+
+
+def select_member_xy(member: PreparedReplayMember, *, track_point: int) -> pd.DataFrame:
+    if track_point == -1:
+        return member.xy_default.copy()
+    if track_point < -1:
+        raise ValueError("Track point must be -1 or a non-negative integer.")
+    selected = member.xy_by_track_point.get(track_point)
+    if selected is None:
+        raise ValueError(
+            f"Track point {track_point} is unavailable for member {member.label}."
+        )
+    xy = selected.copy()
+    xy.columns = ["x", "y"]
+    return xy
+
+
+def filter_xy_by_agent_indices(
+    xy: pd.DataFrame,
+    member_agent_ids: tuple[object, ...],
+    *,
+    agent_indices: tuple[int, ...] | None,
+) -> pd.DataFrame:
+    if agent_indices is None:
+        return xy
+    if not member_agent_ids:
+        raise ValueError("Cannot apply agent index filtering: member has no agent IDs.")
+    max_index = len(member_agent_ids) - 1
+    selected_agent_ids: list[object] = []
+    for idx in agent_indices:
+        if idx < 0 or idx > max_index:
+            raise ValueError(
+                f"Agent index {idx} out of range for member (valid 0..{max_index})."
+            )
+        selected_agent_ids.append(member_agent_ids[idx])
+    return xy[xy.index.get_level_values("AgentID").isin(selected_agent_ids)]
+
+
+def _agent_ids_from_step_index(step: pd.DataFrame) -> tuple[object, ...]:
+    return tuple(step.index.get_level_values("AgentID").unique())
+
+
+def _build_registry_xy_by_track_point(
+    dataset: LarvaDataset, step: pd.DataFrame
+) -> dict[int, pd.DataFrame]:
+    xy_by_track_point: dict[int, pd.DataFrame] = {}
+    npoints = int(dataset.c.Npoints or 0)
+    for idx in range(max(npoints, 0)):
+        point_name = dataset.c.get_track_point(idx)
+        cols = list(util.nam.xy(point_name))
+        if all(col in step.columns for col in cols):
+            xy_tp = step[cols].copy()
+            xy_tp.columns = ["x", "y"]
+            xy_by_track_point[idx] = xy_tp
+    return xy_by_track_point
+
+
+def _build_workspace_xy_by_track_point(
+    step: pd.DataFrame, conf: dict[str, Any]
+) -> dict[int, pd.DataFrame]:
+    xy_by_track_point: dict[int, pd.DataFrame] = {}
+    npoints = int(conf.get("Npoints") or 0)
+    for idx, point_name in enumerate(util.nam.midline(npoints, type="point")):
+        cols = list(util.nam.xy(point_name))
+        if all(col in step.columns for col in cols):
+            xy_tp = step[cols].copy()
+            xy_tp.columns = ["x", "y"]
+            xy_by_track_point[idx] = xy_tp
+    return xy_by_track_point

@@ -12,6 +12,7 @@ from larvaworld.portal.datasets.replay_data import (
     build_environment_state_for_member,
     build_render_state,
     build_source_catalog,
+    parse_agent_indices,
     prepare_replay_source,
     _resolve_xy_columns,
 )
@@ -267,6 +268,7 @@ def test_build_render_state_origin_dispersal_and_labels(tmp_path: Path) -> None:
         trail_length=10,
         transposition="origin",
         track_point=-1,
+        agent_indices=None,
         time_range=None,
         show_dispersal_ring=True,
     )
@@ -421,8 +423,203 @@ def test_build_render_state_arena_keeps_centered_simulation_coordinates() -> Non
         trail_length=0,
         transposition="arena",
         track_point=-1,
+        agent_indices=None,
         time_range=None,
         show_dispersal_ring=False,
     )
 
     assert state.frame.centroids == ((0.03, -0.01),)
+
+
+def test_parse_agent_indices_valid_and_empty_cases() -> None:
+    assert parse_agent_indices("") is None
+    assert parse_agent_indices("   ") is None
+    assert parse_agent_indices("0,1") == (0, 1)
+    assert parse_agent_indices("0, 1,2") == (0, 1, 2)
+
+
+@pytest.mark.parametrize("raw", ["-1", "1.5", "abc", "1,,2"])
+def test_parse_agent_indices_invalid_cases(raw: str) -> None:
+    with pytest.raises(ValueError):
+        parse_agent_indices(raw)
+
+
+def test_build_render_state_filters_by_agent_indices(tmp_path: Path) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    ds_a = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "a"
+    _write_workspace_dataset(
+        ds_a, dataset_id="a", group_id="grp1", n_agents=3, n_ticks=4
+    )
+    source = next(
+        s
+        for s in build_source_catalog(workspace)
+        if s.source_type == "workspace_dataset"
+    )
+    prepared = prepare_replay_source(source)
+    member_token = next(iter(prepared.members.keys()))
+
+    state = build_render_state(
+        prepared,
+        tick=2,
+        member_tokens=[member_token],
+        show_positions=True,
+        show_ids=True,
+        show_tracks=False,
+        trail_length=0,
+        transposition=None,
+        track_point=-1,
+        agent_indices=(1, 2),
+        time_range=None,
+        show_dispersal_ring=False,
+    )
+
+    assert len(state.frame.centroids) == 2
+    assert state.frame.labels == ("a_a1", "a_a2")
+
+
+def test_build_render_state_agent_index_out_of_range_raises(tmp_path: Path) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    ds_a = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "a"
+    _write_workspace_dataset(
+        ds_a, dataset_id="a", group_id="grp1", n_agents=2, n_ticks=4
+    )
+    source = next(
+        s
+        for s in build_source_catalog(workspace)
+        if s.source_type == "workspace_dataset"
+    )
+    prepared = prepare_replay_source(source)
+    member_token = next(iter(prepared.members.keys()))
+
+    with pytest.raises(ValueError):
+        build_render_state(
+            prepared,
+            tick=1,
+            member_tokens=[member_token],
+            show_positions=True,
+            show_ids=False,
+            show_tracks=False,
+            trail_length=0,
+            transposition=None,
+            track_point=-1,
+            agent_indices=(10,),
+            time_range=None,
+            show_dispersal_ring=False,
+        )
+
+
+def test_build_render_state_explicit_missing_track_point_raises(tmp_path: Path) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    ds_a = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "a"
+    _write_workspace_dataset(
+        ds_a, dataset_id="a", group_id="grp1", n_agents=1, n_ticks=4
+    )
+    source = next(
+        s
+        for s in build_source_catalog(workspace)
+        if s.source_type == "workspace_dataset"
+    )
+    prepared = prepare_replay_source(source)
+    member_token = next(iter(prepared.members.keys()))
+
+    with pytest.raises(ValueError):
+        build_render_state(
+            prepared,
+            tick=1,
+            member_tokens=[member_token],
+            show_positions=True,
+            show_ids=False,
+            show_tracks=False,
+            trail_length=0,
+            transposition="origin",
+            track_point=5,
+            agent_indices=None,
+            time_range=None,
+            show_dispersal_ring=False,
+        )
+
+
+def test_prepare_replay_source_stores_workspace_agent_ids(tmp_path: Path) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    ds_a = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "a"
+    _write_workspace_dataset(
+        ds_a, dataset_id="a", group_id="grp1", n_agents=3, n_ticks=4
+    )
+    source = next(
+        s
+        for s in build_source_catalog(workspace)
+        if s.source_type == "workspace_dataset"
+    )
+
+    prepared = prepare_replay_source(source)
+    member = next(iter(prepared.members.values()))
+    assert member.agent_ids == ("a_a0", "a_a1", "a_a2")
+
+
+def test_prepare_replay_source_falls_back_to_index_agent_ids(tmp_path: Path) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    ds_a = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "a"
+    _write_workspace_dataset(
+        ds_a, dataset_id="a", group_id="grp1", n_agents=2, n_ticks=4
+    )
+    conf_path = ds_a / "data" / "conf.txt"
+    conf = json.loads(conf_path.read_text(encoding="utf-8"))
+    conf.pop("agent_ids", None)
+    conf_path.write_text(json.dumps(conf), encoding="utf-8")
+    source = next(
+        s
+        for s in build_source_catalog(workspace)
+        if s.source_type == "workspace_dataset"
+    )
+
+    prepared = prepare_replay_source(source)
+    member = next(iter(prepared.members.values()))
+    assert member.agent_ids == ("a_a0", "a_a1")
+
+
+def test_track_point_explicit_mapping_changes_xy_before_origin_alignment() -> None:
+    idx = pd.MultiIndex.from_tuples(
+        [(0, "a0"), (1, "a0")],
+        names=["Step", "AgentID"],
+    )
+    xy_default = pd.DataFrame({"x": [10.0, 12.0], "y": [5.0, 7.0]}, index=idx)
+    xy_tp = pd.DataFrame({"x": [2.0, 5.0], "y": [3.0, 9.0]}, index=idx)
+    member = PreparedReplayMember(
+        token="m",
+        label="m",
+        color="#000000",
+        xy_default=xy_default,
+        arena_dims=(0.2, 0.2),
+        dt=1.0,
+        nticks=2,
+        xy_by_track_point={0: xy_tp},
+        agent_ids=("a0",),
+    )
+    source = PreparedReplaySource(
+        source=ReplaySource(
+            token="t",
+            label="t",
+            source_type="workspace_dataset",
+            members=(),
+        ),
+        members={"m": member},
+        nticks=2,
+        dt=1.0,
+    )
+
+    state = build_render_state(
+        source,
+        tick=1,
+        member_tokens=["m"],
+        show_positions=True,
+        show_ids=False,
+        show_tracks=False,
+        trail_length=0,
+        transposition="origin",
+        track_point=0,
+        agent_indices=None,
+        time_range=None,
+        show_dispersal_ring=False,
+    )
+
+    assert state.frame.centroids == ((3.0, 6.0),)

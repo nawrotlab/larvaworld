@@ -53,6 +53,8 @@ class PreparedReplayMember:
     env_conf_id: str | None = None
     env_params: dict[str, Any] | None = None
     coordinate_origin: ReplayCoordinateOrigin = "corner"
+    xy_by_track_point: dict[int, pd.DataFrame] = field(default_factory=dict)
+    agent_ids: tuple[object, ...] = ()
 
 
 @dataclass

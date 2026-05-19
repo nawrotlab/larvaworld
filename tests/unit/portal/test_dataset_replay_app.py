@@ -25,7 +25,7 @@ def workspace_config_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
 
 
 def _write_workspace_dataset(
-    dataset_dir: Path, *, dataset_id: str, group_id: str
+    dataset_dir: Path, *, dataset_id: str, group_id: str, n_agents: int = 1
 ) -> None:
     data_dir = dataset_dir / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -38,8 +38,8 @@ def _write_workspace_dataset(
         "Nticks": 4,
         "Npoints": 3,
         "Ncontour": 0,
-        "agent_ids": [f"{dataset_id}_a0"],
-        "N": 1,
+        "agent_ids": [f"{dataset_id}_a{i}" for i in range(n_agents)],
+        "N": n_agents,
         "env_params": {
             "id": "dish",
             "arena": {"geometry": "rectangular", "dims": [0.2, 0.1]},
@@ -49,19 +49,23 @@ def _write_workspace_dataset(
         "y": "y",
     }
     (data_dir / "conf.txt").write_text(json.dumps(conf), encoding="utf-8")
-    rows = [
-        {
-            "Step": t,
-            "AgentID": f"{dataset_id}_a0",
-            "x": float(t) * 0.01,
-            "y": float(t) * 0.02,
-        }
-        for t in range(4)
-    ]
+    rows = []
+    for t in range(4):
+        for i in range(n_agents):
+            rows.append(
+                {
+                    "Step": t,
+                    "AgentID": f"{dataset_id}_a{i}",
+                    "x": float(t) * 0.01 + (i * 0.003),
+                    "y": float(t) * 0.02 + (i * 0.004),
+                }
+            )
     pd.DataFrame(rows).set_index(["Step", "AgentID"]).to_hdf(
         data_dir / "data.h5", key="step"
     )
-    pd.DataFrame(index=[f"{dataset_id}_a0"]).to_hdf(data_dir / "data.h5", key="end")
+    pd.DataFrame(index=[f"{dataset_id}_a{i}" for i in range(n_agents)]).to_hdf(
+        data_dir / "data.h5", key="end"
+    )
 
 
 def _write_workspace_simulation_dataset(
@@ -117,6 +121,7 @@ def test_dataset_replay_controller_loads_workspace_source(tmp_path: Path) -> Non
     assert len(controller.member_visibility.options) >= 1
     assert controller.tick_player.end >= 0
     assert controller.transposition.value == "origin"
+    assert controller.agent_indices.name == "Agent indices"
 
 
 def test_dataset_replay_controller_origin_mode_builds_ring(tmp_path: Path) -> None:
@@ -358,6 +363,53 @@ def test_dataset_replay_controller_registry_only_without_workspace() -> None:
         label.startswith("Registry / Reference")
         for label in controller.source_select.options
     )
+
+
+def test_dataset_replay_controller_invalid_agent_indices_sets_status(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+
+    controller.agent_indices.value = "1,,2"
+    controller._render()
+
+    assert "Invalid Agent indices" in controller.status_pane.object
+
+
+def test_dataset_replay_controller_invalid_track_point_sets_status(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+
+    controller.track_point.value = 99
+    controller._render()
+
+    assert "Replay render error" in controller.status_pane.object
+
+
+def test_dataset_replay_controller_valid_agent_indices_filters_agents(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1", n_agents=2)
+    controller = _DatasetReplayController()
+
+    controller.show_ids.value = True
+    controller.agent_indices.value = "1"
+    controller.tick_player.value = 1
+    controller._render()
+
+    assert controller.canvas.sim_larva_label_source.data["label"] == ["ds1_a1"]
 
 
 def test_dataset_replay_app_returns_viewable() -> None:
