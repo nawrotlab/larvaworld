@@ -1427,8 +1427,8 @@ class _SingleExperimentController:
         self._on_show_display_change()
         self._refresh_environment_options()
         self._refresh_experiment_template_options()
-        self._refresh_summary()
         self._refresh_parameter_editor()
+        self._refresh_summary()
         self.status.object = "Select a template and prepare a single-run preview."
 
     def _environment_dir(self) -> Path:
@@ -1740,6 +1740,7 @@ class _SingleExperimentController:
         if not (self.environment_save_name.value or "").strip():
             self.environment_save_name.value = self._default_environment_preset_name()
         self._refresh_environment_save_state(reset_baseline=False)
+        self._refresh_summary()
 
     def _on_environment_save_name_change(self, *_: object) -> None:
         self._refresh_environment_save_state(reset_baseline=False)
@@ -1767,8 +1768,8 @@ class _SingleExperimentController:
         self._sync_environment_preset_select()
         self.environment_save_name.value = ref.name
         self._parameter_seed_overrides = util.AttrDict()
-        self._refresh_summary()
         self._refresh_parameter_editor()
+        self._refresh_summary()
 
     def _on_environment_preset_saved(self, ref: PresetRef, payload: Any) -> None:
         self._active_environment_preset_ref = ref
@@ -1778,8 +1779,8 @@ class _SingleExperimentController:
         self._sync_environment_preset_select()
         self.environment_save_name.value = ref.name
         self._parameter_seed_overrides = util.AttrDict()
-        self._refresh_summary()
         self._refresh_parameter_editor()
+        self._refresh_summary()
 
     def _on_use_template_default_environment(self, *_: object) -> None:
         self._active_environment_preset_ref = None
@@ -1787,8 +1788,8 @@ class _SingleExperimentController:
         self.selection.environment_preset = "__template__"
         self._sync_environment_preset_select()
         self._parameter_seed_overrides = util.AttrDict()
-        self._refresh_summary()
         self._refresh_parameter_editor()
+        self._refresh_summary()
 
     def _workspace_experiment_templates_dir(self) -> Path:
         metadata_dir = get_workspace_dir("metadata")
@@ -1850,15 +1851,70 @@ class _SingleExperimentController:
 
     @staticmethod
     def _workspace_override_value(existing: Any, value: Any) -> Any:
-        normalized = _coerce_xy_sequences(_normalize_scalar(value))
+        normalized = _normalize_scalar(value)
         if normalized == "empty_dict":
             if isinstance(existing, dict):
                 return {}
             if existing is None:
                 return None
-        if isinstance(existing, tuple) and isinstance(normalized, (list, tuple)):
+        if (
+            isinstance(existing, tuple)
+            and isinstance(normalized, (list, tuple))
+            and _SingleExperimentController._preserve_tuple_override(
+                existing, normalized
+            )
+        ):
             return tuple(normalized)
+        if (
+            isinstance(existing, list)
+            and isinstance(normalized, (list, tuple))
+            and _SingleExperimentController._preserve_tuple_list_override(
+                existing, normalized
+            )
+        ):
+            return [tuple(item) for item in normalized]
         return normalized
+
+    @staticmethod
+    def _preserve_tuple_override(existing: tuple[Any, ...], incoming: Any) -> bool:
+        if not isinstance(incoming, (list, tuple)):
+            return False
+        if len(existing) != len(incoming):
+            return False
+        # Keep tuple coercion for XY-like numeric tuples only. Other sequence
+        # fields (for example enrichment selector lists) should remain lists.
+        if len(existing) == 2:
+            for value in existing:
+                if not isinstance(value, (int, float)):
+                    return False
+            for value in incoming:
+                if not isinstance(value, (int, float)):
+                    return False
+            return True
+        return False
+
+    @staticmethod
+    def _preserve_tuple_list_override(existing: list[Any], incoming: Any) -> bool:
+        if not isinstance(incoming, (list, tuple)):
+            return False
+        if not existing or not all(isinstance(item, tuple) for item in existing):
+            return False
+        if len(existing) != len(incoming):
+            return False
+        item_length = len(existing[0])
+        if item_length == 0:
+            return False
+        for existing_item in existing:
+            if len(existing_item) != item_length:
+                return False
+        for incoming_item in incoming:
+            if not isinstance(incoming_item, (list, tuple)):
+                return False
+            if len(incoming_item) != item_length:
+                return False
+            if not all(isinstance(value, (int, float)) for value in incoming_item):
+                return False
+        return True
 
     @staticmethod
     def _set_nested_value(target: Any, path: list[str], value: Any) -> None:
@@ -2240,6 +2296,7 @@ class _SingleExperimentController:
         if self._loading_experiment_template_preset:
             return
         self._refresh_experiment_template_save_state(reset_baseline=False)
+        self._refresh_summary()
 
     def _on_experiment_template_save_name_change(self, *_: object) -> None:
         if self._loading_experiment_template_preset:
@@ -2328,8 +2385,8 @@ class _SingleExperimentController:
             self._active_environment_preset_payload = None
             self._refresh_environment_options()
             self.selection.environment_preset = "__template__"
-            self._refresh_summary()
             self._refresh_parameter_editor()
+            self._refresh_summary()
             self._refresh_experiment_template_save_state(reset_baseline=True)
             self.experiment_template_save_hint.object = ""
             self.experiment_template_save_inline.object = ""
@@ -2441,7 +2498,7 @@ class _SingleExperimentController:
 
     def _refresh_summary(self) -> None:
         experiment = self._selected_experiment()
-        parameters = self._parameters_from_selected_template()
+        parameters = self._resolve_experiment_parameters()
         larva_groups = list(parameters.get("larva_groups", {}).keys())
         env = util.AttrDict(parameters.env_params)
         epochs = parameters.get("trials", {}).get("epochs", {})
@@ -3488,8 +3545,8 @@ class _SingleExperimentController:
             )
         else:
             self._parameter_seed_overrides = util.AttrDict()
-        self._refresh_summary()
         self._refresh_parameter_editor()
+        self._refresh_summary()
         self.status.object = f'Template "{experiment}" loaded.'
 
     def _on_run_name_change(self, *_: object) -> None:
@@ -3509,13 +3566,13 @@ class _SingleExperimentController:
 
     def _on_parameter_override_change(self, *_: object) -> None:
         self._parameter_seed_overrides = util.AttrDict()
-        self._refresh_summary()
         self._refresh_parameter_editor()
+        self._refresh_summary()
 
     def _on_refresh_environments(self, *_: object) -> None:
         self._refresh_environment_options()
-        self._refresh_summary()
         self._refresh_parameter_editor()
+        self._refresh_summary()
         self.status.object = "Refreshed environment presets."
 
     def _build_run_directory(self) -> Path:

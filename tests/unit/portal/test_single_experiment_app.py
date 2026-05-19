@@ -3330,6 +3330,7 @@ def test_single_experiment_parameter_editor_values_feed_build_parameters(
 
     assert parameters.duration == pytest.approx(2.5)
     assert parameters.env_params.arena.geometry == "rectangular"
+    assert "Arena geometry:</strong> rectangular" in controller.summary.object
     assert parameters.flatten()[population_path] == 12
 
 

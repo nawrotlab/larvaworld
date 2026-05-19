@@ -6,11 +6,13 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from larvaworld.lib import reg
 from larvaworld.lib.process.dataset import LarvaDataset
 from larvaworld.portal.datasets.replay_data import (
     build_render_state,
     build_source_catalog,
     prepare_replay_source,
+    _resolve_xy_columns,
 )
 from larvaworld.portal.workspace import initialize_workspace
 
@@ -144,3 +146,12 @@ def test_build_render_state_origin_dispersal_and_labels(tmp_path: Path) -> None:
     assert state.frame.labels[0] == "a_a0"
     assert len(state.rings) == 1
     assert state.rings[0].radius > 0
+
+
+def test_resolve_xy_columns_falls_back_to_point_xy_for_registry_reference() -> None:
+    dataset = reg.conf.Ref.loadRef(id="exploration.dish01", load=False)
+    dataset.load(step=True)
+
+    cols = _resolve_xy_columns(dataset, dataset.s, track_point=-1)
+
+    assert cols == list(dataset.c.point_xy)

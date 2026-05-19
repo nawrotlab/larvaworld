@@ -309,14 +309,23 @@ def _resolve_arena_dims(dataset: LarvaDataset) -> tuple[float, float]:
 def _resolve_xy_columns(
     dataset: LarvaDataset, df: pd.DataFrame, *, track_point: int
 ) -> list[str]:
+    candidates: list[list[str]] = []
     if track_point >= 0:
         point = dataset.c.get_track_point(track_point)
-        cols = util.nam.xy(point)
+        candidates.append(list(util.nam.xy(point)))
+    candidates.extend(
+        [
+            list(dataset.c.traj_xy),
+            list(dataset.c.point_xy),
+            list(dataset.c.centroid_xy),
+        ]
+    )
+    for cols in candidates:
+        if all(col in df.columns for col in cols):
+            return cols
+    for cols in dataset.c.all_xy.group_by_n(2):
         if all(col in df.columns for col in cols):
             return list(cols)
-    cols = list(dataset.c.traj_xy)
-    if all(col in df.columns for col in cols):
-        return cols
     if all(col in df.columns for col in ("x", "y")):
         return ["x", "y"]
     raise ValueError("Could not resolve trajectory xy columns for replay.")
