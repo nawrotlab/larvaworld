@@ -117,6 +117,46 @@ def test_environment_canvas_draws_rectangular_and_circular_arena() -> None:
     assert canvas._arena_circle_renderer.visible is True
 
 
+def test_environment_canvas_can_hide_arena_outline_without_changing_viewport() -> None:
+    canvas = EnvironmentCanvas(width=760, height=620)
+    canvas.set_state(
+        EnvironmentCanvasState(
+            arena=CanvasArena("rectangular", (0.2, 0.1)),
+            show_arena_outline=False,
+        )
+    )
+
+    assert canvas.arena_source.data["w"] == [0.2]
+    assert canvas.arena_source.data["h"] == [0.1]
+    assert canvas._arena_rect_renderer.visible is False
+    assert canvas._arena_circle_renderer.visible is False
+    x_span = canvas.fig.x_range.end - canvas.fig.x_range.start
+    y_span = canvas.fig.y_range.end - canvas.fig.y_range.start
+    assert x_span > 0
+    assert y_span > 0
+    assert x_span / y_span == pytest.approx(760 / 620)
+
+
+def test_environment_canvas_arena_outline_visibility_roundtrips() -> None:
+    canvas = EnvironmentCanvas()
+    canvas.set_state(
+        EnvironmentCanvasState(
+            arena=CanvasArena("circular", (0.2, 0.2)),
+            show_arena_outline=False,
+        )
+    )
+    assert canvas._arena_circle_renderer.visible is False
+
+    canvas.set_state(
+        EnvironmentCanvasState(
+            arena=CanvasArena("circular", (0.2, 0.2)),
+            show_arena_outline=True,
+        )
+    )
+    assert canvas._arena_circle_renderer.visible is True
+    assert canvas._arena_rect_renderer.visible is False
+
+
 def test_environment_canvas_ranges_preserve_one_to_one_axis_ratio() -> None:
     canvas = EnvironmentCanvas(width=760, height=620)
     canvas.set_state(

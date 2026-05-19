@@ -1,19 +1,25 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 import pandas as pd
 
-from larvaworld.portal.datasets.models import WorkspaceDatasetRecord
+from larvaworld.portal.datasets.models import (
+    WorkspaceDatasetRecord,
+    WorkspaceReplayDatasetRecord,
+)
 
 
 ReplaySourceType = Literal[
     "workspace_dataset",
     "workspace_group",
+    "workspace_simulation_run",
     "registry_reference",
     "registry_reference_group",
 ]
+
+ReplayCoordinateOrigin = Literal["corner", "centered"]
 
 
 @dataclass(frozen=True)
@@ -21,7 +27,9 @@ class ReplaySourceMember:
     token: str
     label: str
     source_type: ReplaySourceType
-    workspace_record: WorkspaceDatasetRecord | None = None
+    workspace_record: WorkspaceDatasetRecord | WorkspaceReplayDatasetRecord | None = (
+        None
+    )
     registry_ref_id: str | None = None
 
 
@@ -43,6 +51,8 @@ class PreparedReplayMember:
     dt: float
     nticks: int
     env_conf_id: str | None = None
+    env_params: dict[str, Any] | None = None
+    coordinate_origin: ReplayCoordinateOrigin = "corner"
 
 
 @dataclass

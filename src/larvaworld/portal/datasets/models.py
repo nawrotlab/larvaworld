@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 
 @dataclass(frozen=True)
@@ -14,6 +14,24 @@ class WorkspaceDatasetRecord:
     h5_path: Path
     lab_id: str | None
     group_id: str | None
+    ref_id: str | None
+    n_agents: int | None
+
+
+WorkspaceReplayDatasetOrigin = Literal["imported", "simulation_run"]
+
+
+@dataclass(frozen=True)
+class WorkspaceReplayDatasetRecord:
+    origin: WorkspaceReplayDatasetOrigin
+    dataset_id: str
+    dataset_dir: Path
+    data_dir: Path
+    conf_path: Path
+    h5_path: Path
+    group_id: str | None
+    run_id: str | None
+    member_id: str | None
     ref_id: str | None
     n_agents: int | None
 

@@ -5,7 +5,10 @@ from pathlib import Path
 from typing import Any
 
 from larvaworld.lib.util.dictsNlists import load_dict
-from larvaworld.portal.datasets.models import WorkspaceDatasetRecord
+from larvaworld.portal.datasets.models import (
+    WorkspaceDatasetRecord,
+    WorkspaceReplayDatasetRecord,
+)
 from larvaworld.portal.workspace import WorkspaceState, get_workspace_dir
 
 
@@ -103,6 +106,79 @@ def _record_from_dataset_dir(dataset_dir: Path) -> WorkspaceDatasetRecord | None
     )
 
 
+def _simulation_record_from_conf_path(
+    conf_path: Path, *, experiments_dir: Path
+) -> WorkspaceReplayDatasetRecord | None:
+    conf_path = conf_path.expanduser().resolve()
+    if conf_path.name != "conf.txt" or conf_path.parent.name != "data":
+        return None
+    data_dir = conf_path.parent
+    dataset_dir = data_dir.parent
+    h5_path = data_dir / "data.h5"
+    if not h5_path.is_file():
+        logger.debug("Ignoring simulation dataset without data.h5: %s", dataset_dir)
+        return None
+    try:
+        rel = conf_path.relative_to(experiments_dir.expanduser().resolve())
+    except ValueError:
+        logger.debug(
+            "Ignoring simulation dataset outside workspace experiments dir: %s",
+            dataset_dir,
+        )
+        return None
+    if len(rel.parts) < 4:
+        logger.debug(
+            "Ignoring simulation dataset with unsupported layout: %s", dataset_dir
+        )
+        return None
+    run_id = rel.parts[0].strip()
+    if not run_id:
+        return None
+
+    config = load_dict(str(conf_path))
+    if not config:
+        logger.debug(
+            "Ignoring simulation dataset with malformed or empty config: %s", conf_path
+        )
+        return None
+
+    dataset_id = config.get("id")
+    if not isinstance(dataset_id, str) or not dataset_id.strip():
+        dataset_id = dataset_dir.name
+    dataset_id = dataset_id.strip()
+
+    group_id = _normalize_group_id(config.get("group_id"))
+    larva_group = config.get("larva_group")
+    if group_id is None and isinstance(larva_group, dict):
+        group_id = _normalize_group_id(larva_group.get("group_id"))
+
+    ref_id = config.get("refID")
+    if not isinstance(ref_id, str) or not ref_id.strip():
+        ref_id = None
+
+    n_agents = config.get("N")
+    if not isinstance(n_agents, int):
+        agent_ids = config.get("agent_ids")
+        if isinstance(agent_ids, list):
+            n_agents = len(agent_ids)
+        else:
+            n_agents = None
+
+    return WorkspaceReplayDatasetRecord(
+        origin="simulation_run",
+        dataset_id=dataset_id,
+        dataset_dir=dataset_dir,
+        data_dir=data_dir,
+        conf_path=conf_path,
+        h5_path=h5_path,
+        group_id=group_id,
+        run_id=run_id,
+        member_id=dataset_dir.name,
+        ref_id=ref_id,
+        n_agents=n_agents,
+    )
+
+
 def get_workspace_dataset(dataset_dir: Path) -> WorkspaceDatasetRecord | None:
     return _record_from_dataset_dir(dataset_dir)
 
@@ -123,3 +199,19 @@ def list_workspace_datasets(
         if record is not None:
             records.append(record)
     return records
+
+
+def list_workspace_simulation_datasets(
+    workspace: WorkspaceState | None = None,
+) -> list[WorkspaceReplayDatasetRecord]:
+    experiments_dir = get_workspace_dir("experiments", workspace=workspace)
+    records: list[WorkspaceReplayDatasetRecord] = []
+    for conf_path in sorted(experiments_dir.rglob("conf.txt")):
+        record = _simulation_record_from_conf_path(
+            conf_path, experiments_dir=experiments_dir
+        )
+        if record is not None:
+            records.append(record)
+    return sorted(
+        records, key=lambda r: (str(r.run_id), r.dataset_id, str(r.conf_path))
+    )

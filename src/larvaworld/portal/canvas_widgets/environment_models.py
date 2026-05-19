@@ -49,6 +49,7 @@ class EnvironmentCanvasState:
     odorscape: dict[str, Any] | None = None
     windscape: dict[str, Any] | None = None
     thermoscape: dict[str, Any] | None = None
+    show_arena_outline: bool = True
 
 
 @dataclass(frozen=True)

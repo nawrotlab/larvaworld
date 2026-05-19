@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Any, Iterable
 
 import numpy as np
 import pandas as pd
@@ -20,7 +20,10 @@ from larvaworld.portal.datasets.replay_models import (
     ReplaySource,
     ReplaySourceMember,
 )
-from larvaworld.portal.datasets.workspace_index import list_workspace_datasets
+from larvaworld.portal.datasets.workspace_index import (
+    list_workspace_datasets,
+    list_workspace_simulation_datasets,
+)
 from larvaworld.portal.workspace import WorkspaceState
 
 
@@ -45,7 +48,7 @@ def build_source_catalog(workspace: WorkspaceState | None) -> list[ReplaySource]
             sources.append(
                 ReplaySource(
                     token=member.token,
-                    label=f"Workspace / Dataset / {record.dataset_id}",
+                    label=f"Workspace / Imported dataset / {record.dataset_id}",
                     source_type="workspace_dataset",
                     members=(member,),
                 )
@@ -67,8 +70,37 @@ def build_source_catalog(workspace: WorkspaceState | None) -> list[ReplaySource]
             sources.append(
                 ReplaySource(
                     token=f"workspace_group:{lab_id}:{group_id}",
-                    label=f"Workspace / Group / {lab_id}:{group_id}",
+                    label=f"Workspace / Imported group / {lab_id}:{group_id}",
                     source_type="workspace_group",
+                    members=members,
+                )
+            )
+        simulation_records = list_workspace_simulation_datasets(workspace=workspace)
+        by_run: dict[str, list] = {}
+        for record in simulation_records:
+            if not record.run_id:
+                continue
+            by_run.setdefault(record.run_id, []).append(record)
+        for run_id, run_records in sorted(by_run.items()):
+            members = tuple(
+                ReplaySourceMember(
+                    token=(
+                        "workspace_simulation:"
+                        f"{run_id}:{record.member_id or record.dataset_id}"
+                    ),
+                    label=record.dataset_id,
+                    source_type="workspace_simulation_run",
+                    workspace_record=record,
+                )
+                for record in sorted(
+                    run_records, key=lambda r: (r.dataset_id, str(r.dataset_dir))
+                )
+            )
+            sources.append(
+                ReplaySource(
+                    token=f"workspace_simulation_run:{run_id}",
+                    label=f"Workspace / Simulation run / {run_id}",
+                    source_type="workspace_simulation_run",
                     members=members,
                 )
             )
@@ -124,13 +156,20 @@ def prepare_replay_source(source: ReplaySource) -> PreparedReplaySource:
 
 
 def build_environment_state_for_member(
-    member: PreparedReplayMember, *, allow_static_layers: bool
+    member: PreparedReplayMember,
+    *,
+    allow_static_layers: bool,
+    show_arena_outline: bool = True,
 ) -> EnvironmentCanvasState:
     if not allow_static_layers:
         return EnvironmentCanvasState(
-            arena=CanvasArena("rectangular", member.arena_dims), objects=()
+            arena=CanvasArena("rectangular", member.arena_dims),
+            objects=(),
+            show_arena_outline=show_arena_outline,
         )
-    if member.env_conf_id and member.env_conf_id in reg.conf.Env.confIDs:
+    if member.env_params is not None:
+        env_conf = member.env_params
+    elif member.env_conf_id and member.env_conf_id in reg.conf.Env.confIDs:
         env_conf = reg.conf.Env.get(member.env_conf_id)
     else:
         env_conf = reg.gen.Env(
@@ -172,6 +211,7 @@ def build_render_state(
             transposition=transposition,
             track_point=track_point,
             arena_dims=member.arena_dims,
+            coordinate_origin=member.coordinate_origin,
         )
         if time_range is not None and member.dt > 0:
             s0 = int(time_range[0] / member.dt)
@@ -251,6 +291,7 @@ def _prepare_member(member: ReplaySourceMember) -> PreparedReplayMember:
         dt=dt,
         nticks=nticks,
         env_conf_id=env_conf_id,
+        coordinate_origin="corner",
     )
 
 
@@ -289,6 +330,12 @@ def _prepare_workspace_member(member: ReplaySourceMember) -> PreparedReplayMembe
         dt=dt,
         nticks=nticks,
         env_conf_id=str(env_conf.get("id")) if isinstance(env_conf, dict) else None,
+        env_params=_plain_mapping(env_conf),
+        coordinate_origin=(
+            "centered"
+            if getattr(record, "origin", None) == "simulation_run"
+            else "corner"
+        ),
     )
 
 
@@ -331,12 +378,19 @@ def _resolve_xy_columns(
     raise ValueError("Could not resolve trajectory xy columns for replay.")
 
 
+def _plain_mapping(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    return dict(value)
+
+
 def _aligned_xy(
     xy_default: pd.DataFrame,
     *,
     transposition: str | None,
     track_point: int,
     arena_dims: tuple[float, float],
+    coordinate_origin: str = "corner",
 ) -> pd.DataFrame:
     mode = transposition
     if mode in {"", "none", "stored"}:
@@ -346,6 +400,8 @@ def _aligned_xy(
         return xy
     assert mode in {"origin", "center", "arena"}
     if mode == "arena":
+        if coordinate_origin == "centered":
+            return xy
         xy.loc[:, "x"] = xy["x"] - (arena_dims[0] / 2.0)
         xy.loc[:, "y"] = xy["y"] - (arena_dims[1] / 2.0)
         return xy

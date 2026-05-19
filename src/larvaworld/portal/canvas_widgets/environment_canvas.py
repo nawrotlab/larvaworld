@@ -1172,7 +1172,7 @@ class EnvironmentCanvas:
         self._arena = state.arena
         self.clear()
         self._state = state
-        self._apply_arena(state.arena)
+        self._apply_arena(state.arena, show_arena_outline=state.show_arena_outline)
         self._apply_food_grid(state.food_grid)
         self._apply_scapes(state)
         self._apply_objects(state.objects)
@@ -1280,14 +1280,14 @@ class EnvironmentCanvas:
             height = width
         return width, height
 
-    def _apply_arena(self, arena: CanvasArena) -> None:
+    def _apply_arena(self, arena: CanvasArena, *, show_arena_outline: bool) -> None:
         self._arena = arena
         width, height = self._arena_dimensions()
         self.arena_source.data = {"x": [0.0], "y": [0.0], "w": [width], "h": [height]}
         is_circular = str(arena.geometry).lower().startswith("circ")
-        self._arena_circle_renderer.visible = is_circular
+        self._arena_circle_renderer.visible = is_circular and show_arena_outline
         self._food_grid_circle_renderer.visible = is_circular
-        self._arena_rect_renderer.visible = not is_circular
+        self._arena_rect_renderer.visible = (not is_circular) and show_arena_outline
         self._food_grid_rect_renderer.visible = not is_circular
         pad_scale = 1.24
         required_x_span = width * pad_scale

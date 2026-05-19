@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from html import escape
+from pathlib import Path
 
 import panel as pn
 
@@ -52,22 +54,8 @@ class _DatasetReplayController:
         self._sources = build_source_catalog(self.workspace)
         self._source_by_token = {source.token: source for source in self._sources}
         self._prepared: PreparedReplaySource | None = None
-        self._last_static_state_key: tuple[str, str | None, bool] | None = None
+        self._last_static_state_key: tuple[str, str | None, bool, bool] | None = None
 
-        source_type_options: dict[str, str] = {}
-        for source in self._sources:
-            type_label = {
-                "workspace_dataset": "Workspace / Dataset",
-                "workspace_group": "Workspace / Group",
-                "registry_reference": "Registry / Reference dataset",
-                "registry_reference_group": "Registry / Reference group",
-            }[source.source_type]
-            source_type_options[type_label] = source.source_type
-        self.source_type_select = pn.widgets.Select(
-            name="Source type",
-            options=source_type_options
-            or {"Registry / Reference dataset": "registry_reference"},
-        )
         self.source_select = pn.widgets.Select(name="Source", options={})
 
         self.member_visibility = pn.widgets.CheckBoxGroup(
@@ -103,7 +91,6 @@ class _DatasetReplayController:
             _status_html("Select a replay source to begin."), margin=0
         )
 
-        self.source_type_select.param.watch(self._on_source_type_change, "value")
         self.source_select.param.watch(self._on_source_change, "value")
         self.member_visibility.param.watch(self._on_any_control_change, "value")
         for widget in (
@@ -127,24 +114,58 @@ class _DatasetReplayController:
         self.status_pane.object = _status_html(text)
 
     def _reload_source_options(self) -> None:
-        source_type = self.source_type_select.value
-        options = {
-            source.label: source.token
-            for source in self._sources
-            if source.source_type == source_type
-        }
+        previous = self.source_select.value
+        options = self._source_options()
         self.source_select.options = options
-        if options:
+        if previous in options.values():
+            self.source_select.value = previous
+        elif options:
             self.source_select.value = next(iter(options.values()))
         else:
             self.source_select.value = None
             self._prepared = None
-            self._set_status("No sources found for this source type.")
+            self._set_status("No replay sources found.")
             self.canvas.clear()
             self.canvas.clear_dynamic_overlays()
 
-    def _on_source_type_change(self, _event=None) -> None:
-        self._reload_source_options()
+    def _source_options(self) -> dict[str, str]:
+        by_label: dict[str, list[ReplaySource]] = defaultdict(list)
+        for source in self._sources:
+            by_label[source.label].append(source)
+        options: dict[str, str] = {}
+        for label, sources in by_label.items():
+            if len(sources) == 1:
+                options[label] = sources[0].token
+                continue
+            disambiguator_counts: dict[str, int] = defaultdict(int)
+            for source in sources:
+                suffix = self._source_disambiguator(source)
+                disambiguator_counts[suffix] += 1
+                index = disambiguator_counts[suffix]
+                disambiguator = suffix if index == 1 else f"{suffix}#{index}"
+                options[f"{label} ({disambiguator})"] = source.token
+        return options
+
+    @staticmethod
+    def _source_disambiguator(source: ReplaySource) -> str:
+        token = str(source.token)
+        if token.startswith("workspace:"):
+            raw = token.split("workspace:", 1)[1]
+            path = Path(raw)
+            parent = path.parent.name
+            name = path.name
+            return f"{parent}/{name}" if parent else name
+        if token.startswith("workspace_group:"):
+            return token.split("workspace_group:", 1)[1]
+        if token.startswith("workspace_simulation_run:"):
+            return token.split("workspace_simulation_run:", 1)[1]
+        if token.startswith("workspace_simulation:"):
+            return token.split("workspace_simulation:", 1)[1]
+        if token.startswith("registry_ref:"):
+            return token.split("registry_ref:", 1)[1]
+        if token.startswith("registry_group:"):
+            return token.split("registry_group:", 1)[1]
+        return token
 
     def _on_source_change(self, _event=None) -> None:
         token = self.source_select.value
@@ -195,44 +216,53 @@ class _DatasetReplayController:
             time_range=time_range,
             show_dispersal_ring=bool(self.show_dispersal.value),
         )
-        self.canvas.set_larva_frame(state.frame)
-        self.canvas.set_dynamic_overlays(rings=state.rings)
 
-        source_kind = self._prepared.source.source_type
-        allow_none_mode = source_kind in {
-            "registry_reference",
-            "registry_reference_group",
-        }
-        allow_static_layers = transposition == "arena" or (
-            transposition is None and allow_none_mode and False
-        )
+        allow_static_layers = transposition == "arena"
         if self._prepared.members:
             first_member = next(iter(self._prepared.members.values()))
+            show_arena_outline = self._show_arena_outline_for_mode(
+                transposition,
+                first_member.coordinate_origin,
+            )
             static_state_key = (
                 self._prepared.source.token,
                 transposition,
                 allow_static_layers,
+                show_arena_outline,
             )
             if static_state_key != self._last_static_state_key:
                 self.canvas.set_state(
                     build_environment_state_for_member(
                         first_member,
                         allow_static_layers=allow_static_layers,
+                        show_arena_outline=show_arena_outline,
                     )
                 )
                 self._last_static_state_key = static_state_key
+        self.canvas.set_larva_frame(state.frame)
+        self.canvas.set_dynamic_overlays(rings=state.rings)
+
+    @staticmethod
+    def _show_arena_outline_for_mode(
+        transposition: str | None, coordinate_origin: str
+    ) -> bool:
+        if transposition == "arena":
+            return True
+        if transposition is None and coordinate_origin == "centered":
+            return True
+        return False
 
     def view(self) -> pn.viewable.Viewable:
         intro = pn.pane.HTML(
             (
                 '<div class="lw-dataset-replay-intro">'
-                "Replay imported workspace datasets and registry references with a read-only, frame-based viewer."
+                "Replay imported workspace datasets, single experiment run outputs, "
+                "and registry references with a read-only, frame-based viewer."
                 "</div>"
             ),
             margin=0,
         )
         controls = pn.Column(
-            self.source_type_select,
             self.source_select,
             self.member_visibility,
             pn.layout.Divider(),
