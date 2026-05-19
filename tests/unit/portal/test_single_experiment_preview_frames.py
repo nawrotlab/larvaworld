@@ -19,12 +19,19 @@ class DummyAgent:
         midline,
         trajectory,
         color,
+        segs=(),
     ) -> None:
         self.pos = pos
         self.head = head
         self.midline_xy = midline
         self.trajectory = trajectory
         self.color = color
+        self.segs = segs
+
+
+class DummySegment:
+    def __init__(self, vertices) -> None:
+        self.vertices = vertices
 
 
 class DummyAgents(list):
@@ -62,6 +69,10 @@ def test_capture_larva_frame_copies_expected_fields() -> None:
                 midline=[(0.0, 0.0), (0.001, 0.002)],
                 trajectory=[(0.0, 0.0), (0.001, 0.001), (0.002, 0.002)],
                 color="#111111",
+                segs=(
+                    DummySegment([(0.0, 0.0), (0.001, 0.0), (0.001, 0.001)]),
+                    DummySegment([(0.001, 0.0), (0.002, 0.0), (0.002, 0.001)]),
+                ),
             ),
             DummyAgent(
                 pos=[0.01, 0.02],
@@ -87,6 +98,13 @@ def test_capture_larva_frame_copies_expected_fields() -> None:
     assert frame.trails == (
         ((0.001, 0.001), (0.002, 0.002)),
         ((0.01, 0.02), (0.015, 0.025)),
+    )
+    assert frame.segment_polygons == (
+        (
+            ((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),
+            ((0.001, 0.0), (0.002, 0.0), (0.002, 0.001)),
+        ),
+        (),
     )
     assert frame.colors == ("#111111", "#222222")
 
@@ -114,6 +132,7 @@ def test_capture_larva_frame_preserves_alignment_for_invalid_optional_data() -> 
                 midline=[(0.04, 0.05), (0.041, 0.052)],
                 trajectory=[(0.04, 0.05), (0.042, 0.054)],
                 color="#333333",
+                segs=(DummySegment([(0.04, 0.05), (0.041, 0.05), (0.041, 0.051)]),),
             ),
         ]
     )
@@ -124,6 +143,7 @@ def test_capture_larva_frame_preserves_alignment_for_invalid_optional_data() -> 
     assert len(frame.heads) == 3
     assert len(frame.midlines) == 3
     assert len(frame.trails) == 3
+    assert len(frame.segment_polygons) == 3
     assert len(frame.colors) == 3
 
     assert frame.heads[0] == (0.001, 0.002)
@@ -137,6 +157,9 @@ def test_capture_larva_frame_preserves_alignment_for_invalid_optional_data() -> 
     assert frame.trails[0] == ((0.0, 0.0), (0.001, 0.001))
     assert frame.trails[1] == ((0.02, 0.03),)
     assert frame.trails[2] == ((0.04, 0.05), (0.042, 0.054))
+    assert frame.segment_polygons[0] == ()
+    assert frame.segment_polygons[1] == ()
+    assert frame.segment_polygons[2] == (((0.04, 0.05), (0.041, 0.05), (0.041, 0.051)),)
 
     assert frame.colors == ("#111111", "", "#333333")
 
@@ -153,6 +176,7 @@ def test_capture_larva_frame_copies_values_not_references() -> None:
         midline=[(0.0, 0.0), (0.001, 0.001)],
         trajectory=[(0.0, 0.0), (0.001, 0.001)],
         color="#111111",
+        segs=(DummySegment([(0.0, 0.0), (0.001, 0.0), (0.001, 0.001)]),),
     )
     launcher = DummyLauncher([agent], tick=5)
 
@@ -162,11 +186,35 @@ def test_capture_larva_frame_copies_values_not_references() -> None:
     agent.head[0] = 8.8
     agent.midline_xy[0] = (7.7, 7.7)
     agent.trajectory[0] = (6.6, 6.6)
+    agent.segs[0].vertices[0] = (5.5, 5.5)
 
     assert frame.centroids == ((0.0, 0.0),)
     assert frame.heads == ((0.001, 0.002),)
     assert frame.midlines == (((0.0, 0.0), (0.001, 0.001)),)
     assert frame.trails == (((0.0, 0.0), (0.001, 0.001)),)
+    assert frame.segment_polygons == ((((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),)
+
+
+def test_capture_larva_frame_skips_malformed_segment_vertices() -> None:
+    launcher = DummyLauncher(
+        [
+            DummyAgent(
+                pos=[0.0, 0.0],
+                head=[0.0, 0.0],
+                midline=[],
+                trajectory=[],
+                color="#111111",
+                segs=(
+                    DummySegment([(0.0, 0.0), (0.001, 0.0), (0.001, 0.001)]),
+                    DummySegment([(0.0, 0.0), ("bad", None), (0.001, float("nan"))]),
+                ),
+            )
+        ]
+    )
+
+    frame = capture_larva_frame(launcher)
+
+    assert frame.segment_polygons == ((((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),)
 
 
 def test_capture_larva_frame_tick_override() -> None:

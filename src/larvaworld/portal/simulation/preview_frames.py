@@ -49,6 +49,15 @@ def _copy_positions(values: Any, count: int) -> tuple[tuple[float, float], ...]:
     return tuple(copied)
 
 
+def _copy_segment_polygons(agent: Any) -> tuple[tuple[tuple[float, float], ...], ...]:
+    polygons: list[tuple[tuple[float, float], ...]] = []
+    for seg in getattr(agent, "segs", ()):
+        polygon = _copy_path(getattr(seg, "vertices", ()))
+        if len(polygon) >= 3:
+            polygons.append(polygon)
+    return tuple(polygons)
+
+
 def capture_larva_frame(
     launcher: Any,
     *,
@@ -100,6 +109,13 @@ def capture_larva_frame(
             trail_rows.append(path)
         trails = tuple(trail_rows)
 
+    segment_rows: list[tuple[tuple[tuple[float, float], ...], ...]] = []
+    for index in range(n_agents):
+        try:
+            segment_rows.append(_copy_segment_polygons(agents[index]))
+        except (TypeError, IndexError, KeyError, AttributeError):
+            segment_rows.append(())
+
     colors = tuple(
         "" if getattr(agent, "color", None) is None else str(agent.color)
         for agent in agents
@@ -112,6 +128,7 @@ def capture_larva_frame(
         heads=heads,
         midlines=midlines,
         trails=trails,
+        segment_polygons=tuple(segment_rows),
         colors=colors,
     )
 

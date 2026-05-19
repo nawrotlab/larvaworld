@@ -448,6 +448,9 @@ class EnvironmentCanvas:
         self.sim_larva_trail_source = ColumnDataSource(
             _empty(["xs", "ys", "color", "id"])
         )
+        self.sim_larva_segment_source = ColumnDataSource(
+            _empty(["xs", "ys", "color", "id"])
+        )
         self.sim_larva_label_source = ColumnDataSource(
             _empty(["x", "y", "label", "color", "id"])
         )
@@ -733,6 +736,16 @@ class EnvironmentCanvas:
             line_alpha=0.32,
             line_width=1.5,
         )
+        self._sim_larva_segment_renderer = self.fig.patches(
+            xs="xs",
+            ys="ys",
+            source=self.sim_larva_segment_source,
+            fill_color="color",
+            line_color="#111111",
+            fill_alpha=0.55,
+            line_alpha=0.80,
+            line_width=0.8,
+        )
         self._sim_larva_midline_renderer = self.fig.multi_line(
             xs="xs",
             ys="ys",
@@ -901,6 +914,7 @@ class EnvironmentCanvas:
             LegendItem(
                 label="Simulated larvae",
                 renderers=[
+                    self._sim_larva_segment_renderer,
                     self._sim_larva_centroid_renderer,
                     self._sim_larva_head_renderer,
                     self._sim_larva_midline_renderer,
@@ -942,6 +956,7 @@ class EnvironmentCanvas:
         head_rows: list[dict[str, Any]] = []
         midline_rows: list[dict[str, Any]] = []
         trail_rows: list[dict[str, Any]] = []
+        segment_rows: list[dict[str, Any]] = []
         label_rows: list[dict[str, Any]] = []
 
         for index, centroid in enumerate(frame.centroids):
@@ -1011,6 +1026,18 @@ class EnvironmentCanvas:
                             "id": larva_id,
                         }
                     )
+            if index < len(frame.segment_polygons):
+                for segment_index, polygon in enumerate(frame.segment_polygons[index]):
+                    polygon_points = _valid_path(polygon)
+                    if len(polygon_points) >= 3:
+                        segment_rows.append(
+                            {
+                                "xs": [point[0] for point in polygon_points],
+                                "ys": [point[1] for point in polygon_points],
+                                "color": color,
+                                "id": f"{larva_id}_seg_{segment_index}",
+                            }
+                        )
 
         self.sim_larva_centroid_source.data = _rows_to_data(
             centroid_rows, ["x", "y", "color", "id"]
@@ -1023,6 +1050,9 @@ class EnvironmentCanvas:
         )
         self.sim_larva_trail_source.data = _rows_to_data(
             trail_rows, ["xs", "ys", "color", "id"]
+        )
+        self.sim_larva_segment_source.data = _rows_to_data(
+            segment_rows, ["xs", "ys", "color", "id"]
         )
         self.sim_larva_label_source.data = _rows_to_data(
             label_rows, ["x", "y", "label", "color", "id"]
@@ -1062,6 +1092,7 @@ class EnvironmentCanvas:
         self.sim_larva_head_source.data = _empty(["x", "y", "color", "id"])
         self.sim_larva_midline_source.data = _empty(["xs", "ys", "color", "id"])
         self.sim_larva_trail_source.data = _empty(["xs", "ys", "color", "id"])
+        self.sim_larva_segment_source.data = _empty(["xs", "ys", "color", "id"])
         self.sim_larva_label_source.data = _empty(["x", "y", "label", "color", "id"])
 
     def clear(self) -> None:

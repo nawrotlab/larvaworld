@@ -252,6 +252,10 @@ def test_environment_canvas_set_larva_frame_populates_dynamic_sources() -> None:
             heads=((0.0016, 0.0),),
             midlines=(((0.0, 0.0), (0.001, 0.0), (0.002, 0.0)),),
             trails=(((0.0, 0.0), (0.0, 0.003)), ((0.01, 0.02), (0.011, 0.021))),
+            segment_polygons=(
+                (((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),
+                (),
+            ),
             colors=("#111111",),
         )
     )
@@ -264,6 +268,10 @@ def test_environment_canvas_set_larva_frame_populates_dynamic_sources() -> None:
     assert canvas.sim_larva_head_source.data["x"] == [0.0016]
     assert canvas.sim_larva_midline_source.data["xs"] == [[0.0, 0.001, 0.002]]
     assert canvas.sim_larva_trail_source.data["ys"] == [[0.0, 0.003], [0.02, 0.021]]
+    assert canvas.sim_larva_segment_source.data["xs"] == [[0.0, 0.001, 0.001]]
+    assert canvas.sim_larva_segment_source.data["ys"] == [[0.0, 0.0, 0.001]]
+    assert canvas.sim_larva_segment_source.data["color"] == ["#111111"]
+    assert canvas.sim_larva_segment_source.data["id"] == ["larva_0_seg_0"]
 
 
 def test_environment_canvas_set_larva_frame_populates_labels() -> None:
@@ -345,6 +353,11 @@ def test_environment_canvas_set_larva_frame_skips_invalid_optional_data() -> Non
                 ("bad",),
                 ((0.02, 0.03), (0.02, 0.04)),
             ),
+            segment_polygons=(
+                (((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),
+                (((0.0, 0.0),),),
+                (((0.02, 0.03), (0.03, 0.03), ("x", 1.0)),),
+            ),
             colors=("", "#ff0000"),
         )
     )
@@ -357,6 +370,7 @@ def test_environment_canvas_set_larva_frame_skips_invalid_optional_data() -> Non
     assert canvas.sim_larva_head_source.data["x"] == []
     assert canvas.sim_larva_midline_source.data["xs"] == [[0.02, 0.03]]
     assert canvas.sim_larva_trail_source.data["xs"] == [[0.02, 0.02]]
+    assert canvas.sim_larva_segment_source.data["xs"] == [[0.0, 0.001, 0.001]]
 
 
 def test_environment_canvas_clear_larva_frame_only_clears_dynamic_sources() -> None:
@@ -367,6 +381,7 @@ def test_environment_canvas_clear_larva_frame_only_clears_dynamic_sources() -> N
             tick=1,
             centroids=((0.0, 0.0),),
             trails=(((0.0, 0.0), (0.0, 0.01)),),
+            segment_polygons=((((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),),
         )
     )
 
@@ -379,6 +394,7 @@ def test_environment_canvas_clear_larva_frame_only_clears_dynamic_sources() -> N
     assert canvas.sim_larva_head_source.data["x"] == []
     assert canvas.sim_larva_midline_source.data["xs"] == []
     assert canvas.sim_larva_trail_source.data["xs"] == []
+    assert canvas.sim_larva_segment_source.data["xs"] == []
     assert canvas.larva_group_circle_source.data["id"] == ["larvae"]
 
 
@@ -390,6 +406,7 @@ def test_environment_canvas_set_state_clears_stale_simulated_larvae() -> None:
             centroids=((0.0, 0.0),),
             heads=((0.0, 0.001),),
             trails=(((0.0, 0.0), (0.0, 0.01)),),
+            segment_polygons=((((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),),
         )
     )
 
@@ -398,6 +415,7 @@ def test_environment_canvas_set_state_clears_stale_simulated_larvae() -> None:
     assert canvas.sim_larva_centroid_source.data["x"] == []
     assert canvas.sim_larva_head_source.data["x"] == []
     assert canvas.sim_larva_trail_source.data["xs"] == []
+    assert canvas.sim_larva_segment_source.data["xs"] == []
 
 
 def test_environment_canvas_simulated_larvae_legend_membership() -> None:
@@ -407,6 +425,7 @@ def test_environment_canvas_simulated_larvae_legend_membership() -> None:
     larva_groups_item = _legend_item(canvas, "Larva groups")
 
     assert simulated_item.renderers == [
+        canvas._sim_larva_segment_renderer,
         canvas._sim_larva_centroid_renderer,
         canvas._sim_larva_head_renderer,
         canvas._sim_larva_midline_renderer,
@@ -415,7 +434,23 @@ def test_environment_canvas_simulated_larvae_legend_membership() -> None:
     assert canvas._sim_larva_centroid_renderer not in larva_groups_item.renderers
     assert canvas._sim_larva_head_renderer not in larva_groups_item.renderers
     assert canvas._sim_larva_midline_renderer not in larva_groups_item.renderers
+    assert canvas._sim_larva_segment_renderer not in larva_groups_item.renderers
     assert canvas._sim_larva_trail_renderer not in larva_groups_item.renderers
+
+
+def test_environment_canvas_segments_require_valid_centroid_row() -> None:
+    canvas = EnvironmentCanvas()
+    canvas.set_larva_frame(
+        LarvaPreviewFrame(
+            tick=2,
+            centroids=(("bad", 0.0),),
+            segment_polygons=((((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),),
+            colors=("#111111",),
+        )
+    )
+
+    assert canvas.sim_larva_centroid_source.data["x"] == []
+    assert canvas.sim_larva_segment_source.data["xs"] == []
 
 
 def test_environment_canvas_view_is_stable_across_larva_frame_updates() -> None:
