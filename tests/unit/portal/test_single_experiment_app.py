@@ -1989,6 +1989,52 @@ def test_single_experiment_template_save_dirty_state_from_env_and_experiment_edi
     assert "Will save as:" not in str(controller.experiment_template_save_hint.object)
 
 
+def test_single_experiment_workspace_template_larva_group_model_change_enables_save_controls(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    templates_dir = workspace_root / "metadata" / "experiment_templates"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+    (templates_dir / "dish_1.json").write_text(
+        json.dumps(
+            {
+                "experiment": "dish",
+                "larva_groups": {
+                    "explorer": {
+                        "distribution": {
+                            "N": 35,
+                            "mode": "grid",
+                            "shape": "rect",
+                        }
+                    }
+                },
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    controller = _SingleExperimentController()
+    _load_workspace_template(controller, "dish_1")
+
+    larva_view = controller._get_parameter_group_view("larva_groups")
+    assert larva_view is not None
+
+    model_type = _find_widget(larva_view, "Model configuration ID", pn.widgets.Select)
+    current_value = model_type.value
+    next_value = next(
+        option for option in model_type.options if option != current_value
+    )
+
+    model_type.value = next_value
+
+    assert controller.experiment_template_save_name.disabled is False
+    assert controller.experiment_template_save_btn.disabled is False
+    assert controller.experiment_template_save_name.value == "dish_1"
+
+
 def test_single_experiment_template_save_writes_whitelisted_payload(
     tmp_path: Path,
 ) -> None:

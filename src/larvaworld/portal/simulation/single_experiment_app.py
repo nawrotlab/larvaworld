@@ -1386,6 +1386,7 @@ class _SingleExperimentController:
         self._active_environment_preset_payload: util.AttrDict | None = None
         self._experiment_template_baseline_signature: str | None = None
         self._experiment_template_watcher_handles: list[Any] = []
+        self._larva_groups_state_watcher_handles: list[Any] = []
         self._active_workspace_template_payload: util.AttrDict | None = None
         self._active_workspace_template_filename: str | None = None
         self._experiment_template_workspace_available = False
@@ -2271,6 +2272,78 @@ class _SingleExperimentController:
             except Exception:
                 continue
 
+    def _clear_larva_groups_state_watchers(self) -> None:
+        while self._larva_groups_state_watcher_handles:
+            watcher = self._larva_groups_state_watcher_handles.pop()
+            owner = getattr(watcher, "inst", None)
+            if owner is None:
+                continue
+            try:
+                owner.param.unwatch(watcher)
+            except Exception:
+                continue
+
+    def _bind_parameterized_tree_watchers(
+        self,
+        obj: Any,
+        *,
+        callback: Any,
+        seen: set[int],
+    ) -> None:
+        if not isinstance(obj, param.Parameterized):
+            return
+        obj_id = id(obj)
+        if obj_id in seen:
+            return
+        seen.add(obj_id)
+        for name, parameter in obj.param.objects(instance=False).items():
+            if name == "name" or parameter.readonly:
+                continue
+            try:
+                watcher = obj.param.watch(callback, name)
+            except Exception:
+                continue
+            self._larva_groups_state_watcher_handles.append(watcher)
+            value = getattr(obj, name, None)
+            if isinstance(value, param.Parameterized):
+                self._bind_parameterized_tree_watchers(
+                    value,
+                    callback=callback,
+                    seen=seen,
+                )
+            elif isinstance(value, dict):
+                for item in value.values():
+                    if isinstance(item, param.Parameterized):
+                        self._bind_parameterized_tree_watchers(
+                            item,
+                            callback=callback,
+                            seen=seen,
+                        )
+            elif isinstance(value, (list, tuple)):
+                for item in value:
+                    if isinstance(item, param.Parameterized):
+                        self._bind_parameterized_tree_watchers(
+                            item,
+                            callback=callback,
+                            seen=seen,
+                        )
+
+    def _bind_larva_groups_state_watchers(self) -> None:
+        self._clear_larva_groups_state_watchers()
+        owner = self._typed_experiment_for_larva_groups
+        if owner is None:
+            return
+        larva_groups = getattr(owner, "larva_groups", None)
+        if not isinstance(larva_groups, dict):
+            return
+        seen: set[int] = set()
+        for group in larva_groups.values():
+            self._bind_parameterized_tree_watchers(
+                group,
+                callback=self._on_experiment_template_parameter_widget_change,
+                seen=seen,
+            )
+
     def _bind_experiment_template_watchers(self) -> None:
         self._clear_experiment_template_watchers()
         for root in (self.environment_parameters_editor, self.parameters_editor):
@@ -2295,6 +2368,8 @@ class _SingleExperimentController:
     def _on_experiment_template_parameter_widget_change(self, *_: object) -> None:
         if self._loading_experiment_template_preset:
             return
+        if self._typed_experiment_for_larva_groups is not None:
+            self._bind_larva_groups_state_watchers()
         self._refresh_experiment_template_save_state(reset_baseline=False)
         self._refresh_summary()
 
@@ -3400,6 +3475,7 @@ class _SingleExperimentController:
             exp_owner=self._typed_experiment_for_larva_groups,
             section="larva_groups",
         )
+        self._bind_larva_groups_state_watchers()
         self._larva_groups_group_view = build_larva_groups_widget(
             self._typed_experiment_for_larva_groups
         )
