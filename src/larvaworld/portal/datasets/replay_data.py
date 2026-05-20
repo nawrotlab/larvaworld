@@ -196,12 +196,42 @@ def build_render_state(
     agent_indices: tuple[int, ...] | None,
     time_range: tuple[float, float] | None,
     show_dispersal_ring: bool,
+    show_heads: bool = True,
+    show_midlines: bool = True,
+    show_segments: bool = True,
+    show_body_contours: bool = False,
 ) -> ReplayRenderState:
+    body_geometry_enabled = bool(show_heads or show_midlines or show_segments)
+    contour_geometry_enabled = bool(show_body_contours)
+    needs_aligned_history = bool(
+        show_tracks or (show_dispersal_ring and transposition == "origin")
+    )
+
     centroids: list[tuple[float, float]] = []
+    heads: list[tuple[float, float]] = []
+    midlines: list[tuple[tuple[float, float], ...]] = []
     trails: list[tuple[tuple[float, float], ...]] = []
+    segment_polygons: list[tuple[tuple[tuple[float, float], ...], ...]] = []
+    body_contours: list[tuple[tuple[float, float], ...]] = []
     colors: list[str] = []
     labels: list[str] = []
     dispersal_distances: list[float] = []
+
+    if not show_positions:
+        return ReplayRenderState(
+            frame=LarvaPreviewFrame(
+                tick=max(int(tick), 0),
+                centroids=(),
+                heads=(),
+                midlines=(),
+                trails=(),
+                segment_polygons=(),
+                body_contours=(),
+                colors=(),
+                labels=(),
+            ),
+            rings=(),
+        )
 
     for token in member_tokens:
         member = prepared.members.get(token)
@@ -221,27 +251,82 @@ def build_render_state(
             xy = xy.loc[(slice(s0, s1), slice(None)), :]
         if xy.empty:
             continue
-        xy = _aligned_xy(
+        offsets_by_agent = _alignment_offsets_by_agent(
             xy,
             transposition=transposition,
             arena_dims=member.arena_dims,
             coordinate_origin=member.coordinate_origin,
         )
+
+        aligned_xy = None
+        grouped = None
+        if needs_aligned_history:
+            aligned_xy = _apply_alignment_offsets(xy, offsets_by_agent=offsets_by_agent)
+            grouped = aligned_xy.groupby(level="AgentID")
+
         try:
             at_tick = xy.xs(tick, level="Step")
         except KeyError:
             continue
-        grouped = xy.groupby(level="AgentID")
+
+        emitted_rows: list[tuple[object, float, float]] = []
         for agent_id, at_row in at_tick.iterrows():
-            x = float(at_row["x"])
-            y = float(at_row["y"])
+            x_raw = float(at_row["x"])
+            y_raw = float(at_row["y"])
+            dx, dy = offsets_by_agent.get(agent_id, (0.0, 0.0))
+            x = float(x_raw - dx)
+            y = float(y_raw - dy)
             if not (np.isfinite(x) and np.isfinite(y)):
                 continue
-            if show_positions:
-                centroids.append((x, y))
-                colors.append(member.color)
-                labels.append(str(agent_id) if show_ids else "")
+            emitted_rows.append((agent_id, x, y))
+            centroids.append((x, y))
+            colors.append(member.color)
+            labels.append(str(agent_id) if show_ids else "")
+
+        if not emitted_rows:
+            continue
+
+        emitted_agent_ids = tuple(agent_id for agent_id, _, _ in emitted_rows)
+        body_points_by_agent: dict[object, tuple[tuple[float, float], ...]] = {}
+        if body_geometry_enabled:
+            body_points_by_agent = _geometry_points_for_agents_at_tick(
+                member.body_xy_by_point,
+                tick=tick,
+                emitted_agent_ids=emitted_agent_ids,
+                offsets_by_agent=offsets_by_agent,
+                min_points=2,
+            )
+
+        contour_points_by_agent: dict[object, tuple[tuple[float, float], ...]] = {}
+        if contour_geometry_enabled:
+            contour_points_by_agent = _geometry_points_for_agents_at_tick(
+                member.contour_xy_by_point,
+                tick=tick,
+                emitted_agent_ids=emitted_agent_ids,
+                offsets_by_agent=offsets_by_agent,
+                min_points=3,
+            )
+
+        for agent_id, x, y in emitted_rows:
+            larva_midline = body_points_by_agent.get(agent_id, ())
+            if show_midlines:
+                midlines.append(larva_midline)
+            else:
+                midlines.append(())
+            if show_heads and larva_midline:
+                heads.append(larva_midline[0])
+            else:
+                heads.append(())
+            if show_segments and larva_midline:
+                segment_polygons.append(_segment_polygons_from_midline(larva_midline))
+            else:
+                segment_polygons.append(())
+            if contour_geometry_enabled:
+                body_contours.append(contour_points_by_agent.get(agent_id, ()))
+            else:
+                body_contours.append(())
             if show_tracks:
+                assert grouped is not None
                 history = grouped.get_group(agent_id).loc[:tick]
                 history = history.dropna()
                 if trail_length > 0 and history.shape[0] > trail_length:
@@ -252,6 +337,7 @@ def build_render_state(
             else:
                 trails.append(())
             if show_dispersal_ring and transposition == "origin":
+                assert grouped is not None
                 path = grouped.get_group(agent_id).dropna()
                 if path.empty:
                     continue
@@ -273,7 +359,11 @@ def build_render_state(
     frame = LarvaPreviewFrame(
         tick=max(int(tick), 0),
         centroids=tuple(centroids),
+        heads=tuple(heads),
+        midlines=tuple(midlines),
         trails=tuple(trails),
+        segment_polygons=tuple(segment_polygons),
+        body_contours=tuple(body_contours),
         colors=tuple(colors),
         labels=tuple(labels),
     )
@@ -288,6 +378,10 @@ def _prepare_member(member: ReplaySourceMember) -> PreparedReplayMember:
     xy = dataset.s[_resolve_xy_columns(dataset, dataset.s, track_point=-1)].copy()
     xy.columns = ["x", "y"]
     xy_by_track_point = _build_registry_xy_by_track_point(dataset, dataset.s)
+    body_xy_by_point = _build_body_xy_by_point(dataset.s, int(dataset.c.Npoints or 0))
+    contour_xy_by_point = _build_contour_xy_by_point(
+        dataset.s, int(dataset.c.Ncontour or 0)
+    )
     arena_dims = _resolve_arena_dims(dataset)
     dt = float(dataset.c.dt or 0.1)
     nticks = int(dataset.c.Nticks or (int(xy.index.unique("Step").max()) + 1))
@@ -307,6 +401,8 @@ def _prepare_member(member: ReplaySourceMember) -> PreparedReplayMember:
         env_conf_id=env_conf_id,
         coordinate_origin="corner",
         xy_by_track_point=xy_by_track_point,
+        body_xy_by_point=body_xy_by_point,
+        contour_xy_by_point=contour_xy_by_point,
         agent_ids=agent_ids,
     )
 
@@ -328,6 +424,10 @@ def _prepare_workspace_member(member: ReplaySourceMember) -> PreparedReplayMembe
     xy = step[[x_name, y_name]].copy()
     xy.columns = ["x", "y"]
     xy_by_track_point = _build_workspace_xy_by_track_point(step, conf)
+    body_xy_by_point = _build_body_xy_by_point(step, int(conf.get("Npoints") or 0))
+    contour_xy_by_point = _build_contour_xy_by_point(
+        step, int(conf.get("Ncontour") or 0)
+    )
     conf_agent_ids = conf.get("agent_ids") if isinstance(conf, dict) else None
     if isinstance(conf_agent_ids, list) and conf_agent_ids:
         agent_ids = tuple(conf_agent_ids)
@@ -359,6 +459,8 @@ def _prepare_workspace_member(member: ReplaySourceMember) -> PreparedReplayMembe
             else "corner"
         ),
         xy_by_track_point=xy_by_track_point,
+        body_xy_by_point=body_xy_by_point,
+        contour_xy_by_point=contour_xy_by_point,
         agent_ids=agent_ids,
     )
 
@@ -418,36 +520,68 @@ def _aligned_xy(
     arena_dims: tuple[float, float],
     coordinate_origin: str = "corner",
 ) -> pd.DataFrame:
+    offsets_by_agent = _alignment_offsets_by_agent(
+        xy,
+        transposition=transposition,
+        arena_dims=arena_dims,
+        coordinate_origin=coordinate_origin,
+    )
+    return _apply_alignment_offsets(xy, offsets_by_agent=offsets_by_agent)
+
+
+def _alignment_offsets_by_agent(
+    xy: pd.DataFrame,
+    *,
+    transposition: str | None,
+    arena_dims: tuple[float, float],
+    coordinate_origin: str,
+) -> dict[object, tuple[float, float]]:
     mode = transposition
     if mode in {"", "none", "stored"}:
         mode = None
-    xy = xy.copy()
-    if mode is None:
-        return xy
-    assert mode in {"origin", "center", "arena"}
-    if mode == "arena":
-        if coordinate_origin == "centered":
-            return xy
-        xy.loc[:, "x"] = xy["x"] - (arena_dims[0] / 2.0)
-        xy.loc[:, "y"] = xy["y"] - (arena_dims[1] / 2.0)
-        return xy
-    out = []
-    for _, g in xy.groupby(level="AgentID"):
-        gg = g.copy()
-        valid = gg.dropna()
+    if mode not in {None, "origin", "center", "arena"}:
+        raise ValueError(f"Unsupported transposition mode: {mode!r}")
+
+    grouped = xy.groupby(level="AgentID")
+    offsets: dict[object, tuple[float, float]] = {}
+    for agent_id, g in grouped:
+        offsets[agent_id] = (0.0, 0.0)
+        if mode is None:
+            continue
+        if mode == "arena":
+            if coordinate_origin == "centered":
+                continue
+            offsets[agent_id] = (arena_dims[0] / 2.0, arena_dims[1] / 2.0)
+            continue
+        valid = g.dropna()
         if valid.empty:
-            out.append(gg)
             continue
         if mode == "origin":
             x0, y0 = valid.iloc[0]["x"], valid.iloc[0]["y"]
         else:
             x0 = (float(valid["x"].min()) + float(valid["x"].max())) / 2.0
             y0 = (float(valid["y"].min()) + float(valid["y"].max())) / 2.0
-        gg.loc[:, "x"] = gg["x"] - x0
-        gg.loc[:, "y"] = gg["y"] - y0
+        if np.isfinite(x0) and np.isfinite(y0):
+            offsets[agent_id] = (float(x0), float(y0))
+    return offsets
+
+
+def _apply_alignment_offsets(
+    xy: pd.DataFrame,
+    *,
+    offsets_by_agent: dict[object, tuple[float, float]],
+) -> pd.DataFrame:
+    if xy.empty:
+        return xy.copy()
+    out = []
+    for agent_id, g in xy.groupby(level="AgentID"):
+        gg = g.copy()
+        dx, dy = offsets_by_agent.get(agent_id, (0.0, 0.0))
+        gg.loc[:, "x"] = gg["x"] - float(dx)
+        gg.loc[:, "y"] = gg["y"] - float(dy)
         out.append(gg)
     if not out:
-        return xy
+        return xy.copy()
     return pd.concat(out).sort_index()
 
 
@@ -505,6 +639,112 @@ def filter_xy_by_agent_indices(
     return xy[xy.index.get_level_values("AgentID").isin(selected_agent_ids)]
 
 
+def _select_and_align_geometry_by_point(
+    xy_by_point: dict[int, pd.DataFrame],
+    *,
+    agent_ids: tuple[object, ...],
+    agent_indices: tuple[int, ...] | None,
+    time_range: tuple[float, float] | None,
+    dt: float,
+    offsets_by_agent: dict[object, tuple[float, float]],
+) -> dict[int, pd.DataFrame]:
+    # Deprecated in the replay frame hot path; retained for compatibility.
+    selected: dict[int, pd.DataFrame] = {}
+    for idx, xy in xy_by_point.items():
+        filtered = filter_xy_by_agent_indices(
+            xy,
+            agent_ids,
+            agent_indices=agent_indices,
+        )
+        if filtered.empty:
+            continue
+        if time_range is not None and dt > 0:
+            s0 = int(time_range[0] / dt)
+            s1 = int(time_range[1] / dt)
+            filtered = filtered.loc[(slice(s0, s1), slice(None)), :]
+        if filtered.empty:
+            continue
+        selected[idx] = _apply_alignment_offsets(
+            filtered,
+            offsets_by_agent=offsets_by_agent,
+        )
+    return selected
+
+
+def _geometry_points_for_agents_at_tick(
+    xy_by_point: dict[int, pd.DataFrame],
+    *,
+    tick: int,
+    emitted_agent_ids: tuple[object, ...],
+    offsets_by_agent: dict[object, tuple[float, float]],
+    min_points: int,
+) -> dict[object, tuple[tuple[float, float], ...]]:
+    if not emitted_agent_ids:
+        return {}
+    emitted_set = set(emitted_agent_ids)
+    points_by_agent: dict[object, list[tuple[float, float]]] = {
+        agent_id: [] for agent_id in emitted_agent_ids
+    }
+    for point_idx in sorted(xy_by_point.keys()):
+        xy = xy_by_point[point_idx]
+        try:
+            at_tick = xy.xs(tick, level="Step")
+        except KeyError:
+            continue
+        for agent_id, row in at_tick.iterrows():
+            if agent_id not in emitted_set:
+                continue
+            x_raw = float(row["x"])
+            y_raw = float(row["y"])
+            dx, dy = offsets_by_agent.get(agent_id, (0.0, 0.0))
+            x = float(x_raw - dx)
+            y = float(y_raw - dy)
+            if np.isfinite(x) and np.isfinite(y):
+                points_by_agent[agent_id].append((x, y))
+    out: dict[object, tuple[tuple[float, float], ...]] = {}
+    for agent_id in emitted_agent_ids:
+        points = tuple(points_by_agent.get(agent_id, ()))
+        if len(points) >= min_points:
+            out[agent_id] = points
+    return out
+
+
+def _segment_polygons_from_midline(
+    midline: tuple[tuple[float, float], ...],
+) -> tuple[tuple[tuple[float, float], ...], ...]:
+    if len(midline) < 2:
+        return ()
+    lengths: list[float] = []
+    pairs: list[
+        tuple[tuple[float, float], tuple[float, float], float, float, float]
+    ] = []
+    for p0, p1 in zip(midline[:-1], midline[1:]):
+        dx = float(p1[0] - p0[0])
+        dy = float(p1[1] - p0[1])
+        length = float((dx * dx + dy * dy) ** 0.5)
+        if not np.isfinite(length) or length <= 0:
+            continue
+        lengths.append(length)
+        pairs.append((p0, p1, dx, dy, length))
+    if not lengths:
+        return ()
+    half_width = 0.25 * float(np.median(np.asarray(lengths, dtype=float)))
+    if not np.isfinite(half_width) or half_width <= 0:
+        return ()
+    polygons: list[tuple[tuple[float, float], ...]] = []
+    for p0, p1, dx, dy, length in pairs:
+        nx = -dy / length
+        ny = dx / length
+        polygon = (
+            (p0[0] + (nx * half_width), p0[1] + (ny * half_width)),
+            (p1[0] + (nx * half_width), p1[1] + (ny * half_width)),
+            (p1[0] - (nx * half_width), p1[1] - (ny * half_width)),
+            (p0[0] - (nx * half_width), p0[1] - (ny * half_width)),
+        )
+        polygons.append(tuple((float(x), float(y)) for x, y in polygon))
+    return tuple(polygons)
+
+
 def _agent_ids_from_step_index(step: pd.DataFrame) -> tuple[object, ...]:
     return tuple(step.index.get_level_values("AgentID").unique())
 
@@ -522,6 +762,32 @@ def _build_registry_xy_by_track_point(
             xy_tp.columns = ["x", "y"]
             xy_by_track_point[idx] = xy_tp
     return xy_by_track_point
+
+
+def _build_body_xy_by_point(
+    step: pd.DataFrame, npoints: int
+) -> dict[int, pd.DataFrame]:
+    xy_by_point: dict[int, pd.DataFrame] = {}
+    for idx, point_name in enumerate(util.nam.midline(max(npoints, 0), type="point")):
+        cols = list(util.nam.xy(point_name))
+        if all(col in step.columns for col in cols):
+            xy_tp = step[cols].copy()
+            xy_tp.columns = ["x", "y"]
+            xy_by_point[idx] = xy_tp
+    return xy_by_point
+
+
+def _build_contour_xy_by_point(
+    step: pd.DataFrame, ncontour: int
+) -> dict[int, pd.DataFrame]:
+    xy_by_point: dict[int, pd.DataFrame] = {}
+    for idx, point_name in enumerate(util.nam.contour(max(ncontour, 0))):
+        cols = list(util.nam.xy(point_name))
+        if all(col in step.columns for col in cols):
+            xy_tp = step[cols].copy()
+            xy_tp.columns = ["x", "y"]
+            xy_by_point[idx] = xy_tp
+    return xy_by_point
 
 
 def _build_workspace_xy_by_track_point(

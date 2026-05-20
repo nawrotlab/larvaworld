@@ -122,6 +122,10 @@ def test_dataset_replay_controller_loads_workspace_source(tmp_path: Path) -> Non
     assert controller.tick_player.end >= 0
     assert controller.transposition.value == "origin"
     assert controller.agent_indices.name == "Agent indices"
+    assert controller.show_heads.name == "Heads"
+    assert controller.show_midlines.name == "Midlines"
+    assert controller.show_segments.name == "Body segments"
+    assert controller.show_body_contours.name == "Body contours"
 
 
 def test_dataset_replay_controller_origin_mode_builds_ring(tmp_path: Path) -> None:
@@ -410,6 +414,43 @@ def test_dataset_replay_controller_valid_agent_indices_filters_agents(
     controller._render()
 
     assert controller.canvas.sim_larva_label_source.data["label"] == ["ds1_a1"]
+
+
+def test_dataset_replay_controller_passes_body_visibility_flags(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+
+    captured: dict[str, object] = {}
+
+    def _stub_build_render_state(*args, **kwargs):
+        captured.update(kwargs)
+        from larvaworld.portal.datasets.replay_data import ReplayRenderState
+        from larvaworld.portal.canvas_widgets.environment_models import (
+            LarvaPreviewFrame,
+        )
+
+        return ReplayRenderState(frame=LarvaPreviewFrame(tick=0))
+
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.build_render_state",
+        _stub_build_render_state,
+    )
+
+    controller.show_heads.value = False
+    controller.show_midlines.value = False
+    controller.show_segments.value = False
+    controller.show_body_contours.value = True
+    controller._render()
+
+    assert captured["show_heads"] is False
+    assert captured["show_midlines"] is False
+    assert captured["show_segments"] is False
+    assert captured["show_body_contours"] is True
 
 
 def test_dataset_replay_app_returns_viewable() -> None:

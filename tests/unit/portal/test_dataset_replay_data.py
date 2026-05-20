@@ -623,3 +623,448 @@ def test_track_point_explicit_mapping_changes_xy_before_origin_alignment() -> No
     )
 
     assert state.frame.centroids == ((3.0, 6.0),)
+
+
+def test_build_render_state_show_positions_false_returns_empty_frame() -> None:
+    idx = pd.MultiIndex.from_tuples([(0, "a0")], names=["Step", "AgentID"])
+    xy_default = pd.DataFrame({"x": [1.0], "y": [2.0]}, index=idx)
+    member = PreparedReplayMember(
+        token="m",
+        label="m",
+        color="#000000",
+        xy_default=xy_default,
+        arena_dims=(0.2, 0.2),
+        dt=1.0,
+        nticks=1,
+        agent_ids=("a0",),
+    )
+    source = PreparedReplaySource(
+        source=ReplaySource(
+            token="t",
+            label="t",
+            source_type="workspace_dataset",
+            members=(),
+        ),
+        members={"m": member},
+        nticks=1,
+        dt=1.0,
+    )
+
+    state = build_render_state(
+        source,
+        tick=0,
+        member_tokens=["m"],
+        show_positions=False,
+        show_ids=False,
+        show_tracks=True,
+        trail_length=5,
+        transposition="origin",
+        track_point=-1,
+        agent_indices=None,
+        time_range=None,
+        show_dispersal_ring=True,
+    )
+
+    assert state.frame.centroids == ()
+    assert state.frame.heads == ()
+    assert state.frame.midlines == ()
+    assert state.frame.trails == ()
+    assert state.frame.segment_polygons == ()
+    assert state.frame.body_contours == ()
+    assert state.frame.colors == ()
+    assert state.frame.labels == ()
+    assert state.rings == ()
+
+
+def test_build_render_state_skips_body_geometry_when_body_layers_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import larvaworld.portal.datasets.replay_data as replay_data
+
+    idx = pd.MultiIndex.from_tuples([(0, "a0")], names=["Step", "AgentID"])
+    xy_default = pd.DataFrame({"x": [1.0], "y": [2.0]}, index=idx)
+    member = PreparedReplayMember(
+        token="m",
+        label="m",
+        color="#000000",
+        xy_default=xy_default,
+        arena_dims=(0.2, 0.2),
+        dt=1.0,
+        nticks=1,
+        body_xy_by_point={0: xy_default.copy(), 1: xy_default.copy()},
+        agent_ids=("a0",),
+    )
+    source = PreparedReplaySource(
+        source=ReplaySource(
+            token="t",
+            label="t",
+            source_type="workspace_dataset",
+            members=(),
+        ),
+        members={"m": member},
+        nticks=1,
+        dt=1.0,
+    )
+
+    def _boom(*_args, **_kwargs):
+        raise AssertionError("body geometry helper must not be called")
+
+    monkeypatch.setattr(replay_data, "_geometry_points_for_agents_at_tick", _boom)
+
+    state = build_render_state(
+        source,
+        tick=0,
+        member_tokens=["m"],
+        show_positions=True,
+        show_ids=False,
+        show_tracks=False,
+        trail_length=0,
+        transposition=None,
+        track_point=-1,
+        agent_indices=None,
+        time_range=None,
+        show_dispersal_ring=False,
+        show_heads=False,
+        show_midlines=False,
+        show_segments=False,
+        show_body_contours=False,
+    )
+
+    assert state.frame.centroids == ((1.0, 2.0),)
+    assert state.frame.midlines == ((),)
+    assert state.frame.heads == ((),)
+    assert state.frame.segment_polygons == ((),)
+
+
+def test_build_render_state_skips_contour_geometry_when_contours_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import larvaworld.portal.datasets.replay_data as replay_data
+
+    idx = pd.MultiIndex.from_tuples([(0, "a0")], names=["Step", "AgentID"])
+    xy_default = pd.DataFrame({"x": [1.0], "y": [2.0]}, index=idx)
+    member = PreparedReplayMember(
+        token="m",
+        label="m",
+        color="#000000",
+        xy_default=xy_default,
+        arena_dims=(0.2, 0.2),
+        dt=1.0,
+        nticks=1,
+        contour_xy_by_point={
+            0: xy_default.copy(),
+            1: xy_default.copy(),
+            2: xy_default.copy(),
+        },
+        agent_ids=("a0",),
+    )
+    source = PreparedReplaySource(
+        source=ReplaySource(
+            token="t",
+            label="t",
+            source_type="workspace_dataset",
+            members=(),
+        ),
+        members={"m": member},
+        nticks=1,
+        dt=1.0,
+    )
+
+    called = {"n": 0}
+    original = replay_data._geometry_points_for_agents_at_tick
+
+    def _wrapped(*args, **kwargs):
+        called["n"] += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(replay_data, "_geometry_points_for_agents_at_tick", _wrapped)
+
+    build_render_state(
+        source,
+        tick=0,
+        member_tokens=["m"],
+        show_positions=True,
+        show_ids=False,
+        show_tracks=False,
+        trail_length=0,
+        transposition=None,
+        track_point=-1,
+        agent_indices=None,
+        time_range=None,
+        show_dispersal_ring=False,
+        show_heads=False,
+        show_midlines=False,
+        show_segments=False,
+        show_body_contours=False,
+    )
+
+    assert called["n"] == 0
+
+
+def test_build_render_state_builds_midline_head_and_segments() -> None:
+    idx = pd.MultiIndex.from_tuples([(0, "a0"), (1, "a0")], names=["Step", "AgentID"])
+    xy_default = pd.DataFrame({"x": [10.0, 11.0], "y": [20.0, 21.0]}, index=idx)
+    body_head = pd.DataFrame({"x": [100.0, 101.0], "y": [50.0, 52.0]}, index=idx)
+    body_mid = pd.DataFrame({"x": [102.0, 103.0], "y": [51.0, 53.0]}, index=idx)
+    body_tail = pd.DataFrame({"x": [104.0, 105.0], "y": [52.0, 54.0]}, index=idx)
+    member = PreparedReplayMember(
+        token="m",
+        label="m",
+        color="#112233",
+        xy_default=xy_default,
+        arena_dims=(0.2, 0.2),
+        dt=1.0,
+        nticks=2,
+        body_xy_by_point={0: body_head, 1: body_mid, 2: body_tail},
+        agent_ids=("a0",),
+    )
+    source = PreparedReplaySource(
+        source=ReplaySource(
+            token="t",
+            label="t",
+            source_type="workspace_dataset",
+            members=(),
+        ),
+        members={"m": member},
+        nticks=2,
+        dt=1.0,
+    )
+
+    state = build_render_state(
+        source,
+        tick=1,
+        member_tokens=["m"],
+        show_positions=True,
+        show_ids=False,
+        show_tracks=False,
+        trail_length=0,
+        transposition="origin",
+        track_point=-1,
+        agent_indices=None,
+        time_range=None,
+        show_dispersal_ring=False,
+        show_heads=True,
+        show_midlines=True,
+        show_segments=True,
+    )
+
+    assert state.frame.centroids == ((1.0, 1.0),)
+    assert state.frame.midlines == ((((91.0, 32.0), (93.0, 33.0), (95.0, 34.0))),)
+    assert state.frame.heads == ((91.0, 32.0),)
+    assert len(state.frame.segment_polygons) == 1
+    assert len(state.frame.segment_polygons[0]) == 2
+
+
+def test_build_render_state_segments_do_not_require_midline_layer() -> None:
+    idx = pd.MultiIndex.from_tuples([(0, "a0"), (1, "a0")], names=["Step", "AgentID"])
+    xy_default = pd.DataFrame({"x": [10.0, 11.0], "y": [20.0, 21.0]}, index=idx)
+    body_head = pd.DataFrame({"x": [100.0, 101.0], "y": [50.0, 52.0]}, index=idx)
+    body_tail = pd.DataFrame({"x": [104.0, 105.0], "y": [52.0, 54.0]}, index=idx)
+    member = PreparedReplayMember(
+        token="m",
+        label="m",
+        color="#112233",
+        xy_default=xy_default,
+        arena_dims=(0.2, 0.2),
+        dt=1.0,
+        nticks=2,
+        body_xy_by_point={0: body_head, 1: body_tail},
+        agent_ids=("a0",),
+    )
+    source = PreparedReplaySource(
+        source=ReplaySource(
+            token="t",
+            label="t",
+            source_type="workspace_dataset",
+            members=(),
+        ),
+        members={"m": member},
+        nticks=2,
+        dt=1.0,
+    )
+
+    state = build_render_state(
+        source,
+        tick=1,
+        member_tokens=["m"],
+        show_positions=True,
+        show_ids=False,
+        show_tracks=False,
+        trail_length=0,
+        transposition="origin",
+        track_point=-1,
+        agent_indices=None,
+        time_range=None,
+        show_dispersal_ring=False,
+        show_heads=False,
+        show_midlines=False,
+        show_segments=True,
+    )
+
+    assert state.frame.midlines == ((),)
+    assert len(state.frame.segment_polygons[0]) == 1
+
+
+def test_build_render_state_applies_same_origin_offset_to_body_points() -> None:
+    idx = pd.MultiIndex.from_tuples([(0, "a0"), (1, "a0")], names=["Step", "AgentID"])
+    xy_default = pd.DataFrame({"x": [10.0, 12.0], "y": [5.0, 7.0]}, index=idx)
+    body_head = pd.DataFrame({"x": [2.0, 5.0], "y": [3.0, 9.0]}, index=idx)
+    body_tail = pd.DataFrame({"x": [4.0, 8.0], "y": [6.0, 11.0]}, index=idx)
+    member = PreparedReplayMember(
+        token="m",
+        label="m",
+        color="#000000",
+        xy_default=xy_default,
+        arena_dims=(0.2, 0.2),
+        dt=1.0,
+        nticks=2,
+        body_xy_by_point={0: body_head, 1: body_tail},
+        agent_ids=("a0",),
+    )
+    source = PreparedReplaySource(
+        source=ReplaySource(
+            token="t",
+            label="t",
+            source_type="workspace_dataset",
+            members=(),
+        ),
+        members={"m": member},
+        nticks=2,
+        dt=1.0,
+    )
+
+    state = build_render_state(
+        source,
+        tick=1,
+        member_tokens=["m"],
+        show_positions=True,
+        show_ids=False,
+        show_tracks=False,
+        trail_length=0,
+        transposition="origin",
+        track_point=-1,
+        agent_indices=None,
+        time_range=None,
+        show_dispersal_ring=False,
+    )
+
+    assert state.frame.centroids == ((2.0, 2.0),)
+    assert state.frame.midlines == ((((-5.0, 4.0), (-2.0, 6.0))),)
+    assert state.frame.heads == ((-5.0, 4.0),)
+
+
+def test_build_render_state_contours_only_when_enabled() -> None:
+    idx = pd.MultiIndex.from_tuples([(0, "a0")], names=["Step", "AgentID"])
+    xy_default = pd.DataFrame({"x": [0.0], "y": [0.0]}, index=idx)
+    contour0 = pd.DataFrame({"x": [1.0], "y": [1.0]}, index=idx)
+    contour1 = pd.DataFrame({"x": [2.0], "y": [1.0]}, index=idx)
+    contour2 = pd.DataFrame({"x": [2.0], "y": [2.0]}, index=idx)
+    member = PreparedReplayMember(
+        token="m",
+        label="m",
+        color="#000000",
+        xy_default=xy_default,
+        arena_dims=(0.2, 0.2),
+        dt=1.0,
+        nticks=1,
+        contour_xy_by_point={0: contour0, 1: contour1, 2: contour2},
+        agent_ids=("a0",),
+    )
+    source = PreparedReplaySource(
+        source=ReplaySource(
+            token="t",
+            label="t",
+            source_type="workspace_dataset",
+            members=(),
+        ),
+        members={"m": member},
+        nticks=1,
+        dt=1.0,
+    )
+
+    state_disabled = build_render_state(
+        source,
+        tick=0,
+        member_tokens=["m"],
+        show_positions=True,
+        show_ids=False,
+        show_tracks=False,
+        trail_length=0,
+        transposition=None,
+        track_point=-1,
+        agent_indices=None,
+        time_range=None,
+        show_dispersal_ring=False,
+        show_body_contours=False,
+    )
+    state_enabled = build_render_state(
+        source,
+        tick=0,
+        member_tokens=["m"],
+        show_positions=True,
+        show_ids=False,
+        show_tracks=False,
+        trail_length=0,
+        transposition=None,
+        track_point=-1,
+        agent_indices=None,
+        time_range=None,
+        show_dispersal_ring=False,
+        show_body_contours=True,
+    )
+
+    assert state_disabled.frame.body_contours == ((),)
+    assert state_enabled.frame.body_contours == (
+        (((1.0, 1.0), (2.0, 1.0), (2.0, 2.0))),
+    )
+
+
+def test_build_render_state_time_range_excluding_tick_emits_no_geometry() -> None:
+    idx = pd.MultiIndex.from_tuples([(0, "a0"), (1, "a0")], names=["Step", "AgentID"])
+    xy_default = pd.DataFrame({"x": [0.0, 1.0], "y": [0.0, 1.0]}, index=idx)
+    body_head = pd.DataFrame({"x": [1.0, 2.0], "y": [1.0, 2.0]}, index=idx)
+    body_tail = pd.DataFrame({"x": [2.0, 3.0], "y": [2.0, 3.0]}, index=idx)
+    member = PreparedReplayMember(
+        token="m",
+        label="m",
+        color="#000000",
+        xy_default=xy_default,
+        arena_dims=(0.2, 0.2),
+        dt=1.0,
+        nticks=2,
+        body_xy_by_point={0: body_head, 1: body_tail},
+        agent_ids=("a0",),
+    )
+    source = PreparedReplaySource(
+        source=ReplaySource(
+            token="t",
+            label="t",
+            source_type="workspace_dataset",
+            members=(),
+        ),
+        members={"m": member},
+        nticks=2,
+        dt=1.0,
+    )
+
+    state = build_render_state(
+        source,
+        tick=1,
+        member_tokens=["m"],
+        show_positions=True,
+        show_ids=False,
+        show_tracks=False,
+        trail_length=0,
+        transposition=None,
+        track_point=-1,
+        agent_indices=None,
+        time_range=(0.0, 0.0),
+        show_dispersal_ring=False,
+        show_heads=True,
+        show_midlines=True,
+        show_segments=True,
+    )
+
+    assert state.frame.centroids == ()
+    assert state.frame.midlines == ()
+    assert state.frame.segment_polygons == ()

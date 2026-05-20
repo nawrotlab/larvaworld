@@ -54,6 +54,8 @@ class PreparedReplayMember:
     env_params: dict[str, Any] | None = None
     coordinate_origin: ReplayCoordinateOrigin = "corner"
     xy_by_track_point: dict[int, pd.DataFrame] = field(default_factory=dict)
+    body_xy_by_point: dict[int, pd.DataFrame] = field(default_factory=dict)
+    contour_xy_by_point: dict[int, pd.DataFrame] = field(default_factory=dict)
     agent_ids: tuple[object, ...] = ()
 
 

@@ -65,6 +65,10 @@ class _DatasetReplayController:
         self.show_positions = pn.widgets.Checkbox(name="Positions", value=True)
         self.show_ids = pn.widgets.Checkbox(name="IDs", value=False)
         self.show_tracks = pn.widgets.Checkbox(name="Tracks", value=False)
+        self.show_heads = pn.widgets.Checkbox(name="Heads", value=True)
+        self.show_midlines = pn.widgets.Checkbox(name="Midlines", value=True)
+        self.show_segments = pn.widgets.Checkbox(name="Body segments", value=True)
+        self.show_body_contours = pn.widgets.Checkbox(name="Body contours", value=False)
         self.show_dispersal = pn.widgets.Checkbox(name="Dispersal circle", value=True)
         self.trail_length = pn.widgets.IntSlider(
             name="Trail length", start=1, end=300, step=1, value=80
@@ -103,6 +107,10 @@ class _DatasetReplayController:
             self.show_positions,
             self.show_ids,
             self.show_tracks,
+            self.show_heads,
+            self.show_midlines,
+            self.show_segments,
+            self.show_body_contours,
             self.show_dispersal,
             self.trail_length,
             self.transposition,
@@ -229,6 +237,10 @@ class _DatasetReplayController:
                 agent_indices=agent_indices,
                 time_range=time_range,
                 show_dispersal_ring=bool(self.show_dispersal.value),
+                show_heads=bool(self.show_heads.value),
+                show_midlines=bool(self.show_midlines.value),
+                show_segments=bool(self.show_segments.value),
+                show_body_contours=bool(self.show_body_contours.value),
             )
         except ValueError as exc:
             self._set_status(f"Replay render error: {exc}")
@@ -286,6 +298,10 @@ class _DatasetReplayController:
             self.show_positions,
             self.show_ids,
             self.show_tracks,
+            self.show_heads,
+            self.show_midlines,
+            self.show_segments,
+            self.show_body_contours,
             self.show_dispersal,
             self.trail_length,
             pn.layout.Divider(),
