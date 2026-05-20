@@ -86,9 +86,18 @@ def _state() -> EnvironmentCanvasState:
 def _legend_item(canvas: EnvironmentCanvas, label: str):
     return next(
         item
-        for item in canvas.fig.legend[0].items
+        for legend in canvas.fig.legend
+        for item in legend.items
         if getattr(item.label, "value", None) == label
     )
+
+
+def _legend_labels(legend):
+    return [
+        item.label.value
+        for item in legend.items
+        if isinstance(getattr(item.label, "value", None), str)
+    ]
 
 
 def test_environment_canvas_view_is_stable_across_set_state() -> None:
@@ -213,22 +222,70 @@ def test_environment_canvas_source_group_circle_matches_builder_semantics() -> N
 
 def test_environment_canvas_legend_order_matches_builder_with_larva_extension() -> None:
     canvas = EnvironmentCanvas()
-    legend_labels = [
-        item.label.value
-        for item in canvas.fig.legend[0].items
-        if isinstance(getattr(item.label, "value", None), str)
-    ]
+    assert len(canvas.fig.legend) == 2
+    assert canvas._environment_legend in canvas.fig.center
+    assert canvas._larva_legend in canvas.fig.center
+    assert canvas._environment_legend not in canvas.fig.left
+    assert canvas._larva_legend not in canvas.fig.right
 
-    assert "Source units" in legend_labels
-    assert "Source groups" in legend_labels
-    assert "Borders" in legend_labels
-    assert "Larva groups" in legend_labels
-    assert "Simulated larvae" in legend_labels
-    assert "Larva trails" in legend_labels
-    assert "Odor aura" in legend_labels
-    assert "Odorscape" in legend_labels
-    assert "Windscape" in legend_labels
-    assert "Thermoscape" in legend_labels
+    left_labels = _legend_labels(canvas.fig.legend[0])
+    right_labels = _legend_labels(canvas.fig.legend[1])
+
+    assert left_labels == [
+        "Source units",
+        "Source groups",
+        "Borders",
+        "Odor aura",
+        "Odorscape",
+        "Windscape",
+        "Thermoscape",
+    ]
+    assert right_labels == [
+        "Larva groups",
+        "Larva trails",
+        "Larva body segments",
+        "Body contour",
+        "Larva midline",
+        "Larva markers",
+        "Replay overlays",
+    ]
+    assert canvas.fig.legend[0].click_policy == "hide"
+    assert canvas.fig.legend[1].click_policy == "hide"
+    assert canvas.fig.legend[0].background_fill_alpha == pytest.approx(0.85)
+    assert canvas.fig.legend[1].background_fill_alpha == pytest.approx(0.85)
+    assert canvas.fig.legend[0].location == "top_left"
+    assert canvas.fig.legend[1].location == "top_right"
+
+
+def test_environment_canvas_legends_do_not_mix_layer_groups() -> None:
+    canvas = EnvironmentCanvas()
+    left_labels = set(_legend_labels(canvas.fig.legend[0]))
+    right_labels = set(_legend_labels(canvas.fig.legend[1]))
+
+    assert not (
+        {
+            "Larva groups",
+            "Larva trails",
+            "Larva body segments",
+            "Body contour",
+            "Larva midline",
+            "Larva markers",
+            "Replay overlays",
+        }
+        & left_labels
+    )
+    assert not (
+        {
+            "Source units",
+            "Source groups",
+            "Borders",
+            "Odor aura",
+            "Odorscape",
+            "Windscape",
+            "Thermoscape",
+        }
+        & right_labels
+    )
 
 
 def test_environment_canvas_source_groups_legend_targets_group_renderers() -> None:
@@ -256,6 +313,10 @@ def test_environment_canvas_set_larva_frame_populates_dynamic_sources() -> None:
                 (((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),
                 (),
             ),
+            body_contours=(
+                ((0.0, 0.0), (0.0015, 0.0), (0.0015, 0.0015)),
+                (),
+            ),
             colors=("#111111",),
         )
     )
@@ -272,6 +333,11 @@ def test_environment_canvas_set_larva_frame_populates_dynamic_sources() -> None:
     assert canvas.sim_larva_segment_source.data["ys"] == [[0.0, 0.0, 0.001]]
     assert canvas.sim_larva_segment_source.data["color"] == ["#111111"]
     assert canvas.sim_larva_segment_source.data["id"] == ["larva_0_seg_0"]
+    assert canvas.sim_larva_body_contour_source.data["xs"] == [
+        [0.0, 0.0015, 0.0015, 0.0]
+    ]
+    assert canvas.sim_larva_body_contour_source.data["ys"] == [[0.0, 0.0, 0.0015, 0.0]]
+    assert canvas.sim_larva_body_contour_source.data["id"] == ["larva_0_contour"]
 
 
 def test_environment_canvas_set_larva_frame_populates_labels() -> None:
@@ -358,6 +424,11 @@ def test_environment_canvas_set_larva_frame_skips_invalid_optional_data() -> Non
                 (((0.0, 0.0),),),
                 (((0.02, 0.03), (0.03, 0.03), ("x", 1.0)),),
             ),
+            body_contours=(
+                ((0.0, 0.0), ("bad", 1.0), (0.001, 0.001)),
+                ((0.0, 0.0),),
+                ((0.02, 0.03), (0.03, 0.03), ("x", 1.0)),
+            ),
             colors=("", "#ff0000"),
         )
     )
@@ -371,6 +442,7 @@ def test_environment_canvas_set_larva_frame_skips_invalid_optional_data() -> Non
     assert canvas.sim_larva_midline_source.data["xs"] == [[0.02, 0.03]]
     assert canvas.sim_larva_trail_source.data["xs"] == [[0.02, 0.02]]
     assert canvas.sim_larva_segment_source.data["xs"] == [[0.0, 0.001, 0.001]]
+    assert canvas.sim_larva_body_contour_source.data["xs"] == []
 
 
 def test_environment_canvas_clear_larva_frame_only_clears_dynamic_sources() -> None:
@@ -382,6 +454,7 @@ def test_environment_canvas_clear_larva_frame_only_clears_dynamic_sources() -> N
             centroids=((0.0, 0.0),),
             trails=(((0.0, 0.0), (0.0, 0.01)),),
             segment_polygons=((((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),),
+            body_contours=(((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),
         )
     )
 
@@ -395,6 +468,7 @@ def test_environment_canvas_clear_larva_frame_only_clears_dynamic_sources() -> N
     assert canvas.sim_larva_midline_source.data["xs"] == []
     assert canvas.sim_larva_trail_source.data["xs"] == []
     assert canvas.sim_larva_segment_source.data["xs"] == []
+    assert canvas.sim_larva_body_contour_source.data["xs"] == []
     assert canvas.larva_group_circle_source.data["id"] == ["larvae"]
 
 
@@ -407,6 +481,7 @@ def test_environment_canvas_set_state_clears_stale_simulated_larvae() -> None:
             heads=((0.0, 0.001),),
             trails=(((0.0, 0.0), (0.0, 0.01)),),
             segment_polygons=((((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),),
+            body_contours=(((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),
         )
     )
 
@@ -416,26 +491,40 @@ def test_environment_canvas_set_state_clears_stale_simulated_larvae() -> None:
     assert canvas.sim_larva_head_source.data["x"] == []
     assert canvas.sim_larva_trail_source.data["xs"] == []
     assert canvas.sim_larva_segment_source.data["xs"] == []
+    assert canvas.sim_larva_body_contour_source.data["xs"] == []
 
 
 def test_environment_canvas_simulated_larvae_legend_membership() -> None:
     canvas = EnvironmentCanvas()
-    simulated_item = _legend_item(canvas, "Simulated larvae")
+    segments_item = _legend_item(canvas, "Larva body segments")
+    contour_item = _legend_item(canvas, "Body contour")
+    midline_item = _legend_item(canvas, "Larva midline")
+    markers_item = _legend_item(canvas, "Larva markers")
+    overlay_item = _legend_item(canvas, "Replay overlays")
     trail_item = _legend_item(canvas, "Larva trails")
     larva_groups_item = _legend_item(canvas, "Larva groups")
 
-    assert simulated_item.renderers == [
-        canvas._sim_larva_segment_renderer,
+    assert segments_item.renderers == [canvas._sim_larva_segment_renderer]
+    assert contour_item.renderers == [canvas._sim_larva_body_contour_renderer]
+    assert midline_item.renderers == [canvas._sim_larva_midline_renderer]
+    assert markers_item.renderers == [
         canvas._sim_larva_centroid_renderer,
         canvas._sim_larva_head_renderer,
-        canvas._sim_larva_midline_renderer,
     ]
+    assert overlay_item.renderers == [canvas._dynamic_ring_renderer]
     assert trail_item.renderers == [canvas._sim_larva_trail_renderer]
     assert canvas._sim_larva_centroid_renderer not in larva_groups_item.renderers
     assert canvas._sim_larva_head_renderer not in larva_groups_item.renderers
     assert canvas._sim_larva_midline_renderer not in larva_groups_item.renderers
     assert canvas._sim_larva_segment_renderer not in larva_groups_item.renderers
+    assert canvas._sim_larva_body_contour_renderer not in larva_groups_item.renderers
     assert canvas._sim_larva_trail_renderer not in larva_groups_item.renderers
+
+
+def test_environment_canvas_no_larva_labels_legend_item() -> None:
+    canvas = EnvironmentCanvas()
+    labels = [label for legend in canvas.fig.legend for label in _legend_labels(legend)]
+    assert "Larva labels" not in labels
 
 
 def test_environment_canvas_segments_require_valid_centroid_row() -> None:
@@ -451,6 +540,35 @@ def test_environment_canvas_segments_require_valid_centroid_row() -> None:
 
     assert canvas.sim_larva_centroid_source.data["x"] == []
     assert canvas.sim_larva_segment_source.data["xs"] == []
+
+
+def test_environment_canvas_body_contours_require_valid_centroid_row() -> None:
+    canvas = EnvironmentCanvas()
+    canvas.set_larva_frame(
+        LarvaPreviewFrame(
+            tick=2,
+            centroids=(("bad", 0.0),),
+            body_contours=(((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),
+            colors=("#111111",),
+        )
+    )
+
+    assert canvas.sim_larva_centroid_source.data["x"] == []
+    assert canvas.sim_larva_body_contour_source.data["xs"] == []
+
+
+def test_environment_canvas_contour_closure_does_not_duplicate_closed_path() -> None:
+    canvas = EnvironmentCanvas()
+    canvas.set_larva_frame(
+        LarvaPreviewFrame(
+            tick=3,
+            centroids=((0.0, 0.0),),
+            body_contours=(((0.0, 0.0), (0.001, 0.0), (0.001, 0.001), (0.0, 0.0)),),
+            colors=("#111111",),
+        )
+    )
+
+    assert canvas.sim_larva_body_contour_source.data["xs"] == [[0.0, 0.001, 0.001, 0.0]]
 
 
 def test_environment_canvas_view_is_stable_across_larva_frame_updates() -> None:

@@ -60,6 +60,7 @@ class LarvaPreviewFrame:
     midlines: tuple[tuple[tuple[float, float], ...], ...] = ()
     trails: tuple[tuple[tuple[float, float], ...], ...] = ()
     segment_polygons: tuple[tuple[tuple[tuple[float, float], ...], ...], ...] = ()
+    body_contours: tuple[tuple[tuple[float, float], ...], ...] = ()
     colors: tuple[str, ...] = ()
     labels: tuple[str, ...] = ()
 

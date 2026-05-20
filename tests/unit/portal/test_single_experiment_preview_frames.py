@@ -34,6 +34,14 @@ class DummySegment:
         self.vertices = vertices
 
 
+class LarvaContoured(DummyAgent):
+    pass
+
+
+class LarvaReplayContoured(DummyAgent):
+    pass
+
+
 class DummyAgents(list):
     def get_position(self):
         return [agent.pos for agent in self]
@@ -215,6 +223,126 @@ def test_capture_larva_frame_skips_malformed_segment_vertices() -> None:
     frame = capture_larva_frame(launcher)
 
     assert frame.segment_polygons == ((((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),),)
+
+
+def test_capture_larva_frame_captures_explicit_contour_xy() -> None:
+    agent = DummyAgent(
+        pos=[0.0, 0.0],
+        head=[0.0, 0.0],
+        midline=[],
+        trajectory=[],
+        color="#111111",
+    )
+    agent.contour_xy = [(0.0, 0.0), (0.001, 0.0), (0.001, 0.001)]
+    frame = capture_larva_frame(DummyLauncher([agent]))
+
+    assert frame.body_contours == (((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),)
+
+
+def test_capture_larva_frame_captures_vertices_only_for_contoured_agents() -> None:
+    contoured = LarvaContoured(
+        pos=[0.0, 0.0],
+        head=[0.0, 0.0],
+        midline=[],
+        trajectory=[],
+        color="#111111",
+    )
+    contoured.vertices = [(0.0, 0.0), (0.001, 0.0), (0.001, 0.001)]
+
+    replay_contoured = LarvaReplayContoured(
+        pos=[0.01, 0.01],
+        head=[0.01, 0.01],
+        midline=[],
+        trajectory=[],
+        color="#222222",
+    )
+    replay_contoured.vertices = [(0.01, 0.01), (0.011, 0.01), (0.011, 0.011)]
+
+    segmented_like = DummyAgent(
+        pos=[0.02, 0.02],
+        head=[0.02, 0.02],
+        midline=[],
+        trajectory=[],
+        color="#333333",
+        segs=(DummySegment([(0.02, 0.02), (0.021, 0.02), (0.021, 0.021)]),),
+    )
+    segmented_like.vertices = [(0.02, 0.02), (0.021, 0.02), (0.021, 0.021)]
+
+    frame = capture_larva_frame(
+        DummyLauncher([contoured, replay_contoured, segmented_like])
+    )
+
+    assert frame.body_contours == (
+        ((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),
+        ((0.01, 0.01), (0.011, 0.01), (0.011, 0.011)),
+        (),
+    )
+
+
+def test_capture_larva_frame_handles_contour_property_errors() -> None:
+    class BrokenContourAgent(DummyAgent):
+        @property
+        def contour_xy(self):
+            raise ValueError("broken contour property")
+
+    agent = BrokenContourAgent(
+        pos=[0.0, 0.0],
+        head=[0.0, 0.0],
+        midline=[],
+        trajectory=[],
+        color="#111111",
+    )
+    frame = capture_larva_frame(DummyLauncher([agent]))
+
+    assert frame.body_contours == ((),)
+
+
+def test_capture_larva_frame_skips_malformed_explicit_contours() -> None:
+    agent = DummyAgent(
+        pos=[0.0, 0.0],
+        head=[0.0, 0.0],
+        midline=[],
+        trajectory=[],
+        color="#111111",
+    )
+    agent.contour_xy = [(0.0, 0.0), ("bad", None), (0.001, float("nan"))]
+    frame = capture_larva_frame(DummyLauncher([agent]))
+
+    assert frame.body_contours == ((),)
+
+
+def test_capture_larva_frame_does_not_call_get_shape() -> None:
+    class GetShapeExplodes(DummyAgent):
+        def get_shape(self):
+            raise AssertionError("get_shape must not be called")
+
+    agent = GetShapeExplodes(
+        pos=[0.0, 0.0],
+        head=[0.0, 0.0],
+        midline=[],
+        trajectory=[],
+        color="#111111",
+        segs=(DummySegment([(0.0, 0.0), (0.001, 0.0), (0.001, 0.001)]),),
+    )
+    frame = capture_larva_frame(DummyLauncher([agent]))
+
+    assert frame.body_contours == ((),)
+
+
+def test_capture_larva_frame_copies_contours_not_references() -> None:
+    contour = [(0.0, 0.0), (0.001, 0.0), (0.001, 0.001)]
+    agent = DummyAgent(
+        pos=[0.0, 0.0],
+        head=[0.0, 0.0],
+        midline=[],
+        trajectory=[],
+        color="#111111",
+    )
+    agent.contour_xy = contour
+    frame = capture_larva_frame(DummyLauncher([agent]))
+
+    contour[0] = (9.0, 9.0)
+    assert frame.body_contours == (((0.0, 0.0), (0.001, 0.0), (0.001, 0.001)),)
 
 
 def test_capture_larva_frame_tick_override() -> None:

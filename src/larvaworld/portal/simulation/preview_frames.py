@@ -58,6 +58,39 @@ def _copy_segment_polygons(agent: Any) -> tuple[tuple[tuple[float, float], ...],
     return tuple(polygons)
 
 
+def _is_explicit_contour_agent(agent: Any) -> bool:
+    class_names = {cls.__name__ for cls in type(agent).mro()}
+    return bool({"LarvaContoured", "LarvaReplayContoured"} & class_names)
+
+
+def _copy_explicit_body_contour(agent: Any) -> tuple[tuple[float, float], ...]:
+    """Copy explicit runtime contour geometry from an agent.
+
+    This intentionally avoids inferred or derived outlines. Generic vertices are
+    only accepted for known contoured/replay-contoured agents.
+    """
+    try:
+        contour = getattr(agent, "contour_xy")
+    except (TypeError, AttributeError, IndexError, KeyError, ValueError):
+        contour = None
+
+    copied = _copy_path(contour) if contour is not None else ()
+    if len(copied) >= 3:
+        return copied
+
+    if _is_explicit_contour_agent(agent):
+        try:
+            vertices = getattr(agent, "vertices")
+        except (TypeError, AttributeError, IndexError, KeyError, ValueError):
+            vertices = None
+
+        copied = _copy_path(vertices) if vertices is not None else ()
+        if len(copied) >= 3:
+            return copied
+
+    return ()
+
+
 def capture_larva_frame(
     launcher: Any,
     *,
@@ -116,6 +149,13 @@ def capture_larva_frame(
         except (TypeError, IndexError, KeyError, AttributeError):
             segment_rows.append(())
 
+    body_contour_rows: list[tuple[tuple[float, float], ...]] = []
+    for index in range(n_agents):
+        try:
+            body_contour_rows.append(_copy_explicit_body_contour(agents[index]))
+        except (TypeError, IndexError, KeyError, AttributeError, ValueError):
+            body_contour_rows.append(())
+
     colors = tuple(
         "" if getattr(agent, "color", None) is None else str(agent.color)
         for agent in agents
@@ -129,6 +169,7 @@ def capture_larva_frame(
         midlines=midlines,
         trails=trails,
         segment_polygons=tuple(segment_rows),
+        body_contours=tuple(body_contour_rows),
         colors=colors,
     )
 

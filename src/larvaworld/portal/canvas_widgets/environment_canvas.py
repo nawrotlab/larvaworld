@@ -6,7 +6,7 @@ from typing import Any, Iterable
 import numpy as np
 import panel as pn
 from bokeh.colors import named as named_colors
-from bokeh.models import ColumnDataSource, LabelSet, LegendItem, WheelZoomTool
+from bokeh.models import ColumnDataSource, LabelSet, Legend, LegendItem, WheelZoomTool
 from bokeh.plotting import figure
 
 from larvaworld.lib.param.xy_distro import Spatial_Distro
@@ -85,6 +85,14 @@ def _valid_path(value: Any) -> tuple[tuple[float, float], ...]:
         xy for xy in (_valid_xy(candidate) for candidate in value) if xy is not None
     )
     return points if len(points) >= 2 else ()
+
+
+def _closed_path(
+    points: tuple[tuple[float, float], ...],
+) -> tuple[tuple[float, float], ...]:
+    if len(points) >= 3 and points[0] != points[-1]:
+        return (*points, points[0])
+    return points
 
 
 def _nearest_endpoint(
@@ -451,6 +459,9 @@ class EnvironmentCanvas:
         self.sim_larva_segment_source = ColumnDataSource(
             _empty(["xs", "ys", "color", "id"])
         )
+        self.sim_larva_body_contour_source = ColumnDataSource(
+            _empty(["xs", "ys", "color", "id"])
+        )
         self.sim_larva_label_source = ColumnDataSource(
             _empty(["x", "y", "label", "color", "id"])
         )
@@ -544,7 +555,6 @@ class EnvironmentCanvas:
             fill_color="color",
             fill_alpha="fill_alpha",
             line_width=1,
-            legend_label="Thermoscape",
         )
         self._windscape_segment_renderer = self.fig.segment(
             x0="x0",
@@ -555,7 +565,6 @@ class EnvironmentCanvas:
             line_color="color",
             line_alpha="line_alpha",
             line_width=2,
-            legend_label="Windscape",
         )
         self._windscape_head_renderer = self.fig.scatter(
             x="x",
@@ -578,7 +587,6 @@ class EnvironmentCanvas:
             line_alpha="line_alpha",
             line_width="line_width",
             fill_alpha=0.0,
-            legend_label="Odorscape",
         )
         self._thermoscape_marker_renderer = self.fig.scatter(
             x="x",
@@ -599,7 +607,6 @@ class EnvironmentCanvas:
             line_color=None,
             fill_color="color",
             fill_alpha="fill_alpha",
-            legend_label="Odor aura",
         )
         self._source_units_renderer = self.fig.circle(
             x="x",
@@ -611,7 +618,6 @@ class EnvironmentCanvas:
             fill_alpha="fill_alpha",
             line_alpha="line_alpha",
             line_width="line_width",
-            legend_label="Source units",
         )
         self._odor_peak_renderer = self.fig.circle(
             x="x",
@@ -632,7 +638,6 @@ class EnvironmentCanvas:
             fill_alpha="fill_alpha",
             line_alpha="line_alpha",
             line_width=2,
-            legend_label="Source groups",
         )
         self._source_group_ellipse_renderer = self.fig.ellipse(
             x="x",
@@ -677,7 +682,6 @@ class EnvironmentCanvas:
             source=self.border_source,
             line_color="color",
             line_width="w",
-            legend_label="Borders",
         )
         self._larva_group_circle_renderer = self.fig.circle(
             x="x",
@@ -690,7 +694,6 @@ class EnvironmentCanvas:
             line_alpha="line_alpha",
             line_dash="dashed",
             line_width=2,
-            legend_label="Larva groups",
         )
         self._larva_group_ellipse_renderer = self.fig.ellipse(
             x="x",
@@ -745,6 +748,14 @@ class EnvironmentCanvas:
             fill_alpha=0.55,
             line_alpha=0.80,
             line_width=0.8,
+        )
+        self._sim_larva_body_contour_renderer = self.fig.multi_line(
+            xs="xs",
+            ys="ys",
+            source=self.sim_larva_body_contour_source,
+            line_color="color",
+            line_alpha=0.95,
+            line_width=1.2,
         )
         self._sim_larva_midline_renderer = self.fig.multi_line(
             xs="xs",
@@ -873,18 +884,25 @@ class EnvironmentCanvas:
             fill_color=None,
             line_width=4,
         )
-        self._order_legend()
-
-        self.fig.legend.click_policy = "hide"
-        self.fig.legend.location = "top_left"
-        self.fig.legend.background_fill_alpha = 0.85
+        self._environment_legend = Legend(
+            items=self._environment_legend_items(),
+            click_policy="hide",
+            background_fill_alpha=0.85,
+            location="top_left",
+        )
+        self._larva_legend = Legend(
+            items=self._larva_legend_items(),
+            click_policy="hide",
+            background_fill_alpha=0.85,
+            location="top_right",
+        )
+        self.fig.add_layout(self._environment_legend)
+        self.fig.add_layout(self._larva_legend)
 
         self._pane = pn.pane.Bokeh(self.fig, sizing_mode="stretch_width")
 
-    def _order_legend(self) -> None:
-        if not self.fig.legend:
-            return
-        self.fig.legend[0].items = [
+    def _environment_legend_items(self) -> list[LegendItem]:
+        return [
             LegendItem(
                 label="Source units",
                 renderers=[self._source_units_renderer],
@@ -901,28 +919,6 @@ class EnvironmentCanvas:
             LegendItem(
                 label="Borders",
                 renderers=[self._border_renderer],
-            ),
-            LegendItem(
-                label="Larva groups",
-                renderers=[
-                    self._larva_group_circle_renderer,
-                    self._larva_group_ellipse_renderer,
-                    self._larva_group_rect_renderer,
-                    self._larva_group_member_renderer,
-                ],
-            ),
-            LegendItem(
-                label="Simulated larvae",
-                renderers=[
-                    self._sim_larva_segment_renderer,
-                    self._sim_larva_centroid_renderer,
-                    self._sim_larva_head_renderer,
-                    self._sim_larva_midline_renderer,
-                ],
-            ),
-            LegendItem(
-                label="Larva trails",
-                renderers=[self._sim_larva_trail_renderer],
             ),
             LegendItem(
                 label="Odor aura",
@@ -948,6 +944,46 @@ class EnvironmentCanvas:
             ),
         ]
 
+    def _larva_legend_items(self) -> list[LegendItem]:
+        return [
+            LegendItem(
+                label="Larva groups",
+                renderers=[
+                    self._larva_group_circle_renderer,
+                    self._larva_group_ellipse_renderer,
+                    self._larva_group_rect_renderer,
+                    self._larva_group_member_renderer,
+                ],
+            ),
+            LegendItem(
+                label="Larva trails",
+                renderers=[self._sim_larva_trail_renderer],
+            ),
+            LegendItem(
+                label="Larva body segments",
+                renderers=[self._sim_larva_segment_renderer],
+            ),
+            LegendItem(
+                label="Body contour",
+                renderers=[self._sim_larva_body_contour_renderer],
+            ),
+            LegendItem(
+                label="Larva midline",
+                renderers=[self._sim_larva_midline_renderer],
+            ),
+            LegendItem(
+                label="Larva markers",
+                renderers=[
+                    self._sim_larva_centroid_renderer,
+                    self._sim_larva_head_renderer,
+                ],
+            ),
+            LegendItem(
+                label="Replay overlays",
+                renderers=[self._dynamic_ring_renderer],
+            ),
+        ]
+
     def view(self) -> pn.viewable.Viewable:
         return self._pane
 
@@ -957,6 +993,7 @@ class EnvironmentCanvas:
         midline_rows: list[dict[str, Any]] = []
         trail_rows: list[dict[str, Any]] = []
         segment_rows: list[dict[str, Any]] = []
+        body_contour_rows: list[dict[str, Any]] = []
         label_rows: list[dict[str, Any]] = []
 
         for index, centroid in enumerate(frame.centroids):
@@ -1038,6 +1075,18 @@ class EnvironmentCanvas:
                                 "id": f"{larva_id}_seg_{segment_index}",
                             }
                         )
+            if index < len(frame.body_contours):
+                contour_points = _valid_path(frame.body_contours[index])
+                if len(contour_points) >= 3:
+                    contour_points = _closed_path(contour_points)
+                    body_contour_rows.append(
+                        {
+                            "xs": [point[0] for point in contour_points],
+                            "ys": [point[1] for point in contour_points],
+                            "color": color,
+                            "id": f"{larva_id}_contour",
+                        }
+                    )
 
         self.sim_larva_centroid_source.data = _rows_to_data(
             centroid_rows, ["x", "y", "color", "id"]
@@ -1053,6 +1102,9 @@ class EnvironmentCanvas:
         )
         self.sim_larva_segment_source.data = _rows_to_data(
             segment_rows, ["xs", "ys", "color", "id"]
+        )
+        self.sim_larva_body_contour_source.data = _rows_to_data(
+            body_contour_rows, ["xs", "ys", "color", "id"]
         )
         self.sim_larva_label_source.data = _rows_to_data(
             label_rows, ["x", "y", "label", "color", "id"]
@@ -1093,6 +1145,7 @@ class EnvironmentCanvas:
         self.sim_larva_midline_source.data = _empty(["xs", "ys", "color", "id"])
         self.sim_larva_trail_source.data = _empty(["xs", "ys", "color", "id"])
         self.sim_larva_segment_source.data = _empty(["xs", "ys", "color", "id"])
+        self.sim_larva_body_contour_source.data = _empty(["xs", "ys", "color", "id"])
         self.sim_larva_label_source.data = _empty(["x", "y", "label", "color", "id"])
 
     def clear(self) -> None:
