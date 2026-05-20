@@ -8,11 +8,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import holoviews as hv
 import panel as pn
 import param
 
-from larvaworld.lib import reg, screen, sim, util
+from larvaworld.lib import reg, sim, util
 from larvaworld.lib.param.custom import ClassAttr, ClassDict
 from larvaworld.lib.sim.validation import (
     CompatibilityIssue,
@@ -781,221 +780,6 @@ def _join_help_parts(*parts: str | None) -> str | None:
     if not cleaned:
         return None
     return "\n\n".join(cleaned)
-
-
-class _ExperimentPreview:
-    _FORWARD_ONLY_MESSAGE = (
-        "Preview is forward-only; prepare the preview again to replay from the start."
-    )
-
-    def __init__(
-        self,
-        launcher: sim.ExpRun,
-        *,
-        size: int = 620,
-        preview_step_cap: int = _PREVIEW_STEP_CAP,
-        launcher_ready: bool = False,
-    ) -> None:
-        self.launcher = launcher
-        self.size = size
-        self.draw_ops = screen.AgentDrawOps(draw_centroid=True, draw_segs=False)
-        preview_steps = max(2, min(int(self.launcher.p.steps), preview_step_cap))
-        if not launcher_ready:
-            self.launcher.sim_setup(steps=preview_steps)
-        self.Nfade = max(1, int(self.draw_ops.trail_dt / self.launcher.dt))
-        self.env = self.launcher.p.env_params
-        xdim, ydim = self.env.arena.dims
-        self.image_kws = {
-            "title": "Arena preview",
-            "xlim": (-xdim / 2, xdim / 2),
-            "ylim": (-ydim / 2, ydim / 2),
-            "width": self.size,
-            "height": int(self.size * ydim / xdim) if xdim else self.size,
-            "xlabel": "X (m)",
-            "ylabel": "Y (m)",
-        }
-        self.progress_bar = pn.widgets.Progress(
-            name="Simulation timestep",
-            bar_color="primary",
-            width=int(self.size / 2),
-            max=self.launcher.Nsteps - 1,
-            value=self.launcher.t,
-        )
-        self.time_slider = pn.widgets.IntSlider(
-            name="Tick",
-            width=int(self.size / 2),
-            start=0,
-            end=preview_steps - 1,
-            step=1,
-            value=0,
-        )
-        self.forward_only_note = pn.pane.HTML("", sizing_mode="stretch_width")
-        self._syncing_slider = False
-        self.tank_plot = self._get_tank_plot()
-        self.static_overlay = self._build_static_overlay()
-
-    def _get_tank_plot(self) -> hv.element.Overlay:
-        arena = self.env.arena
-        if arena.geometry == "circular":
-            return hv.Ellipse(0, 0, arena.dims[0]).opts(
-                line_width=5,
-                bgcolor="lightgrey",
-            )
-        if arena.geometry == "rectangular":
-            return hv.Box(0, 0, spec=arena.dims).opts(
-                line_width=5,
-                bgcolor="lightgrey",
-            )
-        raise ValueError(f"Unsupported arena geometry: {arena.geometry}")
-
-    def _source_layers(self) -> list[Any]:
-        return [
-            hv.Ellipse(source.pos[0], source.pos[1], source.radius * 2).opts(
-                line_width=5,
-                color=source.color,
-                bgcolor=source.color,
-            )
-            for source in self.launcher.sources
-        ]
-
-    def _odor_layers(self) -> list[Any]:
-        odor_layers = []
-        for source in self.launcher.sources:
-            odor = getattr(source, "odor", None)
-            spread = getattr(odor, "spread", None)
-            odor_id = getattr(odor, "id", None)
-            if odor_id in {None, ""} or spread in {None, ""}:
-                continue
-            try:
-                spread_value = float(spread)
-            except Exception:
-                continue
-            if spread_value <= 0:
-                continue
-            odor_layers.append(
-                hv.Ellipse(source.pos[0], source.pos[1], spread_value * 2).opts(
-                    line_width=2,
-                    color=source.color,
-                    alpha=0.22,
-                )
-            )
-        return odor_layers
-
-    def _border_layers(self) -> list[Any]:
-        border_layers = []
-        for border in getattr(self.launcher, "borders", []):
-            line_width = max(1.0, float(getattr(border, "width", 0.001)) * 1800)
-            for segment in getattr(border, "border_xy", []):
-                border_layers.append(
-                    hv.Path(segment).opts(
-                        color=getattr(border, "color", "#d94841"),
-                        line_width=line_width,
-                    )
-                )
-        return border_layers
-
-    def _build_static_overlay(self) -> hv.Overlay:
-        return hv.Overlay(
-            [self.tank_plot]
-            + self._odor_layers()
-            + self._source_layers()
-            + self._border_layers()
-        )
-
-    def _dynamic_agent_layers(self) -> list[Any]:
-        agents = self.launcher.agents
-        layers = []
-        if self.draw_ops.draw_segs:
-            layers.append(
-                hv.Overlay(
-                    [
-                        hv.Polygons([seg.vertices for seg in agent.segs]).opts(
-                            color=agent.color
-                        )
-                        for agent in agents
-                    ]
-                )
-            )
-        if self.draw_ops.draw_centroid:
-            layers.append(
-                hv.Points(agents.get_position()).opts(
-                    size=5,
-                    color="black",
-                )
-            )
-        if self.draw_ops.draw_head:
-            layers.append(
-                hv.Points(agents.head.front_end).opts(
-                    size=5,
-                    color="red",
-                )
-            )
-        if self.draw_ops.draw_midline:
-            layers.append(
-                hv.Overlay(
-                    [
-                        hv.Path(agent.midline_xy).opts(color="blue", line_width=2)
-                        for agent in agents
-                    ]
-                )
-            )
-        if self.draw_ops.visible_trails:
-            layers.append(
-                hv.Contours([agent.trajectory[-self.Nfade :] for agent in agents]).opts(
-                    color="black"
-                )
-            )
-        return layers
-
-    def _draw_overlay(self) -> hv.Overlay:
-        agent_layers = self._dynamic_agent_layers()
-        overlay = self.static_overlay
-        if agent_layers:
-            overlay = overlay * hv.Overlay(agent_layers)
-        return overlay.opts(
-            responsive=False,
-            **self.image_kws,
-        )
-
-    def _sync_slider_to_current_tick(self) -> None:
-        self._syncing_slider = True
-        try:
-            self.time_slider.value = self.launcher.t
-        finally:
-            self._syncing_slider = False
-
-    def _image_for_tick(self, i: int) -> hv.Overlay:
-        if self._syncing_slider:
-            return self._draw_overlay()
-        if i < self.launcher.t:
-            self.forward_only_note.object = self._FORWARD_ONLY_MESSAGE
-            self._sync_slider_to_current_tick()
-            self.progress_bar.value = self.launcher.t
-            return self._draw_overlay()
-        self.forward_only_note.object = ""
-        if i == self.launcher.t:
-            return self._draw_overlay()
-        while i > self.launcher.t:
-            self.launcher.sim_step()
-        self.progress_bar.value = self.launcher.t
-        return self._draw_overlay()
-
-    def view(self) -> pn.viewable.Viewable:
-        @pn.depends(i=self.time_slider)
-        def _image(i: int) -> hv.Overlay:
-            return self._image_for_tick(i)
-
-        preview = hv.DynamicMap(_image)
-        return pn.Row(
-            preview,
-            pn.Column(
-                pn.Row(pn.Column("Tick", self.time_slider)),
-                pn.Row(pn.Column("Computed timestep", self.progress_bar)),
-                self.forward_only_note,
-                pn.Param(self.draw_ops),
-            ),
-            sizing_mode="stretch_width",
-        )
 
 
 class _FrameSimulationPreview:
@@ -4196,7 +3980,6 @@ class _SingleExperimentController:
 
 def single_experiment_app() -> pn.viewable.Viewable:
     pn.extension(raw_css=[PORTAL_RAW_CSS, SINGLE_EXPERIMENT_RAW_CSS])
-    hv.extension("bokeh")
     controller = _SingleExperimentController()
 
     template = pn.template.MaterialTemplate(
