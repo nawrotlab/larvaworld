@@ -18,7 +18,11 @@ from larvaworld.portal.datasets.replay_data import (
     parse_agent_indices,
     prepare_replay_source,
 )
-from larvaworld.portal.datasets.replay_models import PreparedReplaySource, ReplaySource
+from larvaworld.portal.datasets.replay_models import (
+    PreparedReplayMember,
+    PreparedReplaySource,
+    ReplaySource,
+)
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
 from larvaworld.portal.runtime.display_shortcuts import (
     DISPLAY_SHORTCUTS_RAW_CSS,
@@ -85,6 +89,14 @@ def _safe_slug(value: str) -> str:
 
 
 class _DatasetReplayController:
+    _FIX_SEGMENT_NONE = "__none__"
+    _FIX_SEGMENT_FRONT = "front"
+    _FIX_SEGMENT_REAR = "rear"
+    _BODY_RENDER_SEGMENTS = "segments"
+    _BODY_RENDER_CONTOUR = "contour"
+    _BODY_RENDER_MIDLINE = "midline"
+    _BODY_RENDER_CONTOUR_SEGMENTS = "contour_segments"
+
     def __init__(self) -> None:
         self.workspace = get_active_workspace()
         self.canvas = EnvironmentCanvas(
@@ -126,6 +138,31 @@ class _DatasetReplayController:
             value="origin" if "origin" in transposition_options.values() else None,
         )
         self.track_point = pn.widgets.IntInput(name="Track point", value=-1, step=1)
+        self.fix_point = pn.widgets.Select(
+            name="Fix point",
+            options={"None": None},
+            value=None,
+            disabled=True,
+        )
+        self.close_view = pn.widgets.Checkbox(
+            name="Close view", value=False, disabled=True
+        )
+        self.fix_segment = pn.widgets.Select(
+            name="Fix orientation",
+            options={"None": self._FIX_SEGMENT_NONE},
+            value=self._FIX_SEGMENT_NONE,
+            disabled=True,
+        )
+        self.native_body_rendering = pn.widgets.Select(
+            name="Body rendering",
+            options={
+                "Segments": self._BODY_RENDER_SEGMENTS,
+                "Contour": self._BODY_RENDER_CONTOUR,
+                "Midline only": self._BODY_RENDER_MIDLINE,
+                "Contour + segments": self._BODY_RENDER_CONTOUR_SEGMENTS,
+            },
+            value=self._BODY_RENDER_SEGMENTS,
+        )
         self.agent_indices = pn.widgets.TextInput(
             name="Agent indices",
             placeholder="empty = all; e.g. 0,1,2",
@@ -183,6 +220,7 @@ class _DatasetReplayController:
 
         self.source_select.param.watch(self._on_source_change, "value")
         self.member_visibility.param.watch(self._on_any_control_change, "value")
+        self.fix_point.param.watch(self._on_any_control_change, "value")
         self.show_display.param.watch(self._on_show_display_change, "value")
         self.save_video.param.watch(self._on_save_video_change, "value")
         self.open_pygame_replay_btn.on_click(self._on_open_pygame_replay)
@@ -286,11 +324,13 @@ class _DatasetReplayController:
         self.tick_player.value = 0
         self._set_status(f"Loaded source: {source.label}")
         self._last_static_state_key = None
+        self._refresh_close_inspection_controls()
         self._render()
         self._refresh_native_replay_control_state()
         self._show_native_replay_blocker_status_if_needed()
 
     def _on_any_control_change(self, _event=None) -> None:
+        self._refresh_close_inspection_controls()
         self._render()
         self._refresh_native_replay_control_state()
         self._show_native_replay_blocker_status_if_needed()
@@ -339,7 +379,108 @@ class _DatasetReplayController:
         self.show_display.disabled = bool(disabled)
         self.save_video.disabled = bool(disabled)
         self.display_shortcuts_dialog_controller.set_disabled(bool(disabled))
+        self._refresh_close_inspection_controls()
         self._refresh_native_replay_control_state()
+
+    def _visible_member_tokens(self) -> list[str]:
+        return [str(token) for token in self.member_visibility.value]
+
+    def _single_visible_member_token(self) -> str | None:
+        visible_tokens = self._visible_member_tokens()
+        if len(visible_tokens) != 1:
+            return None
+        return visible_tokens[0]
+
+    def _prepared_member_for_token(
+        self, token: str | None
+    ) -> PreparedReplayMember | None:
+        if token is None or self._prepared is None:
+            return None
+        return self._prepared.members.get(token)
+
+    def _native_fix_points_for_member(
+        self, member: PreparedReplayMember
+    ) -> list[tuple[str, int]]:
+        items: list[tuple[str, int]] = []
+        mapping = member.native_track_point_by_ui_track_point or {}
+        for ui_idx in sorted(mapping.keys()):
+            native_idx = mapping.get(ui_idx)
+            if native_idx is None:
+                continue
+            native_point = int(native_idx)
+            if native_point <= 0:
+                continue
+            items.append((f"Body point {ui_idx + 1}", native_point))
+        return items
+
+    @staticmethod
+    def _orientation_options_for_native_fix_point(
+        native_fix_point: int | None,
+        native_fix_points: set[int],
+    ) -> dict[str, str]:
+        options: dict[str, str] = {"None": _DatasetReplayController._FIX_SEGMENT_NONE}
+        if native_fix_point is None:
+            return options
+        if (native_fix_point - 1) in native_fix_points:
+            options["Front segment"] = _DatasetReplayController._FIX_SEGMENT_FRONT
+        if (native_fix_point + 1) in native_fix_points:
+            options["Rear segment"] = _DatasetReplayController._FIX_SEGMENT_REAR
+        return options
+
+    def _selected_native_fix_point(self) -> int | None:
+        if self.fix_point.value is None:
+            return None
+        return int(self.fix_point.value)
+
+    def _selected_fix_segment(self) -> str | None:
+        value = self.fix_segment.value
+        if value in [None, self._FIX_SEGMENT_NONE]:
+            return None
+        return str(value)
+
+    def _refresh_close_inspection_controls(self) -> None:
+        controls_locked = bool(self._native_replay_controls_locked)
+        token = self._single_visible_member_token()
+        member = self._prepared_member_for_token(token)
+
+        if controls_locked or member is None:
+            self.fix_point.options = {"None": None}
+            self.fix_point.value = None
+            self.fix_point.disabled = True
+            self.close_view.value = False
+            self.close_view.disabled = True
+            self.fix_segment.options = {"None": self._FIX_SEGMENT_NONE}
+            self.fix_segment.value = self._FIX_SEGMENT_NONE
+            self.fix_segment.disabled = True
+            return
+
+        point_options: dict[str, int | None] = {"None": None}
+        point_items = self._native_fix_points_for_member(member)
+        for label, native_idx in point_items:
+            point_options[label] = native_idx
+        self.fix_point.options = point_options
+        if self.fix_point.value not in set(point_options.values()):
+            self.fix_point.value = None
+        self.fix_point.disabled = False
+
+        selected_fix_point = self._selected_native_fix_point()
+        if selected_fix_point is None:
+            self.close_view.value = False
+            self.close_view.disabled = True
+            self.fix_segment.options = {"None": self._FIX_SEGMENT_NONE}
+            self.fix_segment.value = self._FIX_SEGMENT_NONE
+            self.fix_segment.disabled = True
+            return
+
+        self.close_view.disabled = False
+        native_fix_points = {native_idx for _, native_idx in point_items}
+        orientation_options = self._orientation_options_for_native_fix_point(
+            selected_fix_point, native_fix_points
+        )
+        self.fix_segment.options = orientation_options
+        if self.fix_segment.value not in set(orientation_options.values()):
+            self.fix_segment.value = self._FIX_SEGMENT_NONE
+        self.fix_segment.disabled = len(orientation_options) <= 1
 
     def _native_replay_video_output_dir(self) -> Path:
         return (
@@ -384,7 +525,16 @@ class _DatasetReplayController:
                     "fps": int(self.video_fps.value),
                 }
             )
+        screen_kws.update(self._native_body_rendering_screen_kws())
         return screen_kws, video_target
+
+    def _native_body_rendering_screen_kws(self) -> dict[str, bool]:
+        mode = str(self.native_body_rendering.value)
+        if mode == self._BODY_RENDER_MIDLINE:
+            return {"draw_contour": False, "draw_midline": True}
+        if mode == self._BODY_RENDER_CONTOUR_SEGMENTS:
+            return {"draw_contour": True, "draw_midline": True}
+        return {}
 
     def _selected_time_range(self) -> tuple[float, float] | None:
         if not self.use_time_range.value:
@@ -432,6 +582,33 @@ class _DatasetReplayController:
         prepared_member = self._prepared.members.get(selected_member_token)
         if prepared_member is None:
             raise ValueError("Prepared replay member is unavailable.")
+        selected_fix_point = self._selected_native_fix_point()
+        selected_fix_segment = self._selected_fix_segment()
+        if selected_fix_point is None:
+            selected_fix_segment = None
+        else:
+            native_fix_points = {
+                native_idx
+                for _label, native_idx in self._native_fix_points_for_member(
+                    prepared_member
+                )
+            }
+            if selected_fix_point not in native_fix_points:
+                raise ValueError(
+                    f"Fix point {selected_fix_point} is unavailable for native replay."
+                )
+            valid_orientation_values = set(
+                self._orientation_options_for_native_fix_point(
+                    selected_fix_point, native_fix_points
+                ).values()
+            )
+            if selected_fix_segment is not None and (
+                selected_fix_segment not in valid_orientation_values
+            ):
+                raise ValueError(
+                    "Fix orientation is unavailable for the selected fix point."
+                )
+
         workspace_record = source_member.workspace_record
         ref_id = source_member.registry_ref_id
         ref_dir = None
@@ -447,7 +624,12 @@ class _DatasetReplayController:
             raise ValueError("Replay member has no dataset reference id.")
 
         draw_nsegs = 2
-        if len(prepared_member.body_xy_by_point) >= 2:
+        if self.native_body_rendering.value in [
+            self._BODY_RENDER_CONTOUR,
+            self._BODY_RENDER_MIDLINE,
+        ]:
+            draw_nsegs = None
+        elif len(prepared_member.body_xy_by_point) >= 2:
             draw_nsegs = max(2, len(prepared_member.body_xy_by_point) - 1)
 
         if prepared_member.native_replay_missing_columns:
@@ -476,11 +658,16 @@ class _DatasetReplayController:
             refID=ref_id,
             refDir=ref_dir,
             track_point=int(native_track_point),
-            transposition=self.transposition.value,
+            transposition=None
+            if selected_fix_point is not None
+            else self.transposition.value,
             agent_ids=list(agent_indices) if agent_indices is not None else [],
             time_range=time_range,
             overlap_mode=False,
             draw_Nsegs=draw_nsegs,
+            close_view=bool(self.close_view.value),
+            fix_point=selected_fix_point,
+            fix_segment=selected_fix_segment,
         ).nestedConf
         return parameters, dataset
 
@@ -676,6 +863,13 @@ class _DatasetReplayController:
             ),
             _control_tile(
                 "Coordinates", self.transposition, self.track_point, self.agent_indices
+            ),
+            _control_tile(
+                "Native Close Inspection",
+                self.fix_point,
+                self.close_view,
+                self.fix_segment,
+                self.native_body_rendering,
             ),
             _control_tile("Time", self.use_time_range, self.time_start, self.time_end),
             _control_tile(

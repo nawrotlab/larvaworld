@@ -320,12 +320,13 @@ def test_dataset_replay_controller_view_groups_controls_in_tiles(
     names = [widget.name for widget in controller.view().select(pn.widgets.Widget)]
 
     titles = {card.title for card in cards}
-    assert len(cards) == 6
+    assert len(cards) == 7
     assert titles == {
         "Source",
         "Display",
         "Motion",
         "Coordinates",
+        "Native Close Inspection",
         "Time",
         "Media / Output",
     }
@@ -335,7 +336,8 @@ def test_dataset_replay_controller_view_groups_controls_in_tiles(
     assert "Video filename" in names
     assert "Video speed-up" in names
     assert "Display Shortcuts" in names
-    assert "Run native replay" in names
+    assert "Run replay" in names
+    assert "Body rendering" in names
 
 
 def test_dataset_replay_controller_display_shortcuts_dialog_open_close(
@@ -900,6 +902,246 @@ def test_dataset_replay_controller_native_replay_explicit_track_point_mapping(
     assert parameters.track_point == int(
         prepared_member.native_track_point_by_ui_track_point[0]
     )
+
+
+def test_dataset_replay_controller_native_close_inspection_defaults(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller._on_any_control_change()
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
+    parameters, _dataset = controller._build_native_replay_parameters(
+        selected_member_token=selected_member,
+        agent_indices=None,
+        time_range=None,
+    )
+
+    assert parameters.close_view is False
+    assert parameters.fix_point is None
+    assert parameters.fix_segment is None
+    assert parameters.draw_Nsegs == 2
+
+
+def test_dataset_replay_controller_native_contour_rendering_passes_no_draw_nsegs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller.native_body_rendering.value = "contour"
+    controller._on_any_control_change()
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
+    parameters, _dataset = controller._build_native_replay_parameters(
+        selected_member_token=selected_member,
+        agent_indices=None,
+        time_range=None,
+    )
+
+    assert parameters.draw_Nsegs is None
+
+
+def test_dataset_replay_controller_native_body_rendering_presets(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
+    controller.native_body_rendering.value = "midline"
+    parameters, _dataset = controller._build_native_replay_parameters(
+        selected_member_token=selected_member,
+        agent_indices=None,
+        time_range=None,
+    )
+    screen_kws, _video_target = controller._native_replay_screen_kws(selected_member)
+    assert parameters.draw_Nsegs is None
+    assert screen_kws["draw_contour"] is False
+    assert screen_kws["draw_midline"] is True
+
+    controller.native_body_rendering.value = "contour_segments"
+    parameters, _dataset = controller._build_native_replay_parameters(
+        selected_member_token=selected_member,
+        agent_indices=None,
+        time_range=None,
+    )
+    screen_kws, _video_target = controller._native_replay_screen_kws(selected_member)
+    assert parameters.draw_Nsegs == 2
+    assert screen_kws["draw_contour"] is True
+    assert screen_kws["draw_midline"] is True
+
+
+def test_dataset_replay_controller_native_close_inspection_gating(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    ds1 = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    ds2 = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds2"
+    _write_workspace_dataset(ds1, dataset_id="ds1", group_id="grp1")
+    _write_workspace_dataset(ds2, dataset_id="ds2", group_id="grp1")
+    controller = _DatasetReplayController()
+    source_token = next(
+        token
+        for label, token in controller.source_select.options.items()
+        if label.startswith("Workspace / Imported group / ")
+    )
+    controller.source_select.value = source_token
+    tokens = list(controller.member_visibility.options.values())
+
+    controller.member_visibility.value = [tokens[0], tokens[1]]
+    controller._on_any_control_change()
+    assert controller.fix_point.disabled is True
+    assert controller.close_view.disabled is True
+    assert controller.fix_segment.disabled is True
+
+    controller.member_visibility.value = [tokens[0]]
+    controller._on_any_control_change()
+    assert controller.fix_point.disabled is False
+    assert controller.close_view.disabled is True
+    assert controller.fix_segment.disabled is True
+
+
+def test_dataset_replay_controller_native_close_view_requires_fix_point(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    data_h5 = dataset_dir / "data" / "data.h5"
+    step = pd.read_hdf(data_h5, "step")
+    step["head_x"] = step["x"]
+    step["head_y"] = step["y"]
+    step.to_hdf(data_h5, key="step")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller._on_any_control_change()
+
+    first_fix_option = next(
+        value for value in controller.fix_point.options.values() if value is not None
+    )
+    controller.fix_point.value = first_fix_option
+    controller._on_any_control_change()
+    controller.close_view.value = True
+    assert controller.close_view.disabled is False
+
+    controller.fix_point.value = None
+    controller._on_any_control_change()
+    assert controller.close_view.disabled is True
+    assert controller.close_view.value is False
+
+
+def test_dataset_replay_controller_native_fix_point_mapping_and_segment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    data_h5 = dataset_dir / "data" / "data.h5"
+    step = pd.read_hdf(data_h5, "step")
+    step["head_x"] = step["x"]
+    step["head_y"] = step["y"]
+    step["point2_x"] = step["x"] + 0.001
+    step["point2_y"] = step["y"] + 0.001
+    step["tail_x"] = step["x"] + 0.002
+    step["tail_y"] = step["y"] + 0.002
+    step.to_hdf(data_h5, key="step")
+
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller._on_any_control_change()
+
+    body_labels = [k for k in controller.fix_point.options.keys() if k != "None"]
+    assert body_labels == ["Body point 1", "Body point 2", "Body point 3"]
+    assert all(v is None or int(v) > 0 for v in controller.fix_point.options.values())
+
+    controller.fix_point.value = controller.fix_point.options["Body point 2"]
+    controller.transposition.value = "origin"
+    controller._on_any_control_change()
+    orientation_labels = list(controller.fix_segment.options.keys())
+    assert "Front segment" in orientation_labels
+    assert "Rear segment" in orientation_labels
+    controller.fix_segment.value = "rear"
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
+    parameters, _dataset = controller._build_native_replay_parameters(
+        selected_member_token=selected_member,
+        agent_indices=None,
+        time_range=None,
+    )
+    assert parameters.fix_point == int(controller.fix_point.options["Body point 2"])
+    assert parameters.fix_segment == "rear"
+    assert parameters.transposition is None
+
+
+def test_dataset_replay_controller_native_fix_orientation_invalid_state_raises(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    data_h5 = dataset_dir / "data" / "data.h5"
+    step = pd.read_hdf(data_h5, "step")
+    step["head_x"] = step["x"]
+    step["head_y"] = step["y"]
+    step["point2_x"] = step["x"] + 0.001
+    step["point2_y"] = step["y"] + 0.001
+    step["tail_x"] = step["x"] + 0.002
+    step["tail_y"] = step["y"] + 0.002
+    step.to_hdf(data_h5, key="step")
+
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller._on_any_control_change()
+    controller.fix_point.value = controller.fix_point.options["Body point 1"]
+    controller._on_any_control_change()
+    assert "Front segment" not in controller.fix_segment.options
+    controller.fix_segment.value = "front"
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
+    with pytest.raises(ValueError, match="Fix orientation is unavailable"):
+        controller._build_native_replay_parameters(
+            selected_member_token=selected_member,
+            agent_indices=None,
+            time_range=None,
+        )
 
 
 def test_dataset_replay_controller_native_replay_unavailable_track_point_sets_status(
