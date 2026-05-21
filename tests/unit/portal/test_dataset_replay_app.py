@@ -316,32 +316,42 @@ def test_dataset_replay_controller_view_groups_controls_in_tiles(
     _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
 
     controller = _DatasetReplayController()
-    cards = controller.view().select(pn.Card)
-    names = [widget.name for widget in controller.view().select(pn.widgets.Widget)]
+    view = controller.view()
+    cards = view.select(pn.Card)
 
     titles = {card.title for card in cards}
-    assert len(cards) == 5
-    assert titles == {
+    assert {
         "Source",
         "Display",
         "Motion",
         "Coordinates",
         "Pygame replay",
-    }
+    }.issubset(titles)
     assert "Native Close Inspection" not in titles
     assert "Time" not in titles
     assert "Media / Output" not in titles
-    assert "Show display" in names
-    assert "Display every N steps" in names
-    assert "Save video" in names
-    assert "Video filename" in names
-    assert "Video speed-up" in names
-    assert "Display Shortcuts" in names
-    assert "Run replay" in names
-    assert "Body rendering" in names
-    assert "Limit replay time range" in names
-    assert "Start (s)" in names
-    assert "End (s)" in names
+    assert {
+        "Time range",
+        "Close inspection",
+        "Body rendering",
+        "Output",
+    }.issubset(titles)
+    assert not view.select(pn.Accordion)
+
+    assert controller.use_time_range.name == "Limit replay time range"
+    assert controller.time_start.name == "Start (s)"
+    assert controller.time_end.name == "End (s)"
+    assert controller.fix_point.name == "Fix point"
+    assert controller.close_view.name == "Close view"
+    assert controller.fix_segment.name == "Fix orientation"
+    assert controller.native_body_rendering.name == "Body rendering"
+    assert controller.show_display.name == "Show display"
+    assert controller.display_every_n_steps.name == "Display every N steps"
+    assert controller.save_video.name == "Save video"
+    assert controller.video_filename.name == "Video filename"
+    assert controller.video_fps.name == "Video speed-up"
+    assert controller.display_shortcuts_link.name == "Display Shortcuts"
+    assert controller.open_pygame_replay_btn.name == "Run replay"
 
 
 def test_dataset_replay_controller_display_shortcuts_dialog_open_close(

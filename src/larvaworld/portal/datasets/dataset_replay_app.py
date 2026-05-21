@@ -82,8 +82,16 @@ def _control_tile(title: str, *children: object) -> pn.Card:
     )
 
 
-def _section_heading(title: str) -> pn.pane.Markdown:
-    return pn.pane.Markdown(f"#### {title}", margin=(8, 0, 2, 0))
+def _subcontrol_tile(title: str, *children: object) -> pn.Card:
+    return pn.Card(
+        pn.Column(*children, sizing_mode="stretch_width", margin=0),
+        title=title,
+        collapsed=False,
+        collapsible=False,
+        sizing_mode="stretch_width",
+        margin=(4, 0, 4, 0),
+        css_classes=["lw-dataset-replay-control-tile"],
+    )
 
 
 def _safe_slug(value: str) -> str:
@@ -846,27 +854,35 @@ class _DatasetReplayController:
         )
         pygame_replay = _control_tile(
             "Pygame replay",
-            _section_heading("Time range"),
-            self.use_time_range,
-            self.time_start,
-            self.time_end,
-            _section_heading("Close inspection"),
-            self.fix_point,
-            self.close_view,
-            self.fix_segment,
-            _section_heading("Body rendering"),
-            self.native_body_rendering,
-            _section_heading("Output"),
-            self.show_display,
-            self.display_every_n_steps,
-            self.save_video,
-            self.video_filename,
-            self.video_fps,
-            pn.Row(
-                self.display_shortcuts_link,
-                self.open_pygame_replay_btn,
-                sizing_mode="stretch_width",
-                margin=(4, 0, 0, 0),
+            _subcontrol_tile(
+                "Time range",
+                self.use_time_range,
+                self.time_start,
+                self.time_end,
+            ),
+            _subcontrol_tile(
+                "Close inspection",
+                self.fix_point,
+                self.close_view,
+                self.fix_segment,
+            ),
+            _subcontrol_tile(
+                "Body rendering",
+                self.native_body_rendering,
+            ),
+            _subcontrol_tile(
+                "Output",
+                self.show_display,
+                self.display_every_n_steps,
+                self.save_video,
+                self.video_filename,
+                self.video_fps,
+                pn.Row(
+                    self.display_shortcuts_link,
+                    self.open_pygame_replay_btn,
+                    sizing_mode="stretch_width",
+                    margin=(4, 0, 0, 0),
+                ),
             ),
         )
         controls = pn.Column(
