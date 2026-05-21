@@ -3,10 +3,12 @@ from __future__ import annotations
 from collections import defaultdict
 from html import escape
 from pathlib import Path
+from typing import Any
 
 import panel as pn
 
-from larvaworld.lib import reg
+from larvaworld.lib import reg, sim
+from larvaworld.lib.process.dataset import LarvaDataset
 from larvaworld.portal.canvas_widgets import EnvironmentCanvas
 from larvaworld.portal.datasets.replay_data import (
     build_environment_state_for_member,
@@ -40,11 +42,31 @@ DATASET_REPLAY_RAW_CSS = """
   border: 1px solid rgba(17, 17, 17, 0.1);
   background: rgba(248, 250, 252, 0.94);
 }
+.lw-dataset-replay-controls {
+  gap: 10px;
+}
+.lw-dataset-replay-control-tile {
+  border-radius: 8px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: none;
+}
 """.strip()
 
 
 def _status_html(text: str) -> str:
     return f'<div class="lw-dataset-replay-status">{escape(text)}</div>'
+
+
+def _control_tile(title: str, *children: object) -> pn.Card:
+    return pn.Card(
+        pn.Column(*children, sizing_mode="stretch_width", margin=0),
+        title=title,
+        collapsed=False,
+        collapsible=False,
+        sizing_mode="stretch_width",
+        css_classes=["lw-dataset-replay-control-tile"],
+    )
 
 
 class _DatasetReplayController:
@@ -56,6 +78,7 @@ class _DatasetReplayController:
         self._source_by_token = {source.token: source for source in self._sources}
         self._prepared: PreparedReplaySource | None = None
         self._last_static_state_key: tuple[str, str | None, bool, bool] | None = None
+        self._native_replay_controls_locked = False
 
         self.source_select = pn.widgets.Select(name="Source", options={})
 
@@ -97,12 +120,21 @@ class _DatasetReplayController:
         )
         self.time_end = pn.widgets.FloatInput(name="Time end (s)", value=0.0, step=1.0)
         self.use_time_range = pn.widgets.Checkbox(name="Apply time range", value=False)
+        self.show_display = pn.widgets.Checkbox(name="Show display", value=True)
+        self.display_every_n_steps = pn.widgets.IntInput(
+            name="Display every N steps", value=1, step=1, start=1, end=20
+        )
+        self.open_pygame_replay_btn = pn.widgets.Button(
+            name="Open pygame replay", button_type="primary"
+        )
         self.status_pane = pn.pane.HTML(
             _status_html("Select a replay source to begin."), margin=0
         )
 
         self.source_select.param.watch(self._on_source_change, "value")
         self.member_visibility.param.watch(self._on_any_control_change, "value")
+        self.show_display.param.watch(self._on_show_display_change, "value")
+        self.open_pygame_replay_btn.on_click(self._on_open_pygame_replay)
         for widget in (
             self.show_positions,
             self.show_ids,
@@ -123,6 +155,7 @@ class _DatasetReplayController:
         ):
             widget.param.watch(self._on_any_control_change, "value")
 
+        self._on_show_display_change()
         self._reload_source_options()
 
     def _set_status(self, text: str) -> None:
@@ -205,6 +238,171 @@ class _DatasetReplayController:
     def _on_any_control_change(self, _event=None) -> None:
         self._render()
 
+    def _on_show_display_change(self, _event=None) -> None:
+        enabled = (
+            bool(self.show_display.value) and not self._native_replay_controls_locked
+        )
+        self.display_every_n_steps.disabled = not enabled
+        self.open_pygame_replay_btn.disabled = not enabled
+
+    def _set_native_replay_controls_disabled(self, disabled: bool) -> None:
+        self._native_replay_controls_locked = bool(disabled)
+        self.show_display.disabled = bool(disabled)
+        self._on_show_display_change()
+
+    def _selected_time_range(self) -> tuple[float, float] | None:
+        if not self.use_time_range.value:
+            return None
+        time_range = (
+            float(self.time_start.value or 0.0),
+            float(self.time_end.value or 0.0),
+        )
+        if time_range[1] < time_range[0]:
+            time_range = (time_range[1], time_range[0])
+        return time_range
+
+    def _selected_replay_member_token(self) -> str | None:
+        visible_tokens = [str(token) for token in self.member_visibility.value]
+        if len(visible_tokens) == 0:
+            self._set_status("Select one visible member for pygame replay.")
+            return None
+        if len(visible_tokens) > 1:
+            self._set_status(
+                "Pygame replay supports one visible member in this version."
+            )
+            return None
+        return visible_tokens[0]
+
+    def _source_member_for_token(self, token: str):
+        if self._prepared is None:
+            return None
+        source = self._prepared.source
+        for member in source.members:
+            if str(member.token) == token:
+                return member
+        return None
+
+    def _build_native_replay_parameters(
+        self,
+        *,
+        selected_member_token: str,
+        agent_indices: tuple[int, ...] | None,
+        time_range: tuple[float, float] | None,
+    ) -> tuple[Any, LarvaDataset | None]:
+        assert self._prepared is not None
+        source_member = self._source_member_for_token(selected_member_token)
+        if source_member is None:
+            raise ValueError("Selected replay member is unavailable.")
+        prepared_member = self._prepared.members.get(selected_member_token)
+        if prepared_member is None:
+            raise ValueError("Prepared replay member is unavailable.")
+        workspace_record = source_member.workspace_record
+        ref_id = source_member.registry_ref_id
+        ref_dir = None
+        dataset: LarvaDataset | None = None
+        if workspace_record is not None:
+            if workspace_record.ref_id in reg.conf.Ref.confIDs:
+                ref_id = workspace_record.ref_id
+            else:
+                ref_id = reg.default_refID
+            ref_dir = str(workspace_record.dataset_dir)
+            dataset = LarvaDataset(dir=ref_dir, load_data=True)
+        if not ref_id:
+            raise ValueError("Replay member has no dataset reference id.")
+
+        draw_nsegs = 2
+        if len(prepared_member.body_xy_by_point) >= 2:
+            draw_nsegs = max(2, len(prepared_member.body_xy_by_point) - 1)
+
+        parameters = reg.gen.Replay(
+            refID=ref_id,
+            refDir=ref_dir,
+            track_point=int(self.track_point.value),
+            transposition=self.transposition.value,
+            agent_ids=list(agent_indices) if agent_indices is not None else [],
+            time_range=time_range,
+            overlap_mode=False,
+            draw_Nsegs=draw_nsegs,
+        ).nestedConf
+        return parameters, dataset
+
+    def _execute_native_pygame_replay(
+        self,
+        *,
+        parameters: Any,
+        dataset: LarvaDataset | None,
+    ) -> None:
+        launcher = None
+        try:
+            screen_kws = {
+                "show_display": True,
+                "display_every_n_steps": int(self.display_every_n_steps.value),
+                "vis_mode": "video",
+            }
+            launcher = sim.ReplayRun(
+                parameters=parameters,
+                dataset=dataset,
+                screen_kws=screen_kws,
+                store_data=False,
+            )
+            launcher.run()
+        except Exception as exc:
+            self._set_status(f"Native pygame replay failed: {exc}")
+            self._set_native_replay_controls_disabled(False)
+            return
+        finally:
+            try:
+                if launcher is not None and getattr(launcher, "screen_manager", None):
+                    launcher.screen_manager.close()
+            except Exception:
+                pass
+        self._set_status("Native pygame replay finished.")
+        self._set_native_replay_controls_disabled(False)
+
+    def _on_open_pygame_replay(self, *_: object) -> None:
+        if self._prepared is None:
+            self._set_status("Select a replay source to begin.")
+            return
+        if not bool(self.show_display.value):
+            self._set_status("Enable Show display to open pygame replay.")
+            return
+        selected_member_token = self._selected_replay_member_token()
+        if selected_member_token is None:
+            return
+        try:
+            agent_indices = parse_agent_indices(self.agent_indices.value)
+        except ValueError as exc:
+            self._set_status(f"Invalid Agent indices: {exc}")
+            return
+        time_range = self._selected_time_range()
+        try:
+            parameters, dataset = self._build_native_replay_parameters(
+                selected_member_token=selected_member_token,
+                agent_indices=agent_indices,
+                time_range=time_range,
+            )
+        except Exception as exc:
+            self._set_status(f"Native pygame replay failed: {exc}")
+            return
+
+        self._set_status(
+            "Starting native pygame replay. The portal UI may be unresponsive until the replay window closes."
+        )
+        self._set_native_replay_controls_disabled(True)
+        document = pn.state.curdoc
+        if document is not None:
+            document.add_next_tick_callback(
+                lambda: self._execute_native_pygame_replay(
+                    parameters=parameters,
+                    dataset=dataset,
+                )
+            )
+            return
+        self._execute_native_pygame_replay(
+            parameters=parameters,
+            dataset=dataset,
+        )
+
     def _render(self) -> None:
         if self._prepared is None:
             return
@@ -212,12 +410,7 @@ class _DatasetReplayController:
         transposition = self.transposition.value
         time_range = None
         if self.use_time_range.value:
-            time_range = (
-                float(self.time_start.value or 0.0),
-                float(self.time_end.value or 0.0),
-            )
-            if time_range[1] < time_range[0]:
-                time_range = (time_range[1], time_range[0])
+            time_range = self._selected_time_range()
         try:
             agent_indices = parse_agent_indices(self.agent_indices.value)
         except ValueError as exc:
@@ -292,27 +485,32 @@ class _DatasetReplayController:
             margin=0,
         )
         controls = pn.Column(
-            self.source_select,
-            self.member_visibility,
-            pn.layout.Divider(),
-            self.show_positions,
-            self.show_ids,
-            self.show_tracks,
-            self.show_heads,
-            self.show_midlines,
-            self.show_segments,
-            self.show_body_contours,
-            self.show_dispersal,
-            self.trail_length,
-            pn.layout.Divider(),
-            self.transposition,
-            self.track_point,
-            self.agent_indices,
-            self.use_time_range,
-            self.time_start,
-            self.time_end,
+            _control_tile("Source", self.source_select, self.member_visibility),
+            _control_tile(
+                "Display",
+                self.show_positions,
+                self.show_ids,
+                self.show_heads,
+                self.show_midlines,
+                self.show_segments,
+                self.show_body_contours,
+            ),
+            _control_tile(
+                "Motion", self.show_tracks, self.trail_length, self.show_dispersal
+            ),
+            _control_tile(
+                "Coordinates", self.transposition, self.track_point, self.agent_indices
+            ),
+            _control_tile("Time", self.use_time_range, self.time_start, self.time_end),
+            _control_tile(
+                "Media / Output",
+                self.show_display,
+                self.display_every_n_steps,
+                self.open_pygame_replay_btn,
+            ),
             width=360,
             sizing_mode="fixed",
+            css_classes=["lw-dataset-replay-controls"],
         )
         main = pn.Column(
             self.tick_player,

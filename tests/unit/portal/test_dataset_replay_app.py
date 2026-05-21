@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import panel as pn
 import pandas as pd
@@ -301,6 +302,33 @@ def test_dataset_replay_controller_view_has_no_source_type_widget(
     assert "Source" in names
 
 
+def test_dataset_replay_controller_view_groups_controls_in_tiles(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+
+    controller = _DatasetReplayController()
+    cards = controller.view().select(pn.Card)
+    names = [widget.name for widget in controller.view().select(pn.widgets.Widget)]
+
+    titles = {card.title for card in cards}
+    assert len(cards) == 6
+    assert titles == {
+        "Source",
+        "Display",
+        "Motion",
+        "Coordinates",
+        "Time",
+        "Media / Output",
+    }
+    assert "Show display" in names
+    assert "Display every N steps" in names
+    assert "Open pygame replay" in names
+
+
 def test_dataset_replay_controller_preserves_source_on_reload(tmp_path: Path) -> None:
     workspace = initialize_workspace(tmp_path / "workspace")
     set_active_workspace_path(workspace.root)
@@ -384,6 +412,26 @@ def test_dataset_replay_controller_invalid_agent_indices_sets_status(
     assert "Invalid Agent indices" in controller.status_pane.object
 
 
+def test_dataset_replay_controller_show_display_toggles_runtime_controls(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+
+    controller.show_display.value = True
+    controller._on_show_display_change()
+    assert controller.display_every_n_steps.disabled is False
+    assert controller.open_pygame_replay_btn.disabled is False
+
+    controller.show_display.value = False
+    controller._on_show_display_change()
+    assert controller.display_every_n_steps.disabled is True
+    assert controller.open_pygame_replay_btn.disabled is True
+
+
 def test_dataset_replay_controller_invalid_track_point_sets_status(
     tmp_path: Path,
 ) -> None:
@@ -451,6 +499,229 @@ def test_dataset_replay_controller_passes_body_visibility_flags(
     assert captured["show_midlines"] is False
     assert captured["show_segments"] is False
     assert captured["show_body_contours"] is True
+
+
+def test_dataset_replay_controller_pygame_replay_requires_one_visible_member(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1", n_agents=2)
+    controller = _DatasetReplayController()
+
+    controller.member_visibility.value = []
+    controller._on_open_pygame_replay()
+    assert (
+        "Select one visible member for pygame replay." in controller.status_pane.object
+    )
+
+    controller.member_visibility.value = list(
+        controller.member_visibility.options.values()
+    )
+    if len(controller.member_visibility.value) < 2:
+        second = next(iter(controller.member_visibility.options.values()))
+        controller.member_visibility.value = [second, second]
+    controller._on_open_pygame_replay()
+    assert (
+        "Pygame replay supports one visible member in this version."
+        in controller.status_pane.object
+    )
+
+
+def test_dataset_replay_controller_pygame_replay_invalid_agent_indices_does_not_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    controller.member_visibility.value = [
+        next(iter(controller.member_visibility.options.values()))
+    ]
+    controller.agent_indices.value = "1,,2"
+
+    called = {"value": False}
+
+    class _FakeReplayRun:
+        def __init__(self, **kwargs: Any):
+            called["value"] = True
+
+        def run(self) -> None:
+            called["value"] = True
+
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.sim.ReplayRun",
+        _FakeReplayRun,
+    )
+    controller._on_open_pygame_replay()
+
+    assert "Invalid Agent indices" in controller.status_pane.object
+    assert called["value"] is False
+
+
+def test_dataset_replay_controller_pygame_replay_registry_invocation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    registry_token = next(
+        token
+        for label, token in controller.source_select.options.items()
+        if label.startswith("Registry / Reference dataset / ")
+    )
+    controller.source_select.value = registry_token
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    expected_draw_nsegs = max(
+        2, len(controller._prepared.members[selected_member].body_xy_by_point) - 1
+    )
+    controller.show_display.value = True
+    controller.display_every_n_steps.value = 3
+
+    captured: dict[str, Any] = {}
+
+    class _FakeScreenManager:
+        def __init__(self) -> None:
+            self.close_called = False
+
+        def close(self) -> None:
+            self.close_called = True
+
+    class _FakeReplayRun:
+        def __init__(self, **kwargs: Any):
+            captured.update(kwargs)
+            self.screen_manager = _FakeScreenManager()
+
+        def run(self) -> None:
+            captured["run_called"] = True
+
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.sim.ReplayRun",
+        _FakeReplayRun,
+    )
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.pn.state.curdoc",
+        None,
+        raising=False,
+    )
+
+    controller._on_open_pygame_replay()
+
+    assert captured["dataset"] is None
+    assert captured["store_data"] is False
+    assert captured["run_called"] is True
+    assert captured["screen_kws"]["show_display"] is True
+    assert captured["screen_kws"]["vis_mode"] == "video"
+    assert captured["screen_kws"]["display_every_n_steps"] == 3
+    assert captured["parameters"].track_point == int(controller.track_point.value)
+    assert "refDir" in captured["parameters"]
+    assert captured["parameters"].draw_Nsegs == expected_draw_nsegs
+    assert "Native pygame replay finished." in controller.status_pane.object
+
+
+def test_dataset_replay_controller_pygame_replay_workspace_invocation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller.show_display.value = True
+
+    captured: dict[str, Any] = {}
+
+    class _FakeScreenManager:
+        def __init__(self) -> None:
+            self.close_called = False
+
+        def close(self) -> None:
+            self.close_called = True
+
+    class _FakeReplayRun:
+        def __init__(self, **kwargs: Any):
+            captured.update(kwargs)
+            self.screen_manager = _FakeScreenManager()
+
+        def run(self) -> None:
+            captured["run_called"] = True
+
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.sim.ReplayRun",
+        _FakeReplayRun,
+    )
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.pn.state.curdoc",
+        None,
+        raising=False,
+    )
+
+    controller._on_open_pygame_replay()
+
+    assert captured["dataset"] is not None
+    assert captured["run_called"] is True
+    assert "Native pygame replay finished." in controller.status_pane.object
+
+
+def test_dataset_replay_controller_pygame_replay_closes_screen_on_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller.show_display.value = True
+
+    captured: dict[str, Any] = {}
+
+    class _FakeScreenManager:
+        def __init__(self) -> None:
+            self.close_called = False
+
+        def close(self) -> None:
+            self.close_called = True
+            captured["close_called"] = True
+
+    class _FailingReplayRun:
+        def __init__(self, **kwargs: Any):
+            captured.update(kwargs)
+            self.screen_manager = _FakeScreenManager()
+
+        def run(self) -> None:
+            raise RuntimeError("boom")
+
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.sim.ReplayRun",
+        _FailingReplayRun,
+    )
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.pn.state.curdoc",
+        None,
+        raising=False,
+    )
+
+    controller._on_open_pygame_replay()
+
+    assert captured.get("close_called") is True
+    assert "Native pygame replay failed: boom" in controller.status_pane.object
 
 
 def test_dataset_replay_app_returns_viewable() -> None:
