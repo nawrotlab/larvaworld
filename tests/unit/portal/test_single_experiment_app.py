@@ -1345,7 +1345,7 @@ def test_single_experiment_display_shortcuts_dialog_open_close_and_note() -> Non
     drag_headers = [
         row
         for row in dialog_card.select(pn.Row)
-        if "lw-single-exp-shortcuts-drag-handle" in getattr(row, "css_classes", [])
+        if "lw-display-shortcuts-drag-handle" in getattr(row, "css_classes", [])
     ]
     assert len(drag_headers) == 1
     assert controller.display_shortcuts_close_btn in drag_headers[0].objects

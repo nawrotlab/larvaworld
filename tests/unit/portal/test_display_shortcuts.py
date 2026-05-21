@@ -5,7 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from larvaworld.portal.simulation.display_shortcuts import DisplayShortcutsController
+from larvaworld.portal.runtime.display_shortcuts import (
+    DisplayShortcutsController,
+    build_display_shortcuts_dialog,
+)
 from larvaworld.portal.workspace import (
     clear_active_workspace_path,
     get_workspace_dir,
@@ -199,3 +202,36 @@ def test_display_shortcuts_save_without_workspace_reports_error() -> None:
     controller._on_save()
 
     assert "no active workspace" in controller.status
+
+
+def test_display_shortcuts_dialog_builder_defaults() -> None:
+    dialog = build_display_shortcuts_dialog(note="Example note")
+
+    assert dialog.open_button.name == "Display Shortcuts"
+    assert dialog.close_button.name == "Close"
+    assert isinstance(dialog.controller, DisplayShortcutsController)
+    assert dialog.dialog.visible is False
+
+
+def test_display_shortcuts_dialog_open_close_and_disable() -> None:
+    dialog = build_display_shortcuts_dialog(note="Example note")
+    dialog.open()
+    assert dialog.dialog.visible is True
+    dialog.close()
+    assert dialog.dialog.visible is False
+
+    dialog.open()
+    assert dialog.dialog.visible is True
+    dialog.set_disabled(True)
+    assert dialog.open_button.disabled is True
+    assert dialog.close_button.disabled is True
+    assert dialog.dialog.visible is False
+
+
+def test_display_shortcuts_simulation_reexport_imports() -> None:
+    from larvaworld.portal.simulation.display_shortcuts import (
+        DisplayShortcutsController as SimController,
+    )
+
+    controller = SimController()
+    assert isinstance(controller, DisplayShortcutsController)

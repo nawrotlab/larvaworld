@@ -52,8 +52,9 @@ from larvaworld.portal.simulation.parameter_resolution import (
     apply_environment_payload,
     resolve_base_experiment_parameters,
 )
-from larvaworld.portal.simulation.display_shortcuts import (
-    DisplayShortcutsController,
+from larvaworld.portal.runtime.display_shortcuts import (
+    DISPLAY_SHORTCUTS_RAW_CSS,
+    build_display_shortcuts_dialog,
 )
 from larvaworld.portal.simulation.preview_frames import generate_preview_frames
 from larvaworld.portal.workspace import WorkspaceError, get_workspace_dir
@@ -111,108 +112,6 @@ SINGLE_EXPERIMENT_RAW_CSS = """
   background: rgba(181,194,176,0.14);
   border-left: 3px solid #b5c2b0;
   border-radius: 8px;
-}
-
-.lw-inline-help-link .bk-btn {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  color: #2f4858 !important;
-  font-size: 11px !important;
-  line-height: 1.3 !important;
-  padding: 0 !important;
-  min-height: 0 !important;
-  text-decoration: underline;
-}
-
-.lw-inline-help-link .bk-btn:hover,
-.lw-inline-help-link .bk-btn:focus {
-  color: #1f3542 !important;
-  text-decoration: underline;
-}
-
-.lw-single-exp-shortcuts-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  background: rgba(15, 23, 42, 0.58);
-  padding: 24px;
-}
-
-.lw-single-exp-shortcuts-dialog {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(560px, 95vw);
-  max-height: 85vh;
-  overflow: auto;
-  border-radius: 10px;
-  border: 1px solid rgba(60, 60, 60, 0.26);
-  background: #dddddd;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.34);
-  color: rgba(17, 17, 17, 0.86);
-  padding: 12px 14px;
-}
-
-.lw-single-exp-shortcuts-note {
-  font-size: 12px;
-  line-height: 1.45;
-  margin: 0 0 8px 0;
-}
-
-.lw-single-exp-shortcuts-drag-handle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: default;
-  user-select: none;
-  margin: -2px -4px 10px -4px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: rgba(60, 60, 60, 0.1);
-}
-
-.lw-single-exp-shortcuts-dialog-title {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.3;
-  font-weight: 600;
-}
-
-.lw-single-exp-shortcuts-table-wrap {
-  border-radius: 8px;
-  border: 1px solid rgba(17, 17, 17, 0.1);
-  background: rgba(181,194,176,0.14);
-  padding: 10px 10px 8px 10px;
-}
-
-.lw-single-exp-shortcuts-table-wrap h4 {
-  margin: 0 0 8px 0;
-  font-size: 13px;
-  line-height: 1.2;
-}
-
-.lw-single-exp-shortcuts-table-wrap table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.lw-single-exp-shortcuts-table-wrap td {
-  padding: 3px 0;
-  vertical-align: top;
-}
-
-.lw-single-exp-shortcuts-table-wrap kbd {
-  display: inline-block;
-  min-width: 28px;
-  border-radius: 5px;
-  border: 1px solid rgba(17, 17, 17, 0.18);
-  background: rgba(255, 255, 255, 0.82);
-  padding: 1px 5px;
-  text-align: center;
-  font: 11px/1.35 monospace;
-  color: rgba(17, 17, 17, 0.78);
 }
 
 .lw-single-exp-media {
@@ -1106,51 +1005,21 @@ class _SingleExperimentController:
             "border-radius": "8px",
         }
         self.status = pn.pane.Markdown("", margin=0)
-        self.display_shortcuts_link = pn.widgets.Button(
-            name="Display Shortcuts",
-            button_type="light",
-            css_classes=["lw-inline-help-link"],
-            margin=(4, 0, 0, 0),
-            width_policy="min",
+        self.display_shortcuts_dialog_controller = build_display_shortcuts_dialog(
+            note=(
+                "These shortcuts apply only to the live pygame display opened by "
+                "Run experiment when Show display is enabled. "
+                "They do not control the preview canvas."
+            )
         )
-        self.display_shortcuts_close_btn = pn.widgets.Button(
-            name="Close",
-            button_type="default",
-            width=88,
-            margin=0,
+        self.display_shortcuts = self.display_shortcuts_dialog_controller.controller
+        self.display_shortcuts_link = (
+            self.display_shortcuts_dialog_controller.open_button
         )
-        self.display_shortcuts = DisplayShortcutsController()
-        self.display_shortcuts_dialog = pn.Column(
-            pn.Column(
-                pn.Row(
-                    pn.pane.Markdown(
-                        "<p class='lw-single-exp-shortcuts-dialog-title'>Display Shortcuts</p>",
-                        margin=0,
-                    ),
-                    pn.Spacer(sizing_mode="stretch_width"),
-                    self.display_shortcuts_close_btn,
-                    css_classes=["lw-single-exp-shortcuts-drag-handle"],
-                    sizing_mode="stretch_width",
-                    margin=0,
-                ),
-                pn.pane.Markdown(
-                    (
-                        "These shortcuts apply only to the live pygame display opened by "
-                        "Run experiment when Show display is enabled. "
-                        "They do not control the preview canvas."
-                    ),
-                    css_classes=["lw-single-exp-shortcuts-note"],
-                    margin=0,
-                ),
-                self.display_shortcuts.view(),
-                css_classes=["lw-single-exp-shortcuts-dialog"],
-                sizing_mode="fixed",
-            ),
-            visible=False,
-            css_classes=["lw-single-exp-shortcuts-overlay"],
-            sizing_mode="stretch_width",
-            margin=0,
+        self.display_shortcuts_close_btn = (
+            self.display_shortcuts_dialog_controller.close_button
         )
+        self.display_shortcuts_dialog = self.display_shortcuts_dialog_controller.dialog
         self.run_info = pn.Column(
             self.status,
             self.display_shortcuts_link,
@@ -3511,10 +3380,7 @@ class _SingleExperimentController:
         self.preview_frames_input.disabled = disabled
         self.experiment_template_save_name.disabled = disabled
         self.experiment_template_save_btn.disabled = disabled
-        self.display_shortcuts_link.disabled = disabled
-        self.display_shortcuts_close_btn.disabled = disabled
-        if disabled:
-            self.display_shortcuts_dialog.visible = False
+        self.display_shortcuts_dialog_controller.set_disabled(bool(disabled))
         self.display_every_n_steps.disabled = disabled or not bool(
             self.show_display.value
         )
@@ -3877,10 +3743,10 @@ class _SingleExperimentController:
         )
 
     def _on_open_display_shortcuts(self, *_: object) -> None:
-        self.display_shortcuts_dialog.visible = True
+        self.display_shortcuts_dialog_controller.open()
 
     def _on_close_display_shortcuts(self, *_: object) -> None:
-        self.display_shortcuts_dialog.visible = False
+        self.display_shortcuts_dialog_controller.close()
 
     def view(self) -> pn.viewable.Viewable:
         intro = pn.pane.Markdown(
@@ -3979,7 +3845,9 @@ class _SingleExperimentController:
 
 
 def single_experiment_app() -> pn.viewable.Viewable:
-    pn.extension(raw_css=[PORTAL_RAW_CSS, SINGLE_EXPERIMENT_RAW_CSS])
+    pn.extension(
+        raw_css=[PORTAL_RAW_CSS, SINGLE_EXPERIMENT_RAW_CSS, DISPLAY_SHORTCUTS_RAW_CSS]
+    )
     controller = _SingleExperimentController()
 
     template = pn.template.MaterialTemplate(

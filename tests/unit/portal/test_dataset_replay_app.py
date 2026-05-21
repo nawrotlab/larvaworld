@@ -334,7 +334,24 @@ def test_dataset_replay_controller_view_groups_controls_in_tiles(
     assert "Save video" in names
     assert "Video filename" in names
     assert "Video speed-up" in names
+    assert "Display Shortcuts" in names
     assert "Run native replay" in names
+
+
+def test_dataset_replay_controller_display_shortcuts_dialog_open_close(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+
+    controller = _DatasetReplayController()
+    assert controller.display_shortcuts_dialog.visible is False
+    controller.display_shortcuts_dialog_controller.open()
+    assert controller.display_shortcuts_dialog.visible is True
+    controller.display_shortcuts_dialog_controller.close()
+    assert controller.display_shortcuts_dialog.visible is False
 
 
 def test_dataset_replay_controller_preserves_source_on_reload(tmp_path: Path) -> None:
@@ -506,6 +523,28 @@ def test_dataset_replay_controller_native_action_disabled_without_output_mode(
     controller._refresh_native_replay_control_state()
 
     assert controller.open_pygame_replay_btn.disabled is True
+
+
+def test_dataset_replay_controller_native_lock_disables_shortcuts_and_hides_dialog(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    controller.display_shortcuts_dialog_controller.open()
+    assert controller.display_shortcuts_dialog.visible is True
+
+    controller._set_native_replay_controls_disabled(True)
+
+    assert controller.display_shortcuts_link.disabled is True
+    assert controller.display_shortcuts_close_btn.disabled is True
+    assert controller.display_shortcuts_dialog.visible is False
+
+    controller._set_native_replay_controls_disabled(False)
+    assert controller.display_shortcuts_link.disabled is False
+    assert controller.display_shortcuts_close_btn.disabled is False
 
 
 def test_dataset_replay_controller_member_visibility_refreshes_native_action(
@@ -753,6 +792,8 @@ def test_dataset_replay_controller_pygame_replay_registry_invocation(
     assert captured["screen_kws"]["show_display"] is True
     assert captured["screen_kws"]["vis_mode"] == "video"
     assert captured["screen_kws"]["display_every_n_steps"] == 3
+    assert "pygame_keys" in captured["screen_kws"]
+    assert captured["screen_kws"]["pygame_keys"]["pause"] == "K_SPACE"
     assert "save_video" not in captured["screen_kws"]
     prepared_member = controller._prepared.members[selected_member]
     assert captured["parameters"].track_point == int(
@@ -814,6 +855,7 @@ def test_dataset_replay_controller_native_replay_headless_video_export(
 
     assert captured["screen_kws"]["show_display"] is False
     assert captured["screen_kws"]["vis_mode"] == "video"
+    assert "pygame_keys" in captured["screen_kws"]
     assert captured["screen_kws"]["save_video"] is True
     assert captured["screen_kws"]["video_file"] == "My_Replay"
     assert captured["screen_kws"]["fps"] == 4
@@ -939,6 +981,43 @@ def test_dataset_replay_controller_native_replay_missing_columns_does_not_run(
         "Native replay is unavailable for this member: missing "
         "front_orientation, rear_orientation." in controller.status_pane.object
     )
+    assert called["value"] is False
+
+
+def test_dataset_replay_controller_native_replay_invalid_shortcuts_does_not_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller.show_display.value = True
+
+    called = {"value": False}
+
+    class _FakeReplayRun:
+        def __init__(self, **kwargs: Any):
+            called["value"] = True
+
+        def run(self) -> None:
+            called["value"] = True
+
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.sim.ReplayRun",
+        _FakeReplayRun,
+    )
+    monkeypatch.setattr(
+        controller.display_shortcuts,
+        "validate",
+        lambda: ["duplicate key: pause and snapshot"],
+    )
+
+    controller._on_open_pygame_replay()
+
+    assert "Display shortcut errors:" in controller.status_pane.object
     assert called["value"] is False
 
 

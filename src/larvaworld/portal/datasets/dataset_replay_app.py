@@ -20,6 +20,10 @@ from larvaworld.portal.datasets.replay_data import (
 )
 from larvaworld.portal.datasets.replay_models import PreparedReplaySource, ReplaySource
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
+from larvaworld.portal.runtime.display_shortcuts import (
+    DISPLAY_SHORTCUTS_RAW_CSS,
+    build_display_shortcuts_dialog,
+)
 from larvaworld.portal.workspace import get_active_workspace, get_workspace_dir
 
 
@@ -154,8 +158,25 @@ class _DatasetReplayController:
             disabled=True,
         )
         self.open_pygame_replay_btn = pn.widgets.Button(
-            name="Run native replay", button_type="primary"
+            name="Run replay", button_type="primary"
         )
+        self.display_shortcuts_dialog_controller = build_display_shortcuts_dialog(
+            note=(
+                "These shortcuts apply only to the native pygame display opened by "
+                "Dataset Replay when Show display is enabled. "
+                "They do not control the browser replay canvas."
+            )
+        )
+        self.display_shortcuts = self.display_shortcuts_dialog_controller.controller
+        self.display_shortcuts_link = (
+            self.display_shortcuts_dialog_controller.open_button
+        )
+        self.display_shortcuts_link.button_type = "default"
+        self.display_shortcuts_link.css_classes = []
+        self.display_shortcuts_close_btn = (
+            self.display_shortcuts_dialog_controller.close_button
+        )
+        self.display_shortcuts_dialog = self.display_shortcuts_dialog_controller.dialog
         self.status_pane = pn.pane.HTML(
             _status_html("Select a replay source to begin."), margin=0
         )
@@ -317,6 +338,7 @@ class _DatasetReplayController:
         self._native_replay_controls_locked = bool(disabled)
         self.show_display.disabled = bool(disabled)
         self.save_video.disabled = bool(disabled)
+        self.display_shortcuts_dialog_controller.set_disabled(bool(disabled))
         self._refresh_native_replay_control_state()
 
     def _native_replay_video_output_dir(self) -> Path:
@@ -344,6 +366,7 @@ class _DatasetReplayController:
         screen_kws: dict[str, Any] = {
             "show_display": show_display,
             "display_every_n_steps": int(self.display_every_n_steps.value),
+            "pygame_keys": self.display_shortcuts.runtime_pygame_keys(),
         }
         video_target: Path | None = None
         if show_display or save_video:
@@ -511,6 +534,10 @@ class _DatasetReplayController:
             self._set_status(f"Invalid Agent indices: {exc}")
             return
         time_range = self._selected_time_range()
+        shortcut_errors = self.display_shortcuts.validate()
+        if shortcut_errors:
+            self._set_status("Display shortcut errors: " + "; ".join(shortcut_errors))
+            return
         try:
             parameters, dataset = self._build_native_replay_parameters(
                 selected_member_token=selected_member_token,
@@ -658,7 +685,12 @@ class _DatasetReplayController:
                 self.save_video,
                 self.video_filename,
                 self.video_fps,
-                self.open_pygame_replay_btn,
+                pn.Row(
+                    self.display_shortcuts_link,
+                    self.open_pygame_replay_btn,
+                    sizing_mode="stretch_width",
+                    margin=(4, 0, 0, 0),
+                ),
             ),
             width=360,
             sizing_mode="fixed",
@@ -672,6 +704,7 @@ class _DatasetReplayController:
         )
         return pn.Column(
             intro,
+            self.display_shortcuts_dialog,
             pn.Row(controls, main, sizing_mode="stretch_width"),
             css_classes=["lw-dataset-replay-root"],
             sizing_mode="stretch_width",
@@ -679,7 +712,9 @@ class _DatasetReplayController:
 
 
 def dataset_replay_app() -> pn.viewable.Viewable:
-    pn.extension(raw_css=[PORTAL_RAW_CSS, DATASET_REPLAY_RAW_CSS])
+    pn.extension(
+        raw_css=[PORTAL_RAW_CSS, DATASET_REPLAY_RAW_CSS, DISPLAY_SHORTCUTS_RAW_CSS]
+    )
     controller = _DatasetReplayController()
     template = pn.template.MaterialTemplate(
         title="",
