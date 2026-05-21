@@ -70,6 +70,8 @@ def _write_workspace_dataset(
                     "AgentID": f"{dataset_id}_a{agent_idx}",
                     "x": 0.01 * tick + agent_idx * 0.005,
                     "y": 0.02 * tick + agent_idx * 0.003,
+                    "front_orientation": 0.0,
+                    "rear_orientation": 0.0,
                 }
             )
     step = pd.DataFrame(rows).set_index(["Step", "AgentID"]).sort_index()
@@ -115,6 +117,8 @@ def _write_simulation_workspace_dataset(
                     "AgentID": f"{dataset_id}_a{agent_idx}",
                     "x": 0.03 * tick + agent_idx * 0.01,
                     "y": 0.01 * tick + agent_idx * 0.02,
+                    "front_orientation": 0.0,
+                    "rear_orientation": 0.0,
                 }
             )
     pd.DataFrame(rows).set_index(["Step", "AgentID"]).sort_index().to_hdf(
@@ -287,6 +291,59 @@ def test_resolve_xy_columns_falls_back_to_point_xy_for_registry_reference() -> N
     cols = _resolve_xy_columns(dataset, dataset.s, track_point=-1)
 
     assert cols == list(dataset.c.point_xy)
+
+
+def test_prepare_replay_source_registry_sets_native_default_track_point() -> None:
+    source = next(
+        s
+        for s in build_source_catalog(None)
+        if s.source_type == "registry_reference"
+        and any(
+            member.token == "registry_ref:exploration.dish01" for member in s.members
+        )
+    )
+    member_token = "registry_ref:exploration.dish01"
+
+    prepared = prepare_replay_source(source)
+    member = prepared.members[member_token]
+    dataset = reg.conf.Ref.loadRef(id="exploration.dish01", load=False)
+    dataset.load(step=True)
+
+    assert member.native_default_track_point == int(dataset.c.point_idx)
+    assert member.native_track_point_by_ui_track_point
+    assert member.native_replay_missing_columns == (
+        "front_orientation",
+        "rear_orientation",
+    )
+
+
+def test_prepare_replay_source_workspace_maps_head_to_native_one(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    ds_a = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "a"
+    _write_workspace_dataset(
+        ds_a, dataset_id="a", group_id="grp1", n_agents=1, n_ticks=4
+    )
+    data_h5 = ds_a / "data" / "data.h5"
+    step = pd.read_hdf(data_h5, "step")
+    step["head_x"] = step["x"]
+    step["head_y"] = step["y"]
+    step["point2_x"] = step["x"] + 0.001
+    step["point2_y"] = step["y"] + 0.001
+    step["tail_x"] = step["x"] + 0.002
+    step["tail_y"] = step["y"] + 0.002
+    step.to_hdf(data_h5, key="step")
+    source = next(
+        s
+        for s in build_source_catalog(workspace)
+        if s.source_type == "workspace_dataset"
+    )
+
+    prepared = prepare_replay_source(source)
+    member = next(iter(prepared.members.values()))
+
+    assert member.native_track_point_by_ui_track_point[0] == 1
 
 
 def test_environment_state_shows_outline_without_static_layers_by_default() -> None:

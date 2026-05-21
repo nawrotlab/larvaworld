@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from html import escape
 from pathlib import Path
+import re
 from typing import Any
 
 import panel as pn
@@ -19,10 +20,14 @@ from larvaworld.portal.datasets.replay_data import (
 )
 from larvaworld.portal.datasets.replay_models import PreparedReplaySource, ReplaySource
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
-from larvaworld.portal.workspace import get_active_workspace
+from larvaworld.portal.workspace import get_active_workspace, get_workspace_dir
 
 
 __all__ = ["_DatasetReplayController", "dataset_replay_app"]
+
+
+_REPLAY_CANVAS_WIDTH = 920
+_REPLAY_CANVAS_HEIGHT = 760
 
 
 DATASET_REPLAY_RAW_CSS = """
@@ -69,10 +74,20 @@ def _control_tile(title: str, *children: object) -> pn.Card:
     )
 
 
+def _safe_slug(value: str) -> str:
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "_", value.strip())
+    slug = slug.strip("._-")
+    return slug
+
+
 class _DatasetReplayController:
     def __init__(self) -> None:
         self.workspace = get_active_workspace()
-        self.canvas = EnvironmentCanvas(snap_heads_to_midline=False)
+        self.canvas = EnvironmentCanvas(
+            width=_REPLAY_CANVAS_WIDTH,
+            height=_REPLAY_CANVAS_HEIGHT,
+            snap_heads_to_midline=False,
+        )
 
         self._sources = build_source_catalog(self.workspace)
         self._source_by_token = {source.token: source for source in self._sources}
@@ -88,7 +103,7 @@ class _DatasetReplayController:
         self.show_positions = pn.widgets.Checkbox(name="Positions", value=True)
         self.show_ids = pn.widgets.Checkbox(name="IDs", value=False)
         self.show_tracks = pn.widgets.Checkbox(name="Tracks", value=False)
-        self.show_heads = pn.widgets.Checkbox(name="Heads", value=True)
+        self.show_heads = pn.widgets.Checkbox(name="Heads", value=False)
         self.show_midlines = pn.widgets.Checkbox(name="Midlines", value=True)
         self.show_segments = pn.widgets.Checkbox(name="Body segments", value=True)
         self.show_body_contours = pn.widgets.Checkbox(name="Body contours", value=False)
@@ -122,10 +137,24 @@ class _DatasetReplayController:
         self.use_time_range = pn.widgets.Checkbox(name="Apply time range", value=False)
         self.show_display = pn.widgets.Checkbox(name="Show display", value=True)
         self.display_every_n_steps = pn.widgets.IntInput(
-            name="Display every N steps", value=1, step=1, start=1, end=20
+            name="Display every N steps", value=2, step=1, start=1, end=20
+        )
+        self.save_video = pn.widgets.Checkbox(name="Save video", value=False)
+        self.video_filename = pn.widgets.TextInput(
+            name="Video filename",
+            value="",
+            disabled=True,
+        )
+        self.video_fps = pn.widgets.IntInput(
+            name="Video speed-up",
+            value=1,
+            step=1,
+            start=1,
+            end=120,
+            disabled=True,
         )
         self.open_pygame_replay_btn = pn.widgets.Button(
-            name="Open pygame replay", button_type="primary"
+            name="Run native replay", button_type="primary"
         )
         self.status_pane = pn.pane.HTML(
             _status_html("Select a replay source to begin."), margin=0
@@ -134,6 +163,7 @@ class _DatasetReplayController:
         self.source_select.param.watch(self._on_source_change, "value")
         self.member_visibility.param.watch(self._on_any_control_change, "value")
         self.show_display.param.watch(self._on_show_display_change, "value")
+        self.save_video.param.watch(self._on_save_video_change, "value")
         self.open_pygame_replay_btn.on_click(self._on_open_pygame_replay)
         for widget in (
             self.show_positions,
@@ -155,8 +185,10 @@ class _DatasetReplayController:
         ):
             widget.param.watch(self._on_any_control_change, "value")
 
-        self._on_show_display_change()
+        self._refresh_native_replay_control_state()
         self._reload_source_options()
+        self.canvas._sim_larva_centroid_renderer.visible = True
+        self.canvas._sim_larva_head_renderer.visible = True
 
     def _set_status(self, text: str) -> None:
         self.status_pane.object = _status_html(text)
@@ -234,21 +266,102 @@ class _DatasetReplayController:
         self._set_status(f"Loaded source: {source.label}")
         self._last_static_state_key = None
         self._render()
+        self._refresh_native_replay_control_state()
+        self._show_native_replay_blocker_status_if_needed()
 
     def _on_any_control_change(self, _event=None) -> None:
         self._render()
+        self._refresh_native_replay_control_state()
+        self._show_native_replay_blocker_status_if_needed()
 
     def _on_show_display_change(self, _event=None) -> None:
-        enabled = (
-            bool(self.show_display.value) and not self._native_replay_controls_locked
+        self._refresh_native_replay_control_state()
+
+    def _on_save_video_change(self, _event=None) -> None:
+        self._refresh_native_replay_control_state()
+
+    def _refresh_native_replay_control_state(self) -> None:
+        controls_locked = bool(self._native_replay_controls_locked)
+        show_display = bool(self.show_display.value)
+        save_video = bool(self.save_video.value)
+        blocker = self._native_replay_blocker()
+        self.display_every_n_steps.disabled = controls_locked or not show_display
+        self.video_filename.disabled = controls_locked or not save_video
+        self.video_fps.disabled = controls_locked or not save_video
+        self.open_pygame_replay_btn.disabled = (
+            controls_locked or not (show_display or save_video) or blocker is not None
         )
-        self.display_every_n_steps.disabled = not enabled
-        self.open_pygame_replay_btn.disabled = not enabled
+
+    def _native_replay_blocker(self) -> str | None:
+        if self._prepared is None:
+            return "Select a replay source to begin."
+        visible_tokens = [str(token) for token in self.member_visibility.value]
+        if len(visible_tokens) == 0:
+            return "Select one visible member for native replay."
+        if len(visible_tokens) > 1:
+            return "Native replay supports one visible member in this version."
+        prepared_member = self._prepared.members.get(visible_tokens[0])
+        if prepared_member is None:
+            return "Prepared replay member is unavailable."
+        if prepared_member.native_replay_missing_columns:
+            missing = ", ".join(prepared_member.native_replay_missing_columns)
+            return f"Native replay is unavailable for this member: missing {missing}."
+        return None
+
+    def _show_native_replay_blocker_status_if_needed(self) -> None:
+        blocker = self._native_replay_blocker()
+        if blocker is not None and blocker.startswith("Native replay is unavailable"):
+            self._set_status(blocker)
 
     def _set_native_replay_controls_disabled(self, disabled: bool) -> None:
         self._native_replay_controls_locked = bool(disabled)
         self.show_display.disabled = bool(disabled)
-        self._on_show_display_change()
+        self.save_video.disabled = bool(disabled)
+        self._refresh_native_replay_control_state()
+
+    def _native_replay_video_output_dir(self) -> Path:
+        return (
+            get_workspace_dir("analysis", workspace=self.workspace)
+            / "dataset_replay_media"
+        )
+
+    def _native_replay_video_name(self, selected_member_token: str) -> str:
+        raw = (self.video_filename.value or "").strip()
+        if raw:
+            base = raw[:-4] if raw.lower().endswith(".mp4") else raw
+            slug = _safe_slug(base)
+            return slug or "dataset_replay"
+        member = self._source_member_for_token(selected_member_token)
+        label = member.label if member is not None else selected_member_token
+        slug = _safe_slug(label)
+        return f"dataset_replay_{slug}" if slug else "dataset_replay"
+
+    def _native_replay_screen_kws(
+        self, selected_member_token: str
+    ) -> tuple[dict[str, Any], Path | None]:
+        show_display = bool(self.show_display.value)
+        save_video = bool(self.save_video.value)
+        screen_kws: dict[str, Any] = {
+            "show_display": show_display,
+            "display_every_n_steps": int(self.display_every_n_steps.value),
+        }
+        video_target: Path | None = None
+        if show_display or save_video:
+            screen_kws["vis_mode"] = "video"
+        if save_video:
+            media_dir = self._native_replay_video_output_dir()
+            media_dir.mkdir(parents=True, exist_ok=True)
+            video_name = self._native_replay_video_name(selected_member_token)
+            video_target = media_dir / f"{video_name}.mp4"
+            screen_kws.update(
+                {
+                    "save_video": True,
+                    "video_file": video_name,
+                    "media_dir": str(media_dir),
+                    "fps": int(self.video_fps.value),
+                }
+            )
+        return screen_kws, video_target
 
     def _selected_time_range(self) -> tuple[float, float] | None:
         if not self.use_time_range.value:
@@ -264,11 +377,11 @@ class _DatasetReplayController:
     def _selected_replay_member_token(self) -> str | None:
         visible_tokens = [str(token) for token in self.member_visibility.value]
         if len(visible_tokens) == 0:
-            self._set_status("Select one visible member for pygame replay.")
+            self._set_status("Select one visible member for native replay.")
             return None
         if len(visible_tokens) > 1:
             self._set_status(
-                "Pygame replay supports one visible member in this version."
+                "Native replay supports one visible member in this version."
             )
             return None
         return visible_tokens[0]
@@ -314,10 +427,32 @@ class _DatasetReplayController:
         if len(prepared_member.body_xy_by_point) >= 2:
             draw_nsegs = max(2, len(prepared_member.body_xy_by_point) - 1)
 
+        if prepared_member.native_replay_missing_columns:
+            missing = ", ".join(prepared_member.native_replay_missing_columns)
+            raise ValueError(
+                "Native replay is unavailable for this member: " f"missing {missing}."
+            )
+
+        track_point = int(self.track_point.value)
+        if track_point == -1:
+            native_track_point = prepared_member.native_default_track_point
+            if native_track_point is None:
+                raise ValueError(
+                    "No native replay track point is available for this member."
+                )
+        else:
+            native_track_point = (
+                prepared_member.native_track_point_by_ui_track_point.get(track_point)
+            )
+            if native_track_point is None:
+                raise ValueError(
+                    f"Track point {track_point} is unavailable for native replay."
+                )
+
         parameters = reg.gen.Replay(
             refID=ref_id,
             refDir=ref_dir,
-            track_point=int(self.track_point.value),
+            track_point=int(native_track_point),
             transposition=self.transposition.value,
             agent_ids=list(agent_indices) if agent_indices is not None else [],
             time_range=time_range,
@@ -331,14 +466,11 @@ class _DatasetReplayController:
         *,
         parameters: Any,
         dataset: LarvaDataset | None,
+        screen_kws: dict[str, Any],
+        video_target: Path | None,
     ) -> None:
         launcher = None
         try:
-            screen_kws = {
-                "show_display": True,
-                "display_every_n_steps": int(self.display_every_n_steps.value),
-                "vis_mode": "video",
-            }
             launcher = sim.ReplayRun(
                 parameters=parameters,
                 dataset=dataset,
@@ -347,7 +479,8 @@ class _DatasetReplayController:
             )
             launcher.run()
         except Exception as exc:
-            self._set_status(f"Native pygame replay failed: {exc}")
+            detail = str(exc) or exc.__class__.__name__
+            self._set_status(f"Native replay failed: {detail}")
             self._set_native_replay_controls_disabled(False)
             return
         finally:
@@ -356,15 +489,18 @@ class _DatasetReplayController:
                     launcher.screen_manager.close()
             except Exception:
                 pass
-        self._set_status("Native pygame replay finished.")
+        if video_target is not None:
+            self._set_status(f"Native replay finished. Video target: {video_target}.")
+        else:
+            self._set_status("Native pygame replay finished.")
         self._set_native_replay_controls_disabled(False)
 
     def _on_open_pygame_replay(self, *_: object) -> None:
         if self._prepared is None:
             self._set_status("Select a replay source to begin.")
             return
-        if not bool(self.show_display.value):
-            self._set_status("Enable Show display to open pygame replay.")
+        if not bool(self.show_display.value) and not bool(self.save_video.value):
+            self._set_status("Enable Show display or Save video to run native replay.")
             return
         selected_member_token = self._selected_replay_member_token()
         if selected_member_token is None:
@@ -382,12 +518,21 @@ class _DatasetReplayController:
                 time_range=time_range,
             )
         except Exception as exc:
-            self._set_status(f"Native pygame replay failed: {exc}")
+            self._set_status(f"Native replay failed: {exc}")
             return
+        screen_kws, video_target = self._native_replay_screen_kws(selected_member_token)
 
-        self._set_status(
-            "Starting native pygame replay. The portal UI may be unresponsive until the replay window closes."
-        )
+        if video_target is not None:
+            self._set_status(
+                "Starting native replay video export. "
+                "The portal UI may be unresponsive until export finishes. "
+                f"Video target: {video_target}."
+            )
+        else:
+            self._set_status(
+                "Starting native pygame replay. "
+                "The portal UI may be unresponsive until the replay window closes."
+            )
         self._set_native_replay_controls_disabled(True)
         document = pn.state.curdoc
         if document is not None:
@@ -395,12 +540,16 @@ class _DatasetReplayController:
                 lambda: self._execute_native_pygame_replay(
                     parameters=parameters,
                     dataset=dataset,
+                    screen_kws=screen_kws,
+                    video_target=video_target,
                 )
             )
             return
         self._execute_native_pygame_replay(
             parameters=parameters,
             dataset=dataset,
+            screen_kws=screen_kws,
+            video_target=video_target,
         )
 
     def _render(self) -> None:
@@ -506,6 +655,9 @@ class _DatasetReplayController:
                 "Media / Output",
                 self.show_display,
                 self.display_every_n_steps,
+                self.save_video,
+                self.video_filename,
+                self.video_fps,
                 self.open_pygame_replay_btn,
             ),
             width=360,

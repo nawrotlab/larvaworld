@@ -378,6 +378,17 @@ def _prepare_member(member: ReplaySourceMember) -> PreparedReplayMember:
     xy = dataset.s[_resolve_xy_columns(dataset, dataset.s, track_point=-1)].copy()
     xy.columns = ["x", "y"]
     xy_by_track_point = _build_registry_xy_by_track_point(dataset, dataset.s)
+    native_track_point_by_ui_track_point = _build_registry_native_track_point_mapping(
+        dataset, dataset.s
+    )
+    native_default_track_point = _choose_native_default_track_point(
+        step=dataset.s,
+        native_track_point_by_ui_track_point=native_track_point_by_ui_track_point,
+        configured_point_idx=int(getattr(dataset.c, "point_idx", -1) or -1),
+        traj_xy=list(dataset.c.traj_xy),
+        centroid_xy=list(dataset.c.centroid_xy),
+        point_name_for_native_index=dataset.c.get_track_point,
+    )
     body_xy_by_point = _build_body_xy_by_point(dataset.s, int(dataset.c.Npoints or 0))
     contour_xy_by_point = _build_contour_xy_by_point(
         dataset.s, int(dataset.c.Ncontour or 0)
@@ -401,6 +412,9 @@ def _prepare_member(member: ReplaySourceMember) -> PreparedReplayMember:
         env_conf_id=env_conf_id,
         coordinate_origin="corner",
         xy_by_track_point=xy_by_track_point,
+        native_default_track_point=native_default_track_point,
+        native_track_point_by_ui_track_point=native_track_point_by_ui_track_point,
+        native_replay_missing_columns=_native_replay_missing_columns(dataset.s),
         body_xy_by_point=body_xy_by_point,
         contour_xy_by_point=contour_xy_by_point,
         agent_ids=agent_ids,
@@ -424,6 +438,20 @@ def _prepare_workspace_member(member: ReplaySourceMember) -> PreparedReplayMembe
     xy = step[[x_name, y_name]].copy()
     xy.columns = ["x", "y"]
     xy_by_track_point = _build_workspace_xy_by_track_point(step, conf)
+    native_track_point_by_ui_track_point = _build_workspace_native_track_point_mapping(
+        step, conf
+    )
+    configured_point_idx = int(conf.get("point_idx") or -1)
+    if int(conf.get("Npoints") or 0) <= 0:
+        configured_point_idx = -1
+    native_default_track_point = _choose_native_default_track_point(
+        step=step,
+        native_track_point_by_ui_track_point=native_track_point_by_ui_track_point,
+        configured_point_idx=configured_point_idx,
+        traj_xy=list(util.nam.xy("")),
+        centroid_xy=list(util.nam.xy("centroid")),
+        point_name_for_native_index=lambda idx: _workspace_point_name(conf, idx),
+    )
     body_xy_by_point = _build_body_xy_by_point(step, int(conf.get("Npoints") or 0))
     contour_xy_by_point = _build_contour_xy_by_point(
         step, int(conf.get("Ncontour") or 0)
@@ -459,6 +487,9 @@ def _prepare_workspace_member(member: ReplaySourceMember) -> PreparedReplayMembe
             else "corner"
         ),
         xy_by_track_point=xy_by_track_point,
+        native_default_track_point=native_default_track_point,
+        native_track_point_by_ui_track_point=native_track_point_by_ui_track_point,
+        native_replay_missing_columns=_native_replay_missing_columns(step),
         body_xy_by_point=body_xy_by_point,
         contour_xy_by_point=contour_xy_by_point,
         agent_ids=agent_ids,
@@ -762,6 +793,87 @@ def _build_registry_xy_by_track_point(
             xy_tp.columns = ["x", "y"]
             xy_by_track_point[idx] = xy_tp
     return xy_by_track_point
+
+
+def _build_registry_native_track_point_mapping(
+    dataset: LarvaDataset, step: pd.DataFrame
+) -> dict[int, int]:
+    mapping: dict[int, int] = {}
+    npoints = int(dataset.c.Npoints or 0)
+    for ui_idx in range(max(npoints, 0)):
+        point_name = dataset.c.get_track_point(ui_idx)
+        cols = list(util.nam.xy(point_name))
+        if all(col in step.columns for col in cols):
+            mapping[ui_idx] = ui_idx
+    return mapping
+
+
+def _native_replay_missing_columns(step: pd.DataFrame) -> tuple[str, ...]:
+    required = ("front_orientation", "rear_orientation")
+    return tuple(col for col in required if col not in step.columns)
+
+
+def _workspace_point_name(conf: dict[str, Any], native_idx: int) -> str:
+    npoints = int(conf.get("Npoints") or 0)
+    if native_idx <= 0 or npoints <= 0:
+        return "centroid"
+    points = list(util.nam.midline(npoints, type="point"))
+    if not points:
+        return "centroid"
+    clamped = max(1, min(native_idx, len(points)))
+    return points[clamped - 1]
+
+
+def _build_workspace_native_track_point_mapping(
+    step: pd.DataFrame, conf: dict[str, Any]
+) -> dict[int, int]:
+    mapping: dict[int, int] = {}
+    npoints = int(conf.get("Npoints") or 0)
+    for ui_idx, point_name in enumerate(util.nam.midline(npoints, type="point")):
+        cols = list(util.nam.xy(point_name))
+        if all(col in step.columns for col in cols):
+            mapping[ui_idx] = ui_idx + 1
+    return mapping
+
+
+def _has_native_point_xy(
+    step: pd.DataFrame,
+    *,
+    native_track_point: int,
+    point_name_for_native_index: Any,
+) -> bool:
+    point_name = point_name_for_native_index(int(native_track_point))
+    cols = list(util.nam.xy(point_name))
+    return all(col in step.columns for col in cols)
+
+
+def _choose_native_default_track_point(
+    *,
+    step: pd.DataFrame,
+    native_track_point_by_ui_track_point: dict[int, int],
+    configured_point_idx: int,
+    traj_xy: list[str],
+    centroid_xy: list[str],
+    point_name_for_native_index: Any,
+) -> int | None:
+    if _has_native_point_xy(
+        step,
+        native_track_point=configured_point_idx,
+        point_name_for_native_index=point_name_for_native_index,
+    ):
+        return int(configured_point_idx)
+    if all(col in step.columns for col in traj_xy) or all(
+        col in step.columns for col in centroid_xy
+    ):
+        return -1
+    native_body_points = sorted(
+        native
+        for native in native_track_point_by_ui_track_point.values()
+        if int(native) > 0
+    )
+    if native_body_points:
+        return int(native_body_points[0])
+    return None
 
 
 def _build_body_xy_by_point(

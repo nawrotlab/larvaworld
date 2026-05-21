@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import json
 from pathlib import Path
 from typing import Any
@@ -59,6 +60,8 @@ def _write_workspace_dataset(
                     "AgentID": f"{dataset_id}_a{i}",
                     "x": float(t) * 0.01 + (i * 0.003),
                     "y": float(t) * 0.02 + (i * 0.004),
+                    "front_orientation": 0.0,
+                    "rear_orientation": 0.0,
                 }
             )
     pd.DataFrame(rows).set_index(["Step", "AgentID"]).to_hdf(
@@ -101,6 +104,8 @@ def _write_workspace_simulation_dataset(
             "AgentID": f"{dataset_id}_a0",
             "x": float(t) * 0.01,
             "y": float(t) * 0.02,
+            "front_orientation": 0.0,
+            "rear_orientation": 0.0,
         }
         for t in range(4)
     ]
@@ -326,7 +331,10 @@ def test_dataset_replay_controller_view_groups_controls_in_tiles(
     }
     assert "Show display" in names
     assert "Display every N steps" in names
-    assert "Open pygame replay" in names
+    assert "Save video" in names
+    assert "Video filename" in names
+    assert "Video speed-up" in names
+    assert "Run native replay" in names
 
 
 def test_dataset_replay_controller_preserves_source_on_reload(tmp_path: Path) -> None:
@@ -425,11 +433,115 @@ def test_dataset_replay_controller_show_display_toggles_runtime_controls(
     controller._on_show_display_change()
     assert controller.display_every_n_steps.disabled is False
     assert controller.open_pygame_replay_btn.disabled is False
+    assert controller.video_filename.disabled is True
+    assert controller.video_fps.disabled is True
 
     controller.show_display.value = False
     controller._on_show_display_change()
     assert controller.display_every_n_steps.disabled is True
     assert controller.open_pygame_replay_btn.disabled is True
+
+    controller.save_video.value = True
+    controller._on_save_video_change()
+    assert controller.open_pygame_replay_btn.disabled is False
+    assert controller.video_filename.disabled is False
+    assert controller.video_fps.disabled is False
+
+
+def test_dataset_replay_controller_missing_native_columns_disable_action(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller._prepared.members[selected_member] = replace(
+        controller._prepared.members[selected_member],
+        native_replay_missing_columns=("front_orientation", "rear_orientation"),
+    )
+
+    controller._on_any_control_change()
+
+    assert controller.open_pygame_replay_btn.disabled is True
+    assert (
+        "Native replay is unavailable for this member: missing "
+        "front_orientation, rear_orientation." in controller.status_pane.object
+    )
+
+
+def test_dataset_replay_controller_native_action_enabled_for_capable_member(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller.show_display.value = True
+    controller.save_video.value = False
+
+    controller._refresh_native_replay_control_state()
+
+    assert controller.open_pygame_replay_btn.disabled is False
+
+
+def test_dataset_replay_controller_native_action_disabled_without_output_mode(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller.show_display.value = False
+    controller.save_video.value = False
+
+    controller._refresh_native_replay_control_state()
+
+    assert controller.open_pygame_replay_btn.disabled is True
+
+
+def test_dataset_replay_controller_member_visibility_refreshes_native_action(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    ds1 = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    ds2 = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds2"
+    _write_workspace_dataset(ds1, dataset_id="ds1", group_id="grp1")
+    _write_workspace_dataset(ds2, dataset_id="ds2", group_id="grp1")
+    controller = _DatasetReplayController()
+    source_token = next(
+        token
+        for label, token in controller.source_select.options.items()
+        if label.startswith("Workspace / Imported group / ")
+    )
+    controller.source_select.value = source_token
+    tokens = list(controller.member_visibility.options.values())
+    unsupported, supported = tokens[0], tokens[1]
+    controller._prepared.members[unsupported] = replace(
+        controller._prepared.members[unsupported],
+        native_replay_missing_columns=("front_orientation",),
+    )
+    controller._prepared.members[supported] = replace(
+        controller._prepared.members[supported],
+        native_replay_missing_columns=(),
+    )
+
+    controller.member_visibility.value = [unsupported]
+    controller._on_any_control_change()
+    assert controller.open_pygame_replay_btn.disabled is True
+
+    controller.member_visibility.value = [supported]
+    controller._on_any_control_change()
+    assert controller.open_pygame_replay_btn.disabled is False
 
 
 def test_dataset_replay_controller_invalid_track_point_sets_status(
@@ -513,7 +625,7 @@ def test_dataset_replay_controller_pygame_replay_requires_one_visible_member(
     controller.member_visibility.value = []
     controller._on_open_pygame_replay()
     assert (
-        "Select one visible member for pygame replay." in controller.status_pane.object
+        "Select one visible member for native replay." in controller.status_pane.object
     )
 
     controller.member_visibility.value = list(
@@ -524,7 +636,26 @@ def test_dataset_replay_controller_pygame_replay_requires_one_visible_member(
         controller.member_visibility.value = [second, second]
     controller._on_open_pygame_replay()
     assert (
-        "Pygame replay supports one visible member in this version."
+        "Native replay supports one visible member in this version."
+        in controller.status_pane.object
+    )
+
+
+def test_dataset_replay_controller_native_replay_requires_display_or_video(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+
+    controller.show_display.value = False
+    controller.save_video.value = False
+    controller._on_open_pygame_replay()
+
+    assert (
+        "Enable Show display or Save video to run native replay."
         in controller.status_pane.object
     )
 
@@ -580,6 +711,10 @@ def test_dataset_replay_controller_pygame_replay_registry_invocation(
     expected_draw_nsegs = max(
         2, len(controller._prepared.members[selected_member].body_xy_by_point) - 1
     )
+    controller._prepared.members[selected_member] = replace(
+        controller._prepared.members[selected_member],
+        native_replay_missing_columns=(),
+    )
     controller.show_display.value = True
     controller.display_every_n_steps.value = 3
 
@@ -618,10 +753,193 @@ def test_dataset_replay_controller_pygame_replay_registry_invocation(
     assert captured["screen_kws"]["show_display"] is True
     assert captured["screen_kws"]["vis_mode"] == "video"
     assert captured["screen_kws"]["display_every_n_steps"] == 3
-    assert captured["parameters"].track_point == int(controller.track_point.value)
+    assert "save_video" not in captured["screen_kws"]
+    prepared_member = controller._prepared.members[selected_member]
+    assert captured["parameters"].track_point == int(
+        prepared_member.native_default_track_point
+    )
     assert "refDir" in captured["parameters"]
     assert captured["parameters"].draw_Nsegs == expected_draw_nsegs
     assert "Native pygame replay finished." in controller.status_pane.object
+
+
+def test_dataset_replay_controller_native_replay_headless_video_export(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller.show_display.value = False
+    controller.save_video.value = True
+    controller.video_filename.value = "My Replay.mp4"
+    controller.video_fps.value = 4
+
+    captured: dict[str, Any] = {}
+
+    class _FakeScreenManager:
+        def __init__(self) -> None:
+            self.close_called = False
+
+        def close(self) -> None:
+            self.close_called = True
+
+    class _FakeReplayRun:
+        def __init__(self, **kwargs: Any):
+            captured.update(kwargs)
+            self.screen_manager = _FakeScreenManager()
+
+        def run(self) -> None:
+            captured["run_called"] = True
+
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.sim.ReplayRun",
+        _FakeReplayRun,
+    )
+    monkeypatch.setattr(
+        controller,
+        "_build_native_replay_parameters",
+        lambda **kwargs: ({"mock": "parameters"}, None),
+    )
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.pn.state.curdoc",
+        None,
+        raising=False,
+    )
+
+    controller._on_open_pygame_replay()
+
+    assert captured["screen_kws"]["show_display"] is False
+    assert captured["screen_kws"]["vis_mode"] == "video"
+    assert captured["screen_kws"]["save_video"] is True
+    assert captured["screen_kws"]["video_file"] == "My_Replay"
+    assert captured["screen_kws"]["fps"] == 4
+    assert "dataset_replay_media" in captured["screen_kws"]["media_dir"]
+    assert "Video target:" in controller.status_pane.object
+
+
+def test_dataset_replay_controller_native_replay_explicit_track_point_mapping(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    data_h5 = dataset_dir / "data" / "data.h5"
+    step = pd.read_hdf(data_h5, "step")
+    step["head_x"] = step["x"]
+    step["head_y"] = step["y"]
+    step["point2_x"] = step["x"] + 0.001
+    step["point2_y"] = step["y"] + 0.001
+    step["tail_x"] = step["x"] + 0.002
+    step["tail_y"] = step["y"] + 0.002
+    step.to_hdf(data_h5, key="step")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller.show_display.value = True
+    controller.track_point.value = 0
+
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
+    parameters, _dataset = controller._build_native_replay_parameters(
+        selected_member_token=selected_member,
+        agent_indices=None,
+        time_range=None,
+    )
+
+    prepared_member = controller._prepared.members[selected_member]
+    assert parameters.track_point == int(
+        prepared_member.native_track_point_by_ui_track_point[0]
+    )
+
+
+def test_dataset_replay_controller_native_replay_unavailable_track_point_sets_status(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller.show_display.value = True
+    controller.track_point.value = 99
+
+    called = {"value": False}
+
+    class _FakeReplayRun:
+        def __init__(self, **kwargs: Any):
+            called["value"] = True
+
+        def run(self) -> None:
+            called["value"] = True
+
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.sim.ReplayRun",
+        _FakeReplayRun,
+    )
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
+    controller._on_open_pygame_replay()
+
+    assert (
+        "Track point 99 is unavailable for native replay."
+        in controller.status_pane.object
+    )
+    assert called["value"] is False
+
+
+def test_dataset_replay_controller_native_replay_missing_columns_does_not_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller.show_display.value = True
+    controller._prepared.members[selected_member] = replace(
+        controller._prepared.members[selected_member],
+        native_replay_missing_columns=("front_orientation", "rear_orientation"),
+    )
+    called = {"value": False}
+
+    class _FakeReplayRun:
+        def __init__(self, **kwargs: Any):
+            called["value"] = True
+
+        def run(self) -> None:
+            called["value"] = True
+
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.sim.ReplayRun",
+        _FakeReplayRun,
+    )
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
+    controller._on_open_pygame_replay()
+
+    assert (
+        "Native replay is unavailable for this member: missing "
+        "front_orientation, rear_orientation." in controller.status_pane.object
+    )
+    assert called["value"] is False
 
 
 def test_dataset_replay_controller_pygame_replay_workspace_invocation(
@@ -721,7 +1039,7 @@ def test_dataset_replay_controller_pygame_replay_closes_screen_on_failure(
     controller._on_open_pygame_replay()
 
     assert captured.get("close_called") is True
-    assert "Native pygame replay failed: boom" in controller.status_pane.object
+    assert "Native replay failed: boom" in controller.status_pane.object
 
 
 def test_dataset_replay_app_returns_viewable() -> None:
