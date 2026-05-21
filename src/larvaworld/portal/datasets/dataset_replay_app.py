@@ -82,6 +82,10 @@ def _control_tile(title: str, *children: object) -> pn.Card:
     )
 
 
+def _section_heading(title: str) -> pn.pane.Markdown:
+    return pn.pane.Markdown(f"#### {title}", margin=(8, 0, 2, 0))
+
+
 def _safe_slug(value: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9._-]+", "_", value.strip())
     slug = slug.strip("._-")
@@ -95,7 +99,6 @@ class _DatasetReplayController:
     _BODY_RENDER_SEGMENTS = "segments"
     _BODY_RENDER_CONTOUR = "contour"
     _BODY_RENDER_MIDLINE = "midline"
-    _BODY_RENDER_CONTOUR_SEGMENTS = "contour_segments"
 
     def __init__(self) -> None:
         self.workspace = get_active_workspace()
@@ -159,7 +162,6 @@ class _DatasetReplayController:
                 "Segments": self._BODY_RENDER_SEGMENTS,
                 "Contour": self._BODY_RENDER_CONTOUR,
                 "Midline only": self._BODY_RENDER_MIDLINE,
-                "Contour + segments": self._BODY_RENDER_CONTOUR_SEGMENTS,
             },
             value=self._BODY_RENDER_SEGMENTS,
         )
@@ -171,11 +173,11 @@ class _DatasetReplayController:
         self.tick_player = pn.widgets.Player(
             name="Tick", start=0, end=1, step=1, value=0, interval=100
         )
-        self.time_start = pn.widgets.FloatInput(
-            name="Time start (s)", value=0.0, step=1.0
+        self.time_start = pn.widgets.FloatInput(name="Start (s)", value=0.0, step=1.0)
+        self.time_end = pn.widgets.FloatInput(name="End (s)", value=0.0, step=1.0)
+        self.use_time_range = pn.widgets.Checkbox(
+            name="Limit replay time range", value=False
         )
-        self.time_end = pn.widgets.FloatInput(name="Time end (s)", value=0.0, step=1.0)
-        self.use_time_range = pn.widgets.Checkbox(name="Apply time range", value=False)
         self.show_display = pn.widgets.Checkbox(name="Show display", value=True)
         self.display_every_n_steps = pn.widgets.IntInput(
             name="Display every N steps", value=2, step=1, start=1, end=20
@@ -532,8 +534,6 @@ class _DatasetReplayController:
         mode = str(self.native_body_rendering.value)
         if mode == self._BODY_RENDER_MIDLINE:
             return {"draw_contour": False, "draw_midline": True}
-        if mode == self._BODY_RENDER_CONTOUR_SEGMENTS:
-            return {"draw_contour": True, "draw_midline": True}
         return {}
 
     def _selected_time_range(self) -> tuple[float, float] | None:
@@ -771,9 +771,6 @@ class _DatasetReplayController:
             return
         visible_tokens = [str(token) for token in self.member_visibility.value]
         transposition = self.transposition.value
-        time_range = None
-        if self.use_time_range.value:
-            time_range = self._selected_time_range()
         try:
             agent_indices = parse_agent_indices(self.agent_indices.value)
         except ValueError as exc:
@@ -791,7 +788,7 @@ class _DatasetReplayController:
                 transposition=transposition,
                 track_point=int(self.track_point.value),
                 agent_indices=agent_indices,
-                time_range=time_range,
+                time_range=None,
                 show_dispersal_ring=bool(self.show_dispersal.value),
                 show_heads=bool(self.show_heads.value),
                 show_midlines=bool(self.show_midlines.value),
@@ -847,6 +844,31 @@ class _DatasetReplayController:
             ),
             margin=0,
         )
+        pygame_replay = _control_tile(
+            "Pygame replay",
+            _section_heading("Time range"),
+            self.use_time_range,
+            self.time_start,
+            self.time_end,
+            _section_heading("Close inspection"),
+            self.fix_point,
+            self.close_view,
+            self.fix_segment,
+            _section_heading("Body rendering"),
+            self.native_body_rendering,
+            _section_heading("Output"),
+            self.show_display,
+            self.display_every_n_steps,
+            self.save_video,
+            self.video_filename,
+            self.video_fps,
+            pn.Row(
+                self.display_shortcuts_link,
+                self.open_pygame_replay_btn,
+                sizing_mode="stretch_width",
+                margin=(4, 0, 0, 0),
+            ),
+        )
         controls = pn.Column(
             _control_tile("Source", self.source_select, self.member_visibility),
             _control_tile(
@@ -864,28 +886,7 @@ class _DatasetReplayController:
             _control_tile(
                 "Coordinates", self.transposition, self.track_point, self.agent_indices
             ),
-            _control_tile(
-                "Native Close Inspection",
-                self.fix_point,
-                self.close_view,
-                self.fix_segment,
-                self.native_body_rendering,
-            ),
-            _control_tile("Time", self.use_time_range, self.time_start, self.time_end),
-            _control_tile(
-                "Media / Output",
-                self.show_display,
-                self.display_every_n_steps,
-                self.save_video,
-                self.video_filename,
-                self.video_fps,
-                pn.Row(
-                    self.display_shortcuts_link,
-                    self.open_pygame_replay_btn,
-                    sizing_mode="stretch_width",
-                    margin=(4, 0, 0, 0),
-                ),
-            ),
+            pygame_replay,
             width=360,
             sizing_mode="fixed",
             css_classes=["lw-dataset-replay-controls"],

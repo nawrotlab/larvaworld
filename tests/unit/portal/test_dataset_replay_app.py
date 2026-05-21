@@ -320,16 +320,17 @@ def test_dataset_replay_controller_view_groups_controls_in_tiles(
     names = [widget.name for widget in controller.view().select(pn.widgets.Widget)]
 
     titles = {card.title for card in cards}
-    assert len(cards) == 7
+    assert len(cards) == 5
     assert titles == {
         "Source",
         "Display",
         "Motion",
         "Coordinates",
-        "Native Close Inspection",
-        "Time",
-        "Media / Output",
+        "Pygame replay",
     }
+    assert "Native Close Inspection" not in titles
+    assert "Time" not in titles
+    assert "Media / Output" not in titles
     assert "Show display" in names
     assert "Display every N steps" in names
     assert "Save video" in names
@@ -338,6 +339,9 @@ def test_dataset_replay_controller_view_groups_controls_in_tiles(
     assert "Display Shortcuts" in names
     assert "Run replay" in names
     assert "Body rendering" in names
+    assert "Limit replay time range" in names
+    assert "Start (s)" in names
+    assert "End (s)" in names
 
 
 def test_dataset_replay_controller_display_shortcuts_dialog_open_close(
@@ -984,16 +988,73 @@ def test_dataset_replay_controller_native_body_rendering_presets(
     assert screen_kws["draw_contour"] is False
     assert screen_kws["draw_midline"] is True
 
-    controller.native_body_rendering.value = "contour_segments"
+
+def test_dataset_replay_controller_browser_render_ignores_pygame_time_range(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    captured: dict[str, Any] = {}
+
+    def _stub_build_render_state(*args, **kwargs):
+        captured.update(kwargs)
+
+        class _Frame:
+            tick = 0
+            centroids = ()
+            heads = ()
+            midlines = ()
+            trails = ()
+            segment_polygons = ()
+            body_contours = ()
+            colors = ()
+            labels = ()
+
+        class _State:
+            frame = _Frame()
+            rings = ()
+
+        return _State()
+
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.build_render_state",
+        _stub_build_render_state,
+    )
+
+    controller.use_time_range.value = True
+    controller.time_start.value = 30.0
+    controller.time_end.value = 40.0
+    controller.tick_player.value = 0
+    controller._render()
+
+    assert captured["time_range"] is None
+
+
+def test_dataset_replay_controller_pygame_replay_still_receives_time_range(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
     parameters, _dataset = controller._build_native_replay_parameters(
         selected_member_token=selected_member,
         agent_indices=None,
-        time_range=None,
+        time_range=(30.0, 40.0),
     )
-    screen_kws, _video_target = controller._native_replay_screen_kws(selected_member)
-    assert parameters.draw_Nsegs == 2
-    assert screen_kws["draw_contour"] is True
-    assert screen_kws["draw_midline"] is True
+
+    assert parameters.time_range == (30.0, 40.0)
 
 
 def test_dataset_replay_controller_native_close_inspection_gating(
