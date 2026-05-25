@@ -182,7 +182,6 @@ class _ModelInspectorController:
         )
 
         self.primary_table = pn.pane.DataFrame(pd.DataFrame(), height=240)
-        self.optional_table = pn.pane.DataFrame(pd.DataFrame(), height=200)
         self.settings_grid = pn.GridBox(ncols=2, sizing_mode="stretch_width")
         self.compare_table = pn.pane.DataFrame(pd.DataFrame(), height=260)
         self.compare_title = pn.pane.Markdown("", margin=(0, 0, 6, 0))
@@ -434,19 +433,9 @@ class _ModelInspectorController:
         )
 
     def _update_summary_sections(self) -> None:
-        baseline_summary_box = pn.Column(
-            pn.pane.Markdown(
-                "#### Baseline locomotor modules (summary)", margin=(0, 0, 6, 0)
-            ),
+        summary_box = pn.Column(
+            pn.pane.Markdown("#### Configured modules (summary)", margin=(0, 0, 6, 0)),
             self.primary_table,
-            css_classes=["lw-model-inspector-section-box"],
-            sizing_mode="stretch_width",
-        )
-        optional_summary_box = pn.Column(
-            pn.pane.Markdown(
-                "#### Optional configured modules (summary)", margin=(0, 0, 6, 0)
-            ),
-            self.optional_table,
             css_classes=["lw-model-inspector-section-box"],
             sizing_mode="stretch_width",
         )
@@ -456,9 +445,7 @@ class _ModelInspectorController:
             css_classes=["lw-model-inspector-section-box"],
             sizing_mode="stretch_width",
         )
-        table_sections: list[pn.viewable.Viewable] = [baseline_summary_box]
-        if not self.optional_table.object.empty:
-            table_sections.append(optional_summary_box)
+        table_sections: list[pn.viewable.Viewable] = [summary_box]
         if not self.compare_table.object.empty:
             table_sections.append(comparison_box)
         self.summary_sections_box.objects = table_sections
@@ -470,14 +457,14 @@ class _ModelInspectorController:
         except ModelInspectorError as exc:
             self._set_status(f"Inspection failed ({exc.code}): {exc}")
             self.primary_table.object = pd.DataFrame()
-            self.optional_table.object = pd.DataFrame()
             self.compare_table.object = pd.DataFrame()
             self.compare_title.object = ""
             self._update_summary_sections()
             return
 
-        self.primary_table.object = _modules_to_dataframe(primary.baseline_modules)
-        self.optional_table.object = _modules_to_dataframe(primary.optional_modules)
+        self.primary_table.object = _modules_to_dataframe(
+            primary.baseline_modules, primary.optional_modules
+        )
         self.settings_grid.objects = self._build_settings_cards(primary)
 
         if self._has_local_edits:
@@ -699,16 +686,20 @@ class _ModelInspectorController:
         )
 
 
-def _modules_to_dataframe(modules: tuple[ModuleInspection, ...]) -> pd.DataFrame:
+def _modules_to_dataframe(
+    baseline_modules: tuple[ModuleInspection, ...],
+    optional_modules: tuple[ModuleInspection, ...],
+) -> pd.DataFrame:
     return pd.DataFrame(
         [
             {
+                "Category": "Baseline" if module.is_baseline else "Optional",
                 "Module": module.module_id,
                 "Present": module.present,
                 "Mode": module.mode or "—",
                 "Parameters": repr(module.parameters),
             }
-            for module in modules
+            for module in (*baseline_modules, *optional_modules)
         ]
     )
 

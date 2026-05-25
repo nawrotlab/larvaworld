@@ -11,7 +11,10 @@ from larvaworld.portal.models_architecture.model_inspector_app import (
     _ModelInspectorController,
     model_inspector_app,
 )
-from larvaworld.portal.models_architecture.model_inspector_data import BASELINE_MODULES
+from larvaworld.portal.models_architecture.model_inspector_data import (
+    BASELINE_MODULES,
+    inspect_model,
+)
 from larvaworld.portal.workspace import clear_active_workspace_path
 
 
@@ -44,6 +47,7 @@ def test_controller_initializes_primary_only(monkeypatch: pytest.MonkeyPatch) ->
     assert controller.primary_select.value is not None
     assert controller.compare_select.value == ""
     assert isinstance(controller.primary_table.object, pd.DataFrame)
+    assert not hasattr(controller, "optional_table")
     assert controller.settings_grid.objects
     assert len(controller.settings_grid.objects) >= len(BASELINE_MODULES)
 
@@ -69,6 +73,26 @@ def test_controller_comparison_hidden_after_local_edits(
     controller._on_local_parameter_edit()
     assert controller.compare_select.disabled is True
     assert "hidden during local edits" in controller.compare_title.object
+
+
+def test_controller_merges_optional_modules_into_summary(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    for model_id in reg.conf.Model.confIDs:
+        inspection = inspect_model(model_id)
+        if not inspection.optional_modules:
+            continue
+        controller.primary_select.value = model_id
+        summary = controller.primary_table.object
+        assert isinstance(summary, pd.DataFrame)
+        assert "Category" in summary.columns
+        assert set(summary["Category"]) >= {"Baseline", "Optional"}
+        optional_ids = {module.module_id for module in inspection.optional_modules}
+        assert optional_ids.issubset(set(summary["Module"]))
+        return
+    pytest.skip("No model with configured optional modules was found.")
 
 
 def test_controller_live_run_updates_trace_and_pause(
