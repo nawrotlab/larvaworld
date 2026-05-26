@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 import pandas as pd
 
@@ -21,6 +21,37 @@ class ModelInspection:
     model_id: str
     baseline_modules: tuple[ModuleInspection, ...]
     optional_modules: tuple[ModuleInspection, ...]
+
+
+ModuleKind = Literal["brain", "memory", "larva"]
+DraftValidationSeverity = Literal["warning", "error"]
+
+
+@dataclass(frozen=True)
+class ModelModuleSpec:
+    module_id: str
+    display_name: str
+    group: str
+    subgroup: str
+    module_kind: ModuleKind
+    present: bool
+    enabled: bool
+    current_mode: str | None
+    mode_options: tuple[str, ...]
+    mode_labels: dict[str, str]
+    parameters: dict[str, Any]
+    current_modality: str | None = None
+    modality_options_by_mode: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    is_core: bool = False
+
+
+@dataclass(frozen=True)
+class DraftValidationIssue:
+    code: str
+    severity: DraftValidationSeverity
+    module_id: str
+    path: tuple[str, ...]
+    message: str
 
 
 @dataclass(frozen=True)
