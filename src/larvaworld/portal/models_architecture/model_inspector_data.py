@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from numbers import Real
 from types import SimpleNamespace
 from typing import Any
 
@@ -67,6 +68,12 @@ _BRAIN_OPTIONAL_NON_MEMORY_MODULES: tuple[str, ...] = (
     "windsensor",
     "thermosensor",
 )
+_WINDSENSOR_DEFAULT_WEIGHTS: dict[str, float] = {
+    "hunch_lin": 0.0,
+    "hunch_ang": 0.0,
+    "bend_lin": 0.0,
+    "bend_ang": 0.0,
+}
 
 
 def load_model_draft(model_id: str) -> Any:
@@ -102,6 +109,8 @@ def default_brain_module_config(module_id: str, mode: str) -> Any:
             context={"module_id": module_id, "mode": mode},
         )
     copied = _copy_config_value(conf)
+    if module_id == "windsensor" and "weights" not in copied:
+        copied["weights"] = util.AttrDict(_WINDSENSOR_DEFAULT_WEIGHTS.copy())
     copied["mode"] = mode
     return copied
 
@@ -161,6 +170,8 @@ def set_draft_module_enabled(model_conf: Any, module_id: str, enabled: bool) -> 
         if module_conf is None:
             first_mode = _first_mode_or_raise(module_id)
             brain_conf[module_id] = default_brain_module_config(module_id, first_mode)
+        elif module_id == "windsensor" and "weights" not in module_conf:
+            module_conf["weights"] = util.AttrDict(_WINDSENSOR_DEFAULT_WEIGHTS.copy())
         model_conf.brain = brain_conf
         return
     if module_id == "memory":
@@ -292,79 +303,98 @@ def validate_draft_module_config(model_conf: Any) -> tuple[DraftValidationIssue,
     issues: list[DraftValidationIssue] = []
     brain_conf = _get_brain_conf("<draft>", model_conf)
     memory_conf = _module_conf(brain_conf, "memory")
-    if memory_conf is None:
-        return ()
+    if memory_conf is not None:
+        memory_mode = _conf_get(memory_conf, "mode")
+        memory_modality = _conf_get(memory_conf, "modality")
+        if memory_mode is None:
+            issues.append(
+                DraftValidationIssue(
+                    code="memory_mode_missing",
+                    severity="error",
+                    module_id="memory",
+                    path=("brain", "memory", "mode"),
+                    message='Memory configuration is missing required "mode".',
+                )
+            )
+        elif memory_mode not in MD.BrainModuleModes["memory"]:
+            issues.append(
+                DraftValidationIssue(
+                    code="memory_mode_unsupported",
+                    severity="error",
+                    module_id="memory",
+                    path=("brain", "memory", "mode"),
+                    message=f'Unsupported memory mode "{memory_mode}".',
+                )
+            )
+        elif memory_modality is None:
+            issues.append(
+                DraftValidationIssue(
+                    code="memory_modality_missing",
+                    severity="error",
+                    module_id="memory",
+                    path=("brain", "memory", "modality"),
+                    message='Memory configuration is missing required "modality".',
+                )
+            )
+        else:
+            supported_modalities = _memory_modalities_for_mode(memory_mode)
+            if memory_modality not in supported_modalities:
+                issues.append(
+                    DraftValidationIssue(
+                        code="memory_modality_unsupported",
+                        severity="error",
+                        module_id="memory",
+                        path=("brain", "memory", "modality"),
+                        message=(
+                            f'Unsupported memory modality "{memory_modality}" for mode "{memory_mode}".'
+                        ),
+                    )
+                )
+            elif (
+                memory_modality == "olfaction"
+                and _module_conf(brain_conf, "olfactor") is None
+            ):
+                issues.append(
+                    DraftValidationIssue(
+                        code="memory_sensor_missing",
+                        severity="warning",
+                        module_id="memory",
+                        path=("brain", "memory", "modality"),
+                        message="Memory modality requires enabled sensor module (olfactor).",
+                    )
+                )
+            elif (
+                memory_modality == "touch"
+                and _module_conf(brain_conf, "toucher") is None
+            ):
+                issues.append(
+                    DraftValidationIssue(
+                        code="memory_sensor_missing",
+                        severity="warning",
+                        module_id="memory",
+                        path=("brain", "memory", "modality"),
+                        message="Memory modality requires enabled sensor module (toucher).",
+                    )
+                )
 
-    memory_mode = _conf_get(memory_conf, "mode")
-    memory_modality = _conf_get(memory_conf, "modality")
-    if memory_mode is None:
+    intermitter_conf = _module_conf(brain_conf, "intermitter")
+    intermitter_mode = _conf_get(intermitter_conf, "mode")
+    intermitter_beta = _conf_get(intermitter_conf, "beta")
+    if intermitter_mode == "branch" and not _is_positive_real(intermitter_beta):
         issues.append(
             DraftValidationIssue(
-                code="memory_mode_missing",
+                code="intermitter_branch_beta_invalid",
                 severity="error",
-                module_id="memory",
-                path=("brain", "memory", "mode"),
-                message='Memory configuration is missing required "mode".',
-            )
-        )
-        return tuple(issues)
-    if memory_mode not in MD.BrainModuleModes["memory"]:
-        issues.append(
-            DraftValidationIssue(
-                code="memory_mode_unsupported",
-                severity="error",
-                module_id="memory",
-                path=("brain", "memory", "mode"),
-                message=f'Unsupported memory mode "{memory_mode}".',
-            )
-        )
-        return tuple(issues)
-    if memory_modality is None:
-        issues.append(
-            DraftValidationIssue(
-                code="memory_modality_missing",
-                severity="error",
-                module_id="memory",
-                path=("brain", "memory", "modality"),
-                message='Memory configuration is missing required "modality".',
-            )
-        )
-        return tuple(issues)
-    supported_modalities = _memory_modalities_for_mode(memory_mode)
-    if memory_modality not in supported_modalities:
-        issues.append(
-            DraftValidationIssue(
-                code="memory_modality_unsupported",
-                severity="error",
-                module_id="memory",
-                path=("brain", "memory", "modality"),
-                message=(
-                    f'Unsupported memory modality "{memory_modality}" for mode "{memory_mode}".'
-                ),
-            )
-        )
-        return tuple(issues)
-    if memory_modality == "olfaction" and _module_conf(brain_conf, "olfactor") is None:
-        issues.append(
-            DraftValidationIssue(
-                code="memory_sensor_missing",
-                severity="warning",
-                module_id="memory",
-                path=("brain", "memory", "modality"),
-                message="Memory modality requires enabled sensor module (olfactor).",
-            )
-        )
-    if memory_modality == "touch" and _module_conf(brain_conf, "toucher") is None:
-        issues.append(
-            DraftValidationIssue(
-                code="memory_sensor_missing",
-                severity="warning",
-                module_id="memory",
-                path=("brain", "memory", "modality"),
-                message="Memory modality requires enabled sensor module (toucher).",
+                module_id="intermitter",
+                path=("brain", "intermitter", "beta"),
+                message='Branch intermitter requires a positive numeric "beta" before live preview can run.',
             )
         )
     return tuple(issues)
+
+
+def _is_positive_real(value: Any) -> bool:
+    return isinstance(value, Real) and not isinstance(value, bool) and value > 0
 
 
 def inspect_model_modules_from_config(

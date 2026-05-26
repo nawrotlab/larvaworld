@@ -460,6 +460,23 @@ def test_set_draft_module_enabled_enables_optional_brain_module_with_defaults() 
     assert draft.brain["olfactor"]["mode"] == (MD.mod_modes("olfactor") or [None])[0]
 
 
+def test_set_draft_module_enabled_enables_windsensor_with_required_weights() -> None:
+    model_id = (
+        "explorer" if "explorer" in reg.conf.Model.confIDs else list_model_ids()[0]
+    )
+    draft = load_model_draft(model_id)
+    draft.brain["windsensor"] = None
+    set_draft_module_enabled(draft, "windsensor", True)
+    assert draft.brain["windsensor"] is not None
+    assert "weights" in draft.brain["windsensor"]
+    assert set(draft.brain["windsensor"]["weights"].keys()) == {
+        "hunch_lin",
+        "hunch_ang",
+        "bend_lin",
+        "bend_ang",
+    }
+
+
 def test_set_draft_module_enabled_disables_optional_larva_module() -> None:
     model_id = (
         "explorer" if "explorer" in reg.conf.Model.confIDs else list_model_ids()[0]
@@ -610,6 +627,71 @@ def test_validate_draft_module_config_reports_invalid_memory_mode_error() -> Non
     assert len(issues) == 1
     assert issues[0].code == "memory_mode_unsupported"
     assert issues[0].severity == "error"
+
+
+def test_validate_draft_module_config_reports_branch_intermitter_invalid_beta_error() -> (
+    None
+):
+    model_id = (
+        "CON_CON_SQ_BR"
+        if "CON_CON_SQ_BR" in reg.conf.Model.confIDs
+        else (
+            "explorer" if "explorer" in reg.conf.Model.confIDs else list_model_ids()[0]
+        )
+    )
+    draft = load_model_draft(model_id)
+    set_draft_memory_config(draft, enabled=False)
+    draft.brain["intermitter"]["mode"] = "branch"
+    draft.brain["intermitter"]["beta"] = None
+    issues = validate_draft_module_config(draft)
+    target = next(
+        (issue for issue in issues if issue.code == "intermitter_branch_beta_invalid"),
+        None,
+    )
+    assert target is not None
+    assert target.severity == "error"
+    assert target.module_id == "intermitter"
+    assert target.path == ("brain", "intermitter", "beta")
+    assert 'positive numeric "beta"' in target.message
+
+
+def test_validate_draft_module_config_allows_branch_intermitter_with_positive_beta() -> (
+    None
+):
+    model_id = (
+        "CON_CON_SQ_BR"
+        if "CON_CON_SQ_BR" in reg.conf.Model.confIDs
+        else (
+            "explorer" if "explorer" in reg.conf.Model.confIDs else list_model_ids()[0]
+        )
+    )
+    draft = load_model_draft(model_id)
+    set_draft_memory_config(draft, enabled=False)
+    draft.brain["intermitter"]["mode"] = "branch"
+    draft.brain["intermitter"]["beta"] = 4.7
+    issues = validate_draft_module_config(draft)
+    assert not any(issue.code == "intermitter_branch_beta_invalid" for issue in issues)
+
+
+def test_validate_draft_module_config_reports_memory_and_intermitter_issues_together() -> (
+    None
+):
+    model_id = (
+        "CON_CON_SQ_BR"
+        if "CON_CON_SQ_BR" in reg.conf.Model.confIDs
+        else (
+            "explorer" if "explorer" in reg.conf.Model.confIDs else list_model_ids()[0]
+        )
+    )
+    draft = load_model_draft(model_id)
+    set_draft_memory_config(draft, enabled=True, mode="RL", modality="olfaction")
+    set_draft_module_enabled(draft, "olfactor", False)
+    draft.brain["intermitter"]["mode"] = "branch"
+    draft.brain["intermitter"]["beta"] = None
+    issues = validate_draft_module_config(draft)
+    codes = {issue.code for issue in issues}
+    assert "memory_sensor_missing" in codes
+    assert "intermitter_branch_beta_invalid" in codes
 
 
 def test_validate_draft_module_config_does_not_mutate_draft() -> None:

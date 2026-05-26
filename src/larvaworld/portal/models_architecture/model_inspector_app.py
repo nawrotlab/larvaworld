@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from html import escape
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, Literal
 
 import pandas as pd
 import panel as pn
@@ -66,7 +66,10 @@ LIVE_REPORTER_LABELS = {
 }
 LIVE_PREVIEW_SIDEBAR_TOP_OFFSET = 28
 LIVE_PREVIEW_SIDEBAR_HEIGHT = 354
+LIVE_PREVIEW_TOP_ROW_HEIGHT = 940
 CONTROLS_COLUMN_WIDTH = 340
+SECTION_COLUMN_GAP_PX = 10
+UIRefreshScope = Literal["parameter", "mode", "enabled", "full"]
 
 
 MODEL_INSPECTOR_RAW_CSS = """
@@ -101,9 +104,41 @@ MODEL_INSPECTOR_RAW_CSS = """
 .lw-model-inspector-section-box {
   border-radius: 10px;
   border: 1px solid rgba(17, 17, 17, 0.1);
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(248, 250, 252, 0.96);
   padding: 10px;
   margin-top: 8px;
+}
+
+.lw-model-inspector-subsection-box {
+  border-radius: 8px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  background: rgba(248, 250, 252, 0.96);
+  padding: 8px;
+  margin-bottom: 10px;
+}
+
+.lw-model-inspector-subsection--locomotion {
+  background: rgba(248, 250, 252, 0.96);
+}
+
+.lw-model-inspector-subsection--sensation {
+  background: rgba(248, 250, 252, 0.96);
+}
+
+.lw-model-inspector-subsection--feeding {
+  background: rgba(248, 250, 252, 0.96);
+}
+
+.lw-model-inspector-subsection--memory {
+  background: rgba(248, 250, 252, 0.96);
+}
+
+.lw-model-inspector-subsection--core {
+  background: rgba(248, 250, 252, 0.96);
+}
+
+.lw-model-inspector-subsection--optional {
+  background: rgba(248, 250, 252, 0.96);
 }
 
 .lw-model-inspector-live-box {
@@ -111,7 +146,6 @@ MODEL_INSPECTOR_RAW_CSS = """
   border: 1px solid rgba(17, 17, 17, 0.1);
   background: rgba(255, 255, 255, 0.98);
   padding: 10px;
-  margin-top: 8px;
 }
 
 .lw-model-inspector-live-sidebar {
@@ -268,17 +302,25 @@ class _ModelInspectorController:
             step=0.01,
         )
 
-        self.primary_table = pn.pane.DataFrame(pd.DataFrame(), height=240)
+        self.primary_table = pn.pane.DataFrame(
+            pd.DataFrame(),
+            sizing_mode="stretch_width",
+        )
         self.module_sections_box = pn.Column(sizing_mode="stretch_width")
-        self.compare_table = pn.pane.DataFrame(pd.DataFrame(), height=260)
+        self._module_card_slots: dict[str, pn.Column] = {}
+        self._module_specs_by_id: dict[str, ModelModuleSpec] = {}
+        self.compare_table = pn.pane.DataFrame(
+            pd.DataFrame(),
+            sizing_mode="stretch_width",
+        )
         self.compare_title = pn.pane.Markdown("", margin=(0, 0, 6, 0))
         self.summary_sections_box = pn.Column(
             sizing_mode="stretch_width",
-            styles={"flex": "1 1 0", "min-width": "0"},
+            css_classes=["lw-model-inspector-section-box"],
         )
         self.probe_table = pn.pane.DataFrame(
             pd.DataFrame(),
-            height=220,
+            height=300,
             css_classes=["lw-model-inspector-live-table"],
         )
         self.probe_meta = pn.pane.HTML("", margin=0)
@@ -440,6 +482,7 @@ class _ModelInspectorController:
             message=f"Loaded {ref.display_label}.",
             clear_trace=True,
             mark_dirty=True,
+            ui_scope="full",
         )
 
     def _on_primary_change(self, _event=None) -> None:
@@ -461,10 +504,11 @@ class _ModelInspectorController:
             message=f'Model changed to "{self.primary_select.value}".',
             clear_trace=True,
             mark_dirty=False,
+            ui_scope="full",
         )
 
     def _on_compare_change(self, _event=None) -> None:
-        self._refresh_inspection()
+        self._refresh_inspection_tables()
 
     def _on_run(self, _event=None) -> None:
         if self._is_running:
@@ -510,13 +554,13 @@ class _ModelInspectorController:
     def _on_reset_to_preset(self, _event=None) -> None:
         self._pause_callback()
         self._reset_draft_to_selected_model()
+        self._has_local_edits = False
         self._sync_preview_after_draft_change(
             message=f'Reset local state to model preset "{self.primary_select.value}".',
             clear_trace=True,
             mark_dirty=False,
+            ui_scope="full",
         )
-        self._has_local_edits = False
-        self._refresh_inspection()
 
     def _start_callback(self) -> None:
         self._pause_callback()
@@ -634,11 +678,24 @@ class _ModelInspectorController:
         message: str,
         clear_trace: bool = True,
         mark_dirty: bool,
+        ui_scope: UIRefreshScope = "full",
+        module_id: str | None = None,
     ) -> None:
+        if ui_scope not in {"parameter", "mode", "enabled", "full"}:
+            raise ValueError(f"Unsupported UI refresh scope: {ui_scope!r}")
+        previous_issues = self._draft_validation_issues
         self._pause_callback()
         if mark_dirty:
             self._has_local_edits = True
         self._refresh_draft_validation()
+        module_specs = self._refresh_inspection_tables()
+        if module_specs is not None:
+            self._refresh_targeted_module_cards(
+                module_specs=module_specs,
+                module_id=module_id,
+                ui_scope=ui_scope,
+                previous_issues=previous_issues,
+            )
         if self._has_validation_errors():
             self._brain = None
             self._runtime = None
@@ -646,7 +703,6 @@ class _ModelInspectorController:
             if clear_trace:
                 self._clear_trace_data()
             self._update_probe_meta()
-            self._refresh_inspection()
             self._set_status(
                 self._with_validation_status(
                     f"{message} Preview blocked by draft validation errors."
@@ -657,7 +713,6 @@ class _ModelInspectorController:
         if clear_trace:
             self._clear_trace_data()
         self._update_probe_meta()
-        self._refresh_inspection()
         if self._draft_validation_issues:
             self._set_status(
                 self._with_validation_status(
@@ -667,28 +722,39 @@ class _ModelInspectorController:
         else:
             self._set_status(f"{message} Preview rebuilt from current draft.")
 
-    def _mark_draft_edited(self, message: str) -> None:
-        self._sync_preview_after_draft_change(
-            message=message,
-            clear_trace=True,
-            mark_dirty=True,
-        )
-
     def _set_module_enabled(self, module_id: str, enabled: bool) -> None:
         draft = self._require_draft_model()
         set_draft_module_enabled(draft, module_id, enabled)
         action = "enabled" if enabled else "disabled"
-        self._mark_draft_edited(f'Module "{module_id}" {action}.')
+        self._sync_preview_after_draft_change(
+            message=f'Module "{module_id}" {action}.',
+            clear_trace=True,
+            mark_dirty=True,
+            ui_scope="enabled",
+            module_id=module_id,
+        )
 
     def _set_brain_module_mode(self, module_id: str, mode: str) -> None:
         draft = self._require_draft_model()
         set_draft_brain_module_mode(draft, module_id, mode)
-        self._mark_draft_edited(f'Module "{module_id}" mode changed to "{mode}".')
+        self._sync_preview_after_draft_change(
+            message=f'Module "{module_id}" mode changed to "{mode}".',
+            clear_trace=True,
+            mark_dirty=True,
+            ui_scope="mode",
+            module_id=module_id,
+        )
 
     def _set_memory_mode(self, mode: str) -> None:
         draft = self._require_draft_model()
         set_draft_memory_config(draft, enabled=True, mode=mode, modality=None)
-        self._mark_draft_edited(f'Memory mode changed to "{mode}".')
+        self._sync_preview_after_draft_change(
+            message=f'Memory mode changed to "{mode}".',
+            clear_trace=True,
+            mark_dirty=True,
+            ui_scope="mode",
+            module_id="memory",
+        )
 
     def _set_memory_modality(self, modality: str) -> None:
         draft = self._require_draft_model()
@@ -697,7 +763,13 @@ class _ModelInspectorController:
         set_draft_memory_config(
             draft, enabled=True, mode=current_mode, modality=modality
         )
-        self._mark_draft_edited(f'Memory modality changed to "{modality}".')
+        self._sync_preview_after_draft_change(
+            message=f'Memory modality changed to "{modality}".',
+            clear_trace=True,
+            mark_dirty=True,
+            ui_scope="mode",
+            module_id="memory",
+        )
 
     def _set_module_parameter(
         self,
@@ -708,8 +780,12 @@ class _ModelInspectorController:
         draft = self._require_draft_model()
         set_draft_module_parameter(draft, module_id, parameter_path, value)
         path_label = ".".join(parameter_path)
-        self._mark_draft_edited(
-            f'Module "{module_id}" parameter "{path_label}" changed.'
+        self._sync_preview_after_draft_change(
+            message=f'Module "{module_id}" parameter "{path_label}" changed.',
+            clear_trace=True,
+            mark_dirty=True,
+            ui_scope="parameter",
+            module_id=module_id,
         )
 
     def _prepare_reporters(self) -> None:
@@ -825,6 +901,7 @@ class _ModelInspectorController:
             message=f"dt changed to {self._dt()}.",
             clear_trace=True,
             mark_dirty=False,
+            ui_scope="full",
         )
 
     def _update_probe_meta(self) -> None:
@@ -852,28 +929,27 @@ class _ModelInspectorController:
         )
 
     def _update_summary_sections(self) -> None:
-        summary_box = pn.Column(
+        children: list[pn.viewable.Viewable] = [
             pn.pane.Markdown("#### Configured modules (summary)", margin=(0, 0, 6, 0)),
             self.primary_table,
-            css_classes=["lw-model-inspector-section-box"],
-            sizing_mode="stretch_width",
-        )
-        comparison_box = pn.Column(
-            self.compare_title,
-            self.compare_table,
-            css_classes=["lw-model-inspector-section-box"],
-            sizing_mode="stretch_width",
-        )
-        table_sections: list[pn.viewable.Viewable] = [summary_box]
+        ]
+        if self.compare_title.object:
+            children.append(pn.Spacer(height=8))
+            children.append(self.compare_title)
         if not self.compare_table.object.empty:
-            table_sections.append(comparison_box)
-        self.summary_sections_box.objects = table_sections
+            children.append(self.compare_table)
+        self.summary_sections_box.objects = children
 
     def _refresh_inspection(self) -> None:
+        self._refresh_draft_validation()
+        module_specs = self._refresh_inspection_tables()
+        if module_specs is not None:
+            self._refresh_all_module_cards(module_specs)
+
+    def _refresh_inspection_tables(self) -> tuple[ModelModuleSpec, ...] | None:
         primary_id = str(self.primary_select.value)
         try:
             draft = self._require_draft_model()
-            self._refresh_draft_validation()
             primary = inspect_model_from_config(primary_id, draft)
             module_specs = inspect_model_modules_from_config(primary_id, draft)
         except ModelInspectorError as exc:
@@ -884,26 +960,22 @@ class _ModelInspectorController:
             self.module_sections_box.objects = [
                 pn.pane.Markdown("Module inspection unavailable.", margin=0)
             ]
+            self._module_card_slots.clear()
+            self._module_specs_by_id.clear()
             self._update_summary_sections()
-            return
+            return None
 
         self.primary_table.object = _modules_to_dataframe(
             primary.baseline_modules, primary.optional_modules
         )
-        self.module_sections_box.objects = _build_module_sections(
-            controller=self,
-            specs=module_specs,
-            validation_issues=self._draft_validation_issues,
-        )
+        self._module_specs_by_id = {spec.module_id: spec for spec in module_specs}
 
         if self._has_local_edits:
             self.compare_select.disabled = True
             self.compare_title.object = "#### Comparison hidden during local edits"
-            self.compare_table.object = pd.DataFrame(
-                [{"Status": "Reset to model preset to re-enable canonical comparison."}]
-            )
+            self.compare_table.object = pd.DataFrame()
             self._update_summary_sections()
-            return
+            return module_specs
         self.compare_select.disabled = False
 
         compare_id = str(self.compare_select.value or "")
@@ -911,7 +983,7 @@ class _ModelInspectorController:
             self.compare_title.object = ""
             self.compare_table.object = pd.DataFrame()
             self._update_summary_sections()
-            return
+            return module_specs
 
         try:
             comparison = inspect_model(compare_id)
@@ -921,7 +993,7 @@ class _ModelInspectorController:
             self.compare_title.object = ""
             self.compare_table.object = pd.DataFrame()
             self._update_summary_sections()
-            return
+            return module_specs
 
         self.compare_title.object = f"#### Comparison: `{primary_id}` vs `{compare_id}`"
         self.compare_table.object = pd.DataFrame(
@@ -941,6 +1013,67 @@ class _ModelInspectorController:
             ]
         )
         self._update_summary_sections()
+        return module_specs
+
+    def _refresh_all_module_cards(
+        self,
+        module_specs: tuple[ModelModuleSpec, ...],
+    ) -> None:
+        self._module_card_slots.clear()
+        self._module_specs_by_id = {spec.module_id: spec for spec in module_specs}
+        self.module_sections_box.objects = _build_module_sections(
+            controller=self,
+            specs=module_specs,
+            validation_issues=self._draft_validation_issues,
+            card_slots=self._module_card_slots,
+        )
+
+    def _refresh_targeted_module_cards(
+        self,
+        *,
+        module_specs: tuple[ModelModuleSpec, ...],
+        module_id: str | None,
+        ui_scope: UIRefreshScope,
+        previous_issues: tuple[DraftValidationIssue, ...],
+    ) -> None:
+        self._module_specs_by_id = {spec.module_id: spec for spec in module_specs}
+        if ui_scope == "full":
+            self._refresh_all_module_cards(module_specs)
+            return
+        if ui_scope == "parameter":
+            affected_cards: set[str] = set()
+        elif ui_scope in {"mode", "enabled"}:
+            affected_cards = {module_id} if module_id else set()
+        else:
+            raise ValueError(f"Unsupported UI refresh scope: {ui_scope!r}")
+
+        if module_id in {"memory", "olfactor", "toucher"} and ui_scope in {
+            "mode",
+            "enabled",
+        }:
+            affected_cards.add("memory")
+
+        old_sig = _validation_issue_signature(previous_issues)
+        new_sig = _validation_issue_signature(self._draft_validation_issues)
+        changed_issue_modules = {
+            m_id
+            for m_id in set(old_sig) | set(new_sig)
+            if old_sig.get(m_id, ()) != new_sig.get(m_id, ())
+        }
+        affected_cards |= changed_issue_modules
+
+        for affected_module_id in affected_cards:
+            spec = self._module_specs_by_id.get(affected_module_id)
+            slot = self._module_card_slots.get(affected_module_id)
+            if spec is None or slot is None:
+                self._refresh_all_module_cards(module_specs)
+                return
+            new_card = _module_editor_card(
+                controller=self,
+                spec=spec,
+                validation_issues=self._draft_validation_issues,
+            )
+            slot.objects = [new_card]
 
     def _build_settings_cards(self, inspection) -> list[pn.viewable.Viewable]:
         if self._brain is None:
@@ -1020,71 +1153,91 @@ class _ModelInspectorController:
             self.reset_preset_button,
             sizing_mode="stretch_width",
         )
-        controls = pn.Column(
+        primary_controls = pn.Column(
             self.primary_select,
             self.compare_select,
-            action_buttons,
             self.status_pane,
             self.validation_pane,
-            pn.pane.Markdown("#### Draft presets", margin=(8, 0, 2, 0)),
-            self.model_preset_controls.view,
-            self.download_json_button,
             pn.pane.Markdown("#### Preview settings", margin=(8, 0, 2, 0)),
             self.max_steps_input,
             self.a_in_input,
             self.trace_window_input,
             self.dt_input,
+            action_buttons,
+            sizing_mode="stretch_width",
+            css_classes=["lw-model-inspector-controls-box"],
+        )
+        preset_controls = pn.Column(
+            pn.pane.Markdown("#### Draft presets", margin=(0, 0, 2, 0)),
+            self.model_preset_controls.view,
+            self.download_json_button,
             sizing_mode="stretch_width",
             css_classes=["lw-model-inspector-controls-box"],
         )
         controls_box = pn.Column(
-            controls,
+            primary_controls,
+            preset_controls,
             width=CONTROLS_COLUMN_WIDTH,
             styles={
                 "flex": f"0 0 {CONTROLS_COLUMN_WIDTH}px",
                 "margin-bottom": "10px",
             },
         )
-        tables_box = self.summary_sections_box
-        top_row = pn.Row(
-            controls_box,
-            tables_box,
-            sizing_mode="stretch_width",
-            styles={"align-items": "stretch"},
-        )
         probe_sidebar = pn.Column(
             self.probe_meta,
             self.probe_table,
-            margin=(LIVE_PREVIEW_SIDEBAR_TOP_OFFSET, 0, 0, 0),
-            height=LIVE_PREVIEW_SIDEBAR_HEIGHT,
             sizing_mode="stretch_width",
             css_classes=["lw-model-inspector-live-sidebar"],
             styles={
-                "flex": "1 1 0",
-                "overflow-y": "auto",
+                "flex": "0 0 auto",
+                "margin-top": "6px",
             },
         )
-        probe_body = pn.Row(
-            pn.Column(
-                self.live_plot_view,
-                sizing_mode="stretch_width",
-                styles={"flex": "3 1 0"},
-            ),
+        probe_body = pn.Column(
+            self.live_plot_view,
             probe_sidebar,
             sizing_mode="stretch_width",
-            styles={"align-items": "stretch"},
+            styles={
+                "height": "100%",
+                "justify-content": "flex-start",
+            },
         )
         probe = pn.Column(
             pn.pane.Markdown("#### Live preview", margin=(0, 0, 6, 0)),
             probe_body,
             css_classes=["lw-model-inspector-live-box"],
             sizing_mode="stretch_width",
+            height=LIVE_PREVIEW_TOP_ROW_HEIGHT,
+            styles={
+                "height": f"{LIVE_PREVIEW_TOP_ROW_HEIGHT}px",
+                "min-height": f"{LIVE_PREVIEW_TOP_ROW_HEIGHT}px",
+                "display": "flex",
+            },
+        )
+        probe_cell = pn.Column(
+            probe,
+            sizing_mode="stretch_width",
+            styles={
+                "margin-left": f"{SECTION_COLUMN_GAP_PX}px",
+                "display": "flex",
+                "flex": "1 1 0",
+                "align-self": "stretch",
+                "height": f"{LIVE_PREVIEW_TOP_ROW_HEIGHT}px",
+                "min-height": f"{LIVE_PREVIEW_TOP_ROW_HEIGHT}px",
+            },
+            height=LIVE_PREVIEW_TOP_ROW_HEIGHT,
+        )
+        top_row = pn.Row(
+            controls_box,
+            probe_cell,
+            sizing_mode="stretch_width",
+            styles={"align-items": "stretch"},
         )
         return pn.Column(
             intro,
             top_row,
             self.module_sections_box,
-            probe,
+            self.summary_sections_box,
             css_classes=["lw-model-inspector-root"],
             sizing_mode="stretch_width",
         )
@@ -1208,6 +1361,12 @@ def _clone_parameter_object(
     return clone
 
 
+def _is_supported_parameter_for_editor(parameter: param.Parameter) -> bool:
+    # Dict-valued parameters (e.g. intermitter distribution blobs) need
+    # dedicated editors; rendering them as scalar controls raises Param errors.
+    return not isinstance(parameter, param.Dict)
+
+
 def _make_parameter_proxy(
     *,
     module_id: str,
@@ -1218,6 +1377,10 @@ def _make_parameter_proxy(
     attrs: dict[str, param.Parameter] = {}
     for name, pobj in parameter_objects.items():
         if name.split(".", 1)[0] in _PROTECTED_PARAMETER_ROOTS:
+            continue
+        if not _is_supported_parameter_for_editor(pobj):
+            continue
+        if name not in values:
             continue
         default = values.get(name, getattr(pobj, "default", None))
         attrs[name] = _clone_parameter_object(pobj, default)
@@ -1242,7 +1405,12 @@ def _parameter_editor_group(
     names = [
         name
         for name in parameter_objects
-        if name and name.split(".", 1)[0] not in _PROTECTED_PARAMETER_ROOTS
+        if (
+            name
+            and name.split(".", 1)[0] not in _PROTECTED_PARAMETER_ROOTS
+            and _is_supported_parameter_for_editor(parameter_objects[name])
+            and name in values
+        )
     ]
     if not names:
         return pn.pane.Markdown("No editable parameters.", margin=(2, 0, 0, 0))
@@ -1448,6 +1616,22 @@ def _issues_for_card(
     return tuple(issue for issue in validation_issues if issue.module_id == module_id)
 
 
+def _validation_issue_signature(
+    issues: tuple[DraftValidationIssue, ...],
+) -> dict[str, tuple[tuple[str, str, tuple[str, ...], str], ...]]:
+    by_module: dict[str, list[tuple[str, str, tuple[str, ...], str]]] = {}
+    for issue in issues:
+        by_module.setdefault(issue.module_id, []).append(
+            (
+                issue.severity,
+                issue.code,
+                tuple(issue.path),
+                issue.message,
+            )
+        )
+    return {module_id: tuple(sorted(values)) for module_id, values in by_module.items()}
+
+
 def _module_editor_card(
     *,
     controller: _ModelInspectorController,
@@ -1506,6 +1690,8 @@ def _module_editor_card(
             options=mode_options,
             value=mode_value,
             disabled=not spec.present,
+            sizing_mode="fixed",
+            width=170,
         )
         selected_mode = str(mode_value) if mode_value is not None else ""
         modality_options = list(spec.modality_options_by_mode.get(selected_mode, ()))
@@ -1519,6 +1705,8 @@ def _module_editor_card(
             options=modality_options,
             value=modality_value,
             disabled=not spec.present,
+            sizing_mode="fixed",
+            width=160,
         )
         mode_select.param.watch(
             lambda event: controller._set_memory_mode(str(event.new)),
@@ -1532,7 +1720,16 @@ def _module_editor_card(
 
     body_children: list[pn.viewable.Viewable] = []
     if controls:
-        body_children.append(pn.Row(*controls, sizing_mode="stretch_width"))
+        if is_memory:
+            body_children.append(
+                pn.Row(
+                    *controls,
+                    sizing_mode="stretch_width",
+                    styles={"flex-wrap": "wrap", "row-gap": "6px"},
+                )
+            )
+        else:
+            body_children.append(pn.Row(*controls, sizing_mode="stretch_width"))
     if not spec.present and (
         is_optional_brain_non_memory or is_optional_larva or is_memory
     ):
@@ -1573,43 +1770,294 @@ def _build_module_sections(
     controller: _ModelInspectorController,
     specs: tuple[ModelModuleSpec, ...],
     validation_issues: tuple[DraftValidationIssue, ...],
+    card_slots: dict[str, pn.Column] | None = None,
 ) -> list[pn.viewable.Viewable]:
-    section_order = [
-        ("Nervous System", "Locomotion"),
-        ("Nervous System", "Sensation"),
-        ("Nervous System", "Feeding"),
-        ("Nervous System", "Memory"),
-        ("Larva Modules", "Core"),
-        ("Larva Modules", "Optional"),
-    ]
+    specs_by_id = {spec.module_id: spec for spec in specs}
     sections: list[pn.viewable.Viewable] = []
-    for group, subgroup in section_order:
-        subgroup_specs = [
-            spec for spec in specs if spec.group == group and spec.subgroup == subgroup
-        ]
-        if not subgroup_specs:
-            continue
-        grid = pn.GridBox(
-            *(
-                _module_editor_card(
-                    controller=controller,
-                    spec=spec,
-                    validation_issues=validation_issues,
-                )
-                for spec in subgroup_specs
-            ),
-            ncols=3,
-            sizing_mode="stretch_width",
-        )
-        sections.append(
-            pn.Column(
-                pn.pane.Markdown(f"#### {group} / {subgroup}", margin=(0, 0, 6, 0)),
-                grid,
-                css_classes=["lw-model-inspector-section-box"],
-                sizing_mode="stretch_width",
-            )
-        )
+
+    nervous_system = _build_nervous_system_section(
+        controller=controller,
+        specs_by_id=specs_by_id,
+        validation_issues=validation_issues,
+        card_slots=card_slots,
+    )
+    if nervous_system is not None:
+        sections.append(nervous_system)
+
+    larva_modules = _build_larva_modules_section(
+        controller=controller,
+        specs_by_id=specs_by_id,
+        validation_issues=validation_issues,
+        card_slots=card_slots,
+    )
+    if larva_modules is not None:
+        sections.append(larva_modules)
     return sections
+
+
+def _build_nervous_system_section(
+    *,
+    controller: _ModelInspectorController,
+    specs_by_id: dict[str, ModelModuleSpec],
+    validation_issues: tuple[DraftValidationIssue, ...],
+    card_slots: dict[str, pn.Column] | None,
+) -> pn.viewable.Viewable | None:
+    locomotion = _build_locomotion_subsection(
+        controller=controller,
+        specs_by_id=specs_by_id,
+        validation_issues=validation_issues,
+        card_slots=card_slots,
+    )
+    right_column = pn.Column(
+        *(
+            section
+            for section in (
+                _build_vertical_subsection(
+                    title="Sensation",
+                    css_modifier="sensation",
+                    module_ids=("olfactor", "toucher", "windsensor", "thermosensor"),
+                    controller=controller,
+                    specs_by_id=specs_by_id,
+                    validation_issues=validation_issues,
+                    card_slots=card_slots,
+                ),
+                _build_vertical_subsection(
+                    title="Feeding",
+                    css_modifier="feeding",
+                    module_ids=("feeder",),
+                    controller=controller,
+                    specs_by_id=specs_by_id,
+                    validation_issues=validation_issues,
+                    card_slots=card_slots,
+                ),
+                _build_vertical_subsection(
+                    title="Memory",
+                    css_modifier="memory",
+                    module_ids=("memory",),
+                    controller=controller,
+                    specs_by_id=specs_by_id,
+                    validation_issues=validation_issues,
+                    card_slots=card_slots,
+                ),
+            )
+            if section is not None
+        ),
+        sizing_mode="stretch_width",
+        styles={"margin-left": f"{SECTION_COLUMN_GAP_PX}px"},
+    )
+    if locomotion is None and not right_column.objects:
+        return None
+    layout = pn.GridSpec(
+        ncols=3,
+        nrows=1,
+        sizing_mode="stretch_width",
+    )
+    if locomotion is not None:
+        layout[0, 0:2] = locomotion
+    if right_column.objects:
+        layout[0, 2] = right_column
+    return pn.Column(
+        pn.pane.Markdown("#### Nervous System", margin=(0, 0, 6, 0)),
+        layout,
+        css_classes=["lw-model-inspector-section-box"],
+        sizing_mode="stretch_width",
+    )
+
+
+def _build_larva_modules_section(
+    *,
+    controller: _ModelInspectorController,
+    specs_by_id: dict[str, ModelModuleSpec],
+    validation_issues: tuple[DraftValidationIssue, ...],
+    card_slots: dict[str, pn.Column] | None,
+) -> pn.viewable.Viewable | None:
+    core = _build_larva_core_subsection(
+        controller=controller,
+        specs_by_id=specs_by_id,
+        validation_issues=validation_issues,
+        card_slots=card_slots,
+    )
+    optional = _build_vertical_subsection(
+        title="Optional",
+        css_modifier="optional",
+        module_ids=("energetics", "sensorimotor", "Box2D"),
+        controller=controller,
+        specs_by_id=specs_by_id,
+        validation_issues=validation_issues,
+        card_slots=card_slots,
+    )
+    if core is None and optional is None:
+        return None
+    optional_cell: pn.viewable.Viewable | None = None
+    if optional is not None:
+        optional_cell = pn.Column(
+            optional,
+            sizing_mode="stretch_width",
+            styles={"margin-left": f"{SECTION_COLUMN_GAP_PX}px"},
+        )
+    layout = pn.GridSpec(
+        ncols=3,
+        nrows=1,
+        sizing_mode="stretch_width",
+    )
+    if core is not None:
+        layout[0, 0:2] = core
+    if optional_cell is not None:
+        layout[0, 2] = optional_cell
+    return pn.Column(
+        pn.pane.Markdown("#### Larva Modules", margin=(0, 0, 6, 0)),
+        layout,
+        css_classes=["lw-model-inspector-section-box"],
+        sizing_mode="stretch_width",
+    )
+
+
+def _build_locomotion_subsection(
+    *,
+    controller: _ModelInspectorController,
+    specs_by_id: dict[str, ModelModuleSpec],
+    validation_issues: tuple[DraftValidationIssue, ...],
+    card_slots: dict[str, pn.Column] | None,
+) -> pn.viewable.Viewable | None:
+    first_column = _build_module_slot_column(
+        module_ids=("crawler", "turner"),
+        controller=controller,
+        specs_by_id=specs_by_id,
+        validation_issues=validation_issues,
+        card_slots=card_slots,
+    )
+    second_column = _build_module_slot_column(
+        module_ids=("interference", "intermitter"),
+        controller=controller,
+        specs_by_id=specs_by_id,
+        validation_issues=validation_issues,
+        card_slots=card_slots,
+    )
+    if first_column is None and second_column is None:
+        return None
+    columns = [column for column in (first_column, second_column) if column is not None]
+    return pn.Card(
+        pn.GridBox(*columns, ncols=len(columns), sizing_mode="stretch_width"),
+        title="Locomotion",
+        collapsed=False,
+        css_classes=[
+            "lw-model-inspector-subsection-box",
+            "lw-model-inspector-subsection--locomotion",
+        ],
+        sizing_mode="stretch_width",
+    )
+
+
+def _build_larva_core_subsection(
+    *,
+    controller: _ModelInspectorController,
+    specs_by_id: dict[str, ModelModuleSpec],
+    validation_issues: tuple[DraftValidationIssue, ...],
+    card_slots: dict[str, pn.Column] | None,
+) -> pn.viewable.Viewable | None:
+    first_column = _build_module_slot_column(
+        module_ids=("body",),
+        controller=controller,
+        specs_by_id=specs_by_id,
+        validation_issues=validation_issues,
+        card_slots=card_slots,
+    )
+    second_column = _build_module_slot_column(
+        module_ids=("physics",),
+        controller=controller,
+        specs_by_id=specs_by_id,
+        validation_issues=validation_issues,
+        card_slots=card_slots,
+    )
+    if first_column is None and second_column is None:
+        return None
+    columns = [column for column in (first_column, second_column) if column is not None]
+    return pn.Card(
+        pn.GridBox(*columns, ncols=len(columns), sizing_mode="stretch_width"),
+        title="Core",
+        collapsed=False,
+        css_classes=[
+            "lw-model-inspector-subsection-box",
+            "lw-model-inspector-subsection--core",
+        ],
+        sizing_mode="stretch_width",
+    )
+
+
+def _build_vertical_subsection(
+    *,
+    title: str,
+    css_modifier: str | None,
+    module_ids: tuple[str, ...],
+    controller: _ModelInspectorController,
+    specs_by_id: dict[str, ModelModuleSpec],
+    validation_issues: tuple[DraftValidationIssue, ...],
+    card_slots: dict[str, pn.Column] | None,
+) -> pn.viewable.Viewable | None:
+    column = _build_module_slot_column(
+        module_ids=module_ids,
+        controller=controller,
+        specs_by_id=specs_by_id,
+        validation_issues=validation_issues,
+        card_slots=card_slots,
+    )
+    if column is None:
+        return None
+    css_classes = ["lw-model-inspector-subsection-box"]
+    if css_modifier:
+        css_classes.append(f"lw-model-inspector-subsection--{css_modifier}")
+    return pn.Card(
+        column,
+        title=title,
+        collapsed=False,
+        css_classes=css_classes,
+        sizing_mode="stretch_width",
+    )
+
+
+def _build_module_slot_column(
+    *,
+    module_ids: tuple[str, ...],
+    controller: _ModelInspectorController,
+    specs_by_id: dict[str, ModelModuleSpec],
+    validation_issues: tuple[DraftValidationIssue, ...],
+    card_slots: dict[str, pn.Column] | None,
+) -> pn.viewable.Viewable | None:
+    slots = [
+        _build_module_card_slot(
+            controller=controller,
+            spec=specs_by_id[module_id],
+            validation_issues=validation_issues,
+            card_slots=card_slots,
+        )
+        for module_id in module_ids
+        if module_id in specs_by_id
+    ]
+    if not slots:
+        return None
+    return pn.GridBox(
+        *slots,
+        ncols=1,
+        sizing_mode="stretch_width",
+    )
+
+
+def _build_module_card_slot(
+    *,
+    controller: _ModelInspectorController,
+    spec: ModelModuleSpec,
+    validation_issues: tuple[DraftValidationIssue, ...],
+    card_slots: dict[str, pn.Column] | None,
+) -> pn.Column:
+    card = _module_editor_card(
+        controller=controller,
+        spec=spec,
+        validation_issues=validation_issues,
+    )
+    slot = pn.Column(card, sizing_mode="stretch_width")
+    if card_slots is not None:
+        card_slots[spec.module_id] = slot
+    return slot
 
 
 def model_inspector_app() -> pn.viewable.Viewable:

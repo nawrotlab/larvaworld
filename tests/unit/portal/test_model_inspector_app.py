@@ -62,7 +62,10 @@ def _collect_cards(viewable) -> list[pn.Card]:
     cards: list[pn.Card] = []
     if isinstance(viewable, pn.Card):
         cards.append(viewable)
-    for child in getattr(viewable, "objects", []):
+    children = getattr(viewable, "objects", [])
+    if isinstance(children, dict):
+        children = children.values()
+    for child in children:
         cards.extend(_collect_cards(child))
     return cards
 
@@ -73,13 +76,20 @@ def _collect_card_titles(viewable) -> list[str]:
     ]
 
 
+def _collect_module_card_titles(viewable) -> list[str]:
+    return [title for title in _collect_card_titles(viewable) if " | " in title]
+
+
 def _collect_text(viewable) -> str:
     bits: list[str] = []
     if hasattr(viewable, "object") and isinstance(getattr(viewable, "object"), str):
         bits.append(getattr(viewable, "object"))
     if hasattr(viewable, "title") and isinstance(getattr(viewable, "title"), str):
         bits.append(getattr(viewable, "title"))
-    for child in getattr(viewable, "objects", []):
+    children = getattr(viewable, "objects", [])
+    if isinstance(children, dict):
+        children = children.values()
+    for child in children:
         bits.append(_collect_text(child))
     return "\n".join(bit for bit in bits if bit)
 
@@ -101,7 +111,10 @@ def _collect_widgets(
             name is None or getattr(viewable, "name", None) == name
         ):
             widgets.append(viewable)
-    for child in getattr(viewable, "objects", []):
+    children = getattr(viewable, "objects", [])
+    if isinstance(children, dict):
+        children = children.values()
+    for child in children:
         widgets.extend(_collect_widgets(child, widget_type=widget_type, name=name))
     return widgets
 
@@ -111,6 +124,12 @@ def _find_widget_in_card(card: pn.Card, widget_type: type, name: str):
     if not widgets:
         raise AssertionError(f'Widget "{name}" not found in card "{card.title}".')
     return widgets[0]
+
+
+def _card_slot(controller: _ModelInspectorController, module_id: str) -> pn.Column:
+    slot = controller._module_card_slots.get(module_id)
+    assert slot is not None
+    return slot
 
 
 def _status_text(controller: _ModelInspectorController) -> str:
@@ -177,6 +196,27 @@ def test_module_cards_have_draft_backed_parameter_editors(
     assert not _collect_widgets(memory_card, pn.widgets.Widget, "modality")
 
 
+def test_intermitter_dict_distribution_parameters_are_not_scalar_editors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    intermitter_card = _find_card(controller.module_sections_box, "intermitter")
+    assert not _collect_widgets(intermitter_card, pn.widgets.Widget, "run_dist")
+    assert not _collect_widgets(intermitter_card, pn.widgets.Widget, "stridechain_dist")
+    assert not _collect_widgets(intermitter_card, pn.widgets.Widget, "pause_dist")
+
+
+def test_generic_module_editors_only_render_existing_draft_leaves(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    assert not _collect_widgets(
+        controller.module_sections_box, pn.widgets.Widget, "closed"
+    )
+
+
 def test_module_cards_do_not_render_debug_metadata_text(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -240,12 +280,14 @@ def test_controller_builds_grouped_module_sections(
     _guard_registry_writes(monkeypatch)
     controller = _ModelInspectorController()
     text = _collect_text(controller.module_sections_box)
-    assert "Nervous System / Locomotion" in text
-    assert "Nervous System / Sensation" in text
-    assert "Nervous System / Feeding" in text
-    assert "Nervous System / Memory" in text
-    assert "Larva Modules / Core" in text
-    assert "Larva Modules / Optional" in text
+    assert "Nervous System" in text
+    assert "Locomotion" in text
+    assert "Sensation" in text
+    assert "Feeding" in text
+    assert "Memory" in text
+    assert "Larva Modules" in text
+    assert "Core" in text
+    assert "Optional" in text
 
 
 def test_controller_shows_all_module_slots_in_order(
@@ -253,9 +295,25 @@ def test_controller_shows_all_module_slots_in_order(
 ) -> None:
     _guard_registry_writes(monkeypatch)
     controller = _ModelInspectorController()
-    titles = _collect_card_titles(controller.module_sections_box)
+    titles = _collect_module_card_titles(controller.module_sections_box)
     module_ids = [title.split(" | ", 1)[0] for title in titles]
-    assert module_ids == list(MODEL_MODULE_ORDER)
+    assert module_ids == [
+        "crawler",
+        "turner",
+        "interference",
+        "intermitter",
+        "olfactor",
+        "toucher",
+        "windsensor",
+        "thermosensor",
+        "feeder",
+        "memory",
+        "body",
+        "physics",
+        "energetics",
+        "sensorimotor",
+        "Box2D",
+    ]
     assert "Box2D" in module_ids
 
 
@@ -276,9 +334,9 @@ def test_controller_rebuilds_cards_on_primary_model_change_without_replacing_con
     controller.primary_select.value = other_model_id
     assert id(controller.module_sections_box) == container_id
     assert controller._draft_model_id == other_model_id
-    titles = _collect_card_titles(controller.module_sections_box)
+    titles = _collect_module_card_titles(controller.module_sections_box)
     module_ids = [title.split(" | ", 1)[0] for title in titles]
-    assert module_ids == list(MODEL_MODULE_ORDER)
+    assert set(module_ids) == set(MODEL_MODULE_ORDER)
     expected_title_prefixes = {spec.module_id for spec in expected_specs}
     assert set(module_ids) == expected_title_prefixes
 
@@ -306,7 +364,7 @@ def test_controller_refresh_reads_from_draft_not_registry(
     controller = _ModelInspectorController()
     controller._draft_model.brain["crawler"]["mode"] = "constant"
     controller._refresh_inspection()
-    titles = _collect_card_titles(controller.module_sections_box)
+    titles = _collect_module_card_titles(controller.module_sections_box)
     crawler_title = next(title for title in titles if title.startswith("crawler |"))
     assert crawler_title == "crawler | constant | configured"
     canonical = load_model_draft(str(controller.primary_select.value))
@@ -611,6 +669,47 @@ def test_validation_error_blocks_preview_and_run(
     controller._on_run()
     assert controller._is_running is False
     assert "Live preview blocked by draft validation errors" in _status_text(controller)
+
+
+def test_branch_intermitter_invalid_beta_blocks_live_preview(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    if "CON_CON_SQ_BR" not in reg.conf.Model.confIDs:
+        pytest.skip("CON_CON_SQ_BR is required for this validation test.")
+    controller = _ModelInspectorController()
+    controller.primary_select.value = "CON_CON_SQ_BR"
+    assert any(
+        issue.code == "intermitter_branch_beta_invalid"
+        for issue in controller._draft_validation_issues
+    )
+    assert controller.run_button.disabled is True
+    assert controller.run_button.button_type == "danger"
+    assert controller._brain is None
+    assert controller._runtime is None
+    controller._on_run()
+    assert controller._is_running is False
+    assert "Live preview blocked by draft validation errors" in _status_text(controller)
+
+
+def test_intermitter_card_shows_branch_beta_validation_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    if "CON_CON_SQ_BR" not in reg.conf.Model.confIDs:
+        pytest.skip("CON_CON_SQ_BR is required for this validation test.")
+    controller = _ModelInspectorController()
+    controller.primary_select.value = "CON_CON_SQ_BR"
+    intermitter_card = _find_card(controller.module_sections_box, "intermitter")
+    card_text = _collect_text(intermitter_card)
+    assert "Branch intermitter requires" in card_text
+    assert "beta" in card_text
+    error_panes = [
+        pane
+        for pane in intermitter_card.select(pn.pane.Markdown)
+        if "lw-model-inspector-validation-error" in getattr(pane, "css_classes", [])
+    ]
+    assert error_panes
 
 
 def test_module_edit_hides_comparison(
@@ -1090,7 +1189,7 @@ def test_comparison_remains_canonical_only_and_hidden_during_draft_edits(
     assert controller._has_local_edits is True
     assert controller.compare_select.disabled is True
     assert "hidden during local edits" in controller.compare_title.object
-    assert "Reset to model preset" in controller.compare_table.object.iloc[0]["Status"]
+    assert controller.compare_table.object.empty
     controller._on_reset_to_preset()
     assert controller.compare_select.disabled is False
 
@@ -1274,6 +1373,166 @@ def test_advanced_model_preset_mode_exposes_registry_target_only_when_explicit(
     assert controller.model_preset_controls.policy.can_delete_registry is True
     assert controller.model_preset_controls.policy.can_reset_registry is True
     assert controller.model_preset_controls.save_target is not None
+
+
+def test_safe_parameter_edit_does_not_replace_sections_slots_or_cards(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    sections_before = list(controller.module_sections_box.objects)
+    crawler_slot_before = _card_slot(controller, "crawler")
+    crawler_card_before = _find_card(controller.module_sections_box, "crawler")
+    body_slot_before = _card_slot(controller, "body")
+    body_card_before = _find_card(controller.module_sections_box, "body")
+    amp_widget = _find_widget_in_card(crawler_card_before, pn.widgets.Widget, "amp")
+    amp_widget.value = controller._draft_model.brain["crawler"]["amp"] + 0.37
+    assert list(controller.module_sections_box.objects) == sections_before
+    assert _card_slot(controller, "crawler") is crawler_slot_before
+    assert _find_card(controller.module_sections_box, "crawler") is crawler_card_before
+    assert _card_slot(controller, "body") is body_slot_before
+    assert _find_card(controller.module_sections_box, "body") is body_card_before
+
+
+def test_compare_change_does_not_rebuild_module_cards(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    candidates = [
+        model_id
+        for model_id in reg.conf.Model.confIDs
+        if model_id != controller.primary_select.value
+    ]
+    if not candidates:
+        pytest.skip("Need alternate model for comparison change test.")
+    sections_before = list(controller.module_sections_box.objects)
+    crawler_card_before = _find_card(controller.module_sections_box, "crawler")
+    body_card_before = _find_card(controller.module_sections_box, "body")
+    controller.compare_select.value = candidates[0]
+    assert list(controller.module_sections_box.objects) == sections_before
+    assert _find_card(controller.module_sections_box, "crawler") is crawler_card_before
+    assert _find_card(controller.module_sections_box, "body") is body_card_before
+    assert isinstance(controller.compare_table.object, pd.DataFrame)
+
+
+def test_summary_box_stacks_comparison_table_below_configured_modules(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    candidates = [
+        model_id
+        for model_id in reg.conf.Model.confIDs
+        if model_id != controller.primary_select.value
+    ]
+    if not candidates:
+        pytest.skip("Need alternate model for comparison layout test.")
+    assert controller.summary_sections_box.css_classes == [
+        "lw-model-inspector-section-box"
+    ]
+    assert all(
+        "lw-model-inspector-section-box" not in getattr(child, "css_classes", [])
+        for child in controller.summary_sections_box.objects
+    )
+    assert controller.primary_table in controller.summary_sections_box.objects
+    assert controller.compare_table not in controller.summary_sections_box.objects
+    controller.compare_select.value = candidates[0]
+    children = list(controller.summary_sections_box.objects)
+    primary_index = children.index(controller.primary_table)
+    compare_index = children.index(controller.compare_table)
+    assert primary_index < compare_index
+
+
+def test_mode_change_replaces_only_changed_card_slot_contents(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    sections_before = list(controller.module_sections_box.objects)
+    crawler_slot_before = _card_slot(controller, "crawler")
+    body_slot_before = _card_slot(controller, "body")
+    crawler_card_before = _find_card(controller.module_sections_box, "crawler")
+    body_card_before = _find_card(controller.module_sections_box, "body")
+    mode_select = _find_widget_in_card(crawler_card_before, pn.widgets.Select, "Mode")
+    target = next(
+        (opt for opt in mode_select.options if opt != mode_select.value), None
+    )
+    if target is None:
+        pytest.skip("No alternate crawler mode available.")
+    mode_select.value = target
+    assert list(controller.module_sections_box.objects) == sections_before
+    assert _card_slot(controller, "crawler") is crawler_slot_before
+    assert _card_slot(controller, "body") is body_slot_before
+    assert (
+        _find_card(controller.module_sections_box, "crawler") is not crawler_card_before
+    )
+    assert _find_card(controller.module_sections_box, "body") is body_card_before
+
+
+def test_enable_disable_replaces_only_changed_card_slot_contents(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    sections_before = list(controller.module_sections_box.objects)
+    olf_slot_before = _card_slot(controller, "olfactor")
+    body_slot_before = _card_slot(controller, "body")
+    olf_card_before = _find_card(controller.module_sections_box, "olfactor")
+    body_card_before = _find_card(controller.module_sections_box, "body")
+    enabled = _find_widget_in_card(olf_card_before, pn.widgets.Checkbox, "Enabled")
+    enabled.value = not bool(enabled.value)
+    assert list(controller.module_sections_box.objects) == sections_before
+    assert _card_slot(controller, "olfactor") is olf_slot_before
+    assert _card_slot(controller, "body") is body_slot_before
+    assert _find_card(controller.module_sections_box, "olfactor") is not olf_card_before
+    assert _find_card(controller.module_sections_box, "body") is body_card_before
+
+
+def test_sensor_disable_refreshes_memory_validation_card(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    memory_card = _find_card(controller.module_sections_box, "memory")
+    enabled_memory = _find_widget_in_card(memory_card, pn.widgets.Checkbox, "Enabled")
+    if not bool(enabled_memory.value):
+        enabled_memory.value = True
+        memory_card = _find_card(controller.module_sections_box, "memory")
+    mode_select = _find_widget_in_card(memory_card, pn.widgets.Select, "Memory mode")
+    mode_select.value = "RL"
+    memory_card = _find_card(controller.module_sections_box, "memory")
+    modality_select = _find_widget_in_card(
+        memory_card, pn.widgets.Select, "Memory modality"
+    )
+    modality_select.value = "olfaction"
+    olfactor_card = _find_card(controller.module_sections_box, "olfactor")
+    enabled_olf = _find_widget_in_card(olfactor_card, pn.widgets.Checkbox, "Enabled")
+    if not bool(enabled_olf.value):
+        enabled_olf.value = True
+    assert "Memory modality requires enabled sensor module" not in _collect_text(
+        _find_card(controller.module_sections_box, "memory")
+    )
+    memory_slot_before = _card_slot(controller, "memory")
+    body_slot_before = _card_slot(controller, "body")
+    memory_card_before = _find_card(controller.module_sections_box, "memory")
+    body_card_before = _find_card(controller.module_sections_box, "body")
+    olfactor_card = _find_card(controller.module_sections_box, "olfactor")
+    enabled_olf = _find_widget_in_card(olfactor_card, pn.widgets.Checkbox, "Enabled")
+    enabled_olf.value = False
+    assert _card_slot(controller, "memory") is memory_slot_before
+    assert _card_slot(controller, "body") is body_slot_before
+    assert (
+        _find_card(controller.module_sections_box, "memory") is not memory_card_before
+    )
+    assert _find_card(controller.module_sections_box, "body") is body_card_before
+    assert any(
+        issue.code == "memory_sensor_missing"
+        for issue in controller._draft_validation_issues
+    )
+    assert "Memory modality requires enabled sensor module" in _collect_text(
+        _find_card(controller.module_sections_box, "memory")
+    )
 
 
 def test_controller_auto_stops_at_max_steps(
