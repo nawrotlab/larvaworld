@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Iterable
 
 import numpy as np
@@ -426,35 +427,38 @@ def _prepare_workspace_member(member: ReplaySourceMember) -> PreparedReplayMembe
     record = member.workspace_record
     conf = util.load_dict(str(record.conf_path))
     step = pd.read_hdf(record.h5_path, "step")
-    x_name = str(conf.get("x") or "x")
-    y_name = str(conf.get("y") or "y")
-    if x_name not in step.columns or y_name not in step.columns:
-        if "x" in step.columns and "y" in step.columns:
-            x_name, y_name = "x", "y"
-        else:
-            raise ValueError(
-                f"Workspace dataset is missing xy columns: {record.dataset_id}"
-            )
-    xy = step[[x_name, y_name]].copy()
+    spatial_step = _build_workspace_spatial_step(
+        step,
+        h5_path=record.h5_path,
+        dataset_id=record.dataset_id,
+    )
+    xy_cols = _resolve_workspace_xy_columns(
+        spatial_step,
+        conf,
+        dataset_id=record.dataset_id,
+    )
+    xy = spatial_step[xy_cols].copy()
     xy.columns = ["x", "y"]
-    xy_by_track_point = _build_workspace_xy_by_track_point(step, conf)
+    xy_by_track_point = _build_workspace_xy_by_track_point(spatial_step, conf)
     native_track_point_by_ui_track_point = _build_workspace_native_track_point_mapping(
-        step, conf
+        spatial_step, conf
     )
     configured_point_idx = int(conf.get("point_idx") or -1)
     if int(conf.get("Npoints") or 0) <= 0:
         configured_point_idx = -1
     native_default_track_point = _choose_native_default_track_point(
-        step=step,
+        step=spatial_step,
         native_track_point_by_ui_track_point=native_track_point_by_ui_track_point,
         configured_point_idx=configured_point_idx,
         traj_xy=list(util.nam.xy("")),
         centroid_xy=list(util.nam.xy("centroid")),
         point_name_for_native_index=lambda idx: _workspace_point_name(conf, idx),
     )
-    body_xy_by_point = _build_body_xy_by_point(step, int(conf.get("Npoints") or 0))
+    body_xy_by_point = _build_body_xy_by_point(
+        spatial_step, int(conf.get("Npoints") or 0)
+    )
     contour_xy_by_point = _build_contour_xy_by_point(
-        step, int(conf.get("Ncontour") or 0)
+        spatial_step, int(conf.get("Ncontour") or 0)
     )
     conf_agent_ids = conf.get("agent_ids") if isinstance(conf, dict) else None
     if isinstance(conf_agent_ids, list) and conf_agent_ids:
@@ -822,6 +826,108 @@ def _workspace_point_name(conf: dict[str, Any], native_idx: int) -> str:
         return "centroid"
     clamped = max(1, min(native_idx, len(points)))
     return points[clamped - 1]
+
+
+def _read_workspace_hdf_group(h5_path: Path, key: str) -> pd.DataFrame | None:
+    full_key = f"/{key}"
+    with pd.HDFStore(h5_path, mode="r") as store:
+        if full_key not in set(store.keys()):
+            return None
+    return pd.read_hdf(h5_path, key)
+
+
+def _join_workspace_spatial_group(
+    base: pd.DataFrame,
+    group: pd.DataFrame | None,
+    *,
+    group_name: str,
+    dataset_id: str,
+) -> pd.DataFrame:
+    if group is None:
+        return base
+    if not group.index.equals(base.index):
+        raise ValueError(
+            f"Workspace dataset has incompatible {group_name} index: {dataset_id}"
+        )
+    new_columns = [col for col in group.columns if col not in base.columns]
+    if not new_columns:
+        return base
+    return base.join(group[new_columns])
+
+
+def _build_workspace_spatial_step(
+    step: pd.DataFrame,
+    *,
+    h5_path: Path,
+    dataset_id: str,
+) -> pd.DataFrame:
+    spatial_step = step.copy()
+    base_spatial = _read_workspace_hdf_group(h5_path, "base_spatial")
+    spatial_step = _join_workspace_spatial_group(
+        spatial_step,
+        base_spatial,
+        group_name="base_spatial",
+        dataset_id=dataset_id,
+    )
+    midline = _read_workspace_hdf_group(h5_path, "midline")
+    spatial_step = _join_workspace_spatial_group(
+        spatial_step,
+        midline,
+        group_name="midline",
+        dataset_id=dataset_id,
+    )
+    contour = _read_workspace_hdf_group(h5_path, "contour")
+    spatial_step = _join_workspace_spatial_group(
+        spatial_step,
+        contour,
+        group_name="contour",
+        dataset_id=dataset_id,
+    )
+    return spatial_step
+
+
+def _resolve_workspace_xy_columns(
+    spatial_step: pd.DataFrame,
+    conf: dict[str, Any],
+    *,
+    dataset_id: str,
+) -> list[str]:
+    x_name = conf.get("x")
+    y_name = conf.get("y")
+    if (
+        isinstance(x_name, str)
+        and isinstance(y_name, str)
+        and x_name in spatial_step.columns
+        and y_name in spatial_step.columns
+    ):
+        return [x_name, y_name]
+    if "x" in spatial_step.columns and "y" in spatial_step.columns:
+        return ["x", "y"]
+    point_name = conf.get("point")
+    if isinstance(point_name, str) and point_name:
+        point_cols = list(util.nam.xy(point_name))
+        if all(col in spatial_step.columns for col in point_cols):
+            return point_cols
+    point_idx = conf.get("point_idx")
+    try:
+        parsed_point_idx = int(point_idx)
+    except (TypeError, ValueError):
+        parsed_point_idx = None
+    if parsed_point_idx is not None:
+        idx_point_cols = list(
+            util.nam.xy(_workspace_point_name(conf, parsed_point_idx))
+        )
+        if all(col in spatial_step.columns for col in idx_point_cols):
+            return idx_point_cols
+    centroid_cols = ["centroid_x", "centroid_y"]
+    if all(col in spatial_step.columns for col in centroid_cols):
+        return centroid_cols
+    npoints = int(conf.get("Npoints") or 0)
+    for point in util.nam.midline(npoints, type="point"):
+        cols = list(util.nam.xy(point))
+        if all(col in spatial_step.columns for col in cols):
+            return cols
+    raise ValueError(f"Workspace dataset is missing xy columns: {dataset_id}")
 
 
 def _build_workspace_native_track_point_mapping(

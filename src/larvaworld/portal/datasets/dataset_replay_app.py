@@ -169,9 +169,14 @@ class _DatasetReplayController:
             options={
                 "Segments": self._BODY_RENDER_SEGMENTS,
                 "Contour": self._BODY_RENDER_CONTOUR,
-                "Midline only": self._BODY_RENDER_MIDLINE,
+                "Midline": self._BODY_RENDER_MIDLINE,
             },
             value=self._BODY_RENDER_SEGMENTS,
+        )
+        self.native_segment_count = pn.widgets.Select(
+            name="Segment count",
+            options={"2": 2},
+            value=2,
         )
         self.agent_indices = pn.widgets.TextInput(
             name="Agent indices",
@@ -231,6 +236,7 @@ class _DatasetReplayController:
         self.source_select.param.watch(self._on_source_change, "value")
         self.member_visibility.param.watch(self._on_any_control_change, "value")
         self.fix_point.param.watch(self._on_any_control_change, "value")
+        self.native_body_rendering.param.watch(self._on_any_control_change, "value")
         self.show_display.param.watch(self._on_show_display_change, "value")
         self.save_video.param.watch(self._on_save_video_change, "value")
         self.open_pygame_replay_btn.on_click(self._on_open_pygame_replay)
@@ -322,7 +328,17 @@ class _DatasetReplayController:
         if source is None:
             self._prepared = None
             return
-        self._prepared = prepare_replay_source(source)
+        try:
+            self._prepared = prepare_replay_source(source)
+        except Exception as exc:
+            self._prepared = None
+            self.member_visibility.options = {}
+            self.member_visibility.value = []
+            self.canvas.clear()
+            self.canvas.clear_dynamic_overlays()
+            self._set_status(f"Replay source load failed: {source.label}: {exc}")
+            self._refresh_native_replay_control_state()
+            return
         member_options = {member.label: member.token for member in source.members}
         self.member_visibility.options = member_options
         self.member_visibility.value = list(member_options.values())
@@ -335,12 +351,14 @@ class _DatasetReplayController:
         self._set_status(f"Loaded source: {source.label}")
         self._last_static_state_key = None
         self._refresh_close_inspection_controls()
+        self._refresh_native_segment_count_options()
         self._render()
         self._refresh_native_replay_control_state()
         self._show_native_replay_blocker_status_if_needed()
 
     def _on_any_control_change(self, _event=None) -> None:
         self._refresh_close_inspection_controls()
+        self._refresh_native_segment_count_options()
         self._render()
         self._refresh_native_replay_control_state()
         self._show_native_replay_blocker_status_if_needed()
@@ -492,6 +510,35 @@ class _DatasetReplayController:
             self.fix_segment.value = self._FIX_SEGMENT_NONE
         self.fix_segment.disabled = len(orientation_options) <= 1
 
+    @staticmethod
+    def _native_segment_count_options_for_member(
+        member: PreparedReplayMember,
+    ) -> dict[str, int]:
+        options = {"2": 2}
+        if len(member.body_xy_by_point) >= 2:
+            full_count = max(2, len(member.body_xy_by_point) - 1)
+            options[f"All available ({full_count})"] = full_count
+        return options
+
+    def _refresh_native_segment_count_options(self) -> None:
+        token = self._single_visible_member_token()
+        member = self._prepared_member_for_token(token)
+        if member is None:
+            options = {"2": 2}
+        else:
+            options = self._native_segment_count_options_for_member(member)
+        previous_values = set(self.native_segment_count.options.values())
+        self.native_segment_count.options = options
+        option_values = set(options.values())
+        if (
+            previous_values != option_values
+            or self.native_segment_count.value not in option_values
+        ):
+            self.native_segment_count.value = max(options.values())
+        self.native_segment_count.disabled = (
+            self.native_body_rendering.value != self._BODY_RENDER_SEGMENTS
+        )
+
     def _native_replay_video_output_dir(self) -> Path:
         return (
             get_workspace_dir("analysis", workspace=self.workspace)
@@ -637,8 +684,16 @@ class _DatasetReplayController:
             self._BODY_RENDER_MIDLINE,
         ]:
             draw_nsegs = None
-        elif len(prepared_member.body_xy_by_point) >= 2:
-            draw_nsegs = max(2, len(prepared_member.body_xy_by_point) - 1)
+        else:
+            valid_segment_counts = set(
+                self._native_segment_count_options_for_member(prepared_member).values()
+            )
+            selected_segment_count = int(self.native_segment_count.value)
+            if selected_segment_count not in valid_segment_counts:
+                raise ValueError(
+                    "Segment count is unavailable for native replay on this member."
+                )
+            draw_nsegs = selected_segment_count
 
         if prepared_member.native_replay_missing_columns:
             missing = ", ".join(prepared_member.native_replay_missing_columns)
@@ -869,6 +924,7 @@ class _DatasetReplayController:
             _subcontrol_tile(
                 "Body rendering",
                 self.native_body_rendering,
+                self.native_segment_count,
             ),
             _subcontrol_tile(
                 "Output",
@@ -904,7 +960,6 @@ class _DatasetReplayController:
             ),
             pygame_replay,
             width=360,
-            sizing_mode="fixed",
             css_classes=["lw-dataset-replay-controls"],
         )
         main = pn.Column(

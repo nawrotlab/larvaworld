@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from larvaworld.lib import reg
+from larvaworld.lib import reg, util
 from larvaworld.lib.process.dataset import LarvaDataset
 from larvaworld.portal.datasets.replay_data import (
     build_environment_state_for_member,
@@ -78,6 +78,93 @@ def _write_workspace_dataset(
     step.to_hdf(data_dir / "data.h5", key="step")
     end = pd.DataFrame(index=[f"{dataset_id}_a{i}" for i in range(n_agents)])
     end.to_hdf(data_dir / "data.h5", key="end")
+
+
+def _write_workspace_imported_spatial_dataset(
+    dataset_dir: Path,
+    *,
+    dataset_id: str,
+    group_id: str | None = None,
+    n_agents: int = 2,
+    n_ticks: int = 5,
+    midline_index_offset: int = 0,
+) -> None:
+    data_dir = dataset_dir / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    conf = {
+        "id": dataset_id,
+        "dir": str(dataset_dir),
+        "refID": None,
+        "group_id": group_id,
+        "dt": 0.1,
+        "fr": 10.0,
+        "Nticks": n_ticks,
+        "Npoints": 12,
+        "Ncontour": 3,
+        "agent_ids": [f"{dataset_id}_a{i}" for i in range(n_agents)],
+        "N": n_agents,
+        "point": "point9",
+        "point_idx": 9,
+        "env_params": {
+            "arena": {"geometry": "rectangular", "dims": [0.2, 0.1]},
+        },
+        "larva_group": {"group_id": group_id},
+    }
+    (data_dir / "conf.txt").write_text(json.dumps(conf), encoding="utf-8")
+
+    step_rows = []
+    base_spatial_rows = []
+    midline_rows = []
+    contour_rows = []
+    midline_points = list(util.nam.midline(12, type="point"))
+    contour_points = list(util.nam.contour(3))
+    for tick in range(n_ticks):
+        for agent_idx in range(n_agents):
+            agent_id = f"{dataset_id}_a{agent_idx}"
+            x = 0.01 * tick + agent_idx * 0.005
+            y = 0.02 * tick + agent_idx * 0.003
+            step_rows.append(
+                {
+                    "Step": tick,
+                    "AgentID": agent_id,
+                    "collision_flag": bool((tick + agent_idx) % 2),
+                    "t": tick * 0.1,
+                }
+            )
+            base_spatial_rows.append(
+                {
+                    "Step": tick,
+                    "AgentID": agent_id,
+                    "point9_x": x,
+                    "point9_y": y,
+                }
+            )
+            midline_row = {"Step": tick + midline_index_offset, "AgentID": agent_id}
+            for point_idx, point_name in enumerate(midline_points):
+                midline_row[f"{point_name}_x"] = x + (point_idx * 0.001)
+                midline_row[f"{point_name}_y"] = y + (point_idx * 0.0015)
+            midline_rows.append(midline_row)
+            contour_row = {"Step": tick, "AgentID": agent_id}
+            for contour_idx, point_name in enumerate(contour_points):
+                contour_row[f"{point_name}_x"] = x + (contour_idx * 0.002)
+                contour_row[f"{point_name}_y"] = y + (contour_idx * 0.0025)
+            contour_rows.append(contour_row)
+
+    step = pd.DataFrame(step_rows).set_index(["Step", "AgentID"]).sort_index()
+    base_spatial = (
+        pd.DataFrame(base_spatial_rows).set_index(["Step", "AgentID"]).sort_index()
+    )
+    midline = pd.DataFrame(midline_rows).set_index(["Step", "AgentID"]).sort_index()
+    contour = pd.DataFrame(contour_rows).set_index(["Step", "AgentID"]).sort_index()
+
+    h5_path = data_dir / "data.h5"
+    step.to_hdf(h5_path, key="step")
+    base_spatial.to_hdf(h5_path, key="base_spatial")
+    midline.to_hdf(h5_path, key="midline")
+    contour.to_hdf(h5_path, key="contour")
+    pd.DataFrame(index=[f"{dataset_id}_a{i}" for i in range(n_agents)]).to_hdf(
+        h5_path, key="end"
+    )
 
 
 def _write_simulation_workspace_dataset(
@@ -246,6 +333,58 @@ def test_prepare_replay_source_does_not_call_write_capable_methods(
     prepared = prepare_replay_source(source)
     assert prepared.nticks >= 1
     assert len(prepared.members) == 1
+
+
+def test_prepare_replay_source_supports_imported_workspace_spatial_groups(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    ds_a = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "imported_a"
+    _write_workspace_imported_spatial_dataset(
+        ds_a, dataset_id="imported_a", group_id="grp1", n_agents=2, n_ticks=4
+    )
+    source = next(
+        s
+        for s in build_source_catalog(workspace)
+        if s.source_type == "workspace_dataset"
+    )
+
+    prepared = prepare_replay_source(source)
+    member = next(iter(prepared.members.values()))
+    base_spatial = pd.read_hdf(ds_a / "data" / "data.h5", "base_spatial")
+
+    assert list(member.xy_default.columns) == ["x", "y"]
+    assert member.xy_default["x"].equals(base_spatial["point9_x"])
+    assert member.xy_default["y"].equals(base_spatial["point9_y"])
+    assert member.body_xy_by_point
+    assert 8 in member.body_xy_by_point
+    assert len(member.contour_xy_by_point) == 3
+    assert member.native_default_track_point == 9
+
+
+def test_prepare_replay_source_rejects_incompatible_spatial_group_index(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    ds_a = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "imported_bad"
+    _write_workspace_imported_spatial_dataset(
+        ds_a,
+        dataset_id="imported_bad",
+        group_id="grp1",
+        n_agents=2,
+        n_ticks=4,
+        midline_index_offset=1,
+    )
+    source = next(
+        s
+        for s in build_source_catalog(workspace)
+        if s.source_type == "workspace_dataset"
+    )
+
+    with pytest.raises(
+        ValueError, match="Workspace dataset has incompatible midline index"
+    ):
+        prepare_replay_source(source)
 
 
 def test_build_render_state_origin_dispersal_and_labels(tmp_path: Path) -> None:

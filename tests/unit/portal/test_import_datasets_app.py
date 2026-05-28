@@ -110,6 +110,101 @@ def test_import_datasets_lab_config_panel_loads_selected_configuration() -> None
     assert "Loaded LabFormat" in controller.lab_status.object
 
 
+def test_import_datasets_view_uses_three_column_layout_with_environment_below() -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+    view = controller.view()
+
+    top_row = next(
+        section
+        for section in view.objects
+        if isinstance(section, pn.Row) and len(getattr(section, "objects", [])) == 3
+    )
+    top_columns = top_row.objects
+    col_one = top_columns[0]
+    col_two = top_columns[1]
+    col_three = top_columns[2]
+
+    assert _contains_widget(col_one, "Lab format")
+    assert _contains_widget(col_one, "Configuration ID")
+    assert _contains_widget(col_one, "Raw root")
+    assert _contains_widget(col_one, "Dataset ID")
+    assert _contains_widget(col_one, "Group ID override")
+    assert _contains_widget(col_one, "Import into workspace")
+    assert controller.raw_root_input.sizing_mode == "stretch_width"
+    assert controller.candidate_select.sizing_mode == "stretch_width"
+    raw_root_row = next(
+        section
+        for section in col_one.select(pn.Row)
+        if _contains_widget(section, "Raw root")
+    )
+    source_action_row = next(
+        section
+        for section in col_one.select(pn.Row)
+        if _contains_widget(section, "Browse")
+        and _contains_widget(section, "Discover datasets")
+    )
+    assert source_action_row is not raw_root_row
+    assert not _contains_widget(raw_root_row, "Browse")
+    candidate_row = next(
+        section
+        for section in col_one.select(pn.Row)
+        if _contains_widget(section, "Candidate")
+    )
+    merged_row = next(
+        section
+        for section in col_one.select(pn.Row)
+        if _contains_widget(section, "Merged")
+    )
+    assert merged_row is not candidate_row
+    assert not _contains_widget(candidate_row, "Merged")
+    dataset_id_row = next(
+        section
+        for section in col_one.select(pn.Column)
+        if controller.dataset_id_input in (getattr(section, "objects", []) or [])
+    )
+    assert not _contains_widget(dataset_id_row, "Group ID override")
+    col_one_html = [
+        pane
+        for pane in col_one.select(pn.pane.HTML)
+        if pane
+        in {
+            controller.candidate_summary,
+            controller.status,
+            controller.lab_status,
+        }
+    ]
+    assert col_one_html == []
+
+    lab_actions_widgets = controller.lab_actions.view.select(pn.widgets.Button)
+    lab_actions_names = {widget.name for widget in lab_actions_widgets}
+    source_section_widgets = _section_widgets(col_one)
+    assert lab_actions_names.issubset(source_section_widgets)
+
+    assert _contains_widget(col_two, "Front vector")
+    assert _contains_widget(col_two, "framerate")
+
+    col_three_widget_names = set(_section_widgets(col_three))
+    assert {"labID", "Lab ID", "LabID"} & col_three_widget_names
+    assert {"File pref", "Folder pref", "File sep"} & col_three_widget_names
+    assert {"Rescale by", "rescale_by"} & col_three_widget_names
+
+    assert len(controller.lab_editor_sections.objects) == 3
+    environment_section = controller.lab_editor_sections.objects[2]
+    assert environment_section in view.objects
+    assert environment_section not in top_columns
+    assert _contains_widget(environment_section, "Arena width")
+    environment_row = next(
+        section
+        for section in environment_section.select(pn.Row)
+        if len(getattr(section, "objects", [])) == 2
+    )
+    env_left_col, env_right_col = environment_row.objects
+    assert _contains_widget(env_left_col, "Arena width")
+    assert _contains_widget(env_left_col, "Enable Food grid")
+    assert _contains_widget(env_right_col, "New border ID")
+    assert len(_scape_switches(env_right_col)) >= 1
+
+
 def test_import_datasets_environment_panel_uses_typed_env_helpers() -> None:
     controller = import_datasets_app._ImportDatasetsController()
     environment_section = _find_section_with_widget(controller, "Arena width")

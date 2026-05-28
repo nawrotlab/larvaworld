@@ -72,6 +72,43 @@ def _write_workspace_dataset(
     )
 
 
+def _write_workspace_dataset_without_xy(
+    dataset_dir: Path, *, dataset_id: str, group_id: str
+) -> None:
+    data_dir = dataset_dir / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    conf = {
+        "id": dataset_id,
+        "dir": str(dataset_dir),
+        "group_id": group_id,
+        "dt": 0.1,
+        "fr": 10.0,
+        "Nticks": 4,
+        "agent_ids": [f"{dataset_id}_a0"],
+        "N": 1,
+        "env_params": {
+            "arena": {"geometry": "rectangular", "dims": [0.2, 0.1]},
+        },
+        "larva_group": {"group_id": group_id},
+        "x": "missing_x",
+        "y": "missing_y",
+    }
+    (data_dir / "conf.txt").write_text(json.dumps(conf), encoding="utf-8")
+    rows = [
+        {
+            "Step": t,
+            "AgentID": f"{dataset_id}_a0",
+            "front_orientation": 0.0,
+            "rear_orientation": 0.0,
+        }
+        for t in range(4)
+    ]
+    pd.DataFrame(rows).set_index(["Step", "AgentID"]).to_hdf(
+        data_dir / "data.h5", key="step"
+    )
+    pd.DataFrame(index=[f"{dataset_id}_a0"]).to_hdf(data_dir / "data.h5", key="end")
+
+
 def _write_workspace_simulation_dataset(
     run_dir: Path,
     *,
@@ -132,6 +169,38 @@ def test_dataset_replay_controller_loads_workspace_source(tmp_path: Path) -> Non
     assert controller.show_midlines.name == "Midlines"
     assert controller.show_segments.name == "Body segments"
     assert controller.show_body_contours.name == "Body contours"
+
+
+def test_dataset_replay_controller_handles_invalid_workspace_source_gracefully(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    valid_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    invalid_dir = (
+        workspace.datasets_dir / "imported" / "Schleyer" / "grp2" / "broken_ds"
+    )
+    _write_workspace_dataset(valid_dir, dataset_id="ds1", group_id="grp1")
+    _write_workspace_dataset_without_xy(
+        invalid_dir, dataset_id="broken_ds", group_id="grp2"
+    )
+
+    controller = _DatasetReplayController()
+    broken_token = next(
+        token
+        for label, token in controller.source_select.options.items()
+        if "broken_ds" in label
+    )
+
+    controller.source_select.value = broken_token
+
+    assert controller._prepared is None
+    assert controller.member_visibility.options == {}
+    assert controller.member_visibility.value == []
+    assert "Replay source load failed:" in controller.status_pane.object
+    assert "Workspace dataset is missing xy columns: broken_ds" in (
+        controller.status_pane.object
+    )
 
 
 def test_dataset_replay_controller_origin_mode_builds_ring(tmp_path: Path) -> None:
@@ -345,6 +414,7 @@ def test_dataset_replay_controller_view_groups_controls_in_tiles(
     assert controller.close_view.name == "Close view"
     assert controller.fix_segment.name == "Fix orientation"
     assert controller.native_body_rendering.name == "Body rendering"
+    assert controller.native_segment_count.name == "Segment count"
     assert controller.show_display.name == "Show display"
     assert controller.display_every_n_steps.name == "Display every N steps"
     assert controller.save_video.name == "Save video"
@@ -997,6 +1067,50 @@ def test_dataset_replay_controller_native_body_rendering_presets(
     assert parameters.draw_Nsegs is None
     assert screen_kws["draw_contour"] is False
     assert screen_kws["draw_midline"] is True
+
+
+def test_dataset_replay_controller_native_segment_count_options(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    prepared_member = controller._prepared.members[selected_member]
+    controller._prepared.members[selected_member] = replace(
+        prepared_member,
+        body_xy_by_point={idx: pd.DataFrame() for idx in range(5)},
+    )
+    controller.member_visibility.value = [selected_member]
+    controller._refresh_native_segment_count_options()
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
+    assert controller.native_segment_count.options == {
+        "2": 2,
+        "All available (4)": 4,
+    }
+    assert controller.native_segment_count.value == 4
+
+    controller.native_segment_count.value = 2
+    parameters, _dataset = controller._build_native_replay_parameters(
+        selected_member_token=selected_member,
+        agent_indices=None,
+        time_range=None,
+    )
+    assert parameters.draw_Nsegs == 2
+
+    controller.native_segment_count.value = 4
+    parameters, _dataset = controller._build_native_replay_parameters(
+        selected_member_token=selected_member,
+        agent_indices=None,
+        time_range=None,
+    )
+    assert parameters.draw_Nsegs == 4
 
 
 def test_dataset_replay_controller_browser_render_ignores_pygame_time_range(
