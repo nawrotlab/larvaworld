@@ -9,6 +9,7 @@ import panel as pn
 import pandas as pd
 import pytest
 
+from larvaworld.lib import reg
 from larvaworld.portal.datasets.dataset_replay_app import (
     _DatasetReplayController,
     dataset_replay_app,
@@ -217,6 +218,10 @@ def test_dataset_replay_controller_origin_mode_builds_ring(tmp_path: Path) -> No
     assert len(controller.canvas.dynamic_ring_source.data["r"]) <= 1
     assert controller.canvas._arena_rect_renderer.visible is False
     assert controller.canvas._arena_circle_renderer.visible is False
+    assert controller.canvas.fig.x_range.start < 0.0
+    assert controller.canvas.fig.x_range.end > 0.0
+    assert controller.canvas.fig.y_range.start < 0.0
+    assert controller.canvas.fig.y_range.end > 0.0
 
 
 def test_dataset_replay_controller_center_mode_hides_arena_outline(
@@ -233,9 +238,13 @@ def test_dataset_replay_controller_center_mode_hides_arena_outline(
 
     assert controller.canvas._arena_rect_renderer.visible is False
     assert controller.canvas._arena_circle_renderer.visible is False
+    assert controller.canvas.fig.x_range.start < 0.0
+    assert controller.canvas.fig.x_range.end > 0.0
+    assert controller.canvas.fig.y_range.start < 0.0
+    assert controller.canvas.fig.y_range.end > 0.0
 
 
-def test_dataset_replay_controller_stored_corner_coordinates_hide_arena_outline(
+def test_dataset_replay_controller_stored_corner_coordinates_show_arena_outline(
     tmp_path: Path,
 ) -> None:
     workspace = initialize_workspace(tmp_path / "workspace")
@@ -247,7 +256,7 @@ def test_dataset_replay_controller_stored_corner_coordinates_hide_arena_outline(
     controller.transposition.value = None
     controller._render()
 
-    assert controller.canvas._arena_rect_renderer.visible is False
+    assert controller.canvas._arena_rect_renderer.visible is True
     assert controller.canvas._arena_circle_renderer.visible is False
 
 
@@ -402,7 +411,7 @@ def test_dataset_replay_controller_view_groups_controls_in_tiles(
     assert {
         "Time range",
         "Close inspection",
-        "Body rendering",
+        "Body reconstruction",
         "Output",
     }.issubset(titles)
     assert not view.select(pn.Accordion)
@@ -413,8 +422,9 @@ def test_dataset_replay_controller_view_groups_controls_in_tiles(
     assert controller.fix_point.name == "Fix point"
     assert controller.close_view.name == "Close view"
     assert controller.fix_segment.name == "Fix orientation"
-    assert controller.native_body_rendering.name == "Body rendering"
+    assert controller.native_body_reconstruction.name == "Body reconstruction"
     assert controller.native_segment_count.name == "Segment count"
+    assert controller.native_segment_count.disabled is True
     assert controller.show_display.name == "Show display"
     assert controller.display_every_n_steps.name == "Display every N steps"
     assert controller.save_video.name == "Save video"
@@ -422,6 +432,34 @@ def test_dataset_replay_controller_view_groups_controls_in_tiles(
     assert controller.video_fps.name == "Video speed-up"
     assert controller.display_shortcuts_link.name == "Display Shortcuts"
     assert controller.open_pygame_replay_btn.name == "Run replay"
+
+
+def test_dataset_replay_controller_param_driven_controls_use_param_docs(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+
+    controller = _DatasetReplayController()
+
+    assert (
+        controller.transposition.description
+        == reg.gen.Replay.param["transposition"].doc
+    )
+    assert controller.track_point.description == reg.gen.Replay.param["track_point"].doc
+    assert controller.fix_segment.description == reg.gen.Replay.param["fix_segment"].doc
+    assert (
+        controller.native_segment_count.description
+        == reg.gen.Replay.param["draw_Nsegs"].doc
+    )
+    assert controller.agent_indices.description == reg.gen.Replay.param["agent_ids"].doc
+    assert controller.time_start.description == reg.gen.Replay.param["time_range"].doc
+    assert controller.time_end.description == reg.gen.Replay.param["time_range"].doc
+    assert not hasattr(controller.close_view, "description")
+    assert not hasattr(controller.native_body_reconstruction, "description")
+    assert not hasattr(controller.use_time_range, "description")
 
 
 def test_dataset_replay_controller_display_shortcuts_dialog_open_close(
@@ -840,6 +878,7 @@ def test_dataset_replay_controller_pygame_replay_registry_invocation(
         controller._prepared.members[selected_member],
         native_replay_missing_columns=(),
     )
+    controller.native_body_reconstruction.value = True
     controller.show_display.value = True
     controller.display_every_n_steps.value = 3
 
@@ -1010,13 +1049,24 @@ def test_dataset_replay_controller_native_close_inspection_defaults(
         time_range=None,
     )
 
-    assert parameters.close_view is False
+    assert controller.track_point.value == reg.gen.Replay.param["track_point"].default
+    assert controller.close_view.value == reg.gen.Replay.param["close_view"].default
+    assert reg.gen.Replay.param["draw_Nsegs"].default is None
+    track_low, track_high = controller.track_point.start, controller.track_point.end
+    param_softbounds = reg.gen.Replay.param["track_point"].softbounds
+    if param_softbounds:
+        if param_softbounds[0] is not None:
+            assert track_low == int(param_softbounds[0])
+        if param_softbounds[1] is not None:
+            assert track_high == int(param_softbounds[1])
+
+    assert parameters.close_view == bool(reg.gen.Replay.param["close_view"].default)
     assert parameters.fix_point is None
     assert parameters.fix_segment is None
-    assert parameters.draw_Nsegs == 2
+    assert parameters.draw_Nsegs == reg.gen.Replay.param["draw_Nsegs"].default
 
 
-def test_dataset_replay_controller_native_contour_rendering_passes_no_draw_nsegs(
+def test_dataset_replay_controller_native_body_reconstruction_on_uses_segment_count(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     workspace = initialize_workspace(tmp_path / "workspace")
@@ -1026,7 +1076,8 @@ def test_dataset_replay_controller_native_contour_rendering_passes_no_draw_nsegs
     controller = _DatasetReplayController()
     selected_member = next(iter(controller.member_visibility.options.values()))
     controller.member_visibility.value = [selected_member]
-    controller.native_body_rendering.value = "contour"
+    controller.native_body_reconstruction.value = True
+    controller.native_segment_count.value = 2
     controller._on_any_control_change()
     monkeypatch.setattr(
         "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
@@ -1039,34 +1090,7 @@ def test_dataset_replay_controller_native_contour_rendering_passes_no_draw_nsegs
         time_range=None,
     )
 
-    assert parameters.draw_Nsegs is None
-
-
-def test_dataset_replay_controller_native_body_rendering_presets(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    workspace = initialize_workspace(tmp_path / "workspace")
-    set_active_workspace_path(workspace.root)
-    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
-    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
-    controller = _DatasetReplayController()
-    selected_member = next(iter(controller.member_visibility.options.values()))
-    controller.member_visibility.value = [selected_member]
-    monkeypatch.setattr(
-        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
-        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
-    )
-
-    controller.native_body_rendering.value = "midline"
-    parameters, _dataset = controller._build_native_replay_parameters(
-        selected_member_token=selected_member,
-        agent_indices=None,
-        time_range=None,
-    )
-    screen_kws, _video_target = controller._native_replay_screen_kws(selected_member)
-    assert parameters.draw_Nsegs is None
-    assert screen_kws["draw_contour"] is False
-    assert screen_kws["draw_midline"] is True
+    assert parameters.draw_Nsegs == 2
 
 
 def test_dataset_replay_controller_native_segment_count_options(
@@ -1079,9 +1103,11 @@ def test_dataset_replay_controller_native_segment_count_options(
     controller = _DatasetReplayController()
     selected_member = next(iter(controller.member_visibility.options.values()))
     prepared_member = controller._prepared.members[selected_member]
+    empty_body_index = pd.MultiIndex.from_arrays([[], []], names=["Step", "AgentID"])
+    empty_body_df = pd.DataFrame(index=empty_body_index, columns=["x", "y"])
     controller._prepared.members[selected_member] = replace(
         prepared_member,
-        body_xy_by_point={idx: pd.DataFrame() for idx in range(5)},
+        body_xy_by_point={idx: empty_body_df.copy() for idx in range(5)},
     )
     controller.member_visibility.value = [selected_member]
     controller._refresh_native_segment_count_options()
@@ -1090,27 +1116,53 @@ def test_dataset_replay_controller_native_segment_count_options(
         lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
     )
 
-    assert controller.native_segment_count.options == {
-        "2": 2,
-        "All available (4)": 4,
-    }
-    assert controller.native_segment_count.value == 4
+    low = getattr(reg.gen.Replay.param["draw_Nsegs"], "softmin", None)
+    high = getattr(reg.gen.Replay.param["draw_Nsegs"], "softmax", None)
+    for value in controller.native_segment_count.options.values():
+        if low is not None:
+            assert int(value) >= int(low)
+        if high is not None:
+            assert int(value) <= int(high)
+    if "2" in controller.native_segment_count.options:
+        assert controller.native_segment_count.options["2"] == 2
+        if low is not None:
+            assert 2 >= int(low)
+        if high is not None:
+            assert 2 <= int(high)
+    all_available_labels = [
+        label
+        for label in controller.native_segment_count.options.keys()
+        if label.startswith("All available (")
+    ]
+    for label in all_available_labels:
+        selected_n = controller.native_segment_count.options[label]
+        if low is not None:
+            assert int(selected_n) >= int(low)
+        if high is not None:
+            assert int(selected_n) <= int(high)
+    assert controller.native_segment_count.disabled is True
 
-    controller.native_segment_count.value = 2
-    parameters, _dataset = controller._build_native_replay_parameters(
-        selected_member_token=selected_member,
-        agent_indices=None,
-        time_range=None,
-    )
-    assert parameters.draw_Nsegs == 2
+    controller.native_body_reconstruction.value = True
+    controller._refresh_native_segment_count_options()
+    assert controller.native_segment_count.disabled is False
+    if "2" in controller.native_segment_count.options:
+        controller.native_segment_count.value = 2
+        parameters, _dataset = controller._build_native_replay_parameters(
+            selected_member_token=selected_member,
+            agent_indices=None,
+            time_range=None,
+        )
+        assert parameters.draw_Nsegs == 2
 
-    controller.native_segment_count.value = 4
-    parameters, _dataset = controller._build_native_replay_parameters(
-        selected_member_token=selected_member,
-        agent_indices=None,
-        time_range=None,
-    )
-    assert parameters.draw_Nsegs == 4
+    for label, value in controller.native_segment_count.options.items():
+        if label.startswith("All available ("):
+            controller.native_segment_count.value = value
+            parameters, _dataset = controller._build_native_replay_parameters(
+                selected_member_token=selected_member,
+                agent_indices=None,
+                time_range=None,
+            )
+            assert parameters.draw_Nsegs == value
 
 
 def test_dataset_replay_controller_browser_render_ignores_pygame_time_range(
@@ -1179,6 +1231,30 @@ def test_dataset_replay_controller_pygame_replay_still_receives_time_range(
     )
 
     assert parameters.time_range == (30.0, 40.0)
+
+
+def test_dataset_replay_controller_native_time_range_off_uses_param_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller.use_time_range.value = False
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
+    parameters, _dataset = controller._build_native_replay_parameters(
+        selected_member_token=selected_member,
+        agent_indices=None,
+        time_range=controller._selected_time_range(),
+    )
+    assert parameters.time_range == reg.gen.Replay.param["time_range"].default
 
 
 def test_dataset_replay_controller_native_close_inspection_gating(
@@ -1286,9 +1362,64 @@ def test_dataset_replay_controller_native_fix_point_mapping_and_segment(
         agent_indices=None,
         time_range=None,
     )
+    allowed = set(reg.gen.Replay.param["fix_segment"].objects or [])
+    visible_options = {
+        value
+        for value in controller.fix_segment.options.values()
+        if value != controller._FIX_SEGMENT_NONE
+    }
+    assert visible_options.issubset(allowed)
     assert parameters.fix_point == int(controller.fix_point.options["Body point 2"])
     assert parameters.fix_segment == "rear"
+    assert parameters.fix_segment != controller._FIX_SEGMENT_NONE
     assert parameters.transposition is None
+
+
+def test_dataset_replay_controller_native_agent_indices_empty_maps_to_empty_agent_ids(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    controller.agent_indices.value = ""
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
+    parameters, _dataset = controller._build_native_replay_parameters(
+        selected_member_token=selected_member,
+        agent_indices=(),
+        time_range=None,
+    )
+    assert list(parameters.agent_ids) == []
+
+
+def test_dataset_replay_controller_native_agent_indices_text_maps_to_agent_ids(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    dataset_dir = workspace.datasets_dir / "imported" / "Schleyer" / "grp1" / "ds1"
+    _write_workspace_dataset(dataset_dir, dataset_id="ds1", group_id="grp1")
+    controller = _DatasetReplayController()
+    selected_member = next(iter(controller.member_visibility.options.values()))
+    controller.member_visibility.value = [selected_member]
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.dataset_replay_app.LarvaDataset",
+        lambda **kwargs: {"dataset_dir": kwargs.get("dir")},
+    )
+
+    parameters, _dataset = controller._build_native_replay_parameters(
+        selected_member_token=selected_member,
+        agent_indices=(0, 2),
+        time_range=None,
+    )
+    assert list(parameters.agent_ids) == [0, 2]
 
 
 def test_dataset_replay_controller_native_fix_orientation_invalid_state_raises(

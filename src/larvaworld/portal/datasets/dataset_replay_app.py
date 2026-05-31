@@ -15,6 +15,7 @@ from larvaworld.portal.datasets.replay_data import (
     build_environment_state_for_member,
     build_render_state,
     build_source_catalog,
+    member_has_arena_geometry,
     parse_agent_indices,
     prepare_replay_source,
 )
@@ -100,13 +101,51 @@ def _safe_slug(value: str) -> str:
     return slug
 
 
+def _replay_param(name: str):
+    return reg.gen.Replay.param[name]
+
+
+def _replay_param_default(name: str):
+    return _replay_param(name).default
+
+
+def _replay_param_objects(name: str) -> tuple[Any, ...]:
+    objects = getattr(_replay_param(name), "objects", None)
+    if objects is None:
+        return ()
+    return tuple(objects)
+
+
+def _replay_param_doc(name: str) -> str | None:
+    return getattr(_replay_param(name), "doc", None)
+
+
+def _replay_param_soft_limits(name: str) -> tuple[Any | None, Any | None]:
+    parameter = _replay_param(name)
+    softbounds = getattr(parameter, "softbounds", None)
+    if softbounds:
+        return softbounds
+    return getattr(parameter, "softmin", None), getattr(parameter, "softmax", None)
+
+
+def _within_soft_limits(value: int, low: int | None, high: int | None) -> bool:
+    if low is not None and value < low:
+        return False
+    if high is not None and value > high:
+        return False
+    return True
+
+
+def _apply_widget_help(widget: pn.viewable.Viewable, help_text: str | None):
+    if help_text and hasattr(widget, "description"):
+        widget.description = help_text
+    return widget
+
+
 class _DatasetReplayController:
     _FIX_SEGMENT_NONE = "__none__"
     _FIX_SEGMENT_FRONT = "front"
     _FIX_SEGMENT_REAR = "rear"
-    _BODY_RENDER_SEGMENTS = "segments"
-    _BODY_RENDER_CONTOUR = "contour"
-    _BODY_RENDER_MIDLINE = "midline"
 
     def __init__(self) -> None:
         self.workspace = get_active_workspace()
@@ -138,58 +177,90 @@ class _DatasetReplayController:
         self.trail_length = pn.widgets.IntSlider(
             name="Trail length", start=1, end=300, step=1, value=80
         )
-        replay_cls = reg.gen.Replay
-        transposition_objects = list(replay_cls.param["transposition"].objects or [])
+        transposition_objects = list(_replay_param_objects("transposition"))
         transposition_options = {"Stored coordinates": None}
         for item in transposition_objects:
             transposition_options[str(item)] = str(item)
-        self.transposition = pn.widgets.Select(
-            name="Transposition",
-            options=transposition_options,
-            value="origin" if "origin" in transposition_options.values() else None,
+        track_low, track_high = _replay_param_soft_limits("track_point")
+        track_kws: dict[str, Any] = {"name": "Track point", "step": 1}
+        if track_low is not None:
+            track_kws["start"] = int(track_low)
+        if track_high is not None:
+            track_kws["end"] = int(track_high)
+        track_kws["value"] = int(_replay_param_default("track_point"))
+        self.transposition = _apply_widget_help(
+            pn.widgets.Select(
+                name="Transposition",
+                options=transposition_options,
+                value="origin" if "origin" in transposition_options.values() else None,
+            ),
+            _replay_param_doc("transposition"),
         )
-        self.track_point = pn.widgets.IntInput(name="Track point", value=-1, step=1)
+        self.track_point = _apply_widget_help(
+            pn.widgets.IntInput(**track_kws),
+            _replay_param_doc("track_point"),
+        )
         self.fix_point = pn.widgets.Select(
             name="Fix point",
             options={"None": None},
             value=None,
             disabled=True,
         )
-        self.close_view = pn.widgets.Checkbox(
-            name="Close view", value=False, disabled=True
+        self.close_view = _apply_widget_help(
+            pn.widgets.Checkbox(
+                name="Close view",
+                value=bool(_replay_param_default("close_view")),
+                disabled=True,
+            ),
+            _replay_param_doc("close_view"),
         )
-        self.fix_segment = pn.widgets.Select(
-            name="Fix orientation",
-            options={"None": self._FIX_SEGMENT_NONE},
-            value=self._FIX_SEGMENT_NONE,
-            disabled=True,
+        self.fix_segment = _apply_widget_help(
+            pn.widgets.Select(
+                name="Fix orientation",
+                options={"None": self._FIX_SEGMENT_NONE},
+                value=self._FIX_SEGMENT_NONE,
+                disabled=True,
+            ),
+            _replay_param_doc("fix_segment"),
         )
-        self.native_body_rendering = pn.widgets.Select(
-            name="Body rendering",
-            options={
-                "Segments": self._BODY_RENDER_SEGMENTS,
-                "Contour": self._BODY_RENDER_CONTOUR,
-                "Midline": self._BODY_RENDER_MIDLINE,
-            },
-            value=self._BODY_RENDER_SEGMENTS,
+        self.native_body_reconstruction = _apply_widget_help(
+            pn.widgets.Checkbox(
+                name="Body reconstruction",
+                value=False,
+            ),
+            _replay_param_doc("draw_Nsegs"),
         )
-        self.native_segment_count = pn.widgets.Select(
-            name="Segment count",
-            options={"2": 2},
-            value=2,
+        self.native_segment_count = _apply_widget_help(
+            pn.widgets.Select(
+                name="Segment count",
+                options={"2": 2},
+                value=2,
+            ),
+            _replay_param_doc("draw_Nsegs"),
         )
-        self.agent_indices = pn.widgets.TextInput(
-            name="Agent indices",
-            placeholder="empty = all; e.g. 0,1,2",
-            value="",
+        self.agent_indices = _apply_widget_help(
+            pn.widgets.TextInput(
+                name="Agent indices",
+                placeholder="empty = all; e.g. 0,1,2",
+                value="",
+            ),
+            _replay_param_doc("agent_ids"),
         )
         self.tick_player = pn.widgets.Player(
             name="Tick", start=0, end=1, step=1, value=0, interval=100
         )
-        self.time_start = pn.widgets.FloatInput(name="Start (s)", value=0.0, step=1.0)
-        self.time_end = pn.widgets.FloatInput(name="End (s)", value=0.0, step=1.0)
-        self.use_time_range = pn.widgets.Checkbox(
-            name="Limit replay time range", value=False
+        time_range_doc = _replay_param_doc("time_range")
+        self.time_start = _apply_widget_help(
+            pn.widgets.FloatInput(name="Start (s)", value=0.0, step=1.0),
+            time_range_doc,
+        )
+        self.time_end = _apply_widget_help(
+            pn.widgets.FloatInput(name="End (s)", value=0.0, step=1.0),
+            time_range_doc,
+        )
+        self.use_time_range = _apply_widget_help(
+            pn.widgets.Checkbox(name="Limit replay time range", value=False),
+            time_range_doc,
         )
         self.show_display = pn.widgets.Checkbox(name="Show display", value=True)
         self.display_every_n_steps = pn.widgets.IntInput(
@@ -236,7 +307,9 @@ class _DatasetReplayController:
         self.source_select.param.watch(self._on_source_change, "value")
         self.member_visibility.param.watch(self._on_any_control_change, "value")
         self.fix_point.param.watch(self._on_any_control_change, "value")
-        self.native_body_rendering.param.watch(self._on_any_control_change, "value")
+        self.native_body_reconstruction.param.watch(
+            self._on_any_control_change, "value"
+        )
         self.show_display.param.watch(self._on_show_display_change, "value")
         self.save_video.param.watch(self._on_save_video_change, "value")
         self.open_pygame_replay_btn.on_click(self._on_open_pygame_replay)
@@ -446,12 +519,19 @@ class _DatasetReplayController:
         native_fix_point: int | None,
         native_fix_points: set[int],
     ) -> dict[str, str]:
+        allowed_fix_segments = set(_replay_param_objects("fix_segment"))
         options: dict[str, str] = {"None": _DatasetReplayController._FIX_SEGMENT_NONE}
         if native_fix_point is None:
             return options
-        if (native_fix_point - 1) in native_fix_points:
+        if (
+            "front" in allowed_fix_segments
+            and (native_fix_point - 1) in native_fix_points
+        ):
             options["Front segment"] = _DatasetReplayController._FIX_SEGMENT_FRONT
-        if (native_fix_point + 1) in native_fix_points:
+        if (
+            "rear" in allowed_fix_segments
+            and (native_fix_point + 1) in native_fix_points
+        ):
             options["Rear segment"] = _DatasetReplayController._FIX_SEGMENT_REAR
         return options
 
@@ -514,10 +594,19 @@ class _DatasetReplayController:
     def _native_segment_count_options_for_member(
         member: PreparedReplayMember,
     ) -> dict[str, int]:
-        options = {"2": 2}
+        low, high = _replay_param_soft_limits("draw_Nsegs")
+        low = int(low) if low is not None else None
+        high = int(high) if high is not None else None
+        options: dict[str, int] = {}
+        if _within_soft_limits(2, low, high):
+            options["2"] = 2
         if len(member.body_xy_by_point) >= 2:
             full_count = max(2, len(member.body_xy_by_point) - 1)
-            options[f"All available ({full_count})"] = full_count
+            if _within_soft_limits(full_count, low, high):
+                options[f"All available ({full_count})"] = full_count
+        if not options:
+            fallback_value = low if low is not None else 2
+            options[str(int(fallback_value))] = int(fallback_value)
         return options
 
     def _refresh_native_segment_count_options(self) -> None:
@@ -535,8 +624,8 @@ class _DatasetReplayController:
             or self.native_segment_count.value not in option_values
         ):
             self.native_segment_count.value = max(options.values())
-        self.native_segment_count.disabled = (
-            self.native_body_rendering.value != self._BODY_RENDER_SEGMENTS
+        self.native_segment_count.disabled = not bool(
+            self.native_body_reconstruction.value
         )
 
     def _native_replay_video_output_dir(self) -> Path:
@@ -582,18 +671,11 @@ class _DatasetReplayController:
                     "fps": int(self.video_fps.value),
                 }
             )
-        screen_kws.update(self._native_body_rendering_screen_kws())
         return screen_kws, video_target
-
-    def _native_body_rendering_screen_kws(self) -> dict[str, bool]:
-        mode = str(self.native_body_rendering.value)
-        if mode == self._BODY_RENDER_MIDLINE:
-            return {"draw_contour": False, "draw_midline": True}
-        return {}
 
     def _selected_time_range(self) -> tuple[float, float] | None:
         if not self.use_time_range.value:
-            return None
+            return _replay_param_default("time_range")
         time_range = (
             float(self.time_start.value or 0.0),
             float(self.time_end.value or 0.0),
@@ -678,13 +760,8 @@ class _DatasetReplayController:
         if not ref_id:
             raise ValueError("Replay member has no dataset reference id.")
 
-        draw_nsegs = 2
-        if self.native_body_rendering.value in [
-            self._BODY_RENDER_CONTOUR,
-            self._BODY_RENDER_MIDLINE,
-        ]:
-            draw_nsegs = None
-        else:
+        draw_nsegs = _replay_param_default("draw_Nsegs")
+        if bool(self.native_body_reconstruction.value):
             valid_segment_counts = set(
                 self._native_segment_count_options_for_member(prepared_member).values()
             )
@@ -867,7 +944,7 @@ class _DatasetReplayController:
             first_member = next(iter(self._prepared.members.values()))
             show_arena_outline = self._show_arena_outline_for_mode(
                 transposition,
-                first_member.coordinate_origin,
+                first_member,
             )
             static_state_key = (
                 self._prepared.source.token,
@@ -876,11 +953,17 @@ class _DatasetReplayController:
                 show_arena_outline,
             )
             if static_state_key != self._last_static_state_key:
+                state_coordinate_origin = (
+                    "centered"
+                    if transposition in {"origin", "center"}
+                    else first_member.coordinate_origin
+                )
                 self.canvas.set_state(
                     build_environment_state_for_member(
                         first_member,
                         allow_static_layers=allow_static_layers,
                         show_arena_outline=show_arena_outline,
+                        coordinate_origin=state_coordinate_origin,
                     )
                 )
                 self._last_static_state_key = static_state_key
@@ -889,11 +972,11 @@ class _DatasetReplayController:
 
     @staticmethod
     def _show_arena_outline_for_mode(
-        transposition: str | None, coordinate_origin: str
+        transposition: str | None, member: PreparedReplayMember
     ) -> bool:
         if transposition == "arena":
             return True
-        if transposition is None and coordinate_origin == "centered":
+        if transposition is None and member_has_arena_geometry(member):
             return True
         return False
 
@@ -922,8 +1005,8 @@ class _DatasetReplayController:
                 self.fix_segment,
             ),
             _subcontrol_tile(
-                "Body rendering",
-                self.native_body_rendering,
+                "Body reconstruction",
+                self.native_body_reconstruction,
                 self.native_segment_count,
             ),
             _subcontrol_tile(
