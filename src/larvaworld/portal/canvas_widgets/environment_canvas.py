@@ -1367,7 +1367,15 @@ class EnvironmentCanvas:
     def _apply_arena(self, arena: CanvasArena, *, show_arena_outline: bool) -> None:
         self._arena = arena
         width, height = self._arena_dimensions()
-        self.arena_source.data = {"x": [0.0], "y": [0.0], "w": [width], "h": [height]}
+        origin = getattr(arena, "coordinate_origin", "centered")
+        center_x = width / 2.0 if origin == "corner" else 0.0
+        center_y = height / 2.0 if origin == "corner" else 0.0
+        self.arena_source.data = {
+            "x": [center_x],
+            "y": [center_y],
+            "w": [width],
+            "h": [height],
+        }
         is_circular = str(arena.geometry).lower().startswith("circ")
         self._arena_circle_renderer.visible = is_circular and show_arena_outline
         self._food_grid_circle_renderer.visible = is_circular
@@ -1383,10 +1391,10 @@ class EnvironmentCanvas:
         else:
             x_span = required_x_span
             y_span = x_span / canvas_ratio
-        self.fig.x_range.start = -x_span / 2
-        self.fig.x_range.end = x_span / 2
-        self.fig.y_range.start = -y_span / 2
-        self.fig.y_range.end = y_span / 2
+        self.fig.x_range.start = center_x - x_span / 2
+        self.fig.x_range.end = center_x + x_span / 2
+        self.fig.y_range.start = center_y - y_span / 2
+        self.fig.y_range.end = center_y + y_span / 2
 
     def _apply_food_grid(self, food_grid: dict[str, Any] | None) -> None:
         if not isinstance(food_grid, dict):

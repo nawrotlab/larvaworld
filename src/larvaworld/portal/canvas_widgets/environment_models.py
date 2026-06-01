@@ -16,6 +16,7 @@ class CanvasArena:
     geometry: str
     dims: tuple[float, float]
     torus: bool = False
+    coordinate_origin: Literal["corner", "centered"] = "centered"
 
 
 @dataclass(frozen=True)

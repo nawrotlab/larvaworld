@@ -166,6 +166,26 @@ def test_environment_canvas_arena_outline_visibility_roundtrips() -> None:
     assert canvas._arena_rect_renderer.visible is False
 
 
+def test_environment_canvas_corner_origin_places_arena_in_positive_quadrant() -> None:
+    canvas = EnvironmentCanvas(width=760, height=620)
+    canvas.set_state(
+        EnvironmentCanvasState(
+            arena=CanvasArena(
+                "rectangular",
+                (0.2, 0.1),
+                coordinate_origin="corner",
+            )
+        )
+    )
+
+    assert canvas.arena_source.data["x"] == [0.1]
+    assert canvas.arena_source.data["y"] == [0.05]
+    assert canvas.fig.x_range.start < 0.0
+    assert canvas.fig.x_range.end > 0.2
+    assert canvas.fig.y_range.start < 0.0
+    assert canvas.fig.y_range.end > 0.1
+
+
 def test_environment_canvas_ranges_preserve_one_to_one_axis_ratio() -> None:
     canvas = EnvironmentCanvas(width=760, height=620)
     canvas.set_state(
