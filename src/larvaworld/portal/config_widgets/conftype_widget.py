@@ -9,6 +9,10 @@ from larvaworld import CONFTYPES
 from larvaworld.lib import reg, util
 from larvaworld.lib.param.custom import ClassAttr, ClassDict
 from larvaworld.lib.param.nested_parameter_group import NestedConf
+from larvaworld.portal.config_widgets.conftype_actions import (
+    ConftypeActionsController,
+)
+from larvaworld.portal.config_widgets.enrichment_widget import build_enrichment_widget
 
 __all__ = [
     "ConftypeWidgetController",
@@ -157,7 +161,6 @@ class ConftypeWidgetController:
         self.allow_reset = allow_reset
         self.title = title or f"{self.conf_type.conftype} Configurations"
         self._editor_host = pn.Column(sizing_mode="stretch_width")
-        self._reset_confirm_host = pn.Column(sizing_mode="stretch_width")
         self._current = self._new_instance()
 
         self.header = pn.pane.Markdown(
@@ -184,36 +187,31 @@ class ConftypeWidgetController:
             options={},
             sizing_mode="stretch_width",
         )
-        self.load_button = pn.widgets.Button(
-            name="Load",
-            button_type="primary",
-            sizing_mode="stretch_width",
-        )
-        self.save_button = pn.widgets.Button(
-            name="Save",
-            button_type="primary",
-            sizing_mode="stretch_width",
-        )
-        self.delete_button = pn.widgets.Button(
-            name="Delete",
-            button_type="warning",
-            sizing_mode="stretch_width",
-        )
-        self.reset_button = pn.widgets.Button(
-            name="Reset configurations",
-            button_type="danger",
-            sizing_mode="stretch_width",
-            visible=allow_reset,
-        )
         self.status = pn.pane.HTML(
             '<div style="font-size:12px;color:#52606d;">Ready.</div>',
             margin=(8, 0, 8, 0),
         )
-
-        self.load_button.on_click(self._on_load)
-        self.save_button.on_click(self._on_save)
-        self.delete_button.on_click(self._on_delete)
-        self.reset_button.on_click(self._on_request_reset)
+        self.actions = ConftypeActionsController(
+            config_cls,
+            conftype=self.conf_type.conftype,
+            build_save_payload=lambda _config_id: _serialize_parameterized(
+                self._current
+            ),
+            get_selected_id=lambda: self.preset_select.value,
+            get_save_id=lambda: (
+                self.config_id_input.value.strip() or self.preset_select.value
+            ),
+            on_load=self._apply_loaded_config,
+            on_save=self._after_save,
+            on_delete=self._after_delete,
+            on_reset=self._after_reset,
+            on_status=self._set_status,
+            allow_reset=allow_reset,
+        )
+        self.load_button = self.actions.load_button
+        self.save_button = self.actions.save_button
+        self.delete_button = self.actions.delete_button
+        self.reset_button = self.actions.reset_button
         self.preset_select.param.watch(self._on_select_change, "value")
 
         self._refresh_preset_options()
@@ -224,18 +222,7 @@ class ConftypeWidgetController:
             self.meta,
             self.config_id_input,
             self.preset_select,
-            pn.Row(
-                self.load_button,
-                self.save_button,
-                self.delete_button,
-                sizing_mode="stretch_width",
-            ),
-            pn.Row(
-                self.reset_button,
-                sizing_mode="stretch_width",
-                visible=allow_reset,
-            ),
-            self._reset_confirm_host,
+            self.actions.view,
             self.status,
             self._editor_host,
             sizing_mode="stretch_width",
@@ -273,107 +260,33 @@ class ConftypeWidgetController:
         if event.new:
             self.config_id_input.value = str(event.new)
 
-    def _on_load(self, _event: Any = None) -> None:
-        config_id = self.preset_select.value
-        if not config_id:
-            self._set_status("Select a stored configuration to load.", tone="warning")
-            return
-        try:
-            self.conf_type.load()
-            self._current = self.conf_type.get(config_id)
-        except Exception as exc:
-            self._set_status(f"Load failed: {exc}", tone="danger")
-            return
-        self.config_id_input.value = str(config_id)
+    def _apply_loaded_config(self, _config_id: str, config: Any) -> None:
+        self._current = config
+        self.config_id_input.value = str(_config_id)
         self._render_editor()
-        self._set_status(
-            f'Loaded {self.conf_type.conftype} configuration "{config_id}".',
-            tone="success",
-        )
 
-    def _on_save(self, _event: Any = None) -> None:
-        config_id = self.config_id_input.value.strip() or self.preset_select.value
-        if not config_id:
-            self._set_status("Enter a configuration ID before saving.", tone="warning")
-            return
-        try:
-            payload = _serialize_parameterized(self._current)
-            self.conf_type.setID(config_id, payload)
-        except Exception as exc:
-            self._set_status(f"Save failed: {exc}", tone="danger")
-            return
+    def _after_save(self, config_id: str, _payload: Any) -> None:
         self._refresh_preset_options(select_id=config_id)
-        self._set_status(
-            f'Saved {self.conf_type.conftype} configuration "{config_id}".',
-            tone="success",
-        )
 
-    def _on_delete(self, _event: Any = None) -> None:
-        config_id = self.preset_select.value
-        if not config_id:
-            self._set_status("Select a stored configuration to delete.", tone="warning")
-            return
-        try:
-            self.conf_type.delete(config_id)
-        except Exception as exc:
-            self._set_status(f"Delete failed: {exc}", tone="danger")
-            return
+    def _after_delete(self, config_id: str) -> None:
         self._refresh_preset_options()
         if self.config_id_input.value == config_id:
             self.config_id_input.value = ""
-        self._set_status(
-            f'Deleted {self.conf_type.conftype} configuration "{config_id}".',
-            tone="success",
-        )
+
+    def _after_reset(self, selected_id: str | None) -> None:
+        self._refresh_preset_options(select_id=selected_id)
+
+    def _on_load(self, _event: Any = None) -> None:
+        self.actions.load_selected()
+
+    def _on_save(self, _event: Any = None) -> None:
+        self.actions.save_current()
+
+    def _on_delete(self, _event: Any = None) -> None:
+        self.actions.delete_selected()
 
     def _on_request_reset(self, _event: Any = None) -> None:
-        confirm = pn.widgets.Button(
-            name="Yes, recreate store",
-            button_type="danger",
-            sizing_mode="stretch_width",
-        )
-        cancel = pn.widgets.Button(
-            name="No, cancel",
-            button_type="default",
-            sizing_mode="stretch_width",
-        )
-        message = pn.pane.HTML(
-            (
-                '<div style="font-size:12px;color:#9a3412;">'
-                f"This recreates the full {self.conf_type.conftype} registry store "
-                "from its default definitions."
-                "</div>"
-            ),
-            margin=(0, 0, 8, 0),
-        )
-
-        def _confirm(_click: Any = None) -> None:
-            try:
-                self.conf_type.reset(recreate=True)
-            except Exception as exc:
-                self._set_status(f"Reset failed: {exc}", tone="danger")
-            else:
-                self._refresh_preset_options()
-                self._set_status(
-                    f"Recreated the {self.conf_type.conftype} registry store.",
-                    tone="success",
-                )
-            self._reset_confirm_host.objects = []
-
-        def _cancel(_click: Any = None) -> None:
-            self._reset_confirm_host.objects = []
-            self._set_status("Reset configurations cancelled.")
-
-        confirm.on_click(_confirm)
-        cancel.on_click(_cancel)
-        self._reset_confirm_host.objects = [
-            pn.Column(
-                message,
-                pn.Row(confirm, cancel, sizing_mode="stretch_width"),
-                sizing_mode="stretch_width",
-                margin=(0, 0, 8, 0),
-            )
-        ]
+        self.actions.request_reset()
 
     def _build_parameterized_section(
         self,
@@ -456,7 +369,12 @@ class ConftypeWidgetController:
             create_button.on_click(_create)
             content.append(create_button)
         else:
-            content.append(self._build_parameterized_section(nested_value, title=title))
+            if name == "enrichment":
+                content.append(build_enrichment_widget(nested_value, wrap=False))
+            else:
+                content.append(
+                    self._build_parameterized_section(nested_value, title=title)
+                )
 
         return pn.Card(
             content,

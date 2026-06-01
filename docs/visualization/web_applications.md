@@ -172,9 +172,11 @@ configuration, source selection, discovery, and workspace import controls.
 **Features**:
 
 - Browse available model configurations
-- Inspect model parameter values
-- Compare model presets before simulation
-- Review locomotory model assumptions from the browser
+- Edit baseline locomotor module parameters in-session (not persisted)
+- Inspect optional configured feeder/sensor/memory modules
+- Run and pause a live locomotor preview
+- View live reporter plots for `A_T` and `A_C` when available
+- Compare model presets as a supplemental view
 
 **Access**: `larva_models`
 

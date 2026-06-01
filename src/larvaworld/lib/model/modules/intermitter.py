@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import Any
 
+import os
+
 import numpy as np
 import pandas as pd
 import param
@@ -208,7 +210,7 @@ class Intermitter(Timer):
     @property
     def feed_repeated(self) -> bool:
         r = self.feeder_reoccurence_rate if not self.use_EEB else self.EEB
-        return np.random.uniform(0, 1, 1) < r
+        return np.random.random() < r
 
     def alternate_exploreNexploit(
         self, feed_motion: bool = False, on_food: bool = False
@@ -225,11 +227,7 @@ class Intermitter(Timer):
                     self.cur_Nfeeds += 1
                 else:
                     self.trigger_locomotion()
-        elif (
-            on_food
-            and self.cur_Nfeeds is None
-            and np.random.uniform(0, 1, 1) <= self.EEB
-        ):
+        elif on_food and self.cur_Nfeeds is None and np.random.random() <= self.EEB:
             self.cur_Nfeeds = 1
             self.register()
             self.cur_state = "feed"
@@ -307,9 +305,9 @@ class Intermitter(Timer):
             return
         self.register()
         if self.stridechain_generator is not None:
-            self.exp_Nstrides = self.stridechain_generator.sample()
+            self.exp_Nstrides = self.generate_stridechain()
         elif self.run_generator is not None:
-            self.exp_Trun = self.run_generator.sample()
+            self.exp_Trun = self.generate_run()
         self.cur_Nstrides = 0
         self.cur_state = "exec"
         self.ticks = 0
@@ -320,15 +318,16 @@ class Intermitter(Timer):
     def build_dict(self) -> dict[str, Any]:
         cum_t = nam.cum("t")
         d = {}
-        d[cum_t] = self.total_t
+        total_t = self.total_t
+        d[cum_t] = total_t
         d[nam.num("tick")] = int(self.total_ticks)
         for c0 in ["feed", "stride"]:
             c = nam.chain(c0)
-            Nc0, Nc = nam.num([c0, c])
+            Nc0, _ = nam.num([c0, c])
             l = nam.length(c)
             d[l] = [int(ll) for ll in getattr(self, f"{l}s")]
             d[Nc0] = int(sum(d[l]))
-            d[nam.mean(nam.freq(c0))] = d[Nc0] / d[cum_t]
+            d[nam.mean(nam.freq(c0))] = d[Nc0] / total_t if total_t else 0.0
 
         for c in ["feedchain", "stridechain", "pause"]:
             t = nam.dur(c)
@@ -336,7 +335,7 @@ class Intermitter(Timer):
             d[nam.num(c)] = len(d[t])
             cum_chunk_t = nam.cum(t)
             d[cum_chunk_t] = np.sum(d[t])
-            d[nam.dur_ratio(c)] = d[cum_chunk_t] / d[cum_t]
+            d[nam.dur_ratio(c)] = d[cum_chunk_t] / total_t if total_t else 0.0
         return d
 
     def save_dict(
@@ -356,7 +355,7 @@ class Intermitter(Timer):
 
     @property
     def mean_feed_freq(self) -> float:
-        return self.Nfeeds / self.total_t
+        return self.Nfeeds / self.total_t if self.total_t else 0.0
 
 
 class OfflineIntermitter(Intermitter):
@@ -374,7 +373,10 @@ class OfflineIntermitter(Intermitter):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.crawl_ticks = np.round(1 / (self.crawl_freq * self.dt)).astype(int)
-        self.feed_ticks = np.round(1 / (self.feed_freq * self.dt)).astype(int)
+        if self.feed_freq is None:
+            self.feed_ticks = None
+        else:
+            self.feed_ticks = np.round(1 / (self.feed_freq * self.dt)).astype(int)
 
     def step(
         self,
@@ -384,7 +386,12 @@ class OfflineIntermitter(Intermitter):
     ) -> str | None:
         self.count_time()
         if feed_motion is None:
-            feed_motion = self.cur_state == "feed" and self.ticks % self.feed_ticks == 0
+            if self.feed_ticks is None:
+                feed_motion = False
+            else:
+                feed_motion = (
+                    self.cur_state == "feed" and self.ticks % self.feed_ticks == 0
+                )
         if stride_completed is None:
             stride_completed = (
                 self.cur_state == "exec" and self.ticks % self.crawl_ticks == 0
@@ -417,9 +424,6 @@ class BranchIntermitter(Intermitter):
     )
     c = PositiveNumber(default=0.7, doc="The c parameter for the criticality function")
     sigma = PositiveNumber(default=1.0, doc="The ISING branching coef.")
-
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(**kwargs)
 
     def generate_stridechain(self) -> int:
         return util.exp_bout(
@@ -468,7 +472,7 @@ class FittedIntermitter(OfflineIntermitter):
         super().__init__(**stored_conf)
 
 
-def get_EEB_poly1d(**kws: Any) -> np.poly1d:
+def get_EEB_poly1d(max_dur: float = 60 * 60, **kws: Any) -> np.poly1d:
     """
     Compute polynomial fit of EEB vs mean feeding frequency.
 
@@ -476,6 +480,7 @@ def get_EEB_poly1d(**kws: Any) -> np.poly1d:
     to map feeding frequency back to EEB parameter.
 
     Args:
+        max_dur: Maximum simulation duration (seconds)
         **kws: Intermitter configuration keyword arguments
 
     Returns:
@@ -485,7 +490,6 @@ def get_EEB_poly1d(**kws: Any) -> np.poly1d:
         >>> poly = get_EEB_poly1d(crawl_freq=1.42, feed_freq=2.0, dt=0.1)
         >>> eeb_estimate = poly(0.15)  # For feed_freq=0.15
     """
-    max_dur = 60 * 60
     EEBs = np.arange(0, 1.05, 0.05)
     ms = []
     for EEB in EEBs:
@@ -498,7 +502,10 @@ def get_EEB_poly1d(**kws: Any) -> np.poly1d:
 
 
 def get_EEB_time_fractions(
-    refID: str | None = None, dt: float | None = None, **kwargs: Any
+    refID: str | None = None,
+    dt: float | None = None,
+    max_dur: float = 60 * 60,
+    **kwargs: Any,
 ) -> pd.DataFrame:
     """
     Compute time fractions for behavioral states across EEB range.
@@ -510,6 +517,7 @@ def get_EEB_time_fractions(
     Args:
         refID: Reference dataset ID for intermitter config (optional)
         dt: Time step override (optional)
+        max_dur: Maximum simulation duration (seconds)
         **kwargs: Intermitter configuration if refID not provided
 
     Returns:
@@ -520,12 +528,11 @@ def get_EEB_time_fractions(
         >>> print(df[['EEB', 'crawl ratio', 'pause ratio']])
     """
     if refID is not None:
-        kws = reg.conf.Ref.getRef(refID).intermitter
+        kws = reg.conf.Ref.getRef(refID)["intermitter"]
     else:
         kws = kwargs
     if dt is not None:
         kws["dt"] = dt
-    max_dur = 60 * 60
     rts = {
         f"{q} ratio": nam.dur_ratio(p)
         for p, q in zip(

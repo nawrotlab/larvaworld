@@ -271,12 +271,13 @@ class LarvaSegmented(Larva, SegmentedBodySensored):
         Returns:
         None
         """
-        v.draw_polygon(
-            vertices=self.get_shape(),
-            color=v.selection_color,
-            filled=False,
-            width=0.0002,
-        )
+        for seg in self.segs:
+            v.draw_polygon(
+                vertices=seg.vertices,
+                color=v.selection_color,
+                filled=False,
+                width=0.0002,
+            )
 
 
 class LarvaMotile(LarvaSegmented):

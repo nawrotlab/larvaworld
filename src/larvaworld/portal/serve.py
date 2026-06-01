@@ -21,15 +21,15 @@ APP_ID_TO_FACTORY_PATH: dict[str, str] = {
     "loading": "larvaworld.portal.serve:loading_app",
     "landing": "larvaworld.portal.landing_app:landing_app",
     "notebook": "larvaworld.portal.notebook_launch_app:notebook_launch_app",
-    "wf.run_experiment": "larvaworld.portal.single_experiment_app:single_experiment_app",
+    "wf.run_experiment": "larvaworld.portal.simulation.single_experiment_app:single_experiment_app",
     "wf.open_dataset": "larvaworld.portal.datasets.import_datasets_app:import_datasets_app",
     "wf.dataset_manager": "larvaworld.portal.datasets.dataset_manager_app:dataset_manager_app",
     "wf.environment_builder": "larvaworld.portal.models_architecture.environment_builder_app:environment_builder_app",
     "dev.conftypes": "larvaworld.portal.config_widgets.conftypes_demo_app:conftypes_demo_app",
     # Legacy destinations (served as-is)
-    "track_viewer": "larvaworld.dashboards.track_viewer:track_viewer_app",
+    "track_viewer": "larvaworld.portal.datasets.dataset_replay_app:dataset_replay_app",
     "experiment_viewer": "larvaworld.dashboards.experiment_viewer:experiment_viewer_app",
-    "larva_models": "larvaworld.dashboards.model_inspector:model_inspector_app",
+    "larva_models": "larvaworld.portal.models_architecture.model_inspector_app:model_inspector_app",
     "locomotory_modules": "larvaworld.dashboards.module_inspector:module_inspector_app",
     "lateral_oscillator": "larvaworld.dashboards.lateral_oscillator_inspector:lateral_oscillator_app",
 }

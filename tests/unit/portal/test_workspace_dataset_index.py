@@ -5,7 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from larvaworld.portal.datasets.models import WorkspaceDatasetRecord
+from larvaworld.portal.datasets.models import (
+    WorkspaceDatasetRecord,
+    WorkspaceReplayDatasetRecord,
+)
 from larvaworld.portal.datasets import workspace_index
 from larvaworld.portal.workspace import initialize_workspace
 
@@ -38,6 +41,29 @@ def _write_dataset(
     }
     (data_dir / "conf.txt").write_text(json.dumps(payload), encoding="utf-8")
     (data_dir / "data.h5").write_bytes(b"placeholder")
+
+
+def _write_simulation_dataset(
+    run_dir: Path,
+    *,
+    member_id: str,
+    dataset_id: str,
+    group_id: str | None = None,
+) -> Path:
+    dataset_dir = run_dir / "data" / member_id
+    data_dir = dataset_dir / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "id": dataset_id,
+        "dir": str(dataset_dir),
+        "group_id": group_id,
+        "agent_ids": [f"{dataset_id}_a0"],
+        "N": 1,
+        "larva_group": {"group_id": group_id},
+    }
+    (data_dir / "conf.txt").write_text(json.dumps(payload), encoding="utf-8")
+    (data_dir / "data.h5").write_bytes(b"placeholder")
+    return dataset_dir
 
 
 def test_list_workspace_datasets_returns_empty_list_for_empty_workspace(
@@ -144,6 +170,88 @@ def test_list_workspace_datasets_ignores_unsupported_layout(
     )
 
     records = workspace_index.list_workspace_datasets(workspace=workspace)
+
+    assert records == []
+
+
+def test_list_workspace_datasets_remains_imported_only(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    imported_dir = (
+        workspace.datasets_dir / "imported" / "Schleyer" / "exploration" / "dish01"
+    )
+    _write_dataset(imported_dir, dataset_id="imported_ds", larva_group_id="exploration")
+    _write_simulation_dataset(
+        workspace.experiments_dir / "run_alpha",
+        member_id="explorer",
+        dataset_id="sim_ds",
+        group_id="exploration",
+    )
+
+    records = workspace_index.list_workspace_datasets(workspace=workspace)
+
+    assert [record.dataset_id for record in records] == ["imported_ds"]
+
+
+def test_list_workspace_simulation_datasets_discovers_run_records(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    run_dir = workspace.experiments_dir / "run_alpha"
+    dataset_dir = _write_simulation_dataset(
+        run_dir,
+        member_id="explorer",
+        dataset_id="run_alpha_explorer",
+        group_id="g1",
+    )
+
+    records = workspace_index.list_workspace_simulation_datasets(workspace=workspace)
+
+    assert records == [
+        WorkspaceReplayDatasetRecord(
+            origin="simulation_run",
+            dataset_id="run_alpha_explorer",
+            dataset_dir=dataset_dir.resolve(),
+            data_dir=(dataset_dir / "data").resolve(),
+            conf_path=(dataset_dir / "data" / "conf.txt").resolve(),
+            h5_path=(dataset_dir / "data" / "data.h5").resolve(),
+            group_id="g1",
+            run_id="run_alpha",
+            member_id="explorer",
+            ref_id=None,
+            n_agents=1,
+        )
+    ]
+
+
+def test_list_workspace_simulation_datasets_uses_structural_discovery(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    dataset_dir = _write_simulation_dataset(
+        workspace.experiments_dir / "run_beta" / "nested" / "branch",
+        member_id="navigator",
+        dataset_id="run_beta_nav",
+        group_id="g2",
+    )
+
+    records = workspace_index.list_workspace_simulation_datasets(workspace=workspace)
+
+    assert len(records) == 1
+    assert records[0].dataset_dir == dataset_dir.resolve()
+    assert records[0].run_id == "run_beta"
+
+
+def test_list_workspace_simulation_datasets_ignores_missing_h5(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    data_dir = workspace.experiments_dir / "run_gamma" / "data" / "member1" / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    (data_dir / "conf.txt").write_text('{"id":"sim"}', encoding="utf-8")
+
+    records = workspace_index.list_workspace_simulation_datasets(workspace=workspace)
 
     assert records == []
 

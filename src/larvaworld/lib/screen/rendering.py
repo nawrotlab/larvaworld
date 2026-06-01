@@ -381,27 +381,22 @@ class SimulationClock(PosPixelRel2AreaViewable):
         self.hour = 0
 
     def draw(self, v: Any, **kwargs: Any) -> None:
-        # First pass: set text and render all fonts to get dimensions
+        # Re-anchor every frame to the clock's fixed position. This prevents
+        # cumulative y-drift from repeated rect-center adjustments.
         for k, f in self.text_fonts.items():
+            f.update_font_centre_pos(self)
             t = getattr(self, k)
             if k != "hour":
                 f.set_text(f":{t:02}")
             else:
                 f.set_text(f"{t:02}")
-            # Render text to get rect dimensions
             if f.text_font_r is None:
                 f.render_text()
 
-        # Calculate baseline position using the largest font (hour/minute) as reference
-        # Use hour font as reference since it has the largest font size
         reference_font = self.text_fonts["hour"]
-        baseline_y = reference_font.text_font_r.midbottom[1]
+        baseline_y = self.y + (reference_font.text_font_r.height / 2)
 
-        # Second pass: align all fonts to the same baseline
         for k, f in self.text_fonts.items():
-            # Adjust text_centre y to align baseline
-            # midbottom[1] = center[1] + height/2, so center[1] = midbottom[1] - height/2
-            # We want all midbottoms at the same y, so adjust center accordingly
             adjusted_y = baseline_y - f.text_font_r.height / 2
             f.text_centre = (f.text_centre[0], adjusted_y)
             f.text_font_r.center = f.text_centre

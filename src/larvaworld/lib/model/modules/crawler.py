@@ -17,6 +17,14 @@ __all__: list[str] = [
 ]
 
 
+def _gaussian_window(n: int, std: float, *, sym: bool = False) -> np.ndarray:
+    """Compatibility helper across SciPy versions."""
+    gaussian_fn = getattr(signal, "gaussian", None)
+    if callable(gaussian_fn):
+        return gaussian_fn(n, std=std, sym=sym)
+    return signal.windows.gaussian(n, std=std, sym=sym)
+
+
 class Crawler(StepEffector):
     """
     Base crawler module for peristaltic locomotion.
@@ -120,7 +128,7 @@ class GaussOscillator(StrideOscillator):
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.gauss_w = signal.gaussian(360, std=self.std * 360, sym=False)
+        self.gauss_w = _gaussian_window(360, std=self.std * 360, sym=False)
 
     @property
     def Act_Phi(self) -> float:

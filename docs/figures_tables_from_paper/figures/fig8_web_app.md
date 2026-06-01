@@ -61,16 +61,17 @@ Model Inspector
 
    **Figure 8**: Web-based model inspector application. Users can select any
    preconfigured locomotory model from a dropdown menu and inspect the
-   configuration of its four behavioral modules (Crawler, Turner, Feeder,
-   Intermitter). Real-time simulation variables are plotted dynamically in
-   the central panel.
+   configuration of its baseline locomotor modules (Crawler, Turner,
+   Interference, Intermitter), optionally compare against a second preset,
+   and run a live locomotor preview with reporter plots in the central panel.
 
 **Features:**
 
 - **Model Selection**: Choose from all available preconfigured models
-- **Module Configuration**: View detailed parameters for each behavioral module
-- **Real-time Simulation**: Dynamic plotting of input/output variables
-- **Interactive Parameters**: Adjust values and see immediate effects
+- **Module Configuration**: Edit baseline module parameters in-session (not persisted)
+- **Live Preview**: Run/pause local locomotor preview over a bounded live window
+- **Reporter Plots**: Live `A_T` / `A_C` plots when reporters are available
+- **Comparison View**: Optional side-by-side comparison of two model presets
 
 **Available Applications:**
 

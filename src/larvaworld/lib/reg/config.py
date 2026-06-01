@@ -508,7 +508,20 @@ class RefType(ConfType):
 
         """
         assert id is not None
-        return self.getID(id)
+        return self.resolve_ref_dir(self.getID(id))
+
+    @staticmethod
+    def resolve_ref_dir(dir: str) -> str:
+        """
+        Resolve a reference dataset directory.
+
+        Absolute paths are preserved. Relative registry paths remain rooted in
+        DATA_DIR for compatibility with stored reference dictionaries.
+        """
+        ref_dir = os.path.expanduser(str(dir))
+        if os.path.isabs(ref_dir):
+            return os.path.abspath(ref_dir)
+        return os.path.abspath(os.path.join(DATA_DIR, ref_dir))
 
     def getRef(self, id: Optional[str] = None, dir: Optional[str] = None) -> dict:
         """
@@ -574,8 +587,8 @@ class RefType(ConfType):
         if dir is None:
             refDir = self.getRefDir(id)
         else:
-            refDir = f"{DATA_DIR}/{dir}"
-        return f"{refDir}/data/conf.txt"
+            refDir = self.resolve_ref_dir(dir)
+        return os.path.join(refDir, "data", "conf.txt")
 
     def loadRef(
         self,

@@ -6,7 +6,11 @@ from pathlib import Path
 import panel as pn
 
 from larvaworld.lib import reg
-from larvaworld.portal.config_widgets import build_env_params_widget
+from larvaworld.lib.reg.generators import LabFormat
+from larvaworld.portal.config_widgets import (
+    ConftypeActionsController,
+    build_env_params_widget,
+)
 from larvaworld.portal.landing_registry import DOCS_DATA_PROCESSING
 from larvaworld.portal.datasets.discovery import (
     RawDatasetCandidate,
@@ -84,6 +88,11 @@ IMPORT_DATASETS_RAW_CSS = """
 
 .lw-import-datasets-source-row {
   gap: 0;
+  align-items: flex-end;
+}
+
+.lw-import-datasets-candidate-row {
+  gap: 10px;
   align-items: flex-end;
 }
 
@@ -209,6 +218,7 @@ IMPORT_DATASETS_RAW_CSS = """
 
 .lw-import-datasets-config-grid-col {
   flex: 1 1 0;
+  min-width: 0;
 }
 
 """.strip()
@@ -285,6 +295,15 @@ def _config_family_box(title: str, *children: object) -> pn.Column:
     )
 
 
+def _half_width_row(child: object) -> pn.Row:
+    return pn.Row(
+        pn.Column(child, sizing_mode="stretch_width", margin=0),
+        pn.Spacer(sizing_mode="stretch_width"),
+        sizing_mode="stretch_width",
+        margin=0,
+    )
+
+
 class _ImportDatasetsController:
     def __init__(self) -> None:
         self.workspace = get_active_workspace()
@@ -304,30 +323,29 @@ class _ImportDatasetsController:
             name="Configuration ID",
             width=260,
         )
-        self.lab_load_button = pn.widgets.Button(
-            name="Load",
-            button_type="default",
-            width=90,
+        self.lab_actions = ConftypeActionsController(
+            LabFormat,
+            conftype="LabFormat",
+            build_save_payload=self._build_working_lab_conf,
+            get_selected_id=lambda: self.lab_select.value,
+            get_save_id=lambda: (
+                self.lab_config_name_input.value.strip() or self.lab_select.value
+            ),
+            on_load=self._apply_loaded_lab_config,
+            on_save=self._after_lab_save,
+            on_delete=self._after_lab_delete,
+            on_reset=self._after_lab_reset,
+            on_status=self._set_lab_status,
+            confirm_reset=False,
         )
-        self.lab_save_button = pn.widgets.Button(
-            name="Save",
-            button_type="primary",
-            width=90,
-        )
-        self.lab_delete_button = pn.widgets.Button(
-            name="Delete",
-            button_type="danger",
-            width=90,
-        )
-        self.lab_reset_button = pn.widgets.Button(
-            name="Reset",
-            button_type="default",
-            width=90,
-        )
+        self.lab_load_button = self.lab_actions.load_button
+        self.lab_save_button = self.lab_actions.save_button
+        self.lab_delete_button = self.lab_actions.delete_button
+        self.lab_reset_button = self.lab_actions.reset_button
         self.raw_root_input = pn.widgets.TextInput(
             name="Raw root",
             placeholder="/path/to/raw/data",
-            width=520,
+            sizing_mode="stretch_width",
             css_classes=["lw-import-datasets-source-input"],
         )
         self.browse_raw_root_button = pn.widgets.Button(
@@ -350,9 +368,14 @@ class _ImportDatasetsController:
             name="Candidate",
             options={"Select a candidate": ""},
             value="",
-            width=520,
+            sizing_mode="stretch_width",
         )
         self.candidate_select.description = "Select one discovered candidate to inspect its source path and warnings before importing it into the active workspace."
+        self.merged_checkbox = pn.widgets.Checkbox(
+            name="Merged",
+            value=False,
+            width=90,
+        )
         self.dataset_id_input = pn.widgets.TextInput(name="Dataset ID", width=260)
         self.group_id_input = pn.widgets.TextInput(
             name="Group ID override", placeholder="optional", width=260
@@ -368,21 +391,22 @@ class _ImportDatasetsController:
             button_type="primary",
             width=180,
         )
-        self.workspace_summary = pn.pane.HTML("", margin=0)
-        self.candidate_summary = pn.pane.HTML(
-            _candidate_summary_html(None), margin=(0, 0, 0, 0)
+        self.workspace_summary = pn.pane.HTML(
+            "", margin=(5, 10), sizing_mode="stretch_width"
         )
-        self.lab_status = pn.pane.HTML("", margin=0)
+        self.candidate_summary = pn.pane.HTML(
+            _candidate_summary_html(None),
+            margin=(5, 10),
+            sizing_mode="stretch_width",
+        )
+        self.lab_status = pn.pane.HTML("", margin=(5, 10), sizing_mode="stretch_width")
         self.lab_editor_sections = pn.Column(sizing_mode="stretch_width", margin=0)
-        self.status = pn.pane.HTML("", margin=0)
+        self.status = pn.pane.HTML("", margin=(5, 10), sizing_mode="stretch_width")
 
         self.lab_select.param.watch(self._on_lab_select_change, "value")
         self.raw_root_input.param.watch(self._on_raw_root_change, "value")
         self.candidate_select.param.watch(self._on_candidate_change, "value")
-        self.lab_load_button.on_click(self._handle_lab_load)
-        self.lab_save_button.on_click(self._handle_lab_save)
-        self.lab_delete_button.on_click(self._handle_lab_delete)
-        self.lab_reset_button.on_click(self._handle_lab_reset)
+        self.merged_checkbox.param.watch(self._on_merged_change, "value")
         self.browse_raw_root_button.on_click(self._handle_browse_raw_root)
         self.reset_button.on_click(self._handle_reset)
         self.discover_button.on_click(self._handle_discover)
@@ -614,6 +638,41 @@ class _ImportDatasetsController:
             ),
         )
 
+    def _build_environment_section(self) -> pn.Column:
+        env_content = build_env_params_widget(self._working_lab.env_params, wrap=False)
+        env_children = list(getattr(env_content, "objects", []) or [])
+        if len(env_children) >= 4:
+            left_col = pn.Column(
+                env_children[0],
+                css_classes=["lw-import-datasets-config-grid-col"],
+                sizing_mode="stretch_width",
+                margin=0,
+            )
+            middle_col = pn.Column(
+                env_children[1],
+                css_classes=["lw-import-datasets-config-grid-col"],
+                sizing_mode="stretch_width",
+                margin=0,
+            )
+            right_col = pn.Column(
+                env_children[2],
+                env_children[3],
+                css_classes=["lw-import-datasets-config-grid-col"],
+                sizing_mode="stretch_width",
+                margin=0,
+            )
+            body = pn.Row(
+                left_col,
+                middle_col,
+                right_col,
+                css_classes=["lw-import-datasets-config-grid"],
+                sizing_mode="stretch_width",
+                margin=0,
+            )
+        else:
+            body = env_content
+        return _config_family_box("Environment", body)
+
     def _rebuild_lab_editor(self) -> None:
         if self._working_lab is None:
             self.lab_editor_sections.objects = [
@@ -626,27 +685,16 @@ class _ImportDatasetsController:
                 )
             ]
             return
-        top_grid = pn.Row(
-            pn.Column(
-                self._param_section("General", self._working_lab, parameters=["labID"]),
-                self._build_tracker_metric_section(),
-                css_classes=["lw-import-datasets-config-grid-col"],
-                sizing_mode="stretch_width",
-                margin=0,
-            ),
-            pn.Column(
-                self._build_tracker_framerate_section(),
-                self._param_section("Filesystem", self._working_lab.filesystem),
-                css_classes=["lw-import-datasets-config-grid-col"],
-                sizing_mode="stretch_width",
-                margin=0,
-            ),
-            css_classes=["lw-import-datasets-config-grid"],
+        tracker_column = pn.Column(
+            self._build_tracker_metric_section(),
+            self._build_tracker_framerate_section(),
+            css_classes=["lw-import-datasets-config-grid-col"],
             sizing_mode="stretch_width",
             margin=0,
         )
-        self.lab_editor_sections.objects = [
-            top_grid,
+        general_column = pn.Column(
+            self._param_section("General", self._working_lab, parameters=["labID"]),
+            self._param_section("Filesystem", self._working_lab.filesystem),
             self._param_section(
                 "Preprocess",
                 self._working_lab.preprocess,
@@ -655,10 +703,14 @@ class _ImportDatasetsController:
                     "filter_f": {"type": pn.widgets.FloatInput},
                 },
             ),
-            _config_family_box(
-                "Environment",
-                build_env_params_widget(self._working_lab.env_params, wrap=False),
-            ),
+            css_classes=["lw-import-datasets-config-grid-col"],
+            sizing_mode="stretch_width",
+            margin=0,
+        )
+        self.lab_editor_sections.objects = [
+            tracker_column,
+            general_column,
+            self._build_environment_section(),
         ]
 
     def _load_working_lab(self, lab_id: str | None) -> None:
@@ -668,13 +720,16 @@ class _ImportDatasetsController:
             self.lab_config_name_input.value = ""
             self._rebuild_lab_editor()
             return
-        self._working_lab_id = lab_id
-        self._working_lab = reg.conf.LabFormat.get(lab_id)
-        self.lab_config_name_input.value = lab_id
-        self._rebuild_lab_editor()
+        self._apply_loaded_lab_config(lab_id, reg.conf.LabFormat.get(lab_id))
         self._set_lab_status(f'Loaded LabFormat "{lab_id}".')
 
-    def _build_working_lab_conf(self):
+    def _apply_loaded_lab_config(self, lab_id: str, lab_config: object) -> None:
+        self._working_lab_id = lab_id
+        self._working_lab = lab_config
+        self.lab_config_name_input.value = lab_id
+        self._rebuild_lab_editor()
+
+    def _build_working_lab_conf(self, config_id: str | None = None):
         if self._working_lab_id is None:
             raise RuntimeError("No LabFormat configuration is loaded.")
         rebuilt = self._working_lab.nestedConf.get_copy()
@@ -692,9 +747,30 @@ class _ImportDatasetsController:
                     thermoscape.thermo_source_dTemps
                 )
             rebuilt["env_params"]["thermoscape"] = thermoscape_payload
-        target_id = self.lab_config_name_input.value.strip() or self._working_lab_id
+        target_id = config_id or self.lab_config_name_input.value.strip()
+        target_id = target_id or self._working_lab_id
         rebuilt["labID"] = target_id
         return rebuilt
+
+    def _after_lab_save(self, config_id: str, _payload: object) -> None:
+        self._refresh_lab_options(select_id=config_id)
+        self._load_working_lab(config_id)
+        self._refresh_workspace_summary()
+        self._sync_controls()
+
+    def _after_lab_delete(self, _config_id: str) -> None:
+        self._refresh_lab_options()
+        self._load_working_lab(self.lab_select.value)
+        self._clear_candidates()
+        self._refresh_workspace_summary()
+        self._sync_controls()
+
+    def _after_lab_reset(self, selected_lab_id: str | None) -> None:
+        self._refresh_lab_options(select_id=selected_lab_id)
+        self._load_working_lab(self.lab_select.value)
+        self._clear_candidates()
+        self._refresh_workspace_summary()
+        self._sync_controls()
 
     def _active_workspace_ready(self) -> bool:
         return self.workspace is not None
@@ -764,7 +840,9 @@ class _ImportDatasetsController:
         )
         candidate_ready = self._selected_candidate() is not None
         self.discover_button.disabled = not source_ready
-        self.candidate_select.disabled = not bool(self._candidate_by_key)
+        self.candidate_select.disabled = (
+            not bool(self._candidate_by_key) or self.merged_checkbox.value
+        )
         self.dataset_id_input.disabled = not candidate_ready
         self.group_id_input.disabled = not candidate_ready
         self.color_input.disabled = not candidate_ready
@@ -774,6 +852,7 @@ class _ImportDatasetsController:
         )
         self.raw_root_input.disabled = not workspace_ready
         self.browse_raw_root_button.disabled = not workspace_ready
+        self.merged_checkbox.disabled = not workspace_ready
         self.reset_button.disabled = not (
             workspace_ready and (self._raw_root_text() or self._candidate_by_key)
         )
@@ -817,77 +896,27 @@ class _ImportDatasetsController:
         )
         self._sync_controls()
 
+    def _on_merged_change(self, *_events) -> None:
+        self._sync_controls()
+
     def _handle_lab_load(self, _event=None) -> None:
-        self._load_working_lab(self.lab_select.value)
+        self.lab_actions.load_selected()
         self._sync_controls()
 
     def _handle_lab_save(self, _event=None) -> None:
-        config_id = self.lab_config_name_input.value.strip()
-        if not config_id:
-            self._set_lab_status(
-                "Enter a configuration ID before saving.", tone="warning"
-            )
-            return
-        try:
-            conf = self._build_working_lab_conf()
-            reg.conf.LabFormat.setID(config_id, conf)
-        except Exception as exc:
-            self._set_lab_status(str(exc), tone="danger")
-            return
-        self._refresh_lab_options(select_id=config_id)
-        self._load_working_lab(config_id)
-        self._set_lab_status(
-            f'LabFormat "{config_id}" saved to the registry.',
-            tone="success",
-        )
-        self._refresh_workspace_summary()
-        self._sync_controls()
+        self.lab_actions.save_current()
 
     def _handle_lab_delete(self, _event=None) -> None:
-        lab_id = self.lab_select.value
-        if not lab_id:
-            self._set_lab_status(
-                "Select a LabFormat configuration first.", tone="warning"
-            )
-            return
-        try:
-            reg.conf.LabFormat.delete(lab_id)
-        except Exception as exc:
-            self._set_lab_status(str(exc), tone="danger")
-            return
-        self._set_lab_status(
-            f'LabFormat "{lab_id}" deleted from the registry.',
-            tone="success",
-        )
-        self._refresh_lab_options()
-        self._load_working_lab(self.lab_select.value)
-        self._clear_candidates()
-        self._refresh_workspace_summary()
-        self._sync_controls()
+        self.lab_actions.delete_selected()
 
     def _handle_lab_reset(self, _event=None) -> None:
-        current_lab_id = self.lab_select.value
-        try:
-            reg.conf.LabFormat.reset(recreate=True)
-        except Exception as exc:
-            self._set_lab_status(
-                f"LabFormat registry reset failed: {exc}", tone="danger"
-            )
-            return
-        self._refresh_lab_options(select_id=current_lab_id)
-        self._load_working_lab(self.lab_select.value)
-        self._clear_candidates()
-        self._refresh_workspace_summary()
-        self._set_lab_status(
-            "LabFormat registry recreated from the built-in defaults.",
-            tone="success",
-        )
-        self._sync_controls()
+        self.lab_actions.reset_store()
 
     def _handle_reset(self, _event=None) -> None:
         self.raw_root_input.value = ""
         self.group_id_input.value = ""
         self.color_input.value = "#000000"
+        self.merged_checkbox.value = False
         self._clear_candidates()
         if self.workspace is not None:
             self._set_status(
@@ -965,6 +994,7 @@ class _ImportDatasetsController:
             raw_folder=raw_root,
             group_id=group_id,
             dataset_id=dataset_id,
+            merged=self.merged_checkbox.value,
             color=(self.color_input.value or "#000000"),
             extra_kwargs=extra_kwargs,
         )
@@ -993,61 +1023,30 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def view(self) -> pn.viewable.Viewable:
-        config_section = pn.Card(
-            pn.Column(
-                pn.Column(
-                    self.lab_select,
-                    self.lab_config_name_input,
-                    sizing_mode="stretch_width",
-                    margin=0,
-                ),
-                pn.Column(
-                    pn.Row(
-                        self.lab_load_button,
-                        self.lab_save_button,
-                        css_classes=["lw-import-datasets-config-actions"],
-                        sizing_mode="stretch_width",
-                        margin=0,
-                    ),
-                    pn.Row(
-                        self.lab_delete_button,
-                        self.lab_reset_button,
-                        css_classes=["lw-import-datasets-config-actions"],
-                        sizing_mode="stretch_width",
-                        margin=0,
-                    ),
-                    sizing_mode="stretch_width",
-                    margin=(4, 0, 0, 0),
-                ),
-                self.lab_status,
-                self.lab_editor_sections,
-                sizing_mode="stretch_width",
-            ),
-            title="Lab Format Configuration",
-            collapsed=False,
-            sizing_mode="stretch_width",
-        )
         raw_root_row = pn.Row(
             self.raw_root_input,
-            self.browse_raw_root_button,
             css_classes=["lw-import-datasets-source-row"],
             sizing_mode="stretch_width",
         )
-        source_section = _flow_section(
-            "Source",
-            self.lab_select,
-            raw_root_row,
+        source_action_row = pn.Row(
+            self.browse_raw_root_button,
             self.discover_button,
-            self.status,
+            css_classes=["lw-import-datasets-candidate-row"],
+            sizing_mode="stretch_width",
         )
-        discovery_section = _flow_section(
-            "Discovery",
+        candidate_row = pn.Row(
             self.candidate_select,
-            self.candidate_summary,
+            css_classes=["lw-import-datasets-candidate-row"],
+            sizing_mode="stretch_width",
+        )
+        merged_row = pn.Row(
+            self.merged_checkbox,
+            css_classes=["lw-import-datasets-candidate-row"],
+            sizing_mode="stretch_width",
         )
         import_section = _flow_section(
             "Import Options",
-            pn.Row(
+            pn.Column(
                 pn.Column(
                     self.dataset_id_input,
                     self.color_input,
@@ -1056,6 +1055,7 @@ class _ImportDatasetsController:
                 ),
                 self.group_id_input,
                 sizing_mode="stretch_width",
+                margin=0,
             ),
             pn.Row(
                 self.import_button,
@@ -1063,35 +1063,62 @@ class _ImportDatasetsController:
                 sizing_mode="stretch_width",
             ),
             pn.Spacer(height=8),
-            self.workspace_summary,
+            _half_width_row(self.workspace_summary),
         )
-        workflow_section = pn.Card(
+        lab_source_section = _flow_section(
+            "Lab Format Setup",
             pn.Column(
-                source_section,
-                discovery_section,
-                import_section,
+                self.lab_select,
+                self.lab_config_name_input,
                 sizing_mode="stretch_width",
+                margin=0,
             ),
-            title="Import Workflow",
-            collapsed=False,
-            sizing_mode="stretch_width",
+            raw_root_row,
+            source_action_row,
+            candidate_row,
+            merged_row,
+            pn.Row(
+                pn.Column(
+                    self.lab_actions.view,
+                    sizing_mode="stretch_width",
+                    margin=0,
+                ),
+                pn.Spacer(sizing_mode="stretch_width"),
+                sizing_mode="stretch_width",
+                margin=0,
+            ),
         )
         intro = pn.pane.HTML(
             (
                 '<div class="lw-import-datasets-intro">'
                 "Import one experimental raw dataset into the active workspace through a small workspace-first pipeline, while editing the active `LabFormat` configuration in place before discovery and import. "
                 "The configuration panel exposes the registry-backed general, tracker, filesystem, preprocess, and environment sections used by the import lane, so the selected preset can be adjusted without leaving the app. "
-                "Then use the Source and Discovery steps to point the app at a local raw-data folder, resolve one import candidate, inspect warnings, and import the dataset into workspace-owned storage through the central Larvaworld backend. "
+                "Use the raw-root and candidate controls to point the app at a local raw-data folder, resolve one import candidate, inspect warnings, and import the dataset into workspace-owned storage through the central Larvaworld backend. "
                 "The app does not register references or set global active-dataset state. "
                 f'See the data-processing documentation on Read the Docs for the broader dataset pipeline: <a href="{escape(DOCS_DATA_PROCESSING)}" target="_blank">Read the Docs</a>.'
                 "</div>"
             ),
             margin=0,
         )
+        column_one = pn.Column(
+            lab_source_section,
+            import_section,
+            css_classes=["lw-import-datasets-config-grid-col"],
+            sizing_mode="stretch_width",
+            margin=0,
+        )
+        top_row = pn.Row(
+            column_one,
+            self.lab_editor_sections.objects[0],
+            self.lab_editor_sections.objects[1],
+            css_classes=["lw-import-datasets-config-grid"],
+            sizing_mode="stretch_width",
+            margin=0,
+        )
         return pn.Column(
             intro,
-            config_section,
-            workflow_section,
+            top_row,
+            self.lab_editor_sections.objects[2],
             css_classes=["lw-import-datasets-root"],
             sizing_mode="stretch_width",
         )
