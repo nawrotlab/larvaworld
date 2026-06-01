@@ -18,6 +18,7 @@ from larvaworld.portal.canvas_widgets.environment_models import (
 from larvaworld.portal.datasets.replay_models import (
     PreparedReplayMember,
     PreparedReplaySource,
+    ReplayCoordinateOrigin,
     ReplaySource,
     ReplaySourceMember,
 )
@@ -161,10 +162,27 @@ def build_environment_state_for_member(
     *,
     allow_static_layers: bool,
     show_arena_outline: bool = True,
+    coordinate_origin: ReplayCoordinateOrigin | None = None,
 ) -> EnvironmentCanvasState:
     if not allow_static_layers:
+        state_coordinate_origin = coordinate_origin or member.coordinate_origin
+        arena = _canvas_arena_from_member(member)
+        if arena is None:
+            arena = CanvasArena(
+                "rectangular",
+                member.arena_dims,
+                coordinate_origin=state_coordinate_origin,
+            )
+            show_arena_outline = False
+        elif arena.coordinate_origin != state_coordinate_origin:
+            arena = CanvasArena(
+                arena.geometry,
+                arena.dims,
+                torus=arena.torus,
+                coordinate_origin=state_coordinate_origin,
+            )
         return EnvironmentCanvasState(
-            arena=CanvasArena("rectangular", member.arena_dims),
+            arena=arena,
             objects=(),
             show_arena_outline=show_arena_outline,
         )
@@ -181,6 +199,52 @@ def build_environment_state_for_member(
     )
 
     return env_params_to_canvas_state(env_conf)
+
+
+def member_has_arena_geometry(member: PreparedReplayMember) -> bool:
+    return _canvas_arena_from_member(member) is not None
+
+
+def _canvas_arena_from_member(member: PreparedReplayMember) -> CanvasArena | None:
+    env_conf = _member_env_conf(member)
+    arena_conf = _get_env_value(env_conf, "arena", None)
+    if arena_conf is None:
+        return None
+    dims = _get_env_value(arena_conf, "dims", None)
+    if not (isinstance(dims, (list, tuple)) and len(dims) >= 2):
+        return None
+    try:
+        arena_dims = (float(dims[0]), float(dims[1]))
+    except (TypeError, ValueError):
+        return None
+    geometry = str(_get_env_value(arena_conf, "geometry", "rectangular") or "")
+    if not geometry:
+        return None
+    return CanvasArena(
+        geometry,
+        arena_dims,
+        torus=bool(_get_env_value(arena_conf, "torus", False)),
+        coordinate_origin=member.coordinate_origin,
+    )
+
+
+def _member_env_conf(member: PreparedReplayMember) -> Any | None:
+    if member.env_params is not None:
+        return member.env_params
+    if member.env_conf_id and member.env_conf_id in reg.conf.Env.confIDs:
+        return reg.conf.Env.get(member.env_conf_id)
+    return None
+
+
+def _get_env_value(value: Any, key: str, default: Any = None) -> Any:
+    if value is None:
+        return default
+    if hasattr(value, "get"):
+        try:
+            return value.get(key, default)
+        except Exception:
+            pass
+    return getattr(value, key, default)
 
 
 def build_render_state(
@@ -402,6 +466,7 @@ def _prepare_member(member: ReplaySourceMember) -> PreparedReplayMember:
     agent_ids = tuple(dataset.c.agent_ids or ())
     if not agent_ids:
         agent_ids = _agent_ids_from_step_index(xy)
+    coordinate_origin = _infer_coordinate_origin(xy, arena_dims)
     return PreparedReplayMember(
         token=member.token,
         label=member.label,
@@ -411,7 +476,8 @@ def _prepare_member(member: ReplaySourceMember) -> PreparedReplayMember:
         dt=dt,
         nticks=nticks,
         env_conf_id=env_conf_id,
-        coordinate_origin="corner",
+        env_params=getattr(dataset.c, "env_params", None),
+        coordinate_origin=coordinate_origin,
         xy_by_track_point=xy_by_track_point,
         native_default_track_point=native_default_track_point,
         native_track_point_by_ui_track_point=native_track_point_by_ui_track_point,
@@ -475,6 +541,11 @@ def _prepare_workspace_member(member: ReplaySourceMember) -> PreparedReplayMembe
             dims = arena.get("dims")
             if isinstance(dims, (list, tuple)) and len(dims) >= 2:
                 arena_dims = (float(dims[0]), float(dims[1]))
+    coordinate_origin = (
+        "centered"
+        if getattr(record, "origin", None) == "simulation_run"
+        else _infer_coordinate_origin(xy, arena_dims)
+    )
     return PreparedReplayMember(
         token=member.token,
         label=member.label,
@@ -485,11 +556,7 @@ def _prepare_workspace_member(member: ReplaySourceMember) -> PreparedReplayMembe
         nticks=nticks,
         env_conf_id=str(env_conf.get("id")) if isinstance(env_conf, dict) else None,
         env_params=_plain_mapping(env_conf),
-        coordinate_origin=(
-            "centered"
-            if getattr(record, "origin", None) == "simulation_run"
-            else "corner"
-        ),
+        coordinate_origin=coordinate_origin,
         xy_by_track_point=xy_by_track_point,
         native_default_track_point=native_default_track_point,
         native_track_point_by_ui_track_point=native_track_point_by_ui_track_point,
@@ -562,6 +629,39 @@ def _aligned_xy(
         coordinate_origin=coordinate_origin,
     )
     return _apply_alignment_offsets(xy, offsets_by_agent=offsets_by_agent)
+
+
+def _infer_coordinate_origin(
+    xy: pd.DataFrame, arena_dims: tuple[float, float]
+) -> ReplayCoordinateOrigin:
+    if xy.empty:
+        return "corner"
+    try:
+        width = abs(float(arena_dims[0]))
+        height = abs(float(arena_dims[1]))
+        x_min = float(xy["x"].min(skipna=True))
+        y_min = float(xy["y"].min(skipna=True))
+        x_max = float(xy["x"].max(skipna=True))
+        y_max = float(xy["y"].max(skipna=True))
+    except Exception:
+        return "corner"
+    values = (width, height, x_min, y_min, x_max, y_max)
+    if not all(np.isfinite(value) for value in values):
+        return "corner"
+    if width <= 0.0 or height <= 0.0:
+        return "corner"
+    centered_tol_x = max(width * 0.08, 1e-9)
+    centered_tol_y = max(height * 0.08, 1e-9)
+    fits_centered = (
+        x_min >= -width / 2.0 - centered_tol_x
+        and x_max <= width / 2.0 + centered_tol_x
+        and y_min >= -height / 2.0 - centered_tol_y
+        and y_max <= height / 2.0 + centered_tol_y
+    )
+    has_negative_coordinates = x_min < -centered_tol_x or y_min < -centered_tol_y
+    if fits_centered and has_negative_coordinates:
+        return "centered"
+    return "corner"
 
 
 def _alignment_offsets_by_agent(

@@ -51,7 +51,7 @@ class PreparedReplayMember:
     dt: float
     nticks: int
     env_conf_id: str | None = None
-    env_params: dict[str, Any] | None = None
+    env_params: Any | None = None
     coordinate_origin: ReplayCoordinateOrigin = "corner"
     xy_by_track_point: dict[int, pd.DataFrame] = field(default_factory=dict)
     native_default_track_point: int | None = None

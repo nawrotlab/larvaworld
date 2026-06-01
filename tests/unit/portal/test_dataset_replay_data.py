@@ -9,6 +9,7 @@ import pytest
 from larvaworld.lib import reg, util
 from larvaworld.lib.process.dataset import LarvaDataset
 from larvaworld.portal.datasets.replay_data import (
+    _infer_coordinate_origin,
     build_environment_state_for_member,
     build_render_state,
     build_source_catalog,
@@ -485,7 +486,7 @@ def test_prepare_replay_source_workspace_maps_head_to_native_one(
     assert member.native_track_point_by_ui_track_point[0] == 1
 
 
-def test_environment_state_shows_outline_without_static_layers_by_default() -> None:
+def test_environment_state_hides_outline_without_dataset_arena_config() -> None:
     step = pd.DataFrame([{"Step": 0, "AgentID": "a0", "x": 0.0, "y": 0.0}]).set_index(
         ["Step", "AgentID"]
     )
@@ -502,11 +503,12 @@ def test_environment_state_shows_outline_without_static_layers_by_default() -> N
 
     state = build_environment_state_for_member(member, allow_static_layers=False)
 
-    assert state.show_arena_outline is True
+    assert state.show_arena_outline is False
     assert state.objects == ()
+    assert state.arena.coordinate_origin == "corner"
 
 
-def test_build_environment_state_for_member_can_hide_outline_when_requested() -> None:
+def test_environment_state_uses_dataset_arena_without_static_layers() -> None:
     step = pd.DataFrame([{"Step": 0, "AgentID": "a0", "x": 0.0, "y": 0.0}]).set_index(
         ["Step", "AgentID"]
     )
@@ -519,14 +521,63 @@ def test_build_environment_state_for_member_can_hide_outline_when_requested() ->
         dt=0.1,
         nticks=1,
         env_conf_id=None,
+        env_params={"arena": {"geometry": "circular", "dims": (0.3, 0.3)}},
+    )
+
+    state = build_environment_state_for_member(member, allow_static_layers=False)
+
+    assert state.show_arena_outline is True
+    assert state.objects == ()
+    assert state.arena.geometry == "circular"
+    assert state.arena.dims == (0.3, 0.3)
+    assert state.arena.coordinate_origin == "corner"
+
+
+def test_environment_state_can_override_coordinate_origin_for_aligned_modes() -> None:
+    step = pd.DataFrame([{"Step": 0, "AgentID": "a0", "x": 0.0, "y": 0.0}]).set_index(
+        ["Step", "AgentID"]
+    )
+    member = PreparedReplayMember(
+        token="m1",
+        label="m1",
+        color="#000000",
+        xy_default=step,
+        arena_dims=(0.2, 0.1),
+        dt=0.1,
+        nticks=1,
+        env_params={"arena": {"geometry": "rectangular", "dims": (0.2, 0.1)}},
+        coordinate_origin="corner",
     )
 
     state = build_environment_state_for_member(
-        member, allow_static_layers=False, show_arena_outline=False
+        member,
+        allow_static_layers=False,
+        coordinate_origin="centered",
     )
 
-    assert state.show_arena_outline is False
-    assert state.objects == ()
+    assert state.arena.coordinate_origin == "centered"
+
+
+def test_infer_coordinate_origin_detects_centered_stored_coordinates() -> None:
+    step = pd.DataFrame(
+        [
+            {"Step": 0, "AgentID": "a0", "x": -0.06, "y": -0.04},
+            {"Step": 1, "AgentID": "a0", "x": 0.05, "y": 0.06},
+        ]
+    ).set_index(["Step", "AgentID"])
+
+    assert _infer_coordinate_origin(step, (0.15, 0.15)) == "centered"
+
+
+def test_infer_coordinate_origin_keeps_positive_coordinates_as_corner() -> None:
+    step = pd.DataFrame(
+        [
+            {"Step": 0, "AgentID": "a0", "x": 0.01, "y": 0.02},
+            {"Step": 1, "AgentID": "a0", "x": 0.14, "y": 0.13},
+        ]
+    ).set_index(["Step", "AgentID"])
+
+    assert _infer_coordinate_origin(step, (0.15, 0.15)) == "corner"
 
 
 def test_build_environment_state_for_member_shows_outline_when_static_enabled() -> None:
