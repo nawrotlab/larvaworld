@@ -644,6 +644,11 @@ class _ImportDatasetsController:
         if len(env_children) >= 4:
             left_col = pn.Column(
                 env_children[0],
+                css_classes=["lw-import-datasets-config-grid-col"],
+                sizing_mode="stretch_width",
+                margin=0,
+            )
+            middle_col = pn.Column(
                 env_children[1],
                 css_classes=["lw-import-datasets-config-grid-col"],
                 sizing_mode="stretch_width",
@@ -658,6 +663,7 @@ class _ImportDatasetsController:
             )
             body = pn.Row(
                 left_col,
+                middle_col,
                 right_col,
                 css_classes=["lw-import-datasets-config-grid"],
                 sizing_mode="stretch_width",

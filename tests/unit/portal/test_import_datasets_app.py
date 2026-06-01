@@ -89,6 +89,14 @@ def _scape_switches(section: pn.viewable.Viewable) -> list[pn.widgets.Switch]:
     return [widget for widget in section.select(pn.widgets.Switch)]
 
 
+def _card_titles(section: pn.viewable.Viewable) -> set[str]:
+    return {
+        card.title
+        for card in section.select(pn.Card)
+        if isinstance(getattr(card, "title", None), str)
+    }
+
+
 def test_import_datasets_controller_requires_active_workspace() -> None:
     controller = import_datasets_app._ImportDatasetsController()
 
@@ -196,12 +204,16 @@ def test_import_datasets_view_uses_three_column_layout_with_environment_below() 
     environment_row = next(
         section
         for section in environment_section.select(pn.Row)
-        if len(getattr(section, "objects", [])) == 2
+        if len(getattr(section, "objects", [])) == 3
     )
-    env_left_col, env_right_col = environment_row.objects
+    env_left_col, env_middle_col, env_right_col = environment_row.objects
     assert _contains_widget(env_left_col, "Arena width")
-    assert _contains_widget(env_left_col, "Enable Food grid")
+    assert not _contains_widget(env_left_col, "Enable Food grid")
+    assert _contains_widget(env_middle_col, "Enable Food grid")
+    assert not _contains_widget(env_middle_col, "New border ID")
     assert _contains_widget(env_right_col, "New border ID")
+    assert "Border list" in _card_titles(env_right_col)
+    assert "Environment scapes" in _card_titles(env_right_col)
     assert len(_scape_switches(env_right_col)) >= 1
 
 
