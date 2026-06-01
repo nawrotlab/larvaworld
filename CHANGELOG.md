@@ -1,5 +1,87 @@
 # Changelog
 
+## v2.3.0 (2026-06-01)
+
+### Fix
+
+- Preserve dataset coordinate origins ([`97c7d7e`](https://github.com/nawrotlab/larvaworld/commit/97c7d7eba5f191dd29a8b6313a442304d3201b5d))
+- Include replay arena metadata helpers ([`2413044`](https://github.com/nawrotlab/larvaworld/commit/24130444d1b0e8fdd2d61edf555bbd6911a9a188))
+- Merge optional modules into model inspector summary ([`6720ac0`](https://github.com/nawrotlab/larvaworld/commit/6720ac06642f6221d11dd22d8dc88520c932364d))
+- Make dataset replay sections boxes ([`41c189e`](https://github.com/nawrotlab/larvaworld/commit/41c189e3959865e1bbb45e117e7fbc82b792967c))
+- Make dataset replay time range pygame-only ([`21486f8`](https://github.com/nawrotlab/larvaworld/commit/21486f8b3f6fc84b5d8a4f2c1e7508791da129f8))
+- Disable unsupported native replay members ([`1858f79`](https://github.com/nawrotlab/larvaworld/commit/1858f794fe302319a1d4c8cdc1572c0c346f0e4f))
+- Restore replay segment selection ([`ccdbe59`](https://github.com/nawrotlab/larvaworld/commit/ccdbe595b66c7fcd900d48f41c640e5d46570958))
+- Restore larva-group dirty-state tracking ([`171c63b`](https://github.com/nawrotlab/larvaworld/commit/171c63b20e00868125f54b28a0e3353b20d18ba6))
+- Stabilize replay and experiment summaries ([`6f5463c`](https://github.com/nawrotlab/larvaworld/commit/6f5463ce268012524b47da2d11d0a611a78fb873))
+- Preserve dynamic template items on reload ([`8ee3941`](https://github.com/nawrotlab/larvaworld/commit/8ee39412de82734c9797b826b40614167f341cbd))
+- Improve display shortcuts capture and popup styling ([`ef9c895`](https://github.com/nawrotlab/larvaworld/commit/ef9c895a93ce472c3bf6f4a16461ea973de87cf2))
+- Improve single experiment status dialog formatting ([`7be5e10`](https://github.com/nawrotlab/larvaworld/commit/7be5e10175b5ec91a4dbb848bb4fbc3f686df076))
+- Align circle envelope and allow legacy registry warnings ([`18298d9`](https://github.com/nawrotlab/larvaworld/commit/18298d901073158250c235b537798cb285b523c7))
+- Stabilize workspace experiment template load/edit flow ([`e6adb61`](https://github.com/nawrotlab/larvaworld/commit/e6adb615f7780b456134324004811bd82225e17a))
+- Disable head snapping by default in canvas preview ([`d1d2115`](https://github.com/nawrotlab/larvaworld/commit/d1d2115e4a30eb0f99c601c984757b941cfb8bbd))
+- Stabilize experiment preset selection and runtime defaults ([`0e434b8`](https://github.com/nawrotlab/larvaworld/commit/0e434b880a140b78e69404311489a95e22844bce))
+- Wire source group legend renderer ([`008a526`](https://github.com/nawrotlab/larvaworld/commit/008a5264102cdb6d0e14777ca37a8d41556e91fb))
+- Harden intermitter state helpers ([`865293b`](https://github.com/nawrotlab/larvaworld/commit/865293b73b629b7838c9bdbf80a020fce5304c50))
+
+### Refactor
+
+- Arrange import environment controls ([`fb36f35`](https://github.com/nawrotlab/larvaworld/commit/fb36f354c9b09dd06a3d28b8a7fd63419533e936))
+- Reuse replay param metadata ([`348d152`](https://github.com/nawrotlab/larvaworld/commit/348d1529ee08413792873489f2b9c6b15692463d))
+- Share display shortcuts runtime helper ([`573ad0e`](https://github.com/nawrotlab/larvaworld/commit/573ad0ed1975789b2b40a82543582469415afc70))
+- Remove legacy single experiment preview ([`2498a6e`](https://github.com/nawrotlab/larvaworld/commit/2498a6ef7cda735b9c0e81a110c5d9c75862f8c8))
+- Improve single experiment parameters layout ([`aba7852`](https://github.com/nawrotlab/larvaworld/commit/aba7852a3b1bbefdf0cdacb9f71120dc74998877))
+
+### Feature
+
+- Refine import layout and replay support ([`fd6d66c`](https://github.com/nawrotlab/larvaworld/commit/fd6d66cd76c4490194410c5370327acbfcf3affa))
+- Refine model inspector layout and validation ([`501edaa`](https://github.com/nawrotlab/larvaworld/commit/501edaa8223fbdc9f2091bed10571ed1301d5526))
+- Finish model inspector persistence ([`6814144`](https://github.com/nawrotlab/larvaworld/commit/681414434b6a6245ad730822159ec06972f3f35f))
+- Add native replay close inspection controls ([`e7a49e6`](https://github.com/nawrotlab/larvaworld/commit/e7a49e6ca60d25177523e5528c427e80b20803ae))
+- Render larva contours and split canvas legends ([`13862c1`](https://github.com/nawrotlab/larvaworld/commit/13862c1d53f93c1a8570285aa0bff44fc8d8a0df))
+- Draw larva body segments in simulation preview ([`78f8290`](https://github.com/nawrotlab/larvaworld/commit/78f8290ef42cf7a82b009219d4774e3d966c1057))
+- Add agent index filtering and strict track-point selection ([`0410419`](https://github.com/nawrotlab/larvaworld/commit/041041908782b66e78e5f57262aa8c0310f0120b))
+- Extend dataset replay for simulation runs ([`387eca0`](https://github.com/nawrotlab/larvaworld/commit/387eca042c864fc75f684de4ba1b4454ab45adf4))
+- Make model inspector live-editable ([`752e014`](https://github.com/nawrotlab/larvaworld/commit/752e01453dddbc76ffe5c751aade87129b19ddd8))
+- Migrate larva_models to parity-first model inspector ([`682ccee`](https://github.com/nawrotlab/larvaworld/commit/682cceec138ddff566556de357d9f95ee6d8a27c))
+- Add dataset replay app and migrate track_viewer route ([`8386a85`](https://github.com/nawrotlab/larvaworld/commit/8386a85f1e309293c5a52f9b5b24b99527c3a8ae))
+- Add workspace editable display shortcuts ([`9f4a28d`](https://github.com/nawrotlab/larvaworld/commit/9f4a28d23582083ebc1593e892cafab9fce66d51))
+- Validate food source compatibility in single experiment ([`acc150e`](https://github.com/nawrotlab/larvaworld/commit/acc150eb38f6f00c7cdfad2b75056f17210224a9))
+- Validate single experiment environment compatibility ([`1dea9e3`](https://github.com/nawrotlab/larvaworld/commit/1dea9e30fd081ea7ddacde76664742c3ee5584c2))
+- Integrate experiment template preset controls ([`c6a0634`](https://github.com/nawrotlab/larvaworld/commit/c6a063418c761d727ce1beac4a83c5b4f5ad498a))
+- Integrate env preset controls into single experiment ([`0e8107b`](https://github.com/nawrotlab/larvaworld/commit/0e8107b2512219a3ff76266aff9574f268fd0c19))
+- Add generic registry/workspace preset controls ([`eb04124`](https://github.com/nawrotlab/larvaworld/commit/eb041241856ddf85fa08dbd350af4cf646161a1f))
+- Remap workspace folders and refine single experiment ux ([`3f6d5c7`](https://github.com/nawrotlab/larvaworld/commit/3f6d5c765c3c5ca5f126c0bcf322cfa14f249704))
+- Wire typed trials editor ([`7120876`](https://github.com/nawrotlab/larvaworld/commit/7120876f3554e51d7b1eedb44029f9763b060cbc))
+- Wire typed collections editor ([`02bc538`](https://github.com/nawrotlab/larvaworld/commit/02bc538c3a6f8020ed4a5bbcee9305b529268bad))
+- Wire typed simulation settings editor ([`a2a3e01`](https://github.com/nawrotlab/larvaworld/commit/a2a3e01ad6d9b3ca90d1fb6e51ae660ba8149884))
+- Wire typed env params editor in single experiment ([`f464af7`](https://github.com/nawrotlab/larvaworld/commit/f464af700c26f3cd485b693c52030c83de1d993b))
+- Wire typed enrichment editor in single experiment ([`8f78cd5`](https://github.com/nawrotlab/larvaworld/commit/8f78cd5a33121857020dc09bf1f619e76a9890ba))
+- Wire typed larva_groups editor in single experiment ([`966ca36`](https://github.com/nawrotlab/larvaworld/commit/966ca36090d6d7bc0da47338441160bb45bbda7a))
+- Add param-driven larva group helpers ([`dc08371`](https://github.com/nawrotlab/larvaworld/commit/dc0837102337e46a2dfdca7ba874f117b7ff1311))
+- Refine single experiment preview visuals ([`e91afe8`](https://github.com/nawrotlab/larvaworld/commit/e91afe8121cbada386ced7b50ff3e393c69ee833))
+- Polish single experiment preview controls ([`e5428d2`](https://github.com/nawrotlab/larvaworld/commit/e5428d253a8342dc88dec12ab33bef1b37c2e533))
+- Add frame-based single experiment preview ([`7cc339c`](https://github.com/nawrotlab/larvaworld/commit/7cc339c0eaf779a418b55f5347b18b256f3138fa))
+- Add larva preview frame capture helper ([`99feb21`](https://github.com/nawrotlab/larvaworld/commit/99feb21d877de9032d76d1c44151dd8777094359))
+- Add simulated larvae canvas playback layer ([`c9e21dc`](https://github.com/nawrotlab/larvaworld/commit/c9e21dc8343099690e0665c95a4f9e538ad51c5b))
+- Refine single experiment canvas preview layers ([`d67b48a`](https://github.com/nawrotlab/larvaworld/commit/d67b48a3a95091dda8d84db2f3a41908704324e8))
+- Add shared environment canvas preview ([`d8f5622`](https://github.com/nawrotlab/larvaworld/commit/d8f5622490c5bfaca6d27b1b6c0019e2ea22740f))
+- Refine import and simulation previews ([`bf3a8a9`](https://github.com/nawrotlab/larvaworld/commit/bf3a8a9a981ae64cd3250db2f6b75d44d34be8ac))
+
+### Performance
+
+- Make dataset replay geometry tick-local ([`d1afa8d`](https://github.com/nawrotlab/larvaworld/commit/d1afa8d32d0a8010162165c4a939d66fb5f5c46a))
+- Optimize live display rendering ([`2a74b19`](https://github.com/nawrotlab/larvaworld/commit/2a74b19fd1d6be3521f7d34dce040b738dee0c06))
+
+### Test
+
+- Update preset integration assertions for tokenized flow ([`41e179a`](https://github.com/nawrotlab/larvaworld/commit/41e179a28f397f4a907ed7ed5f5d2b943a2748d1))
+- Add env params typed roundtrip contracts ([`c112e1c`](https://github.com/nawrotlab/larvaworld/commit/c112e1c7554d9e09e0df4c062c352b69046c186f))
+- Align environment preset labels with reverted behavior ([`a0ef347`](https://github.com/nawrotlab/larvaworld/commit/a0ef34732b5e9990668418ced3fb4a19fbc4fada))
+
+### Style
+
+- Apply ruff formatting to single experiment updates ([`19258f1`](https://github.com/nawrotlab/larvaworld/commit/19258f181ee5195d42dbae270e1949f999ed2781))
+
 ## v2.2.0 (2026-04-28)
 
 ### Test
