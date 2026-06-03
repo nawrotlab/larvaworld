@@ -137,9 +137,9 @@ def test_inspect_model_modules_grouping_and_kinds() -> None:
     assert specs["crawler"].subgroup == "Locomotion"
     assert specs["crawler"].module_kind == "brain"
     assert specs["olfactor"].subgroup == "Sensation"
-    assert specs["feeder"].subgroup == "Feeding"
+    assert specs["feeder"].subgroup == "Locomotion"
     assert specs["memory"].subgroup == "Memory"
-    assert specs["body"].group == "Larva Modules"
+    assert specs["body"].group == "Body and Metabolism"
     assert specs["body"].subgroup == "Core"
     assert specs["energetics"].subgroup == "Optional"
     assert specs["body"].module_kind == "larva"
@@ -162,6 +162,19 @@ def test_inspect_model_modules_brain_modes_and_labels_use_moduledb() -> None:
     crawler = specs["crawler"]
     assert crawler.mode_options == tuple(MD.mod_modes("crawler") or ())
     assert crawler.mode_labels["constant"] == "constant (CON)"
+
+
+def test_inspect_model_modules_memory_display_name_includes_modality_when_present() -> (
+    None
+):
+    model_id = (
+        "explorer" if "explorer" in reg.conf.Model.confIDs else list_model_ids()[0]
+    )
+    memory = {spec.module_id: spec for spec in inspect_model_modules(model_id)}[
+        "memory"
+    ]
+    if memory.present and memory.current_modality:
+        assert memory.current_modality in memory.display_name
 
 
 def test_inspect_model_modules_memory_mode_and_modality_options() -> None:
@@ -734,7 +747,7 @@ def test_probe_output_schema_and_reporter_metadata() -> None:
     assert list(result.dataframe.columns)[:4] == ["time", "lin", "ang", "feed_motion"]
     assert "A_T" in result.dataframe.columns
     assert "A_C" in result.dataframe.columns
-    assert set(result.reporter_available.keys()) == {"A_T", "A_C"}
+    assert set(result.reporter_available.keys()) == set(data.PROBE_REPORTER_KEYS)
 
 
 def test_probe_parity_with_legacy_equivalent_runner() -> None:
@@ -753,7 +766,9 @@ def test_probe_parity_with_legacy_equivalent_runner() -> None:
 
     random.seed(1234)
     np.random.seed(1234)
-    probe = run_model_probe(model_id, steps=steps, dt=dt, a_in=a_in)
+    probe = run_model_probe(
+        model_id, steps=steps, dt=dt, a_in=a_in, reporter_keys=("A_T", "A_C")
+    )
 
     assert probe.reporter_available == reference_available
     assert probe.dataframe.shape == reference_df.shape

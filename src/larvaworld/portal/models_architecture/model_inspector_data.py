@@ -31,12 +31,26 @@ OPTIONAL_MODULES: tuple[str, ...] = (
     "thermosensor",
     "memory",
 )
-PROBE_REPORTER_KEYS: tuple[str, ...] = ("A_T", "A_C")
+# Default probe / live-preview reporter keys (full set selectable in UI).
+LIVE_PREVIEW_REPORTER_KEYS: tuple[str, ...] = (
+    "A_T",
+    "A_C",
+    "A_F",
+    "I_T",
+    "I_C",
+    "I_F",
+    "phi_T",
+    "phi_C",
+    "phi_F",
+)
+DEFAULT_LIVE_PREVIEW_REPORTER_KEYS: tuple[str, ...] = ("A_T", "A_C")
+PROBE_REPORTER_KEYS: tuple[str, ...] = LIVE_PREVIEW_REPORTER_KEYS
 LOCOMOTION_MODULES: tuple[str, ...] = (
     "crawler",
     "interference",
     "intermitter",
     "turner",
+    "feeder",
 )
 SENSATION_MODULES: tuple[str, ...] = (
     "olfactor",
@@ -44,14 +58,12 @@ SENSATION_MODULES: tuple[str, ...] = (
     "windsensor",
     "thermosensor",
 )
-FEEDING_MODULES: tuple[str, ...] = ("feeder",)
 MEMORY_MODULES: tuple[str, ...] = ("memory",)
 LARVA_CORE_MODULES: tuple[str, ...] = ("body", "physics")
 LARVA_OPTIONAL_MODULES: tuple[str, ...] = ("energetics", "sensorimotor", "Box2D")
 MODEL_MODULE_ORDER: tuple[str, ...] = (
     *LOCOMOTION_MODULES,
     *SENSATION_MODULES,
-    *FEEDING_MODULES,
     *MEMORY_MODULES,
     *LARVA_CORE_MODULES,
     *LARVA_OPTIONAL_MODULES,
@@ -510,6 +522,7 @@ def run_model_probe(
     steps: int = 501,
     dt: float = 0.1,
     a_in: float = 0.0,
+    reporter_keys: tuple[str, ...] | None = None,
 ) -> ProbeResult:
     if steps <= 0:
         raise ModelInspectorError(
@@ -528,13 +541,12 @@ def run_model_probe(
     brain = DefaultBrain(conf=brain_conf, agent=_inspection_agent(model_id, dt), dt=dt)
     runtime = SimpleNamespace(brain=brain)
 
-    available_from_registry = reg.par.output_reporters(
-        ks=list(PROBE_REPORTER_KEYS), agents=[runtime]
-    )
+    keys = tuple(reporter_keys) if reporter_keys is not None else PROBE_REPORTER_KEYS
+    available_from_registry = reg.par.output_reporters(ks=list(keys), agents=[runtime])
     available_paths = set(available_from_registry.values())
     issues: list[ProbeIssue] = []
     reporter_paths: dict[str, str] = {}
-    for key in PROBE_REPORTER_KEYS:
+    for key in keys:
         try:
             reporter_paths[key] = reg.par.kdict[key].codename
         except Exception:
@@ -799,17 +811,17 @@ def _spec_parameters(module_conf: Any, *, excluded: set[str]) -> dict[str, Any]:
 
 
 def _module_group(module_id: str) -> tuple[str, str, bool]:
+    if module_id == "feeder":
+        return ("Nervous System", "Locomotion", False)
     if module_id in LOCOMOTION_MODULES:
         return ("Nervous System", "Locomotion", True)
     if module_id in SENSATION_MODULES:
         return ("Nervous System", "Sensation", False)
-    if module_id in FEEDING_MODULES:
-        return ("Nervous System", "Feeding", False)
     if module_id in MEMORY_MODULES:
         return ("Nervous System", "Memory", False)
     if module_id in LARVA_CORE_MODULES:
-        return ("Larva Modules", "Core", True)
-    return ("Larva Modules", "Optional", False)
+        return ("Body and Metabolism", "Core", True)
+    return ("Body and Metabolism", "Optional", False)
 
 
 def _brain_module_spec(*, brain_conf: Any, module_id: str) -> ModelModuleSpec:
@@ -855,9 +867,14 @@ def _memory_module_spec(*, brain_conf: Any) -> ModelModuleSpec:
         module_conf.get("modality") if present and hasattr(module_conf, "get") else None
     )
     group, subgroup, is_core = _module_group("memory")
+    display_name = (
+        f"Memory ({current_modality})"
+        if present and current_modality is not None
+        else "Memory"
+    )
     return ModelModuleSpec(
         module_id="memory",
-        display_name="Memory",
+        display_name=display_name,
         group=group,
         subgroup=subgroup,
         module_kind="memory",

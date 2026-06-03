@@ -17,6 +17,8 @@ from larvaworld.portal.models_architecture.model_inspector_app import (
     model_inspector_app,
 )
 from larvaworld.portal.models_architecture.model_inspector_data import (
+    DEFAULT_LIVE_PREVIEW_REPORTER_KEYS,
+    LIVE_PREVIEW_REPORTER_KEYS,
     MODEL_MODULE_ORDER,
     default_brain_module_config,
     load_model_draft,
@@ -283,11 +285,23 @@ def test_controller_builds_grouped_module_sections(
     assert "Nervous System" in text
     assert "Locomotion" in text
     assert "Sensation" in text
-    assert "Feeding" in text
     assert "Memory" in text
-    assert "Larva Modules" in text
+    assert "Body and Metabolism" in text
     assert "Core" in text
     assert "Optional" in text
+
+
+def test_controller_live_preview_plot_checkbox_defaults(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    assert tuple(controller.plot_reporters_checkbox.value) == tuple(
+        DEFAULT_LIVE_PREVIEW_REPORTER_KEYS
+    )
+    assert list(controller.plot_reporters_checkbox.options) == list(
+        LIVE_PREVIEW_REPORTER_KEYS
+    )
 
 
 def test_controller_shows_all_module_slots_in_order(
@@ -302,11 +316,11 @@ def test_controller_shows_all_module_slots_in_order(
         "turner",
         "interference",
         "intermitter",
+        "feeder",
         "olfactor",
         "toucher",
         "windsensor",
         "thermosensor",
-        "feeder",
         "memory",
         "body",
         "physics",

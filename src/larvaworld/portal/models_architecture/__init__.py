@@ -3,6 +3,8 @@ from __future__ import annotations
 from .model_inspector_app import _ModelInspectorController, model_inspector_app
 from .model_inspector_data import (
     BASELINE_MODULES,
+    DEFAULT_LIVE_PREVIEW_REPORTER_KEYS,
+    LIVE_PREVIEW_REPORTER_KEYS,
     MODEL_MODULE_ORDER,
     OPTIONAL_MODULES,
     PROBE_REPORTER_KEYS,
@@ -40,6 +42,7 @@ from .model_inspector_models import (
 __all__ = [
     "_ModelInspectorController",
     "BASELINE_MODULES",
+    "DEFAULT_LIVE_PREVIEW_REPORTER_KEYS",
     "DraftValidationIssue",
     "DraftValidationSeverity",
     "MODEL_MODULE_ORDER",
@@ -48,6 +51,7 @@ __all__ = [
     "ModelInspectorError",
     "ModuleComparison",
     "ModuleInspection",
+    "LIVE_PREVIEW_REPORTER_KEYS",
     "OPTIONAL_MODULES",
     "PROBE_REPORTER_KEYS",
     "ProbeIssue",
