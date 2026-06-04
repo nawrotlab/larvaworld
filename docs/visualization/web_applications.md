@@ -194,17 +194,17 @@ configuration, source selection, discovery, and workspace import controls.
 **Features**:
 
 - Select a **module** (7 modules across the 3 kinds), then a **mode**. Modes requiring remote/IPC backends are excluded from this standalone view: **Nengo** modes everywhere and the olfactor **osn** mode (remote Brian2 server).
-- Edit module parameters with typed widgets bound to the live `param.Parameterized` instance.
+- Edit module parameters with typed widgets that stay linked to the module while you adjust them.
 - Kind-aware drive:
-  - effector: constant **A_in** slider (bounds follow the module `input_range` when defined)
-  - feeder: no input; the effector is started (active) and stepped by its own phase
+  - effector: constant **A_in** slider (bounds follow the module input range when defined)
+  - feeder: no input; the module runs on its own rhythm once started
   - sensor: a **time-varying stimulus** (sinusoid or step) with editable baseline, amplitude, frequency, and onset
 - Set **N steps** and **dt** for the time axis; the trace recomputes immediately on any control or parameter change.
 - Choose which signals to plot (Bokeh time series, x-axis in seconds):
   - effector: **input**, **activation**, **phi**, **output** (whichever exist on the instance)
   - feeder: **phi**, **complete_iteration**
   - sensor: **stimulus**, **output**
-- **Portal-only adapters** (no core changes): a standalone `windsensor` is built with canonical zero `weights`; `olfactor`/`toucher` receive a non-canonical **preview** gain so their response is visible. Sensors respond to the _change_ of the stimulus, which is why a non-zero baseline is used. Default configs from `moduleDB` are **copied** in the portal data layer so edits cannot mutate shared registry defaults.
+- For **wind**, **odor**, and **touch** sensors, the app uses starting values so traces are visible without extra setup. For **temperature** and similar channels, a changing stimulus is used because these plots mainly show how the reading responds when the signal changes, not when it stays flat.
 - **Deterministic preview defaults**: initial **phi** is forced to 0 after construction; the **neural** turner warm-up remains stochastic (seed RNGs for repeatable tests).
 
 **Access**: `locomotory_modules`
