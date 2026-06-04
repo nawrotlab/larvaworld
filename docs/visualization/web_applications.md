@@ -174,8 +174,8 @@ configuration, source selection, discovery, and workspace import controls.
 - Browse available model configurations
 - Adjust locomotion-related parameters in the browser (changes are not saved to disk unless you use your own workflow to export them)
 - Review feeding, sensing, and memory-related settings together with locomotion in a clear layout
-- Run or pause a short live preview to see how the selected model behaves over time
-- Pick which signals appear in the live charts (for example crawl and turn activity, or other traces when the model exposes them)
+- Run or pause a short live preview to see how the selected model behaves over time (default trace window: 500 steps; adjustable in the controls)
+- Pick live chart traces in a compact row (activity, then input, then phase); labels name the signal and show the short reporter keyword from the registry in parentheses
 - Compare two model presets side by side when you want a quick overview of differences
 - Separate areas for brain-related settings and for body and metabolism-related settings
 

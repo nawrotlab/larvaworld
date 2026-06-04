@@ -58,6 +58,10 @@ SENSATION_MODULES: tuple[str, ...] = (
     "windsensor",
     "thermosensor",
 )
+# Model Inspector: Mode dropdown beside "Enabled" in narrow cards (match Memory mode width).
+BRAIN_MODE_SELECT_FIXED_WIDTH_MODULES: frozenset[str] = frozenset(
+    (*SENSATION_MODULES, "feeder")
+)
 MEMORY_MODULES: tuple[str, ...] = ("memory",)
 LARVA_CORE_MODULES: tuple[str, ...] = ("body", "physics")
 LARVA_OPTIONAL_MODULES: tuple[str, ...] = ("energetics", "sensorimotor", "Box2D")

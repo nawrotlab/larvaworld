@@ -14,6 +14,7 @@ from larvaworld.lib.model import moduleDB as MD
 from larvaworld.portal.config_widgets.preset_controls import PresetSource
 from larvaworld.portal.models_architecture.model_inspector_app import (
     _ModelInspectorController,
+    _reporter_key_columns,
     model_inspector_app,
 )
 from larvaworld.portal.models_architecture.model_inspector_data import (
@@ -296,11 +297,29 @@ def test_controller_live_preview_plot_checkbox_defaults(
 ) -> None:
     _guard_registry_writes(monkeypatch)
     controller = _ModelInspectorController()
-    assert tuple(controller.plot_reporters_checkbox.value) == tuple(
-        DEFAULT_LIVE_PREVIEW_REPORTER_KEYS
+    merged = (
+        set(controller.plot_reporters_checkbox_activity.value)
+        | set(controller.plot_reporters_checkbox_input.value)
+        | set(controller.plot_reporters_checkbox_phase.value)
     )
-    assert list(controller.plot_reporters_checkbox.options) == list(
+    assert merged == set(DEFAULT_LIVE_PREVIEW_REPORTER_KEYS)
+    activity_keys, input_keys, phase_keys = _reporter_key_columns()
+    assert set(controller.plot_reporters_checkbox_activity.options.values()) == set(
+        activity_keys
+    )
+    assert set(controller.plot_reporters_checkbox_input.options.values()) == set(
+        input_keys
+    )
+    assert set(controller.plot_reporters_checkbox_phase.options.values()) == set(
+        phase_keys
+    )
+    assert set(controller.plot_reporters_checkbox_activity.options.values()) | set(
+        controller.plot_reporters_checkbox_input.options.values()
+    ) | set(controller.plot_reporters_checkbox_phase.options.values()) == set(
         LIVE_PREVIEW_REPORTER_KEYS
+    )
+    assert (
+        "Turner activity (A_T)" in controller.plot_reporters_checkbox_activity.options
     )
 
 
