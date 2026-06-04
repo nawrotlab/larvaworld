@@ -2,6 +2,7 @@ from pathlib import Path
 
 from larvaworld.lib import reg, util
 from larvaworld.lib.reg import config
+from larvaworld.lib.reg.generators import ExpConf
 
 
 def test_conf():
@@ -38,3 +39,14 @@ def test_ref_path_to_ref_roots_relative_dir_in_data_dir():
         / "data"
         / "conf.txt"
     )
+
+
+def test_expconf_coerces_raw_larva_group_payloads():
+    parameters = reg.conf.Exp.getID("dish").get_copy()
+
+    exp = ExpConf(**dict(parameters))
+
+    assert all(
+        isinstance(group, reg.gen.LarvaGroup) for group in exp.larva_groups.values()
+    )
+    assert isinstance(exp.larva_groups["explorer"].model, dict)

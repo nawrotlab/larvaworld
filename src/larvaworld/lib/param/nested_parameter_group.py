@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from collections.abc import Mapping
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import param
@@ -13,6 +15,25 @@ __all__: list[str] = [
     "class_defaults",
     "class_objs",
 ]
+
+
+def _coerce_classdict_value(parameter: ClassDict, value: Any) -> Any:
+    if parameter.item_type is None or value is None or not isinstance(value, Mapping):
+        return value
+
+    coerced = {}
+    for key, item in value.items():
+        if isinstance(item, parameter.item_type):
+            coerced[key] = item
+        elif isinstance(item, Mapping):
+            coerced[key] = parameter.item_type(**dict(item))
+        else:
+            coerced[key] = item
+    return parameter.class_(coerced)
+
+
+def _has_dict_model(kwargs: Dict[str, Any], cls: type[param.Parameterized]) -> bool:
+    return "model" in cls.param.objects() and isinstance(kwargs.get("model"), Mapping)
 
 
 class NestedConf(param.Parameterized):
@@ -41,19 +62,13 @@ class NestedConf(param.Parameterized):
 
     def __init__(self, **kwargs: Any):
         for k, p in self.param.objects(instance=False).items():
-            try:
-                if k in kwargs:
-                    if type(p) == ClassAttr and not isinstance(kwargs[k], p.class_):
-                        kwargs[k] = p.class_(**kwargs[k])
-                    elif type(p) == ClassDict:
-                        if not all(
-                            isinstance(m, p.item_type) for m in kwargs[k].values()
-                        ):
-                            kwargs[k] = p.class_(
-                                {n: p.item_type(**m) for n, m in kwargs[k].items()}
-                            )
-            except:
-                pass
+            if k not in kwargs:
+                continue
+            if type(p) == ClassAttr and not isinstance(kwargs[k], p.class_):
+                if isinstance(kwargs[k], Mapping):
+                    kwargs[k] = p.class_(**dict(kwargs[k]))
+            elif type(p) == ClassDict:
+                kwargs[k] = _coerce_classdict_value(p, kwargs[k])
         super().__init__(**kwargs)
 
     @property
@@ -172,7 +187,14 @@ def class_generator(A0: Any, mode: str = "Unit"):
 
             kwargs = expand_kws_shortcuts(kwargs)
 
+            model_payload = (
+                kwargs.pop("model", None) if _has_dict_model(kwargs, A) else None
+            )
             super().__init__(**kwargs)
+            if model_payload is not None:
+                self.param.model.check_on_set = False
+                self.model = dict(model_payload)
+                self.param.model.check_on_set = True
 
         def shortcut(
             self, kdict: Dict[str, str], kws: Dict[str, Any]
