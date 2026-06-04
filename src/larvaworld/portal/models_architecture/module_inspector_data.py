@@ -58,6 +58,7 @@ __all__ = [
     "module_kind",
     "module_modes",
     "run_module_trace",
+    "sensor_gain_keys",
     "signals_for_kind",
     "stimulus_series",
     "stimulus_to_input",
@@ -263,13 +264,35 @@ def stimulus_series(stim: StimulusSpec, steps: int, dt: float) -> list[float]:
     return values
 
 
+def sensor_gain_keys(module: Any) -> list[str]:
+    """Return the active ``gain_dict`` keys of a built sensor instance."""
+    return list(getattr(module, "gain_dict", {}) or [])
+
+
 def stimulus_to_input(
-    module_id: str, value: float, baseline: float
+    module_id: str,
+    value: float,
+    baseline: float,
+    *,
+    gain_keys: list[str] | None = None,
 ) -> dict[str, float]:
+    """Map a scalar stimulus onto the sensor input dict.
+
+    The input keys must match the instance ``gain_dict`` keys; otherwise the
+    sensor treats the stimulus as a novel input with gain 0.0 and the output
+    goes flat. When ``gain_keys`` is provided (the built module's active keys),
+    the stimulus follows whatever keys the user configured. Without it, the
+    canonical per-sensor keys are used (backward-compatible default).
+    """
     if module_id == "thermosensor":
-        return {"warm": float(value), "cool": float(baseline)}
-    key = _SENSOR_STIMULUS_KEY[module_id]
-    return {key: float(value)}
+        # Dual-channel: the warm channel follows the stimulus, the cool channel
+        # holds the baseline. Fall back to the canonical warm/cool keys.
+        keys = gain_keys or ["warm", "cool"]
+        warm_key = "warm" if "warm" in keys else keys[0]
+        return {k: (float(value) if k == warm_key else float(baseline)) for k in keys}
+    if gain_keys:
+        return {k: float(value) for k in gain_keys}
+    return {_SENSOR_STIMULUS_KEY[module_id]: float(value)}
 
 
 def run_module_trace(
@@ -321,9 +344,16 @@ def run_module_trace(
         stim_used = stimulus or DEFAULT_STIMULUS
         series = stimulus_series(stim_used, steps, dt)
         signals = SENSOR_SIGNALS
+        # Drive the stimulus through the module's active gain keys so edited
+        # gain_dict keys stay connected to the plotted output.
+        gain_keys = sensor_gain_keys(module)
         for tick in range(steps):
             value = series[tick]
-            module.step(A_in=stimulus_to_input(module_id, value, stim_used.baseline))
+            module.step(
+                A_in=stimulus_to_input(
+                    module_id, value, stim_used.baseline, gain_keys=gain_keys
+                )
+            )
             rows.append(
                 {
                     "time": tick * dt,

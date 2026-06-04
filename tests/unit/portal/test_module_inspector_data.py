@@ -5,6 +5,7 @@ import random
 import numpy as np
 import pytest
 
+from larvaworld.lib import util
 from larvaworld.portal.models_architecture import module_inspector_data as data
 from larvaworld.portal.models_architecture.module_inspector_models import (
     ModuleInspectorError,
@@ -145,3 +146,29 @@ def test_stimulus_to_input_keys() -> None:
         "warm": 0.7,
         "cool": 1.0,
     }
+
+
+def test_stimulus_to_input_follows_active_gain_keys() -> None:
+    # When the user edits gain_dict to a custom key, the stimulus must target it.
+    assert data.stimulus_to_input("olfactor", 0.7, 1.0, gain_keys=["CS"]) == {"CS": 0.7}
+    # Thermosensor keeps its warm-follows-stimulus / cool-holds-baseline contract.
+    assert data.stimulus_to_input(
+        "thermosensor", 0.7, 1.0, gain_keys=["warm", "cool"]
+    ) == {"warm": 0.7, "cool": 1.0}
+
+
+def test_sensor_with_edited_gain_key_stays_connected() -> None:
+    # Reproduces the review edge case: a non-default gain_dict key must remain
+    # driven by the stimulus (output not flat) instead of being added as a
+    # novel gain of 0.0.
+    conf = data.default_module_config("olfactor", "default")
+    conf["gain_dict"] = util.AttrDict({"CS": 2.0})
+    stim = StimulusSpec(
+        waveform="sinusoid", baseline=1.0, amplitude=0.5, frequency=1.0, onset=0.0
+    )
+    module = data.build_standalone_module("olfactor", "default", conf, dt=0.1)
+    assert data.sensor_gain_keys(module) == ["CS"]
+    result = data.run_module_trace(
+        "olfactor", "default", conf, steps=80, dt=0.1, stimulus=stim
+    )
+    assert result.dataframe["output"].nunique() > 1
