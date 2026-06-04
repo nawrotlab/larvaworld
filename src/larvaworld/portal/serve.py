@@ -30,7 +30,7 @@ APP_ID_TO_FACTORY_PATH: dict[str, str] = {
     "track_viewer": "larvaworld.portal.datasets.dataset_replay_app:dataset_replay_app",
     "experiment_viewer": "larvaworld.dashboards.experiment_viewer:experiment_viewer_app",
     "larva_models": "larvaworld.portal.models_architecture.model_inspector_app:model_inspector_app",
-    "locomotory_modules": "larvaworld.dashboards.module_inspector:module_inspector_app",
+    "locomotory_modules": "larvaworld.portal.models_architecture.module_inspector_app:module_inspector_app",
     "lateral_oscillator": "larvaworld.dashboards.lateral_oscillator_inspector:lateral_oscillator_app",
 }
 

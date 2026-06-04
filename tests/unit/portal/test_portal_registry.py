@@ -59,3 +59,9 @@ def test_larva_models_route_points_to_portal_model_inspector() -> None:
     assert APP_ID_TO_FACTORY_PATH["larva_models"] == (
         "larvaworld.portal.models_architecture.model_inspector_app:model_inspector_app"
     )
+
+
+def test_locomotory_modules_route_points_to_portal_module_inspector() -> None:
+    assert APP_ID_TO_FACTORY_PATH["locomotory_modules"] == (
+        "larvaworld.portal.models_architecture.module_inspector_app:module_inspector_app"
+    )
