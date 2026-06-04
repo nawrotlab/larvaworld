@@ -167,6 +167,13 @@ def mode_label(module_id: str, mode: str) -> str:
 
 
 def default_module_config(module_id: str, mode: str) -> Any:
+    """Return a **copy** of the canonical default config for ``module_id`` / ``mode``.
+
+    ``MD.module_conf`` may return a shared ``default_dict`` entry; callers must
+    not mutate the returned object without copying. This function always returns
+    an independent copy so portal callers and tests cannot corrupt moduleDB
+    defaults.
+    """
     if mode not in module_modes(module_id):
         raise ModuleInspectorError(
             "invalid_mode",
@@ -180,7 +187,7 @@ def default_module_config(module_id: str, mode: str) -> Any:
             f'Could not build default config for "{module_id}" mode "{mode}".',
             context={"module_id": module_id, "mode": mode},
         )
-    return conf
+    return copy_config_value(conf)
 
 
 def build_standalone_module(

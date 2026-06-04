@@ -204,7 +204,7 @@ configuration, source selection, discovery, and workspace import controls.
   - effector: **input**, **activation**, **phi**, **output** (whichever exist on the instance)
   - feeder: **phi**, **complete_iteration**
   - sensor: **stimulus**, **output**
-- **Portal-only adapters** (no core changes): a standalone `windsensor` is built with canonical zero `weights`; `olfactor`/`toucher` receive a non-canonical **preview** gain so their response is visible. Sensors respond to the _change_ of the stimulus, which is why a non-zero baseline is used.
+- **Portal-only adapters** (no core changes): a standalone `windsensor` is built with canonical zero `weights`; `olfactor`/`toucher` receive a non-canonical **preview** gain so their response is visible. Sensors respond to the _change_ of the stimulus, which is why a non-zero baseline is used. Default configs from `moduleDB` are **copied** in the portal data layer so edits cannot mutate shared registry defaults.
 - **Deterministic preview defaults**: initial **phi** is forced to 0 after construction; the **neural** turner warm-up remains stochastic (seed RNGs for repeatable tests).
 
 **Access**: `locomotory_modules`

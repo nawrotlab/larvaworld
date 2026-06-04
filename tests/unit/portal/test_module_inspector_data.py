@@ -138,6 +138,14 @@ def test_stimulus_series_shapes() -> None:
     assert step_series[-1] == pytest.approx(1.5)
 
 
+def test_default_module_config_returns_independent_copies() -> None:
+    a = data.default_module_config("olfactor", "default")
+    b = data.default_module_config("olfactor", "default")
+    assert a is not b
+    a["gain_dict"] = util.AttrDict({"X": 1.0})
+    assert "X" not in (b.get("gain_dict") or {})
+
+
 def test_stimulus_to_input_keys() -> None:
     assert data.stimulus_to_input("olfactor", 0.7, 1.0) == {"odor": 0.7}
     assert data.stimulus_to_input("toucher", 0.7, 1.0) == {"touch": 0.7}
