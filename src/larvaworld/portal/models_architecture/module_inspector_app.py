@@ -1,4 +1,4 @@
-"""Portal Module Inspector: standalone crawler/turner stepping and signal plots."""
+"""Portal Module Inspector: kind-aware standalone module stepping and signal plots."""
 
 from __future__ import annotations
 
@@ -17,10 +17,12 @@ from larvaworld.portal.models_architecture.module_inspector_data import (
     DEFAULT_A_IN,
     DEFAULT_DT,
     DEFAULT_STEPS,
+    DEFAULT_STIMULUS,
 )
 from larvaworld.portal.models_architecture.module_inspector_models import (
     ModuleInspectorError,
     ModuleTraceResult,
+    StimulusSpec,
 )
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
 
@@ -29,7 +31,6 @@ __all__ = ["_ModuleInspectorController", "module_inspector_app"]
 CONTROLS_COLUMN_WIDTH = 340
 SECTION_COLUMN_GAP_PX = 10
 
-# Minimal subset of Model Inspector CSS for matching look (root, intro, status, controls).
 MODULE_INSPECTOR_RAW_CSS = """
 .lw-model-inspector-root {
   padding: 14px 12px 20px 12px;
@@ -58,7 +59,33 @@ MODULE_INSPECTOR_RAW_CSS = """
   background: rgba(193, 176, 194, 0.12);
   padding: 10px;
 }
+
+.lw-model-inspector-live-box {
+  border-radius: 10px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+  padding: 10px;
+}
 """.strip()
+
+_KIND_NOTES: dict[str, str] = {
+    "effector": (
+        "**Effector probe:** driven by a constant **A_in**. Initial phase is fixed "
+        "to 0 for reproducibility; the **neural** turner uses a stochastic warm-up "
+        "(seed RNGs for repeatable tests)."
+    ),
+    "feeder": (
+        "**Feeder probe:** the feeder is a self-oscillator with no external input; "
+        "it is driven by its own phase, so there is no A_in. The effector is started "
+        "(active) before stepping."
+    ),
+    "sensor": (
+        "**Sensor probe:** sensors respond to the *change* of the stimulus "
+        "(derivative-based), not its absolute value, so they are driven by a "
+        "time-varying stimulus instead of a constant A_in. Injected gains for "
+        "olfactor/toucher are a non-canonical **preview** adapter."
+    ),
+}
 
 
 def _status_html(text: str) -> str:
@@ -66,7 +93,7 @@ def _status_html(text: str) -> str:
 
 
 class _ModuleInspectorController:
-    """Panel controller: module/mode selection, param editing, trace recompute."""
+    """Panel controller: kind-aware module/mode selection, params, trace recompute."""
 
     def __init__(self) -> None:
         self._module_id = "crawler"
@@ -77,7 +104,7 @@ class _ModuleInspectorController:
 
         self._sources = {
             sig: ColumnDataSource(data={"time": [], sig: []})
-            for sig in data.CANDIDATE_SIGNALS
+            for sig in data.ALL_SIGNALS
         }
 
         self.module_select = pn.widgets.Select(
@@ -98,6 +125,43 @@ class _ModuleInspectorController:
             value=DEFAULT_A_IN,
             step=0.01,
         )
+
+        # Sensor stimulus controls (visible only for kind == "sensor").
+        self.waveform_select = pn.widgets.Select(
+            name="Stimulus waveform",
+            options=["sinusoid", "step"],
+            value=DEFAULT_STIMULUS.waveform,
+        )
+        self.baseline_input = pn.widgets.FloatInput(
+            name="Stimulus baseline",
+            value=DEFAULT_STIMULUS.baseline,
+            step=0.05,
+        )
+        self.amplitude_input = pn.widgets.FloatInput(
+            name="Stimulus amplitude",
+            value=DEFAULT_STIMULUS.amplitude,
+            step=0.05,
+        )
+        self.frequency_input = pn.widgets.FloatInput(
+            name="Stimulus frequency (Hz)",
+            value=DEFAULT_STIMULUS.frequency,
+            start=0.0,
+            step=0.1,
+        )
+        self.onset_input = pn.widgets.FloatInput(
+            name="Stimulus onset (s)",
+            value=DEFAULT_STIMULUS.onset,
+            start=0.0,
+            step=0.1,
+        )
+        self._stimulus_widgets = [
+            self.waveform_select,
+            self.baseline_input,
+            self.amplitude_input,
+            self.frequency_input,
+            self.onset_input,
+        ]
+
         self.steps_input = pn.widgets.IntInput(
             name="N steps",
             value=DEFAULT_STEPS,
@@ -114,18 +178,14 @@ class _ModuleInspectorController:
             options=[],
             value=[],
         )
-        self.status_pane = pn.pane.HTML(_status_html("Ready."), margin=(8, 0, 0, 0))
-        self.param_box = pn.Column(sizing_mode="stretch_width")
-        self.plot_view = pn.Column(sizing_mode="stretch_width")
-
-        self.determinism_note = pn.pane.Markdown(
-            (
-                "**Preview note:** Initial phase is fixed to 0 for reproducibility. "
-                "Turner **neural** mode uses stochastic warm-up; seed RNGs for repeatable tests."
-            ),
+        self.notes_pane = pn.pane.Markdown(
+            _KIND_NOTES["effector"],
             margin=(0, 0, 6, 0),
             sizing_mode="stretch_width",
         )
+        self.status_pane = pn.pane.HTML(_status_html("Ready."), margin=(8, 0, 0, 0))
+        self.param_box = pn.Column(sizing_mode="stretch_width")
+        self.plot_view = pn.Column(sizing_mode="stretch_width")
 
         self.module_select.param.watch(self._on_module_change, "value")
         self.mode_select.param.watch(self._on_mode_change, "value")
@@ -135,6 +195,14 @@ class _ModuleInspectorController:
             else "value"
         )
         self.a_in_slider.param.watch(self._on_setting_change, _slider_attr)
+        self.waveform_select.param.watch(self._on_setting_change, "value")
+        for w in (
+            self.baseline_input,
+            self.amplitude_input,
+            self.frequency_input,
+            self.onset_input,
+        ):
+            w.param.watch(self._on_setting_change, "value")
         self.steps_input.param.watch(self._on_setting_change, "value")
         self.dt_input.param.watch(self._on_dt_change, "value")
         self.signal_checkbox.param.watch(self._on_signals_change, "value")
@@ -142,11 +210,22 @@ class _ModuleInspectorController:
         self._rebuild_editor()
         self._recompute()
 
+    def _kind(self) -> str:
+        return data.module_kind(self._module_id)
+
     def _mode_option_labels(self) -> dict[str, str]:
         return {
             data.mode_label(self._module_id, m): m
             for m in data.module_modes(self._module_id)
         }
+
+    def _apply_kind_visibility(self) -> None:
+        kind = self._kind()
+        self.a_in_slider.visible = kind == "effector"
+        is_sensor = kind == "sensor"
+        for w in self._stimulus_widgets:
+            w.visible = is_sensor
+        self.notes_pane.object = _KIND_NOTES[kind]
 
     def _clear_editor_watchers(self) -> None:
         editor = self._editor
@@ -173,6 +252,7 @@ class _ModuleInspectorController:
 
     def _rebuild_editor(self) -> None:
         self._clear_editor_watchers()
+        kind = self._kind()
         raw_names = list(MD.brainDB[self._module_id].module_pars(mode=self._mode))
         self._editable_params = [n for n in raw_names if n != "mode"]
         self._editor = data.build_standalone_module(
@@ -180,25 +260,28 @@ class _ModuleInspectorController:
             self._mode,
             dt=self._dt(),
         )
-        lo, hi = data.module_input_range(self._editor)
-        self.a_in_slider.start = lo
-        self.a_in_slider.end = hi
-        if self.a_in_slider.value < lo:
-            self.a_in_slider.value = lo
-        elif self.a_in_slider.value > hi:
-            self.a_in_slider.value = hi
+
+        if kind == "effector":
+            lo, hi = data.module_input_range(self._editor)
+            self.a_in_slider.start = lo
+            self.a_in_slider.end = hi
+            if self.a_in_slider.value < lo:
+                self.a_in_slider.value = lo
+            elif self.a_in_slider.value > hi:
+                self.a_in_slider.value = hi
 
         self.param_box.objects = [
             param_controls(self._editor, parameters=self._editable_params)
         ]
         self._watch_editor_params()
 
-        available = list(data.detect_signals(self._editor))
+        available = list(data.detect_signals(self._editor, kind))
         self.signal_checkbox.options = available
         prev = set(self.signal_checkbox.value or ())
         self.signal_checkbox.value = [s for s in available if s in prev] or list(
             available
         )
+        self._apply_kind_visibility()
 
     def _conf_from_editor(self) -> util.AttrDict:
         conf = util.AttrDict(
@@ -215,6 +298,15 @@ class _ModuleInspectorController:
 
     def _a_in(self) -> float:
         return float(self.a_in_slider.value)
+
+    def _stimulus_spec(self) -> StimulusSpec:
+        return StimulusSpec(
+            waveform=str(self.waveform_select.value),
+            baseline=float(self.baseline_input.value),
+            amplitude=float(self.amplitude_input.value),
+            frequency=float(self.frequency_input.value),
+            onset=float(self.onset_input.value),
+        )
 
     def _on_module_change(self, event) -> None:
         self._module_id = str(event.new)
@@ -245,6 +337,8 @@ class _ModuleInspectorController:
         self._recompute()
 
     def _recompute(self) -> None:
+        kind = self._kind()
+        stimulus = self._stimulus_spec() if kind == "sensor" else None
         try:
             result = data.run_module_trace(
                 self._module_id,
@@ -253,20 +347,33 @@ class _ModuleInspectorController:
                 steps=self._steps(),
                 dt=self._dt(),
                 a_in=self._a_in(),
+                stimulus=stimulus,
             )
         except ModuleInspectorError as exc:
             self.status_pane.object = _status_html(f"Trace failed ({exc.code}): {exc}")
             return
         self._update_sources(result)
         self._rebuild_plots(result)
-        self.status_pane.object = _status_html(
-            f"{self._module_id} / {self._mode}: {result.steps} steps, "
-            f"dt={result.dt}, A_in={result.a_in}."
+        self.status_pane.object = _status_html(self._status_text(result))
+
+    def _status_text(self, result: ModuleTraceResult) -> str:
+        base = (
+            f"{result.module_id} / {result.mode} [{result.kind}]: "
+            f"{result.steps} steps, dt={result.dt}"
         )
+        if result.kind == "effector":
+            return f"{base}, A_in={result.a_in}."
+        if result.kind == "sensor" and result.stimulus is not None:
+            s = result.stimulus
+            return (
+                f"{base}, stimulus={s.waveform} "
+                f"(baseline={s.baseline}, amplitude={s.amplitude})."
+            )
+        return f"{base}."
 
     def _update_sources(self, result: ModuleTraceResult) -> None:
         df = result.dataframe
-        for sig in data.CANDIDATE_SIGNALS:
+        for sig in data.ALL_SIGNALS:
             if sig in df.columns:
                 self._sources[sig].data = {
                     "time": list(df["time"]),
@@ -298,9 +405,12 @@ class _ModuleInspectorController:
         intro = pn.pane.HTML(
             (
                 '<div class="lw-model-inspector-intro">'
-                "Inspect <strong>crawler</strong> and <strong>turner</strong> module "
-                "implementations per mode: edit parameters, set constant "
-                "<strong>A_in</strong>, and view time series of available signals."
+                "Inspect standalone <strong>locomotor effectors</strong> "
+                "(crawler, turner), the <strong>feeder</strong>, and "
+                "<strong>sensors</strong> (olfactor, toucher, windsensor, "
+                "thermosensor), one module and mode at a time. Each module type "
+                "uses its own probe: constant A_in, self-oscillation, or a "
+                "time-varying stimulus."
                 "</div>"
             ),
             margin=0,
@@ -309,9 +419,14 @@ class _ModuleInspectorController:
             self.module_select,
             self.mode_select,
             self.a_in_slider,
+            self.waveform_select,
+            self.baseline_input,
+            self.amplitude_input,
+            self.frequency_input,
+            self.onset_input,
             self.steps_input,
             self.dt_input,
-            self.determinism_note,
+            self.notes_pane,
             self.signal_checkbox,
             self.status_pane,
             sizing_mode="stretch_width",

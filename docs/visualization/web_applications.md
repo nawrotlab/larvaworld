@@ -59,7 +59,7 @@ the landing page.
 | **Environment Builder**          | `wf.environment_builder` | Build arenas, borders, obstacles, food layouts, and sensory landscapes           |
 | **Dataset Replay**               | `track_viewer`           | Replay and inspect larval trajectory datasets                                    |
 | **Model Inspector**              | `larva_models`           | Browse available larva model presets and parameters                              |
-| **Module Inspector**             | `locomotory_modules`     | Inspect crawler/turner module behavior per mode (portal)                         |
+| **Module Inspector**             | `locomotory_modules`     | Inspect crawler/turner/feeder/sensor modules per mode (portal)                   |
 
 ---
 
@@ -185,16 +185,27 @@ configuration, source selection, discovery, and workspace import controls.
 
 ## Module Inspector
 
-**Purpose**: Inspect standalone **crawler** and **turner** module implementations (one module and mode at a time) without loading a full larva model preset.
+**Purpose**: Inspect standalone brain modules (one module and mode at a time) without loading a full larva model preset. It covers three module "kinds", each with its own probe:
+
+- **effector** (`crawler`, `turner`): driven by a constant scalar **A_in**
+- **feeder**: a self-oscillator with no external input
+- **sensor** (`olfactor`, `toucher`, `windsensor`, `thermosensor`): driven by a time-varying stimulus
 
 **Features**:
 
-- Select **crawler** or **turner**, then a **mode** (Nengo modes are excluded from this standalone view)
-- Edit module parameters with typed widgets bound to the live `param.Parameterized` instance
-- Drive the module with a constant **A_in** via a slider (bounds follow the module `input_range` when defined)
-- Set **N steps** and **dt** for the time axis; the trace recomputes immediately on any control or parameter change
-- Choose which signals to plot among those present on the instance: **input**, **activation**, **phi**, **output** (Bokeh time series, x-axis in seconds)
-- **Deterministic preview defaults**: initial **phi** is forced to 0 after construction; **neural** turner warm-up remains stochastic (seed RNGs for repeatable tests)
+- Select a **module** (7 modules across the 3 kinds), then a **mode**. Modes requiring remote/IPC backends are excluded from this standalone view: **Nengo** modes everywhere and the olfactor **osn** mode (remote Brian2 server).
+- Edit module parameters with typed widgets bound to the live `param.Parameterized` instance.
+- Kind-aware drive:
+  - effector: constant **A_in** slider (bounds follow the module `input_range` when defined)
+  - feeder: no input; the effector is started (active) and stepped by its own phase
+  - sensor: a **time-varying stimulus** (sinusoid or step) with editable baseline, amplitude, frequency, and onset
+- Set **N steps** and **dt** for the time axis; the trace recomputes immediately on any control or parameter change.
+- Choose which signals to plot (Bokeh time series, x-axis in seconds):
+  - effector: **input**, **activation**, **phi**, **output** (whichever exist on the instance)
+  - feeder: **phi**, **complete_iteration**
+  - sensor: **stimulus**, **output**
+- **Portal-only adapters** (no core changes): a standalone `windsensor` is built with canonical zero `weights`; `olfactor`/`toucher` receive a non-canonical **preview** gain so their response is visible. Sensors respond to the _change_ of the stimulus, which is why a non-zero baseline is used.
+- **Deterministic preview defaults**: initial **phi** is forced to 0 after construction; the **neural** turner warm-up remains stochastic (seed RNGs for repeatable tests).
 
 **Access**: `locomotory_modules`
 
@@ -206,13 +217,13 @@ The `larvaworld-app` command serves the established dashboard collection
 directly. These dashboards are also available through the portal routes where
 they are part of the landing registry.
 
-| Dashboard              | App ID               | Purpose                                 |
-| ---------------------- | -------------------- | --------------------------------------- |
-| **Experiment Viewer**  | `experiment_viewer`  | View experiment results interactively   |
-| **Track Viewer**       | `track_viewer`       | Inspect trajectories                    |
-| **Model Inspector**    | `larva_models`       | Explore locomotory models               |
-| **Module Inspector**   | `locomotory_modules` | Inspect crawler/turner modules (portal) |
-| **Lateral Oscillator** | `lateral_oscillator` | Visualize the neural oscillator module  |
+| Dashboard              | App ID               | Purpose                                               |
+| ---------------------- | -------------------- | ----------------------------------------------------- |
+| **Experiment Viewer**  | `experiment_viewer`  | View experiment results interactively                 |
+| **Track Viewer**       | `track_viewer`       | Inspect trajectories                                  |
+| **Model Inspector**    | `larva_models`       | Explore locomotory models                             |
+| **Module Inspector**   | `locomotory_modules` | Inspect crawler/turner/feeder/sensor modules (portal) |
+| **Lateral Oscillator** | `lateral_oscillator` | Visualize the neural oscillator module                |
 
 ---
 

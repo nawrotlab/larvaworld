@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 from numbers import Real
 from types import SimpleNamespace
 from typing import Any
@@ -19,6 +18,10 @@ from larvaworld.portal.models_architecture.model_inspector_models import (
     ModuleComparison,
     ProbeIssue,
     ProbeResult,
+)
+from larvaworld.portal.models_architecture._module_config_utils import (
+    WINDSENSOR_DEFAULT_WEIGHTS,
+    copy_config_value,
 )
 
 
@@ -84,12 +87,7 @@ _BRAIN_OPTIONAL_NON_MEMORY_MODULES: tuple[str, ...] = (
     "windsensor",
     "thermosensor",
 )
-_WINDSENSOR_DEFAULT_WEIGHTS: dict[str, float] = {
-    "hunch_lin": 0.0,
-    "hunch_ang": 0.0,
-    "bend_lin": 0.0,
-    "bend_ang": 0.0,
-}
+_WINDSENSOR_DEFAULT_WEIGHTS: dict[str, float] = WINDSENSOR_DEFAULT_WEIGHTS
 
 
 def load_model_draft(model_id: str) -> Any:
@@ -651,9 +649,7 @@ def _get_brain_conf(model_id: str, model_conf: Any) -> Any:
 
 
 def _copy_config_value(value: Any) -> Any:
-    if hasattr(value, "get_copy"):
-        return value.get_copy()
-    return copy.deepcopy(value)
+    return copy_config_value(value)
 
 
 def _has_module_config(model_conf: Any, module_id: str) -> bool:

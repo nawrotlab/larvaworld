@@ -1,4 +1,10 @@
-"""Dataclasses and errors for the portal Module Inspector (standalone crawler/turner)."""
+"""Dataclasses and errors for the portal Module Inspector.
+
+Covers three module "kinds":
+- "effector": crawler/turner, driven by a constant scalar ``A_in``
+- "feeder":   self-oscillator, no external input
+- "sensor":   driven by a time-varying stimulus converted to a dict input
+"""
 
 from __future__ import annotations
 
@@ -11,33 +17,46 @@ __all__ = [
     "ModuleInspectorError",
     "ModuleTraceResult",
     "ModuleVariantSpec",
+    "StimulusSpec",
 ]
+
+
+@dataclass(frozen=True)
+class StimulusSpec:
+    """Time-varying stimulus configuration for sensor modules."""
+
+    waveform: str  # "step" | "sinusoid"
+    baseline: float
+    amplitude: float
+    frequency: float  # Hz, used by "sinusoid"
+    onset: float  # seconds, used by "step"
 
 
 @dataclass(frozen=True)
 class ModuleVariantSpec:
     """One inspectable module variant (module id + mode)."""
 
-    module_id: str  # "crawler" | "turner"
-    mode: str  # e.g. "realistic"
-    display_name: str  # e.g. "Crawler / realistic"
-    available_signals: tuple[
-        str, ...
-    ]  # subset of ("input","activation","phi","output")
+    module_id: str
+    mode: str
+    kind: str  # "effector" | "feeder" | "sensor"
+    display_name: str
+    available_signals: tuple[str, ...]
 
 
 @dataclass(frozen=True)
 class ModuleTraceResult:
-    """Time series from stepping a standalone module with constant A_in."""
+    """Time series produced by stepping a standalone module."""
 
     module_id: str
     mode: str
+    kind: str
     steps: int
     dt: float
     a_in: float
     signals: tuple[str, ...]
     dataframe: pd.DataFrame  # columns: "time" + signals
     input_range: tuple[float, float]
+    stimulus: StimulusSpec | None = None  # set only for kind == "sensor"
 
 
 class ModuleInspectorError(RuntimeError):
