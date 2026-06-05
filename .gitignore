@@ -171,3 +171,9 @@ my_work/
 
 # GUI obsolete since pysimplegui v.5
 /src/larvaworld/gui/
+
+# Local editor / agent / tooling (not part of published LarvaWorld source)
+.cursor/
+.agents/
+.codex/
+.vscode/
