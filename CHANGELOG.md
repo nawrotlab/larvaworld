@@ -1,5 +1,28 @@
 # Changelog
 
+## v2.4.0 (2026-06-05)
+
+### Fix
+
+- Coerce nested classdict payloads ([`27e9017`](https://github.com/nawrotlab/larvaworld/commit/27e9017828675f9cb759568d35a6dbd0744a53a5))
+- Return copied defaults from module inspector default_module_config ([`770a6a0`](https://github.com/nawrotlab/larvaworld/commit/770a6a0ff20253a79491281d7bc8b05cdfd4daa2))
+- Keep module inspector sensor stimulus on active gain keys ([`5596365`](https://github.com/nawrotlab/larvaworld/commit/5596365b0f52de237531ca5388c7915fbc5616e5))
+
+### Performance
+
+- Reduce landing banner gif sizes ([`8ad8d3c`](https://github.com/nawrotlab/larvaworld/commit/8ad8d3c24b05dd54c15d8ddcff117ab7145edf7a))
+
+### Documentation
+
+- Keep module inspector copy user-facing ([`f2bfd7e`](https://github.com/nawrotlab/larvaworld/commit/f2bfd7e3d9ad94c51ac44613933ddfbf7e606289))
+
+### Feature
+
+- Extend module inspector with kind-aware feeder and sensor probes ([`51dc86b`](https://github.com/nawrotlab/larvaworld/commit/51dc86bd4f35b7085c76cf008eab022279a9b927))
+- Add portal module inspector for crawler and turner ([`21f9e64`](https://github.com/nawrotlab/larvaworld/commit/21f9e64de6db5b01c1607e9a8735db11b62a8807))
+- Refine model inspector preview reporters and mode widgets ([`3f9abb2`](https://github.com/nawrotlab/larvaworld/commit/3f9abb26a296854b206509ac9b6bc3d644889c97))
+- Extend model inspector layout and live preview ([`19112ab`](https://github.com/nawrotlab/larvaworld/commit/19112ab56f81f669167186ae61e7756f2353e20c))
+
 ## v2.3.0 (2026-06-01)
 
 ### Fix
