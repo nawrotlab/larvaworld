@@ -14,9 +14,12 @@ from larvaworld.lib.model import moduleDB as MD
 from larvaworld.portal.config_widgets.preset_controls import PresetSource
 from larvaworld.portal.models_architecture.model_inspector_app import (
     _ModelInspectorController,
+    _reporter_key_columns,
     model_inspector_app,
 )
 from larvaworld.portal.models_architecture.model_inspector_data import (
+    DEFAULT_LIVE_PREVIEW_REPORTER_KEYS,
+    LIVE_PREVIEW_REPORTER_KEYS,
     MODEL_MODULE_ORDER,
     default_brain_module_config,
     load_model_draft,
@@ -283,11 +286,41 @@ def test_controller_builds_grouped_module_sections(
     assert "Nervous System" in text
     assert "Locomotion" in text
     assert "Sensation" in text
-    assert "Feeding" in text
     assert "Memory" in text
-    assert "Larva Modules" in text
+    assert "Body and Metabolism" in text
     assert "Core" in text
     assert "Optional" in text
+
+
+def test_controller_live_preview_plot_checkbox_defaults(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    merged = (
+        set(controller.plot_reporters_checkbox_activity.value)
+        | set(controller.plot_reporters_checkbox_input.value)
+        | set(controller.plot_reporters_checkbox_phase.value)
+    )
+    assert merged == set(DEFAULT_LIVE_PREVIEW_REPORTER_KEYS)
+    activity_keys, input_keys, phase_keys = _reporter_key_columns()
+    assert set(controller.plot_reporters_checkbox_activity.options.values()) == set(
+        activity_keys
+    )
+    assert set(controller.plot_reporters_checkbox_input.options.values()) == set(
+        input_keys
+    )
+    assert set(controller.plot_reporters_checkbox_phase.options.values()) == set(
+        phase_keys
+    )
+    assert set(controller.plot_reporters_checkbox_activity.options.values()) | set(
+        controller.plot_reporters_checkbox_input.options.values()
+    ) | set(controller.plot_reporters_checkbox_phase.options.values()) == set(
+        LIVE_PREVIEW_REPORTER_KEYS
+    )
+    assert (
+        "Turner activity (A_T)" in controller.plot_reporters_checkbox_activity.options
+    )
 
 
 def test_controller_shows_all_module_slots_in_order(
@@ -302,11 +335,11 @@ def test_controller_shows_all_module_slots_in_order(
         "turner",
         "interference",
         "intermitter",
+        "feeder",
         "olfactor",
         "toucher",
         "windsensor",
         "thermosensor",
-        "feeder",
         "memory",
         "body",
         "physics",

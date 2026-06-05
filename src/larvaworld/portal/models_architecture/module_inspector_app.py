@@ -1,0 +1,479 @@
+"""Portal Module Inspector: kind-aware standalone module stepping and signal plots."""
+
+from __future__ import annotations
+
+from html import escape
+from typing import Any
+
+import panel as pn
+from bokeh.models import ColumnDataSource
+from bokeh.plotting import figure
+
+from larvaworld.lib import util
+from larvaworld.lib.model import moduleDB as MD
+from larvaworld.portal.config_widgets.widget_base import param_controls
+from larvaworld.portal.models_architecture import module_inspector_data as data
+from larvaworld.portal.models_architecture.module_inspector_data import (
+    DEFAULT_A_IN,
+    DEFAULT_DT,
+    DEFAULT_STEPS,
+    DEFAULT_STIMULUS,
+)
+from larvaworld.portal.models_architecture.module_inspector_models import (
+    ModuleInspectorError,
+    ModuleTraceResult,
+    StimulusSpec,
+)
+from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
+
+__all__ = ["_ModuleInspectorController", "module_inspector_app"]
+
+CONTROLS_COLUMN_WIDTH = 340
+SECTION_COLUMN_GAP_PX = 10
+
+MODULE_INSPECTOR_RAW_CSS = """
+.lw-model-inspector-root {
+  padding: 14px 12px 20px 12px;
+}
+
+.lw-model-inspector-intro {
+  border-left: 4px solid #c1b0c2;
+  background: rgba(193, 176, 194, 0.16);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0 0 10px 0;
+}
+
+.lw-model-inspector-status {
+  font-size: 12px;
+  line-height: 1.45;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  background: rgba(248, 250, 252, 0.94);
+}
+
+.lw-model-inspector-controls-box {
+  border-radius: 10px;
+  border: 1px solid rgba(17, 17, 17, 0.12);
+  background: rgba(193, 176, 194, 0.12);
+  padding: 10px;
+}
+
+.lw-model-inspector-live-box {
+  border-radius: 10px;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+  padding: 10px;
+}
+""".strip()
+
+_KIND_NOTES: dict[str, str] = {
+    "effector": (
+        "**Effector probe:** driven by a constant **A_in**. Initial phase is fixed "
+        "to 0 for reproducibility; the **neural** turner uses a stochastic warm-up "
+        "(seed RNGs for repeatable tests)."
+    ),
+    "feeder": (
+        "**Feeder probe:** the feeder is a self-oscillator with no external input; "
+        "it is driven by its own phase, so there is no A_in. The effector is started "
+        "(active) before stepping."
+    ),
+    "sensor": (
+        "**Sensor probe:** sensors respond to the *change* of the stimulus "
+        "(derivative-based), not its absolute value, so they are driven by a "
+        "time-varying stimulus instead of a constant A_in. Injected gains for "
+        "olfactor/toucher are a non-canonical **preview** adapter."
+    ),
+}
+
+
+def _status_html(text: str) -> str:
+    return f'<div class="lw-model-inspector-status">{escape(text)}</div>'
+
+
+class _ModuleInspectorController:
+    """Panel controller: kind-aware module/mode selection, params, trace recompute."""
+
+    def __init__(self) -> None:
+        self._module_id = "crawler"
+        self._mode = str(data.module_modes(self._module_id)[0])
+        self._editor: Any = None
+        self._editable_params: list[str] = []
+        self._editor_watchers: list[Any] = []
+
+        self._sources = {
+            sig: ColumnDataSource(data={"time": [], sig: []})
+            for sig in data.ALL_SIGNALS
+        }
+
+        self.module_select = pn.widgets.Select(
+            name="Module",
+            options=list(data.INSPECTABLE_MODULES),
+            value=self._module_id,
+        )
+        self.mode_select = pn.widgets.Select(
+            name="Mode",
+            options=self._mode_option_labels(),
+            value=self._mode,
+        )
+        lo, hi = data.FALLBACK_INPUT_RANGE
+        self.a_in_slider = pn.widgets.FloatSlider(
+            name="A_in",
+            start=lo,
+            end=hi,
+            value=DEFAULT_A_IN,
+            step=0.01,
+        )
+
+        # Sensor stimulus controls (visible only for kind == "sensor").
+        self.waveform_select = pn.widgets.Select(
+            name="Stimulus waveform",
+            options=["sinusoid", "step"],
+            value=DEFAULT_STIMULUS.waveform,
+        )
+        self.baseline_input = pn.widgets.FloatInput(
+            name="Stimulus baseline",
+            value=DEFAULT_STIMULUS.baseline,
+            step=0.05,
+        )
+        self.amplitude_input = pn.widgets.FloatInput(
+            name="Stimulus amplitude",
+            value=DEFAULT_STIMULUS.amplitude,
+            step=0.05,
+        )
+        self.frequency_input = pn.widgets.FloatInput(
+            name="Stimulus frequency (Hz)",
+            value=DEFAULT_STIMULUS.frequency,
+            start=0.0,
+            step=0.1,
+        )
+        self.onset_input = pn.widgets.FloatInput(
+            name="Stimulus onset (s)",
+            value=DEFAULT_STIMULUS.onset,
+            start=0.0,
+            step=0.1,
+        )
+        self._stimulus_widgets = [
+            self.waveform_select,
+            self.baseline_input,
+            self.amplitude_input,
+            self.frequency_input,
+            self.onset_input,
+        ]
+
+        self.steps_input = pn.widgets.IntInput(
+            name="N steps",
+            value=DEFAULT_STEPS,
+            start=1,
+        )
+        self.dt_input = pn.widgets.FloatInput(
+            name="dt",
+            value=DEFAULT_DT,
+            start=0.001,
+            step=0.01,
+        )
+        self.signal_checkbox = pn.widgets.CheckBoxGroup(
+            name="Signals",
+            options=[],
+            value=[],
+        )
+        self.notes_pane = pn.pane.Markdown(
+            _KIND_NOTES["effector"],
+            margin=(0, 0, 6, 0),
+            sizing_mode="stretch_width",
+        )
+        self.status_pane = pn.pane.HTML(_status_html("Ready."), margin=(8, 0, 0, 0))
+        self.param_box = pn.Column(sizing_mode="stretch_width")
+        self.plot_view = pn.Column(sizing_mode="stretch_width")
+
+        self.module_select.param.watch(self._on_module_change, "value")
+        self.mode_select.param.watch(self._on_mode_change, "value")
+        _slider_attr = (
+            "value_throttled"
+            if "value_throttled" in self.a_in_slider.param
+            else "value"
+        )
+        self.a_in_slider.param.watch(self._on_setting_change, _slider_attr)
+        self.waveform_select.param.watch(self._on_setting_change, "value")
+        for w in (
+            self.baseline_input,
+            self.amplitude_input,
+            self.frequency_input,
+            self.onset_input,
+        ):
+            w.param.watch(self._on_setting_change, "value")
+        self.steps_input.param.watch(self._on_setting_change, "value")
+        self.dt_input.param.watch(self._on_dt_change, "value")
+        self.signal_checkbox.param.watch(self._on_signals_change, "value")
+
+        self._rebuild_editor()
+        self._recompute()
+
+    def _kind(self) -> str:
+        return data.module_kind(self._module_id)
+
+    def _mode_option_labels(self) -> dict[str, str]:
+        return {
+            data.mode_label(self._module_id, m): m
+            for m in data.module_modes(self._module_id)
+        }
+
+    def _apply_kind_visibility(self) -> None:
+        kind = self._kind()
+        self.a_in_slider.visible = kind == "effector"
+        is_sensor = kind == "sensor"
+        for w in self._stimulus_widgets:
+            w.visible = is_sensor
+        self.notes_pane.object = _KIND_NOTES[kind]
+
+    def _clear_editor_watchers(self) -> None:
+        editor = self._editor
+        if editor is None:
+            self._editor_watchers.clear()
+            return
+        for watcher in self._editor_watchers:
+            try:
+                editor.param.unwatch(watcher)
+            except Exception:
+                pass
+        self._editor_watchers.clear()
+
+    def _watch_editor_params(self) -> None:
+        def _on_param_change(_event) -> None:
+            self._recompute()
+
+        for name in self._editable_params:
+            try:
+                w = self._editor.param.watch(_on_param_change, name)
+                self._editor_watchers.append(w)
+            except Exception:
+                continue
+
+    def _rebuild_editor(self) -> None:
+        self._clear_editor_watchers()
+        kind = self._kind()
+        raw_names = list(MD.brainDB[self._module_id].module_pars(mode=self._mode))
+        self._editable_params = [n for n in raw_names if n != "mode"]
+        self._editor = data.build_standalone_module(
+            self._module_id,
+            self._mode,
+            dt=self._dt(),
+        )
+
+        if kind == "effector":
+            lo, hi = data.module_input_range(self._editor)
+            self.a_in_slider.start = lo
+            self.a_in_slider.end = hi
+            if self.a_in_slider.value < lo:
+                self.a_in_slider.value = lo
+            elif self.a_in_slider.value > hi:
+                self.a_in_slider.value = hi
+
+        self.param_box.objects = [
+            param_controls(self._editor, parameters=self._editable_params)
+        ]
+        self._watch_editor_params()
+
+        available = list(data.detect_signals(self._editor, kind))
+        self.signal_checkbox.options = available
+        prev = set(self.signal_checkbox.value or ())
+        self.signal_checkbox.value = [s for s in available if s in prev] or list(
+            available
+        )
+        self._apply_kind_visibility()
+
+    def _conf_from_editor(self) -> util.AttrDict:
+        conf = util.AttrDict(
+            {name: getattr(self._editor, name) for name in self._editable_params}
+        )
+        conf["mode"] = self._mode
+        return conf
+
+    def _dt(self) -> float:
+        return max(0.001, float(self.dt_input.value))
+
+    def _steps(self) -> int:
+        return max(1, int(self.steps_input.value))
+
+    def _a_in(self) -> float:
+        return float(self.a_in_slider.value)
+
+    def _stimulus_spec(self) -> StimulusSpec:
+        return StimulusSpec(
+            waveform=str(self.waveform_select.value),
+            baseline=float(self.baseline_input.value),
+            amplitude=float(self.amplitude_input.value),
+            frequency=float(self.frequency_input.value),
+            onset=float(self.onset_input.value),
+        )
+
+    def _on_module_change(self, event) -> None:
+        self._module_id = str(event.new)
+        labels = self._mode_option_labels()
+        self.mode_select.options = labels
+        modes = data.module_modes(self._module_id)
+        first = str(modes[0])
+        if self.mode_select.value != first:
+            self.mode_select.value = first
+        else:
+            self._mode = first
+            self._rebuild_editor()
+            self._recompute()
+
+    def _on_mode_change(self, event) -> None:
+        self._mode = str(event.new)
+        self._rebuild_editor()
+        self._recompute()
+
+    def _on_setting_change(self, _event=None) -> None:
+        self._recompute()
+
+    def _on_dt_change(self, _event=None) -> None:
+        self._rebuild_editor()
+        self._recompute()
+
+    def _on_signals_change(self, _event=None) -> None:
+        self._recompute()
+
+    def _recompute(self) -> None:
+        kind = self._kind()
+        stimulus = self._stimulus_spec() if kind == "sensor" else None
+        try:
+            result = data.run_module_trace(
+                self._module_id,
+                self._mode,
+                self._conf_from_editor(),
+                steps=self._steps(),
+                dt=self._dt(),
+                a_in=self._a_in(),
+                stimulus=stimulus,
+            )
+        except ModuleInspectorError as exc:
+            self.status_pane.object = _status_html(f"Trace failed ({exc.code}): {exc}")
+            return
+        self._update_sources(result)
+        self._rebuild_plots(result)
+        self.status_pane.object = _status_html(self._status_text(result))
+
+    def _status_text(self, result: ModuleTraceResult) -> str:
+        base = (
+            f"{result.module_id} / {result.mode} [{result.kind}]: "
+            f"{result.steps} steps, dt={result.dt}"
+        )
+        if result.kind == "effector":
+            return f"{base}, A_in={result.a_in}."
+        if result.kind == "sensor" and result.stimulus is not None:
+            s = result.stimulus
+            return (
+                f"{base}, stimulus={s.waveform} "
+                f"(baseline={s.baseline}, amplitude={s.amplitude})."
+            )
+        return f"{base}."
+
+    def _update_sources(self, result: ModuleTraceResult) -> None:
+        df = result.dataframe
+        for sig in data.ALL_SIGNALS:
+            if sig in df.columns:
+                self._sources[sig].data = {
+                    "time": list(df["time"]),
+                    sig: list(df[sig]),
+                }
+            else:
+                self._sources[sig].data = {"time": [], sig: []}
+
+    def _rebuild_plots(self, result: ModuleTraceResult) -> None:
+        selected = tuple(self.signal_checkbox.value or ())
+        plots: list[pn.viewable.Viewable] = []
+        for sig in selected:
+            if sig not in result.signals:
+                continue
+            fig = figure(
+                title=sig,
+                height=220,
+                x_axis_label="time (sec)",
+                y_axis_label=sig,
+                tools="pan,wheel_zoom,box_zoom,save,reset",
+                active_drag=None,
+                sizing_mode="stretch_width",
+            )
+            fig.line("time", sig, source=self._sources[sig], line_width=2)
+            plots.append(pn.pane.Bokeh(fig, sizing_mode="stretch_width"))
+        self.plot_view.objects = plots
+
+    def view(self) -> pn.viewable.Viewable:
+        intro = pn.pane.HTML(
+            (
+                '<div class="lw-model-inspector-intro">'
+                "Inspect standalone <strong>locomotor effectors</strong> "
+                "(crawler, turner), the <strong>feeder</strong>, and "
+                "<strong>sensors</strong> (olfactor, toucher, windsensor, "
+                "thermosensor), one module and mode at a time. Each module type "
+                "uses its own probe: constant A_in, self-oscillation, or a "
+                "time-varying stimulus."
+                "</div>"
+            ),
+            margin=0,
+        )
+        controls = pn.Column(
+            self.module_select,
+            self.mode_select,
+            self.a_in_slider,
+            self.waveform_select,
+            self.baseline_input,
+            self.amplitude_input,
+            self.frequency_input,
+            self.onset_input,
+            self.steps_input,
+            self.dt_input,
+            self.notes_pane,
+            self.signal_checkbox,
+            self.status_pane,
+            sizing_mode="stretch_width",
+            css_classes=["lw-model-inspector-controls-box"],
+            width=CONTROLS_COLUMN_WIDTH,
+            styles={
+                "flex": f"0 0 {CONTROLS_COLUMN_WIDTH}px",
+                "margin-bottom": "10px",
+            },
+        )
+        body = pn.Column(
+            self.param_box,
+            self.plot_view,
+            sizing_mode="stretch_width",
+            css_classes=["lw-model-inspector-live-box"],
+        )
+        body_cell = pn.Column(
+            body,
+            sizing_mode="stretch_width",
+            styles={
+                "margin-left": f"{SECTION_COLUMN_GAP_PX}px",
+                "flex": "1 1 0",
+                "min-width": "0",
+            },
+        )
+        row = pn.Row(
+            controls,
+            body_cell,
+            sizing_mode="stretch_width",
+            styles={"align-items": "flex-start"},
+        )
+        return pn.Column(
+            intro,
+            row,
+            css_classes=["lw-model-inspector-root"],
+            sizing_mode="stretch_width",
+        )
+
+
+def module_inspector_app() -> pn.viewable.Viewable:
+    pn.extension(raw_css=[PORTAL_RAW_CSS, MODULE_INSPECTOR_RAW_CSS])
+    controller = _ModuleInspectorController()
+    template = pn.template.MaterialTemplate(
+        title="",
+        header_background="#c1b0c2",
+        header_color="#111111",
+    )
+    template.header.append(build_app_header(title="Module Inspector"))
+    template.main.append(controller.view())
+    return template

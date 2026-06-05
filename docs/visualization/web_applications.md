@@ -59,7 +59,7 @@ the landing page.
 | **Environment Builder**          | `wf.environment_builder` | Build arenas, borders, obstacles, food layouts, and sensory landscapes           |
 | **Dataset Replay**               | `track_viewer`           | Replay and inspect larval trajectory datasets                                    |
 | **Model Inspector**              | `larva_models`           | Browse available larva model presets and parameters                              |
-| **Module Inspector**             | `locomotory_modules`     | Inspect locomotory and sensorimotor module parameters                            |
+| **Module Inspector**             | `locomotory_modules`     | Inspect crawler/turner/feeder/sensor modules per mode (portal)                   |
 
 ---
 
@@ -172,11 +172,12 @@ configuration, source selection, discovery, and workspace import controls.
 **Features**:
 
 - Browse available model configurations
-- Edit baseline locomotor module parameters in-session (not persisted)
-- Inspect optional configured feeder/sensor/memory modules
-- Run and pause a live locomotor preview
-- View live reporter plots for `A_T` and `A_C` when available
-- Compare model presets as a supplemental view
+- Adjust locomotion-related parameters in the browser (changes are not saved to disk unless you use your own workflow to export them)
+- Review feeding, sensing, and memory-related settings together with locomotion in a clear layout
+- Run or pause a short live preview to see how the selected model behaves over time (default trace window: 500 steps; adjustable in the controls)
+- Pick live chart traces in a compact row (activity, then input, then phase); labels name the signal and show the short reporter keyword from the registry in parentheses
+- Compare two model presets side by side when you want a quick overview of differences
+- Separate areas for brain-related settings and for body and metabolism-related settings
 
 **Access**: `larva_models`
 
@@ -184,13 +185,27 @@ configuration, source selection, discovery, and workspace import controls.
 
 ## Module Inspector
 
-**Purpose**: Inspect behavioral and locomotory modules.
+**Purpose**: Inspect standalone brain modules (one module and mode at a time) without loading a full larva model preset. It covers three module "kinds", each with its own probe:
+
+- **effector** (`crawler`, `turner`): driven by a constant scalar **A_in**
+- **feeder**: a self-oscillator with no external input
+- **sensor** (`olfactor`, `toucher`, `windsensor`, `thermosensor`): driven by a time-varying stimulus
 
 **Features**:
 
-- Browse locomotory and sensorimotor module settings
-- Inspect module parameters and roles
-- Review how modules contribute to larval control
+- Select a **module** (7 modules across the 3 kinds), then a **mode**. Modes requiring remote/IPC backends are excluded from this standalone view: **Nengo** modes everywhere and the olfactor **osn** mode (remote Brian2 server).
+- Edit module parameters with typed widgets that stay linked to the module while you adjust them.
+- Kind-aware drive:
+  - effector: constant **A_in** slider (bounds follow the module input range when defined)
+  - feeder: no input; the module runs on its own rhythm once started
+  - sensor: a **time-varying stimulus** (sinusoid or step) with editable baseline, amplitude, frequency, and onset
+- Set **N steps** and **dt** for the time axis; the trace recomputes immediately on any control or parameter change.
+- Choose which signals to plot (Bokeh time series, x-axis in seconds):
+  - effector: **input**, **activation**, **phi**, **output** (whichever exist on the instance)
+  - feeder: **phi**, **complete_iteration**
+  - sensor: **stimulus**, **output**
+- For **wind**, **odor**, and **touch** sensors, the app uses starting values so traces are visible without extra setup. For **temperature** and similar channels, a changing stimulus is used because these plots mainly show how the reading responds when the signal changes, not when it stays flat.
+- **Deterministic preview defaults**: initial **phi** is forced to 0 after construction; the **neural** turner warm-up remains stochastic (seed RNGs for repeatable tests).
 
 **Access**: `locomotory_modules`
 
@@ -202,13 +217,13 @@ The `larvaworld-app` command serves the established dashboard collection
 directly. These dashboards are also available through the portal routes where
 they are part of the landing registry.
 
-| Dashboard              | App ID               | Purpose                                |
-| ---------------------- | -------------------- | -------------------------------------- |
-| **Experiment Viewer**  | `experiment_viewer`  | View experiment results interactively  |
-| **Track Viewer**       | `track_viewer`       | Inspect trajectories                   |
-| **Model Inspector**    | `larva_models`       | Explore locomotory models              |
-| **Module Inspector**   | `locomotory_modules` | Inspect behavioral modules             |
-| **Lateral Oscillator** | `lateral_oscillator` | Visualize the neural oscillator module |
+| Dashboard              | App ID               | Purpose                                               |
+| ---------------------- | -------------------- | ----------------------------------------------------- |
+| **Experiment Viewer**  | `experiment_viewer`  | View experiment results interactively                 |
+| **Track Viewer**       | `track_viewer`       | Inspect trajectories                                  |
+| **Model Inspector**    | `larva_models`       | Explore locomotory models                             |
+| **Module Inspector**   | `locomotory_modules` | Inspect crawler/turner/feeder/sensor modules (portal) |
+| **Lateral Oscillator** | `lateral_oscillator` | Visualize the neural oscillator module                |
 
 ---
 

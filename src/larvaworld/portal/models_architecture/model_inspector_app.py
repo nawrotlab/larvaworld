@@ -30,18 +30,21 @@ from larvaworld.portal.config_widgets.preset_controls import (
 from larvaworld.portal.config_widgets.widget_base import param_controls
 from larvaworld.portal.models_architecture.model_inspector_data import (
     BASELINE_MODULES,
+    BRAIN_MODE_SELECT_FIXED_WIDTH_MODULES,
+    DEFAULT_LIVE_PREVIEW_REPORTER_KEYS,
+    LIVE_PREVIEW_REPORTER_KEYS,
     build_inspection_brain_from_config,
     compare_model_inspections,
     inspect_model,
     inspect_model_from_config,
     inspect_model_modules_from_config,
     load_model_draft,
+    list_model_ids,
     set_draft_brain_module_mode,
     set_draft_memory_config,
     set_draft_module_enabled,
     set_draft_module_parameter,
     validate_draft_module_config,
-    list_model_ids,
 )
 from larvaworld.portal.models_architecture.model_inspector_models import (
     DraftValidationIssue,
@@ -55,18 +58,11 @@ from larvaworld.portal.workspace import WorkspaceError, get_workspace_dir
 __all__ = ["_ModelInspectorController", "model_inspector_app"]
 
 
-LIVE_ROLLOVER = 100
+# Default live-preview trace window (most recent steps kept in plots / probe table).
+LIVE_ROLLOVER = 500
 LIVE_MAX_STEPS = 501
 LIVE_DT = 0.1
 LIVE_A_IN = 0.0
-LIVE_REPORTERS = ("A_T", "A_C")
-LIVE_REPORTER_LABELS = {
-    "A_T": "Turn activation (A_T)",
-    "A_C": "Crawl activation (A_C)",
-}
-LIVE_PREVIEW_SIDEBAR_TOP_OFFSET = 28
-LIVE_PREVIEW_SIDEBAR_HEIGHT = 354
-LIVE_PREVIEW_TOP_ROW_HEIGHT = 940
 CONTROLS_COLUMN_WIDTH = 340
 SECTION_COLUMN_GAP_PX = 10
 UIRefreshScope = Literal["parameter", "mode", "enabled", "full"]
@@ -155,6 +151,30 @@ MODEL_INSPECTOR_RAW_CSS = """
   padding: 10px;
 }
 
+.lw-model-inspector-reporter-selector {
+  border-radius: 8px;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  background: rgba(193, 176, 194, 0.12);
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.lw-model-inspector-reporter-selector-note {
+  color: rgba(17, 17, 17, 0.72);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.lw-model-inspector-reporter-checkbox-columns {
+  width: 100%;
+  max-width: 100%;
+  column-gap: 6px;
+}
+
+.lw-model-inspector-reporter-checkbox-columns .bk-input-group {
+  margin-bottom: 0;
+}
+
 .lw-model-inspector-live-table .slick-cell,
 .lw-model-inspector-live-table .slick-header-column,
 .lw-model-inspector-live-table .slick-headerrow-column {
@@ -185,6 +205,55 @@ MODEL_INSPECTOR_RAW_CSS = """
 
 def _status_html(text: str) -> str:
     return f'<div class="lw-model-inspector-status">{escape(text)}</div>'
+
+
+_REPORTER_MODULE_LABELS = {
+    "C": "Crawler",
+    "T": "Turner",
+    "F": "Feeder",
+}
+_REPORTER_SIGNAL_LABELS = {
+    "A": "activity",
+    "I": "input",
+    "phi": "phase",
+}
+
+
+def _reporter_label_parts(key: str) -> tuple[str | None, str | None]:
+    signal, _, module = key.partition("_")
+    module_label = _REPORTER_MODULE_LABELS.get(module)
+    signal_label = _REPORTER_SIGNAL_LABELS.get(signal)
+    return module_label, signal_label
+
+
+def _reporter_plot_label(key: str) -> str:
+    module_label, signal_label = _reporter_label_parts(key)
+    if module_label and signal_label:
+        return f"{module_label} {signal_label} ({key})"
+    try:
+        entry = reg.par.kdict[key]
+        desc = getattr(entry, "d", None) or key
+        return f"{key} ({desc})"
+    except Exception:
+        return key
+
+
+def _reporter_key_columns() -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+    """Split live-preview reporter keys into Activity / Input / Phase columns."""
+    activity = tuple(k for k in LIVE_PREVIEW_REPORTER_KEYS if k.startswith("A_"))
+    inp = tuple(k for k in LIVE_PREVIEW_REPORTER_KEYS if k.startswith("I_"))
+    phase = tuple(k for k in LIVE_PREVIEW_REPORTER_KEYS if k.startswith("phi_"))
+    return activity, inp, phase
+
+
+def _reporter_selector_options_for_keys(keys: tuple[str, ...]) -> dict[str, str]:
+    return {_reporter_plot_label(k): k for k in keys}
+
+
+def _ordered_selected_reporter_keys(selected: set[str]) -> tuple[str, ...]:
+    if not selected:
+        return tuple(DEFAULT_LIVE_PREVIEW_REPORTER_KEYS)
+    return tuple(k for k in LIVE_PREVIEW_REPORTER_KEYS if k in selected)
 
 
 def _json_ready(value: Any) -> Any:
@@ -248,11 +317,77 @@ class _ModelInspectorController:
         self._active_dt = LIVE_DT
         self._reporter_paths: dict[str, str] = {}
         self._reporter_available: dict[str, bool] = {
-            key: False for key in LIVE_REPORTERS
+            key: False for key in LIVE_PREVIEW_REPORTER_KEYS
         }
         self._watched_param_tokens: set[tuple[int, str]] = set()
+        activity_keys, input_keys, phase_keys = _reporter_key_columns()
+        self.plot_reporters_checkbox_activity = pn.widgets.CheckBoxGroup(
+            name="",
+            value=[k for k in DEFAULT_LIVE_PREVIEW_REPORTER_KEYS if k in activity_keys],
+            options=_reporter_selector_options_for_keys(activity_keys),
+            inline=False,
+        )
+        self.plot_reporters_checkbox_input = pn.widgets.CheckBoxGroup(
+            name="",
+            value=[k for k in DEFAULT_LIVE_PREVIEW_REPORTER_KEYS if k in input_keys],
+            options=_reporter_selector_options_for_keys(input_keys),
+            inline=False,
+        )
+        self.plot_reporters_checkbox_phase = pn.widgets.CheckBoxGroup(
+            name="",
+            value=[k for k in DEFAULT_LIVE_PREVIEW_REPORTER_KEYS if k in phase_keys],
+            options=_reporter_selector_options_for_keys(phase_keys),
+            inline=False,
+        )
+        _reporter_col = {"flex": "1 1 0", "min-width": "0"}
+        self.plot_reporters_checkbox_columns = pn.Row(
+            pn.Column(
+                self.plot_reporters_checkbox_activity,
+                sizing_mode="stretch_width",
+                styles=dict(_reporter_col),
+                margin=0,
+            ),
+            pn.Column(
+                self.plot_reporters_checkbox_input,
+                sizing_mode="stretch_width",
+                styles=dict(_reporter_col),
+                margin=0,
+            ),
+            pn.Column(
+                self.plot_reporters_checkbox_phase,
+                sizing_mode="stretch_width",
+                styles=dict(_reporter_col),
+                margin=0,
+            ),
+            sizing_mode="stretch_width",
+            css_classes=["lw-model-inspector-reporter-checkbox-columns"],
+            styles={"gap": "6px", "align-items": "flex-start"},
+        )
+        self.plot_reporters_box = pn.Column(
+            pn.pane.Markdown("##### Plot signals", margin=(0, 0, 2, 0)),
+            pn.pane.HTML(
+                (
+                    '<div class="lw-model-inspector-reporter-selector-note">'
+                    "Order is activity, then input, then phase. Parentheses show the "
+                    "short reporter <strong>keywords</strong> from the registry "
+                    "(<strong>C</strong>=crawler, <strong>T</strong>=turner, "
+                    "<strong>F</strong>=feeder)."
+                    "</div>"
+                ),
+                margin=(0, 0, 6, 0),
+            ),
+            self.plot_reporters_checkbox_columns,
+            sizing_mode="stretch_width",
+            css_classes=["lw-model-inspector-reporter-selector"],
+        )
         self._probe_df = pd.DataFrame(
-            columns=["time", "lin", "ang", "feed_motion", *LIVE_REPORTERS]
+            columns=[
+                "time",
+                "lin",
+                "ang",
+                "feed_motion",
+                *_ordered_selected_reporter_keys(self._merged_reporter_selection()),
+            ]
         )
 
         self.primary_select = pn.widgets.Select(
@@ -339,9 +474,19 @@ class _ModelInspectorController:
         )
 
         self._sources = {
-            key: ColumnDataSource(data={"time": [], key: []}) for key in LIVE_REPORTERS
+            key: ColumnDataSource(data={"time": [], key: []})
+            for key in LIVE_PREVIEW_REPORTER_KEYS
         }
 
+        self.plot_reporters_checkbox_activity.param.watch(
+            self._on_plot_reporters_change, "value"
+        )
+        self.plot_reporters_checkbox_input.param.watch(
+            self._on_plot_reporters_change, "value"
+        )
+        self.plot_reporters_checkbox_phase.param.watch(
+            self._on_plot_reporters_change, "value"
+        )
         self.primary_select.param.watch(self._on_primary_change, "value")
         self.compare_select.param.watch(self._on_compare_change, "value")
         self.run_button.on_click(self._on_run)
@@ -699,7 +844,9 @@ class _ModelInspectorController:
         if self._has_validation_errors():
             self._brain = None
             self._runtime = None
-            self._reporter_available = {key: False for key in LIVE_REPORTERS}
+            self._reporter_available = {
+                key: False for key in LIVE_PREVIEW_REPORTER_KEYS
+            }
             if clear_trace:
                 self._clear_trace_data()
             self._update_probe_meta()
@@ -788,15 +935,66 @@ class _ModelInspectorController:
             module_id=module_id,
         )
 
+    def _merged_reporter_selection(self) -> set[str]:
+        return (
+            set(self.plot_reporters_checkbox_activity.value or ())
+            | set(self.plot_reporters_checkbox_input.value or ())
+            | set(self.plot_reporters_checkbox_phase.value or ())
+        )
+
+    def _set_reporter_checkboxes(self, keys: list[str]) -> None:
+        key_set = set(keys)
+        activity_keys, input_keys, phase_keys = _reporter_key_columns()
+        self.plot_reporters_checkbox_activity.value = [
+            k for k in LIVE_PREVIEW_REPORTER_KEYS if k in key_set and k in activity_keys
+        ]
+        self.plot_reporters_checkbox_input.value = [
+            k for k in LIVE_PREVIEW_REPORTER_KEYS if k in key_set and k in input_keys
+        ]
+        self.plot_reporters_checkbox_phase.value = [
+            k for k in LIVE_PREVIEW_REPORTER_KEYS if k in key_set and k in phase_keys
+        ]
+
+    def _selected_plot_reporter_keys(self) -> tuple[str, ...]:
+        return _ordered_selected_reporter_keys(self._merged_reporter_selection())
+
+    def _on_plot_reporters_change(self, event) -> None:
+        if not self._merged_reporter_selection():
+            if event.old:
+                self._set_reporter_checkboxes(list(DEFAULT_LIVE_PREVIEW_REPORTER_KEYS))
+            return
+        self._pause_callback()
+        self._step = 0
+        for key in LIVE_PREVIEW_REPORTER_KEYS:
+            self._sources[key].data = {"time": [], key: []}
+        self._probe_df = pd.DataFrame(
+            columns=[
+                "time",
+                "lin",
+                "ang",
+                "feed_motion",
+                *self._selected_plot_reporter_keys(),
+            ]
+        )
+        self._refresh_probe_table()
+        self._init_live_plots()
+        if (
+            self._brain is not None
+            and self._runtime is not None
+            and not self._has_validation_errors()
+        ):
+            self._prepare_reporters()
+        self._update_probe_meta()
+
     def _prepare_reporters(self) -> None:
         assert self._runtime is not None
         available = reg.par.output_reporters(
-            ks=list(LIVE_REPORTERS), agents=[self._runtime]
+            ks=list(self._selected_plot_reporter_keys()), agents=[self._runtime]
         )
         available_paths = set(available.values())
         reporter_paths: dict[str, str] = {}
         reporter_available: dict[str, bool] = {}
-        for key in LIVE_REPORTERS:
+        for key in self._selected_plot_reporter_keys():
             try:
                 path = reg.par.kdict[key].codename
             except Exception:
@@ -833,7 +1031,7 @@ class _ModelInspectorController:
                 self._reporter_available[key] = False
                 row[key] = None
 
-        for key in LIVE_REPORTERS:
+        for key in self._selected_plot_reporter_keys():
             value = row.get(key)
             if value is None:
                 continue
@@ -854,15 +1052,26 @@ class _ModelInspectorController:
 
     def _clear_trace_data(self) -> None:
         self._step = 0
-        for key in LIVE_REPORTERS:
+        for key in LIVE_PREVIEW_REPORTER_KEYS:
             self._sources[key].data = {"time": [], key: []}
         self._probe_df = pd.DataFrame(
-            columns=["time", "lin", "ang", "feed_motion", *LIVE_REPORTERS]
+            columns=[
+                "time",
+                "lin",
+                "ang",
+                "feed_motion",
+                *self._selected_plot_reporter_keys(),
+            ]
         )
         self._refresh_probe_table()
 
     def _refresh_probe_table(self) -> None:
-        self.probe_table.object = self._probe_df.rename(columns=LIVE_REPORTER_LABELS)
+        rename = {
+            k: _reporter_plot_label(k)
+            for k in self._selected_plot_reporter_keys()
+            if k in self._probe_df.columns
+        }
+        self.probe_table.object = self._probe_df.rename(columns=rename)
 
     def _max_steps(self) -> int:
         return max(1, int(self.max_steps_input.value))
@@ -878,7 +1087,7 @@ class _ModelInspectorController:
 
     def _trim_trace_data(self) -> None:
         trace_window = self._trace_window()
-        for key in LIVE_REPORTERS:
+        for key in self._selected_plot_reporter_keys():
             source_data = self._sources[key].data
             self._sources[key].data = {
                 "time": list(source_data["time"])[-trace_window:],
@@ -916,8 +1125,8 @@ class _ModelInspectorController:
         else:
             runtime_state = "ready"
         reporter_bits = [
-            f'{LIVE_REPORTER_LABELS[k]}={"yes" if self._reporter_available.get(k, False) else "no"}'
-            for k in LIVE_REPORTERS
+            f'{_reporter_plot_label(k)}={"yes" if self._reporter_available.get(k, False) else "no"}'
+            for k in self._selected_plot_reporter_keys()
         ]
         self.probe_meta.object = (
             '<div class="lw-model-inspector-status">'
@@ -1118,8 +1327,8 @@ class _ModelInspectorController:
 
     def _init_live_plots(self) -> None:
         plots: list[pn.viewable.Viewable] = []
-        for reporter in LIVE_REPORTERS:
-            reporter_label = LIVE_REPORTER_LABELS[reporter]
+        for reporter in self._selected_plot_reporter_keys():
+            reporter_label = _reporter_plot_label(reporter)
             fig = figure(
                 title=reporter_label,
                 height=220,
@@ -1194,44 +1403,31 @@ class _ModelInspectorController:
             },
         )
         probe_body = pn.Column(
+            self.plot_reporters_box,
             self.live_plot_view,
             probe_sidebar,
             sizing_mode="stretch_width",
-            styles={
-                "height": "100%",
-                "justify-content": "flex-start",
-            },
         )
         probe = pn.Column(
             pn.pane.Markdown("#### Live preview", margin=(0, 0, 6, 0)),
             probe_body,
             css_classes=["lw-model-inspector-live-box"],
             sizing_mode="stretch_width",
-            height=LIVE_PREVIEW_TOP_ROW_HEIGHT,
-            styles={
-                "height": f"{LIVE_PREVIEW_TOP_ROW_HEIGHT}px",
-                "min-height": f"{LIVE_PREVIEW_TOP_ROW_HEIGHT}px",
-                "display": "flex",
-            },
         )
         probe_cell = pn.Column(
             probe,
             sizing_mode="stretch_width",
             styles={
                 "margin-left": f"{SECTION_COLUMN_GAP_PX}px",
-                "display": "flex",
                 "flex": "1 1 0",
-                "align-self": "stretch",
-                "height": f"{LIVE_PREVIEW_TOP_ROW_HEIGHT}px",
-                "min-height": f"{LIVE_PREVIEW_TOP_ROW_HEIGHT}px",
+                "min-width": "0",
             },
-            height=LIVE_PREVIEW_TOP_ROW_HEIGHT,
         )
         top_row = pn.Row(
             controls_box,
             probe_cell,
             sizing_mode="stretch_width",
-            styles={"align-items": "stretch"},
+            styles={"align-items": "flex-start"},
         )
         return pn.Column(
             intro,
@@ -1660,11 +1856,16 @@ def _module_editor_card(
         mode_value = spec.current_mode or (
             spec.mode_options[0] if spec.mode_options else None
         )
+        mode_select_kwargs: dict[str, Any] = {}
+        if spec.module_id in BRAIN_MODE_SELECT_FIXED_WIDTH_MODULES:
+            mode_select_kwargs["sizing_mode"] = "fixed"
+            mode_select_kwargs["width"] = 170
         mode_select = pn.widgets.Select(
             name="Mode",
             options=list(spec.mode_options),
             value=mode_value,
             disabled=(is_optional_brain_non_memory and not spec.present),
+            **mode_select_kwargs,
         )
         mode_select.param.watch(
             lambda event, module_id=spec.module_id: controller._set_brain_module_mode(
@@ -1822,15 +2023,6 @@ def _build_nervous_system_section(
                     card_slots=card_slots,
                 ),
                 _build_vertical_subsection(
-                    title="Feeding",
-                    css_modifier="feeding",
-                    module_ids=("feeder",),
-                    controller=controller,
-                    specs_by_id=specs_by_id,
-                    validation_issues=validation_issues,
-                    card_slots=card_slots,
-                ),
-                _build_vertical_subsection(
                     title="Memory",
                     css_modifier="memory",
                     module_ids=("memory",),
@@ -1856,9 +2048,15 @@ def _build_nervous_system_section(
         layout[0, 0:2] = locomotion
     if right_column.objects:
         layout[0, 2] = right_column
-    return pn.Column(
-        pn.pane.Markdown("#### Nervous System", margin=(0, 0, 6, 0)),
+    inner = pn.Column(
         layout,
+        sizing_mode="stretch_width",
+    )
+    return pn.Card(
+        inner,
+        title="Nervous System",
+        collapsed=False,
+        collapsible=True,
         css_classes=["lw-model-inspector-section-box"],
         sizing_mode="stretch_width",
     )
@@ -1905,7 +2103,7 @@ def _build_larva_modules_section(
     if optional_cell is not None:
         layout[0, 2] = optional_cell
     return pn.Column(
-        pn.pane.Markdown("#### Larva Modules", margin=(0, 0, 6, 0)),
+        pn.pane.Markdown("#### Body and Metabolism", margin=(0, 0, 6, 0)),
         layout,
         css_classes=["lw-model-inspector-section-box"],
         sizing_mode="stretch_width",
@@ -1927,7 +2125,7 @@ def _build_locomotion_subsection(
         card_slots=card_slots,
     )
     second_column = _build_module_slot_column(
-        module_ids=("interference", "intermitter"),
+        module_ids=("interference", "intermitter", "feeder"),
         controller=controller,
         specs_by_id=specs_by_id,
         validation_issues=validation_issues,
