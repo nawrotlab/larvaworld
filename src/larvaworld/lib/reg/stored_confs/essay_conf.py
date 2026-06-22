@@ -5,7 +5,7 @@ import shutil
 
 from .... import SIM_DIR
 from ... import reg, util, funcs
-from ...param import Larva_Distro
+from ...param import Larva_Distro, Life
 
 # LarvaGroup import - deep import required due to circular dependency
 from ...reg.larvagroup import LarvaGroup
@@ -51,15 +51,17 @@ class Essay:
         self.results = {}
 
     def conf(self, exp: str, id: str, dur: float, lgs: Any, env: Any, **kwargs: Any):
-        return reg.gen.Exp(
+        c = reg.gen.Exp(
             duration=dur,
             env_params=env,
             larva_groups=lgs,
-            experiment=exp,
+            experiment=None,
             enrichment=self.enrichment,
             collections=self.collections,
             **kwargs,
         ).nestedConf
+        c["essay_run_label"] = id
+        return c
 
     def run(self):
         from ...sim import ExpRun
@@ -68,10 +70,21 @@ class Essay:
         for exp, cs in self.exp_dict.items():
             print(f"Running {len(cs)} versions of experiment {exp}")
             self.datasets[exp] = [
-                ExpRun(parameters=c, screen_kws=self.screen_kws).simulate() for c in cs
+                ExpRun(
+                    id=self._generate_run_id(c.pop("essay_run_label", None)),
+                    parameters=c,
+                    screen_kws=self.screen_kws,
+                ).simulate()
+                for c in cs
             ]
 
         return self.datasets
+
+    def _generate_run_id(self, label: Optional[str]) -> Optional[str]:
+        if label is None:
+            return None
+        idx = reg.config.next_idx(label, conftype="Exp")
+        return f"{label}_{idx}"
 
     def anal(self):
         self.global_anal()
@@ -435,23 +448,20 @@ class DoublePatch_Essay(Essay):
         self.mdiff_df, row_colors = diff_df(mIDs=self.mID0s, ms=self.ms)
 
     def get_larvagroups(self, age=120.0):
-        def lg(id=None, **kwargs):
-            l = reg.gen.LarvaGroup(**kwargs)
-            if id is None:
-                id = l.model
-            return l.entry(id)
-
-        kws0 = {
-            "N": self.N,
-            "s": (0.005, 0.005),
-            "sample": reg.default_refID,
-            "age": age,
-            "epochs": {"0": reg.gen.Epoch(age_range=(0.0, age)).nestedConf},
-        }
+        def lg(id, c, mID):
+            l = reg.gen.LarvaGroup(
+                group_id=id,
+                model=mID,
+                color=c,
+                distribution={"N": self.N, "scale": (0.005, 0.005)},
+                life_history=Life(age=age),
+                sample=reg.default_refID,
+            )
+            return l.entry()
 
         return util.AttrDict.merge_dicts(
             [
-                lg(id=id, c=c, mID=mID, **kws0)
+                lg(id=id, c=c, mID=mID)
                 for mID, c, id in zip(self.mIDs, ["blue", "red"], ["rover", "sitter"])
             ]
         )
@@ -663,12 +673,17 @@ class Chemotaxis_Essay(Essay):
         dst1 = Larva_Distro(N=self.N, mode="uniform")
         kws1 = {
             "env": reg.conf.Env.get("mid_odor_gaussian"),
-            "lgs": {
-                mID: LarvaGroup(
-                    distribution=dst1, color=d["color"], model=d["model"]
-                ).nestedConf
-                for mID, d in models.items()
-            },
+            "lgs": util.AttrDict.merge_dicts(
+                [
+                    LarvaGroup(
+                        group_id=mID,
+                        distribution=dst1,
+                        color=d["color"],
+                        model=d["model"],
+                    ).entry()
+                    for mID, d in models.items()
+                ]
+            ),
             "id": f"{exp1}_exp",
             "dur": self.dur,
             "exp": exp1,
@@ -684,10 +699,17 @@ class Chemotaxis_Essay(Essay):
         )
         kws2 = {
             "env": reg.conf.Env.get("odor_gradient"),
-            "lgs": {
-                mID: LarvaGroup(distribution=dst2, color=d["color"], model=d["model"])
-                for mID, d in models.items()
-            },
+            "lgs": util.AttrDict.merge_dicts(
+                [
+                    LarvaGroup(
+                        group_id=mID,
+                        distribution=dst2,
+                        color=d["color"],
+                        model=d["model"],
+                    ).entry()
+                    for mID, d in models.items()
+                ]
+            ),
             "id": f"{exp2}_exp",
             "dur": self.dur,
             "exp": exp2,
