@@ -177,3 +177,5 @@ my_work/
 .agents/
 .codex/
 .vscode/
+CLAUDE.md
+.claude/
