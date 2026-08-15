@@ -379,8 +379,11 @@ def main() -> None:
 
     _start_bootstrap_once()
 
-    # Suppress harmless Bokeh validation warnings about FIXED_SIZING_MODE
+    # Suppress harmless Bokeh validation warnings and WebSocket connection messages
     logging.getLogger("bokeh.core.validation").setLevel(logging.ERROR)
+    logging.getLogger("bokeh.server.views.ws").setLevel(logging.ERROR)
+    logging.getLogger("tornado.iostream").setLevel(logging.ERROR)
+    logging.getLogger("tornado.websocket").setLevel(logging.ERROR)
 
     apps: dict[str, Callable[..., Any]] = {
         app_id: _lazy_factory(factory_path)
