@@ -215,3 +215,11 @@ def list_workspace_simulation_datasets(
     return sorted(
         records, key=lambda r: (str(r.run_id), r.dataset_id, str(r.conf_path))
     )
+
+
+def list_all_workspace_datasets(
+    workspace: WorkspaceState | None = None,
+) -> tuple[list[WorkspaceDatasetRecord], list[WorkspaceReplayDatasetRecord]]:
+    imported = list_workspace_datasets(workspace=workspace)
+    simulated = list_workspace_simulation_datasets(workspace=workspace)
+    return imported, simulated
