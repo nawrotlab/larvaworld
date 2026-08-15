@@ -481,6 +481,219 @@ def test_temperature_correction(pars: de.DEBPars) -> None:
 
 
 # ---------------------------------------------------------------------------
+# tempcorr -- 1/3/5-parameter Arrhenius (DEBtool_M/lib/misc/tempcorr.m)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "pars_T",
+    [
+        [12000.0],
+        [12000.0, 277.0, 20000.0],
+        [12000.0, 350.0, 190000.0],
+        [12000.0, 277.0, 328.0, 20000.0, 190000.0],
+    ],
+)
+def test_tempcorr_is_unity_at_the_reference(pars_T: list) -> None:
+    """tempcorr(T_ref, T_ref, .) == 1 whatever the parameters."""
+    assert float(de.tempcorr(320.0, 320.0, pars_T)) == pytest.approx(1.0)
+
+
+def test_tempcorr_one_parameter_is_plain_arrhenius() -> None:
+    T, T_ref, T_A = 300.0, 293.15, 8000.0
+    expected = math.exp(T_A / T_ref - T_A / T)
+    assert float(de.tempcorr(T, T_ref, [T_A])) == pytest.approx(expected)
+    assert float(de.tempcorr(T, T_ref, T_A)) == pytest.approx(expected)
+
+
+def test_tempcorr_torpor_never_exceeds_plain_arrhenius() -> None:
+    """Torpor only ever slows rates down, so 1 parameter is always the largest."""
+    T_ref, temps = 320.0, np.array([300.0, 310.0, 320.0, 330.0, 340.0])
+    one = de.tempcorr(temps, T_ref, [12000.0])
+    five = de.tempcorr(temps, T_ref, [12000.0, 277.0, 328.0, 20000.0, 190000.0])
+    assert np.all(five <= one + 1e-12)
+
+
+def test_tempcorr_low_temperature_torpor_only_acts_below_reference() -> None:
+    T_ref, temps = 320.0, np.array([300.0, 310.0, 330.0, 340.0])
+    one = de.tempcorr(temps, T_ref, [12000.0])
+    low = de.tempcorr(temps, T_ref, [12000.0, 277.0, 20000.0])  # T_L < T_ref
+    assert np.all(low[:2] < one[:2])  # below T_ref: suppressed
+    assert low[2:] == pytest.approx(one[2:])  # above T_ref: unaffected
+
+
+def test_tempcorr_high_temperature_torpor_only_acts_above_reference() -> None:
+    T_ref, temps = 320.0, np.array([300.0, 310.0, 330.0, 340.0])
+    one = de.tempcorr(temps, T_ref, [12000.0])
+    high = de.tempcorr(temps, T_ref, [12000.0, 350.0, 190000.0])  # T_H > T_ref
+    assert high[:2] == pytest.approx(one[:2])
+    assert np.all(high[2:] < one[2:])
+
+
+def test_tempcorr_rejects_bad_parameter_vectors() -> None:
+    with pytest.raises(ValueError, match="1, 3 or 5"):
+        de.tempcorr(300.0, 293.15, [1.0, 2.0])
+    with pytest.raises(ValueError, match="must lie between"):
+        de.tempcorr(300.0, 320.0, [12000.0, 330.0, 340.0, 20000.0, 190000.0])
+
+
+def test_temperature_correction_selects_the_right_branch(pars: de.DEBPars) -> None:
+    plain = de.temperature_correction(pars, 280.0)
+    chilled = de.temperature_correction(pars.with_(T_L=277.0, T_AL=20000.0), 280.0)
+    assert chilled < plain
+
+    both = pars.with_(T_L=277.0, T_AL=20000.0, T_H=320.0, T_AH=190000.0)
+    assert de.temperature_correction(both, both.T_ref) == pytest.approx(1.0)
+    assert de.temperature_correction(both, 330.0) < de.temperature_correction(
+        pars, 330.0
+    )
+
+
+def test_torpor_parameters_must_be_supplied_in_pairs(pars: de.DEBPars) -> None:
+    with pytest.raises(ValueError, match="T_L and T_AL"):
+        pars.with_(T_L=277.0)
+    with pytest.raises(ValueError, match="T_H and T_AH"):
+        pars.with_(T_H=320.0)
+    with pytest.raises(ValueError, match="T_L .* must not exceed T_ref"):
+        pars.with_(T_L=400.0, T_AL=20000.0)
+    with pytest.raises(ValueError, match="T_H .* must not be below T_ref"):
+        pars.with_(T_H=100.0, T_AH=20000.0)
+
+
+# ---------------------------------------------------------------------------
+# Per-stage simulation and life-cycle chaining
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_stage_accepts_the_embryo_alias() -> None:
+    assert de.resolve_stage("embryo") == de.Stage.EGG
+    assert de.resolve_stage("larva") == de.Stage.LARVA
+    with pytest.raises(ValueError, match="unknown stage"):
+        de.resolve_stage("nymph")
+
+
+def test_run_stage_stops_at_the_next_stage(pars: de.DEBPars) -> None:
+    st, tr = de.run_stage(pars, stage="egg", engine="closed", dt=1 / 24, f=1.0, T=T_25C)
+    assert st.stage == de.Stage.LARVA
+    assert set(tr.stage) == {de.Stage.EGG, de.Stage.LARVA}
+
+
+def test_run_stage_accepts_the_embryo_alias(pars: de.DEBPars) -> None:
+    a, _ = de.run_stage(
+        pars, stage="embryo", engine="closed", dt=1 / 24, f=1.0, T=T_25C
+    )
+    b, _ = de.run_stage(pars, stage="egg", engine="closed", dt=1 / 24, f=1.0, T=T_25C)
+    assert a.age == pytest.approx(b.age)
+
+
+def test_run_stage_runs_a_stage_in_isolation(pars: de.DEBPars) -> None:
+    """A pupa started from a synthetic state must use the pupal fluxes only."""
+    seed = de.DEBState(
+        E=50.0, V=1e-6, E_H=0.0, stage=de.Stage.PUPA, L_b=0.036, L_p=0.29
+    )
+    st, tr = de.run_stage(
+        pars, state=seed, stage="pupa", engine="closed", dt=1 / 240, f=1.0, T=T_25C
+    )
+    assert de.Stage.LARVA not in tr.stage
+    assert de.Stage.EGG not in tr.stage
+    assert st.stage == de.Stage.IMAGO
+
+
+def test_run_life_cycle_matches_run_until_imago(pars: de.DEBPars) -> None:
+    """
+    Chaining run_stage must reproduce a single run(until_stage="imago").
+
+    Not bit-identical: each run_stage call sizes its own solve_ivp output grid from
+    the age it starts at, so the adaptive solver places steps slightly differently
+    and locates each event a few 1e-8 apart. The tolerance is well inside that and
+    far below any real divergence.
+    """
+    lh = de.run_life_cycle(pars, engine="closed", dt=1 / 24, f=1.0, T=T_25C)
+    st, tr = de.run(
+        pars, engine="closed", dt=1 / 24, f=1.0, T=T_25C, until_stage=de.Stage.IMAGO
+    )
+    assert lh.reached == de.STAGES
+    for stage in de.STAGES:
+        assert lh.events[stage] == pytest.approx(tr.events[stage], rel=1e-6)
+    assert lh.final.age == pytest.approx(st.age, rel=1e-6)
+
+
+def test_run_life_cycle_durations_are_consistent(pars: de.DEBPars) -> None:
+    lh = de.run_life_cycle(pars, engine="closed", dt=1 / 24, f=1.0, T=T_25C)
+    for stage in (de.Stage.EGG, de.Stage.LARVA, de.Stage.PUPA):
+        entered = lh.events[stage]
+        nxt = de.STAGES[de.STAGES.index(stage) + 1]
+        assert lh.durations[stage] == pytest.approx(lh.events[nxt] - entered, rel=1e-9)
+    assert lh.time_to_pupation == pytest.approx(
+        lh.age_at_pupation - lh.age_at_birth, rel=1e-12
+    )
+
+
+def test_run_life_cycle_reference_lengths_match_amp(
+    pars: de.DEBPars, amp: dict
+) -> None:
+    lh = de.run_life_cycle(pars, engine="closed", dt=1 / 24, f=1.0, T=T_25C)
+    assert lh.Lw_b == pytest.approx(amp["Lb"], rel=5e-3)
+    assert lh.Lw_p == pytest.approx(amp["Lj"], rel=1e-2)
+
+
+def test_L_p_is_the_larval_size_not_the_post_reset_seed(pars: de.DEBPars) -> None:
+    """
+    Larval structure is resorbed at pupation, so the state entering the pupal stage
+    carries only the seed volume. L_p must still report the size reached.
+    """
+    lh = de.run_life_cycle(pars, engine="closed", dt=1 / 24, f=1.0, T=T_25C)
+    assert lh.L_at("pupa") == pytest.approx(pars.V_seed ** (1 / 3))
+    assert lh.L_p > 100 * lh.L_at("pupa")
+    assert lh.L_p > lh.L_b
+
+
+def test_run_life_cycle_rejects_until_stage(pars: de.DEBPars) -> None:
+    with pytest.raises(ValueError, match="drives the stage sequence itself"):
+        de.run_life_cycle(pars, until_stage="pupa")
+
+
+def test_life_cycle_trajectory_is_continuous(pars: de.DEBPars) -> None:
+    lh = de.run_life_cycle(pars, engine="closed", dt=1 / 24, f=1.0, T=T_25C)
+    tr = lh.trajectory
+    assert np.all(np.diff(tr.t) >= 0.0)
+    assert tr.t.size == len(tr.stage) == tr.E.size
+    assert set(tr.stage) == set(de.STAGES)
+
+
+@pytest.mark.parametrize("engine", ["stepped", "closed"])
+def test_run_life_cycle_works_with_both_engines(engine: str, pars: de.DEBPars) -> None:
+    dt = 1 / (24 * 60) if engine == "stepped" else 1 / 24
+    lh = de.run_life_cycle(
+        pars, engine=engine, dt=dt, f=1.0, T=T_25C, max_steps=2_000_000
+    )
+    assert lh.reached == de.STAGES
+
+
+def test_format_life_history_lists_every_stage(pars: de.DEBPars) -> None:
+    lh = de.run_life_cycle(pars, engine="closed", dt=1 / 24, f=1.0, T=T_25C)
+    text = de.format_life_history(lh)
+    for stage in de.STAGES:
+        assert stage in text
+    for label in ("oviposition", "hatching", "pupation", "emergence"):
+        assert label in text
+    # the pupal column reports the size reached at pupation, not the reset seed
+    assert f"{10 * lh.Lw_p:.4g}" in text
+
+
+def test_weights(pars: de.DEBPars) -> None:
+    V, E = 1e-3, 5.0
+    assert de.dry_weight(pars, V, E) == pytest.approx(
+        V * pars.d_V + E * pars.w_E / pars.mu_E
+    )
+    assert de.wet_weight(pars, V, E) == pytest.approx(
+        V + E * pars.w_E / (pars.mu_E * pars.d_V)
+    )
+    # wet weight exceeds dry weight for any positive state
+    assert de.wet_weight(pars, V, E) > de.dry_weight(pars, V, E)
+
+
+# ---------------------------------------------------------------------------
 # Validation against the published AmP predictions
 # ---------------------------------------------------------------------------
 

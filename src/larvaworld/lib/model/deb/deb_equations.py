@@ -23,10 +23,15 @@ Structure
 ---------
 1. Special functions and embryo solvers  (``beta0``, ``get_lb``, ``get_ue0``)
 2. Parameters                            (``DEBPars``)
-3. Fluxes -- Table S1                    (``powers``)
+3. Fluxes -- Table S1                    (``powers``, ``tempcorr``)
 4. Dynamics -- Table S2                  (``derivatives``)
 5. Stage machine                         (``Stage``, ``DEBState``, ``transition``)
 6. Integration engines                   (``step``, ``run``)
+7. Stage and life-cycle simulation       (``run_stage``, ``run_life_cycle``,
+   ``LifeHistory``, ``format_life_history``, ``dry_weight``, ``wet_weight``)
+
+Either engine drives any stage: ``run_stage`` simulates one stage in isolation and
+``run_life_cycle`` chains all four into a whole life cycle.
 
 Units follow the AmP/DEBtool convention: energies in J, lengths in cm, volumes in
 cm^3, time in days.
@@ -50,17 +55,26 @@ __all__: list[str] = [
     "DEBPars",
     "DEBState",
     "Trajectory",
+    "LifeHistory",
     "beta0",
     "get_lb",
     "get_ue0",
     "acceleration",
+    "tempcorr",
     "temperature_correction",
     "powers",
     "derivatives",
     "transition",
+    "resolve_stage",
     "initial_state",
     "step",
     "run",
+    "run_stage",
+    "run_life_cycle",
+    "format_life_history",
+    "dry_weight",
+    "wet_weight",
+    "amp_predictions",
 ]
 
 
@@ -256,6 +270,12 @@ class DEBPars:
     # --- primary: temperature ------------------------------------------------
     T_ref: float = 293.1  # K, reference temperature
     T_A: float = 28890.0  # K, Arrhenius temperature
+    # Optional torpor boundaries; see tempcorr(). With all four left as None the
+    # correction is the plain one-parameter Arrhenius factor.
+    T_L: Optional[float] = None  # K, lower temperature boundary
+    T_H: Optional[float] = None  # K, upper temperature boundary
+    T_AL: Optional[float] = None  # K, Arrhenius temperature for the lower boundary
+    T_AH: Optional[float] = None  # K, Arrhenius temperature for the upper boundary
 
     # --- primary: core -------------------------------------------------------
     z: float = 0.05054  # -, zoom factor
@@ -346,6 +366,17 @@ class DEBPars:
             )
         # E_He is NOT required to exceed E_Hp: maturity is reset to zero at
         # pupation, so the pupa matures from 0 up to E_He on a fresh counter.
+        for boundary, arrhenius in (("T_L", "T_AL"), ("T_H", "T_AH")):
+            b, a = getattr(self, boundary), getattr(self, arrhenius)
+            if (b is None) != (a is None):
+                raise ValueError(
+                    f"{boundary} and {arrhenius} must be given together; "
+                    f"got {boundary}={b!r}, {arrhenius}={a!r}"
+                )
+        if self.T_L is not None and self.T_L > self.T_ref:
+            raise ValueError(f"T_L ({self.T_L}) must not exceed T_ref ({self.T_ref})")
+        if self.T_H is not None and self.T_H < self.T_ref:
+            raise ValueError(f"T_H ({self.T_H}) must not be below T_ref ({self.T_ref})")
 
     # -- compound parameters (parscomp_st.m + addchem.m) ----------------------
 
@@ -521,11 +552,85 @@ def acceleration(L: float, L_b: float, L_p: float) -> float:
     return max(1.0, min(L, L_p) / L_b)
 
 
+def tempcorr(T: Any, T_ref: float, pars_T: Any) -> Any:
+    """
+    Temperature correction factor. Ported from ``DEBtool_M/lib/misc/tempcorr.m``.
+
+    The factor multiplies every physiological rate to move it from ``T_ref`` to ``T``:
+    ``rate(T) = rate(T_ref) * tempcorr(T, T_ref, pars_T)``. It is 1 at ``T = T_ref``
+    whatever the parameters.
+
+    ``pars_T`` is a 1-, 3- or 5-vector:
+
+    * 1 -- ``[T_A]``: plain Arrhenius, applies over the whole temperature range.
+    * 3 -- ``[T_A, T_b, T_Ab]``: one-sided torpor. The interpretation depends on
+      ``T_b`` relative to ``T_ref``: below it, ``T_b`` is the lower boundary ``T_L``
+      and low-temperature torpor is modelled (rates above ``T_ref`` are unaffected);
+      above it, ``T_b`` is the upper boundary ``T_H`` and the reverse applies.
+    * 5 -- ``[T_A, T_L, T_H, T_AL, T_AH]``: both. ``T_ref`` must lie between the
+      boundaries.
+
+    The one-parameter result is always the largest, since torpor only ever reduces
+    rates.
+    """
+    T_arr = np.asarray(T, dtype=float)
+    p = np.atleast_1d(np.asarray(pars_T, dtype=float))
+
+    T_A = p[0]
+    s_A = np.exp(T_A / T_ref - T_A / T_arr)  # Arrhenius factor
+    if p.size == 1:
+        return s_A
+
+    if p.size == 3:  # one-sided torpor
+        if p[1] < T_ref:
+            T_L, T_AL = p[1], p[2]
+            s_L_ratio = (1 + np.exp(T_AL / T_ref - T_AL / T_L)) / (
+                1 + np.exp(T_AL / T_arr - T_AL / T_L)
+            )
+            return s_A * ((T_arr <= T_ref) * s_L_ratio + (T_arr > T_ref))
+        T_H, T_AH = p[1], p[2]
+        s_H_ratio = (1 + np.exp(T_AH / T_H - T_AH / T_ref)) / (
+            1 + np.exp(T_AH / T_H - T_AH / T_arr)
+        )
+        return s_A * ((T_arr >= T_ref) * s_H_ratio + (T_arr < T_ref))
+
+    if p.size != 5:
+        raise ValueError(f"pars_T must have 1, 3 or 5 entries; got {p.size}")
+
+    T_L, T_H, T_AL, T_AH = p[1], p[2], p[3], p[4]
+    if T_L > T_ref or T_H < T_ref:
+        raise ValueError(
+            f"invalid temperature parameters: T_ref ({T_ref}) must lie between "
+            f"T_L ({T_L}) and T_H ({T_H})"
+        )
+    s_L_ratio = (1 + np.exp(T_AL / T_ref - T_AL / T_L)) / (
+        1 + np.exp(T_AL / T_arr - T_AL / T_L)
+    )
+    s_H_ratio = (1 + np.exp(T_AH / T_H - T_AH / T_ref)) / (
+        1 + np.exp(T_AH / T_H - T_AH / T_arr)
+    )
+    return s_A * ((T_arr <= T_ref) * s_L_ratio + (T_arr > T_ref) * s_H_ratio)
+
+
 def temperature_correction(pars: DEBPars, T: Optional[float] = None) -> float:
-    """One-parameter Arrhenius correction factor ``exp(T_A/T_ref - T_A/T)``."""
+    """
+    Arrhenius correction factor for a parameter set at temperature ``T`` in K.
+
+    Delegates to :func:`tempcorr`, selecting the 1-, 3- or 5-parameter form from
+    which torpor boundaries the parameter set defines. ``T = None`` means "at the
+    reference temperature" and returns 1.0 without evaluating anything.
+    """
     if T is None:
         return 1.0
-    return float(np.exp(pars.T_A / pars.T_ref - pars.T_A / T))
+    if pars.T_L is not None and pars.T_H is not None:
+        pars_T = [pars.T_A, pars.T_L, pars.T_H, pars.T_AL, pars.T_AH]
+    elif pars.T_L is not None:
+        pars_T = [pars.T_A, pars.T_L, pars.T_AL]
+    elif pars.T_H is not None:
+        pars_T = [pars.T_A, pars.T_H, pars.T_AH]
+    else:
+        pars_T = [pars.T_A]
+    return float(tempcorr(T, pars.T_ref, pars_T))
 
 
 def powers(
@@ -913,6 +1018,304 @@ def run(
             record_every,
         )
     return _run_closed(pars, state, dt, f, T, until_age, until_stage, until_maturity)
+
+
+#: Stage that follows each stage, or None for the terminal stage.
+_NEXT_STAGE: dict[str, Optional[str]] = {
+    Stage.EGG: Stage.LARVA,
+    Stage.LARVA: Stage.PUPA,
+    Stage.PUPA: Stage.IMAGO,
+    Stage.IMAGO: None,
+}
+
+#: Accepted aliases for stage names. "embryo" is what larvaworld has always called
+#: the pre-hatching stage; Table S1 calls it "egg".
+_STAGE_ALIASES: dict[str, str] = {"embryo": Stage.EGG}
+
+
+def resolve_stage(stage: str) -> str:
+    """Normalise a stage name, accepting the historical aliases."""
+    s = _STAGE_ALIASES.get(stage, stage)
+    if s not in STAGES:
+        raise ValueError(f"unknown stage {stage!r}; expected one of {STAGES}")
+    return s
+
+
+def run_stage(
+    pars: DEBPars,
+    state: Optional[DEBState] = None,
+    stage: Optional[str] = None,
+    **kwargs: Any,
+) -> tuple[DEBState, Trajectory]:
+    """
+    Simulate exactly one life stage.
+
+    Integrates from the current state until the stage ends -- by transition to the
+    next stage, or by death -- or until one of the stop criteria of :func:`run`
+    fires, whichever comes first.
+
+    Any stage can be run in isolation from a supplied state, which is what makes
+    stage-by-stage study possible; :func:`run_life_cycle` chains them.
+
+    Parameters
+    ----------
+    pars : parameter set
+    state : starting state; a fresh egg when omitted. If ``stage`` is given and the
+        state is in a different stage, the state is moved to ``stage`` first.
+    stage : the stage to run; defaults to the state's current stage. Accepts the
+        alias ``"embryo"`` for ``"egg"``.
+    **kwargs : forwarded to :func:`run` (``engine``, ``dt``, ``f``, ``T``,
+        ``until_age``, ``until_maturity``, ``max_steps``, ``record_every``).
+
+    Returns
+    -------
+    (state, trajectory)
+    """
+    state = initial_state(pars) if state is None else state
+    stage = resolve_stage(stage) if stage is not None else state.stage
+    state.stage = stage
+
+    kwargs.setdefault("until_stage", _NEXT_STAGE[stage])
+    return run(pars, state=state, **kwargs)
+
+
+@dataclass
+class LifeHistory:
+    """
+    Outcome of a whole-life-cycle simulation.
+
+    ``events`` maps each stage to the age (d) at which it was entered, ``durations``
+    to how long it lasted. ``state_at`` holds a snapshot of the state on entering
+    each stage, so reserve, structure and weight at every life event are recoverable.
+    """
+
+    pars: DEBPars
+    events: dict[str, float] = field(default_factory=dict)
+    durations: dict[str, float] = field(default_factory=dict)
+    state_at: dict[str, DEBState] = field(default_factory=dict)
+    trajectory: Optional[Trajectory] = None
+    final: Optional[DEBState] = None
+
+    @property
+    def reached(self) -> tuple[str, ...]:
+        """Stages actually entered, in order."""
+        return tuple(s for s in STAGES if s in self.events)
+
+    @property
+    def age_at_birth(self) -> Optional[float]:
+        """Age at hatching (d) -- AmP's ``a_b``."""
+        return self.events.get(Stage.LARVA)
+
+    @property
+    def age_at_pupation(self) -> Optional[float]:
+        return self.events.get(Stage.PUPA)
+
+    @property
+    def age_at_emergence(self) -> Optional[float]:
+        return self.events.get(Stage.IMAGO)
+
+    @property
+    def time_to_pupation(self) -> Optional[float]:
+        """Time from hatching to pupation (d) -- AmP's ``t_j``."""
+        if self.age_at_birth is None or self.age_at_pupation is None:
+            return None
+        return self.age_at_pupation - self.age_at_birth
+
+    @property
+    def L_b(self) -> Optional[float]:
+        """Structural length at hatching (cm) -- the acceleration reference."""
+        L = None if self.final is None else self.final.L_b
+        return None if L is None or not np.isfinite(L) else L
+
+    @property
+    def L_p(self) -> Optional[float]:
+        """
+        Structural length at pupation (cm) -- AmP's ``L_j``.
+
+        This is the *larval* size reached at pupation. It is not the same as the
+        structure of the state entering the pupal stage, which is the post-reset
+        seed: at pupation the larval structure is resorbed into reserve.
+        """
+        L = None if self.final is None else self.final.L_p
+        return None if L is None or not np.isfinite(L) else L
+
+    @property
+    def Lw_b(self) -> Optional[float]:
+        """Physical length at hatching (cm) -- AmP's ``L_b``."""
+        return None if self.L_b is None else self.L_b / self.pars.del_M
+
+    @property
+    def Lw_p(self) -> Optional[float]:
+        """Physical length at pupation (cm) -- AmP's ``L_j``."""
+        return None if self.L_p is None else self.L_p / self.pars.del_M
+
+    def L_at(self, stage: str) -> Optional[float]:
+        """
+        Structural length (cm) of the state *entering* ``stage``.
+
+        For the pupa this is the post-reset seed, not the size at pupation -- use
+        :attr:`L_p` for that.
+        """
+        st = self.state_at.get(resolve_stage(stage))
+        return None if st is None else st.L
+
+    def Lw_at(self, stage: str) -> Optional[float]:
+        """Physical length (cm) of the state entering ``stage``, ``L / del_M``."""
+        L = self.L_at(stage)
+        return None if L is None else L / self.pars.del_M
+
+
+def run_life_cycle(
+    pars: DEBPars,
+    state: Optional[DEBState] = None,
+    max_stages: int = len(STAGES) + 1,
+    **kwargs: Any,
+) -> LifeHistory:
+    """
+    Simulate the whole life cycle by chaining :func:`run_stage`.
+
+    Runs egg to larva to pupa to imago, applying the transition rules between
+    segments, and stops on death, on reaching the imago, or when a stop criterion
+    from :func:`run` fires. This is the replacement for the legacy
+    ``predict_*_stage`` chain, and it works with either engine.
+
+    Parameters
+    ----------
+    pars : parameter set
+    state : starting state; a fresh egg when omitted
+    **kwargs : forwarded to :func:`run`. ``until_stage`` is managed per segment and
+        must not be supplied.
+
+    Returns
+    -------
+    LifeHistory
+    """
+    if "until_stage" in kwargs:
+        raise ValueError(
+            "run_life_cycle drives the stage sequence itself; use run_stage or run "
+            "if you need to stop at a particular stage"
+        )
+
+    state = initial_state(pars) if state is None else state
+    lh = LifeHistory(pars=pars)
+    lh.events[state.stage] = state.age
+    lh.state_at[state.stage] = state.copy()
+
+    segments: list[Trajectory] = []
+    for _ in range(max_stages):
+        stage = state.stage
+        started = state.age
+        state, tr = run_stage(pars, state=state, stage=stage, **kwargs)
+        segments.append(tr)
+        lh.durations[stage] = state.age - started
+
+        if not state.alive or state.stage == stage:
+            break  # died, or a stop criterion fired before the stage ended
+        lh.events.setdefault(state.stage, state.age)
+        lh.state_at.setdefault(state.stage, state.copy())
+        if _NEXT_STAGE[state.stage] is None:
+            break
+
+    lh.final = state
+    lh.trajectory = _concat(segments, lh.events)
+    return lh
+
+
+def _concat(
+    segments: list[Trajectory], events: dict[str, float]
+) -> Optional[Trajectory]:
+    """Join per-stage trajectories into one, dropping the duplicated join points."""
+    if not segments:
+        return None
+    keep = [segments[0]]
+    for tr in segments[1:]:
+        keep.append(
+            Trajectory(
+                t=tr.t[1:],
+                E=tr.E[1:],
+                V=tr.V[1:],
+                E_H=tr.E_H[1:],
+                E_R=tr.E_R[1:],
+                stage=tr.stage[1:],
+            )
+        )
+    return Trajectory(
+        t=np.concatenate([s.t for s in keep]),
+        E=np.concatenate([s.E for s in keep]),
+        V=np.concatenate([s.V for s in keep]),
+        E_H=np.concatenate([s.E_H for s in keep]),
+        E_R=np.concatenate([s.E_R for s in keep]),
+        stage=[s for seg in keep for s in seg.stage],
+        events=dict(events),
+    )
+
+
+def dry_weight(pars: DEBPars, V: float, E: float) -> float:
+    """
+    Dry weight (g) = structure + reserve, both as dry mass.
+
+    ``V [d_V]`` is the dry mass of structure and ``E w_E / mu_E`` the dry mass of
+    reserve.
+    """
+    return V * pars.d_V + E * pars.w_E / pars.mu_E
+
+
+def wet_weight(pars: DEBPars, V: float, E: float) -> float:
+    """
+    Wet weight (g) in the Kooijman convention, ``V + E w_E / (mu_E d_E)``.
+
+    Both contributions are converted to volume and taken at unit density. This is
+    the form the AmP ``predict_`` routines use for wet-weight data; it is roughly
+    ``1/d_V`` larger than :func:`dry_weight`.
+    """
+    d_E = pars.d_X if pars.d_V is None else pars.d_V
+    return V + E * pars.w_E / (pars.mu_E * d_E)
+
+
+def format_life_history(lh: LifeHistory) -> str:
+    """
+    Render a life history as an aligned text table.
+
+    Replacement for the legacy ``print_life_history``: one column per life event
+    with age, reserve, dry weight and physical length.
+    """
+    pars = lh.pars
+    labels = {
+        Stage.EGG: "oviposition",
+        Stage.LARVA: "hatching",
+        Stage.PUPA: "pupation",
+        Stage.IMAGO: "emergence",
+    }
+
+    def _length(s: str, st: DEBState) -> str:
+        # At pupation the larval structure is resorbed, so the state entering the
+        # pupal stage carries the seed volume. Report the size reached at pupation.
+        L = lh.L_p if s == Stage.PUPA else st.L
+        return "-" if L is None else f"{10 * L / pars.del_M:.4g}"
+
+    rows = [
+        ("Life event", lambda s, st: labels[s]),
+        ("Age (d)", lambda s, st: f"{st.age:.4g}"),
+        (
+            "Stage duration (d)",
+            lambda s, st: f"{lh.durations.get(s, float('nan')):.4g}",
+        ),
+        ("Reserve E (J)", lambda s, st: f"{st.E:.4g}"),
+        ("Dry weight (mg)", lambda s, st: f"{1000 * dry_weight(pars, st.V, st.E):.4g}"),
+        ("Physical length (mm)", _length),
+    ]
+    stages = lh.reached
+    if not stages:
+        return "no stages simulated"
+
+    cells = [[fmt(s, lh.state_at[s]) for s in stages] for _, fmt in rows]
+    width = max([len(c) for col in cells for c in col] + [len(s) for s in stages]) + 2
+    head = " " * 22 + "".join(s.ljust(width) for s in stages)
+    body = [
+        name.ljust(22) + "".join(c.ljust(width) for c in col)
+        for (name, _), col in zip(rows, cells)
+    ]
+    return "\n".join([head, *body])
 
 
 def _new_recorder(state: DEBState) -> dict[str, list]:
