@@ -10,6 +10,7 @@ from larvaworld.portal.registry_types import (
 DOCS_ROOT = "https://larvaworld.readthedocs.io/en/latest/"
 GITHUB_ROOT = "https://github.com/nawrotlab/larvaworld"
 GITHUB_ISSUES = f"{GITHUB_ROOT}/issues"
+PYPI_ROOT = "https://pypi.org/project/larvaworld/"
 
 DOCS_WEB_APPS = f"{DOCS_ROOT}visualization/web_applications.html"
 DOCS_EXPERIMENT_VIEWER = f"{DOCS_WEB_APPS}#experiment-viewer"
@@ -25,6 +26,7 @@ DOCS_BATCH_RUNS = f"{DOCS_ROOT}working_with_larvaworld/batch_runs_advanced.html"
 DOCS_REFERENCE_DATASETS = f"{DOCS_ROOT}data_pipeline/reference_datasets.html"
 DOCS_DATA_PROCESSING = f"{DOCS_ROOT}data_pipeline/data_processing.html"
 DOCS_PLOTTING_API = f"{DOCS_ROOT}visualization/plotting_api.html"
+DOCS_DATASET_REPLAY = f"{DOCS_WEB_APPS}#dataset-replay"
 
 DOCS_ARENAS_SUBSTRATES = f"{DOCS_ROOT}agents_environments/arenas_and_substrates.html"
 DOCS_AGENT_ARCHITECTURE = (
@@ -76,8 +78,8 @@ QUICK_START_MODES: list[QuickStartModeSpec] = [
         color="#c1b0c2",
         item_ids=[
             "wf.environment_builder",
+            "locomotory_modules",
             "larva_models",
-            "wf.ga_optimization",
         ],
     ),
     QuickStartModeSpec(
@@ -401,26 +403,26 @@ ITEMS: dict[str, LandingItem] = {
     ),
     "wf.export_center": LandingItem(
         id="wf.export_center",
-        kind="placeholder",
-        status="planned",
+        kind="panel_app",
+        status="ready",
         lane="data",
         level="core",
         title="Analysis",
+        panel_app_id="wf.export_center",
         subtitle=(
-            "Inspect selected datasets through analysis views.\n"
-            "Build plots and summary comparisons interactively.\n"
-            "Prepare deeper post-processing workflows."
+            "Select datasets and generate plots.\n"
+            "Explore available analysis functions.\n"
+            "Build analysis visualizations interactively."
         ),
         cta="Analyze",
-        prereq_hint="Not available yet in the web UI.",
         learn_more=LearnMore(
-            issue_url=GITHUB_ISSUES,
-            docs_url=DOCS_PLOTTING_API,
+            docs_url=DOCS_DATASET_REPLAY,
         ),
         preview_md=(
-            "### Analysis (Planned)\n"
-            "- Open dataset-centric analysis tools\n"
-            "- Build comparison plots and summaries\n"
+            "### Analysis & Plotting\n"
+            "- Select one or more datasets for analysis\n"
+            "- Filter available plots by dataset compatibility\n"
+            "- Generate and explore visualizations\n"
         ),
     ),
     "wf.environment_builder": LandingItem(

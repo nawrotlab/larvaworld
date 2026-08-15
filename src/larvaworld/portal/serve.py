@@ -24,6 +24,7 @@ APP_ID_TO_FACTORY_PATH: dict[str, str] = {
     "wf.run_experiment": "larvaworld.portal.simulation.single_experiment_app:single_experiment_app",
     "wf.open_dataset": "larvaworld.portal.datasets.import_datasets_app:import_datasets_app",
     "wf.dataset_manager": "larvaworld.portal.datasets.dataset_manager_app:dataset_manager_app",
+    "wf.export_center": "larvaworld.portal.datasets.analysis_app:analysis_app",
     "wf.environment_builder": "larvaworld.portal.models_architecture.environment_builder_app:environment_builder_app",
     "dev.conftypes": "larvaworld.portal.config_widgets.conftypes_demo_app:conftypes_demo_app",
     # Legacy destinations (served as-is)
@@ -369,12 +370,17 @@ def _default_open_browser() -> bool:
 
 
 def main() -> None:
+    import logging
+
     import panel as pn
 
     port = int(os.getenv("LARVAWORLD_PORTAL_PORT", "5006"))
     open_browser = _env_flag("LARVAWORLD_PORTAL_OPEN_BROWSER", _default_open_browser())
 
     _start_bootstrap_once()
+
+    # Suppress harmless Bokeh validation warnings about FIXED_SIZING_MODE
+    logging.getLogger("bokeh.core.validation").setLevel(logging.ERROR)
 
     apps: dict[str, Callable[..., Any]] = {
         app_id: _lazy_factory(factory_path)
