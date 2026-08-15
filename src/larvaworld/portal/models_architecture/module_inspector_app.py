@@ -220,6 +220,14 @@ class _ModuleInspectorController:
         )
         self.status_pane = pn.pane.HTML(_status_html("Ready."), margin=(8, 0, 0, 0))
         self.param_box = pn.Column(sizing_mode="stretch_width")
+        self.config_panel = pn.Card(
+            self.param_box,
+            title="Configuration",
+            collapsed=False,
+            collapsible=True,
+            sizing_mode="stretch_width",
+            css_classes=["lw-model-inspector-config-panel"],
+        )
         self.plot_view = pn.Column(sizing_mode="stretch_width")
 
         self.module_select.param.watch(self._on_module_change, "value")
@@ -465,15 +473,27 @@ class _ModuleInspectorController:
             sizing_mode="stretch_width",
             margin=(0, 0, 12, 0),
         )
+        stimulus_card = pn.Card(
+            pn.Column(
+                self.waveform_select,
+                self.baseline_input,
+                self.amplitude_input,
+                self.frequency_input,
+                self.onset_input,
+                spacing=6,
+                sizing_mode="stretch_width",
+                margin=0,
+            ),
+            title="Stimulus",
+            collapsed=False,
+            collapsible=True,
+            sizing_mode="stretch_width",
+        )
         controls = pn.Column(
             self.module_select,
             self.mode_select,
             self.a_in_slider,
-            self.waveform_select,
-            self.baseline_input,
-            self.amplitude_input,
-            self.frequency_input,
-            self.onset_input,
+            stimulus_card,
             self.steps_input,
             self.dt_input,
             self.notes_pane,
@@ -483,6 +503,7 @@ class _ModuleInspectorController:
                 collapsed=True,
                 sizing_mode="stretch_width",
             ),
+            self.config_panel,
             self.signal_checkbox,
             self.status_pane,
             sizing_mode="stretch_width",
@@ -494,7 +515,6 @@ class _ModuleInspectorController:
             },
         )
         body = pn.Column(
-            self.param_box,
             self.plot_view,
             sizing_mode="stretch_width",
             css_classes=["lw-model-inspector-live-box"],
