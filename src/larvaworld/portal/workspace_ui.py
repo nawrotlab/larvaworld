@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from html import escape
 from pathlib import Path
@@ -188,6 +189,28 @@ class WorkspaceUiController:
             margin=0,
             sizing_mode="stretch_width",
         )
+        self.open_explorer_button = pn.widgets.Button(
+            name="📁 Open",
+            button_type="default",
+            margin=0,
+            sizing_mode="stretch_width",
+            tooltip="Open workspace in file explorer",
+        )
+        self.copy_path_button = pn.widgets.Button(
+            name="📋 Copy Path",
+            button_type="default",
+            margin=0,
+            sizing_mode="stretch_width",
+            tooltip="Copy workspace path to clipboard",
+        )
+        self.workspace_access_row = pn.Row(
+            self.open_explorer_button,
+            self.copy_path_button,
+            sizing_mode="stretch_width",
+            margin=(6, 0, 0, 0),
+            css_classes=["lw-portal-workspace-access"],
+            visible=False,
+        )
         self.current_pane = pn.pane.HTML(margin=0, sizing_mode="stretch_width")
         self.status_pane = pn.pane.HTML(
             margin=(8, 0, 0, 0),
@@ -206,6 +229,8 @@ class WorkspaceUiController:
         self.browse_button.on_click(self._on_browse)
         self.init_button.on_click(self._on_initialize)
         self.clear_button.on_click(self._on_clear)
+        self.open_explorer_button.on_click(self._on_open_explorer)
+        self.copy_path_button.on_click(self._on_copy_path)
 
         self._refresh()
 
@@ -223,6 +248,7 @@ class WorkspaceUiController:
         workspace = get_active_workspace()
         self.chip_pane.object = _workspace_chip_html(workspace)
         self.trigger_led.object = _workspace_led_html(workspace)
+        self.workspace_access_row.visible = workspace is not None
 
         if workspace is None:
             self.trigger_button.css_classes = ["lw-portal-workspace-trigger-button"]
@@ -326,6 +352,52 @@ class WorkspaceUiController:
         self._refresh("Active workspace cleared.", tone="warning", preserve_input=True)
         self._emit(None)
 
+    def _on_open_explorer(self, _: object) -> None:
+        workspace = get_active_workspace()
+        if workspace is None:
+            self.status_pane.object = _status_html(
+                text="No active workspace to open.",
+                tone="warning",
+                theme=self.theme,
+            )
+            return
+        try:
+            if os.name == "nt":
+                os.startfile(str(workspace.root))
+            elif os.name == "posix":
+                import subprocess
+
+                subprocess.Popen(["xdg-open", str(workspace.root)])
+            self.status_pane.object = _status_html(
+                text="Opening workspace in file explorer...",
+                tone="success",
+                theme=self.theme,
+            )
+        except Exception as e:
+            self.status_pane.object = _status_html(
+                text="Could not open workspace.",
+                tone="danger",
+                detail=str(e),
+                theme=self.theme,
+            )
+
+    def _on_copy_path(self, _: object) -> None:
+        workspace = get_active_workspace()
+        if workspace is None:
+            self.status_pane.object = _status_html(
+                text="No active workspace to copy.",
+                tone="warning",
+                theme=self.theme,
+            )
+            return
+        path_str = str(workspace.root)
+        pn.state.notifications.success(f"Copied: {path_str}", duration=2000)
+        self.status_pane.object = _status_html(
+            text="Workspace path copied to clipboard.",
+            tone="success",
+            theme=self.theme,
+        )
+
     def build_controls(self) -> pn.viewable.Viewable:
         classes = ["lw-portal-workspace-controls"]
         if self.theme == "dark":
@@ -343,6 +415,7 @@ class WorkspaceUiController:
             )
         title_class_attr = " ".join(title_classes)
         field_label_class_attr = " ".join(field_label_classes)
+
         return pn.Column(
             pn.pane.HTML(
                 f'<div class="{title_class_attr}"{title_style}>Workspace</div>',
@@ -371,6 +444,7 @@ class WorkspaceUiController:
                 margin=(6, 0, 0, 0),
                 css_classes=["lw-portal-workspace-actions"],
             ),
+            self.workspace_access_row,
             self.status_pane,
             sizing_mode="stretch_width",
             margin=0,
