@@ -682,7 +682,6 @@ PORTAL_RAW_CSS = """
 
 .lw-portal-banner-main {
   display: flex;
-  align-items: stretch;
   gap: 0;
   height: 300px;
 }
@@ -692,17 +691,27 @@ PORTAL_RAW_CSS = """
 }
 
 .lw-portal-banner-media {
-  flex: 0 0 74%;
+  flex: 0 0 80%;
   min-width: 0;
-  min-height: 300px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #3a3a3a;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
 }
 
 .lw-portal-banner-gif {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  margin: auto;
+  object-fit: contain;
+  object-position: center;
   display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  min-height: 300px;
 }
 
 .lw-portal-banner-copy {
@@ -712,7 +721,7 @@ PORTAL_RAW_CSS = """
   gap: 8px;
   padding: 16px 58px 16px 16px;
   height: 300px;
-  flex: 1 1 26%;
+  flex: 1 1 20%;
   overflow: hidden;
 }
 
@@ -1205,11 +1214,77 @@ button.lw-portal-qs-top-tab--active,
 .lw-portal-footer-link:hover {
   color: #111111;
 }
+
+.lw-about-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lw-about-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+.lw-about-content {
+  position: relative;
+  z-index: 1001;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.lw-about-body {
+  padding: 24px;
+  color: rgba(241, 245, 249, 0.96);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.lw-about-body h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: rgba(241, 245, 249, 0.98);
+  margin-bottom: 12px;
+}
+
+.lw-about-body p {
+  margin: 12px 0;
+}
+
+.lw-about-body a {
+  color: #f5a142;
+  text-decoration: none;
+}
+
+.lw-about-body a:hover {
+  text-decoration: underline;
+}
+
+.lw-about-btn:hover {
+  background: rgba(255, 255, 255, 0.26) !important;
+}
 """.strip()
 
 
 def _load_icon_data_uri(filename: str, mime_type: str) -> str:
-    icon_path = Path(__file__).with_name("icons") / filename
+    icon_path = Path(__file__).parent / "media" / "icons" / filename
     try:
         encoded = base64.b64encode(icon_path.read_bytes()).decode("ascii")
     except OSError:
@@ -1231,6 +1306,30 @@ _PYPI_ICON_DATA_URI = _load_icon_data_uri("pypi_logo.svg", "image/svg+xml")
 _PORTAL_VERSION = _resolve_portal_version()
 
 
+def _about_dialog_html() -> str:
+    return (
+        '<div id="lw-about-dialog" class="lw-about-modal" style="display:none;">'
+        "<div class=\"lw-about-backdrop\" onclick=\"document.getElementById('lw-about-dialog').style.display='none';\"></div>"
+        '<div class="lw-about-content">'
+        '<div class="lw-about-body">'
+        '<h2 style="margin-top:0;">About Larvaworld</h2>'
+        "<p><strong>Larvaworld</strong> v" + escape(_PORTAL_VERSION) + "</p>"
+        "<p>A computational framework for simulating and analyzing Drosophila larva behavior.</p>"
+        "<p>Use this portal to:"
+        '<ul style="margin:8px 0;">'
+        "<li>Run behavioral simulations with configurable larva models</li>"
+        "<li>Analyze experimental and simulated trajectories</li>"
+        "<li>Inspect model architectures and module dynamics</li>"
+        "<li>Manage and process datasets</li>"
+        "</ul>"
+        "</p>"
+        '<p><a href="https://github.com/nawrotlab/larvaworld" target="_blank" rel="noopener noreferrer">View on GitHub</a></p>'
+        "</div>"
+        "</div>"
+        "</div>"
+    )
+
+
 def _portal_logo_html(*, version: str) -> str:
     logo_img = ""
     if _LOGO_DATA_URI:
@@ -1244,12 +1343,18 @@ def _portal_logo_html(*, version: str) -> str:
         "may be lost.'); } return true;\">"
         f"{logo_img}"
         '<span class="lw-portal-logo-text">Larvaworld</span>'
+        '<div style="display:flex;align-items:center;gap:8px;">'
         f'<span class="lw-portal-version-badge">v{escape(version)}</span>'
+        "</div>"
         "</a>"
     )
 
 
 def _header_links_html() -> str:
+    from larvaworld.portal.workspace_ui import _workspace_header_icons_html
+
+    info_icons_html = _workspace_header_icons_html()
+
     docs_icon = ""
     if _RTD_ICON_DATA_URI:
         docs_icon = (
@@ -1285,6 +1390,8 @@ def _header_links_html() -> str:
         'target="_blank" rel="noopener noreferrer" title="PyPI">'
         f"{pypi_icon}"
         "</a>"
+        '<div style="width:12px;"></div>'
+        f"{info_icons_html}"
         "</div>"
     )
 

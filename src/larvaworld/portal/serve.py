@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import base64
+import atexit
 import os
+import signal
 import sys
 import threading
 import time
@@ -107,7 +109,7 @@ _BOOTSTRAP_THREAD: threading.Thread | None = None
 
 
 def _loading_gif_data_uris() -> list[str]:
-    gifs_dir = Path(__file__).with_name("icons") / "gifs"
+    gifs_dir = Path(__file__).parent / "media" / "gifs"
     if not gifs_dir.exists():
         return []
     uris: list[str] = []
@@ -314,10 +316,12 @@ def loading_app() -> Any:
             return
         background_state["index"] = index
         root.styles = {
-            "background": (
-                "linear-gradient(rgba(0,0,0,0.68), rgba(0,0,0,0.78)), "
-                f"url('{_LOADING_GIF_URIS[index]}') center / cover no-repeat"
-            ),
+            "background-color": "#3a3a3a",
+            "background-image": f"url('{_LOADING_GIF_URIS[index]}')",
+            "background-position": "center center",
+            "background-size": "contain",
+            "background-repeat": "no-repeat",
+            "background-attachment": "fixed",
             "min-height": "100vh",
             "padding": "0",
         }
@@ -370,7 +374,9 @@ def _default_open_browser() -> bool:
 
 
 def main() -> None:
+    import asyncio
     import logging
+    import warnings
 
     import panel as pn
 
@@ -382,16 +388,91 @@ def main() -> None:
     # Suppress harmless Bokeh validation warnings and WebSocket connection messages
     logging.getLogger("bokeh.core.validation").setLevel(logging.ERROR)
     logging.getLogger("bokeh.server.views.ws").setLevel(logging.ERROR)
-    logging.getLogger("tornado.iostream").setLevel(logging.ERROR)
-    logging.getLogger("tornado.websocket").setLevel(logging.ERROR)
+    logging.getLogger("tornado.iostream").setLevel(logging.CRITICAL)
+    logging.getLogger("tornado.websocket").setLevel(logging.CRITICAL)
+    logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
     logging.getLogger("panel.io.document").setLevel(logging.ERROR)
+    logging.getLogger("bokeh.server.server").setLevel(logging.ERROR)
+    logging.getLogger("asyncio").setLevel(logging.CRITICAL)
+
+    # Suppress WebSocket closed warnings
+    warnings.simplefilter("ignore", RuntimeWarning)
+    warnings.simplefilter("ignore", category=Warning)
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
+    warnings.filterwarnings("ignore", message=".*WebSocketClosedError.*")
+    warnings.filterwarnings("ignore", message=".*StreamClosedError.*")
+
+    # Suppress unhandled exception in asyncio event loop
+    def _handle_exception(loop: object, context: dict) -> None:
+        exc = context.get("exception")
+        if exc and "WebSocketClosedError" in str(type(exc).__name__):
+            return
+        if exc and "StreamClosedError" in str(type(exc).__name__):
+            return
+        logging.getLogger("asyncio").exception("Unhandled exception in event loop")
+
+    # Custom logging filter to suppress WebSocket closed errors
+    class _WebSocketErrorFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            if "WebSocketClosedError" in record.getMessage():
+                return False
+            if "StreamClosedError" in record.getMessage():
+                return False
+            if "Task exception was never retrieved" in record.getMessage():
+                return False
+            return True
+
+    # Apply filter to all handlers
+    filter_instance = _WebSocketErrorFilter()
+    for handler in logging.root.handlers:
+        handler.addFilter(filter_instance)
+
+    # Suppress WebSocket exceptions in traceback output
+    _original_excepthook = sys.excepthook
+
+    def _suppress_websocket_excepthook(
+        exc_type: type, exc_value: BaseException, tb: object
+    ) -> None:
+        if "WebSocketClosedError" in str(exc_type):
+            return
+        if "StreamClosedError" in str(exc_type):
+            return
+        _original_excepthook(exc_type, exc_value, tb)
+
+    sys.excepthook = _suppress_websocket_excepthook
+
+    def _cleanup() -> None:
+        clear_active_workspace_path()
+
+    def _signal_handler(sig: int, frame: object) -> None:
+        _cleanup()
+        sys.exit(0)
+
+    # Set up event loop exception handler
+    try:
+        loop = asyncio.get_event_loop()
+        loop.set_exception_handler(_handle_exception)
+    except RuntimeError:
+        pass
+
+    atexit.register(_cleanup)
+    signal.signal(signal.SIGINT, _signal_handler)
+    if sys.platform != "win32":
+        signal.signal(signal.SIGTERM, _signal_handler)
 
     apps: dict[str, Callable[..., Any]] = {
         app_id: _lazy_factory(factory_path)
         for app_id, factory_path in APP_ID_TO_FACTORY_PATH.items()
     }
 
-    pn.serve(apps, port=port, show=open_browser)
+    pn.serve(
+        apps,
+        port=port,
+        show=open_browser,
+        threaded=False,
+        num_procs=1,
+        use_xheaders=False,
+    )
 
 
 if __name__ == "__main__":

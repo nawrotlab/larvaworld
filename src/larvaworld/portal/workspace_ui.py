@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import base64
 import os
+import subprocess
 from dataclasses import dataclass
 from html import escape
 from pathlib import Path
@@ -19,6 +21,24 @@ from larvaworld.portal.workspace import (
     set_active_workspace_path,
     validate_workspace,
 )
+
+
+def _load_folder_icon_data_uri() -> str:
+    icon_path = Path(__file__).parent / "media" / "icons" / "folder_icon.svg"
+    try:
+        encoded = base64.b64encode(icon_path.read_bytes()).decode("ascii")
+        return f"data:image/svg+xml;base64,{encoded}"
+    except OSError:
+        return ""
+
+
+def _load_info_icon_data_uri() -> str:
+    icon_path = Path(__file__).parent / "media" / "icons" / "info_icon.svg"
+    try:
+        encoded = base64.b64encode(icon_path.read_bytes()).decode("ascii")
+        return f"data:image/svg+xml;base64,{encoded}"
+    except OSError:
+        return ""
 
 
 def _short_path(path: Path, *, keep_parts: int = 3) -> str:
@@ -47,19 +67,32 @@ def _workspace_chip_html(workspace: WorkspaceState | None) -> str:
     )
 
 
-def _workspace_led_html(workspace: WorkspaceState | None) -> str:
-    if workspace is not None:
-        icon = "📁"
-        short_path = _short_path(workspace.root, keep_parts=2)
-        title = f"Workspace: {workspace.name}\nPath: {short_path}"
-    else:
-        icon = "📂"
-        title = "Workspace: Not configured\nClick to setup"
+def _workspace_button_icon_html() -> str:
+    folder_icon_uri = _load_folder_icon_data_uri()
+    if not folder_icon_uri:
+        return '<div style="font-size:24px;" title="workspace">🗂️</div>'
     return (
-        f'<div title="{escape(title)}" aria-label="{escape(title)}" '
-        f'style="font-size:18px;display:flex;align-items:center;justify-content:center;'
-        f'width:22px;height:22px;cursor:pointer;">{icon}</div>'
+        f'<img src="{folder_icon_uri}" '
+        f'style="width:24px;height:24px;object-fit:contain;" title="workspace"/>'
     )
+
+
+def _workspace_header_icons_html() -> str:
+    info_icon_uri = _load_info_icon_data_uri()
+
+    info_title = "Parameter database"
+
+    info_html = ""
+    if info_icon_uri:
+        info_html = (
+            f'<a class="lw-portal-icon-link" title="{escape(info_title)}" '
+            f'aria-label="{escape(info_title)}" style="cursor:pointer;">'
+            f'<img class="lw-portal-header-icon" src="{info_icon_uri}" '
+            f'alt="Parameter database" style="width:24px;height:24px;"/>'
+            f"</a>"
+        )
+
+    return info_html
 
 
 def _status_html(
@@ -156,13 +189,11 @@ class WorkspaceUiController:
     def __post_init__(self) -> None:
         self.trigger_button = pn.widgets.Button(
             name="",
-            button_type="default",
+            button_type="light",
             margin=0,
-            width=22,
-            height=22,
-            css_classes=["lw-portal-workspace-trigger-button"],
+            css_classes=["lw-portal-icon-link"],
         )
-        self.trigger_led = pn.pane.HTML(margin=0, width=22, height=22)
+        self.trigger_led = pn.pane.HTML(margin=0)
         current = get_active_workspace_path()
         self.path_input = pn.widgets.TextInput(
             name="",
@@ -249,7 +280,7 @@ class WorkspaceUiController:
     ) -> None:
         workspace = get_active_workspace()
         self.chip_pane.object = _workspace_chip_html(workspace)
-        self.trigger_led.object = _workspace_led_html(workspace)
+        self.trigger_led.object = _workspace_button_icon_html()
         self.workspace_access_row.visible = workspace is not None
 
         if workspace is None:
@@ -371,7 +402,7 @@ class WorkspaceUiController:
 
                 subprocess.Popen(["xdg-open", str(workspace.root)])
             self.status_pane.object = _status_html(
-                text="Opening workspace in file explorer...",
+                text="Opened workspace in file explorer.",
                 tone="success",
                 theme=self.theme,
             )
@@ -392,13 +423,34 @@ class WorkspaceUiController:
                 theme=self.theme,
             )
             return
-        path_str = str(workspace.root)
-        pn.state.notifications.success(f"Copied: {path_str}", duration=2000)
-        self.status_pane.object = _status_html(
-            text="Workspace path copied to clipboard.",
-            tone="success",
-            theme=self.theme,
-        )
+        try:
+            path_str = str(workspace.root)
+            if os.name == "nt":
+                subprocess.run(
+                    ["clip.exe"],
+                    input=path_str.encode("utf-8"),
+                    check=True,
+                )
+            elif os.name == "posix":
+                subprocess.run(
+                    ["xclip", "-selection", "clipboard"],
+                    input=path_str.encode("utf-8"),
+                    check=True,
+                )
+            else:
+                raise RuntimeError(f"Unsupported OS: {os.name}")
+            self.status_pane.object = _status_html(
+                text="Copied workspace path to clipboard.",
+                tone="success",
+                theme=self.theme,
+            )
+        except Exception as e:
+            self.status_pane.object = _status_html(
+                text="Could not copy path to clipboard.",
+                tone="danger",
+                detail=str(e),
+                theme=self.theme,
+            )
 
     def build_controls(self) -> pn.viewable.Viewable:
         classes = ["lw-portal-workspace-controls"]

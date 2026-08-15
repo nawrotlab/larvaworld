@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="4.91412 4.91412 14.17176 14.17176">
+  <defs>
+    <style>
+      .info-text { font-size="20" font-weight: 600; fill: #32322a; font-style: italic; }
+    </style>
+  </defs>
+  <text class="info-text" x="12" y="18" text-anchor="middle" font-family="Georgia, serif">i</text>
+</svg>

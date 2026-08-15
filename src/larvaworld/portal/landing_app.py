@@ -29,7 +29,7 @@ from larvaworld.portal.workspace import get_active_workspace
 
 
 def _load_banner_gif_data_uri(filename: str) -> str:
-    gif_path = Path(__file__).with_name("icons") / "gifs" / filename
+    gif_path = Path(__file__).parent / "media" / "gifs" / filename
     try:
         encoded = base64.b64encode(gif_path.read_bytes()).decode("ascii")
     except OSError:
@@ -49,11 +49,20 @@ def _banner_slides() -> list[dict[str, str]]:
             "url": "https://computational-systems-neuroscience.de/wp-content/uploads/2024/10/1.mp4",
         },
         {
-            "filename": "Locomotory_model_for_Drosophila_larva.gif",
-            "title": "Locomotory model for Drosophila larva",
+            "filename": "Locomotory_model_top.gif",
+            "title": "Uncoupled rhythmic oscillations",
             "description": (
-                "The locomotory model combines crawling rhythms and directional control in a "
-                "single pipeline. Use it to inspect how motor components shape trajectory behavior."
+                "Crawling and lateral bending rhythms in the segmental network. "
+                "Observe how intrinsic oscillations generate rhythmic motor output independent of sensory input."
+            ),
+            "url": "https://computational-systems-neuroscience.de/wp-content/uploads/2024/10/2.mp4",
+        },
+        {
+            "filename": "Locomotory_model_bottom.gif",
+            "title": "Intermittent coupled oscillators",
+            "description": (
+                "Coupled oscillations and intermittent behavior in directional control circuits. "
+                "Inspect how motor components dynamically interact to modulate trajectory behavior."
             ),
             "url": "https://computational-systems-neuroscience.de/wp-content/uploads/2024/10/2.mp4",
         },
