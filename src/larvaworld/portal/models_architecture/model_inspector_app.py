@@ -424,7 +424,17 @@ class _ModelInspectorController:
             def __init__(self, controller, is_compare=False):
                 self.controller = controller
                 self.is_compare = is_compare
-                self.disabled = False
+
+            @property
+            def disabled(self):
+                if self.is_compare and hasattr(self.controller, "comparison_select"):
+                    return self.controller.comparison_select.disabled
+                return False
+
+            @disabled.setter
+            def disabled(self, value: bool):
+                if self.is_compare and hasattr(self.controller, "comparison_select"):
+                    self.controller.comparison_select.disabled = value
 
             @property
             def value(self):
@@ -1418,6 +1428,7 @@ class _ModelInspectorController:
         if self._has_local_edits:
             self.compare_title.object = "#### Comparison hidden during local edits"
             self.compare_table.object = pd.DataFrame()
+            self.comparison_select.disabled = True
             self._update_summary_sections()
             return module_specs
 
@@ -1425,6 +1436,7 @@ class _ModelInspectorController:
         if len(selected_ids) <= 1:
             self.compare_title.object = ""
             self.compare_table.object = pd.DataFrame()
+            self.comparison_select.disabled = False
             self._update_summary_sections()
             return module_specs
 
@@ -1444,6 +1456,7 @@ class _ModelInspectorController:
             self._set_status(f"Comparison failed ({exc.code}): {exc}")
             self.compare_title.object = ""
             self.compare_table.object = pd.DataFrame()
+            self.comparison_select.disabled = False
             self._update_summary_sections()
             return module_specs
 
@@ -1469,6 +1482,7 @@ class _ModelInspectorController:
                 for item in diffs
             ]
         )
+        self.comparison_select.disabled = False
         self._update_summary_sections()
         return module_specs
 
