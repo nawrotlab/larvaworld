@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import io
 import json
+import math
 from collections.abc import Mapping
 from html import escape
 from pathlib import Path
@@ -559,6 +560,7 @@ class _ModelInspectorController:
             key: ColumnDataSource(data={"time": [], key: []})
             for key in LIVE_PREVIEW_REPORTER_KEYS
         }
+        self._trajectory_source = ColumnDataSource(data={"x": [], "y": [], "time": []})
 
         self.plot_reporters_checkbox_activity.param.watch(
             self._on_plot_reporters_change, "value"
@@ -1131,6 +1133,22 @@ class _ModelInspectorController:
         self._reporter_paths = reporter_paths
         self._reporter_available = reporter_available
 
+    def _compute_trajectory_position(self, df: pd.DataFrame) -> tuple[list, list]:
+        """Compute 2D trajectory position from lin and ang velocities."""
+        x_pos = [0.0]
+        y_pos = [0.0]
+        heading = 0.0
+        for idx in range(len(df)):
+            if idx == 0:
+                continue
+            lin = df.iloc[idx]["lin"]
+            ang = df.iloc[idx]["ang"]
+            dt = self._active_dt
+            heading += ang * dt
+            x_pos.append(x_pos[-1] + lin * dt * math.cos(heading))
+            y_pos.append(y_pos[-1] + lin * dt * math.sin(heading))
+        return x_pos, y_pos
+
     def _tick_live_preview(self) -> None:
         if self._brain is None or self._runtime is None:
             self._pause_callback()
@@ -1173,6 +1191,12 @@ class _ModelInspectorController:
         self._probe_df = self._probe_df.tail(self._trace_window()).reset_index(
             drop=True
         )
+        x_pos, y_pos = self._compute_trajectory_position(self._probe_df)
+        self._trajectory_source.data = {
+            "x": x_pos,
+            "y": y_pos,
+            "time": self._probe_df["time"].tolist(),
+        }
         self._refresh_probe_table()
         self._step += 1
         self._update_probe_meta()
@@ -1181,6 +1205,7 @@ class _ModelInspectorController:
         self._step = 0
         for key in LIVE_PREVIEW_REPORTER_KEYS:
             self._sources[key].data = {"time": [], key: []}
+        self._trajectory_source.data = {"x": [], "y": [], "time": []}
         self._probe_df = pd.DataFrame(
             columns=[
                 "time",
@@ -1466,6 +1491,26 @@ class _ModelInspectorController:
 
     def _init_live_plots(self) -> None:
         plots: list[pn.viewable.Viewable] = []
+        trajectory_fig = figure(
+            title="Simulated Trajectory (2D Position)",
+            height=280,
+            width=900,
+            x_axis_label="X position",
+            y_axis_label="Y position",
+            tools="pan,wheel_zoom,box_zoom,save,reset",
+            active_drag=None,
+            sizing_mode="stretch_width",
+        )
+        trajectory_fig.line("x", "y", source=self._trajectory_source, line_width=2)
+        trajectory_fig.circle(
+            "x",
+            "y",
+            source=self._trajectory_source,
+            size=4,
+            color="navy",
+            alpha=0.5,
+        )
+        plots.append(pn.pane.Bokeh(trajectory_fig, sizing_mode="stretch_width"))
         for reporter in self._selected_plot_reporter_keys():
             reporter_label = _reporter_plot_label(reporter)
             fig = figure(
