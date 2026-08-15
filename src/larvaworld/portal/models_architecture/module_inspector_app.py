@@ -488,7 +488,6 @@ class _ModuleInspectorController:
                 self.amplitude_input,
                 self.frequency_input,
                 self.onset_input,
-                spacing=6,
                 sizing_mode="stretch_width",
                 margin=0,
             ),

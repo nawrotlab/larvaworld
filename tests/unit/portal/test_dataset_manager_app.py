@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from larvaworld.portal.datasets import dataset_manager_app
+from larvaworld.portal.datasets.manager_helpers import UnifiedDatasetRecord
 from larvaworld.portal.datasets.models import WorkspaceDatasetRecord
 from larvaworld.portal.workspace import (
     clear_active_workspace_path,
@@ -29,7 +30,7 @@ def _write_dataset(
     dataset_id: str | None = None,
     ref_id: str | None = None,
     n_agents: int | None = 12,
-) -> WorkspaceDatasetRecord:
+) -> UnifiedDatasetRecord:
     dataset_dir = workspace.datasets_dir / "imported" / lab_id / group_id / dataset_slug
     data_dir = dataset_dir / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
@@ -43,7 +44,7 @@ def _write_dataset(
     }
     (data_dir / "conf.txt").write_text(json.dumps(payload), encoding="utf-8")
     (data_dir / "data.h5").write_bytes(b"placeholder")
-    return WorkspaceDatasetRecord(
+    record = WorkspaceDatasetRecord(
         dataset_id=(dataset_id or dataset_slug),
         dataset_dir=dataset_dir.resolve(),
         data_dir=data_dir.resolve(),
@@ -54,6 +55,7 @@ def _write_dataset(
         ref_id=ref_id,
         n_agents=n_agents,
     )
+    return UnifiedDatasetRecord.from_imported(record)
 
 
 def _select_first_row(

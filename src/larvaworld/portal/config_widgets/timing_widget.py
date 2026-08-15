@@ -106,7 +106,7 @@ def build_timing_widget(
             '<div style="color:#999;font-size:12px;">No timing parameters available.</div>'
         )
 
-    body = pn.Column(*widgets, spacing=6, sizing_mode="stretch_width", margin=0)
+    body = pn.Column(*widgets, sizing_mode="stretch_width", margin=0)
 
     if collapsible:
         return pn.Card(
