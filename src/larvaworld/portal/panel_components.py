@@ -7,6 +7,7 @@ from pathlib import Path
 
 import panel as pn
 
+from larvaworld.portal.about import build_about_content
 from larvaworld.portal.landing_registry import (
     DOCS_ROOT,
     GITHUB_ISSUES,
@@ -302,6 +303,22 @@ PORTAL_RAW_CSS = """
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
+}
+
+.lw-portal-workspace-trigger-shell:hover::after {
+  content: "Workspace";
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.96);
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 31;
 }
 
 .lw-portal-icon-link:hover,
@@ -1215,70 +1232,201 @@ button.lw-portal-qs-top-tab--active,
   color: #111111;
 }
 
-.lw-about-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.lw-about-backdrop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  cursor: pointer;
-}
-
-.lw-about-content {
+.lw-about-dropdown-wrap {
   position: relative;
-  z-index: 1001;
-  background: rgba(15, 23, 42, 0.96);
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
+  display: inline-flex;
+  align-items: center;
 }
 
-.lw-about-body {
-  padding: 24px;
-  color: rgba(241, 245, 249, 0.96);
-  font-size: 14px;
+.lw-about-trigger-shell {
+  position: relative;
+  width: 22px;
+  min-width: 22px;
+  max-width: 22px;
+  height: 22px;
+  min-height: 22px;
+  max-height: 22px;
+  flex: 0 0 22px;
+  margin: 0 !important;
+}
+
+.lw-about-trigger-button,
+.lw-about-trigger-button .bk-btn,
+.lw-about-trigger-button button,
+.lw-about-trigger-button .mdc-button,
+.lw-about-trigger-button [class*="mdc-button"] {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.lw-about-trigger-shell:hover::after {
+  content: "About";
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.96);
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 31;
+}
+
+.lw-about-dropdown-panel {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  width: min(420px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.14);
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+  box-sizing: border-box;
+  z-index: 30;
+  color: #111111;
+  font-size: 13px;
   line-height: 1.6;
 }
 
-.lw-about-body h2 {
-  font-size: 20px;
-  font-weight: 600;
-  color: rgba(241, 245, 249, 0.98);
-  margin-bottom: 12px;
+.lw-about-dropdown-panel h3 {
+  font-size: 17px;
+  font-weight: 650;
+  margin: 0 0 4px 0;
+  color: #111111;
 }
 
-.lw-about-body p {
-  margin: 12px 0;
+.lw-about-dropdown-panel p,
+.lw-about-dropdown-panel ul {
+  margin: 0 0 10px 0;
+  color: rgba(17,17,17,0.86);
 }
 
-.lw-about-body a {
-  color: #f5a142;
+.lw-about-dropdown-panel ul {
+  padding-left: 20px;
+}
+
+.lw-about-dropdown-panel a {
+  color: #1f5fa8;
   text-decoration: none;
 }
 
-.lw-about-body a:hover {
+.lw-about-dropdown-panel a:hover {
   text-decoration: underline;
 }
 
-.lw-about-btn:hover {
-  background: rgba(255, 255, 255, 0.26) !important;
+.lw-parameter-db-dropdown-wrap {
+  position: relative;
+  display: flex;
+  display: inline-flex;
+  align-items: center;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  flex: 0 0 22px;
+  align-self: center !important;
+  margin-right: 0 !important;
+  overflow: visible;
+}
+
+.lw-parameter-db-trigger-shell {
+  position: relative;
+  width: 22px;
+  min-width: 22px;
+  max-width: 22px;
+  height: 22px;
+  min-height: 22px;
+  max-height: 22px;
+  flex: 0 0 22px;
+  margin: 0 !important;
+}
+
+.lw-parameter-db-trigger-button,
+.lw-parameter-db-trigger-button .bk-btn,
+.lw-parameter-db-trigger-button button,
+.lw-parameter-db-trigger-button .mdc-button,
+.lw-parameter-db-trigger-button [class*="mdc-button"] {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.lw-parameter-db-trigger-shell:hover::after {
+  content: "Parameter database";
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.96);
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 31;
+}
+
+.lw-parameter-db-dropdown-panel {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  width: min(420px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.14);
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+  box-sizing: border-box;
+  z-index: 30;
+  color: #111111;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.lw-parameter-db-dropdown-panel h3 {
+  font-size: 17px;
+  font-weight: 650;
+  margin: 0 0 4px 0;
+  color: #111111;
+}
+
+.lw-parameter-db-dropdown-panel p {
+  margin: 0 0 10px 0;
+  color: rgba(17,17,17,0.86);
 }
 """.strip()
 
@@ -1303,30 +1451,34 @@ _LOGO_DATA_URI = _load_icon_data_uri("LarvaWorld_logo.png", "image/png")
 _RTD_ICON_DATA_URI = _load_icon_data_uri("RTD_logo.svg", "image/svg+xml")
 _GITHUB_ICON_DATA_URI = _load_icon_data_uri("github_logo.svg", "image/svg+xml")
 _PYPI_ICON_DATA_URI = _load_icon_data_uri("pypi_logo.svg", "image/svg+xml")
+_ABOUT_ICON_DATA_URI = _load_icon_data_uri("info_icon.svg", "image/svg+xml")
+_PARAMETER_DB_ICON_DATA_URI = _load_icon_data_uri("parameter_icon.png", "image/png")
 _PORTAL_VERSION = _resolve_portal_version()
 
 
-def _about_dialog_html() -> str:
+def _about_button_icon_html() -> str:
+    if not _ABOUT_ICON_DATA_URI:
+        return '<div style="font-size:20px;" title="About">ℹ️</div>'
     return (
-        '<div id="lw-about-dialog" class="lw-about-modal" style="display:none;">'
-        "<div class=\"lw-about-backdrop\" onclick=\"document.getElementById('lw-about-dialog').style.display='none';\"></div>"
-        '<div class="lw-about-content">'
-        '<div class="lw-about-body">'
-        '<h2 style="margin-top:0;">About Larvaworld</h2>'
-        "<p><strong>Larvaworld</strong> v" + escape(_PORTAL_VERSION) + "</p>"
-        "<p>A computational framework for simulating and analyzing Drosophila larva behavior.</p>"
-        "<p>Use this portal to:"
-        '<ul style="margin:8px 0;">'
-        "<li>Run behavioral simulations with configurable larva models</li>"
-        "<li>Analyze experimental and simulated trajectories</li>"
-        "<li>Inspect model architectures and module dynamics</li>"
-        "<li>Manage and process datasets</li>"
-        "</ul>"
-        "</p>"
-        '<p><a href="https://github.com/nawrotlab/larvaworld" target="_blank" rel="noopener noreferrer">View on GitHub</a></p>'
-        "</div>"
-        "</div>"
-        "</div>"
+        f'<img src="{_ABOUT_ICON_DATA_URI}" '
+        f'style="width:22px;height:22px;object-fit:contain;" title="About"/>'
+    )
+
+
+def _parameter_db_button_icon_html() -> str:
+    if not _PARAMETER_DB_ICON_DATA_URI:
+        return '<div style="font-size:20px;" title="Parameter database">📊</div>'
+    return (
+        f'<img src="{_PARAMETER_DB_ICON_DATA_URI}" '
+        f'style="width:22px;height:22px;object-fit:contain;" title="Parameter database"/>'
+    )
+
+
+def build_parameter_db_content() -> pn.viewable.Viewable:
+    return pn.Column(
+        pn.pane.Markdown("### Parameter Database", margin=(0, 0, 12, 0)),
+        pn.pane.Markdown("_Content coming soon._", margin=0),
+        margin=0,
     )
 
 
@@ -1343,18 +1495,12 @@ def _portal_logo_html(*, version: str) -> str:
         "may be lost.'); } return true;\">"
         f"{logo_img}"
         '<span class="lw-portal-logo-text">Larvaworld</span>'
-        '<div style="display:flex;align-items:center;gap:8px;">'
         f'<span class="lw-portal-version-badge">v{escape(version)}</span>'
-        "</div>"
         "</a>"
     )
 
 
 def _header_links_html() -> str:
-    from larvaworld.portal.workspace_ui import _workspace_header_icons_html
-
-    info_icons_html = _workspace_header_icons_html()
-
     docs_icon = ""
     if _RTD_ICON_DATA_URI:
         docs_icon = (
@@ -1390,8 +1536,6 @@ def _header_links_html() -> str:
         'target="_blank" rel="noopener noreferrer" title="PyPI">'
         f"{pypi_icon}"
         "</a>"
-        '<div style="width:12px;"></div>'
-        f"{info_icons_html}"
         "</div>"
     )
 
@@ -1461,11 +1605,61 @@ def build_footer() -> pn.viewable.Viewable:
 
 def build_template_header() -> pn.viewable.Viewable:
     workspace_ui = WorkspaceUiController()
-    left = pn.pane.HTML(
+
+    # Logo and about button
+    logo_pane = pn.pane.HTML(
         _portal_logo_html(version=_PORTAL_VERSION),
         margin=0,
         css_classes=["lw-portal-header-left"],
     )
+
+    # About trigger, built the same way as the workspace trigger in
+    # WorkspaceUiController: a visible HTML icon pane plus an invisible
+    # Button stacked on top for the click handling, wrapped in a small
+    # shell (see .lw-portal-workspace-trigger-shell / -led / -button).
+    about_led = pn.pane.HTML(_about_button_icon_html(), margin=0)
+    about_button = pn.widgets.Button(
+        name="",
+        margin=0,
+        css_classes=["lw-about-trigger-button"],
+    )
+    about_trigger_view = pn.Column(
+        about_led,
+        about_button,
+        margin=0,
+        width=22,
+        height=22,
+        css_classes=["lw-about-trigger-shell"],
+    )
+    about_panel = pn.Column(
+        build_about_content(_PORTAL_VERSION),
+        visible=False,
+        css_classes=["lw-about-dropdown-panel"],
+        margin=0,
+    )
+
+    def _toggle_about(_: object) -> None:
+        about_panel.visible = not about_panel.visible
+
+    about_button.on_click(_toggle_about)
+
+    about_dropdown = pn.Column(
+        about_trigger_view,
+        about_panel,
+        css_classes=["lw-about-dropdown-wrap"],
+        margin=(0, 0, 0, 8),
+        sizing_mode="fixed",
+        width_policy="min",
+    )
+
+    left_row = pn.Row(
+        logo_pane,
+        about_dropdown,
+        margin=0,
+        width_policy="min",
+        sizing_mode="fixed",
+    )
+
     links = pn.pane.HTML(
         _header_links_html(),
         margin=0,
@@ -1497,8 +1691,46 @@ def build_template_header() -> pn.viewable.Viewable:
         sizing_mode="fixed",
         width_policy="min",
     )
+
+    # Parameter Database trigger, built the same way as the about trigger.
+    parameter_db_led = pn.pane.HTML(_parameter_db_button_icon_html(), margin=0)
+    parameter_db_button = pn.widgets.Button(
+        name="",
+        margin=0,
+        css_classes=["lw-parameter-db-trigger-button"],
+    )
+    parameter_db_trigger_view = pn.Column(
+        parameter_db_led,
+        parameter_db_button,
+        margin=0,
+        width=22,
+        height=22,
+        css_classes=["lw-parameter-db-trigger-shell"],
+    )
+    parameter_db_panel = pn.Column(
+        build_parameter_db_content(),
+        visible=False,
+        css_classes=["lw-parameter-db-dropdown-panel"],
+        margin=0,
+    )
+
+    def _toggle_parameter_db(_: object) -> None:
+        parameter_db_panel.visible = not parameter_db_panel.visible
+
+    parameter_db_button.on_click(_toggle_parameter_db)
+
+    parameter_db_dropdown = pn.Column(
+        parameter_db_trigger_view,
+        parameter_db_panel,
+        css_classes=["lw-parameter-db-dropdown-wrap"],
+        margin=(0, 0, 0, 36),
+        sizing_mode="fixed",
+        width_policy="min",
+    )
+
     right = pn.Row(
         links,
+        parameter_db_dropdown,
         settings_dropdown,
         css_classes=["lw-portal-header-right-wrap"],
         margin=0,
@@ -1506,7 +1738,7 @@ def build_template_header() -> pn.viewable.Viewable:
         width_policy="min",
     )
     header_row = pn.Row(
-        left,
+        left_row,
         pn.Spacer(),
         pn.Spacer(sizing_mode="stretch_width"),
         right,
@@ -1514,6 +1746,7 @@ def build_template_header() -> pn.viewable.Viewable:
         sizing_mode="stretch_width",
         margin=0,
     )
+
     return header_row
 
 

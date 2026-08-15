@@ -32,15 +32,6 @@ def _load_folder_icon_data_uri() -> str:
         return ""
 
 
-def _load_info_icon_data_uri() -> str:
-    icon_path = Path(__file__).parent / "media" / "icons" / "info_icon.svg"
-    try:
-        encoded = base64.b64encode(icon_path.read_bytes()).decode("ascii")
-        return f"data:image/svg+xml;base64,{encoded}"
-    except OSError:
-        return ""
-
-
 def _short_path(path: Path, *, keep_parts: int = 3) -> str:
     parts = path.parts
     if len(parts) <= keep_parts:
@@ -75,24 +66,6 @@ def _workspace_button_icon_html() -> str:
         f'<img src="{folder_icon_uri}" '
         f'style="width:24px;height:24px;object-fit:contain;" title="workspace"/>'
     )
-
-
-def _workspace_header_icons_html() -> str:
-    info_icon_uri = _load_info_icon_data_uri()
-
-    info_title = "Parameter database"
-
-    info_html = ""
-    if info_icon_uri:
-        info_html = (
-            f'<a class="lw-portal-icon-link" title="{escape(info_title)}" '
-            f'aria-label="{escape(info_title)}" style="cursor:pointer;">'
-            f'<img class="lw-portal-header-icon" src="{info_icon_uri}" '
-            f'alt="Parameter database" style="width:24px;height:24px;"/>'
-            f"</a>"
-        )
-
-    return info_html
 
 
 def _status_html(
