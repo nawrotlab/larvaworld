@@ -7,7 +7,12 @@ from pathlib import Path
 
 import panel as pn
 
-from larvaworld.portal.landing_registry import DOCS_ROOT, GITHUB_ISSUES, GITHUB_ROOT
+from larvaworld.portal.landing_registry import (
+    DOCS_ROOT,
+    GITHUB_ISSUES,
+    GITHUB_ROOT,
+    PYPI_ROOT,
+)
 from larvaworld.portal.registry_logic import (
     compute_badges,
     compute_primary_action,
@@ -1222,6 +1227,7 @@ def _resolve_portal_version() -> str:
 _LOGO_DATA_URI = _load_icon_data_uri("LarvaWorld_logo.png", "image/png")
 _RTD_ICON_DATA_URI = _load_icon_data_uri("RTD_logo.svg", "image/svg+xml")
 _GITHUB_ICON_DATA_URI = _load_icon_data_uri("github_logo.svg", "image/svg+xml")
+_PYPI_ICON_DATA_URI = _load_icon_data_uri("pypi_logo.svg", "image/svg+xml")
 _PORTAL_VERSION = _resolve_portal_version()
 
 
@@ -1258,6 +1264,13 @@ def _header_links_html() -> str:
             'alt="GitHub logo"/>'
         )
 
+    pypi_icon = ""
+    if _PYPI_ICON_DATA_URI:
+        pypi_icon = (
+            f'<img class="lw-portal-header-icon" src="{_PYPI_ICON_DATA_URI}" '
+            'alt="PyPI logo"/>'
+        )
+
     return (
         '<div class="lw-portal-header-right">'
         f'<a class="lw-portal-icon-link" href="{escape(DOCS_ROOT)}" '
@@ -1267,6 +1280,10 @@ def _header_links_html() -> str:
         f'<a class="lw-portal-icon-link" href="{escape(GITHUB_ROOT)}" '
         'target="_blank" rel="noopener noreferrer" title="GitHub">'
         f"{github_icon}"
+        "</a>"
+        f'<a class="lw-portal-icon-link" href="{escape(PYPI_ROOT)}" '
+        'target="_blank" rel="noopener noreferrer" title="PyPI">'
+        f"{pypi_icon}"
         "</a>"
         "</div>"
     )

@@ -198,14 +198,12 @@ class WorkspaceUiController:
             button_type="default",
             margin=0,
             sizing_mode="stretch_width",
-            tooltip="Open workspace in file explorer",
         )
         self.copy_path_button = pn.widgets.Button(
             name="📋 Copy Path",
             button_type="default",
             margin=0,
             sizing_mode="stretch_width",
-            tooltip="Copy workspace path to clipboard",
         )
         self.workspace_access_row = pn.Row(
             self.open_explorer_button,
