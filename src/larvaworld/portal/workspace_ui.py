@@ -48,14 +48,17 @@ def _workspace_chip_html(workspace: WorkspaceState | None) -> str:
 
 
 def _workspace_led_html(workspace: WorkspaceState | None) -> str:
-    active = workspace is not None
-    title = "Workspace configured" if active else "Workspace not configured"
-    cls = "lw-portal-workspace-led"
-    if active:
-        cls += " lw-portal-workspace-led--active"
+    if workspace is not None:
+        icon = "📁"
+        title = f"Workspace configured: {workspace.name}"
     else:
-        cls += " lw-portal-workspace-led--inactive"
-    return f'<div class="{cls}" title="{escape(title)}" aria-label="{escape(title)}"></div>'
+        icon = "📂"
+        title = "Workspace not configured"
+    return (
+        f'<div title="{escape(title)}" aria-label="{escape(title)}" '
+        f'style="font-size:18px;display:flex;align-items:center;justify-content:center;'
+        f'width:22px;height:22px;">{icon}</div>'
+    )
 
 
 def _status_html(
