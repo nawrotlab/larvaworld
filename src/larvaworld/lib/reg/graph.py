@@ -360,7 +360,7 @@ class GraphRegistry:
             {
                 "general": [
                     # self.entry('ethogram', add_samples=False),
-                    self.entry("pathlength", scaled=False),
+                    # self.entry("pathlength", scaled=False),
                     # self.entry('navigation index'),
                     self.entry("epochs", stridechain_duration=True),
                 ],

@@ -133,7 +133,10 @@ def _status_html(text: str, *, tone: str = "neutral", detail: str | None = None)
 class _AnalysisController:
     def __init__(self) -> None:
         self.workspace = get_active_workspace()
-        self.graph_registry = GraphRegistry()
+        try:
+            self.graph_registry = GraphRegistry()
+        except Exception:
+            self.graph_registry = None
         self._all_records = []
         self._selected_datasets = []
         self._loaded_datasets: dict[str, LarvaDataset] = {}
@@ -254,6 +257,13 @@ class _AnalysisController:
             self._set_status("Select at least one dataset first.", tone="warning")
             return
 
+        if self.graph_registry is None:
+            self._set_status(
+                "Plot registry is not available. Please check your larvaworld installation.",
+                tone="danger",
+            )
+            return
+
         self._set_status(
             "Loading datasets and checking plot availability…", tone="neutral"
         )
@@ -322,6 +332,13 @@ class _AnalysisController:
         if not self._selected_datasets or not self._loaded_datasets:
             self._set_status(
                 "Select and refresh dataset availability first.", tone="warning"
+            )
+            return
+
+        if self.graph_registry is None:
+            self._set_status(
+                "Plot registry is not available. Please check your larvaworld installation.",
+                tone="danger",
             )
             return
 
