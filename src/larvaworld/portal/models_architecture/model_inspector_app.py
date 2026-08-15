@@ -54,6 +54,10 @@ from larvaworld.portal.models_architecture.model_inspector_models import (
 )
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
 from larvaworld.portal.workspace import WorkspaceError, get_workspace_dir
+from larvaworld.portal.models_architecture.model_export import (
+    export_model_config_to_json,
+    format_export_filename,
+)
 
 __all__ = ["_ModelInspectorController", "model_inspector_app"]
 
@@ -415,6 +419,13 @@ class _ModelInspectorController:
             button_type="warning",
             sizing_mode="stretch_width",
         )
+        self.export_button = pn.widgets.Button(
+            name="📥 Export JSON",
+            button_type="default",
+            sizing_mode="stretch_width",
+            tooltip="Export model configuration(s) to JSON",
+        )
+        self.export_status = pn.pane.HTML("", margin=(6, 0, 0, 0))
         self.max_steps_input = pn.widgets.IntInput(
             name="Max steps",
             value=LIVE_MAX_STEPS,
