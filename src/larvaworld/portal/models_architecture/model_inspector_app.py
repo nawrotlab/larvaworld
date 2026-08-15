@@ -417,6 +417,62 @@ class _ModelInspectorController:
         default_model = "explorer" if "explorer" in model_ids else model_ids[0]
         self.model_select_table.selection = [0] if model_ids else []
         self._primary_model_id = default_model
+
+        class _SelectProxy:
+            def __init__(self, controller, is_compare=False):
+                self.controller = controller
+                self.is_compare = is_compare
+                self.disabled = False
+
+            @property
+            def value(self):
+                if self.is_compare:
+                    selected = self.controller._get_selected_model_ids()
+                    return selected[1] if len(selected) > 1 else ""
+                else:
+                    return self.controller._get_primary_model_id()
+
+            @value.setter
+            def value(self, model_id: str):
+                if self.is_compare:
+                    if not model_id:
+                        selected = self.controller._get_selected_model_ids()
+                        if selected:
+                            idx = int(
+                                self.controller.model_select_table.value[
+                                    self.controller.model_select_table.value["ID"]
+                                    == selected[0]
+                                ].index[0]
+                            )
+                            self.controller.model_select_table.selection = [idx]
+                        else:
+                            self.controller.model_select_table.selection = []
+                        return
+                    df = self.controller.model_select_table.value
+                    if model_id in df["ID"].values:
+                        idx = int(df[df["ID"] == model_id].index[0])
+                        primary_id = self.controller._get_primary_model_id()
+                        primary_idx = int(
+                            self.controller.model_select_table.value[
+                                self.controller.model_select_table.value["ID"]
+                                == primary_id
+                            ].index[0]
+                        )
+                        self.controller.model_select_table.selection = [
+                            primary_idx,
+                            idx,
+                        ]
+                else:
+                    df = self.controller.model_select_table.value
+                    if model_id in df["ID"].values:
+                        idx = int(df[df["ID"] == model_id].index[0])
+                        self.controller.model_select_table.selection = [idx]
+
+            def param(self):
+                return type("Param", (), {"watch": lambda *a, **kw: None})()
+
+        self.primary_select = _SelectProxy(self, is_compare=False)
+        self.compare_select = _SelectProxy(self, is_compare=True)
         self.run_button = pn.widgets.Button(name="Run", button_type="success")
         self.pause_button = pn.widgets.Button(name="Pause", button_type="primary")
         self.clear_trace_button = pn.widgets.Button(
@@ -544,79 +600,6 @@ class _ModelInspectorController:
         if selected:
             return selected[0]
         return self._primary_model_id
-
-    @property
-    def primary_select(self):
-        """Backward-compatible proxy for primary model selection."""
-
-        class PrimarySelectProxy:
-            def __init__(self, controller):
-                self._controller = controller
-
-            @property
-            def value(self):
-                return self._controller._get_primary_model_id()
-
-            @value.setter
-            def value(self, model_id: str):
-                df = self._controller.model_select_table.value
-                if model_id in df["ID"].values:
-                    idx = int(df[df["ID"] == model_id].index[0])
-                    self._controller.model_select_table.selection = [idx]
-
-            def param(self):
-                return type("Param", (), {"watch": lambda *a, **kw: None})()
-
-        return PrimarySelectProxy(self)
-
-    @property
-    def compare_select(self):
-        """Backward-compatible proxy for comparison model selection."""
-
-        class CompareSelectProxy:
-            def __init__(self, controller):
-                self._controller = controller
-                self.disabled = False
-
-            @property
-            def value(self):
-                selected = self._controller._get_selected_model_ids()
-                return selected[1] if len(selected) > 1 else ""
-
-            @value.setter
-            def value(self, model_id: str):
-                if not model_id:
-                    selected = self._controller._get_selected_model_ids()
-                    if selected:
-                        idx = int(
-                            self._controller.model_select_table.value[
-                                self._controller.model_select_table.value["ID"]
-                                == selected[0]
-                            ].index[0]
-                        )
-                        self._controller.model_select_table.selection = [idx]
-                    else:
-                        self._controller.model_select_table.selection = []
-                    return
-                df = self._controller.model_select_table.value
-                if model_id in df["ID"].values:
-                    idx = int(df[df["ID"] == model_id].index[0])
-                    primary_id = self._controller._get_primary_model_id()
-                    primary_idx = int(
-                        self._controller.model_select_table.value[
-                            self._controller.model_select_table.value["ID"]
-                            == primary_id
-                        ].index[0]
-                    )
-                    self._controller.model_select_table.selection = [
-                        primary_idx,
-                        idx,
-                    ]
-
-            def param(self):
-                return type("Param", (), {"watch": lambda *a, **kw: None})()
-
-        return CompareSelectProxy(self)
 
     def _set_status(self, message: str) -> None:
         self._status_message = message
