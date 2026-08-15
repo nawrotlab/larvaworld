@@ -56,6 +56,7 @@ __all__: list[str] = [
     "DROSOPHILA_AMP_JSON",
     "PHENOTYPES",
     "SPECIES",
+    "DEFAULT_SPECIES",
     "DEFAULT_PHENOTYPE_PARAM",
     "PHENOTYPE_VALUES",
     "KAP_V_OVERRIDE",
@@ -178,10 +179,11 @@ def phenotypes(
     """
     Build the generic model plus both phenotypes in one call.
 
-    Returns ``{"drosophila": generic, "rover": ..., "sitter": ...}``.
+    Returns ``{"default": generic, "rover": ..., "sitter": ...}``, keyed by the
+    same names :data:`SPECIES` uses.
     """
     base = load_drosophila() if base is None else base
-    out = {"drosophila": base}
+    out = {DEFAULT_SPECIES: base}
     for name in PHENOTYPES:
         out[name] = make_phenotype(
             name, base=base, param=param, values=values, **overrides
@@ -189,20 +191,22 @@ def phenotypes(
     return out
 
 
-#: Selectable model names. ``"default"`` is a historical alias for the generic
-#: species model; the ten stored rover*/sitter* larva-model configs persist
-#: ``"rover"`` and ``"sitter"``.
-SPECIES: tuple[str, ...] = ("default", "drosophila", "rover", "sitter")
+#: Name of the generic, unmodified species model.
+DEFAULT_SPECIES: str = "default"
+
+#: Selectable model names. The ten stored rover*/sitter* larva-model configs
+#: persist ``"rover"`` and ``"sitter"``.
+SPECIES: tuple[str, ...] = (DEFAULT_SPECIES, *PHENOTYPES)
 
 
 @lru_cache(maxsize=None)
-def get_species_pars(species: str = "default") -> DEBPars:
+def get_species_pars(species: str = DEFAULT_SPECIES) -> DEBPars:
     """
     Resolve a species name to its parameter set.
 
-    ``"default"`` and ``"drosophila"`` both give the generic species model straight
-    from the AmP export; ``"rover"`` and ``"sitter"`` give the behavioural
-    phenotypes derived from it.
+    The AmP export is the source in every case. ``"default"`` uses it unaltered --
+    the average representative individual of the species -- while ``"rover"`` and
+    ``"sitter"`` additionally override the differentiating parameter.
 
     Cached, because constructing a :class:`DEBPars` runs the embryo solver and a
     ``DEB`` instance is built every time the model registry resolves defaults.

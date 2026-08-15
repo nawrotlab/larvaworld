@@ -14,7 +14,7 @@ from larvaworld.lib.model.deb import rover_sitter_model as rs
 
 #: Yield coefficients carried by the pre-existing larvaworld species files
 #: (``models/deb_{default,rover,sitter}.csv``). The phenotypes must reproduce them.
-LEGACY_Y_E_X = {"drosophila": 0.763636, "rover": 0.85, "sitter": 0.5}
+LEGACY_Y_E_X = {"default": 0.763636, "rover": 0.85, "sitter": 0.5}
 
 T_25C = 298.15
 
@@ -94,14 +94,14 @@ def test_caller_can_override_kap_V() -> None:
 
 
 def test_phenotypes_returns_generic_and_both_phenotypes(models: dict) -> None:
-    assert set(models) == {"drosophila", "rover", "sitter"}
+    assert set(models) == {"default", "rover", "sitter"}
 
 
 def test_generic_kap_X_is_the_amp_value(generic: de.DEBPars) -> None:
     assert generic.kap_X == pytest.approx(0.8)
 
 
-@pytest.mark.parametrize("name", ["drosophila", "rover", "sitter"])
+@pytest.mark.parametrize("name", ["default", "rover", "sitter"])
 def test_phenotypes_reproduce_legacy_yield_coefficients(
     name: str, models: dict
 ) -> None:
@@ -147,6 +147,42 @@ def test_assimilation_at_equal_f_is_phenotype_independent(models: dict) -> None:
     p_rover = de.powers(de.Stage.LARVA, pars=models["rover"], **kw)
     p_sitter = de.powers(de.Stage.LARVA, pars=models["sitter"], **kw)
     assert p_rover.p_A == pytest.approx(p_sitter.p_A)
+
+
+def test_species_names(generic: de.DEBPars) -> None:
+    """Exactly three: the unaltered species model plus the two phenotypes."""
+    assert rs.SPECIES == ("default", "rover", "sitter")
+    assert rs.DEFAULT_SPECIES == "default"
+    with pytest.raises(ValueError, match="unknown species"):
+        rs.get_species_pars("drosophila")
+
+
+def test_default_species_is_the_json_unaltered() -> None:
+    """
+    Every species loads the same AmP export; "default" applies no override at all.
+
+    The phenotypes differ from it only in the differentiating parameter.
+    """
+    default = rs.get_species_pars("default")
+    raw = rs.load_drosophila()
+    for f in de.DEBPars.__dataclass_fields__:
+        if f == "metadata":
+            continue
+        assert getattr(default, f) == getattr(raw, f), f
+
+    for name in rs.PHENOTYPES:
+        pheno = rs.get_species_pars(name)
+        differing = {
+            f
+            for f in de.DEBPars.__dataclass_fields__
+            if f != "metadata" and getattr(pheno, f) != getattr(default, f)
+        }
+        assert differing == {rs.DEFAULT_PHENOTYPE_PARAM}, name
+
+
+def test_get_species_pars_is_cached() -> None:
+    """A DEB is built whenever the registry resolves defaults; don't re-solve."""
+    assert rs.get_species_pars("rover") is rs.get_species_pars("rover")
 
 
 def test_convenience_constructors_match_make_phenotype(generic: de.DEBPars) -> None:
@@ -204,7 +240,7 @@ def test_incomplete_values_raise(generic: de.DEBPars) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("name", ["drosophila", "rover", "sitter"])
+@pytest.mark.parametrize("name", ["default", "rover", "sitter"])
 def test_phenotype_completes_a_life_cycle(name: str, models: dict) -> None:
     pars = models[name]
     st, tr = de.run(
