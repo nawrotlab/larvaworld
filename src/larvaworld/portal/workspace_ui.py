@@ -50,14 +50,15 @@ def _workspace_chip_html(workspace: WorkspaceState | None) -> str:
 def _workspace_led_html(workspace: WorkspaceState | None) -> str:
     if workspace is not None:
         icon = "📁"
-        title = f"Workspace configured: {workspace.name}"
+        short_path = _short_path(workspace.root, keep_parts=2)
+        title = f"Workspace: {workspace.name}\nPath: {short_path}"
     else:
         icon = "📂"
-        title = "Workspace not configured"
+        title = "Workspace: Not configured\nClick to setup"
     return (
         f'<div title="{escape(title)}" aria-label="{escape(title)}" '
         f'style="font-size:18px;display:flex;align-items:center;justify-content:center;'
-        f'width:22px;height:22px;">{icon}</div>'
+        f'width:22px;height:22px;cursor:pointer;">{icon}</div>'
     )
 
 

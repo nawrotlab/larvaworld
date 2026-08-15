@@ -790,9 +790,12 @@ class _ImportDatasetsController:
             self._working_lab = None
             self.lab_config_name_input.value = ""
             self._rebuild_lab_editor()
+            self._set_lab_status("No LabFormat selected.")
             return
         self._apply_loaded_lab_config(lab_id, reg.conf.LabFormat.get(lab_id))
-        self._set_lab_status(f'Loaded LabFormat "{lab_id}".')
+        self._set_lab_status(
+            f'✓ Loaded LabFormat "{lab_id}". Configuration panel updated above.'
+        )
 
     def _apply_loaded_lab_config(self, lab_id: str, lab_config: object) -> None:
         self._working_lab_id = lab_id
