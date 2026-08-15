@@ -204,6 +204,17 @@ MODEL_INSPECTOR_RAW_CSS = """
   border-radius: 8px;
   font-size: 12px;
 }
+
+.lw-model-inspector-table .tabulator {
+  border-radius: 10px;
+  border: 1px solid rgba(90, 71, 96, 0.12);
+  overflow: hidden;
+}
+
+.lw-model-inspector-table .tabulator .tabulator-col,
+.lw-model-inspector-table .tabulator .tabulator-cell {
+  font-size: 12px;
+}
 """.strip()
 
 
@@ -394,21 +405,18 @@ class _ModelInspectorController:
             ]
         )
 
-        self.primary_select = pn.widgets.Select(
-            name="Primary model",
-            options={model_id: model_id for model_id in model_ids},
-            value="explorer" if "explorer" in model_ids else model_ids[0],
+        model_df = pd.DataFrame({"ID": model_ids})
+        self.model_select_table = pn.widgets.Tabulator(
+            model_df,
+            show_index=False,
+            selectable="checkbox",
+            height=200,
+            sizing_mode="stretch_width",
+            css_classes=["lw-model-inspector-table"],
         )
-        compare_options = {"(None)": ""} | {
-            model_id: model_id
-            for model_id in model_ids
-            if model_id != self.primary_select.value
-        }
-        self.compare_select = pn.widgets.Select(
-            name="Compare with",
-            options=compare_options,
-            value="",
-        )
+        default_model = "explorer" if "explorer" in model_ids else model_ids[0]
+        self.model_select_table.selection = [0] if model_ids else []
+        self._primary_model_id = default_model
         self.run_button = pn.widgets.Button(name="Run", button_type="success")
         self.pause_button = pn.widgets.Button(name="Pause", button_type="primary")
         self.clear_trace_button = pn.widgets.Button(
@@ -423,7 +431,6 @@ class _ModelInspectorController:
             name="📥 Export JSON",
             button_type="default",
             sizing_mode="stretch_width",
-            tooltip="Export model configuration(s) to JSON",
         )
         self.export_status = pn.pane.HTML("", margin=(6, 0, 0, 0))
         self.max_steps_input = pn.widgets.IntInput(
@@ -498,8 +505,9 @@ class _ModelInspectorController:
         self.plot_reporters_checkbox_phase.param.watch(
             self._on_plot_reporters_change, "value"
         )
-        self.primary_select.param.watch(self._on_primary_change, "value")
-        self.compare_select.param.watch(self._on_compare_change, "value")
+        self.model_select_table.param.watch(
+            self._on_models_selection_change, "selection"
+        )
         self.run_button.on_click(self._on_run)
         self.pause_button.on_click(self._on_pause)
         self.clear_trace_button.on_click(self._on_clear_trace)
@@ -521,6 +529,94 @@ class _ModelInspectorController:
         self._init_live_plots()
         self._update_probe_meta()
         self._update_summary_sections()
+
+    def _get_selected_model_ids(self) -> list[str]:
+        """Get list of selected model IDs from the Tabulator."""
+        if not self.model_select_table.selection:
+            return []
+        df = self.model_select_table.value
+        selected_indices = sorted(int(idx) for idx in self.model_select_table.selection)
+        return [df.iloc[idx]["ID"] for idx in selected_indices if idx < len(df)]
+
+    def _get_primary_model_id(self) -> str:
+        """Get the primary (first selected) model ID."""
+        selected = self._get_selected_model_ids()
+        if selected:
+            return selected[0]
+        return self._primary_model_id
+
+    @property
+    def primary_select(self):
+        """Backward-compatible proxy for primary model selection."""
+
+        class PrimarySelectProxy:
+            def __init__(self, controller):
+                self._controller = controller
+
+            @property
+            def value(self):
+                return self._controller._get_primary_model_id()
+
+            @value.setter
+            def value(self, model_id: str):
+                df = self._controller.model_select_table.value
+                if model_id in df["ID"].values:
+                    idx = int(df[df["ID"] == model_id].index[0])
+                    self._controller.model_select_table.selection = [idx]
+
+            def param(self):
+                return type("Param", (), {"watch": lambda *a, **kw: None})()
+
+        return PrimarySelectProxy(self)
+
+    @property
+    def compare_select(self):
+        """Backward-compatible proxy for comparison model selection."""
+
+        class CompareSelectProxy:
+            def __init__(self, controller):
+                self._controller = controller
+                self.disabled = False
+
+            @property
+            def value(self):
+                selected = self._controller._get_selected_model_ids()
+                return selected[1] if len(selected) > 1 else ""
+
+            @value.setter
+            def value(self, model_id: str):
+                if not model_id:
+                    selected = self._controller._get_selected_model_ids()
+                    if selected:
+                        idx = int(
+                            self._controller.model_select_table.value[
+                                self._controller.model_select_table.value["ID"]
+                                == selected[0]
+                            ].index[0]
+                        )
+                        self._controller.model_select_table.selection = [idx]
+                    else:
+                        self._controller.model_select_table.selection = []
+                    return
+                df = self._controller.model_select_table.value
+                if model_id in df["ID"].values:
+                    idx = int(df[df["ID"] == model_id].index[0])
+                    primary_id = self._controller._get_primary_model_id()
+                    primary_idx = int(
+                        self._controller.model_select_table.value[
+                            self._controller.model_select_table.value["ID"]
+                            == primary_id
+                        ].index[0]
+                    )
+                    self._controller.model_select_table.selection = [
+                        primary_idx,
+                        idx,
+                    ]
+
+            def param(self):
+                return type("Param", (), {"watch": lambda *a, **kw: None})()
+
+        return CompareSelectProxy(self)
 
     def _set_status(self, message: str) -> None:
         self._status_message = message
@@ -546,7 +642,7 @@ class _ModelInspectorController:
         return io.StringIO(self._draft_json_text())
 
     def _draft_download_filename(self) -> str:
-        base = str(self.primary_select.value or "model").strip() or "model"
+        base = str(self._get_primary_model_id()).strip() or "model"
         safe = WorkspacePresetStore.normalize_name(base)
         return f"{safe}_draft.json"
 
@@ -627,11 +723,12 @@ class _ModelInspectorController:
                 "invalid_model_preset",
                 f'Loaded preset "{ref.display_label}" is missing a valid "brain" payload.',
             )
-        template = load_model_draft(str(self.primary_select.value))
+        primary = self._get_primary_model_id()
+        template = load_model_draft(str(primary))
         self._draft_model = util.AttrDict(
             _coerce_like_template(template, copied)
         ).get_copy()
-        self._draft_model_id = str(self.primary_select.value)
+        self._draft_model_id = str(primary)
         if hasattr(self.model_preset_controls, "preset_name"):
             self.model_preset_controls.preset_name.value = ref.name
         self._sync_preview_after_draft_change(
@@ -641,29 +738,25 @@ class _ModelInspectorController:
             ui_scope="full",
         )
 
-    def _on_primary_change(self, _event=None) -> None:
+    def _on_models_selection_change(self, _event=None) -> None:
+        selected_ids = self._get_selected_model_ids()
+        if not selected_ids:
+            self.model_select_table.selection = [0] if self._model_ids else []
+            return
+        primary = selected_ids[0]
+        self._primary_model_id = primary
         self._pause_callback()
         self._reset_draft_to_selected_model()
         self._refresh_model_preset_controls()
         self.download_json_button.filename = self._draft_download_filename()
-        compare_options = {"(None)": ""} | {
-            model_id: model_id
-            for model_id in self._model_ids
-            if model_id != self.primary_select.value
-        }
-        previous = self.compare_select.value
-        self.compare_select.options = compare_options
-        self.compare_select.value = (
-            previous if previous in compare_options.values() else ""
-        )
         self._sync_preview_after_draft_change(
-            message=f'Model changed to "{self.primary_select.value}".',
+            message=f'Model changed to "{primary}".'
+            if len(selected_ids) == 1
+            else f"Multiple models selected: {len(selected_ids)}.",
             clear_trace=True,
             mark_dirty=False,
             ui_scope="full",
         )
-
-    def _on_compare_change(self, _event=None) -> None:
         self._refresh_inspection_tables()
 
     def _on_run(self, _event=None) -> None:
@@ -691,7 +784,7 @@ class _ModelInspectorController:
             )
         else:
             self._set_status(
-                f'Live preview running for model "{self.primary_select.value}".'
+                f'Live preview running for model "{self._get_primary_model_id()}".'
             )
 
     def _on_pause(self, _event=None) -> None:
@@ -712,7 +805,7 @@ class _ModelInspectorController:
         self._reset_draft_to_selected_model()
         self._has_local_edits = False
         self._sync_preview_after_draft_change(
-            message=f'Reset local state to model preset "{self.primary_select.value}".',
+            message=f'Reset local state to model preset "{self._get_primary_model_id()}".',
             clear_trace=True,
             mark_dirty=False,
             ui_scope="full",
@@ -736,14 +829,14 @@ class _ModelInspectorController:
         self._active_dt = self._dt()
         draft = self._require_draft_model()
         self._brain = build_inspection_brain_from_config(
-            str(self.primary_select.value), draft, dt=self._active_dt
+            self._get_primary_model_id(), draft, dt=self._active_dt
         )
         self._runtime = SimpleNamespace(brain=self._brain)
         self._watched_param_tokens.clear()
         self._prepare_reporters()
 
     def _reset_draft_to_selected_model(self) -> None:
-        model_id = str(self.primary_select.value)
+        model_id = self._get_primary_model_id()
         self._draft_model = load_model_draft(model_id)
         self._draft_model_id = model_id
         self._draft_validation_issues = ()
@@ -1167,7 +1260,7 @@ class _ModelInspectorController:
             self._refresh_all_module_cards(module_specs)
 
     def _refresh_inspection_tables(self) -> tuple[ModelModuleSpec, ...] | None:
-        primary_id = str(self.primary_select.value)
+        primary_id = self._get_primary_model_id()
         try:
             draft = self._require_draft_model()
             primary = inspect_model_from_config(primary_id, draft)
@@ -1191,20 +1284,19 @@ class _ModelInspectorController:
         self._module_specs_by_id = {spec.module_id: spec for spec in module_specs}
 
         if self._has_local_edits:
-            self.compare_select.disabled = True
             self.compare_title.object = "#### Comparison hidden during local edits"
             self.compare_table.object = pd.DataFrame()
             self._update_summary_sections()
             return module_specs
-        self.compare_select.disabled = False
 
-        compare_id = str(self.compare_select.value or "")
-        if not compare_id:
+        selected_ids = self._get_selected_model_ids()
+        if len(selected_ids) <= 1:
             self.compare_title.object = ""
             self.compare_table.object = pd.DataFrame()
             self._update_summary_sections()
             return module_specs
 
+        compare_id = selected_ids[1]
         try:
             comparison = inspect_model(compare_id)
             diffs = compare_model_inspections(primary, comparison)
@@ -1215,7 +1307,12 @@ class _ModelInspectorController:
             self._update_summary_sections()
             return module_specs
 
-        self.compare_title.object = f"#### Comparison: `{primary_id}` vs `{compare_id}`"
+        compare_suffix = ""
+        if len(selected_ids) > 2:
+            compare_suffix = f" (showing 1st comparison of {len(selected_ids) - 1})"
+        self.compare_title.object = (
+            f"#### Comparison: `{primary_id}` vs `{compare_id}`{compare_suffix}"
+        )
         self.compare_table.object = pd.DataFrame(
             [
                 {
@@ -1384,8 +1481,14 @@ class _ModelInspectorController:
             sizing_mode="stretch_width",
         )
         primary_controls = pn.Column(
-            self.primary_select,
-            self.compare_select,
+            pn.pane.Markdown("#### Select models", margin=(0, 0, 2, 0)),
+            pn.pane.HTML(
+                '<div style="font-size:11px;color:rgba(17,17,17,0.72);margin-bottom:6px;">'
+                "Use checkboxes to select. First = primary, others = comparisons."
+                "</div>",
+                margin=(0, 0, 6, 0),
+            ),
+            self.model_select_table,
             self.status_pane,
             self.validation_pane,
             pn.pane.Markdown("#### Preview settings", margin=(8, 0, 2, 0)),
