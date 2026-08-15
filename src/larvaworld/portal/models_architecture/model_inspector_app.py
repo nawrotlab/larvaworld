@@ -4,6 +4,7 @@ import copy
 import io
 import json
 import math
+import time
 from collections.abc import Mapping
 from html import escape
 from pathlib import Path
@@ -487,6 +488,12 @@ class _ModelInspectorController:
         self.clear_trace_button = pn.widgets.Button(
             name="Clear trace", button_type="primary"
         )
+        self.sensitivity_button = pn.widgets.Button(
+            name="Sensitivity Analysis",
+            button_type="default",
+            sizing_mode="stretch_width",
+        )
+        self.sensitivity_pane = pn.pane.HTML("", margin=(6, 0, 0, 0))
         self.reset_preset_button = pn.widgets.Button(
             name="Reset to model preset",
             button_type="warning",
@@ -561,6 +568,14 @@ class _ModelInspectorController:
             for key in LIVE_PREVIEW_REPORTER_KEYS
         }
         self._trajectory_source = ColumnDataSource(data={"x": [], "y": [], "time": []})
+        self._performance_stats: dict[str, Any] = {
+            "total_steps": 0,
+            "total_time": 0.0,
+            "avg_step_time": 0.0,
+            "min_step_time": float("inf"),
+            "max_step_time": 0.0,
+        }
+        self._step_times: list[float] = []
 
         self.plot_reporters_checkbox_activity.param.watch(
             self._on_plot_reporters_change, "value"
@@ -575,6 +590,7 @@ class _ModelInspectorController:
             self._on_models_selection_change, "selection"
         )
         self.comparison_select.param.watch(self._on_comparison_select_change, "value")
+        self.sensitivity_button.on_click(self._on_sensitivity_analysis)
         self.run_button.on_click(self._on_run)
         self.pause_button.on_click(self._on_pause)
         self.clear_trace_button.on_click(self._on_clear_trace)
@@ -783,6 +799,38 @@ class _ModelInspectorController:
         """Handle comparison model selection change."""
         self._comparison_model_id = self.comparison_select.value
         self._refresh_inspection_tables()
+
+    def _on_sensitivity_analysis(self, _event=None) -> None:
+        """Run sensitivity analysis on A_in parameter."""
+        if self._brain is None:
+            self.sensitivity_pane.object = _status_html(
+                "Sensitivity analysis requires a ready brain."
+            )
+            return
+
+        baseline_a_in = self._a_in()
+        param_name = "A_in"
+        param_values = [v / 10.0 for v in range(1, 11)]
+        results: dict[float, dict[str, float]] = {}
+
+        for a_in_val in param_values:
+            self._brain.locomotor.reset()
+            lin_sum = 0.0
+            for _ in range(50):
+                lin, _, _ = self._brain.locomotor.step(A_in=a_in_val)
+                lin_sum += lin
+            results[a_in_val] = {"avg_lin": lin_sum / 50}
+
+        html = (
+            f'<div class="lw-model-inspector-status">'
+            f"<strong>Sensitivity Analysis: {param_name}</strong><br>"
+            f"Testing {param_name} range [0.1, 1.0] for effect on linear velocity<br>"
+        )
+        for val, metrics in sorted(results.items()):
+            html += f"{param_name}={val:.1f}: avg_lin={metrics['avg_lin']:.4f}<br>"
+        html += "</div>"
+        self.sensitivity_pane.object = html
+        self.a_in_input.value = baseline_a_in
 
     def _on_run(self, _event=None) -> None:
         if self._is_running:
@@ -1158,7 +1206,9 @@ class _ModelInspectorController:
             self._set_status(f"Live preview auto-stopped at step {self._max_steps()}.")
             return
 
+        step_start = time.perf_counter()
         lin, ang, feed_motion = self._brain.locomotor.step(A_in=self._a_in())
+        step_time = (time.perf_counter() - step_start) * 1000
         time_now = self._step * self._active_dt
         row: dict[str, Any] = {
             "time": time_now,
@@ -1198,6 +1248,18 @@ class _ModelInspectorController:
             "time": self._probe_df["time"].tolist(),
         }
         self._refresh_probe_table()
+        self._step_times.append(step_time)
+        self._performance_stats["total_steps"] = len(self._step_times)
+        self._performance_stats["total_time"] = sum(self._step_times) / 1000
+        self._performance_stats["avg_step_time"] = (
+            sum(self._step_times) / len(self._step_times) if self._step_times else 0
+        )
+        self._performance_stats["min_step_time"] = (
+            min(self._step_times) if self._step_times else 0
+        )
+        self._performance_stats["max_step_time"] = (
+            max(self._step_times) if self._step_times else 0
+        )
         self._step += 1
         self._update_probe_meta()
 
@@ -1206,6 +1268,14 @@ class _ModelInspectorController:
         for key in LIVE_PREVIEW_REPORTER_KEYS:
             self._sources[key].data = {"time": [], key: []}
         self._trajectory_source.data = {"x": [], "y": [], "time": []}
+        self._step_times.clear()
+        self._performance_stats = {
+            "total_steps": 0,
+            "total_time": 0.0,
+            "avg_step_time": 0.0,
+            "min_step_time": float("inf"),
+            "max_step_time": 0.0,
+        }
         self._probe_df = pd.DataFrame(
             columns=[
                 "time",
@@ -1280,11 +1350,20 @@ class _ModelInspectorController:
             f'{_reporter_plot_label(k)}={"yes" if self._reporter_available.get(k, False) else "no"}'
             for k in self._selected_plot_reporter_keys()
         ]
+        perf_line = ""
+        if self._performance_stats["total_steps"] > 0:
+            perf_line = (
+                f"<strong>Performance:</strong> "
+                f"{self._performance_stats['avg_step_time']:.2f}ms/step "
+                f"(min: {self._performance_stats['min_step_time']:.2f}ms, "
+                f"max: {self._performance_stats['max_step_time']:.2f}ms)<br>"
+            )
         self.probe_meta.object = (
             '<div class="lw-model-inspector-status">'
             f"<strong>Preview runtime:</strong> {runtime_state}<br>"
             f"<strong>Preview settings:</strong> dt={self._active_dt}, a_in={self._a_in()}, rollover={self._trace_window()}, max_steps={self._max_steps()}<br>"
             f"<strong>Current step:</strong> {self._step}<br>"
+            f"{perf_line}"
             f"<strong>Reporter availability:</strong> {'; '.join(reporter_bits)}"
             "</div>"
         )
@@ -1554,6 +1633,7 @@ class _ModelInspectorController:
                 sizing_mode="stretch_width",
             ),
             self.reset_preset_button,
+            self.sensitivity_button,
             sizing_mode="stretch_width",
         )
         primary_controls = pn.Column(
@@ -1568,6 +1648,7 @@ class _ModelInspectorController:
             self.comparison_select,
             self.status_pane,
             self.validation_pane,
+            self.sensitivity_pane,
             pn.pane.Markdown("#### Preview settings", margin=(8, 0, 2, 0)),
             self.max_steps_input,
             self.a_in_input,
