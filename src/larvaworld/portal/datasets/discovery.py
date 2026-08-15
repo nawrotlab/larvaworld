@@ -160,10 +160,21 @@ def _dedupe_candidates(
 
 def discover_raw_datasets(lab_id: str, raw_root: Path) -> list[RawDatasetCandidate]:
     normalized_root = _normalized_root(raw_root)
-    if normalized_root is None or not str(lab_id).strip():
-        return []
+    if normalized_root is None:
+        raise ValueError(f"Raw root path is invalid or does not exist: {raw_root}")
 
-    lab = reg.conf.LabFormat.get(str(lab_id).strip())
+    lab_id_str = str(lab_id).strip()
+    if not lab_id_str:
+        raise ValueError("No lab format selected. Choose a LabFormat before discovery.")
+
+    try:
+        lab = reg.conf.LabFormat.get(lab_id_str)
+    except KeyError:
+        available = ", ".join(sorted(reg.conf.LabFormat.keys()))
+        raise ValueError(
+            f'LabFormat "{lab_id_str}" not found. ' f"Available formats: {available}"
+        )
+
     filesystem = lab.filesystem
     if filesystem.folder_pref or filesystem.folder_suff:
         return _dedupe_candidates(_folder_candidates(lab, normalized_root))

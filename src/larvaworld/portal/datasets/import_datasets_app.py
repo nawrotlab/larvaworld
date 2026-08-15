@@ -1425,17 +1425,25 @@ class _ImportDatasetsController:
             candidate_row,
             merged_row,
         )
-        intro = pn.pane.HTML(
+        intro_text = pn.pane.HTML(
             (
-                '<div class="lw-import-datasets-intro">'
-                "Import one experimental raw dataset into the active workspace through a small workspace-first pipeline, while editing the active `LabFormat` configuration in place before discovery and import. "
-                "The configuration panel exposes the registry-backed general, tracker, filesystem, preprocess, and environment sections used by the import lane, so the selected preset can be adjusted without leaving the app. "
-                "Use the raw-root and candidate controls to point the app at a local raw-data folder on the machine where the portal runs (Browse opens a native folder picker for that host: macOS AppleScript, Linux zenity/kdialog/yad when installed, WSL2 Windows dialog with Linux paths, else Tk when a GUI is available), resolve one import candidate, inspect warnings, and import the dataset into workspace-owned storage through the central Larvaworld backend. "
-                "The app does not register references or set global active-dataset state. "
-                f'See the data-processing documentation on Read the Docs for the broader dataset pipeline: <a href="{escape(DOCS_DATA_PROCESSING)}" target="_blank">Read the Docs</a>.'
-                "</div>"
+                "<p>Import experimental raw datasets into the active workspace. "
+                "Edit the LabFormat configuration, discover candidates, inspect warnings, and import.</p>"
+                "<p><strong>Workflow:</strong> Select lab format → Browse/enter raw root → Discover datasets → "
+                "Select candidate → Configure import options → Import</p>"
+                f'<p><a href="{escape(DOCS_DATA_PROCESSING)}" target="_blank">📚 Dataset Processing Guide</a> — '
+                "View the complete dataset pipeline documentation.</p>"
             ),
             margin=0,
+        )
+        intro = pn.Card(
+            intro_text,
+            title="ℹ️ About Dataset Import",
+            collapsed=True,
+            collapsible=True,
+            css_classes=["lw-portal-app-info"],
+            sizing_mode="stretch_width",
+            margin=(0, 0, 12, 0),
         )
         column_one = pn.Column(
             lab_source_section,
