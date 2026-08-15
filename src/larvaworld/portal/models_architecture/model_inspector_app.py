@@ -1183,14 +1183,16 @@ class _ModelInspectorController:
 
     def _compute_trajectory_position(self, df: pd.DataFrame) -> tuple[list, list]:
         """Compute 2D trajectory position from lin and ang velocities."""
+        if df.empty or "lin" not in df.columns or "ang" not in df.columns:
+            return [], []
         x_pos = [0.0]
         y_pos = [0.0]
         heading = 0.0
         for idx in range(len(df)):
             if idx == 0:
                 continue
-            lin = df.iloc[idx]["lin"]
-            ang = df.iloc[idx]["ang"]
+            lin = float(df.iloc[idx]["lin"])
+            ang = float(df.iloc[idx]["ang"])
             dt = self._active_dt
             heading += ang * dt
             x_pos.append(x_pos[-1] + lin * dt * math.cos(heading))
@@ -1241,12 +1243,15 @@ class _ModelInspectorController:
         self._probe_df = self._probe_df.tail(self._trace_window()).reset_index(
             drop=True
         )
-        x_pos, y_pos = self._compute_trajectory_position(self._probe_df)
-        self._trajectory_source.data = {
-            "x": x_pos,
-            "y": y_pos,
-            "time": self._probe_df["time"].tolist(),
-        }
+        try:
+            x_pos, y_pos = self._compute_trajectory_position(self._probe_df)
+            self._trajectory_source.data = {
+                "x": x_pos,
+                "y": y_pos,
+                "time": self._probe_df["time"].tolist(),
+            }
+        except Exception:
+            pass
         self._refresh_probe_table()
         self._step_times.append(step_time)
         self._performance_stats["total_steps"] = len(self._step_times)
