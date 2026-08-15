@@ -384,6 +384,7 @@ def main() -> None:
     logging.getLogger("bokeh.server.views.ws").setLevel(logging.ERROR)
     logging.getLogger("tornado.iostream").setLevel(logging.ERROR)
     logging.getLogger("tornado.websocket").setLevel(logging.ERROR)
+    logging.getLogger("panel.io.document").setLevel(logging.ERROR)
 
     apps: dict[str, Callable[..., Any]] = {
         app_id: _lazy_factory(factory_path)
