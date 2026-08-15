@@ -473,6 +473,14 @@ class _ModelInspectorController:
 
         self.primary_select = _SelectProxy(self, is_compare=False)
         self.compare_select = _SelectProxy(self, is_compare=True)
+        self._comparison_model_id: str | None = None
+        self.comparison_select = pn.widgets.Select(
+            name="Compare against",
+            options={},
+            value="",
+            sizing_mode="stretch_width",
+            visible=False,
+        )
         self.run_button = pn.widgets.Button(name="Run", button_type="success")
         self.pause_button = pn.widgets.Button(name="Pause", button_type="primary")
         self.clear_trace_button = pn.widgets.Button(
@@ -564,6 +572,7 @@ class _ModelInspectorController:
         self.model_select_table.param.watch(
             self._on_models_selection_change, "selection"
         )
+        self.comparison_select.param.watch(self._on_comparison_select_change, "value")
         self.run_button.on_click(self._on_run)
         self.pause_button.on_click(self._on_pause)
         self.clear_trace_button.on_click(self._on_clear_trace)
@@ -740,6 +749,37 @@ class _ModelInspectorController:
             mark_dirty=False,
             ui_scope="full",
         )
+        self._refresh_inspection_tables()
+        self._update_comparison_selector()
+
+    def _update_comparison_selector(self) -> None:
+        """Update comparison model selector based on selected models."""
+        selected_ids = self._get_selected_model_ids()
+        if len(selected_ids) <= 1:
+            self.comparison_select.visible = False
+            self.comparison_select.options = {}
+            self.comparison_select.value = ""
+            self._comparison_model_id = None
+            return
+
+        primary = selected_ids[0]
+        comparison_options = {
+            model_id: model_id for model_id in selected_ids[1:] if model_id != primary
+        }
+
+        if not comparison_options:
+            self.comparison_select.visible = False
+            return
+
+        self.comparison_select.visible = True
+        self.comparison_select.options = comparison_options
+        if self._comparison_model_id not in comparison_options.values():
+            self._comparison_model_id = list(comparison_options.values())[0]
+        self.comparison_select.value = self._comparison_model_id
+
+    def _on_comparison_select_change(self, _event=None) -> None:
+        """Handle comparison model selection change."""
+        self._comparison_model_id = self.comparison_select.value
         self._refresh_inspection_tables()
 
     def _on_run(self, _event=None) -> None:
@@ -1279,7 +1319,15 @@ class _ModelInspectorController:
             self._update_summary_sections()
             return module_specs
 
-        compare_id = selected_ids[1]
+        compare_id = self._comparison_model_id or (
+            selected_ids[1] if len(selected_ids) > 1 else ""
+        )
+        if not compare_id or compare_id == primary_id:
+            self.compare_title.object = ""
+            self.compare_table.object = pd.DataFrame()
+            self._update_summary_sections()
+            return module_specs
+
         try:
             comparison = inspect_model(compare_id)
             diffs = compare_model_inspections(primary, comparison)
@@ -1292,7 +1340,7 @@ class _ModelInspectorController:
 
         compare_suffix = ""
         if len(selected_ids) > 2:
-            compare_suffix = f" (showing 1st comparison of {len(selected_ids) - 1})"
+            compare_suffix = f" (1 of {len(selected_ids) - 1} available)"
         self.compare_title.object = (
             f"#### Comparison: `{primary_id}` vs `{compare_id}`{compare_suffix}"
         )
@@ -1472,6 +1520,7 @@ class _ModelInspectorController:
                 margin=(0, 0, 6, 0),
             ),
             self.model_select_table,
+            self.comparison_select,
             self.status_pane,
             self.validation_pane,
             pn.pane.Markdown("#### Preview settings", margin=(8, 0, 2, 0)),
