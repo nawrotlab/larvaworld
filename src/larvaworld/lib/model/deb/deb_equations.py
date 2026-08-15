@@ -315,6 +315,10 @@ class DEBPars:
     mu_E: float = 550000.0  # J/mol, chemical potential of reserve
     mu_P: float = 480000.0  # J/mol, chemical potential of faeces
     d_V: float = 0.17  # g/cm^3, specific density of structure (Insecta)
+    # addchem.m defaults the remaining specific densities to that of structure.
+    d_X: Optional[float] = None  # g/cm^3, specific density of food
+    d_E: Optional[float] = None  # g/cm^3, specific density of reserve
+    d_P: Optional[float] = None  # g/cm^3, specific density of faeces
 
     #: Chemical indices for water-free organics (Kooijman 2010, Fig 4.15),
     #: columns X, V, E, P; rows C, H, O, N.
@@ -381,6 +385,11 @@ class DEBPars:
     # -- compound parameters (parscomp_st.m + addchem.m) ----------------------
 
     def _derive(self) -> None:
+        # addchem.m: the other specific densities default to that of structure.
+        for name in ("d_X", "d_E", "d_P"):
+            if getattr(self, name) is None:
+                setattr(self, name, self.d_V)
+
         # Molecular weights from the chemical indices (g/mol).
         atomic = np.array([12.0, 1.0, 16.0, 14.0])
         n_O = np.asarray(self.n_O, dtype=float)
@@ -1268,8 +1277,7 @@ def wet_weight(pars: DEBPars, V: float, E: float) -> float:
     the form the AmP ``predict_`` routines use for wet-weight data; it is roughly
     ``1/d_V`` larger than :func:`dry_weight`.
     """
-    d_E = pars.d_X if pars.d_V is None else pars.d_V
-    return V + E * pars.w_E / (pars.mu_E * d_E)
+    return V + E * pars.w_E / (pars.mu_E * pars.d_E)
 
 
 def format_life_history(lh: LifeHistory) -> str:

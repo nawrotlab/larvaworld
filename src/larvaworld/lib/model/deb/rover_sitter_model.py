@@ -45,6 +45,7 @@ See :mod:`larvaworld.lib.model.deb.deb_equations` for the equations themselves.
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Any, Optional
 
 import os
@@ -54,6 +55,7 @@ from .deb_equations import DEBPars
 __all__: list[str] = [
     "DROSOPHILA_AMP_JSON",
     "PHENOTYPES",
+    "SPECIES",
     "DEFAULT_PHENOTYPE_PARAM",
     "PHENOTYPE_VALUES",
     "KAP_V_OVERRIDE",
@@ -62,6 +64,7 @@ __all__: list[str] = [
     "rover",
     "sitter",
     "phenotypes",
+    "get_species_pars",
 ]
 
 
@@ -184,3 +187,30 @@ def phenotypes(
             name, base=base, param=param, values=values, **overrides
         )
     return out
+
+
+#: Selectable model names. ``"default"`` is a historical alias for the generic
+#: species model; the ten stored rover*/sitter* larva-model configs persist
+#: ``"rover"`` and ``"sitter"``.
+SPECIES: tuple[str, ...] = ("default", "drosophila", "rover", "sitter")
+
+
+@lru_cache(maxsize=None)
+def get_species_pars(species: str = "default") -> DEBPars:
+    """
+    Resolve a species name to its parameter set.
+
+    ``"default"`` and ``"drosophila"`` both give the generic species model straight
+    from the AmP export; ``"rover"`` and ``"sitter"`` give the behavioural
+    phenotypes derived from it.
+
+    Cached, because constructing a :class:`DEBPars` runs the embryo solver and a
+    ``DEB`` instance is built every time the model registry resolves defaults.
+    The result is shared, so treat it as immutable -- use
+    :meth:`DEBPars.with_` to vary a parameter.
+    """
+    if species not in SPECIES:
+        raise ValueError(f"unknown species {species!r}; expected one of {SPECIES}")
+    if species in PHENOTYPES:
+        return make_phenotype(species)
+    return load_drosophila()
