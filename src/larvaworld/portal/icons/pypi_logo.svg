@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- PyPI logo: Yellow/gold background with blue "pypi" text -->
+  <rect width="64" height="64" rx="4" fill="#fff3cd"/>
+  <text x="32" y="40" font-family="Arial, sans-serif" font-size="16" font-weight="bold" text-anchor="middle" fill="#3775a9">pypi</text>
+</svg>
