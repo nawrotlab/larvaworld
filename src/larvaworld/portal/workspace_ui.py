@@ -429,12 +429,12 @@ class WorkspaceUiController:
         classes = ["lw-portal-workspace-controls"]
         if self.theme == "dark":
             classes.append("lw-portal-workspace-controls--dark")
-        title_classes = ["lw-portal-settings-title"]
+        title_classes = ["lw-portal-workspace-title"]
         field_label_classes = ["lw-portal-field-label"]
         title_style = ""
         field_label_style = ""
         if self.theme == "dark":
-            title_classes.append("lw-portal-settings-title--dark")
+            title_classes.append("lw-portal-workspace-title--dark")
             field_label_classes.append("lw-portal-field-label--dark")
             title_style = ' style="font-size:13px;font-weight:650;margin:0 0 6px 0;color:rgba(241,245,249,0.96);"'
             field_label_style = (

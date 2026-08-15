@@ -182,6 +182,14 @@ PORTAL_RAW_CSS = """
   align-self: center !important;
 }
 
+.lw-portal-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  align-self: center !important;
+}
+
 .lw-portal-header-right {
   display: flex;
   align-items: center;
@@ -322,7 +330,7 @@ PORTAL_RAW_CSS = """
 }
 
 .lw-portal-icon-link:hover,
-.lw-portal-topbar .lw-portal-settings-btn .bk-btn:hover {
+.lw-portal-topbar .lw-portal-workspace-btn .bk-btn:hover {
   text-decoration: none;
 }
 
@@ -332,18 +340,18 @@ PORTAL_RAW_CSS = """
   object-fit: contain;
 }
 
-.lw-portal-settings-btn .bk-btn {
+.lw-portal-workspace-btn .bk-btn {
   text-decoration: none;
   padding: 0 12px;
   font-size: 13px;
   font-weight: 500;
 }
 
-.lw-portal-settings-btn {
+.lw-portal-workspace-btn {
   margin: 0 !important;
 }
 
-.lw-portal-settings-dropdown-wrap {
+.lw-portal-workspace-dropdown-wrap {
   position: relative;
   display: flex;
   display: inline-flex;
@@ -357,7 +365,7 @@ PORTAL_RAW_CSS = """
   overflow: visible;
 }
 
-.lw-portal-settings-panel {
+.lw-portal-workspace-panel {
   position: absolute;
   top: 40px;
   right: 0;
@@ -375,14 +383,14 @@ PORTAL_RAW_CSS = """
   pointer-events: auto;
 }
 
-.lw-portal-settings-title {
+.lw-portal-workspace-title {
   font-size: 13px;
   font-weight: 650;
   margin: 0 0 6px 0;
   color: #111111;
 }
 
-.lw-portal-settings-title--dark {
+.lw-portal-workspace-title--dark {
   color: rgba(241,245,249,0.96) !important;
 }
 
@@ -396,7 +404,7 @@ PORTAL_RAW_CSS = """
   color: rgba(241,245,249,0.92) !important;
 }
 
-.lw-portal-settings-body {
+.lw-portal-workspace-body {
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -411,12 +419,12 @@ PORTAL_RAW_CSS = """
   backdrop-filter: none;
 }
 
-.lw-portal-settings-row {
+.lw-portal-workspace-row {
   font-size: 12px;
   color: rgba(0,0,0,0.72);
 }
 
-.lw-portal-settings-advanced {
+.lw-portal-workspace-advanced {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -427,31 +435,31 @@ PORTAL_RAW_CSS = """
   padding: 0 !important;
 }
 
-.lw-portal-settings-check {
+.lw-portal-workspace-check {
   color: rgba(17,17,17,0.72);
   font-size: 12px;
   line-height: 1;
 }
 
-.lw-portal-settings-panel .bk,
-.lw-portal-settings-panel label,
-.lw-portal-settings-panel .bk-input-group,
-.lw-portal-settings-panel .bk-form-group {
+.lw-portal-workspace-panel .bk,
+.lw-portal-workspace-panel label,
+.lw-portal-workspace-panel .bk-input-group,
+.lw-portal-workspace-panel .bk-form-group {
   color: #111111 !important;
 }
 
-.lw-portal-settings-body .bk,
-.lw-portal-settings-body label,
-.lw-portal-settings-body .bk-input-group,
-.lw-portal-settings-body .bk-form-group {
+.lw-portal-workspace-body .bk,
+.lw-portal-workspace-body label,
+.lw-portal-workspace-body .bk-input-group,
+.lw-portal-workspace-body .bk-form-group {
   color: #111111 !important;
 }
 
-.lw-portal-settings-panel * {
+.lw-portal-workspace-panel * {
   color: #111111 !important;
 }
 
-.lw-portal-settings-body * {
+.lw-portal-workspace-body * {
   color: #111111 !important;
 }
 
@@ -510,8 +518,8 @@ PORTAL_RAW_CSS = """
   color: rgba(17,17,17,0.82);
 }
 
-.lw-portal-workspace-controls--dark .lw-portal-settings-title,
-.lw-portal-workspace-controls--dark .lw-portal-settings-title--dark,
+.lw-portal-workspace-controls--dark .lw-portal-workspace-title,
+.lw-portal-workspace-controls--dark .lw-portal-workspace-title--dark,
 .lw-portal-workspace-controls--dark .lw-portal-field-label,
 .lw-portal-workspace-controls--dark .lw-portal-field-label--dark,
 .lw-portal-workspace-controls--dark label,
@@ -639,7 +647,7 @@ PORTAL_RAW_CSS = """
   fill: #ffffff !important;
 }
 
-.lw-portal-settings-panel .lw-portal-workspace-input .bk-input-group input {
+.lw-portal-workspace-panel .lw-portal-workspace-input .bk-input-group input {
   width: 100% !important;
   min-height: 36px;
   padding: 7px 10px !important;
@@ -649,9 +657,9 @@ PORTAL_RAW_CSS = """
   box-shadow: none !important;
 }
 
-.lw-portal-settings-panel .bk-input-group,
-.lw-portal-settings-panel .bk-form-group,
-.lw-portal-settings-panel .bk-input-group input {
+.lw-portal-workspace-panel .bk-input-group,
+.lw-portal-workspace-panel .bk-form-group,
+.lw-portal-workspace-panel .bk-input-group input {
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
@@ -670,7 +678,7 @@ PORTAL_RAW_CSS = """
 }
 
 .lw-portal-root.lw-portal-dark .lw-portal-card-subtitle,
-.lw-portal-root.lw-portal-dark .lw-portal-settings-row {
+.lw-portal-root.lw-portal-dark .lw-portal-workspace-row {
   color: rgba(203, 213, 225, 0.9);
 }
 
@@ -1603,16 +1611,7 @@ def build_footer() -> pn.viewable.Viewable:
     return pn.pane.HTML(html, margin=0, sizing_mode="stretch_width")
 
 
-def build_template_header() -> pn.viewable.Viewable:
-    workspace_ui = WorkspaceUiController()
-
-    # Logo and about button
-    logo_pane = pn.pane.HTML(
-        _portal_logo_html(version=_PORTAL_VERSION),
-        margin=0,
-        css_classes=["lw-portal-header-left"],
-    )
-
+def _build_about_dropdown() -> pn.viewable.Viewable:
     # About trigger, built the same way as the workspace trigger in
     # WorkspaceUiController: a visible HTML icon pane plus an invisible
     # Button stacked on top for the click handling, wrapped in a small
@@ -1643,7 +1642,7 @@ def build_template_header() -> pn.viewable.Viewable:
 
     about_button.on_click(_toggle_about)
 
-    about_dropdown = pn.Column(
+    return pn.Column(
         about_trigger_view,
         about_panel,
         css_classes=["lw-about-dropdown-wrap"],
@@ -1652,46 +1651,40 @@ def build_template_header() -> pn.viewable.Viewable:
         width_policy="min",
     )
 
-    left_row = pn.Row(
-        logo_pane,
-        about_dropdown,
-        margin=0,
-        width_policy="min",
-        sizing_mode="fixed",
-    )
 
-    links = pn.pane.HTML(
-        _header_links_html(),
-        margin=0,
-    )
+def _build_workspace_dropdown(
+    workspace_ui: WorkspaceUiController,
+) -> pn.viewable.Viewable:
     workspace_controls = workspace_ui.build_controls()
-    settings_body = pn.Column(
+    workspace_body = pn.Column(
         workspace_controls,
-        css_classes=["lw-portal-settings-body"],
+        css_classes=["lw-portal-workspace-body"],
         sizing_mode="stretch_width",
         margin=0,
     )
-    settings_panel = pn.Column(
-        settings_body,
+    workspace_panel = pn.Column(
+        workspace_body,
         visible=get_active_workspace() is None,
-        css_classes=["lw-portal-settings-panel"],
+        css_classes=["lw-portal-workspace-panel"],
         margin=0,
     )
 
-    def _toggle_settings(_: object) -> None:
-        settings_panel.visible = not settings_panel.visible
+    def _toggle_workspace(_: object) -> None:
+        workspace_panel.visible = not workspace_panel.visible
 
-    workspace_ui.trigger_button.on_click(_toggle_settings)
+    workspace_ui.trigger_button.on_click(_toggle_workspace)
 
-    settings_dropdown = pn.Column(
+    return pn.Column(
         workspace_ui.trigger_view,
-        settings_panel,
-        css_classes=["lw-portal-settings-dropdown-wrap"],
+        workspace_panel,
+        css_classes=["lw-portal-workspace-dropdown-wrap"],
         margin=0,
         sizing_mode="fixed",
         width_policy="min",
     )
 
+
+def _build_parameter_db_dropdown() -> pn.viewable.Viewable:
     # Parameter Database trigger, built the same way as the about trigger.
     parameter_db_led = pn.pane.HTML(_parameter_db_button_icon_html(), margin=0)
     parameter_db_button = pn.widgets.Button(
@@ -1719,7 +1712,7 @@ def build_template_header() -> pn.viewable.Viewable:
 
     parameter_db_button.on_click(_toggle_parameter_db)
 
-    parameter_db_dropdown = pn.Column(
+    return pn.Column(
         parameter_db_trigger_view,
         parameter_db_panel,
         css_classes=["lw-parameter-db-dropdown-wrap"],
@@ -1728,10 +1721,51 @@ def build_template_header() -> pn.viewable.Viewable:
         width_policy="min",
     )
 
+
+def _build_header_controls_panel(
+    workspace_ui: WorkspaceUiController,
+) -> pn.viewable.Viewable:
+    """Parameter Database + workspace dropdowns, combined so every header
+    (landing template and every sub-app) places both together as one unit."""
+    return pn.Row(
+        _build_parameter_db_dropdown(),
+        _build_workspace_dropdown(workspace_ui),
+        css_classes=["lw-portal-header-controls"],
+        margin=0,
+        sizing_mode="fixed",
+        width_policy="min",
+    )
+
+
+def build_template_header() -> pn.viewable.Viewable:
+    workspace_ui = WorkspaceUiController()
+
+    # Logo and about button
+    logo_pane = pn.pane.HTML(
+        _portal_logo_html(version=_PORTAL_VERSION),
+        margin=0,
+        css_classes=["lw-portal-header-left"],
+    )
+
+    about_dropdown = _build_about_dropdown()
+
+    left_row = pn.Row(
+        logo_pane,
+        about_dropdown,
+        margin=0,
+        width_policy="min",
+        sizing_mode="fixed",
+    )
+
+    links = pn.pane.HTML(
+        _header_links_html(),
+        margin=0,
+    )
+    controls_panel = _build_header_controls_panel(workspace_ui)
+
     right = pn.Row(
         links,
-        parameter_db_dropdown,
-        settings_dropdown,
+        controls_panel,
         css_classes=["lw-portal-header-right-wrap"],
         margin=0,
         sizing_mode="fixed",
@@ -1766,11 +1800,12 @@ def build_app_header(
         f'<div class="lw-portal-app-title">{escape(title)}</div>',
         margin=0,
     )
+    controls_panel = _build_header_controls_panel(workspace_ui)
     return pn.Row(
         back_button,
         title_pane,
         pn.Spacer(sizing_mode="stretch_width"),
-        workspace_ui.chip_pane,
+        controls_panel,
         css_classes=["lw-portal-app-topbar"],
         sizing_mode="stretch_width",
         margin=0,
