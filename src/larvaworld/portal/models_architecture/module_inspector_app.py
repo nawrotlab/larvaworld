@@ -29,6 +29,9 @@ from larvaworld.portal.models_architecture import module_inspector_data as data
 from larvaworld.portal.models_architecture.module_equations import (
     get_module_equations_html,
 )
+from larvaworld.portal.models_architecture.module_param_reference import (
+    get_parameter_reference_html,
+)
 from larvaworld.portal.models_architecture.module_inspector_data import (
     DEFAULT_A_IN,
     DEFAULT_DT,
@@ -215,6 +218,11 @@ class _ModuleInspectorController:
         )
         self.equations_pane = pn.pane.HTML(
             get_module_equations_html("crawler"),
+            margin=(0, 0, 6, 0),
+            sizing_mode="stretch_width",
+        )
+        self.param_reference_pane = pn.pane.HTML(
+            get_parameter_reference_html(),
             margin=(0, 0, 6, 0),
             sizing_mode="stretch_width",
         )
@@ -500,6 +508,12 @@ class _ModuleInspectorController:
             pn.Card(
                 self.equations_pane,
                 title="Equations",
+                collapsed=True,
+                sizing_mode="stretch_width",
+            ),
+            pn.Card(
+                self.param_reference_pane,
+                title="Parameter Reference",
                 collapsed=True,
                 sizing_mode="stretch_width",
             ),
