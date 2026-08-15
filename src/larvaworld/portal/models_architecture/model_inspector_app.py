@@ -1344,13 +1344,23 @@ class _ModelInspectorController:
         self.live_plot_view.objects = plots
 
     def view(self) -> pn.viewable.Viewable:
-        intro = pn.pane.HTML(
+        intro_text = pn.pane.HTML(
             (
-                '<div class="lw-model-inspector-intro">'
-                "Inspect canonical larva model presets, edit baseline modules locally, and run live reporter preview."
-                "</div>"
+                "<p>Inspect canonical larva model presets, edit baseline modules locally, "
+                "and run live reporter preview.</p>"
+                "<p>Edit configuration, run simulations, and compare model behavior. "
+                "Use the left panel for controls and settings.</p>"
             ),
             margin=0,
+        )
+        info_panel = pn.Card(
+            intro_text,
+            title="ℹ️ About Model Inspector",
+            collapsed=True,
+            collapsible=True,
+            css_classes=["lw-portal-app-info"],
+            sizing_mode="stretch_width",
+            margin=(0, 0, 12, 0),
         )
         action_buttons = pn.Column(
             pn.Row(
@@ -1430,7 +1440,7 @@ class _ModelInspectorController:
             styles={"align-items": "flex-start"},
         )
         return pn.Column(
-            intro,
+            info_panel,
             top_row,
             self.module_sections_box,
             self.summary_sections_box,

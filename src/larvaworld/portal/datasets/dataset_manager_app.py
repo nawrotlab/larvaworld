@@ -7,16 +7,36 @@ import pandas as pd
 import panel as pn
 
 from larvaworld.portal.datasets.manager_helpers import (
+    UnifiedDatasetRecord,
+    annotate_dataset,
     delete_imported_workspace_dataset,
     format_relative_imported_location,
+    get_processing_status,
+    list_all_unified_datasets as _list_all_unified_datasets,
+    preprocess_dataset,
+    process_dataset,
+    subsample_dataset,
+    timeslice_dataset,
+    update_dataset_refid,
 )
 from larvaworld.portal.datasets.models import WorkspaceDatasetRecord
-from larvaworld.portal.datasets.workspace_index import list_workspace_datasets
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
-from larvaworld.portal.workspace import get_active_workspace
+from larvaworld.portal.workspace import get_active_workspace, get_workspace_dir
 
 
-__all__ = ["_DatasetManagerController", "dataset_manager_app"]
+__all__ = [
+    "_DatasetManagerController",
+    "dataset_manager_app",
+    "list_workspace_datasets",
+]
+
+
+def list_workspace_datasets(workspace=None):
+    """
+    Backwards-compatible wrapper for tests and external code.
+    Returns UnifiedDatasetRecord objects for both imported and simulated datasets.
+    """
+    return _list_all_unified_datasets(workspace=workspace)
 
 
 DATASET_MANAGER_RAW_CSS = """
@@ -153,7 +173,15 @@ DATASET_MANAGER_RAW_CSS = """
 """.strip()
 
 
-TABLE_COLUMNS = ["Dataset ID", "Lab", "Group", "Ref ID", "N agents", "Location"]
+TABLE_COLUMNS = [
+    "Dataset ID",
+    "Source",
+    "Lab",
+    "Group",
+    "Ref ID",
+    "N agents",
+    "Location",
+]
 
 
 def _status_html(text: str, *, tone: str = "neutral", detail: str | None = None) -> str:
@@ -175,7 +203,9 @@ def _status_html(text: str, *, tone: str = "neutral", detail: str | None = None)
     )
 
 
-def _details_html(record: WorkspaceDatasetRecord | None) -> str:
+def _details_html(
+    record: UnifiedDatasetRecord | None, proc_status: dict | None = None
+) -> str:
     if record is None:
         return (
             '<div class="lw-dataset-manager-status">'
@@ -184,19 +214,45 @@ def _details_html(record: WorkspaceDatasetRecord | None) -> str:
         )
     conf_present = "yes" if record.conf_path.is_file() else "no"
     h5_present = "yes" if record.h5_path.is_file() else "no"
+    source_label = "Imported" if record.origin == "imported" else "Simulated"
+    source_note = (
+        "(experimental dataset from workspace import)"
+        if record.origin == "imported"
+        else f"(generated from simulation run: {escape(record.run_id or '—')})"
+    )
+    lab_info = (
+        f"<div><strong>Lab</strong>: {escape(record.lab_id or '—')}</div>"
+        if record.lab_id
+        else ""
+    )
+
+    proc_html = ""
+    if proc_status:
+        proc_items = []
+        for key, done in proc_status.items():
+            label = key.replace("_", " ").title()
+            status_icon = "✓" if done else "—"
+            proc_items.append(f"<div>{status_icon} {label}</div>")
+        if proc_items:
+            proc_html = (
+                f'<div style="margin-top:8px;"><strong>Processing status</strong>:</div>'
+                + "".join(proc_items)
+            )
+
     return (
         '<div class="lw-dataset-manager-status">'
         f"<div><strong>Dataset ID</strong>: {escape(record.dataset_id)}</div>"
-        f"<div><strong>Lab</strong>: {escape(record.lab_id or '—')}</div>"
+        f"<div><strong>Source</strong>: {escape(source_label)} {source_note}</div>"
+        f"{lab_info}"
         f"<div><strong>Group ID</strong>: {escape(record.group_id or '—')}</div>"
         f"<div><strong>Ref ID</strong>: {escape(record.ref_id or '—')}</div>"
         f"<div><strong>Agents</strong>: {escape(str(record.n_agents) if record.n_agents is not None else '—')}</div>"
         f'<div style="margin-top:8px;"><strong>Dataset directory</strong>: {escape(str(record.dataset_dir))}</div>'
         f"<div><strong>conf.txt</strong>: {escape(str(record.conf_path))}</div>"
         f"<div><strong>data.h5</strong>: {escape(str(record.h5_path))}</div>"
-        f'<div style="margin-top:8px;"><strong>Portal-supported imported layout</strong>: yes</div>'
         f"<div><strong>Config file present</strong>: {conf_present}</div>"
         f"<div><strong>HDF file present</strong>: {h5_present}</div>"
+        f"{proc_html}"
         "</div>"
     )
 
@@ -218,17 +274,42 @@ def _empty_state_html(title: str, copy: str, *, cta_href: str | None = None) -> 
     )
 
 
-def _records_frame(records: list[WorkspaceDatasetRecord], workspace) -> pd.DataFrame:
+def _records_frame(records: list[UnifiedDatasetRecord], workspace) -> pd.DataFrame:
     rows = []
     for record in records:
+        source_label = "Imported" if record.origin == "imported" else "Simulated"
+        location = ""
+        if record.origin == "imported":
+            try:
+                datasets_root = get_workspace_dir(
+                    "datasets", workspace=workspace
+                ).resolve()
+                location = (
+                    record.dataset_dir.resolve().relative_to(datasets_root).as_posix()
+                )
+            except (ValueError, AttributeError):
+                location = record.dataset_dir.name
+        else:
+            try:
+                experiments_root = get_workspace_dir(
+                    "experiments", workspace=workspace
+                ).resolve()
+                location = (
+                    record.dataset_dir.resolve()
+                    .relative_to(experiments_root)
+                    .as_posix()
+                )
+            except (ValueError, AttributeError):
+                location = record.dataset_dir.name
         rows.append(
             {
                 "Dataset ID": record.dataset_id,
+                "Source": source_label,
                 "Lab": record.lab_id or "—",
                 "Group": record.group_id or "—",
                 "Ref ID": record.ref_id or "—",
                 "N agents": record.n_agents if record.n_agents is not None else "—",
-                "Location": format_relative_imported_location(record, workspace),
+                "Location": location,
             }
         )
     if not rows:
@@ -239,10 +320,10 @@ def _records_frame(records: list[WorkspaceDatasetRecord], workspace) -> pd.DataF
 class _DatasetManagerController:
     def __init__(self) -> None:
         self.workspace = get_active_workspace()
-        self._all_records: list[WorkspaceDatasetRecord] = []
-        self._filtered_records: list[WorkspaceDatasetRecord] = []
-        self._selected_record: WorkspaceDatasetRecord | None = None
-        self._pending_delete_record: WorkspaceDatasetRecord | None = None
+        self._all_records: list[UnifiedDatasetRecord] = []
+        self._filtered_records: list[UnifiedDatasetRecord] = []
+        self._selected_record: UnifiedDatasetRecord | None = None
+        self._pending_delete_record: UnifiedDatasetRecord | None = None
 
         self.search_input = pn.widgets.TextInput(
             name="Search",
@@ -316,8 +397,80 @@ class _DatasetManagerController:
             margin=(4, 0, 0, 0),
         )
 
+        self.preprocess_button = pn.widgets.Button(
+            name="Preprocess",
+            button_type="default",
+            width=120,
+            disabled=True,
+        )
+        self.process_button = pn.widgets.Button(
+            name="Process",
+            button_type="default",
+            width=100,
+            disabled=True,
+        )
+        self.annotate_button = pn.widgets.Button(
+            name="Annotate",
+            button_type="default",
+            width=100,
+            disabled=True,
+        )
+        self.refid_input = pn.widgets.TextInput(
+            name="Reference ID",
+            placeholder="Enter or create reference ID",
+            width=200,
+        )
+        self.update_refid_button = pn.widgets.Button(
+            name="Update Ref ID",
+            button_type="default",
+            width=130,
+            disabled=True,
+        )
+        self.subsample_button = pn.widgets.Button(
+            name="Subsample",
+            button_type="default",
+            width=110,
+            disabled=True,
+        )
+        self.subsample_n = pn.widgets.IntInput(
+            name="N agents",
+            value=10,
+            start=1,
+            step=1,
+            width=100,
+        )
+        self.subsample_output = pn.widgets.TextInput(
+            name="Output name",
+            placeholder="e.g., dataset_subsample_10",
+            width=200,
+        )
+        self.timeslice_button = pn.widgets.Button(
+            name="Time slice",
+            button_type="default",
+            width=110,
+            disabled=True,
+        )
+        self.timeslice_start = pn.widgets.FloatInput(
+            name="Start (s)",
+            value=0.0,
+            step=1.0,
+            width=100,
+        )
+        self.timeslice_end = pn.widgets.FloatInput(
+            name="End (s)",
+            value=60.0,
+            step=1.0,
+            width=100,
+        )
+        self.timeslice_output = pn.widgets.TextInput(
+            name="Output name",
+            placeholder="e.g., dataset_timeslice_0_60s",
+            width=200,
+        )
+
         self._copy_source = pn.widgets.TextInput(value="", visible=False)
         self._copy_result = pn.widgets.TextInput(value="", visible=False)
+        self._processing_status: dict[str, bool] = {}
 
         self.search_input.param.watch(self._on_filters_change, "value")
         self.lab_filter.param.watch(self._on_filters_change, "value")
@@ -347,6 +500,12 @@ class _DatasetManagerController:
                 }
             """,
         )
+        self.preprocess_button.on_click(self._handle_preprocess)
+        self.process_button.on_click(self._handle_process)
+        self.annotate_button.on_click(self._handle_annotate)
+        self.update_refid_button.on_click(self._handle_update_refid)
+        self.subsample_button.on_click(self._handle_subsample)
+        self.timeslice_button.on_click(self._handle_timeslice)
 
         self._load_records()
 
@@ -393,10 +552,17 @@ class _DatasetManagerController:
             self.lab_filter.value = ""
         self._apply_filters()
         if self._all_records:
-            self._set_action_status(
-                f"Scanned the active workspace. {len(self._all_records)} imported dataset(s) found.",
-                tone="success",
+            imported_count = sum(1 for r in self._all_records if r.origin == "imported")
+            simulated_count = sum(
+                1 for r in self._all_records if r.origin == "simulation_run"
             )
+            parts = []
+            if imported_count > 0:
+                parts.append(f"{imported_count} imported")
+            if simulated_count > 0:
+                parts.append(f"{simulated_count} simulated")
+            msg = f"Scanned the active workspace. {', '.join(parts)} dataset(s) found."
+            self._set_action_status(msg, tone="success")
         else:
             self.action_status.object = ""
         self._refresh_body()
@@ -405,7 +571,7 @@ class _DatasetManagerController:
         query = self.search_input.value.strip().lower()
         lab_filter = self.lab_filter.value.strip()
 
-        def matches(record: WorkspaceDatasetRecord) -> bool:
+        def matches(record: UnifiedDatasetRecord) -> bool:
             if lab_filter and record.lab_id != lab_filter:
                 return False
             if not query:
@@ -413,7 +579,7 @@ class _DatasetManagerController:
             haystack = " ".join(
                 filter(
                     None,
-                    [record.dataset_id, record.group_id, record.ref_id],
+                    [record.dataset_id, record.group_id, record.ref_id, record.origin],
                 )
             ).lower()
             return query in haystack
@@ -441,7 +607,7 @@ class _DatasetManagerController:
         if self.workspace is None:
             self.empty_state.object = _empty_state_html(
                 "Dataset Manager requires an active workspace",
-                "Configure an active workspace to browse imported dataset records.",
+                "Configure an active workspace to browse dataset records.",
             )
             self.main_content.objects = [self.empty_state]
             return
@@ -449,7 +615,7 @@ class _DatasetManagerController:
         if not self._all_records:
             self.empty_state.object = _empty_state_html(
                 "No imported datasets found in this workspace",
-                "This view lists imported datasets recognized under the current workspace imported layout.",
+                "Import experimental datasets or generate datasets from simulations.",
                 cta_href="/wf.open_dataset",
             )
             self.main_content.objects = [self.empty_state]
@@ -467,7 +633,7 @@ class _DatasetManagerController:
         )
         catalog_card = pn.Card(
             self.table,
-            title="Imported datasets",
+            title="Datasets (imported & simulated)",
             collapsed=False,
             sizing_mode="stretch_width",
         )
@@ -484,6 +650,35 @@ class _DatasetManagerController:
                     self.copy_path_button,
                     self.delete_button,
                     sizing_mode="stretch_width",
+                ),
+                pn.Row(
+                    self.preprocess_button,
+                    self.process_button,
+                    self.annotate_button,
+                    pn.Spacer(sizing_mode="stretch_width"),
+                    sizing_mode="stretch_width",
+                    margin=(6, 0, 0, 0),
+                ),
+                pn.Row(
+                    self.refid_input,
+                    self.update_refid_button,
+                    sizing_mode="stretch_width",
+                    margin=(6, 0, 0, 0),
+                ),
+                pn.Row(
+                    self.subsample_button,
+                    self.subsample_n,
+                    self.subsample_output,
+                    sizing_mode="stretch_width",
+                    margin=(6, 0, 0, 0),
+                ),
+                pn.Row(
+                    self.timeslice_button,
+                    self.timeslice_start,
+                    self.timeslice_end,
+                    self.timeslice_output,
+                    sizing_mode="stretch_width",
+                    margin=(6, 0, 0, 0),
                 ),
                 self.delete_confirm_panel,
                 self.action_status,
@@ -524,10 +719,18 @@ class _DatasetManagerController:
         self._pending_delete_record = None
         self.delete_confirm_panel.visible = False
         self.delete_confirm_text.object = ""
-        self.details_pane.object = _details_html(record)
+        self._load_processing_status(record)
+        self.details_pane.object = _details_html(record, self._processing_status)
         self._copy_source.value = str(record.dataset_dir)
+        self.refid_input.value = record.ref_id or ""
         self.copy_path_button.disabled = False
-        self.delete_button.disabled = False
+        self.delete_button.disabled = record.origin != "imported"
+        self.preprocess_button.disabled = False
+        self.process_button.disabled = False
+        self.annotate_button.disabled = False
+        self.update_refid_button.disabled = False
+        self.subsample_button.disabled = False
+        self.timeslice_button.disabled = False
 
     def _handle_refresh(self, _event=None) -> None:
         self._load_records()
@@ -605,18 +808,118 @@ class _DatasetManagerController:
             tone="success",
         )
 
+    def _load_processing_status(self, record: UnifiedDatasetRecord) -> None:
+        try:
+            self._processing_status = get_processing_status(record)
+        except Exception:
+            self._processing_status = {}
+
+    def _handle_preprocess(self, _event=None) -> None:
+        if self._selected_record is None:
+            return
+        self._set_action_status("Running preprocessing…", tone="neutral")
+        success, msg = preprocess_dataset(self._selected_record)
+        tone = "success" if success else "danger"
+        self._set_action_status(msg, tone=tone)
+        if success:
+            self._load_records()
+
+    def _handle_process(self, _event=None) -> None:
+        if self._selected_record is None:
+            return
+        self._set_action_status("Running processing…", tone="neutral")
+        success, msg = process_dataset(self._selected_record)
+        tone = "success" if success else "danger"
+        self._set_action_status(msg, tone=tone)
+        if success:
+            self._load_records()
+
+    def _handle_annotate(self, _event=None) -> None:
+        if self._selected_record is None:
+            return
+        self._set_action_status("Running annotation…", tone="neutral")
+        success, msg = annotate_dataset(self._selected_record)
+        tone = "success" if success else "danger"
+        self._set_action_status(msg, tone=tone)
+        if success:
+            self._load_records()
+
+    def _handle_update_refid(self, _event=None) -> None:
+        if self._selected_record is None:
+            return
+        new_ref_id = self.refid_input.value.strip()
+        if not new_ref_id:
+            self._set_action_status("Enter a reference ID first.", tone="warning")
+            return
+        self._set_action_status("Updating reference ID…", tone="neutral")
+        success, msg = update_dataset_refid(self._selected_record, new_ref_id)
+        tone = "success" if success else "danger"
+        self._set_action_status(msg, tone=tone)
+        if success:
+            self._load_records()
+
+    def _handle_subsample(self, _event=None) -> None:
+        if self._selected_record is None or self.workspace is None:
+            return
+        n_agents = int(self.subsample_n.value)
+        output_name = self.subsample_output.value.strip()
+        if not output_name:
+            self._set_action_status("Enter an output dataset name.", tone="warning")
+            return
+        self._set_action_status("Creating subsampled dataset…", tone="neutral")
+        success, msg = subsample_dataset(
+            self._selected_record, n_agents, output_name, self.workspace
+        )
+        tone = "success" if success else "danger"
+        self._set_action_status(msg, tone=tone)
+        if success:
+            self._load_records()
+
+    def _handle_timeslice(self, _event=None) -> None:
+        if self._selected_record is None or self.workspace is None:
+            return
+        start = float(self.timeslice_start.value)
+        end = float(self.timeslice_end.value)
+        output_name = self.timeslice_output.value.strip()
+        if not output_name:
+            self._set_action_status("Enter an output dataset name.", tone="warning")
+            return
+        if start >= end:
+            self._set_action_status(
+                "Start time must be before end time.", tone="warning"
+            )
+            return
+        self._set_action_status("Creating time-sliced dataset…", tone="neutral")
+        success, msg = timeslice_dataset(
+            self._selected_record, (start, end), output_name, self.workspace
+        )
+        tone = "success" if success else "danger"
+        self._set_action_status(msg, tone=tone)
+        if success:
+            self._load_records()
+
     def view(self) -> pn.viewable.Viewable:
-        intro = pn.pane.HTML(
+        intro_text = pn.pane.HTML(
             (
-                '<div class="lw-dataset-manager-intro">'
-                "Browse and inspect imported datasets stored in the active workspace. "
-                "This first manager pass is a read-first catalog for portal-recognized imported dataset records, with lightweight selection, path inspection, and safe workspace actions."
-                "</div>"
+                "<p>Browse and inspect both imported and simulated datasets in the active workspace. "
+                "This manager is a catalog for portal-recognized dataset records with lightweight selection, "
+                "path inspection, and workspace actions.</p>"
+                "<p>Actions: preprocess (standardize columns), process (compute derived columns), "
+                "annotate (add metadata), derive (split/subsample/slice).</p>"
             ),
             margin=0,
         )
+        info_panel = pn.Card(
+            intro_text,
+            title="ℹ️ About Dataset Manager",
+            collapsed=True,
+            collapsible=True,
+            css_classes=["lw-portal-app-info"],
+            sizing_mode="stretch_width",
+            margin=(0, 0, 12, 0),
+        )
         scope = pn.pane.HTML(
-            '<div class="lw-dataset-manager-scope">Scope: Imported datasets only</div>',
+            '<div class="lw-dataset-manager-scope">Scope: Imported and simulated datasets</div>',
             margin=0,
         )
         hidden_proxies = pn.Column(
@@ -629,7 +932,7 @@ class _DatasetManagerController:
             margin=0,
         )
         return pn.Column(
-            intro,
+            info_panel,
             scope,
             self.main_content,
             hidden_proxies,

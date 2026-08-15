@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from html import escape
 from typing import Any
 
@@ -9,10 +10,25 @@ import panel as pn
 from bokeh.models import ColumnDataSource
 from bokeh.plotting import figure
 
+
+# Suppress Bokeh patch warning spam
+class _BokehPatchFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return (
+            "Dropping a patch because it contains a previously known reference"
+            not in record.getMessage()
+        )
+
+
+logging.getLogger("root").addFilter(_BokehPatchFilter())
+
 from larvaworld.lib import util
 from larvaworld.lib.model import moduleDB as MD
 from larvaworld.portal.config_widgets.widget_base import param_controls
 from larvaworld.portal.models_architecture import module_inspector_data as data
+from larvaworld.portal.models_architecture.module_equations import (
+    get_module_equations_html,
+)
 from larvaworld.portal.models_architecture.module_inspector_data import (
     DEFAULT_A_IN,
     DEFAULT_DT,
@@ -90,6 +106,20 @@ _KIND_NOTES: dict[str, str] = {
 
 def _status_html(text: str) -> str:
     return f'<div class="lw-model-inspector-status">{escape(text)}</div>'
+
+
+def _format_param_name(name: str) -> str:
+    """Format parameter name with subscripts where applicable (e.g., A_in → A_{in})."""
+    # Map common parameter names to their subscripted forms (HTML notation)
+    subs = {
+        "A_in": "A<sub>in</sub>",
+        "A_C": "A<sub>C</sub>",
+        "A_T": "A<sub>T</sub>",
+        "A_CT": "A<sub>CT</sub>",
+        "I_C": "I<sub>C</sub>",
+        "phi": "φ",
+    }
+    return subs.get(name, name)
 
 
 class _ModuleInspectorController:
@@ -180,6 +210,11 @@ class _ModuleInspectorController:
         )
         self.notes_pane = pn.pane.Markdown(
             _KIND_NOTES["effector"],
+            margin=(0, 0, 6, 0),
+            sizing_mode="stretch_width",
+        )
+        self.equations_pane = pn.pane.HTML(
+            get_module_equations_html("crawler"),
             margin=(0, 0, 6, 0),
             sizing_mode="stretch_width",
         )
@@ -310,6 +345,9 @@ class _ModuleInspectorController:
 
     def _on_module_change(self, event) -> None:
         self._module_id = str(event.new)
+        self.equations_pane.object = get_module_equations_html(
+            self._module_id, self._mode
+        )
         labels = self._mode_option_labels()
         self.mode_select.options = labels
         modes = data.module_modes(self._module_id)
@@ -323,6 +361,9 @@ class _ModuleInspectorController:
 
     def _on_mode_change(self, event) -> None:
         self._mode = str(event.new)
+        self.equations_pane.object = get_module_equations_html(
+            self._module_id, self._mode
+        )
         self._rebuild_editor()
         self._recompute()
 
@@ -362,7 +403,8 @@ class _ModuleInspectorController:
             f"{result.steps} steps, dt={result.dt}"
         )
         if result.kind == "effector":
-            return f"{base}, A_in={result.a_in}."
+            a_in_label = _format_param_name("A_in")
+            return f"{base}, {a_in_label}={result.a_in}."
         if result.kind == "sensor" and result.stimulus is not None:
             s = result.stimulus
             return (
@@ -389,10 +431,10 @@ class _ModuleInspectorController:
             if sig not in result.signals:
                 continue
             fig = figure(
-                title=sig,
+                title=_format_param_name(sig),
                 height=220,
                 x_axis_label="time (sec)",
-                y_axis_label=sig,
+                y_axis_label=_format_param_name(sig),
                 tools="pan,wheel_zoom,box_zoom,save,reset",
                 active_drag=None,
                 sizing_mode="stretch_width",
@@ -402,18 +444,26 @@ class _ModuleInspectorController:
         self.plot_view.objects = plots
 
     def view(self) -> pn.viewable.Viewable:
-        intro = pn.pane.HTML(
+        intro_text = pn.pane.HTML(
             (
-                '<div class="lw-model-inspector-intro">'
-                "Inspect standalone <strong>locomotor effectors</strong> "
+                "<p>Inspect standalone <strong>locomotor effectors</strong> "
                 "(crawler, turner), the <strong>feeder</strong>, and "
                 "<strong>sensors</strong> (olfactor, toucher, windsensor, "
-                "thermosensor), one module and mode at a time. Each module type "
-                "uses its own probe: constant A_in, self-oscillation, or a "
-                "time-varying stimulus."
-                "</div>"
+                "thermosensor), one module and mode at a time.</p>"
+                "<p>Each module type uses its own probe: constant A<sub>in</sub>, "
+                "self-oscillation, or time-varying stimulus. Charts update in real-time "
+                "as you adjust parameters.</p>"
             ),
             margin=0,
+        )
+        info_panel = pn.Card(
+            intro_text,
+            title="ℹ️ About Module Inspector",
+            collapsed=True,
+            collapsible=True,
+            css_classes=["lw-portal-app-info"],
+            sizing_mode="stretch_width",
+            margin=(0, 0, 12, 0),
         )
         controls = pn.Column(
             self.module_select,
@@ -427,6 +477,12 @@ class _ModuleInspectorController:
             self.steps_input,
             self.dt_input,
             self.notes_pane,
+            pn.Card(
+                self.equations_pane,
+                title="Equations",
+                collapsed=True,
+                sizing_mode="stretch_width",
+            ),
             self.signal_checkbox,
             self.status_pane,
             sizing_mode="stretch_width",
@@ -459,7 +515,7 @@ class _ModuleInspectorController:
             styles={"align-items": "flex-start"},
         )
         return pn.Column(
-            intro,
+            info_panel,
             row,
             css_classes=["lw-model-inspector-root"],
             sizing_mode="stretch_width",

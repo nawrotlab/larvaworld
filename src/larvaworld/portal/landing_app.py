@@ -151,6 +151,34 @@ def landing_app() -> pn.viewable.Viewable:
 
     topbar = build_template_header()
     template.header.append(topbar)
+
+    info_panel = pn.Card(
+        pn.pane.HTML(
+            (
+                "<p><strong>Larvaworld</strong> is a computational framework for simulating and analyzing "
+                "Drosophila larva behavior. Use this portal to:"
+                "</p>"
+                "<ul>"
+                "<li>Run behavioral simulations with configurable larva models</li>"
+                "<li>Analyze experimental and simulated trajectories</li>"
+                "<li>Inspect model architectures and module dynamics</li>"
+                "<li>Manage and process datasets</li>"
+                "</ul>"
+                "<p>Select a workspace above to get started. New to Larvaworld? "
+                'Check the <a href="https://larvaworld.readthedocs.io" target="_blank">documentation</a>.'
+                "</p>"
+            ),
+            margin=0,
+        ),
+        title="ℹ️ About Larvaworld",
+        collapsed=True,
+        collapsible=True,
+        css_classes=["lw-portal-app-info"],
+        sizing_mode="stretch_width",
+        margin=(0, 0, 12, 0),
+    )
+    root.append(info_panel)
+
     slides = _banner_slides()
     if slides:
         active_slide = {"index": 0, "play_token": 0}
