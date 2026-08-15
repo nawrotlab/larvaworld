@@ -395,13 +395,19 @@ def test_controller_refresh_reads_from_draft_not_registry(
 ) -> None:
     _guard_registry_writes(monkeypatch)
     controller = _ModelInspectorController()
-    controller._draft_model.brain["crawler"]["mode"] = "constant"
+    canonical = load_model_draft(str(controller.primary_select.value))
+    original_mode = canonical.brain["crawler"]["mode"]
+    # Set draft to a different mode than the original
+    new_mode = "gaussian" if original_mode != "gaussian" else "square"
+    controller._draft_model.brain["crawler"]["mode"] = new_mode
     controller._refresh_inspection()
     titles = _collect_module_card_titles(controller.module_sections_box)
     crawler_title = next(title for title in titles if title.startswith("crawler |"))
-    assert crawler_title == "crawler | constant | configured"
-    canonical = load_model_draft(str(controller.primary_select.value))
-    assert canonical.brain["crawler"]["mode"] != "constant"
+    assert crawler_title == f"crawler | {new_mode} | configured"
+    canonical_after = load_model_draft(str(controller.primary_select.value))
+    # Verify draft changed but canonical didn't
+    assert canonical_after.brain["crawler"]["mode"] == original_mode
+    assert canonical_after.brain["crawler"]["mode"] != new_mode
 
 
 def test_core_brain_mode_dropdown_options_match_moduledb(
