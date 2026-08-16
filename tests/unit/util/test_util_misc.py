@@ -112,6 +112,80 @@ startxref
         content = output_path.read_bytes()
         assert content.startswith(b"%PDF")
 
+    def test_combine_images(self, tmp_path):
+        """Test image combination with real PNG files."""
+        pytest.importorskip("PIL")
+        from PIL import Image
+
+        for name, color in [("a.png", (255, 0, 0)), ("b.png", (0, 255, 0))]:
+            Image.new("RGB", (20, 20), color).save(tmp_path / name)
+
+        combining.combine_images(
+            files=[str(tmp_path / "a.png"), str(tmp_path / "b.png")],
+            save_to=str(tmp_path),
+            save_as="combined.png",
+            size=(100, 100),
+        )
+
+        output_path = tmp_path / "combined.png"
+        assert output_path.exists()
+        assert output_path.stat().st_size > 0
+        with Image.open(output_path) as combined:
+            assert combined.size == (100, 100)
+
+    def test_combine_videos(self, tmp_path):
+        """Test video combination with real MP4 files -- exercises the
+        imageio_ffmpeg-backed path (see _ffmpeg_exe/_video_duration),
+        which doesn't require a system-wide ffmpeg/ffprobe install."""
+        pytest.importorskip("imageio_ffmpeg")
+        imageio = pytest.importorskip("imageio")
+
+        paths = []
+        for name in ("a.mp4", "b.mp4"):
+            path = tmp_path / name
+            writer = imageio.get_writer(str(path), mode="I", fps=10)
+            for _ in range(10):
+                frame = np.zeros((32, 32, 3), dtype=np.uint8)
+                writer.append_data(frame)
+            writer.close()
+            paths.append(str(path))
+
+        combining.combine_videos(
+            files=paths, save_to=str(tmp_path), save_as="combined.mp4"
+        )
+
+        output_path = tmp_path / "combined.mp4"
+        assert output_path.exists()
+        assert output_path.stat().st_size > 0
+
+        reader = imageio.get_reader(str(output_path))
+        try:
+            meta = reader.get_meta_data()
+        finally:
+            reader.close()
+        # hstack of two 32x32 sources -> 64x32
+        assert meta["size"] == (64, 32)
+
+    def test_combine_videos_requires_matching_durations(self, tmp_path):
+        pytest.importorskip("imageio_ffmpeg")
+        imageio = pytest.importorskip("imageio")
+
+        paths = []
+        for name, n_frames in (("a.mp4", 5), ("b.mp4", 10)):
+            path = tmp_path / name
+            writer = imageio.get_writer(str(path), mode="I", fps=10)
+            for _ in range(n_frames):
+                writer.append_data(np.zeros((16, 16, 3), dtype=np.uint8))
+            writer.close()
+            paths.append(str(path))
+
+        with pytest.raises(ValueError, match="same duration"):
+            combining.combine_videos(files=paths, save_to=str(tmp_path))
+
+    def test_combine_videos_requires_at_least_two_files(self, tmp_path):
+        with pytest.raises(ValueError, match="At least two"):
+            combining.combine_videos(files=["only_one.mp4"], save_to=str(tmp_path))
+
 
 class TestColor:
     """Test color.py functions"""
