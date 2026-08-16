@@ -1470,7 +1470,7 @@ class _ImportDatasetsController:
 
 
 def import_datasets_app() -> pn.viewable.Viewable:
-    pn.extension(raw_css=[PORTAL_RAW_CSS, IMPORT_DATASETS_RAW_CSS])
+    pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS, IMPORT_DATASETS_RAW_CSS])
     controller = _ImportDatasetsController()
 
     template = pn.template.MaterialTemplate(

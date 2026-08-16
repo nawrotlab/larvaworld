@@ -3846,7 +3846,8 @@ class _SingleExperimentController:
 
 def single_experiment_app() -> pn.viewable.Viewable:
     pn.extension(
-        raw_css=[PORTAL_RAW_CSS, SINGLE_EXPERIMENT_RAW_CSS, DISPLAY_SHORTCUTS_RAW_CSS]
+        "tabulator",
+        raw_css=[PORTAL_RAW_CSS, SINGLE_EXPERIMENT_RAW_CSS, DISPLAY_SHORTCUTS_RAW_CSS],
     )
     controller = _SingleExperimentController()
 

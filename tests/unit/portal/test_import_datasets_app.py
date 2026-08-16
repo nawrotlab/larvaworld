@@ -237,7 +237,7 @@ def test_import_datasets_view_uses_three_column_layout_with_environment_below() 
     assert not _contains_widget(env_middle_col, "New border ID")
     assert _contains_widget(env_right_col, "New border ID")
     assert "Border list" in _card_titles(env_right_col)
-    assert "Environment scapes" in _card_titles(env_right_col)
+    assert "Sensory landscapes" in _card_titles(env_right_col)
     assert len(_scape_switches(env_right_col)) >= 1
 
 

@@ -111,7 +111,7 @@ def ttest_param_keys():
                 if issubclass(p, NestedConf):
                     try:
                         print(p.name)
-                        assert p().param_keys.sorted == p().nestedConf.keylist
+                        assert p.param_keys().sorted == p().nestedConf.keylist
                     except:
                         print(p.name, "MOD_FAIL")
                         fails.append(p.name)

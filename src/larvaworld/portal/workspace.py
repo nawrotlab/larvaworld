@@ -9,7 +9,7 @@ from typing import Literal
 
 
 WorkspaceKind = Literal[
-    "environments", "experiments", "datasets", "analysis", "metadata"
+    "environments", "experiments", "datasets", "analysis", "metadata", "parameters"
 ]
 
 WORKSPACE_DIR_NAMES: dict[WorkspaceKind, str] = {
@@ -18,6 +18,7 @@ WORKSPACE_DIR_NAMES: dict[WorkspaceKind, str] = {
     "datasets": "experiments",
     "analysis": "analysis",
     "metadata": "metadata",
+    "parameters": "parameters",
 }
 WORKSPACE_METADATA_FILENAME = "workspace.json"
 GLOBAL_CONFIG_FILENAME = "workspace.json"
@@ -52,6 +53,7 @@ class WorkspaceState:
     datasets_dir: Path
     analysis_dir: Path
     metadata_dir: Path
+    parameters_dir: Path
 
 
 def _utc_now_iso() -> str:
@@ -261,6 +263,7 @@ def load_workspace(path: str | Path) -> WorkspaceState:
         datasets_dir=resolved / WORKSPACE_DIR_NAMES["datasets"],
         analysis_dir=resolved / WORKSPACE_DIR_NAMES["analysis"],
         metadata_dir=resolved / WORKSPACE_DIR_NAMES["metadata"],
+        parameters_dir=resolved / WORKSPACE_DIR_NAMES["parameters"],
     )
 
 
@@ -291,6 +294,7 @@ def get_workspace_dir(
         "datasets": state.datasets_dir,
         "analysis": state.analysis_dir,
         "metadata": state.metadata_dir,
+        "parameters": state.parameters_dir,
     }
     return mapping[kind]
 

@@ -116,7 +116,6 @@ class ConftypeActionsController:
             name=reset_button_name,
             button_type=reset_button_type,
             visible=allow_reset,
-            title="Restore all configurations to their original registry defaults",
             **_widget_size(width=button_width, sizing_mode=sizing_mode),
         )
         self.reset_confirm_host = pn.Column(sizing_mode="stretch_width")

@@ -1,7 +1,9 @@
 from __future__ import annotations
-from typing import Any, Optional, Sequence, Tuple
+import typing
+from typing import Any, Optional, Sequence, Tuple, TypedDict
 
 import random
+from types import FunctionType
 
 import numpy as np
 import param
@@ -9,10 +11,14 @@ import param
 from .. import util
 
 __all__: list[str] = [
+    "List",
+    "resolve_param_class",
+    "Unit",
     "StringRobust",
     "PositiveNumber",
     "PositiveInteger",
     "Phase",
+    "SignedPhase",
     "RangeRobust",
     "RangeInf",
     "PositiveRange",
@@ -20,6 +26,7 @@ __all__: list[str] = [
     "OptionalPositiveNumber",
     "OptionalPositiveInteger",
     "RandomizedPhase",
+    "RandomizedSignedPhase",
     "RandomizedColor",
     "OptionalPositiveRange",
     "OptionalPhaseRange",
@@ -63,6 +70,71 @@ def _is_null_value(val: Any) -> bool:
         except Exception:
             return False
     return False
+
+
+class Unit(param.Parameter):
+    """
+    Parameter holding a pint physical unit (e.g. `reg.units.m`,
+    `reg.units.dimensionless`), with class methods to derive its display
+    forms directly from a unit instance -- a LaTeX-wrapped symbol string,
+    or the empty-string/"-" placeholders conventionally used when the
+    unit is `reg.units.dimensionless` specifically.
+
+    A non-None `default` is resolved against the live `reg.units`
+    registry at construction time (via `reg.units.Unit(str(default))`),
+    so a plain string (e.g. `"m"`) or a pint Unit from a *different*
+    UnitRegistry instance (e.g. one deserialized via pickle/JSON, which
+    would otherwise fail equality/arithmetic checks against `reg.units` --
+    see `LarvaworldParam.from_config`) both end up as a proper unit of
+    this registry. `reg` is imported lazily inside `__init__` rather than
+    at module level, since a top-level import here would be circular
+    (`reg` imports this module); by the time any `Unit(...)` is actually
+    constructed (always inside a function body, e.g.
+    `get_LarvaworldParam`), the package has finished importing, so the
+    deferred import is safe.
+
+    The `symbol`/`label`/`is_dimensionless` display helpers below are
+    kept dependency-free of `reg` by checking `str(u) == ""` rather than
+    comparing against `reg.units.dimensionless` directly -- pint's
+    dimensionless unit is the only one that stringifies to the empty
+    string, so this is equivalent, and (unlike pint's own `u.dimensionless`
+    flag, which is also True for e.g. radians, since angles are
+    dimensionally trivial in SI) it matches exactly the *specific*
+    dimensionless sentinel this codebase compared against before this
+    class existed -- not every dimensionally-trivial unit.
+
+    Args:
+        default: Default unit -- a pint Unit instance, a string
+            recognized by `reg.units` (e.g. "m"), or None.
+        **kwargs: Additional keyword arguments passed to param.Parameter
+
+    Example:
+        >>> u_param = Unit(default="m")
+        >>> Unit.symbol(u_param.default)
+        '$meter$'
+    """
+
+    def __init__(self, default=None, **kwargs):
+        if default is not None:
+            from .. import reg
+
+            default = reg.units.Unit(str(default))
+        super().__init__(default=default, **kwargs)
+
+    @staticmethod
+    def is_dimensionless(u: Any) -> bool:
+        """Whether `u` is specifically `reg.units.dimensionless` (see class docstring)."""
+        return str(u) == ""
+
+    @staticmethod
+    def symbol(u: Any) -> str:
+        """LaTeX-wrapped unit symbol (e.g. '$meter$'), or '-' if `u` is dimensionless."""
+        return "-" if Unit.is_dimensionless(u) else rf"${u}$"
+
+    @staticmethod
+    def label(u: Any) -> str:
+        """Parenthesized unit label (e.g. '(meter)'), or '' if `u` is dimensionless."""
+        return "" if Unit.is_dimensionless(u) else f"({Unit.symbol(u)})"
 
 
 class StringRobust(param.String):
@@ -176,7 +248,8 @@ class Phase(param.Number):
     Phase angle parameter constrained to [0, 2π] range.
 
     Extends param.Number for representing phase angles in radians,
-    automatically bounded to the valid phase range [0, 2π].
+    automatically bounded to the valid phase range [0, 2π]. See
+    `SignedPhase` for the [-π, π] (centered/signed) variant.
 
     Args:
         default: Default phase value in radians (0.0 to 2π)
@@ -205,6 +278,48 @@ class Phase(param.Number):
             default=default,
             softbounds=(softmin, softmax),
             bounds=(hardmin, hardmax),
+            step=step,
+            **kwargs,
+        )
+
+
+class SignedPhase(Phase):
+    """
+    Phase angle parameter constrained to [-π, π] range.
+
+    Extends `Phase` for representing signed/centered phase angles in
+    radians (e.g. turning angles, heading offsets), bounded to [-π, π]
+    instead of `Phase`'s [0, 2π].
+
+    Args:
+        default: Default phase value in radians (-π to π)
+        softmin: Soft lower bound (default: -π)
+        softmax: Soft upper bound (default: π)
+        hardmin: Hard lower bound (default: -π, enforced)
+        hardmax: Hard upper bound (default: π, enforced)
+        step: Step size for UI increments (default: 0.1 radians)
+        **kwargs: Additional keyword arguments passed to Phase
+
+    Example:
+        >>> turn_angle = SignedPhase(default=0.0)
+    """
+
+    def __init__(
+        self,
+        default=0.0,
+        softmin=-np.pi,
+        softmax=np.pi,
+        hardmin=-np.pi,
+        hardmax=np.pi,
+        step=0.1,
+        **kwargs,
+    ):
+        super().__init__(
+            default=default,
+            softmin=softmin,
+            softmax=softmax,
+            hardmin=hardmin,
+            hardmax=hardmax,
             step=step,
             **kwargs,
         )
@@ -459,6 +574,7 @@ class RandomizedPhase(Phase):
 
     Extends Phase to randomly initialize from uniform [0, 2π] distribution
     when default is None or np.nan, useful for randomized initial conditions.
+    See `RandomizedSignedPhase` for the [-π, π] (centered/signed) variant.
 
     Args:
         default: Initial phase (if None/nan, randomly sampled from [0, 2π])
@@ -477,6 +593,34 @@ class RandomizedPhase(Phase):
         if _is_null_value(val):
             val = np.random.uniform(0, 2 * np.pi)
         super(RandomizedPhase, self)._validate_value(val, allow_None)
+
+
+class RandomizedSignedPhase(SignedPhase):
+    """
+    Signed phase parameter with automatic random initialization.
+
+    Extends SignedPhase to randomly initialize from a uniform [-π, π]
+    distribution when default is None or np.nan, useful for randomized
+    initial conditions expressed in signed/centered form (e.g. random
+    initial turning angle or heading offset).
+
+    Args:
+        default: Initial phase (if None/nan, randomly sampled from [-π, π])
+        **kwargs: Additional keyword arguments passed to SignedPhase
+
+    Example:
+        >>> random_turn = RandomizedSignedPhase(default=None)  # Random each time
+    """
+
+    def __init__(self, default=None, **kwargs):
+        if _is_null_value(default):
+            default = np.random.uniform(-np.pi, np.pi)
+        super().__init__(default=default, allow_None=True, **kwargs)
+
+    def _validate_value(self, val, allow_None):
+        if _is_null_value(val):
+            val = np.random.uniform(-np.pi, np.pi)
+        super(RandomizedSignedPhase, self)._validate_value(val, allow_None)
 
 
 class RandomizedColor(param.Color):
@@ -951,11 +1095,29 @@ class IntegerTuple2DRobust(IntegerTuple):
         super().__init__(default=default, length=2, **kwargs)
 
 
-class ListXYcoordinates(param.List):
+class List(param.List):
+    """
+    param.List variant with list-length constraints under an unambiguous
+    `length` name, instead of param.List's own overloaded `bounds` (which
+    means item count, not value bounds -- easy to confuse with
+    param.Number's `bounds`, which is value bounds).
+
+    Args:
+        length: (min, max) item-count bounds, or None for unbounded.
+        **kwargs: Additional keyword arguments passed to param.List.
+    """
+
+    def __init__(self, default=None, length=None, **kwargs):
+        super().__init__(
+            default=default if default is not None else [], bounds=length, **kwargs
+        )
+
+
+class ListXYcoordinates(List):
     """
     List parameter for XY coordinate tuples.
 
-    Extends param.List with tuple item_type and length bounds,
+    Extends List with tuple item_type and length bounds,
     useful for polylines, paths, and multi-point geometries.
 
     Args:
@@ -970,7 +1132,7 @@ class ListXYcoordinates(param.List):
 
     def __init__(self, default=[], minlen=0, maxlen=None, **kwargs):
         super().__init__(
-            default=default, item_type=tuple, bounds=(minlen, maxlen), **kwargs
+            default=default, item_type=tuple, length=(minlen, maxlen), **kwargs
         )
 
 
@@ -993,11 +1155,11 @@ class XYLine(ListXYcoordinates):
         super().__init__(minlen=minlen, **kwargs)
 
 
-class ItemListParam(param.List):
+class ItemListParam(List):
     """
     Parameter for managed lists with ItemList functionality.
 
-    Extends param.List to enable list management functionality provided by the
+    Extends List to enable list management functionality provided by the
     lib.util.ItemList class, which inherits from a custom SuperList class
     as well as from agentpy.AgentSequence for agent-based modeling.
 
@@ -1022,7 +1184,7 @@ class ItemListParam(param.List):
         self.size = size
         if isinstance(default, list):
             default = util.ItemList(default)
-        param.List.__init__(self, default=default, **params)
+        List.__init__(self, default=default, **params)
         self._validate(default)
 
 
@@ -1220,3 +1382,234 @@ class EndpointDataFrame(DataFrameIndexed):
 
     def __init__(self, **params):
         DataFrameIndexed.__init__(self, levels=["AgentID"], **params)
+
+
+#: dtype -> builtin param.Parameter class, for dtypes with no more specific
+#: custom-class match in `resolve_param_class` below. `str`, `list` and its
+#: typed variants, and both `Tuple[float]`/`Tuple[int]` are intentionally
+#: absent here: `resolve_param_class` always resolves those to a more
+#: specific custom class before reaching this fallback, so a builtin
+#: mapping for them here would be dead code.
+_DTYPE_TO_PARAM_CLASS: dict[Any, type[param.Parameter]] = {
+    float: param.Number,
+    int: param.Integer,
+    bool: param.Boolean,
+    dict: param.Dict,
+    type: param.ClassSelector,
+    FunctionType: param.Callable,
+    TypedDict: param.Dict,
+}
+
+#: A float lim of exactly (0.0, 2*pi) -- used to detect Phase/PhaseRange.
+_PHASE_LIM = (0.0, 2 * np.pi)
+
+#: A float lim of exactly (-pi, pi) -- used to detect SignedPhase.
+_SIGNED_PHASE_LIM = (-np.pi, np.pi)
+
+
+def _select_param_class(
+    dtype: Any, lim: Optional[tuple[Any, Any]], vs: Optional[list[Any]]
+) -> type[param.Parameter]:
+    """
+    Select the param.Parameter (sub)class best matching a given data type,
+    value limit, and value options -- preferring the more semantically
+    precise custom classes in this module (PositiveNumber, Phase,
+    RangeRobust, ...) over the generic builtins where the dtype/lim shape
+    matches one of them, and falling back to the builtin otherwise.
+
+    Args:
+        dtype: The data type of the parameter.
+        lim: (min, max) bounds for the parameter, or None.
+        vs: The value options of the parameter, or None.
+
+    Returns:
+        type[param.Parameter]: The selected Param class.
+    """
+    if dtype == float and lim == (0.0, 1.0):
+        return param.Magnitude
+    if type(vs) == list and dtype in [str, int]:
+        return param.Selector
+    if dtype == float and lim is not None:
+        if lim == _PHASE_LIM:
+            return Phase
+        if lim == _SIGNED_PHASE_LIM:
+            return SignedPhase
+        if lim[0] == 0.0:
+            return PositiveNumber
+    if dtype == int and lim is not None and lim[0] == 0:
+        return PositiveInteger
+    if dtype == str:
+        return StringRobust
+    if dtype == typing.Tuple[float]:
+        if lim is not None:
+            if lim == _PHASE_LIM:
+                return PhaseRange
+            if lim[0] == 0.0:
+                return PositiveRange
+        return RangeRobust
+    if dtype == typing.Tuple[int]:
+        return IntegerTuple
+    if dtype == typing.List[typing.Tuple[float]]:
+        return ListXYcoordinates
+    if dtype in (list, typing.List[int], typing.List[str], typing.List[float]):
+        return List
+    if dtype in _DTYPE_TO_PARAM_CLASS:
+        return _DTYPE_TO_PARAM_CLASS[dtype]
+    return param.Parameter
+
+
+def _accepts_kwarg(param_class: type[param.Parameter], name: str, value: Any) -> bool:
+    """
+    Whether `param_class`'s constructor accepts a keyword argument named
+    `name` -- verified by an actual construction attempt with `value`,
+    rather than a hardcoded per-class table. Several classes in this
+    module build a kwarg like `bounds` internally from their own named
+    args (e.g. PositiveNumber's `hardmin`/`hardmax`) and raise "multiple
+    values for keyword argument" if that same name is *also* forwarded
+    generically via **kwargs, while others (RangeRobust, param.Range, ...)
+    forward it through unchanged and accept it fine -- a distinction only
+    visible by actually attempting the call, not by inspecting signatures.
+
+    A TypeError means `name` isn't a usable keyword for this class (either
+    unexpected, duplicated against one the class already supplies
+    internally, or a required positional arg is missing so the call can't
+    be evaluated at all -- treated as "not accepted" too, since we can't
+    tell). Any other exception (e.g. a ValueError from validating `value`
+    against the class's own rules) means the keyword itself was accepted;
+    only the probe value was rejected, which doesn't matter here.
+    """
+    try:
+        param_class(**{name: value})
+    except TypeError:
+        return False
+    except Exception:
+        return True
+    return True
+
+
+#: Candidate keyword-argument name(s) for expressing a generic (min, max)
+#: `lim` against an arbitrary param.Parameter subclass, tried in this
+#: order: split min/max pairs first for classes that build their own
+#: bounds-like kwarg internally from separately named args (PositiveNumber
+#: & co.'s `hardmin`/`hardmax`, ListXYcoordinates' `minlen`/`maxlen`) --
+#: trying the single-name forms first would wrongly match these via their
+#: inherited **kwargs forwarding, but without going through the class's
+#: own hard-min/max-length plumbing. Single paired kwargs (`bounds`,
+#: `length`) are tried after, for classes with no split-pair alternative
+#: (plain param.Number/param.Range/RangeRobust, List).
+_LIM_KWARG_NAMES: tuple[Any, ...] = (
+    ("hardmin", "hardmax"),
+    ("minlen", "maxlen"),
+    "bounds",
+    "length",
+)
+
+#: Candidate keyword-argument name(s) for mirroring that same `lim` to a
+#: class's *soft* bounds (the slider-rendering range), tried independently
+#: of -- and in addition to -- `_LIM_KWARG_NAMES`, so slider rendering
+#: doesn't visibly change relative to a plain `bounds=lim` parameter.
+#: Split `softmin`/`softmax` (PositiveNumber & co.) is tried before the
+#: single paired `softbounds` (plain param.Number/param.Range/RangeRobust)
+#: for the same reason the hard-bounds candidates are ordered that way.
+_SOFT_LIM_KWARG_NAMES: tuple[Any, ...] = (
+    ("softmin", "softmax"),
+    "softbounds",
+)
+
+
+def _lim_kwargs(
+    param_class: type[param.Parameter], lim: tuple[Any, Any]
+) -> dict[str, Any]:
+    """
+    Translate a generic (min, max) `lim` into whichever bounds-shaped
+    kwarg(s) `param_class` actually accepts -- both the hard bounds (see
+    `_LIM_KWARG_NAMES`) and, independently, the soft bounds (see
+    `_SOFT_LIM_KWARG_NAMES`) -- each probed via `_accepts_kwarg` against
+    the class itself, so any class exposing either concept gets `lim`
+    mirrored into it. Classes whose own hardcoded defaults already encode
+    the exact `lim` they were selected for (Phase/PhaseRange, chosen only
+    when `lim == (0, 2*pi)`, their own default bounds) end up with the
+    same effective values via the `hardmin`/`softmin` path, so no
+    special-cased no-op branch is needed.
+    """
+    kwargs: dict[str, Any] = {}
+    for candidates in (_LIM_KWARG_NAMES, _SOFT_LIM_KWARG_NAMES):
+        for names in candidates:
+            if isinstance(names, tuple):
+                min_name, max_name = names
+                if _accepts_kwarg(param_class, min_name, lim[0]):
+                    kwargs[min_name] = lim[0]
+                    kwargs[max_name] = lim[1]
+                    break
+            elif _accepts_kwarg(param_class, names, lim):
+                kwargs[names] = lim
+                break
+    return kwargs
+
+
+def resolve_param_class(
+    dtype: Any,
+    param_class: Optional[type[param.Parameter]] = None,
+    **kwargs: Any,
+) -> tuple[type[param.Parameter], dict[str, Any]]:
+    """
+    Resolve the param.Parameter (sub)class best matching `dtype` and the
+    given attributes, together with the constructor kwargs to instantiate
+    it with.
+
+    Class selection (when `param_class` isn't given) delegates to
+    `_select_param_class`, preferring the more semantically precise custom
+    classes in this module over the generic builtins where the dtype/lim/
+    vs shape matches one of them.
+
+    kwargs building translates generic attribute names (`lim`, `dv`, `vs`,
+    `v0`) into whichever concrete constructor kwarg(s) the resolved class
+    actually accepts (`bounds`/`length`/`hardmin`+`hardmax` (mirrored to
+    matching `softmin`/`softmax`)/`minlen`+`maxlen`, `step`, `objects`,
+    `default`) -- verified against the class itself via `_accepts_kwarg`
+    rather than a hardcoded per-class table, so any new param.Parameter
+    subclass added to this module is supported automatically. Raw
+    constructor kwarg names (`bounds`, `objects`, `default`, `label`) are
+    also accepted directly, as aliases for their generic counterpart.
+
+    Args:
+        dtype: The data type of the parameter.
+        param_class: Explicit param.Parameter subclass to use, or None to
+            auto-select it from `dtype`/`lim`/`vs`.
+        **kwargs: Attribute values used to select/configure the class --
+            lim / bounds: (min, max) bounds, or None.
+            vs / objects: value options, for param.Selector.
+            dv / step: step size, or None.
+            v0 / v / default: the default value.
+            doc: documentation string.
+            lab / label: display label.
+
+    Returns:
+        tuple[type[param.Parameter], dict[str, Any]]: the resolved class
+        and the kwargs to instantiate it with.
+    """
+    lim = kwargs.get("lim", kwargs.get("bounds"))
+    vs = kwargs.get("vs", kwargs.get("objects"))
+    dv = kwargs.get("dv", kwargs.get("step"))
+    v0 = kwargs.get("v")
+    if v0 is None:
+        v0 = kwargs.get("v0", kwargs.get("default"))
+    doc = kwargs.get("doc")
+    lab = kwargs.get("lab", kwargs.get("label"))
+
+    if param_class is None:
+        param_class = _select_param_class(dtype=dtype, lim=lim, vs=vs)
+
+    param_kwargs: dict[str, Any] = {
+        "default": v0,
+        "doc": doc,
+        "label": lab,
+        "allow_None": True,
+    }
+    if lim is not None:
+        param_kwargs.update(_lim_kwargs(param_class, lim))
+    if dv is not None and _accepts_kwarg(param_class, "step", dv):
+        param_kwargs["step"] = dv
+    if vs is not None and _accepts_kwarg(param_class, "objects", vs):
+        param_kwargs["objects"] = vs
+    return param_class, param_kwargs

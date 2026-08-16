@@ -25,6 +25,7 @@ from larvaworld.lib.param.custom import ClassAttr, ClassDict
 from larvaworld.lib.param.composition import Substrate, substrate_dict
 from larvaworld.lib.param.spatial import Area
 from larvaworld.lib.param.xy_distro import Spatial_Distro
+from larvaworld.portal.buttons import build_load_file_button
 from larvaworld.portal.landing_registry import DOCS_ARENAS_SUBSTRATES
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
 from larvaworld.portal.workspace import WorkspaceError, get_workspace_dir
@@ -1285,20 +1286,13 @@ class _EnvironmentBuilderController:
             name="Delete",
             button_type="warning",
         )
-        self.load_file_btn = pn.widgets.Button(
-            name="Load file",
-            button_type="default",
+        self.load_file_btn, self.load_file_input = build_load_file_button(
+            "Load file", accept=".json,application/json", button_type="default"
         )
         self.download_file_btn = pn.widgets.Button(
             name="Download file",
             button_type="default",
         )
-        self.load_file_input = pn.widgets.FileInput(
-            name="",
-            accept=".json,application/json",
-            multiple=False,
-        )
-        self.load_file_input.css_classes = ["lw-env-builder-hidden-file-input"]
         self.refresh_presets_btn = pn.widgets.Button(
             name="Refresh list",
             button_type="default",
@@ -1457,18 +1451,6 @@ class _EnvironmentBuilderController:
         self.load_file_btn.sizing_mode = "stretch_width"
         self.download_file_btn.width = None
         self.download_file_btn.sizing_mode = "stretch_width"
-        self.load_file_input.width = None
-        self.load_file_input.sizing_mode = "stretch_width"
-        self.load_file_input.styles = {
-            "position": "absolute",
-            "left": "-10000px",
-            "top": "auto",
-            "width": "1px",
-            "height": "1px",
-            "opacity": "0",
-            "overflow": "hidden",
-            "pointer-events": "none",
-        }
         self.apply_selected_btn.width = None
         self.apply_selected_btn.sizing_mode = "stretch_width"
         self.delete_selected_btn.width = None
@@ -2033,30 +2015,6 @@ class _EnvironmentBuilderController:
         self.save_preset_btn.on_click(self._on_save_preset)
         self.load_preset_btn.on_click(self._on_load_preset)
         self.delete_preset_btn.on_click(self._on_delete_preset)
-        self.load_file_btn.js_on_click(
-            args={"load_input": self.load_file_input},
-            code="""
-                const picker = document.createElement('input');
-                picker.type = 'file';
-                picker.accept = '.json,application/json';
-                picker.multiple = false;
-                picker.onchange = async () => {
-                    const file = picker.files && picker.files[0];
-                    if (!file) {
-                        return;
-                    }
-                    const dataUrl = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => resolve(reader.result || '');
-                        reader.onerror = () => reject(reader.error || new Error(`unable to read '${file.name}'`));
-                        reader.readAsDataURL(file);
-                    });
-                    const [, mime_type = '', , value = ''] = String(dataUrl).split(/[:;,]/, 4);
-                    load_input.setv({value, filename: file.name, mime_type});
-                };
-                picker.click();
-            """,
-        )
         self.download_file_btn.js_on_click(
             args={"download_proxy": self.export_btn},
             code="""

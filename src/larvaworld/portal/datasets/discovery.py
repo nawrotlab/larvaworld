@@ -161,7 +161,10 @@ def _dedupe_candidates(
 def discover_raw_datasets(lab_id: str, raw_root: Path) -> list[RawDatasetCandidate]:
     normalized_root = _normalized_root(raw_root)
     if normalized_root is None:
-        raise ValueError(f"Raw root path is invalid or does not exist: {raw_root}")
+        # A missing/invalid root simply has no candidates -- same
+        # "not found" contract as the sibling missing-root check just
+        # below (import-override resolution), not an error condition.
+        return []
 
     lab_id_str = str(lab_id).strip()
     if not lab_id_str:

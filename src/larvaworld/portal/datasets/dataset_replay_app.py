@@ -1062,7 +1062,8 @@ class _DatasetReplayController:
 
 def dataset_replay_app() -> pn.viewable.Viewable:
     pn.extension(
-        raw_css=[PORTAL_RAW_CSS, DATASET_REPLAY_RAW_CSS, DISPLAY_SHORTCUTS_RAW_CSS]
+        "tabulator",
+        raw_css=[PORTAL_RAW_CSS, DATASET_REPLAY_RAW_CSS, DISPLAY_SHORTCUTS_RAW_CSS],
     )
     controller = _DatasetReplayController()
     template = pn.template.MaterialTemplate(

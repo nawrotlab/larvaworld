@@ -3,13 +3,16 @@ Larvaworld parameter database
 """
 
 from __future__ import annotations
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 import param
 
 from .. import reg, util, funcs
 from ..util import AttrDict, SuperList, nam
+
+if TYPE_CHECKING:
+    from .data_aux import LarvaworldParam
 
 __all__: list[str] = [
     "output_keys",
@@ -191,22 +194,71 @@ class ParamClass:
     def build(self) -> None:
         self.dict = AttrDict()
         self.kdict = AttrDict()
-        self.build_initial()
-        self.build_angular()
-        self.build_spatial()
-        self.build_chunks()
-        self.build_sim_pars()
-        self.build_deb_pars()
+        self.category_dict: dict[str, str] = {}
+        for category, builder in (
+            ("initial", self.build_initial),
+            ("angular", self.build_angular),
+            ("spatial", self.build_spatial),
+            ("chunks", self.build_chunks),
+            ("sim_pars", self.build_sim_pars),
+            ("deb_pars", self.build_deb_pars),
+        ):
+            before = set(self.dict.keys())
+            builder()
+            for k in set(self.dict.keys()) - before:
+                self.category_dict[k] = category
         self.p2k_dict = AttrDict({p.p: p.k for k, p in self.dict.items()})
         self.d2k_dict = AttrDict({p.d: p.k for k, p in self.dict.items()})
 
-    def add(self, **kwargs: Any) -> None:
+    def add(self, **kwargs: Any) -> str:
         prepar = reg.prepare_LarvaworldParam(**kwargs)
         self.dict[prepar.k] = prepar
+        return prepar.k
+
+    def category_of(self, k: str) -> str:
+        """
+        Return the builder-family category tag for parameter key k, or "custom"
+        if it was registered outside the standard build() pipeline.
+        """
+        return self.category_dict.get(k, "custom")
+
+    def add_and_instantiate(
+        self, *, overwrite: bool = False, category: str = "custom", **kwargs: Any
+    ) -> str:
+        """
+        Register a new parameter spec and eagerly instantiate it into kdict.
+
+        Unlike add(), which only stores the prepared spec in self.dict, this also
+        realizes the LarvaworldParam instance via update_kdict so the parameter is
+        immediately usable (e.g. via getPar). Raises ValueError if the resulting
+        key already exists in self.dict and overwrite is not set; in that case
+        self.dict/self.kdict are left unmodified.
+        """
+        prepar = reg.prepare_LarvaworldParam(**kwargs)
+        if prepar.k in self.dict and not overwrite:
+            raise ValueError(
+                f"parameter key {prepar.k!r} already exists; pass overwrite=True to replace it"
+            )
+        self.dict[prepar.k] = prepar
+        self.category_dict[prepar.k] = category
+        self.kdict.pop(prepar.k, None)
+        self.update_kdict([prepar.k])
+        return prepar.k
+
+    def remove(self, k: str) -> None:
+        """
+        Remove a parameter from the registry: drops it from self.dict,
+        self.kdict (if instantiated), and self.category_dict. Raises
+        KeyError if k is not a registered parameter.
+        """
+        if k not in self.dict:
+            raise KeyError(k)
+        del self.dict[k]
+        self.kdict.pop(k, None)
+        self.category_dict.pop(k, None)
 
     def build_initial(self) -> None:
         kws1 = {
-            "vfunc": param.Number,
             "lim": (0.0, None),
             "dtype": float,
             "u": reg.units.s,
@@ -225,7 +277,6 @@ class ParamClass:
         )
 
         kws2 = {
-            "vfunc": param.Integer,
             "lim": (0, None),
             "v0": 0,
             "dtype": int,
@@ -280,7 +331,6 @@ class ParamClass:
             "d": d,
             "sym": sym,
             "u": b_num.u / b_den.u,
-            "vfunc": param.Number,
             "required_ks": [k_num, k_den],
         }
         kws.update(kwargs)
@@ -332,7 +382,7 @@ class ParamClass:
             k=ktr,
             sym=nam.tex.sub("r", kc),
             disp=f"time fraction in {pc}s",
-            vfunc=param.Magnitude,
+            param_class=param.Magnitude,
             required_ks=[nam.cum(nam.dur(pc)), nam.cum(nam.dur(""))],
             func=self.func_dict.tr(pc),
         )
@@ -341,7 +391,6 @@ class ParamClass:
             k=kN,
             sym=nam.tex.sub("N", f"{pc}s"),
             disp=f"# {pc}s",
-            vfunc=param.Integer,
             codename=f"brain.locomotor.intermitter.N{pc}s",
             dtype=int,
             **f_kws,
@@ -351,14 +400,15 @@ class ParamClass:
             k=kt,
             sym=nam.tex.sub(nam.tex.Delta("t"), kc),
             disp=f"{pc} duration",
-            vfunc=param.Number,
             u=reg.units.s,
             **f_kws,
         )
 
         for ii in ["on", "off"]:
             self.add(p=f"{pN_mu}_{ii}_food", k=f"{kN_mu}_{ii}_food")
-            self.add(p=f"{ptr}_{ii}_food", k=f"{ktr}_{ii}_food", vfunc=param.Magnitude)
+            self.add(
+                p=f"{ptr}_{ii}_food", k=f"{ktr}_{ii}_food", param_class=param.Magnitude
+            )
 
         self.add_rate(
             k_num=kN,
@@ -500,7 +550,6 @@ class ParamClass:
             "u": b.u / b_l.u,
             "sym": nam.tex.mathring(b.sym),
             "disp": f"scaled {b.disp}",
-            "vfunc": param.Number,
             "required_ks": [k0],
             "func": func,
         }
@@ -522,7 +571,6 @@ class ParamClass:
             "required_ks": [k0],
             "dv": b.dv,
             "v0": b.v0,
-            "vfunc": param.Number,
             "func": self.func_dict.unwrap(b.d, in_deg=False),
         }
         kws.update(kwargs)
@@ -553,7 +601,6 @@ class ParamClass:
             "required_ks": [xk, yk],
             "dv": dv,
             "v0": 0.0,
-            "vfunc": param.Number,
             "func": self.func_dict.dst(point=point),
         }
         kws.update(kwargs)
@@ -569,7 +616,6 @@ class ParamClass:
             "u": reg.units.Hz,
             "sym": nam.tex.sub(b.sym, "freq"),
             "disp": f"{b.disp} frequency",
-            "vfunc": param.Number,
             "required_ks": [k0],
             "func": self.func_dict.freq(b.d),
         }
@@ -586,7 +632,6 @@ class ParamClass:
             "sym": nam.tex.sub("Phi", b.sym),
             "disp": f"{b.disp} phase",
             "lim": (0, 2 * np.pi),
-            "vfunc": param.Number,
         }
         kws.update(kwargs)
         self.add(**kws)
@@ -605,7 +650,6 @@ class ParamClass:
             u=reg.units.m,
             sym=nam.tex.subsup(s0, f"{r0}", f"{r1}"),
             disp=f'dispersal in {dur}"',
-            vfunc=param.Number,
             func=self.func_dict.dsp(range),
             required_ks=["x", "y"],
         )
@@ -622,7 +666,7 @@ class ParamClass:
             k=k,
             sym=nam.tex.sub(k0, str(dur)),
             disp=f"{p0} over {dur}''",
-            vfunc=param.Magnitude,
+            param_class=param.Magnitude,
             func=self.func_dict.tor(dur),
         )
         self.add_operators(k0=k)
@@ -632,7 +676,6 @@ class ParamClass:
             "dv": np.round(np.pi / 180, 2),
             "u": reg.units.rad,
             "v0": 0.0,
-            "vfunc": param.Number,
             "dtype": float,
         }
         self.add(
@@ -695,7 +738,7 @@ class ParamClass:
             self.add_operators(k0=k0)
 
     def build_spatial(self) -> None:
-        kws = {"u": reg.units.m, "vfunc": param.Number}
+        kws = {"u": reg.units.m}
         self.add(
             **{
                 "p": "length",
@@ -787,7 +830,12 @@ class ParamClass:
         ]:
             self.add_dsp(range=i)
         self.add(
-            **{"p": "tortuosity", "k": "tor", "vfunc": param.Magnitude, "sym": "tor"}
+            **{
+                "p": "tortuosity",
+                "k": "tor",
+                "param_class": param.Magnitude,
+                "sym": "tor",
+            }
         )
         for dur in [1, 2, 5, 10, 20, 60]:
             self.add_tor(dur=dur)
@@ -1174,6 +1222,23 @@ class ParamRegistry(ParamClass):
                 self.compute(k0, d)
             p.compute(d)
 
+    def get_param(self, k: str) -> "LarvaworldParam":
+        """
+        Return the live LarvaworldParam instance for key k, instantiating it
+        (via update_kdict) if not already realized.
+
+        Args:
+            k: Short-key of the parameter.
+
+        Returns:
+            LarvaworldParam: The parameter instance.
+
+        Raises:
+            KeyError: If k is not a registered parameter key.
+        """
+        self.update_kdict(ks=[k])
+        return self.kdict[k]
+
     def getPar(
         self,
         k: Optional[str] = None,
@@ -1210,15 +1275,13 @@ class ParamRegistry(ParamClass):
             raise
 
         if isinstance(k, str):
-            self.update_kdict(ks=[k])
-            par = self.kdict[k]
+            par = self.get_param(k)
             if isinstance(to_return, list):
                 return [getattr(par, i) for i in to_return]
             elif isinstance(to_return, str):
                 return getattr(par, to_return)
         else:
-            self.update_kdict(ks=k)
-            pars = [self.kdict[kk] for kk in k]
+            pars = [self.get_param(kk) for kk in k]
             if isinstance(to_return, list):
                 return [[getattr(par, i) for par in pars] for i in to_return]
             elif isinstance(to_return, str):

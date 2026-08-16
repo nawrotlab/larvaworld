@@ -132,7 +132,7 @@ def _banner_text_html(slide: dict[str, str]) -> str:
 
 
 def landing_app() -> pn.viewable.Viewable:
-    pn.extension(raw_css=[PORTAL_RAW_CSS])
+    pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS])
     if get_active_workspace() is None:
         return pn.Column(
             pn.pane.HTML(

@@ -198,7 +198,7 @@ class ParamLarvaDataset(param.Parameterized):
     def __init__(self, **kwargs: Any) -> None:
         if "config" not in kwargs:
             kws = AttrDict()
-            for k in DatasetConfig().param_keys:
+            for k in DatasetConfig.param_keys():
                 if k in kwargs:
                     kws[k] = kwargs[k]
                     kwargs.pop(k)
@@ -360,11 +360,15 @@ class ParamLarvaDataset(param.Parameterized):
         try:
             assert self._chunk_dicts is not None
         except AssertionError:
-            self._chunk_dicts = AttrDict(self.read("chunk_dicts"))
-        except KeyError:
-            self.detect_bouts()
-        finally:
-            return self._chunk_dicts
+            loaded = self.read("chunk_dicts")
+            if loaded is None:
+                # self.read() swallows any underlying error (missing file,
+                # missing key, ...) and returns None -- treat that as "not
+                # yet computed" the same as a genuine KeyError would be.
+                self.detect_bouts()
+            else:
+                self._chunk_dicts = AttrDict(loaded)
+        return self._chunk_dicts
 
     @chunk_dicts.setter
     def chunk_dicts(self, d):
@@ -377,11 +381,15 @@ class ParamLarvaDataset(param.Parameterized):
         try:
             assert self._epoch_dicts is not None
         except AssertionError:
-            self._epoch_dicts = AttrDict(self.read("epoch_dicts"))
-        except KeyError:
-            self.comp_pooled_epochs()
-        finally:
-            return self._epoch_dicts
+            loaded = self.read("epoch_dicts")
+            if loaded is None:
+                # self.read() swallows any underlying error (missing file,
+                # missing key, ...) and returns None -- treat that as "not
+                # yet computed" the same as a genuine KeyError would be.
+                self.comp_pooled_epochs()
+            else:
+                self._epoch_dicts = AttrDict(loaded)
+        return self._epoch_dicts
 
     @epoch_dicts.setter
     def epoch_dicts(self, d):
@@ -393,11 +401,15 @@ class ParamLarvaDataset(param.Parameterized):
         try:
             assert self._fitted_epochs is not None
         except AssertionError:
-            self._fitted_epochs = AttrDict(self.read("fitted_epochs"))
-        except KeyError:
-            self.fit_pooled_epochs()
-        finally:
-            return self._fitted_epochs
+            loaded = self.read("fitted_epochs")
+            if loaded is None:
+                # self.read() swallows any underlying error (missing file,
+                # missing key, ...) and returns None -- treat that as "not
+                # yet computed" the same as a genuine KeyError would be.
+                self.fit_pooled_epochs()
+            else:
+                self._fitted_epochs = AttrDict(loaded)
+        return self._fitted_epochs
 
     @fitted_epochs.setter
     def fitted_epochs(self, d):
@@ -413,8 +425,7 @@ class ParamLarvaDataset(param.Parameterized):
         except KeyError:
             self.comp_pooled_epochs()
 
-        finally:
-            return self._pooled_epochs
+        return self._pooled_epochs
 
     @pooled_epochs.setter
     def pooled_epochs(self, d):
@@ -429,8 +440,7 @@ class ParamLarvaDataset(param.Parameterized):
             self._cycle_curves = AttrDict(self.read("cycle_curves"))
         except KeyError:
             self.comp_interference()
-        finally:
-            return self._cycle_curves
+        return self._cycle_curves
 
     @cycle_curves.setter
     def cycle_curves(self, d):
@@ -443,8 +453,7 @@ class ParamLarvaDataset(param.Parameterized):
             assert self.c.pooled_cycle_curves is not None
         except AssertionError:
             self.comp_pooled_cycle_curves()
-        finally:
-            return self.c.pooled_cycle_curves
+        return self.c.pooled_cycle_curves
 
     @pooled_cycle_curves.setter
     def pooled_cycle_curves(self, d):

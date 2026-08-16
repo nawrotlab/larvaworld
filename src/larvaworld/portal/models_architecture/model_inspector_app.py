@@ -2560,7 +2560,7 @@ def _build_module_card_slot(
 
 
 def model_inspector_app() -> pn.viewable.Viewable:
-    pn.extension(raw_css=[PORTAL_RAW_CSS, MODEL_INSPECTOR_RAW_CSS])
+    pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS, MODEL_INSPECTOR_RAW_CSS])
     controller = _ModelInspectorController()
     template = pn.template.MaterialTemplate(
         title="",

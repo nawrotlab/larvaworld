@@ -8,6 +8,9 @@ from pathlib import Path
 import panel as pn
 
 from larvaworld.portal.about import build_about_content
+from larvaworld.portal.parameter_database.parameter_db_app import (
+    _build_parameter_db_dropdown,
+)
 from larvaworld.portal.landing_registry import (
     DOCS_ROOT,
     GITHUB_ISSUES,
@@ -1405,25 +1408,13 @@ button.lw-portal-qs-top-tab--active,
   z-index: 31;
 }
 
-.lw-parameter-db-dropdown-panel {
-  position: absolute;
-  top: 40px;
-  right: 0;
-  width: min(420px, calc(100vw - 24px));
-  max-width: calc(100vw - 24px);
-  max-height: 70vh;
-  overflow-y: auto;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(0,0,0,0.14);
-  background: #ffffff;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
-  box-sizing: border-box;
-  z-index: 30;
-  color: #111111;
-  font-size: 13px;
-  line-height: 1.6;
-}
+/* .lw-parameter-db-dropdown-panel / --large are marker classes only (used
+   for test/discovery purposes on the Python-level component). The actual
+   visual box (.lw-parameter-db-panel-surface and friends) is styled via
+   _DraggableResizablePopup's own `stylesheets` param in
+   parameter_database/parameter_db_app.py, not here: ReactiveHTML
+   components render into their own scope and reliably picking up
+   document-level raw_css there is not guaranteed. */
 
 .lw-parameter-db-dropdown-panel h3 {
   font-size: 17px;
@@ -1479,14 +1470,6 @@ def _parameter_db_button_icon_html() -> str:
     return (
         f'<img src="{_PARAMETER_DB_ICON_DATA_URI}" '
         f'style="width:22px;height:22px;object-fit:contain;" title="Parameter database"/>'
-    )
-
-
-def build_parameter_db_content() -> pn.viewable.Viewable:
-    return pn.Column(
-        pn.pane.Markdown("### Parameter Database", margin=(0, 0, 12, 0)),
-        pn.pane.Markdown("_Content coming soon._", margin=0),
-        margin=0,
     )
 
 
@@ -1679,44 +1662,6 @@ def _build_workspace_dropdown(
         workspace_panel,
         css_classes=["lw-portal-workspace-dropdown-wrap"],
         margin=0,
-        sizing_mode="fixed",
-        width_policy="min",
-    )
-
-
-def _build_parameter_db_dropdown() -> pn.viewable.Viewable:
-    # Parameter Database trigger, built the same way as the about trigger.
-    parameter_db_led = pn.pane.HTML(_parameter_db_button_icon_html(), margin=0)
-    parameter_db_button = pn.widgets.Button(
-        name="",
-        margin=0,
-        css_classes=["lw-parameter-db-trigger-button"],
-    )
-    parameter_db_trigger_view = pn.Column(
-        parameter_db_led,
-        parameter_db_button,
-        margin=0,
-        width=22,
-        height=22,
-        css_classes=["lw-parameter-db-trigger-shell"],
-    )
-    parameter_db_panel = pn.Column(
-        build_parameter_db_content(),
-        visible=False,
-        css_classes=["lw-parameter-db-dropdown-panel"],
-        margin=0,
-    )
-
-    def _toggle_parameter_db(_: object) -> None:
-        parameter_db_panel.visible = not parameter_db_panel.visible
-
-    parameter_db_button.on_click(_toggle_parameter_db)
-
-    return pn.Column(
-        parameter_db_trigger_view,
-        parameter_db_panel,
-        css_classes=["lw-parameter-db-dropdown-wrap"],
-        margin=(0, 0, 0, 36),
         sizing_mode="fixed",
         width_policy="min",
     )

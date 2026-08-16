@@ -9,6 +9,7 @@ from .. import util
 from .custom import ClassAttr, ClassDict
 
 __all__: list[str] = [
+    "Conf",
     "NestedConf",
     "class_generator",
     "expand_kws_shortcuts",
@@ -36,17 +37,89 @@ def _has_dict_model(kwargs: Dict[str, Any], cls: type[param.Parameterized]) -> b
     return "model" in cls.param.objects() and isinstance(kwargs.get("model"), Mapping)
 
 
-class NestedConf(param.Parameterized):
+class Conf(param.Parameterized):
+    """
+    Base class extending param.Parameterized with declared-defaults
+    introspection and constructor kwargs resolution.
+
+    On construction, `**kwargs` are resolved via `resolve_kwargs` before
+    being passed on to `param.Parameterized.__init__` -- by default, this
+    completes them against this class's own declared defaults
+    (`complete_kwargs`); subclasses may override `resolve_kwargs` to
+    apply different resolution logic instead.
+
+    Also provides `defaults`/`param_keys` (usable without instantiating
+    the class) and `params_missing`, for inspecting a class's declared
+    parameters and their defaults.
+    """
+
+    def __init__(self, **kwargs: Any):
+        super().__init__(**self.resolve_kwargs(kwargs))
+
+    @classmethod
+    def defaults(cls) -> util.AttrDict:
+        """
+        This class's own declared parameter defaults, usable without
+        instantiating it.
+
+        :return: An AttrDict of {param name: declared default value}, for
+            every parameter except 'name'.
+        """
+        d = util.AttrDict(cls.param.values())
+        d.pop("name")
+        return d
+
+    @classmethod
+    def complete_kwargs(cls, kwargs: Dict[str, Any]) -> util.AttrDict:
+        """
+        Complete a raw constructor kwargs dict against this class's own
+        declared defaults.
+
+        :param kwargs: The raw constructor kwargs.
+        :return: A copy of `kwargs`, filled in with any of this class's
+            own declared defaults not already present in `kwargs`.
+        """
+        completed = util.AttrDict(kwargs)
+        for k, v in cls.defaults().items():
+            if k not in completed:
+                completed[k] = v
+        return completed.get_copy()
+
+    @classmethod
+    def resolve_kwargs(cls, kwargs: Dict[str, Any]) -> util.AttrDict:
+        return cls.complete_kwargs(kwargs)
+
+    @classmethod
+    def param_keys(cls) -> util.SuperList:
+        """
+        Retrieves a list of parameter keys, usable without instantiating
+        the class.
+
+        :return: A list of parameter keys excluding 'name'.
+        """
+        return util.SuperList(cls.defaults().keys())
+
+    def params_missing(self, d: Dict[str, Any]) -> util.SuperList:
+        """
+        Checks for missing parameters in the configuration.
+
+        :param d: The configuration dictionary to compare against.
+        :return: A list of missing parameter keys.
+        """
+        ks = self.param_keys()
+        return util.SuperList([k for k in ks if k not in d])
+
+
+class NestedConf(Conf):
     """
     Base class for managing nested configuration parameters.
 
-    Extends param.Parameterized with automatic nested object initialization
-    from dict configs, supporting ClassAttr and ClassDict automatic instantiation.
-    Provides methods for config export, validation, and parameter introspection.
+    Extends `Conf` with automatic nested object initialization from dict
+    configs, supporting ClassAttr and ClassDict automatic instantiation,
+    and config export via `nestedConf`/`entry`.
 
     Attributes:
         nestedConf: Nested configuration dict (property)
-        param_keys: List of parameter keys excluding 'name' (property)
 
     Args:
         **kwargs: Configuration keyword arguments. ClassAttr and ClassDict
@@ -60,8 +133,20 @@ class NestedConf(param.Parameterized):
         >>> conf.nested  # SomeClass instance (auto-instantiated)
     """
 
-    def __init__(self, **kwargs: Any):
-        for k, p in self.param.objects(instance=False).items():
+    @classmethod
+    def resolve_kwargs(cls, kwargs: Dict[str, Any]) -> util.AttrDict:
+        """
+        Auto-instantiate `ClassAttr`/`ClassDict` values passed as plain
+        dict configs, so `super().__init__` receives proper instances.
+        Overrides `Conf.resolve_kwargs` (defaults-merging) with this
+        NestedConf-specific coercion instead.
+
+        :param kwargs: The raw constructor kwargs.
+        :return: The same kwargs as an AttrDict, with any `ClassAttr`/
+            `ClassDict`-typed entries coerced.
+        """
+        kwargs = util.AttrDict(kwargs)
+        for k, p in cls.param.objects(instance=False).items():
             if k not in kwargs:
                 continue
             if type(p) == ClassAttr and not isinstance(kwargs[k], p.class_):
@@ -69,7 +154,7 @@ class NestedConf(param.Parameterized):
                     kwargs[k] = p.class_(**dict(kwargs[k]))
             elif type(p) == ClassDict:
                 kwargs[k] = _coerce_classdict_value(p, kwargs[k])
-        super().__init__(**kwargs)
+        return kwargs
 
     @property
     def nestedConf(self) -> util.AttrDict:
@@ -113,26 +198,6 @@ class NestedConf(param.Parameterized):
                 d.pop("unique_id")
         assert id is not None
         return {id: d}
-
-    @property
-    def param_keys(self) -> util.SuperList:
-        """
-        Retrieves a list of parameter keys.
-
-        :return: A list of parameter keys excluding 'name'.
-        """
-        ks = list(self.param.objects().keys())
-        return util.SuperList([k for k in ks if k not in ["name"]])
-
-    def params_missing(self, d: Dict[str, Any]) -> util.SuperList:
-        """
-        Checks for missing parameters in the configuration.
-
-        :param d: The configuration dictionary to compare against.
-        :return: A list of missing parameter keys.
-        """
-        ks = self.param_keys
-        return util.SuperList([k for k in ks if k not in d])
 
 
 def class_generator(A0: Any, mode: str = "Unit"):

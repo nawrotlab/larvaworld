@@ -556,7 +556,7 @@ class _ModuleInspectorController:
 
 
 def module_inspector_app() -> pn.viewable.Viewable:
-    pn.extension(raw_css=[PORTAL_RAW_CSS, MODULE_INSPECTOR_RAW_CSS])
+    pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS, MODULE_INSPECTOR_RAW_CSS])
     controller = _ModuleInspectorController()
     template = pn.template.MaterialTemplate(
         title="",

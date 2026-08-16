@@ -57,3 +57,45 @@ def test_old_info_button_code_removed() -> None:
 
     assert not hasattr(workspace_ui, "_workspace_header_icons_html")
     assert not hasattr(workspace_ui, "_load_info_icon_data_uri")
+
+
+def test_parameter_db_dropdown_panel_is_large() -> None:
+    """The dropdown panel carries the large-size modifier class, not the
+    small ~420px/70vh cap shared with the About/Workspace popups."""
+    header = build_template_header()
+    panel = _find_by_css_class(header, "lw-parameter-db-dropdown-panel")
+    assert "lw-parameter-db-dropdown-panel--large" in panel.css_classes
+
+
+def _new_detail_popup():
+    from larvaworld.portal.parameter_database.parameter_db_app import (
+        _DraggableResizablePopup,
+    )
+    import panel as pn
+
+    return _DraggableResizablePopup(body=pn.Column(margin=0), visible=False)
+
+
+def test_parameter_db_content_has_table_with_all_params() -> None:
+    """The popup body contains a Tabulator listing every registered parameter."""
+    from larvaworld.lib import reg
+    from larvaworld.portal.parameter_database.parameter_db_app import (
+        build_parameter_db_content,
+    )
+
+    content = build_parameter_db_content(_new_detail_popup())
+    table = _find_by_css_class(content, "lw-parameter-db-table")
+    assert table is not None
+    assert len(table.value) == len(reg.par.dict)
+
+
+def test_parameter_db_table_has_category_column_populated() -> None:
+    from larvaworld.portal.parameter_database.parameter_db_app import (
+        build_parameter_db_content,
+    )
+
+    content = build_parameter_db_content(_new_detail_popup())
+    table = _find_by_css_class(content, "lw-parameter-db-table")
+    assert "Category" in table.value.columns
+    assert not table.value["Category"].isna().any()
+    assert not (table.value["Category"] == "").any()
