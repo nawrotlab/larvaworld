@@ -426,7 +426,11 @@ class OdorScape(ValueGrid):
             super().__init__(**kwargs)
         else:
             if "odorscape" not in kwargs:
-                raise
+                raise ValueError(
+                    "OdorScape() requires an 'odorscape' kwarg "
+                    "(one of 'Gaussian', 'Diffusion', 'Analytical') "
+                    "unless a subclass is instantiated directly."
+                )
             else:
                 subclasses = {
                     "Gaussian": GaussianValueLayer,
