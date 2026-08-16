@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from larvaworld.lib import reg
@@ -9,7 +11,19 @@ from larvaworld.portal.parameter_database.parameter_funcs import (
     get_param_instance,
     register_new_param,
     remove_param,
+    save_param_config_to_workspace,
 )
+from larvaworld.portal.workspace import (
+    clear_active_workspace_path,
+    initialize_workspace,
+    set_active_workspace_path,
+)
+
+
+@pytest.fixture(autouse=True)
+def workspace_config_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LARVAWORLD_PORTAL_CONFIG_DIR", str(tmp_path / "config"))
+    clear_active_workspace_path()
 
 
 def _cloned_config(source_k: str, *, k: str, p: str, d: str) -> dict:
@@ -79,3 +93,20 @@ def test_remove_param_unknown_key_raises_key_error() -> None:
 def test_register_new_param_requires_name() -> None:
     with pytest.raises(ValueError):
         register_new_param({"p": ""})
+
+
+def test_save_param_config_to_workspace_writes_under_parameters_dir(
+    tmp_path: Path,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+
+    path = save_param_config_to_workspace(get_param_instance("t"))
+
+    assert path is not None
+    assert path.parent == workspace.parameters_dir
+    assert path.exists()
+
+
+def test_save_param_config_to_workspace_without_active_workspace_returns_none() -> None:
+    assert save_param_config_to_workspace(get_param_instance("t")) is None

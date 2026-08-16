@@ -35,6 +35,18 @@ class GraphRegistry:
     """
 
     def __init__(self) -> None:
+        # `lib.plot` only lazily imports its submodules on first attribute
+        # access (see its own __getattr__, kept lightweight on purpose).
+        # Any @funcs.graph(...)-decorated function in a submodule nothing
+        # else has imported yet would otherwise be silently missing from
+        # funcs.graphs here -- purely depending on what else happened to
+        # import first elsewhere in the program (e.g. "epochs", from
+        # lib.plot.epochs, failing self.entry("epochs", ...) below in
+        # build_graphgroups when nothing had triggered that import yet).
+        # Force-import every submodule first so the registry is complete
+        # regardless of import order.
+        for _name in plot._SUBMODULES:
+            getattr(plot, _name)
         self.dict = funcs.graphs
         self.required_data_dict = funcs.graph_required_data
         self.graphgroups = self.build_graphgroups()

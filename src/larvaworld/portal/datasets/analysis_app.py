@@ -14,7 +14,11 @@ from larvaworld.portal.datasets.analysis_helpers import (
 )
 from larvaworld.portal.datasets.manager_helpers import list_all_unified_datasets
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
-from larvaworld.portal.workspace import get_active_workspace
+from larvaworld.portal.workspace import (
+    WorkspaceError,
+    get_active_workspace,
+    get_workspace_dir,
+)
 
 
 __all__ = ["_AnalysisController", "analysis_app"]
@@ -328,6 +332,19 @@ class _AnalysisController:
         if func_options:
             self.plot_function_select.value = list(func_options.keys())[0]
 
+    def _plot_save_kwargs(self, plot_id: str, dataset_ids: list[str]) -> dict[str, Any]:
+        """Save kwargs pointing at the workspace's "analysis" folder, same convention as `save_param_config_to_workspace`'s "parameters" folder."""
+        try:
+            analysis_dir = get_workspace_dir("analysis", workspace=self.workspace)
+        except WorkspaceError:
+            return {}
+        subfolder = "_".join(sorted(dataset_ids)) or "dataset"
+        return {
+            "save_to": str(analysis_dir),
+            "subfolder": subfolder,
+            "save_as": plot_id,
+        }
+
     def _handle_run_plot(self, _event=None) -> None:
         if not self._selected_datasets or not self._loaded_datasets:
             self._set_status(
@@ -358,6 +375,7 @@ class _AnalysisController:
                 plot_id,
                 datasets,
                 dataset_ids,
+                default_kwargs=self._plot_save_kwargs(plot_id, dataset_ids),
             )
             self._current_figure = fig
             self._current_plot_id = plot_id
@@ -375,8 +393,8 @@ class _AnalysisController:
 
     def _render_figure(self, fig: Any) -> None:
         try:
-            if hasattr(fig, "_repr_html_"):
-                html_repr = fig._repr_html_()
+            html_repr = fig._repr_html_() if hasattr(fig, "_repr_html_") else None
+            if html_repr:
                 self.figure_pane.object = (
                     '<div style="border: 1px solid #ccc; border-radius: 8px; padding: 12px; overflow-x: auto;">'
                     f"{html_repr}"
@@ -386,6 +404,22 @@ class _AnalysisController:
                 self.figure_pane.object = (
                     '<div style="border: 1px solid #ccc; border-radius: 8px; padding: 12px; overflow-x: auto;">'
                     f"{fig.to_html()}"
+                    "</div>"
+                )
+            elif hasattr(fig, "savefig"):
+                # matplotlib Figure._repr_html_() exists but returns None
+                # (a Jupyter rich-display fallback), so it can't gate this
+                # branch by hasattr alone -- render as an embedded base64 PNG.
+                import base64
+                from io import BytesIO
+
+                buf = BytesIO()
+                fig.savefig(buf, format="png", dpi=150, bbox_inches="tight")
+                buf.seek(0)
+                b64 = base64.b64encode(buf.read()).decode("ascii")
+                self.figure_pane.object = (
+                    '<div style="border: 1px solid #ccc; border-radius: 8px; padding: 12px; overflow-x: auto;">'
+                    f'<img src="data:image/png;base64,{b64}" style="max-width:100%;" />'
                     "</div>"
                 )
             else:
