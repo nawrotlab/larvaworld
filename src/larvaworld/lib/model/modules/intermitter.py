@@ -419,8 +419,11 @@ class BranchIntermitter(Intermitter):
     """
 
     feed_bouts = param.Boolean(False, readonly=True)
+    #: Matches `util.exp_bout`'s own default -- `generate_stridechain` feeds
+    #: this straight into that function, so an unset `beta` should resolve
+    #: to the same fallback `exp_bout` itself would use.
     beta = OptionalPositiveNumber(
-        default=None, doc="The beta coefficient for the exponential function"
+        default=0.01, doc="The beta coefficient for the exponential function"
     )
     c = PositiveNumber(default=0.7, doc="The c parameter for the criticality function")
     sigma = PositiveNumber(default=1.0, doc="The ISING branching coef.")
