@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pytest
 
+from larvaworld import DATA_DIR
+from larvaworld.lib import reg
 from larvaworld.portal.datasets import dataset_manager_app
 from larvaworld.portal.datasets.manager_helpers import UnifiedDatasetRecord
 from larvaworld.portal.datasets.models import WorkspaceDatasetRecord
@@ -72,9 +74,17 @@ def test_dataset_manager_requires_active_workspace() -> None:
     assert controller._all_records == []
 
 
-def test_dataset_manager_empty_state_points_to_import_app(tmp_path: Path) -> None:
+def test_dataset_manager_empty_state_points_to_import_app(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     workspace = initialize_workspace(tmp_path / "workspace")
     set_active_workspace_path(workspace.root)
+    # An empty *workspace* still has the package's own bundled DATA_DIR
+    # dataset(s) available -- isolate from those here to test the
+    # genuinely-empty-catalog state specifically.
+    monkeypatch.setattr(
+        dataset_manager_app, "list_workspace_datasets", lambda workspace=None: []
+    )
 
     controller = dataset_manager_app._DatasetManagerController()
 
@@ -144,6 +154,59 @@ def test_dataset_manager_search_filters_by_dataset_group_and_ref_id(
     assert [record.dataset_id for record in controller._filtered_records] == [
         "alpha_dataset"
     ]
+
+
+def test_list_data_dir_datasets_detects_default_ref_dataset_by_folder() -> None:
+    # Detection by folder layout alone (DATA_DIR/<Lab>Group/processed/...),
+    # not by refID lookup -- confirms the package's own bundled reference
+    # dataset (reg.default_refID == "exploration.30controls") is found by
+    # scanning real files on disk, the same way workspace datasets are
+    # found by scanning the workspace's own directories.
+    from larvaworld.portal.datasets.workspace_index import list_data_dir_datasets
+
+    records = list_data_dir_datasets()
+
+    thirty_controls = next((r for r in records if r.dataset_id == "30controls"), None)
+    assert thirty_controls is not None, (
+        f"Expected a '30controls' dataset under {DATA_DIR}, found: "
+        f"{[r.dataset_id for r in records]}"
+    )
+    assert thirty_controls.lab_id == "Schleyer"
+    assert thirty_controls.group_id == "exploration"
+    assert thirty_controls.ref_id == reg.default_refID
+    assert thirty_controls.dataset_dir.is_dir()
+    assert (thirty_controls.data_dir / "conf.txt").is_file()
+    assert (thirty_controls.data_dir / "data.h5").is_file()
+
+
+def test_dataset_manager_shows_bundled_data_dir_datasets_as_read_only(
+    tmp_path: Path,
+) -> None:
+    # The manager must surface DATA_DIR-bundled datasets alongside
+    # workspace ones (found by folder detection, via the real
+    # list_data_dir_datasets -- not mocked here), labeled distinctly, and
+    # never as mutable in place: they live in the package's own source
+    # tree, not the active workspace.
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+
+    controller = dataset_manager_app._DatasetManagerController()
+
+    bundled = next((r for r in controller._all_records if r.origin == "bundled"), None)
+    assert bundled is not None, "Expected a bundled DATA_DIR dataset to be detected"
+    assert bundled.dataset_id == "30controls"
+
+    row = controller.table.value[controller.table.value["Dataset ID"] == "30controls"]
+    assert row.iloc[0]["Source"] == "Bundled"
+
+    idx = controller._filtered_records.index(bundled)
+    controller.table.selection = [idx]
+    controller._on_table_selection_change()
+    assert controller.delete_button.disabled is True
+    assert controller.preprocess_button.disabled is True
+    assert controller.process_button.disabled is True
+    assert controller.annotate_button.disabled is True
+    assert controller.update_refid_button.disabled is True
 
 
 def test_dataset_manager_lab_filter_narrows_catalog(
@@ -255,11 +318,19 @@ def test_dataset_manager_delete_requires_confirmation(
 
 
 def test_dataset_manager_confirm_delete_removes_selected_dataset(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     workspace = initialize_workspace(tmp_path / "workspace")
     set_active_workspace_path(workspace.root)
     record = _write_dataset(workspace, dataset_slug="alpha")
+    # Real workspace scanning is exercised below (to confirm "alpha" is
+    # actually gone from disk after delete); isolate from the package's
+    # own bundled DATA_DIR dataset(s), which delete must never touch and
+    # which would otherwise survive to break the "nothing left" assertion.
+    monkeypatch.setattr(
+        "larvaworld.portal.datasets.manager_helpers.list_data_dir_datasets",
+        lambda: [],
+    )
 
     controller = dataset_manager_app._DatasetManagerController()
     _select_first_row(controller)

@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import panel as pn
 import pytest
 
+from larvaworld import DATA_DIR
 from larvaworld.portal.datasets import import_datasets_app
 from larvaworld.portal.datasets.discovery import RawDatasetCandidate
 from larvaworld.portal.datasets.models import WorkspaceDatasetRecord
@@ -663,6 +664,31 @@ def test_import_datasets_controller_discovers_candidates_and_enables_import(
     assert controller.import_button.disabled is False
     assert controller.dataset_id_input.value == "dish01"
     assert "exploration/dish01" in controller.candidate_summary.object
+
+
+def test_import_datasets_controller_discovers_real_data_dir_raw_folder(
+    tmp_path: Path,
+) -> None:
+    # End-to-end against the package's own bundled raw data (no mocking of
+    # discover_raw_datasets) -- confirms the controller's raw-root ->
+    # discovery -> candidate-list wiring works against a real Schleyer raw
+    # folder shipped in DATA_DIR, not just synthetic tmp_path fixtures.
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    raw_root = Path(DATA_DIR) / "SchleyerGroup" / "raw"
+    assert raw_root.is_dir(), f"Expected bundled raw data at {raw_root}"
+
+    controller = import_datasets_app._ImportDatasetsController()
+    controller.lab_select.value = "Schleyer"
+    controller.raw_root_input.value = str(raw_root)
+    assert controller.discover_button.disabled is False
+
+    controller._handle_discover()
+
+    assert "Discovered" in controller.status.object
+    assert controller.candidate_select.disabled is False
+    discovered_ids = {c.candidate_id for c in controller._discovered_candidates}
+    assert {"dish01", "dish02"}.issubset(discovered_ids)
 
 
 def test_import_datasets_discover_failure_sets_danger_status(

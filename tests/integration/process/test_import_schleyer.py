@@ -79,18 +79,28 @@ def test_import_schleyer_datasets(tmp_path, dataset_lock):
             **base_kwargs,
         }
 
-        for kwargs in (merged_kwargs, single_kwargs):
-            dataset = lab.import_dataset(**kwargs)
-            assert isinstance(dataset, larvaworld.lib.process.dataset.LarvaDataset)
+        # save_dataset=True registers each refID in the *global*
+        # reg.conf.Ref registry, pointing at files under `tmp_path` --
+        # pytest deletes that directory once the test ends, so without
+        # this cleanup the stale entries make reg.conf.Ref.getRef()
+        # raise AssertionError for any later test (in this or another
+        # file) that happens to iterate the full Ref registry.
+        try:
+            for kwargs in (merged_kwargs, single_kwargs):
+                dataset = lab.import_dataset(**kwargs)
+                assert isinstance(dataset, larvaworld.lib.process.dataset.LarvaDataset)
 
-            dataset.process(is_last=False)
-            dataset.annotate(is_last=True)
+                dataset.process(is_last=False)
+                dataset.annotate(is_last=True)
 
-            assert isinstance(dataset.s, pd.DataFrame)
+                assert isinstance(dataset.s, pd.DataFrame)
 
-            data_dir = Path(dataset.config.dir) / "data"
-            assert data_dir.exists()
-            assert (data_dir / "data.h5").exists()
+                data_dir = Path(dataset.config.dir) / "data"
+                assert data_dir.exists()
+                assert (data_dir / "data.h5").exists()
+        finally:
+            reg.conf.Ref.delete(merged_kwargs["refID"])
+            reg.conf.Ref.delete(single_kwargs["refID"])
     else:
         # Fallback: use existing processed dataset snapshot
         from larvaworld.lib import reg

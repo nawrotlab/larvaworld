@@ -417,7 +417,13 @@ class _ModelInspectorController:
             css_classes=["lw-model-inspector-table"],
         )
         default_model = "explorer" if "explorer" in model_ids else model_ids[0]
-        self.model_select_table.selection = [0] if model_ids else []
+        # Select default_model's own row -- not row 0, which is whatever
+        # model_ids happens to list first and is generally a different
+        # model than "explorer".
+        default_index = model_ids.index(default_model) if model_ids else None
+        self.model_select_table.selection = (
+            [default_index] if default_index is not None else []
+        )
         self._primary_model_id = default_model
 
         class _SelectProxy:
@@ -624,12 +630,27 @@ class _ModelInspectorController:
         self._update_summary_sections()
 
     def _get_selected_model_ids(self) -> list[str]:
-        """Get list of selected model IDs from the Tabulator."""
+        """Get list of selected model IDs from the Tabulator, with the
+        current primary model first if it's part of the selection.
+
+        `.selection` indices are sorted ascending to build the list, which
+        on its own would silently make whichever selected model's *row*
+        sorts first "the primary" (selected_ids[0]) -- e.g. picking a
+        comparison model whose row happens to precede the actual primary's
+        would swap them. `_SelectProxy`'s setters already always place the
+        primary's index first when building `.selection`; this restores
+        that ordering after the ascending sort, rather than just undoing
+        it.
+        """
         if not self.model_select_table.selection:
             return []
         df = self.model_select_table.value
         selected_indices = sorted(int(idx) for idx in self.model_select_table.selection)
-        return [df.iloc[idx]["ID"] for idx in selected_indices if idx < len(df)]
+        ids = [df.iloc[idx]["ID"] for idx in selected_indices if idx < len(df)]
+        if self._primary_model_id in ids and ids[0] != self._primary_model_id:
+            ids.remove(self._primary_model_id)
+            ids.insert(0, self._primary_model_id)
+        return ids
 
     def _get_primary_model_id(self) -> str:
         """Get the primary (first selected) model ID."""
@@ -764,19 +785,26 @@ class _ModelInspectorController:
             self.model_select_table.selection = [0] if self._model_ids else []
             return
         primary = selected_ids[0]
+        primary_changed = primary != self._primary_model_id
         self._primary_model_id = primary
-        self._pause_callback()
-        self._reset_draft_to_selected_model()
-        self._refresh_model_preset_controls()
-        self.download_json_button.filename = self._draft_download_filename()
-        self._sync_preview_after_draft_change(
-            message=f'Model changed to "{primary}".'
-            if len(selected_ids) == 1
-            else f"Multiple models selected: {len(selected_ids)}.",
-            clear_trace=True,
-            mark_dirty=False,
-            ui_scope="full",
-        )
+        # Only a primary-model change warrants pausing the live preview,
+        # resetting the draft, and rebuilding every module card -- e.g.
+        # picking/changing the *comparison* model (selected_ids[1:])
+        # alongside an unchanged primary must not interrupt an in-progress
+        # preview or discard local draft edits.
+        if primary_changed:
+            self._pause_callback()
+            self._reset_draft_to_selected_model()
+            self._refresh_model_preset_controls()
+            self.download_json_button.filename = self._draft_download_filename()
+            self._sync_preview_after_draft_change(
+                message=f'Model changed to "{primary}".'
+                if len(selected_ids) == 1
+                else f"Multiple models selected: {len(selected_ids)}.",
+                clear_trace=True,
+                mark_dirty=False,
+                ui_scope="full",
+            )
         self._refresh_inspection_tables()
         self._update_comparison_selector()
 

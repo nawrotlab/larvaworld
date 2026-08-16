@@ -179,9 +179,19 @@ def discover_raw_datasets(lab_id: str, raw_root: Path) -> list[RawDatasetCandida
         )
 
     filesystem = lab.filesystem
+    # Folder-based candidates (e.g. Schleyer's "box"-prefixed subfolders,
+    # meant to be grouped into merge targets -- see
+    # _ImportDatasetsController._build_merge_targets) are additive on top
+    # of file-based candidates (any directory containing matching raw
+    # files), not a replacement: a lab format's folder_pref/folder_suff
+    # convention exists for merge-grouping specifically, and doesn't mean
+    # every other directory layout (e.g. a plain per-dish raw folder,
+    # imported individually rather than merged) stops being discoverable.
+    candidates: list[RawDatasetCandidate] = []
     if filesystem.folder_pref or filesystem.folder_suff:
-        return _dedupe_candidates(_folder_candidates(lab, normalized_root))
-    return _dedupe_candidates(_file_candidates(lab, normalized_root))
+        candidates.extend(_folder_candidates(lab, normalized_root))
+    candidates.extend(_file_candidates(lab, normalized_root))
+    return _dedupe_candidates(candidates)
 
 
 def _candidate_import_overrides(

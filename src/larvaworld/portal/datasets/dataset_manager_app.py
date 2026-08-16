@@ -277,7 +277,11 @@ def _empty_state_html(title: str, copy: str, *, cta_href: str | None = None) -> 
 def _records_frame(records: list[UnifiedDatasetRecord], workspace) -> pd.DataFrame:
     rows = []
     for record in records:
-        source_label = "Imported" if record.origin == "imported" else "Simulated"
+        source_label = {
+            "imported": "Imported",
+            "simulation_run": "Simulated",
+            "bundled": "Bundled",
+        }[record.origin]
         location = ""
         if record.origin == "imported":
             try:
@@ -289,7 +293,7 @@ def _records_frame(records: list[UnifiedDatasetRecord], workspace) -> pd.DataFra
                 )
             except (ValueError, AttributeError):
                 location = record.dataset_dir.name
-        else:
+        elif record.origin == "simulation_run":
             try:
                 experiments_root = get_workspace_dir(
                     "experiments", workspace=workspace
@@ -297,6 +301,17 @@ def _records_frame(records: list[UnifiedDatasetRecord], workspace) -> pd.DataFra
                 location = (
                     record.dataset_dir.resolve()
                     .relative_to(experiments_root)
+                    .as_posix()
+                )
+            except (ValueError, AttributeError):
+                location = record.dataset_dir.name
+        else:
+            try:
+                from larvaworld import DATA_DIR
+
+                location = (
+                    record.dataset_dir.resolve()
+                    .relative_to(Path(DATA_DIR).resolve())
                     .as_posix()
                 )
             except (ValueError, AttributeError):
@@ -724,11 +739,18 @@ class _DatasetManagerController:
         self._copy_source.value = str(record.dataset_dir)
         self.refid_input.value = record.ref_id or ""
         self.copy_path_button.disabled = False
+        # preprocess/process/annotate/update_refid all mutate
+        # record.dataset_dir *in place*. "imported"/"simulation_run" both
+        # live inside the active *workspace* (the user's own data), so
+        # in-place mutation is fine; "bundled" records live in the
+        # package's own DATA_DIR source tree and must never be writable
+        # this way -- same reasoning as delete_button below.
+        writable_in_place = record.origin != "bundled"
         self.delete_button.disabled = record.origin != "imported"
-        self.preprocess_button.disabled = False
-        self.process_button.disabled = False
-        self.annotate_button.disabled = False
-        self.update_refid_button.disabled = False
+        self.preprocess_button.disabled = not writable_in_place
+        self.process_button.disabled = not writable_in_place
+        self.annotate_button.disabled = not writable_in_place
+        self.update_refid_button.disabled = not writable_in_place
         self.subsample_button.disabled = False
         self.timeslice_button.disabled = False
 

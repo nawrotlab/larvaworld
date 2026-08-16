@@ -183,6 +183,108 @@ def get_workspace_dataset(dataset_dir: Path) -> WorkspaceDatasetRecord | None:
     return _record_from_dataset_dir(dataset_dir)
 
 
+def _lab_id_from_data_dir_group_folder(folder_name: str) -> str:
+    return (
+        folder_name[: -len("Group")] if folder_name.endswith("Group") else folder_name
+    )
+
+
+def _record_from_data_dir_dataset_dir(
+    dataset_dir: Path, data_root: Path
+) -> WorkspaceDatasetRecord | None:
+    dataset_dir = dataset_dir.expanduser().resolve()
+    data_dir = dataset_dir / "data"
+    conf_path = data_dir / "conf.txt"
+    h5_path = data_dir / "data.h5"
+
+    if not dataset_dir.is_dir():
+        return None
+    if not conf_path.is_file() or not h5_path.is_file():
+        return None
+
+    try:
+        relative_parts = dataset_dir.relative_to(data_root.resolve()).parts
+    except ValueError:
+        return None
+    # <LabName>Group/processed/<group_id...>/<dataset> -- the layout every
+    # bundled reference dataset ships under (e.g.
+    # SchleyerGroup/processed/exploration/30controls). Anything else under
+    # DATA_DIR (e.g. SimGroup/eval_runs/... simulation output) isn't a
+    # reference dataset in this sense and is intentionally left alone.
+    if len(relative_parts) < 3 or relative_parts[1] != "processed":
+        logger.debug(
+            "Ignoring DATA_DIR dataset outside a <Lab>Group/processed layout: %s",
+            dataset_dir,
+        )
+        return None
+
+    config = load_dict(str(conf_path))
+    if not config:
+        logger.debug(
+            "Ignoring DATA_DIR dataset with malformed or empty config: %s", conf_path
+        )
+        return None
+
+    lab_id = _lab_id_from_data_dir_group_folder(relative_parts[0])
+    path_group_id = _normalize_group_id("/".join(relative_parts[2:-1]))
+    config_group_id = _normalize_group_id(config.get("group_id"))
+    larva_group = config.get("larva_group", {})
+    larva_group_id = None
+    if isinstance(larva_group, dict):
+        larva_group_id = _normalize_group_id(larva_group.get("group_id"))
+
+    dataset_id = config.get("id")
+    if not isinstance(dataset_id, str) or not dataset_id.strip():
+        dataset_id = dataset_dir.name
+
+    ref_id = config.get("refID")
+    if not isinstance(ref_id, str) or not ref_id.strip():
+        ref_id = None
+
+    n_agents = config.get("N")
+    if not isinstance(n_agents, int):
+        agent_ids = config.get("agent_ids")
+        if isinstance(agent_ids, list):
+            n_agents = len(agent_ids)
+        else:
+            n_agents = None
+
+    return WorkspaceDatasetRecord(
+        dataset_id=dataset_id.strip(),
+        dataset_dir=dataset_dir,
+        data_dir=data_dir,
+        conf_path=conf_path,
+        h5_path=h5_path,
+        lab_id=lab_id,
+        group_id=config_group_id or larva_group_id or path_group_id,
+        ref_id=ref_id,
+        n_agents=n_agents,
+    )
+
+
+def list_data_dir_datasets() -> list[WorkspaceDatasetRecord]:
+    """Scan the package's own bundled DATA_DIR (e.g.
+    src/larvaworld/data/SchleyerGroup/processed/...) for shipped reference
+    datasets -- independent of any workspace, since these ship with the
+    package itself rather than being imported by a user.
+    """
+    from larvaworld import DATA_DIR
+
+    data_root = Path(DATA_DIR).expanduser().resolve()
+    candidates: set[Path] = set()
+    for conf_path in data_root.rglob("conf.txt"):
+        if conf_path.parent.name != "data":
+            continue
+        candidates.add(conf_path.parent.parent.resolve())
+
+    records: list[WorkspaceDatasetRecord] = []
+    for dataset_dir in sorted(candidates):
+        record = _record_from_data_dir_dataset_dir(dataset_dir, data_root)
+        if record is not None:
+            records.append(record)
+    return records
+
+
 def list_workspace_datasets(
     workspace: WorkspaceState | None = None,
 ) -> list[WorkspaceDatasetRecord]:

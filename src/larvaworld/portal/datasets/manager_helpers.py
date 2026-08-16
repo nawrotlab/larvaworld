@@ -10,13 +10,20 @@ from larvaworld.portal.datasets.models import (
     WorkspaceDatasetRecord,
     WorkspaceReplayDatasetRecord,
 )
-from larvaworld.portal.datasets.workspace_index import list_all_workspace_datasets
+from larvaworld.portal.datasets.workspace_index import (
+    list_all_workspace_datasets,
+    list_data_dir_datasets,
+)
 from larvaworld.portal.workspace import WorkspaceState, get_workspace_dir
 
 
 @dataclass(frozen=True)
 class UnifiedDatasetRecord:
-    origin: Literal["imported", "simulation_run"]
+    #: "bundled" datasets ship with the package itself (DATA_DIR, e.g. the
+    #: default reference dataset) -- never workspace-deletable, same as
+    #: "simulation_run" (see _DatasetManagerController's delete gating,
+    #: keyed off `origin == "imported"`).
+    origin: Literal["imported", "simulation_run", "bundled"]
     dataset_id: str
     dataset_dir: Path
     data_dir: Path
@@ -61,6 +68,21 @@ class UnifiedDatasetRecord:
             member_id=record.member_id,
         )
 
+    @staticmethod
+    def from_bundled(record: WorkspaceDatasetRecord) -> UnifiedDatasetRecord:
+        return UnifiedDatasetRecord(
+            origin="bundled",
+            dataset_id=record.dataset_id,
+            dataset_dir=record.dataset_dir,
+            data_dir=record.data_dir,
+            conf_path=record.conf_path,
+            h5_path=record.h5_path,
+            lab_id=record.lab_id,
+            group_id=record.group_id,
+            ref_id=record.ref_id,
+            n_agents=record.n_agents,
+        )
+
 
 def list_all_unified_datasets(
     workspace: WorkspaceState | None = None,
@@ -68,6 +90,9 @@ def list_all_unified_datasets(
     imported, simulated = list_all_workspace_datasets(workspace=workspace)
     records = [UnifiedDatasetRecord.from_imported(r) for r in imported]
     records.extend([UnifiedDatasetRecord.from_simulated(r) for r in simulated])
+    records.extend(
+        UnifiedDatasetRecord.from_bundled(r) for r in list_data_dir_datasets()
+    )
     return sorted(records, key=lambda r: (r.origin, r.dataset_id))
 
 
