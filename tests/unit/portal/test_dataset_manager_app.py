@@ -179,14 +179,15 @@ def test_list_data_dir_datasets_detects_default_ref_dataset_by_folder() -> None:
     assert (thirty_controls.data_dir / "data.h5").is_file()
 
 
-def test_dataset_manager_shows_bundled_data_dir_datasets_as_read_only(
+def test_dataset_manager_shows_bundled_data_dir_datasets_as_editable(
     tmp_path: Path,
 ) -> None:
     # The manager must surface DATA_DIR-bundled datasets alongside
     # workspace ones (found by folder detection, via the real
     # list_data_dir_datasets -- not mocked here), labeled distinctly, and
-    # never as mutable in place: they live in the package's own source
-    # tree, not the active workspace.
+    # editable like any other dataset (preprocess/process/annotate/
+    # update_refid); only delete stays workspace-"imported"-only, per
+    # delete_imported_workspace_dataset's own path validation.
     workspace = initialize_workspace(tmp_path / "workspace")
     set_active_workspace_path(workspace.root)
 
@@ -203,10 +204,10 @@ def test_dataset_manager_shows_bundled_data_dir_datasets_as_read_only(
     controller.table.selection = [idx]
     controller._on_table_selection_change()
     assert controller.delete_button.disabled is True
-    assert controller.preprocess_button.disabled is True
-    assert controller.process_button.disabled is True
-    assert controller.annotate_button.disabled is True
-    assert controller.update_refid_button.disabled is True
+    assert controller.preprocess_button.disabled is False
+    assert controller.process_button.disabled is False
+    assert controller.annotate_button.disabled is False
+    assert controller.update_refid_button.disabled is False
 
 
 def test_dataset_manager_lab_filter_narrows_catalog(
