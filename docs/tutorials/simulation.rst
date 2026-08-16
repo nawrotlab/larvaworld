@@ -8,3 +8,4 @@ Simulation
    single_simulation.ipynb
    model_evaluation.ipynb
    genetic_algorithm_optimization.ipynb
+   ga_turner_noise_optimization.ipynb
