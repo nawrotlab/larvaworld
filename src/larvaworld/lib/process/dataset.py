@@ -2417,10 +2417,14 @@ class BaseLarvaDataset(ParamLarvaDataset):
         Return a new, separately-stored LarvaDataset whose bend/orientation
         angular kinematics are recomputed from a coarse Nsegs-vector body
         approximation (front vector + rear vector split at the body
-        midpoint), matching what ReplayRun's draw_Nsegs=2 reconstructs
-        visually, instead of the original dataset's own (possibly more
-        finely-tuned) front_vector/rear_vector configuration. Lets angular
-        parameters computed on the two be directly compared.
+        midpoint, both excluding the head/tail tip points), matching what
+        ReplayRun's draw_Nsegs=2 reconstructs visually, instead of the
+        original dataset's own (possibly differently-tuned) front_vector/
+        rear_vector configuration. Lets angular parameters computed on the
+        two be directly compared -- validated on the bundled reference
+        dataset via pooled KS-distance between "bend" distributions
+        (tests/unit/process/test_dataset_angular.py::
+        test_reconstruct_at_Nsegs_bend_closely_matches_original).
 
         Args:
             Nsegs: Number of body segments to reconstruct at. Only 2 is
@@ -2444,8 +2448,18 @@ class BaseLarvaDataset(ParamLarvaDataset):
         d2 = copy.deepcopy(self)
         c2 = d2.config
         mid = (c2.Npoints + 1) // 2
-        c2.front_vector = (1, mid)
-        c2.rear_vector = (-mid, -1)
+        # Exclude both tip points (index 0 = head tip, index Npoints-1 =
+        # tail tip) from both vectors: they are the noisiest, most
+        # deformable tracked points, and a vector reaching into a tip
+        # integrates over more of the body's curvature (a longer chord
+        # across a curved arc is straighter than a shorter one), which
+        # mechanically suppresses measured bend variance -- a pure
+        # geometric-averaging artifact, not a property of "fewer
+        # segments". The previous (1, mid)/(-mid, -1) both included the
+        # head tip AND overlapped at the midpoint. front_vector=(2, mid)
+        # excludes point 0 without covering rear_vector's span.
+        c2.front_vector = (2, mid)
+        c2.rear_vector = (-(mid - 1), -1)
         c2.refID = None
         new_dir = new_dir or f"{self.dir}_{Nsegs}seg"
         c2.dir = new_dir
