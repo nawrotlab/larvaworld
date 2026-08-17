@@ -917,6 +917,24 @@ class ParamClass:
             )
         self.add(
             **{
+                "p": "brain.turner.input_noise",
+                "k": "In_T",
+                "d": "turner input noise",
+                "sym": nam.tex.sub("In", "T"),
+                "disp": "TURNER input noise.",
+            }
+        )
+        self.add(
+            **{
+                "p": "brain.turner.output_noise",
+                "k": "On_T",
+                "d": "turner output noise",
+                "sym": nam.tex.sub("On", "T"),
+                "disp": "TURNER output noise.",
+            }
+        )
+        self.add(
+            **{
                 "p": "cur_attenuation",
                 "codename": f"{IF}.cur_attenuation",
                 "k": "A_CT",
