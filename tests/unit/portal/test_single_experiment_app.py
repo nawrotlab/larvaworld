@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import panel as pn
 import pytest
@@ -2552,10 +2553,13 @@ def test_single_experiment_larva_groups_uses_typed_widget_builder(
     sentinel = pn.pane.Markdown("typed-larva-groups")
     captured: dict[str, object] = {}
 
-    def fake_build(owner, *, parameter_name="larva_groups", wrap=True):
+    def fake_build(
+        owner, *, parameter_name="larva_groups", wrap=True, on_select_widget=None
+    ):
         captured["owner"] = owner
         captured["parameter_name"] = parameter_name
         captured["wrap"] = wrap
+        captured["on_select_widget"] = on_select_widget
         return sentinel
 
     monkeypatch.setattr(
@@ -2568,7 +2572,12 @@ def test_single_experiment_larva_groups_uses_typed_widget_builder(
     assert captured["owner"] is controller._typed_experiment_for_larva_groups
     assert captured["parameter_name"] == "larva_groups"
     assert captured["wrap"] is True
-    assert controller._get_parameter_group_view("larva_groups") is sentinel
+    assert callable(captured["on_select_widget"])
+    # The form (sentinel) is now paired with a click-to-place canvas card
+    # in a Row, rather than being the whole "larva_groups" group view.
+    group_view = controller._get_parameter_group_view("larva_groups")
+    assert isinstance(group_view, pn.Row)
+    assert sentinel in list(group_view)
 
 
 def test_single_experiment_mixed_flattened_and_typed_edits_survive_build_parameters(
@@ -3492,3 +3501,129 @@ def test_single_experiment_registry_item_is_now_panel_app() -> None:
 def test_single_experiment_slug_helpers() -> None:
     assert _safe_slug(" Dish Demo / 01 ") == "Dish_Demo_01"
     assert _default_run_name("dish").startswith("dish_")
+
+
+# --- click-to-place larva groups (real EnvironmentCanvas, not mocked) ---
+
+
+def _fresh_controller(tmp_path: Path) -> _SingleExperimentController:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+    return _SingleExperimentController()
+
+
+def test_larva_canvas_insert_tap_adds_group_at_click_position(
+    tmp_path: Path,
+) -> None:
+    controller = _fresh_controller(tmp_path)
+    before = set(controller._typed_experiment_for_larva_groups.larva_groups.keys())
+
+    controller._on_larva_canvas_insert(0.01, -0.02)
+
+    after = controller._typed_experiment_for_larva_groups.larva_groups
+    new_ids = set(after.keys()) - before
+    assert len(new_ids) == 1
+    new_group = after[new_ids.pop()]
+    assert new_group.distribution.loc == (0.01, -0.02)
+
+
+def test_larva_canvas_insert_tap_ids_do_not_collide(tmp_path: Path) -> None:
+    controller = _fresh_controller(tmp_path)
+
+    controller._on_larva_canvas_insert(0.0, 0.0)
+    controller._on_larva_canvas_insert(0.01, 0.01)
+
+    ids = list(controller._typed_experiment_for_larva_groups.larva_groups.keys())
+    assert len(ids) == len(set(ids))
+
+
+def test_larva_canvas_insert_is_saved_identically_to_form_added_group(
+    tmp_path: Path,
+) -> None:
+    # A canvas-inserted group must go through the exact same whole-dict
+    # reassignment the form's own "Add" button uses, so it round-trips
+    # through the experiment-template save payload identically.
+    controller = _fresh_controller(tmp_path)
+    controller._on_larva_canvas_insert(0.02, 0.03)
+
+    payload = controller._experiment_template_payload()
+    saved_groups = payload["larva_groups"]
+    new_id = next(
+        gid
+        for gid in controller._typed_experiment_for_larva_groups.larva_groups
+        if gid.startswith("larva_group_")
+    )
+    assert new_id in saved_groups
+
+
+def test_larva_canvas_select_tap_syncs_form_dropdown(tmp_path: Path) -> None:
+    controller = _fresh_controller(tmp_path)
+    before = set(controller._typed_experiment_for_larva_groups.larva_groups.keys())
+    controller._on_larva_canvas_insert(0.01, 0.01)
+    new_id = next(
+        iter(
+            set(controller._typed_experiment_for_larva_groups.larva_groups.keys())
+            - before
+        )
+    )
+    controller._rebuild_live_larva_canvas()
+
+    controller._on_larva_canvas_select(0.01, 0.01)
+
+    assert controller._larva_groups_select.value == new_id
+
+
+def test_larva_canvas_select_tap_miss_reports_no_object(tmp_path: Path) -> None:
+    controller = _fresh_controller(tmp_path)
+    controller._live_larva_canvas_status = pn.pane.Markdown("")
+
+    controller._on_larva_canvas_select(0.19, 0.19)
+
+    assert "No larva group found" in controller._live_larva_canvas_status.object
+
+
+def test_larva_canvas_tap_dispatches_to_select_or_insert_by_toggle(
+    tmp_path: Path,
+) -> None:
+    controller = _fresh_controller(tmp_path)
+    before = set(controller._typed_experiment_for_larva_groups.larva_groups.keys())
+
+    # select-mode off (default): a tap inserts.
+    controller._on_larva_canvas_tap(SimpleNamespace(x=0.0, y=0.0))
+    after_insert = set(
+        controller._typed_experiment_for_larva_groups.larva_groups.keys()
+    )
+    assert len(after_insert) == len(before) + 1
+
+    # select-mode on: a tap selects instead of inserting again.
+    controller._live_larva_canvas_select_mode.value = True
+    controller._on_larva_canvas_tap(SimpleNamespace(x=0.0, y=0.0))
+    after_select = set(
+        controller._typed_experiment_for_larva_groups.larva_groups.keys()
+    )
+    assert after_select == after_insert
+
+
+def test_larva_groups_form_edit_triggers_canvas_rebuild_once(tmp_path: Path) -> None:
+    controller = _fresh_controller(tmp_path)
+    calls = []
+    controller._rebuild_live_larva_canvas = lambda: calls.append(1)
+
+    controller._on_experiment_template_parameter_widget_change()
+
+    assert len(calls) == 1
+
+
+def test_larva_canvas_insert_triggers_exactly_one_structural_rebuild(
+    tmp_path: Path,
+) -> None:
+    controller = _fresh_controller(tmp_path)
+    calls = []
+    controller._rebuild_live_larva_canvas = lambda: calls.append(1)
+
+    controller._on_larva_canvas_insert(0.0, 0.0)
+
+    # The whole-dict reassignment fires _on_larva_groups_structure_change
+    # exactly once; no infinite loop back into itself.
+    assert len(calls) == 1
