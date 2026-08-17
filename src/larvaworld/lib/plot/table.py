@@ -395,12 +395,32 @@ def mdiff_table(
         >>> fig = mdiff_table(mIDs=['model_A', 'model_B'], dIDs=['A', 'B'])
     """
     data, row_colors = diff_df(mIDs=mIDs, dIDs=dIDs)
+    if dIDs is None:
+        dIDs = mIDs
+    n_models = len(dIDs)
+
+    def _fmt(v: Any) -> Any:
+        # Consistent, compact numeric formatting -- raw float repr (e.g.
+        # 0.5623000000000001) previously flooded cells with noise.
+        if isinstance(v, bool) or v is None:
+            return v
+        if isinstance(v, float):
+            return round(v, 3)
+        return v
+
+    data = data.copy()
+    for c in dIDs:
+        data[c] = data[c].apply(_fmt)
+
+    param_col_width = 0.22
+    model_col_width = (1.0 - param_col_width) / n_models
+    colWidths = [param_col_width] + [model_col_width] * n_models
+
     mpl_kws = {
         "name": "mdiff_table",
         "header0": "MODULE",
         "header0_color": "darkred",
-        "name": "mdiff_table",
-        "figsize": (24, 14),
+        "figsize": (max(16, 8 + 8 * n_models), 14),
         "adjust_kws": {"left": 0.3, "right": 0.95},
         "font_size": 14,
         "highlighted_celltext_dict": {
@@ -410,6 +430,9 @@ def mdiff_table(
         "cellLoc": "center",
         "rowLoc": "center",
         "row_colors": row_colors,
+        "colWidths": colWidths,
+        # Reserve a top band for the "Larva models" spanning header added below.
+        "bbox": (0, 0, 1, 0.9),
     }
     mpl_kws.update(kwargs)
 
@@ -417,6 +440,50 @@ def mdiff_table(
 
     mpl._cells[(0, 0)].set_text_props(weight="bold", color="w")
     mpl._cells[(0, 0)].set_facecolor(mpl_kws["header0_color"])
+
+    # Spanning "Larva models" header above the model-name columns only (not
+    # the "parameter"/"MODULE" columns), so the model-name row reads as one
+    # visually grouped block instead of just more column headers.
+    #
+    # matplotlib's Table recomputes every column's width as the max width of
+    # ANY cell claiming that column index (Table._do_cell_alignment, run on
+    # every draw) -- a single cell spanning multiple column indices with an
+    # oversized width would inflate just the first of those columns and push
+    # the rest apart. Instead, add one same-width, textless cell per
+    # underlying model column at row -1 (matching each column's real width
+    # exactly, so no width gets perturbed) to form a continuous colored bar,
+    # then draw the "Larva models" label as free-floating axes text centered
+    # over the whole bar -- centering it *within* a single cell would bias
+    # it toward whichever column happens to sit at the middle index.
+    fig.canvas.draw()
+    header_height = mpl._cells[(0, 1)].get_height()
+    for col in range(1, n_models + 1):
+        w = mpl._cells[(0, col)].get_width()
+        mpl.add_cell(
+            -1,
+            col,
+            width=w,
+            height=header_height,
+            loc="center",
+            text="",
+            facecolor=mpl_kws["header0_color"],
+        )
+    fig.canvas.draw()
+    x_left = mpl._cells[(-1, 1)].get_x()
+    last = mpl._cells[(-1, n_models)]
+    x_right = last.get_x() + last.get_width()
+    y_center = last.get_y() + last.get_height() / 2
+    ax.text(
+        (x_left + x_right) / 2,
+        y_center,
+        "Larva models",
+        ha="center",
+        va="center",
+        transform=ax.transAxes,
+        weight="bold",
+        color="w",
+        fontsize=mpl_kws["font_size"],
+    )
 
     P = plot.AutoBasePlot(
         name="mdiff_table",

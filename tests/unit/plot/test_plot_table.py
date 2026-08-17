@@ -363,6 +363,31 @@ class TestMdiffTable:
 
         assert isinstance(fig, matplotlib.figure.Figure)
 
+    def test_mdiff_table_has_spanning_larva_models_header_with_no_column_gap(self):
+        """
+        Regression test for the visual rewrite: a "Larva models" header
+        should span just the model-name columns (not "parameter"/"MODULE"),
+        and adding it must not perturb the model columns' own widths --
+        matplotlib's Table recomputes each column's width as the max width
+        of any cell claiming that column index on every draw, so a single
+        cell naively spanning multiple columns previously inflated the
+        first of those columns and pushed the rest apart, leaving a blank
+        gap between the model-name columns.
+        """
+        fig = mdiff_table(mIDs=["explorer", "navigator"], return_fig=True)
+        fig.canvas.draw()
+        ax = fig.axes[0]
+        mpl_table_obj = ax.tables[0]
+
+        assert any(
+            t.get_text() == "Larva models" for t in ax.texts
+        ), "Expected a free-floating 'Larva models' header label"
+
+        col1 = mpl_table_obj[(0, 1)]
+        col2 = mpl_table_obj[(0, 2)]
+        gap = col2.get_x() - (col1.get_x() + col1.get_width())
+        assert abs(gap) < 1e-6, f"Model columns should be contiguous, got gap={gap}"
+
     def test_diff_df_resolves_missing_key_to_class_default_not_none(self):
         """
         A field entirely absent from a model's *stored* flattened config
