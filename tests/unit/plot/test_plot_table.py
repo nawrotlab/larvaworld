@@ -13,6 +13,7 @@ import pytest
 
 from larvaworld.lib.plot.table import (
     arrange_index_labels,
+    mdiff_table,
     modelConfTable,
     mpl_table,
     error_table,
@@ -289,6 +290,25 @@ class TestModelConfTable:
         row = df[df["parameter"] == "EEB"]
         assert not row.empty
         assert float(row["value"].iloc[0]) == 0.0
+
+
+@pytest.mark.fast
+class TestMdiffTable:
+    """Regression tests for mdiff_table (real registry, no mocking)."""
+
+    def test_mdiff_table_without_explicit_dIDs(self):
+        """
+        dIDs used to be a required positional arg even though the underlying
+        diff_df already defaults it to mIDs -- and a separate bug (the table's
+        name passed positionally into AutoBasePlot's `fig` slot, colliding with
+        the explicit `fig=` kwarg) meant this call never actually worked even
+        once dIDs was optional.
+        """
+        import matplotlib.figure
+
+        fig = mdiff_table(mIDs=["explorer", "navigator"], return_fig=True)
+
+        assert isinstance(fig, matplotlib.figure.Figure)
 
 
 @pytest.mark.fast

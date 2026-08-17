@@ -188,7 +188,7 @@ def modelConfTable(
     if m is None:
         m = reg.conf.Model.getID(mID)
     df = mIDtable_data(m, columns=columns)
-    row_colors = [None] + [MD.ModuleColorDict[ii] for ii in df.index.values]
+    row_colors = [None] + [MD.ModuleColorDict.get(ii, "grey") for ii in df.index.values]
     df.index = arrange_index_labels(df.index)
     return conf_table(df, row_colors, mID=mID, colWidths=colWidths, **kwargs)
 
@@ -356,7 +356,7 @@ def mpl_table(
 @funcs.graph("model diff")
 def mdiff_table(
     mIDs: Sequence[str],
-    dIDs: Sequence[str],
+    dIDs: Optional[Sequence[str]] = None,
     show: bool = False,
     save_to: Optional[str] = None,
     save_as: Optional[str] = None,
@@ -370,7 +370,7 @@ def mdiff_table(
 
     Args:
         mIDs: List of model identifiers to compare
-        dIDs: List of display identifiers for models
+        dIDs: List of display identifiers for models. Defaults to mIDs
         show: Whether to display table. Defaults to False
         save_to: Directory to save table. Defaults to None
         save_as: Filename for saved table. Defaults to None
@@ -407,7 +407,12 @@ def mdiff_table(
     mpl._cells[(0, 0)].set_facecolor(mpl_kws["header0_color"])
 
     P = plot.AutoBasePlot(
-        "mdiff_table", save_as=save_as, save_to=save_to, show=show, fig=fig, axs=ax
+        name="mdiff_table",
+        save_as=save_as,
+        save_to=save_to,
+        show=show,
+        fig=fig,
+        axs=ax,
     )
     return P.get()
 
@@ -528,7 +533,7 @@ def diff_df(
     df.set_index(["field"], inplace=True)
     df.sort_index(inplace=True)
 
-    row_colors = [None] + [MD.ModuleColorDict[ii] for ii in df.index.values]
+    row_colors = [None] + [MD.ModuleColorDict.get(ii, "grey") for ii in df.index.values]
     df.index = arrange_index_labels(df.index)
 
     return df, row_colors
