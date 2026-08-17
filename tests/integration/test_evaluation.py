@@ -30,3 +30,31 @@ def test_evaluation_simulation():
     run.simulate()
     # run.plot_results()
     # run.plot_models()
+
+
+@pytest.mark.usefixtures("ensure_datasets_ready")
+def test_evaluation_simulation_uses_target_dataset_arena():
+    """
+    EvalRun.simulate()'s live path (offline is a plain param.Boolean,
+    never actually None, so this is the path always taken) used to build
+    no explicit env_params, silently falling back to the "dispersion"
+    experiment's own default rectangular arena instead of the reference
+    dataset's actual arena (e.g. a circular dish) -- so a model evaluated
+    against a circular-dish dataset was simulated in a rectangular arena.
+    """
+    run = EvalRun(
+        refID=reg.default_refID,
+        modelIDs=["RE_NEU_PHI_DEF"],
+        N=2,
+        duration=0.1,
+        screen_kws={"show_display": False},
+        store_data=False,
+    )
+    run.analyze = lambda *a, **kw: None  # error-plot analysis is out of scope here
+    target_arena = run.target.config.env_params.arena
+
+    run.simulate()
+
+    sim_arena = run.datasets[0].config.env_params.arena
+    assert sim_arena.geometry == target_arena.geometry
+    assert sim_arena.dims == target_arena.dims

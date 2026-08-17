@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+import copy
 import os
 import warnings
 
@@ -131,18 +132,27 @@ class EvalRun(EvalConf, SimConfiguration):
             vprint(
                 f"Simulating {Nm} models : {self.groupIDs} with {self.N} larvae each", 2
             )
+            c = self.target.config
+            # ExpRun/SimConfigurationParams has no bare env_params kwarg --
+            # it must be set on the loaded experiment's own `parameters`.
+            # Without this override, the live path used the "self.
+            # experiment" experiment's own default arena instead of the
+            # reference dataset's actual (e.g. circular dish) arena,
+            # mirroring ExpConf.imitation_exp's own pattern.
+            parameters = reg.conf.Exp.getID(self.experiment).get_copy()
+            parameters.env_params = copy.deepcopy(c.env_params.nestedConf)
             kws0 = AttrDict(
                 {
                     "dir": self.dir,
                     "store_data": self.store_data,
                     "experiment": self.experiment,
+                    "parameters": parameters,
                     "id": self.id,
                     "offline": self.offline,
                     "modelIDs": self.modelIDs,
                     "groupIDs": self.groupIDs,
                     "N": self.N,
                     "sample": self.refID,
-                    # 'parameters': conf,
                     "screen_kws": self.screen_kws,
                     **kws,
                 }
