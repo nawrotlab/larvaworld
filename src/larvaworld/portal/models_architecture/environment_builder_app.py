@@ -1287,21 +1287,21 @@ class _EnvironmentBuilderController:
         )
         self.save_preset_btn = pn.widgets.Button(
             name="Save",
-            button_type="primary",
+            button_type="success",
         )
         self.load_preset_btn = pn.widgets.Button(
             name="Load",
-            button_type="default",
+            button_type="warning",
         )
         self.delete_preset_btn = pn.widgets.Button(
             name="Delete",
-            button_type="warning",
+            button_type="danger",
         )
         self.load_file_btn, self.load_file_input = build_load_file_button(
-            "Load file", accept=".json,application/json", button_type="default"
+            "Import", accept=".json,application/json", button_type="default"
         )
         self.download_file_btn = pn.widgets.Button(
-            name="Download file",
+            name="Export",
             button_type="default",
         )
         self.refresh_presets_btn = pn.widgets.Button(
@@ -1317,7 +1317,7 @@ class _EnvironmentBuilderController:
         )
         self.export_btn = pn.widgets.FileDownload(
             name="",
-            label="Download file",
+            label="Export",
             button_type="default",
             callback=self._export_json,
             filename="environment_builder_config.json",
