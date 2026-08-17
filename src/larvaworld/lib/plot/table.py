@@ -137,49 +137,61 @@ def modelConfTable(
     from ..model import moduleDB as MD
 
     def mIDtable_data(m, columns):
-        def gen_rows2(d, parent, data):
-            for k, p in d.items():
-                if isinstance(p, param.Parameterized):
-                    ddd = [getattr(p, pname) for pname in columns]
-                    row = [parent] + ddd
-                    data.append(row)
+        # mode/run_mode are mode SELECTORS, not values worth a table row.
+        excluded_params = {"mode", "run_mode"}
+
+        def gen_rows(d, parent, data):
+            """
+            Emit one or more table rows for every param in a raw-value
+            dict `d`, under module label `parent`.
+
+            `module_conf()`/`body_kws()`/`physics_kws()`/etc. all return
+            plain AttrDicts of scalars and, where applicable, real typed
+            distribution objects (e.g. intermitter's pause_dist) -- never
+            `param.Parameterized` instances. The previous implementation's
+            `isinstance(p, param.Parameterized)` check accordingly matched
+            nothing for any of these dicts (confirmed directly: body_kws/
+            physics_kws/sensorimotor_kws/energetics_kws all return plain
+            AttrDicts too), so every module except the separately
+            special-cased "intermitter" silently produced zero rows.
+            """
+            for p, v in d.items():
+                if p in excluded_params or v is None:
+                    continue
+                dist_name = getattr(v, "name", None)
+                if dist_name is not None:
+                    vs1, vs2 = reg.get_dist(k=p, k0=parent, v=v, return_tabrows=True)
+                    data.append(vs1)
+                    data.append(vs2)
+                else:
+                    # Scalar / non-distribution parameters (e.g. floats like EEB)
+                    # should still be represented in the table.
+                    data.append([parent, p, "-", v, "-"])
 
         data = []
         for k in MD.BrainMods:
             d0 = m.brain[k]
-            if d0 is not None:
-                if k == "intermitter":
-                    d = MD.module_conf(mID=k, as_entry=False, **d0)
-                    run_mode = d["run_mode"]
-                    for p in d.keylist:
-                        if p == "run_dist" and run_mode == "stridechain":
-                            continue
-                        if p == "stridechain_dist" and run_mode == "exec":
-                            continue
-                        v = d[p]
-                        if v is not None:
-                            dist_name = getattr(v, "name", None)
-                            if dist_name is not None:
-                                vs1, vs2 = reg.get_dist(
-                                    k=p, k0=k, v=v, return_tabrows=True
-                                )
-                                data.append(vs1)
-                                data.append(vs2)
-                            else:
-                                # Scalar / non-distribution parameters (e.g. floats like EEB)
-                                # should still be represented in the table.
-                                data.append([k, p, "-", v, "-"])
-                else:
-                    gen_rows2(d0, k, data)
+            if d0 is None:
+                continue
+            d = MD.module_conf(mID=k, as_entry=False, **d0)
+            if k == "intermitter":
+                run_mode = d.get("run_mode")
+                if run_mode == "stridechain":
+                    d = d.get_copy()
+                    d.pop("run_dist", None)
+                elif run_mode == "exec":
+                    d = d.get_copy()
+                    d.pop("stridechain_dist", None)
+            gen_rows(d, k, data)
 
-        gen_rows2(MD.body_kws(**m.body), "body", data)
-        gen_rows2(MD.physics_kws(**m.physics), "physics", data)
+        gen_rows(MD.body_kws(**m.body), "body", data)
+        gen_rows(MD.physics_kws(**m.physics), "physics", data)
         if "sensorimotor" in m and m.sensorimotor is not None:
-            gen_rows2(MD.sensorimotor_kws(**m.sensorimotor), "sensorimotor", data)
+            gen_rows(MD.sensorimotor_kws(**m.sensorimotor), "sensorimotor", data)
         if m.energetics is not None:
             d = MD.energetics_kws(DEB_kws=m.energetics.DEB, gut_kws=m.energetics.gut)
-            gen_rows2(d.DEB, "DEB", data)
-            gen_rows2(d.gut, "gut", data)
+            gen_rows(d.DEB, "DEB", data)
+            gen_rows(d.gut, "gut", data)
 
         df = pd.DataFrame(data, columns=["field"] + columns)
         df.set_index(["field"], inplace=True)

@@ -291,6 +291,58 @@ class TestModelConfTable:
         assert not row.empty
         assert float(row["value"].iloc[0]) == 0.0
 
+    def test_model_conf_table_includes_every_module_not_just_intermitter(self):
+        """
+        Regression test: gen_rows2's `isinstance(p, param.Parameterized)`
+        filter matched nothing for brain modules OTHER than intermitter
+        (module_conf() returns plain AttrDicts of scalars/typed
+        distribution objects, never Parameterized instances) -- and,
+        confirmed directly, ALSO nothing for body/physics/sensorimotor/
+        energetics (class_defaults()-based dicts are plain AttrDicts too).
+        So every module except the separately special-cased intermitter
+        silently produced zero rows, for every model.
+        """
+
+        def _return_df(df, row_colors, mID, **kwargs):
+            return df
+
+        with patch("larvaworld.lib.plot.table.conf_table", side_effect=_return_df):
+            df_explorer = modelConfTable(mID="explorer")
+            df_navigator = modelConfTable(mID="navigator")
+
+        for df, expected_modules in [
+            (
+                df_explorer,
+                {"CRAWLER", "INTERFERENCE", "TURNER", "INTERMITTER", "BODY", "PHYSICS"},
+            ),
+            (
+                df_navigator,
+                {
+                    "CRAWLER",
+                    "INTERFERENCE",
+                    "TURNER",
+                    "INTERMITTER",
+                    "OLFACTOR",
+                    "BODY",
+                    "PHYSICS",
+                },
+            ),
+        ]:
+            present = set(df.index) - {""}
+            assert expected_modules <= present
+
+    def test_model_conf_table_excludes_mode_and_run_mode(self):
+        """mode/run_mode are selectors, not values worth a table row."""
+
+        def _return_df(df, row_colors, mID, **kwargs):
+            return df
+
+        with patch("larvaworld.lib.plot.table.conf_table", side_effect=_return_df):
+            df = modelConfTable(mID="explorer")
+
+        assert "mode" not in df["parameter"].values
+        assert "run_mode" not in df["parameter"].values
+
 
 @pytest.mark.fast
 class TestMdiffTable:
