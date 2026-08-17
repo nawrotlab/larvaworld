@@ -262,7 +262,13 @@ class LarvaGroup(NestedConf):
         if len(sample_dict) > 0:
             for i in range(Nids):
                 dic = AttrDict({p: vs[i] for p, vs in sample_dict.items()})
-                all_pars[i] = all_pars[i].update_nestdict(dic)
+                # By suffix, and only into fields the model already has --
+                # imitation draws from reg.SAMPLING_PARS unfiltered, which
+                # can include params (e.g. a turner "freq") that don't
+                # apply to this model's actual module modes (e.g. a
+                # "neural" turner has no freq field); update_nestdict would
+                # add them as bogus new fields instead of skipping them.
+                all_pars[i] = all_pars[i].update_existingnestdict_by_suffix(dic)
         return ids, ps, ors, all_pars
 
     def __call__(self, parameter_dict: dict[str, Any] = {}) -> list[dict]:

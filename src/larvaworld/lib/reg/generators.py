@@ -259,7 +259,16 @@ class SimConfigurationParams(SimConfiguration):
                 else:
                     kwargs[k] = parameters[k]
 
-        if "larva_groups" in parameters:
+        # Only override larva_groups when the caller actually asked for an
+        # override -- otherwise (matching the "None means not provided"
+        # convention just above) leave `parameters.larva_groups` as given,
+        # since update_larva_groups() merges these kwargs into every group
+        # unconditionally, including None, which would silently clobber
+        # values already set on `parameters` itself (e.g. a group's own
+        # `sample` from ExpConf.imitation_exp).
+        if "larva_groups" in parameters and any(
+            v is not None for v in (modelIDs, groupIDs, N, sample)
+        ):
             from .larvagroup import update_larva_groups
 
             parameters.larva_groups = update_larva_groups(
@@ -1162,7 +1171,9 @@ class ExpConf(SimOps):
     @classmethod
     def imitation_exp(cls, refID: str, mID: str = "explorer", **kwargs: Any) -> ExpConf:
         c = reg.conf.Ref.getRef(refID)
+        group_id = f"Imitation {refID}"
         kws = {
+            "group_id": group_id,
             "sample": refID,
             "model": mID,
             "color": c.color,
@@ -1173,7 +1184,7 @@ class ExpConf(SimOps):
             dt=c.dt,
             duration=c.duration,
             env_params=gen.Env(**c.env_params),
-            larva_groups=AttrDict({f"Imitation {refID}": gen.LarvaGroup(**kws)}),
+            larva_groups=AttrDict({group_id: gen.LarvaGroup(**kws)}),
             experiment="dish",
             **kwargs,
         )
