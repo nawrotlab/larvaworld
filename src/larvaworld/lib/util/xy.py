@@ -1211,12 +1211,20 @@ def fixate_larva(
         >>> s_fixed, bg = fixate_larva(step_data, config, (0.2, 0.2), P1='centroid', P2='head')
     """
     pars = c.all_xy.existing(s)
-    if not nam.xy(P1).exist_in(s):
-        raise ValueError(f" The requested {P1} is not part of the dataset")
+    P1_xy = nam.xy(P1)
+    if not P1_xy.exist_in(s):
+        # Live-simulation datasets (the "pose" collection) store the single
+        # tracked reference point under bare x/y rather than a
+        # point-prefixed pair (e.g. centroid_x/centroid_y) -- fall back to
+        # that instead of failing outright.
+        if P1 in (None, "centroid") and nam.xy("").exist_in(s):
+            P1_xy = nam.xy("")
+        else:
+            raise ValueError(f" The requested {P1} is not part of the dataset")
     vprint(f"Fixing {P1} to arena center")
     X, Y = arena_dims
-    xy = s[nam.xy(P1)].values
-    xy_start = s[nam.xy(P1)].dropna().values[0]
+    xy = s[P1_xy].values
+    xy_start = s[P1_xy].dropna().values[0]
     bg_x = (xy[:, 0] - xy_start[0]) / X
     bg_y = (xy[:, 1] - xy_start[1]) / Y
 

@@ -25,6 +25,7 @@ from larvaworld.lib.util.xy import (
     rearrange_contour,
     comp_PI,
     Collision,
+    fixate_larva,
 )
 
 
@@ -558,3 +559,60 @@ class TestCollision:
         """Test that Collision is an Exception."""
         collision = Collision(1, 2)
         assert isinstance(collision, Exception)
+
+
+@pytest.mark.fast
+class TestFixateLarva:
+    """
+    Test fixate_larva's P1='centroid' fallback to bare x/y columns.
+
+    Live-simulation ("pose" collection) datasets store their single
+    tracked reference point under bare x/y rather than a point-prefixed
+    pair like centroid_x/centroid_y -- fixate_larva used to raise
+    unconditionally when the point-prefixed pair was missing, even though
+    the physically-equivalent bare x/y pair was right there.
+    """
+
+    def _config(self):
+        from larvaworld.lib.process.dataset import DatasetConfig
+
+        return DatasetConfig(Npoints=0, Ncontour=0)
+
+    def _index(self):
+        return pd.MultiIndex.from_product(
+            [[0, 1, 2], ["a0"]], names=["Step", "AgentID"]
+        )
+
+    def test_fixate_larva_uses_point_prefixed_columns_when_present(self):
+        s = pd.DataFrame(
+            {
+                "centroid_x": [0.0, 1.0, 2.0],
+                "centroid_y": [0.0, 1.0, 2.0],
+            },
+            index=self._index(),
+        )
+        c = self._config()
+
+        s_fixed, bg = fixate_larva(s, c, arena_dims=(1.0, 1.0), P1="centroid")
+
+        # Centroid is fixed to (0, 0) at every step.
+        np.testing.assert_allclose(s_fixed["centroid_x"].to_numpy(), 0.0)
+        np.testing.assert_allclose(s_fixed["centroid_y"].to_numpy(), 0.0)
+
+    def test_fixate_larva_falls_back_to_bare_xy_for_simulated_datasets(self):
+        s = pd.DataFrame(
+            {"x": [0.0, 1.0, 2.0], "y": [0.0, 1.0, 2.0]}, index=self._index()
+        )
+        c = self._config()
+
+        s_fixed, bg = fixate_larva(s, c, arena_dims=(1.0, 1.0), P1="centroid")
+
+        np.testing.assert_allclose(s_fixed["x"].to_numpy(), 0.0)
+        np.testing.assert_allclose(s_fixed["y"].to_numpy(), 0.0)
+
+    def test_fixate_larva_still_raises_when_neither_column_exists(self):
+        s = pd.DataFrame({"other": [0.0, 1.0, 2.0]}, index=self._index())
+        c = self._config()
+
+        with pytest.raises(ValueError, match="not part of the dataset"):
+            fixate_larva(s, c, arena_dims=(1.0, 1.0), P1="centroid")
