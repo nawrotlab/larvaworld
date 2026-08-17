@@ -32,6 +32,12 @@ from larvaworld.portal.canvas_widgets.placement_controller import (
     TapDispatcher,
     pick_nearest,
 )
+from larvaworld.portal.config_widgets.preset_controls import (
+    ADVANCED_PRESET_POLICY,
+    PresetControlsController,
+    PresetRef,
+    WorkspacePresetStore,
+)
 from larvaworld.portal.landing_registry import DOCS_ARENAS_SUBSTRATES
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
 from larvaworld.portal.workspace import WorkspaceError, get_workspace_dir
@@ -287,9 +293,6 @@ _THERMO_SOURCE_COLUMNS = [
     "y",
     "dTemp",
 ]
-
-
-_REGISTRY_PRESET_PREFIX = "__registry__:"
 
 
 def _coerce_xy_sequences(value: object) -> object:
@@ -1275,37 +1278,45 @@ class _EnvironmentBuilderController:
             *self._thermoscape_family.css_classes,
             "lw-env-builder-scape-family",
         ]
-        self.preset_name = pn.widgets.TextInput(
-            name="Preset name",
-            value="environment_builder_config",
-            placeholder="environment_builder_config",
+        # Preset save/load/delete/refresh is the shared PresetControlsController
+        # (config_widgets/preset_controls.py), in dual_write mode: this
+        # builder treats a workspace preset and its same-named registry
+        # entry as one linked unit (Save writes both, Delete removes both)
+        # -- see PresetControlsController's own dual_write docs. Built with
+        # a Path.cwd() placeholder store (always constructible without an
+        # active workspace, mirroring single_experiment_app.py's own
+        # pattern) and immediately re-pointed at the real preset directory
+        # by _sync_preset_controls_availability below.
+        self.preset_controls = PresetControlsController(
+            conftype="Env",
+            workspace_store=WorkspacePresetStore(
+                Path.cwd(), directory_key="environment-builder"
+            ),
+            policy=ADVANCED_PRESET_POLICY,
+            dual_write=True,
+            build_workspace_payload=lambda _name: self._build_export_config_validated(),
+            build_registry_payload=lambda _name: self._build_registry_config(),
+            on_load=self._on_preset_loaded,
+            on_status=self._on_preset_status,
+            title=None,
         )
-        self.preset_select = pn.widgets.Select(
-            name="Saved presets",
-            options={},
-            value=None,
-        )
-        self.save_preset_btn = pn.widgets.Button(
-            name="Save",
-            button_type="success",
-        )
-        self.load_preset_btn = pn.widgets.Button(
-            name="Load",
-            button_type="warning",
-        )
-        self.delete_preset_btn = pn.widgets.Button(
-            name="Delete",
-            button_type="danger",
-        )
+        self.preset_name = self.preset_controls.preset_name
+        self.preset_name.name = "Preset name"
+        self.preset_name.placeholder = "environment_builder_config"
+        self.preset_name.value = "environment_builder_config"
+        self.preset_select = self.preset_controls.preset_select
+        self.preset_select.name = "Saved presets"
+        self.save_preset_btn = self.preset_controls.save_button
+        self.load_preset_btn = self.preset_controls.load_button
+        self.delete_preset_btn = self.preset_controls.delete_button
+        self.refresh_presets_btn = self.preset_controls.refresh_button
+        self.preset_meta = self.preset_controls.storage_info
+        self.preset_overwrite_confirm = self.preset_controls.confirmation_host
         self.load_file_btn, self.load_file_input = build_load_file_button(
             "Import", accept=".json,application/json", button_type="default"
         )
         self.download_file_btn = pn.widgets.Button(
             name="Export",
-            button_type="default",
-        )
-        self.refresh_presets_btn = pn.widgets.Button(
-            name="Refresh list",
             button_type="default",
         )
         self.clear_last_btn = pn.widgets.Button(name="Undo last", button_type="default")
@@ -1325,65 +1336,12 @@ class _EnvironmentBuilderController:
         self.export_btn.css_classes = ["lw-env-builder-hidden-download-proxy"]
         self._register_field(self.preset_name, "preset_name")
         self._register_field(self.preset_select, "preset_select")
-        self.preset_meta = pn.pane.HTML(
-            "",
-            sizing_mode="stretch_width",
-            margin=(0, 0, 4, 0),
-            styles={
-                "font-size": "11px",
-                "line-height": "1.45",
-                "color": "rgba(17, 17, 17, 0.72)",
-                "padding": "8px 10px",
-                "text-align": "left",
-                "background": "rgba(252, 252, 253, 0.99)",
-                "border": "1px solid rgba(90, 71, 96, 0.10)",
-                "border-radius": "8px",
-                "overflow-wrap": "anywhere",
-            },
-        )
-        self._pending_overwrite_id: str | None = None
         self._suspend_arena_update = False
         self._last_valid_arena_controls = {
             "shape": str(self.arena_shape.value),
             "width": float(self.arena_width.value),
             "height": float(self.arena_height.value),
         }
-        self.preset_overwrite_text = pn.pane.Markdown(
-            "",
-            sizing_mode="stretch_width",
-            margin=0,
-            styles={
-                "font-size": "12px",
-                "line-height": "1.4",
-                "padding": "8px 10px",
-                "background": "rgba(255, 244, 214, 0.95)",
-                "border": "1px solid rgba(180, 120, 0, 0.22)",
-                "border-radius": "8px",
-                "color": "rgba(65, 45, 0, 0.92)",
-            },
-        )
-        self.confirm_overwrite_btn = pn.widgets.Button(
-            name="Yes, overwrite",
-            button_type="warning",
-            sizing_mode="stretch_width",
-        )
-        self.cancel_overwrite_btn = pn.widgets.Button(
-            name="No, cancel",
-            button_type="default",
-            sizing_mode="stretch_width",
-        )
-        self.preset_overwrite_confirm = pn.Column(
-            self.preset_overwrite_text,
-            pn.Row(
-                self.confirm_overwrite_btn,
-                self.cancel_overwrite_btn,
-                sizing_mode="stretch_width",
-                margin=(6, 0, 0, 0),
-            ),
-            sizing_mode="stretch_width",
-            margin=(4, 0, 0, 0),
-            visible=False,
-        )
         self._pending_reset_confirmation = False
         self.reset_confirm_text = pn.pane.Markdown(
             "",
@@ -2023,9 +1981,21 @@ class _EnvironmentBuilderController:
         self.table.param.watch(self._on_table_selection_change, "selection")
         self.apply_selected_btn.on_click(self._on_apply_selected_object)
         self.delete_selected_btn.on_click(self._on_delete_selected_object)
-        self.save_preset_btn.on_click(self._on_save_preset)
-        self.load_preset_btn.on_click(self._on_load_preset)
-        self.delete_preset_btn.on_click(self._on_delete_preset)
+        # save_preset_btn/load_preset_btn/delete_preset_btn/refresh_presets_btn
+        # are PresetControlsController's own buttons (aliased above) -- the
+        # controller already wires their primary action internally
+        # (save_current/load_selected/delete_selected/refresh_list); only
+        # the post-action availability sync (disabled state, matching the
+        # old _refresh_preset_controls behavior) needs to be added here.
+        for _preset_btn in (
+            self.save_preset_btn,
+            self.load_preset_btn,
+            self.delete_preset_btn,
+            self.refresh_presets_btn,
+        ):
+            _preset_btn.on_click(
+                lambda _event: self._sync_preset_controls_availability()
+            )
         self.download_file_btn.js_on_click(
             args={"download_proxy": self.export_btn},
             code="""
@@ -2033,9 +2003,6 @@ class _EnvironmentBuilderController:
             """,
         )
         self.load_file_input.param.watch(self._on_load_file, "value")
-        self.refresh_presets_btn.on_click(self._on_refresh_presets)
-        self.confirm_overwrite_btn.on_click(self._on_confirm_overwrite_preset)
-        self.cancel_overwrite_btn.on_click(self._on_cancel_overwrite_preset)
         self.clear_last_btn.on_click(self._on_clear_last)
         self.confirm_reset_btn.on_click(self._on_confirm_reset_configurations)
         self.cancel_reset_btn.on_click(self._on_cancel_reset_configurations)
@@ -2045,7 +2012,6 @@ class _EnvironmentBuilderController:
         self.remove_wind_puff_btn.on_click(self._on_remove_wind_puff)
         self.add_thermo_source_btn.on_click(self._on_add_thermo_source)
         self.remove_thermo_source_btn.on_click(self._on_remove_thermo_source)
-        self.preset_name.param.watch(self._on_preset_name_change, "value")
 
         self._update_insert_hint()
         self._sync_arena_controls()
@@ -2054,7 +2020,12 @@ class _EnvironmentBuilderController:
         self._sync_food_grid_overlay()
         self._sync_odorscape_controls()
         self._sync_scape_preview()
-        self._refresh_preset_controls()
+        # The controller was constructed with a Path.cwd() placeholder
+        # store, so its own internal initial refresh_list() (already run
+        # during PresetControlsController.__init__) reflects that
+        # placeholder, not the real preset directory -- re-point at the
+        # real directory and refresh again now.
+        self._on_refresh_presets()
         self._refresh_object_controls()
         self._sync_arena_lock_state()
 
@@ -2130,6 +2101,7 @@ class _EnvironmentBuilderController:
                     sizing_mode="stretch_width",
                     margin=0,
                 ),
+                self.preset_overwrite_confirm,
                 self.export_btn,
                 sizing_mode="stretch_width",
                 margin=0,
@@ -2670,26 +2642,6 @@ class _EnvironmentBuilderController:
     def _preset_dir(self) -> Path:
         return get_workspace_dir("environments")
 
-    def _preset_filename(self, name: str) -> str:
-        cleaned = re.sub(r"[^a-zA-Z0-9._-]+", "_", name.strip()).strip("._-")
-        if not cleaned:
-            cleaned = "environment_builder_config"
-        if not cleaned.endswith(".json"):
-            cleaned += ".json"
-        return cleaned
-
-    def _preset_label_from_filename(self, filename: str) -> str:
-        return Path(filename).stem
-
-    def _registry_preset_value(self, name: str) -> str:
-        return f"{_REGISTRY_PRESET_PREFIX}{name}"
-
-    def _is_registry_preset(self, selected: str | None) -> bool:
-        return bool(selected and str(selected).startswith(_REGISTRY_PRESET_PREFIX))
-
-    def _registry_preset_name_from_value(self, selected: str) -> str:
-        return str(selected)[len(_REGISTRY_PRESET_PREFIX) :]
-
     def _next_counter_seed(self) -> int:
         highest = 0
         for obj in self._objects:
@@ -2697,144 +2649,6 @@ class _EnvironmentBuilderController:
             if match:
                 highest = max(highest, int(match.group(1)))
         return highest + 1 if highest else len(self._objects) + 1
-
-    def _refresh_preset_controls(self, *, selected_filename: str | None = None) -> None:
-        workspace_message = ""
-        workspace_options: dict[str, str] = {}
-        workspace_labels: set[str] = set()
-        workspace_available = True
-        try:
-            preset_dir = self._preset_dir()
-            preset_dir.mkdir(parents=True, exist_ok=True)
-        except WorkspaceError as exc:
-            preset_dir = None
-            workspace_available = False
-            workspace_message = f"Workspace environments directory unavailable: {exc}"
-        else:
-            preset_files = sorted(preset_dir.glob("*.json"))
-            workspace_labels = {
-                self._preset_label_from_filename(path.name) for path in preset_files
-            }
-            workspace_options = {
-                f"Workspace / {self._preset_label_from_filename(path.name)}": path.name
-                for path in preset_files
-            }
-
-        registry_options = {
-            f"Registry / {name}": self._registry_preset_value(name)
-            for name in sorted(str(key) for key in reg.conf.Env.dict.keys())
-            if name not in workspace_labels
-        }
-        options = {**workspace_options, **registry_options}
-        self.preset_select.options = options
-        self.preset_select.disabled = not bool(options)
-        self.save_preset_btn.disabled = not workspace_available
-        self.refresh_presets_btn.disabled = False
-
-        if not options:
-            self.preset_select.value = None
-            self.load_preset_btn.disabled = True
-        else:
-            self.load_preset_btn.disabled = False
-            if selected_filename in options.values():
-                self.preset_select.value = selected_filename
-            elif self.preset_select.value not in options.values():
-                self.preset_select.value = next(iter(options.values()))
-
-        meta_lines = ["<div>"]
-        if workspace_available and preset_dir is not None:
-            meta_lines.append(
-                f'Workspace preset directory:<br><code style="color: #4a8fd8;">{preset_dir}</code><br>'
-            )
-        elif workspace_message:
-            meta_lines.append(f"{workspace_message}<br>")
-        meta_lines.append(
-            f"{len(registry_options)} Registry environments from:<br>"
-            f'<code style="color: #4a8fd8;">{reg.conf.Env.path_to_dict}</code>'
-        )
-        meta_lines.append("</div>")
-        self.preset_meta.object = "".join(meta_lines)
-        if (
-            self._pending_overwrite_id is not None
-            and not self._preset_id_exists_in_visible_options(
-                self._pending_overwrite_id
-            )
-        ):
-            self._clear_overwrite_confirmation()
-
-    def _preset_id_exists_in_visible_options(self, preset_id: str) -> bool:
-        normalized_id = str(preset_id).strip()
-        if not normalized_id:
-            return False
-        options = self.preset_select.options
-        labels = options.keys() if isinstance(options, dict) else (options or [])
-        for label in labels:
-            label_text = str(label)
-            if " / " in label_text:
-                label_text = label_text.split(" / ", 1)[1]
-            if label_text == normalized_id:
-                return True
-        return False
-
-    def _show_overwrite_confirmation(self, preset_id: str) -> None:
-        self._pending_overwrite_id = preset_id
-        self.preset_overwrite_text.object = (
-            f'Unique ID "{preset_id}" already exists. Overwrite the existing preset?'
-        )
-        self.preset_overwrite_confirm.visible = True
-        self.status.object = (
-            f'Unique ID "{preset_id}" already exists. Confirm overwrite or cancel.'
-        )
-
-    def _clear_overwrite_confirmation(self) -> None:
-        self._pending_overwrite_id = None
-        self.preset_overwrite_text.object = ""
-        self.preset_overwrite_confirm.visible = False
-
-    def _on_preset_name_change(self, _: param.parameterized.Event) -> None:
-        self._clear_overwrite_confirmation()
-
-    def _on_confirm_overwrite_preset(self, _: object) -> None:
-        if not self._pending_overwrite_id:
-            return
-        self._perform_save_preset()
-
-    def _on_cancel_overwrite_preset(self, _: object) -> None:
-        pending_id = self._pending_overwrite_id
-        self._clear_overwrite_confirmation()
-        if pending_id:
-            self.status.object = f'Overwrite cancelled for "{pending_id}".'
-
-    def _perform_save_preset(self) -> None:
-        self._clear_overwrite_confirmation()
-        try:
-            preset_dir = self._preset_dir()
-            preset_dir.mkdir(parents=True, exist_ok=True)
-        except WorkspaceError as exc:
-            self.status.object = (
-                f"Cannot save preset without an active workspace: {exc}"
-            )
-            return
-
-        raw_name = self.preset_name.value.strip() or "environment_builder_config"
-        filename = self._preset_filename(raw_name)
-        target = preset_dir / filename
-        registry_id = self._preset_label_from_filename(filename)
-        validation_error = self._validate_configuration_for_storage()
-        if validation_error is not None:
-            self.status.object = f"{validation_error} Preset was not saved."
-            return
-        payload = self._build_export_config()
-        target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-        env_dict = util.AttrDict(reg.conf.Env.dict).get_copy()
-        env_dict[registry_id] = self._build_registry_config()
-        reg.conf.Env.set_dict(env_dict)
-        self._refresh_preset_controls(selected_filename=filename)
-        self.preset_name.value = registry_id
-        self.status.object = (
-            f'Saved environment preset "{self.preset_name.value}" to the workspace '
-            "and registered it in Env.txt."
-        )
 
     def _selected_row(self) -> _ObjectRow | None:
         selected_id = self._selected_object_id or self.selected_object.value
@@ -3429,75 +3243,68 @@ class _EnvironmentBuilderController:
         self._refresh_object_controls()
         self._update_insert_hint()
 
-    def _on_save_preset(self, _: object) -> None:
-        raw_name = self.preset_name.value.strip() or "environment_builder_config"
-        if (
-            self._preset_id_exists_in_visible_options(raw_name)
-            and self._pending_overwrite_id != raw_name
-        ):
-            self._show_overwrite_confirmation(raw_name)
-            return
-        self._perform_save_preset()
-
-    def _apply_loaded_preset_payload(
-        self,
-        payload: object,
-        *,
-        loaded_name: str,
-        status_prefix: str,
-    ) -> None:
+    def _on_preset_loaded(self, ref: PresetRef, payload: object) -> None:
         if not isinstance(payload, dict):
-            self.status.object = "Preset file is not a valid environment configuration."
-            return
+            raise ValueError("Preset is not a valid environment configuration.")
         self._apply_config(payload)
-        self.preset_name.value = loaded_name
-        self.status.object = f'{status_prefix} "{loaded_name}".'
+        self.preset_name.value = ref.name
 
-    def _on_load_preset(self, _: object) -> None:
-        self._clear_overwrite_confirmation()
-        selected = self.preset_select.value
-        if not selected:
-            self.status.object = "Select a saved preset first."
-            return
+    def _on_preset_status(self, message: str, *, tone: str = "neutral") -> None:
+        # PresetControlsController's own construction runs its initial
+        # refresh_list() (and so this callback) before self.status exists
+        # yet, since preset_controls is built early in __init__ -- no-op
+        # in that case; the real post-construction refresh at the end of
+        # __init__ (_on_refresh_presets) sets an accurate status anyway.
+        status = getattr(self, "status", None)
+        if status is not None:
+            status.object = message
 
-        if self._is_registry_preset(str(selected)):
-            registry_name = self._registry_preset_name_from_value(str(selected))
-            try:
-                payload = util.AttrDict(reg.conf.Env.getID(registry_name)).get_copy()
-            except Exception as exc:
-                self.status.object = f"Failed to load registry environment: {exc}"
-                return
-            loaded_name = registry_name
-            status_prefix = "Loaded registry environment"
-        else:
-            try:
-                path = self._preset_dir() / str(selected)
-            except WorkspaceError as exc:
-                self.status.object = (
-                    f"Cannot load workspace preset without an active workspace: {exc}"
-                )
-                return
-
-            try:
-                payload = json.loads(path.read_text(encoding="utf-8"))
-            except FileNotFoundError:
-                self._refresh_preset_controls()
-                self.status.object = "Selected preset file no longer exists."
-                return
-            except (OSError, json.JSONDecodeError) as exc:
-                self.status.object = f"Failed to read preset: {exc}"
-                return
-            loaded_name = path.stem
-            status_prefix = "Loaded environment preset"
-
-        self._apply_loaded_preset_payload(
-            payload,
-            loaded_name=loaded_name,
-            status_prefix=status_prefix,
+    def _resolve_preset_workspace_store(self) -> bool:
+        """Re-point preset_controls at the real preset directory. Returns
+        whether an active workspace is actually available. On failure,
+        points at a definitely-nonexistent sentinel directory instead of
+        leaving the Path.cwd() construction-time placeholder in place --
+        otherwise WorkspacePresetStore.list_presets() would glob stray
+        *.json files from the process's actual working directory."""
+        try:
+            preset_dir = self._preset_dir()
+            preset_dir.mkdir(parents=True, exist_ok=True)
+        except WorkspaceError:
+            self.preset_controls.workspace_store = WorkspacePresetStore(
+                Path.cwd() / ".larvaworld_env_presets_unavailable",
+                directory_key="environment-builder",
+            )
+            return False
+        self.preset_controls.workspace_store = WorkspacePresetStore(
+            preset_dir, directory_key="environment-builder"
         )
+        return True
+
+    def _sync_preset_controls_availability(self) -> None:
+        # Mirrors the old _refresh_preset_controls' disabled-state rules:
+        # Save requires an active workspace (dual_write always needs to
+        # write the workspace side too); Load is only useful once there's
+        # at least one preset (workspace or registry) to pick.
+        workspace_available = self._resolve_preset_workspace_store()
+        self.preset_controls.save_button.disabled = not workspace_available
+        self.preset_controls.load_button.disabled = not bool(
+            self.preset_controls.preset_select.options
+        )
+        if not workspace_available:
+            self.preset_controls.storage_info.object = (
+                "Storage info:\n"
+                "Workspace environments directory unavailable "
+                "(no active workspace).\n\n"
+                f"Registry presets from:\n  `{self.preset_controls.registry_store.source_path}`"
+            )
+
+    def _on_save_preset(self, _: object = None) -> None:
+        self.preset_controls.save_current()
+
+    def _on_load_preset(self, _: object = None) -> None:
+        self.preset_controls.load_selected()
 
     def _on_load_file(self, _: param.parameterized.Event) -> None:
-        self._clear_overwrite_confirmation()
         raw_value = self.load_file_input.value
         if raw_value in (None, b"", ""):
             return
@@ -3514,70 +3321,20 @@ class _EnvironmentBuilderController:
         except Exception as exc:
             self.status.object = f"Failed to load file: {exc}"
             return
-
-        self._apply_loaded_preset_payload(
-            payload,
-            loaded_name=loaded_name,
-            status_prefix="Loaded environment file",
-        )
-
-    def _on_delete_preset(self, _: object) -> None:
-        self._clear_overwrite_confirmation()
-        selected = self.preset_select.value
-        if not selected:
-            self.status.object = "Select a saved preset first."
+        if not isinstance(payload, dict):
+            self.status.object = "Preset file is not a valid environment configuration."
             return
+        self._apply_config(payload)
+        self.preset_name.value = loaded_name
+        self.status.object = f'Loaded environment file "{loaded_name}".'
 
-        deleted_workspace = False
-        deleted_registry = False
+    def _on_delete_preset(self, _: object = None) -> None:
+        self.preset_controls.delete_selected()
 
-        if self._is_registry_preset(str(selected)):
-            registry_name = self._registry_preset_name_from_value(str(selected))
-            reg.conf.Env.delete(registry_name)
-            deleted_registry = registry_name not in reg.conf.Env.dict
-            deleted_label = registry_name
-        else:
-            try:
-                path = self._preset_dir() / str(selected)
-            except WorkspaceError as exc:
-                self.status.object = (
-                    f"Cannot delete workspace preset without an active workspace: {exc}"
-                )
-                return
-
-            deleted_label = path.stem
-            try:
-                path.unlink()
-                deleted_workspace = True
-            except FileNotFoundError:
-                deleted_workspace = False
-            except OSError as exc:
-                self.status.object = f"Failed to delete preset file: {exc}"
-                return
-
-            reg.conf.Env.delete(deleted_label)
-            deleted_registry = deleted_label not in reg.conf.Env.dict
-
-        self._refresh_preset_controls()
-        removed_targets: list[str] = []
-        if deleted_workspace:
-            removed_targets.append("workspace")
-        if deleted_registry:
-            removed_targets.append("registry")
-        if not removed_targets:
-            self.status.object = (
-                f'Preset "{deleted_label}" was already missing from the selected store.'
-            )
-            return
-        removed_text = " and ".join(removed_targets)
-        self.status.object = f'Deleted preset "{deleted_label}" from {removed_text}.'
-
-    def _on_refresh_presets(self, _: object) -> None:
-        self._clear_overwrite_confirmation()
-        self._refresh_preset_controls(
-            selected_filename=str(self.preset_select.value or "")
-        )
-        self.status.object = "Refreshed environment preset list."
+    def _on_refresh_presets(self, _: object = None) -> None:
+        self._resolve_preset_workspace_store()
+        self.preset_controls.refresh_list()
+        self._sync_preset_controls_availability()
 
     def _on_apply_selected_object(self, _: object) -> None:
         current = self._selected_row()
@@ -4369,7 +4126,6 @@ class _EnvironmentBuilderController:
         self._sync_scape_preview()
 
     def _on_clear_arena(self, _: object) -> None:
-        self._clear_overwrite_confirmation()
         self._clear_reset_confirmation()
         self._clear_arena_contents()
         self.status.object = "Cleared all arena objects."
@@ -4383,14 +4139,14 @@ class _EnvironmentBuilderController:
         try:
             reg_config.resetConfs(conftypes=["Env"], recreate=True)
         except Exception as exc:
-            self._refresh_preset_controls()
+            self._on_refresh_presets()
             self.status.object = (
                 "Cleared all placed objects, but failed to recreate the Env registry: "
                 f"{exc}"
             )
             return
 
-        self._refresh_preset_controls()
+        self._on_refresh_presets()
         self.status.object = (
             "Cleared all placed objects and recreated the Env registry."
         )
@@ -4781,6 +4537,16 @@ class _EnvironmentBuilderController:
 
     def _build_registry_config(self) -> util.AttrDict:
         return _translate_builder_environment_payload(self._build_export_config())
+
+    def _build_export_config_validated(self) -> dict[str, object]:
+        # PresetControlsController's dual-write save calls
+        # build_workspace_payload before build_registry_payload, so
+        # raising here blocks both writes -- validation only needs to
+        # happen once per save.
+        validation_error = self._validate_configuration_for_storage()
+        if validation_error is not None:
+            raise ValueError(f"{validation_error} Preset was not saved.")
+        return self._build_export_config()
 
     def _export_json(self) -> io.StringIO:
         payload = self._build_export_config()

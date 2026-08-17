@@ -75,8 +75,12 @@ def test_environment_builder_saves_preset_to_workspace(tmp_path: Path) -> None:
     registry_payload = reg.conf.Env.dict["Arena_Alpha"]
     assert registry_payload["arena"]["dims"] == (0.2, 0.2)
     assert "food_001" in registry_payload["food_params"]["source_units"]
-    assert controller.preset_select.value == "Arena_Alpha.json"
-    assert "Saved environment preset" in controller.status.object
+    assert (
+        controller.preset_select.value
+        == controller.preset_select.options["Workspace / Arena_Alpha"]
+    )
+    assert "Saved" in controller.status.object
+    assert "workspace and registry" in controller.status.object
 
 
 def test_environment_builder_loads_preset_from_workspace(tmp_path: Path) -> None:
@@ -115,7 +119,9 @@ def test_environment_builder_loads_preset_from_workspace(tmp_path: Path) -> None
     )
 
     controller = _EnvironmentBuilderController()
-    controller.preset_select.value = "demo_env.json"
+    controller.preset_select.value = controller.preset_select.options[
+        "Workspace / demo_env"
+    ]
 
     controller._on_load_preset(None)
 
@@ -133,7 +139,7 @@ def test_environment_builder_loads_preset_from_workspace(tmp_path: Path) -> None
     assert controller.odor_peak_source.data["id"] == []
     assert controller.border_source.data["id"] == ["border_custom"]
     assert controller.preset_name.value == "demo_env"
-    assert 'Loaded environment preset "demo_env"' in controller.status.object
+    assert "Loaded Workspace / demo_env" in controller.status.object
 
 
 def test_environment_builder_loads_environment_from_local_json_file() -> None:
@@ -215,7 +221,9 @@ def test_environment_builder_loads_registry_environment_without_workspace() -> N
 
     assert controller.load_preset_btn.disabled is False
     assert "Registry / registry_env" in controller.preset_select.options
-    controller.preset_select.value = "__registry__:registry_env"
+    controller.preset_select.value = controller.preset_select.options[
+        "Registry / registry_env"
+    ]
 
     controller._on_load_preset(None)
 
@@ -231,7 +239,7 @@ def test_environment_builder_loads_registry_environment_without_workspace() -> N
     assert controller.food_source.data["id"] == ["food_registry"]
     assert controller.odor_peak_source.data["id"] == []
     assert controller.border_source.data["id"] == ["barrier_001", "barrier_002"]
-    assert 'Loaded registry environment "registry_env"' in controller.status.object
+    assert "Loaded Registry / registry_env" in controller.status.object
 
 
 def test_environment_builder_deletes_workspace_preset_and_registry_entry(
@@ -256,15 +264,17 @@ def test_environment_builder_deletes_workspace_preset_and_registry_entry(
     assert preset_path.is_file()
     assert "Arena_Alpha" in reg.conf.Env.dict
 
-    controller.preset_select.value = "Arena_Alpha.json"
+    controller.preset_select.value = controller.preset_select.options[
+        "Workspace / Arena_Alpha"
+    ]
     controller._on_delete_preset(None)
+    controller.preset_controls.confirm_pending_action()
 
     assert not preset_path.exists()
     assert "Arena_Alpha" not in reg.conf.Env.dict
     assert "Workspace / Arena_Alpha" not in controller.preset_select.options
     assert (
-        'Deleted preset "Arena_Alpha" from workspace and registry.'
-        == controller.status.object
+        'Deleted "Arena_Alpha" from workspace and registry.' == controller.status.object
     )
 
 
@@ -290,13 +300,16 @@ def test_environment_builder_deletes_registry_only_preset() -> None:
     )
 
     controller = _EnvironmentBuilderController()
-    controller.preset_select.value = "__registry__:registry_env"
+    controller.preset_select.value = controller.preset_select.options[
+        "Registry / registry_env"
+    ]
 
     controller._on_delete_preset(None)
+    controller.preset_controls.confirm_pending_action()
 
     assert "registry_env" not in reg.conf.Env.dict
     assert "Registry / registry_env" not in controller.preset_select.options
-    assert controller.status.object == 'Deleted preset "registry_env" from registry.'
+    assert controller.status.object == 'Deleted "registry_env" from registry.'
 
 
 def test_environment_builder_reset_configurations_recreates_env_registry() -> None:
@@ -486,7 +499,9 @@ def test_environment_builder_loads_source_groups_and_food_grid(
     )
 
     controller = _EnvironmentBuilderController()
-    controller.preset_select.value = "group_env.json"
+    controller.preset_select.value = controller.preset_select.options[
+        "Workspace / group_env"
+    ]
 
     controller._on_load_preset(None)
 
@@ -912,7 +927,7 @@ def test_environment_builder_blocks_save_when_source_group_members_leave_arena(
     assert "Invalid_Group_Arena" in reg.conf.Env.dict
     assert (
         controller.status.object
-        == 'Saved environment preset "Invalid_Group_Arena" to the workspace and registered it in Env.txt.'
+        == 'Saved "Invalid_Group_Arena" to workspace and registry.'
     )
 
 
