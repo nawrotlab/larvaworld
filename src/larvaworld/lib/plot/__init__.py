@@ -18,6 +18,7 @@ __all__: list[str] = [
     "deb",
     "epochs",
     "freq",
+    "ga",
     "grid",
     "hist",
     "metric",
