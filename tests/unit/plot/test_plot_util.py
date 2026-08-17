@@ -267,6 +267,32 @@ class TestSavePlot:
 
         plt.close(fig)
 
+    def test_save_plot_crops_to_content_not_nominal_figsize(self, tmp_path):
+        """
+        Regression test: save_plot used to call fig.savefig() with no
+        bbox_inches/pad_inches, so every saved PDF page was the full
+        nominal figsize canvas (often built with generous margins for
+        multi-panel grids) rather than the tightly-cropped content --
+        every plot in the package came out with a much bigger page than
+        its actual drawn content. A figure with a large nominal size but
+        content confined to a small corner should now save much smaller
+        than its nominal figsize.
+        """
+        fig, ax = plt.subplots(figsize=(20, 20))
+        ax.set_position([0.05, 0.05, 0.1, 0.1])  # tiny corner of a large canvas
+        ax.plot([0, 1], [0, 1])
+
+        filepath = str(tmp_path / "test_plot.pdf")
+        save_plot(fig=fig, filepath=filepath, filename="test_plot.pdf")
+
+        from pypdf import PdfReader
+
+        page = PdfReader(filepath).pages[0]
+        width_in = float(page.mediabox.width) / 72
+        height_in = float(page.mediabox.height) / 72
+        assert width_in < 15
+        assert height_in < 15
+
 
 @pytest.mark.fast
 class TestProcessPlot:

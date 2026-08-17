@@ -88,7 +88,7 @@ def calibration_plot(
         ax.axis("off")
         ax.imshow(im, cmap=None, aspect=None)
     filepath = os.path.join(save_to, filename)
-    fig.savefig(filepath, dpi=300, facecolor=None)
+    fig.savefig(filepath, dpi=300, facecolor=None, bbox_inches="tight", pad_inches=0.1)
 
     return fig
 
@@ -282,7 +282,7 @@ def velocity_definition(
     fig.subplots_adjust(
         hspace=0.1, wspace=0.5, bottom=0.1, top=0.9, left=0.07, right=0.95
     )
-    fig.savefig(f"{save_to}/{save_as}", dpi=300)
+    fig.savefig(f"{save_to}/{save_as}", dpi=300, bbox_inches="tight", pad_inches=0.1)
 
 
 @funcs.graph(
