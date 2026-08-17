@@ -1799,7 +1799,7 @@ class ParamLarvaDataset(param.Parameterized):
                     mid[:, idx2, 0] - mid[:, idx1, 0],
                     mid[:, idx2, 1] - mid[:, idx1, 1],
                 )
-                s[par] = np.arctan2(y, x) % 2 * np.pi
+                s[par] = np.arctan2(y, x) % (2 * np.pi)
 
         if mode == "full":
             mid = self.midline_xy_data
