@@ -525,7 +525,15 @@ class GAlauncher(BaseRun):
             if self.best_genome is None or g0.fitness > self.best_genome.fitness:
                 self.best_genome = g0
                 self.best_fitness = self.best_genome.fitness
-                reg.conf.Model.setID(self.selector.bestConfID, self.best_genome.mConf)
+                # new_genome() injects a fixed, non-optimized life_history
+                # constant (needed to instantiate a live agent during the
+                # GA run) that the base model was never given -- registering
+                # it verbatim under bestConfID would make every later
+                # base-vs-best model diff flag life_history as "different"
+                # (it isn't -- it's a constant, not an optimization result).
+                mConf_to_register = self.best_genome.mConf.get_copy()
+                mConf_to_register.pop("life_history", None)
+                reg.conf.Model.setID(self.selector.bestConfID, mConf_to_register)
         vprint(f"Generation {Ngen} best_fitness : {self.best_fitness}", 1)
         if self.store_data:
             self.all_genomes_dic += [
@@ -706,9 +714,11 @@ class GAlauncher(BaseRun):
         except Exception as exc:
             vprint(f"Could not compute GA parameter correlation matrix: {exc}", 1)
         try:
+            mConf_for_diff = self.best_genome.mConf.get_copy()
+            mConf_for_diff.pop("life_history", None)
             self.diff_df, row_colors = diff_df(
                 mIDs=[self.selector.base_model, self.selector.bestConfID],
-                ms=[self.selector.mConf0, self.best_genome.mConf],
+                ms=[self.selector.mConf0, mConf_for_diff],
             )
         except Exception as exc:
             vprint(f"Could not compute GA best-vs-base model diff: {exc}", 1)

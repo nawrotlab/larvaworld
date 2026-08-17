@@ -84,3 +84,13 @@ def test_genetic_algorithm_stores_per_generation_results():
 
     assert hasattr(ga, "corr_df")
     assert hasattr(ga, "diff_df")
+
+    # GAselector.new_genome() injects a fixed, non-optimized life_history
+    # constant into every live genome's mConf (needed to instantiate an
+    # agent during the run). The static base model never had it, so
+    # registering best_genome.mConf verbatim used to make every
+    # base-vs-best diff spuriously flag life_history as "different" and
+    # blank out the base model's column on those rows.
+    stored = reg.conf.Model.getID(bestConfID)
+    assert "life_history" not in stored.flatten()
+    assert "life_history" not in ga.diff_df["parameter"].values

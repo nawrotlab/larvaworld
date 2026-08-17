@@ -518,6 +518,39 @@ def diff_df(
     """
     from ..model import moduleDB as MD
 
+    def _resolve_missing_default(m: Any, k: str) -> Any:
+        """
+        Best-effort resolution of a flattened key missing from a model's
+        stored config, via its brain module's class-level default.
+
+        Model configs are stored without fields already at their class
+        default (e.g. a turner's ``input_noise``/``output_noise`` default
+        to 0.0 and are commonly omitted), so a plain ``k in m`` miss does
+        not mean the model has no value for ``k`` -- only that it wasn't
+        serialized. Resolves via the actual param class backing the same
+        brain module + mode present on ``m`` itself (covers module-level
+        params as well as inherited Effector-level ones such as the noise
+        params, which ``module_conf``'s default dict deliberately excludes
+        for display purposes); returns None (former behavior) if
+        unresolvable.
+        """
+        parts = k.split(".")
+        if len(parts) < 3 or parts[0] != "brain":
+            return None
+        mod, leaf = parts[1], parts[-1]
+        mode = m.get(f"brain.{mod}.mode")
+        if mode is None:
+            return None
+        try:
+            cls = MD.brainDB[mod].get_class(mode=mode)
+            return (
+                cls.param[leaf].default
+                if cls is not None and leaf in cls.param
+                else None
+            )
+        except Exception:
+            return None
+
     dic = {}
     if dIDs is None:
         dIDs = mIDs
@@ -527,7 +560,10 @@ def diff_df(
     ks = util.unique_list(util.flatten_list([m.keylist for m in ms]))
 
     for k in ks:
-        entry = {dID: m[k] if k in m else None for dID, m in zip(dIDs, ms)}
+        entry = {
+            dID: m[k] if k in m else _resolve_missing_default(m, k)
+            for dID, m in zip(dIDs, ms)
+        }
         l = list(entry.values())
         if all([a == l[0] for a in l]):
             continue

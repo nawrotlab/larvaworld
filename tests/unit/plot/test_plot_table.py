@@ -13,6 +13,7 @@ import pytest
 
 from larvaworld.lib.plot.table import (
     arrange_index_labels,
+    diff_df,
     mdiff_table,
     modelConfTable,
     mpl_table,
@@ -361,6 +362,39 @@ class TestMdiffTable:
         fig = mdiff_table(mIDs=["explorer", "navigator"], return_fig=True)
 
         assert isinstance(fig, matplotlib.figure.Figure)
+
+    def test_diff_df_resolves_missing_key_to_class_default_not_none(self):
+        """
+        A field entirely absent from a model's *stored* flattened config
+        (because it happens to sit at its class-level default, e.g. a
+        turner's ``input_noise``/``output_noise``) should diff as that
+        default value, not as a blank ``None`` -- "explorer has no value"
+        was misleading: the model does have a value (0.0), it just wasn't
+        serialized. A field whose entire *module* is genuinely absent from
+        one side (e.g. "explorer" has no olfactor at all) must still show
+        None, since there is no mode to resolve a default against.
+        """
+        from larvaworld.lib import reg
+
+        m = reg.conf.Model.getID("explorer").get_copy()
+        m2 = m.get_copy()
+        m2.brain.turner.input_noise = 0.5623
+        m2.brain.turner.output_noise = 0.3187
+
+        df, _ = diff_df(mIDs=["explorer", "modified"], ms=[m, m2])
+        df = df.set_index("parameter")
+
+        assert df.loc["input_noise", "explorer"] == 0.0
+        assert df.loc["input_noise", "modified"] == pytest.approx(0.5623)
+        assert df.loc["output_noise", "explorer"] == 0.0
+        assert df.loc["output_noise", "modified"] == pytest.approx(0.3187)
+
+        df2, _ = diff_df(
+            mIDs=["explorer", "navigator"],
+            ms=[m, reg.conf.Model.getID("navigator")],
+        )
+        df2 = df2.set_index("parameter")
+        assert df2.loc["Odor", "explorer"] is None
 
 
 @pytest.mark.fast
