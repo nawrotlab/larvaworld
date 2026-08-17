@@ -9,6 +9,13 @@ from .environment_models import (
     EnvironmentCanvasState,
     LarvaPreviewFrame,
 )
+from .placement_controller import (
+    HitCandidate,
+    ObjectTable,
+    SelectionSync,
+    TapDispatcher,
+    pick_nearest,
+)
 
 __all__ = [
     "CanvasArena",
@@ -18,6 +25,11 @@ __all__ = [
     "EnvironmentCanvasState",
     "LarvaPreviewFrame",
     "env_params_to_canvas_state",
+    "HitCandidate",
+    "ObjectTable",
+    "SelectionSync",
+    "TapDispatcher",
+    "pick_nearest",
 ]
 
 
