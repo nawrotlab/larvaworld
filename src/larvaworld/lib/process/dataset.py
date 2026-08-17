@@ -2642,11 +2642,32 @@ class LarvaDatasetCollection:
         return util.ItemList(datasets)
 
     def get_colors(self):
+        """
+        Assign each dataset a distinct display color.
+
+        Datasets with an explicit, not-yet-used ``config.color`` keep it;
+        every other dataset (missing or duplicate color) draws from one
+        coordinated `~larvaworld.lib.util.N_colors` batch sized to the full
+        collection, so colors stay maximally distinct across the group
+        instead of each falling back to an independent one-off random draw.
+
+        Returns:
+            List of color strings, one per dataset, in `self.datasets` order.
+        """
+        fallback = util.N_colors(len(self.datasets))
         colors = []
+        fi = 0
         for d in self.datasets:
             color = d.config.color
-            while color is None or color in colors:
-                color = util.colortuple2str(util.random_colors(1)[0])
+            if color is None or color in colors:
+                while fi < len(fallback) and fallback[fi] in colors:
+                    fi += 1
+                color = (
+                    fallback[fi]
+                    if fi < len(fallback)
+                    else util.colortuple2str(util.random_colors(1)[0])
+                )
+                fi += 1
             colors.append(color)
         return colors
 
