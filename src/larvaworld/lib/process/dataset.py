@@ -2605,8 +2605,9 @@ class LarvaDatasetCollection:
             )
             if len(dir0) == 1:
                 return dir0[0]
-            else:
-                raise
+            # No single common parent directory -- fall through to the
+            # implicit None return below, same as every other case this
+            # method can't resolve (e.g. Ndatasets <= 1 or Ngroups > 1).
 
     @property
     def plot_dir(self):
@@ -2645,7 +2646,7 @@ class LarvaDatasetCollection:
         for d in self.datasets:
             color = d.config.color
             while color is None or color in colors:
-                color = util.random_colors(1)[0]
+                color = util.colortuple2str(util.random_colors(1)[0])
             colors.append(color)
         return colors
 

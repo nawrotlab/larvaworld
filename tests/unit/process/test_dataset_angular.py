@@ -66,3 +66,37 @@ def test_reconstruct_at_Nsegs_produces_a_separately_stored_comparable_dataset(
     # The original dataset itself must be untouched (deepcopy, not mutation).
     assert d.config.dir != new_dir
     assert d.id == "30controls"
+
+
+def test_angular_pars_plot_across_real_and_reconstructed_datasets(
+    real_dataset, tmp_path: Path
+) -> None:
+    """
+    Regression test for two real bugs hit when plotting a dataset against
+    its own reconstruct_at_Nsegs() output (same config.color, genuinely
+    different config.dir):
+
+    - LarvaDatasetCollection.get_colors() compared a candidate replacement
+      color (a numpy array from util.random_colors) against a list of
+      plain color strings via `in`, raising "the truth value of an array
+      with more than one element is ambiguous" -- triggered whenever two
+      plotted datasets share the same config.color (the normal case for a
+      dataset and a copy of it).
+    - LarvaDatasetCollection.set_dir() used a bare `raise` (no active
+      exception) when datasets don't share a common parent directory,
+      always crashing instead of falling through to the same `None`
+      fallback every other unresolved case in that method already uses.
+    """
+    from larvaworld.lib import reg
+
+    d = real_dataset
+    d2 = d.reconstruct_at_Nsegs(2, new_dir=str(tmp_path / "reconstructed_2seg"))
+    assert d.config.color == d2.config.color  # the exact trigger condition
+
+    fig, save_to, filename = reg.graphs.run(
+        "angular pars",
+        datasets=[d, d2],
+        labels=["real", "reconstructed"],
+        return_fig=True,
+    )
+    assert hasattr(fig, "savefig")
