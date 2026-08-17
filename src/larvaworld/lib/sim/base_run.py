@@ -8,7 +8,31 @@ from ..model import agents, envs
 
 __all__: list[str] = [
     "BaseRun",
+    "render_configuration_text",
 ]
+
+
+def render_configuration_text(title: str, items: dict[str, Any]) -> str:
+    """
+    Format a title + crucial-field mapping as the on-screen intro text.
+
+    Fields whose value is None are skipped, so callers can pass optional,
+    run-type-specific fields unconditionally and let this function decide
+    whether they're worth a line.
+
+    Args:
+        title: Heading line, e.g. "Simulation configuration".
+        items: Ordered mapping of field label to value.
+
+    Returns:
+        Multi-line text, one field per line under the title.
+    """
+    pref0 = "     "
+    lines = [f"{title} : "]
+    for k, v in items.items():
+        if v is not None:
+            lines.append(f"{pref0}{k} : {v}")
+    return "\n".join(lines)
 
 
 class BaseRun(ABModel):
@@ -252,23 +276,29 @@ class BaseRun(ABModel):
         # raise
 
     @property
-    def configuration_text(self):
+    def configuration_items(self) -> dict[str, Any]:
+        """
+        Crucial, at-a-glance identity fields for the on-screen intro text:
+        what kind of run this is, its identity, where it is stored, and its
+        timing. Subclasses (e.g. `ReplayRun`) extend this dict with their
+        own crucial fields instead of replacing it outright, so run-type-
+        specific info never comes at the cost of dropping this shared core.
+        """
         c = self.p
-        pref0 = "     "
-        text = (
-            f"Simulation configuration : \n"
-            f"{pref0}Simulation mode : {c.runtype}\n"
-            f"{pref0}Experiment : {c.experiment}\n"
-            f"{pref0}Simulation ID : {c.id}\n"
-            f"{pref0}Duration (min) : {c.duration}\n"
-            f"{pref0}Timestep (sec) : {c.dt}\n"
-            f"{pref0}Ticks (#) : {c.Nsteps}\n"
-            f"{pref0}Box2D active : {c.Box2D}\n"
-            f"{pref0}Offline mode : {c.offline}\n"
-            f"{pref0}Data storage : {c.store_data}\n"
-            f"{pref0}Parent path : {c.dir}"
+        return {
+            "Simulation mode": c.runtype,
+            "Experiment": c.experiment,
+            "Simulation ID": c.id,
+            "Storage directory": c.dir,
+            "Duration (min)": c.duration,
+            "Timestep (sec)": c.dt,
+        }
+
+    @property
+    def configuration_text(self) -> str:
+        return render_configuration_text(
+            "Simulation configuration", self.configuration_items
         )
-        return text
 
     @classmethod
     def visualize_Env(

@@ -41,6 +41,14 @@ class ScreenTextFont(NestedConf):
     font_size = PositiveInteger(20, doc="The font size")
     font_type = param.Parameter("Trebuchet MS", doc="The font type to use")
     text_centre = NumericTuple2DRobust(doc="The text center position")
+    line_spacing_scale = PositiveNumber(
+        1.6, doc="Per-line vertical spacing, as a multiple of font_size"
+    )
+    max_text_width = param.Integer(
+        None,
+        doc="Max pixel width per rendered line. Lines longer than this are "
+        "word-wrapped into multiple rendered lines. None disables wrapping.",
+    )
 
     def __init__(self, end_time: int = 0, start_time: int = 0, **kwargs: Any):
         self.font = None
@@ -65,19 +73,63 @@ class ScreenTextFont(NestedConf):
         else:
             N = self.N_text_lines
             ls = self.text_lines
+            line_height = int(self.font_size * self.line_spacing_scale)
             self.text_font = []
             self.text_font_r = []
             x0, y0 = self.text_centre
             for i in range(N):
                 f = self.font.render(ls[i], True, self.text_color)
                 r = f.get_rect()
-                r.center = x0, y0 + (i - int(N / 2)) * 50
+                r.center = x0, y0 + (i - int(N / 2)) * line_height
                 self.text_font.append(f)
                 self.text_font_r.append(r)
 
+    def _split_oversized_word(self, word: str) -> list[str]:
+        # A single space-free token (e.g. an underscore-joined refID) can
+        # still exceed max_text_width on its own; word-wrapping alone can't
+        # break it, so fall back to character-level chunking.
+        chunks: list[str] = []
+        cur = ""
+        for ch in word:
+            trial = cur + ch
+            if cur and self.font.size(trial)[0] > self.max_text_width:
+                chunks.append(cur)
+                cur = ch
+            else:
+                cur = trial
+        if cur:
+            chunks.append(cur)
+        return chunks
+
+    def _wrap_line(self, line: str) -> list[str]:
+        if not line or not self.max_text_width or not self.font:
+            return [line]
+        words = line.split(" ")
+        out: list[str] = []
+        cur = ""
+        for w in words:
+            trial = f"{cur} {w}".strip()
+            if not cur or self.font.size(trial)[0] <= self.max_text_width:
+                cur = trial
+            else:
+                out.append(cur)
+                cur = w
+            if self.font.size(cur)[0] > self.max_text_width:
+                *chunks, cur = self._split_oversized_word(cur)
+                out.extend(chunks)
+        if cur:
+            out.append(cur)
+        return out
+
     @property
     def text_lines(self) -> list[str]:
-        return self.text.splitlines()
+        raw = self.text.splitlines()
+        if not self.max_text_width or not self.font:
+            return raw
+        wrapped: list[str] = []
+        for line in raw:
+            wrapped.extend(self._wrap_line(line))
+        return wrapped
 
     @property
     def N_text_lines(self) -> int:
@@ -164,6 +216,8 @@ class ScreenTextBoxRect(ScreenTextFont, Viewable):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.text_centre = self.frame_rect.center
+        if self.max_text_width is None and self.frame_rect is not None:
+            self.max_text_width = int(self.frame_rect.width * 0.92)
 
     def draw(self, v: Any, **kwargs: Any) -> None:
         if self.show_frame and self.frame_rect is not None:

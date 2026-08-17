@@ -6,7 +6,7 @@ import copy
 import numpy as np
 
 from .. import reg, util
-from .base_run import BaseRun
+from .base_run import BaseRun, render_configuration_text
 from ..util import nam
 
 __all__: list[str] = [
@@ -62,19 +62,28 @@ class ReplayRun(BaseRun):
         )
 
     @property
-    def configuration_text(self):
+    def configuration_items(self) -> dict[str, Any]:
+        """
+        Extends `BaseRun.configuration_items` (sim type/ID/storage dir/
+        timing) with the replay-specific fields that are actually active
+        for this replay -- optional fields left at their "unused" default
+        (no time slice, no transposition, no fixed track point) are
+        omitted rather than shown as clutter.
+        """
         c = self.p
-        pref0 = "     "
-        text = (
-            f"Dataset Replay configuration : \n"
-            f"{pref0}Reference Dataset : {c.refID}\n"
-            f"{pref0}Duration (min) : {c.duration}\n"
-            f"{pref0}Timestep (sec) : {c.dt}\n"
-            f"{pref0}Time range (sec) : {c.time_range}\n"
-            f"{pref0}Transposition : {c.transposition}\n"
-            f"{pref0}Tracked midline point : {c.point}"
+        items = dict(super().configuration_items)
+        items["Reference Dataset"] = c.refID
+        items["Time range (sec)"] = c.time_range
+        items["Transposition"] = c.transposition
+        if c.track_point is not None and c.track_point != -1:
+            items["Tracked midline point"] = c.track_point
+        return items
+
+    @property
+    def configuration_text(self) -> str:
+        return render_configuration_text(
+            "Dataset Replay configuration", self.configuration_items
         )
-        return text
 
     def setup(self) -> None:
         self.draw_Nsegs = self.p.draw_Nsegs

@@ -56,7 +56,12 @@ class MediaDrawOps(NestedConf):
         snapshot_interval_in_sec: Seconds between snapshots
         video_file: Filename for saved videos (without .mp4 extension)
         media_dir: Directory for saving media files
-        fps: Video frames per second
+        fps: Real-time playback speed multiplier for saved video, NOT a
+            literal output frame rate -- one video frame is written per
+            simulation tick, so playback duration = Nticks * dt / fps.
+            fps=1 yields exact real-time playback (a `duration`-second
+            simulation produces a `duration`-second video); the default of
+            60 produces a 60x sped-up preview.
         save_video: Whether to save video output
         vis_mode: Screen visualization mode ('video' or 'image')
         show_display: Whether to launch pygame visualization
@@ -1180,14 +1185,23 @@ class ScreenManager(ScreenAreaPygame):
         if self.intro_text:
             import pygame
 
+            rect = self.get_rect_at_screen_pos()
+            text = m.configuration_text
+            n_lines = text.count("\n") + 1
+            # Scale the font down as the window shrinks and as the number of
+            # crucial info lines grows (run-type dependent), so the box
+            # never crops off-screen; never render larger than the
+            # previous fixed 30px default.
+            font_size = max(12, min(30, int(0.75 * rect.height / (n_lines * 1.6))))
+
             box = _rendering.ScreenTextBoxRect(
-                text=m.configuration_text,
+                text=text,
                 text_color="lightgreen",
                 color="white",
                 visible=True,
-                frame_rect=self.get_rect_at_screen_pos(),
+                frame_rect=rect,
                 font_type="comicsansms",
-                font_size=30,
+                font_size=font_size,
             )
             box.draw(self)
             self._render()
