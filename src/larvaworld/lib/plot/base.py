@@ -215,6 +215,7 @@ class BasePlot:
         ytickMath: Optional[Tuple[int, int]] = None,
         xMaxFix: bool = False,
         leg_loc: Optional[str] = None,
+        leg_bbox_to_anchor: Optional[Tuple[float, float]] = None,
         leg_handles: Optional[Sequence[Any]] = None,
         leg_labels: Optional[Sequence[str]] = None,
         legfontsize: Optional[int] = None,
@@ -324,6 +325,8 @@ class BasePlot:
                 "loc": leg_loc,
                 "fontsize": legfontsize,
             }
+            if leg_bbox_to_anchor is not None:
+                kws["bbox_to_anchor"] = leg_bbox_to_anchor
             if leg_handles is not None:
                 kws["handles"] = leg_handles
             if leg_labels is not None:
@@ -696,6 +699,7 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
         ylab: Optional[str] = None,
         unit: str = "sec",
         leg_loc: str = "upper left",
+        leg_bbox_to_anchor: Optional[Tuple[float, float]] = None,
         coeff: float = 1,
         absolute: bool = False,
         individuals: bool = False,
@@ -767,6 +771,7 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
             xMaxN=5,
             yMaxN=5,
             leg_loc=leg_loc,
+            leg_bbox_to_anchor=leg_bbox_to_anchor,
             **kwargs,
         )
 

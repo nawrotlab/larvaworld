@@ -82,6 +82,7 @@ def module_endpoint_hists(
             xMaxN=3,
             xlabelfontsize=18,
             xticklabelsize=18,
+            xticklabelrotation=30,
             yvis=False if i != 0 else True,
         )
 

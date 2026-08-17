@@ -320,6 +320,8 @@ def timeplots(
     individuals: bool = False,
     absolute: bool = False,
     show_first: bool = False,
+    leg_loc: str = "upper left",
+    leg_bbox_to_anchor: Optional[Tuple[float, float]] = None,
     **kwargs: Any,
 ) -> Any:
     """
@@ -337,6 +339,11 @@ def timeplots(
         individuals: Show individual trajectories. Defaults to False
         absolute: Use absolute values. Defaults to False
         show_first: Highlight first individual. Defaults to False
+        leg_loc: Per-panel legend location. Defaults to 'upper left'
+        leg_bbox_to_anchor: Optional (x, y) legend anchor point, for
+            anchoring the legend outside the axes (e.g. (1.02, 1.0))
+            when in-axes placement would overflow the figure. Defaults
+            to None (in-axes placement).
         **kwargs: Additional arguments passed to AutoPlot
 
     Returns:
@@ -365,6 +372,8 @@ def timeplots(
             individuals=individuals,
             absolute=absolute,
             show_first=show_first,
+            leg_loc=leg_loc,
+            leg_bbox_to_anchor=leg_bbox_to_anchor,
         )
     P.adjust((0.1, 0.95), (0.15, 0.95), H=0.05)
     P.fig.align_ylabels(P.axs[:])

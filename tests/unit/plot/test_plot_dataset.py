@@ -410,6 +410,29 @@ class TestBasePlotConfAx:
         assert plot.axs[0] is not None
         plt.close(plot.fig)
 
+    def test_conf_ax_legend_bbox_to_anchor_places_legend_outside_axes(self):
+        """
+        Regression test: conf_ax's legend call previously had no
+        bbox_to_anchor support at all, so a legend with many/wide entries
+        (e.g. a multi-dataset dispersal-summary panel) could only be
+        placed in-axes and would overflow the figure with no way to
+        anchor it outside the plot area instead.
+        """
+        plot = BasePlot()
+        plot.build()
+        plot.axs[0].plot([0, 1], [0, 1], label="Line 1")
+
+        plot.conf_ax(idx=0, leg_loc="upper left", leg_bbox_to_anchor=(1.02, 1.0))
+
+        legend = plot.axs[0].get_legend()
+        assert legend is not None
+        # bbox_to_anchor of (1.02, 1.0) in axes fraction coords -> x > 1
+        # (outside the right edge of the axes).
+        anchor = legend.get_bbox_to_anchor()
+        transformed = plot.axs[0].transAxes.inverted().transform((anchor.x0, anchor.y0))
+        assert transformed[0] > 1.0
+        plt.close(plot.fig)
+
     def test_conf_ax_with_equal_aspect(self):
         """Test conf_ax sets equal aspect ratio."""
         plot = BasePlot()

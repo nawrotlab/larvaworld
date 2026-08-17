@@ -408,7 +408,7 @@ def dsp_summary(
     )
     P.plot(
         func="dispersal",
-        kws={"range": range, **kws},
+        kws={"range": range, "leg_bbox_to_anchor": (1.02, 1.0), **kws},
         N=1,
         w=16,
         h0=14,
