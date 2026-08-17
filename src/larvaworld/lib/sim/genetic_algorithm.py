@@ -703,15 +703,15 @@ class GAlauncher(BaseRun):
         try:
             cols = [p.name for k, p in self.selector.space_objs.items()]
             self.corr_df = df[["fitness"] + cols].corr()
-        except:
-            pass
+        except Exception as exc:
+            vprint(f"Could not compute GA parameter correlation matrix: {exc}", 1)
         try:
             self.diff_df, row_colors = diff_df(
                 mIDs=[self.selector.base_model, self.selector.bestConfID],
                 ms=[self.selector.mConf0, self.best_genome.mConf],
             )
-        except:
-            pass
+        except Exception as exc:
+            vprint(f"Could not compute GA best-vs-base model diff: {exc}", 1)
 
     def build_threads(self, robots: list) -> list:
         """

@@ -500,6 +500,21 @@ class SpaceDict(NestedConf):
         label="mode of initial generation",
         doc="Mode of initial generation",
     )
+    include_effector_params = param.Boolean(
+        default=False,
+        label="include Effector-level params",
+        doc="If True, include Effector-level params (e.g. input_noise, "
+        "output_noise) in the optimization space for modules listed in "
+        "space_mkeys. Defaults to False, matching prior behavior.",
+    )
+    space_pkeys = param.List(
+        default=None,
+        allow_None=True,
+        label="explicit parameter allowlist",
+        doc="If given, restrict the built space to exactly these parameter "
+        "names (matched against the bare param name, e.g. 'input_noise'), "
+        "within the modules listed in space_mkeys.",
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -509,13 +524,20 @@ class SpaceDict(NestedConf):
         self.parclasses = AttrDict({p: self.parclass(p) for p in self.space_ks})
 
     def build(self):
+        excluded = (
+            ["phi", "name"]
+            if self.include_effector_params
+            else [basic.Effector, "phi", "name"]
+        )
         D = AttrDict()
         for k in self.space_mkeys:
             xx = self.mConf0.brain[k]
             if xx is not None:
                 A = moduleDB.BrainModuleModes[k][xx.mode]
-                Aobjs = class_objs(A, excluded=[basic.Effector, "phi", "name"])
+                Aobjs = class_objs(A, excluded=excluded)
                 for p, obj in Aobjs.items():
+                    if self.space_pkeys is not None and p not in self.space_pkeys:
+                        continue
                     if p in xx:
                         obj.default = xx[p]
                     D[f"brain.{k}.{p}"] = obj

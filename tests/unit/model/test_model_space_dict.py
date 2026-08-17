@@ -66,3 +66,48 @@ def test_space_dict_create_first_generation(space_dict):
     for g in first_gen:
         assert isinstance(g, AttrDict)
         assert len(g) > 0
+
+
+def test_space_dict_excludes_effector_params_by_default():
+    sd = SpaceDict(base_model="explorer", space_mkeys=["turner"])
+    assert "brain.turner.input_noise" not in sd.space_ks
+    assert "brain.turner.output_noise" not in sd.space_ks
+    assert len(sd.space_ks) > 0
+
+
+def test_space_dict_include_effector_params_adds_noise_keys():
+    sd = SpaceDict(
+        base_model="explorer", space_mkeys=["turner"], include_effector_params=True
+    )
+    assert "brain.turner.input_noise" in sd.space_ks
+    assert "brain.turner.output_noise" in sd.space_ks
+    # non-Effector turner params are still present too
+    assert "brain.turner.base_activation" in sd.space_ks
+
+
+def test_space_dict_space_pkeys_narrows_to_exact_allowlist():
+    sd = SpaceDict(
+        base_model="explorer",
+        space_mkeys=["turner"],
+        include_effector_params=True,
+        space_pkeys=["input_noise", "output_noise"],
+    )
+    assert sd.space_ks == ["brain.turner.input_noise", "brain.turner.output_noise"]
+    assert sd.defaults == {
+        "brain.turner.input_noise": 0.0,
+        "brain.turner.output_noise": 0.0,
+    }
+
+
+def test_space_dict_defaults_unaffected_when_new_params_unset(space_dict):
+    """Regression guard: today's exact behavior is unchanged when the new
+    params are left at their defaults (include_effector_params=False,
+    space_pkeys=None)."""
+    baseline = SpaceDict(
+        base_model="explorer",
+        space_mkeys=["interference", "crawler"],
+        Pmutation=0.1,
+        Cmutation=0.1,
+        init_mode="random",
+    )
+    assert baseline.space_ks == space_dict.space_ks

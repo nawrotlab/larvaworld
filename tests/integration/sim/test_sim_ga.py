@@ -1,6 +1,8 @@
 import os
 import sys
+from pathlib import Path
 
+import pandas as pd
 import pytest
 
 from larvaworld.lib import reg, sim
@@ -42,3 +44,43 @@ def test_genetic_algorithm_with_video():
     best2 = ga2.simulate()
     print(best2)
     assert best2 is not None
+
+
+def test_genetic_algorithm_stores_per_generation_results():
+    """
+    store_genomes() previously silently swallowed real failures (a bare
+    except: pass around both corr_df and diff_df) -- diff_df itself crashed
+    with a KeyError whenever a differing model field (e.g. life_history, only
+    present on a live-instantiated agent's mConf) had no entry in
+    ModuleColorDict. Assert the per-generation CSV is written with one row
+    per genome per generation, and that both corr_df/diff_df are actually
+    computed, not silently dropped.
+    """
+    bestConfID = "test_ga_storage_optimized_turner"
+    p = reg.conf.Ga.expand("exploration")
+    p.ga_select_kws.base_model = "explorer"
+    p.ga_select_kws.bestConfID = bestConfID
+    p.ga_select_kws.space_mkeys = ["turner"]
+    p.ga_select_kws.include_effector_params = True
+    p.ga_select_kws.space_pkeys = ["input_noise", "output_noise"]
+    p.ga_select_kws.Nagents = 6
+    p.ga_select_kws.Nelits = 2
+    p.ga_select_kws.Ngenerations = 2
+
+    ga = sim.GAlauncher(
+        parameters=p,
+        duration=0.2,
+        screen_kws={"show_display": False},
+        store_data=True,
+    )
+    ga.simulate()
+
+    csv_path = Path(ga.data_dir) / f"{bestConfID}.csv"
+    assert csv_path.exists()
+    df = pd.read_csv(csv_path)
+    assert len(df) == 6 * 2
+    for col in ["generation", "input_noise", "output_noise", "fitness"]:
+        assert col in df.columns
+
+    assert hasattr(ga, "corr_df")
+    assert hasattr(ga, "diff_df")
