@@ -26,6 +26,12 @@ from larvaworld.lib.param.composition import Substrate, substrate_dict
 from larvaworld.lib.param.spatial import Area
 from larvaworld.lib.param.xy_distro import Spatial_Distro
 from larvaworld.portal.buttons import build_load_file_button
+from larvaworld.portal.canvas_widgets.placement_controller import (
+    HitCandidate,
+    SelectionSync,
+    TapDispatcher,
+    pick_nearest,
+)
 from larvaworld.portal.landing_registry import DOCS_ARENAS_SUBSTRATES
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
 from larvaworld.portal.workspace import WorkspaceError, get_workspace_dir
@@ -764,7 +770,12 @@ class _EnvironmentBuilderController:
         self._objects: list[_ObjectRow] = []
         self._border_start: tuple[float, float] | None = None
         self._selected_object_id: str | None = None
-        self._syncing_selection = False
+        self._selection = SelectionSync(on_change=self._apply_selected_object)
+        self._tap_dispatcher = TapDispatcher(
+            select_mode=lambda: self.select_mode.value,
+            on_select=self._on_tap_select,
+            on_insert=self._on_tap_insert,
+        )
         self._counter = 1
         self._loaded_config = util.AttrDict()
         self._field_wrappers: dict[int, pn.viewable.Viewable] = {}
@@ -2954,25 +2965,28 @@ class _EnvironmentBuilderController:
             }
 
     def _set_selected_object(self, object_id: str | None) -> None:
-        self._syncing_selection = True
-        try:
-            self._selected_object_id = object_id
-            options = self._object_options()
-            if object_id is None or object_id not in options.values():
-                self.selected_object.value = None
-                self.table.selection = []
-                self._populate_editor(None)
-                self.selected_object.disabled = not bool(options)
-                self._update_canvas_highlight(None)
-                return
-            self.selected_object.value = object_id
-            row_index = self._selected_row_index()
-            self.table.selection = [] if row_index is None else [row_index]
-            obj = self._selected_row()
-            self._populate_editor(obj)
-            self._update_canvas_highlight(obj)
-        finally:
-            self._syncing_selection = False
+        self._selection.set_selected(object_id)
+
+    def _apply_selected_object(self, object_id: str | None) -> None:
+        # Called by self._selection (a SelectionSync) with its own
+        # re-entrancy guard already held -- keeps the dropdown, table
+        # selection, editor form, and canvas highlight all in sync from
+        # this one id.
+        self._selected_object_id = object_id
+        options = self._object_options()
+        if object_id is None or object_id not in options.values():
+            self.selected_object.value = None
+            self.table.selection = []
+            self._populate_editor(None)
+            self.selected_object.disabled = not bool(options)
+            self._update_canvas_highlight(None)
+            return
+        self.selected_object.value = object_id
+        row_index = self._selected_row_index()
+        self.table.selection = [] if row_index is None else [row_index]
+        obj = self._selected_row()
+        self._populate_editor(obj)
+        self._update_canvas_highlight(obj)
 
     def _sync_editor_visibility(self, obj: _ObjectRow | None) -> None:
         object_type = obj.object_type if obj is not None else None
@@ -3088,12 +3102,12 @@ class _EnvironmentBuilderController:
         self._set_selected_object(target_id)
 
     def _on_selected_object_change(self, *_: object) -> None:
-        if self._syncing_selection:
+        if self._selection.syncing:
             return
         self._set_selected_object(self.selected_object.value)
 
     def _on_table_selection_change(self, *_: object) -> None:
-        if self._syncing_selection:
+        if self._selection.syncing:
             return
         selection = list(self.table.selection or [])
         if not selection:
@@ -3836,7 +3850,7 @@ class _EnvironmentBuilderController:
         return None
 
     def _pick_object_at(self, x: float, y: float) -> _ObjectRow | None:
-        nearest: tuple[float, _ObjectRow] | None = None
+        candidates: list[HitCandidate[_ObjectRow]] = []
         group_lookup = {
             obj.object_id: obj
             for obj in self._objects
@@ -3855,8 +3869,8 @@ class _EnvironmentBuilderController:
                 continue
             distance = math.hypot(x - float(member_x), y - float(member_y))
             tolerance = max(float(member_radius or 0.0), 0.004)
-            if distance <= tolerance and (nearest is None or distance < nearest[0]):
-                nearest = (distance, parent)
+            if distance <= tolerance:
+                candidates.append(HitCandidate(parent.object_id, distance, parent))
         for obj in self._objects:
             if obj.object_type == "Border segment":
                 x0 = float(obj.x or 0.0)
@@ -3873,8 +3887,8 @@ class _EnvironmentBuilderController:
                 py = y0 + t * dy
                 distance = math.hypot(x - px, y - py)
                 tolerance = max(float(obj.width or 0.001) * 3.0, 0.008)
-                if distance <= tolerance and (nearest is None or distance < nearest[0]):
-                    nearest = (distance, obj)
+                if distance <= tolerance:
+                    candidates.append(HitCandidate(obj.object_id, distance, obj))
                 continue
 
             ox = float(obj.x or 0.0)
@@ -3889,22 +3903,25 @@ class _EnvironmentBuilderController:
             else:
                 radius = max(float(obj.radius or 0.008), 0.004)
             distance = math.hypot(x - ox, y - oy)
-            if distance <= radius and (nearest is None or distance < nearest[0]):
-                nearest = (distance, obj)
+            if distance <= radius:
+                candidates.append(HitCandidate(obj.object_id, distance, obj))
 
-        return None if nearest is None else nearest[1]
+        nearest = pick_nearest(candidates)
+        return None if nearest is None else nearest.ref
 
-    def _on_tap(self, event: Tap) -> None:
-        x = round(float(event.x), 4)
-        y = round(float(event.y), 4)
-        if self.select_mode.value:
-            selected = self._pick_object_at(x, y)
-            if selected is None:
-                self.status.object = "No object found at that location."
-                return
-            self._set_selected_object(selected.object_id)
-            self.status.object = f'Selected "{selected.object_id}" from canvas.'
+    def _on_tap_select(self, x: float, y: float) -> None:
+        x = round(x, 4)
+        y = round(y, 4)
+        selected = self._pick_object_at(x, y)
+        if selected is None:
+            self.status.object = "No object found at that location."
             return
+        self._set_selected_object(selected.object_id)
+        self.status.object = f'Selected "{selected.object_id}" from canvas.'
+
+    def _on_tap_insert(self, x: float, y: float) -> None:
+        x = round(x, 4)
+        y = round(y, 4)
         if not self._inside_arena(x, y):
             self.status.object = "Click inside arena bounds."
             return
@@ -3920,6 +3937,9 @@ class _EnvironmentBuilderController:
             radius=round(float(self.object_radius.value) / 1000.0, 4),
             color=self.object_color.value,
         )
+
+    def _on_tap(self, event: Tap) -> None:
+        self._tap_dispatcher.on_tap(event)
 
     def _tap_border(self, x: float, y: float) -> None:
         if self._border_start is None:
