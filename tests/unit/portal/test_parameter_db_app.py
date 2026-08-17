@@ -143,6 +143,23 @@ def test_build_param_detail_popup_has_no_download_button() -> None:
     assert not list(view.select(pn.widgets.FileDownload))
 
 
+def test_required_param_keys_is_a_multi_select_dropdown() -> None:
+    # Previously a free-text comma-separated field -- now a proper
+    # multi-select over the registry's own param keys, so a user picks
+    # existing keys instead of retyping them by hand.
+    view = build_param_detail_popup("t", editable=True)
+    widgets = [
+        w
+        for w in view.select(pn.widgets.MultiChoice)
+        if w.name == "Required param keys"
+    ]
+    assert len(widgets) == 1
+    widget = widgets[0]
+    assert isinstance(widget.value, list)
+    assert set(widget.value) == set(reg.par.dict["t"].required_ks or [])
+    assert reg.par.dict["t"].k in widget.options
+
+
 # --- standalone page: essential shape ---
 
 
@@ -270,8 +287,9 @@ def test_clone_icon_click_opens_green_add_popup_prepopulated() -> None:
         w for w in detail_popup.body.select(pn.widgets.TextInput) if w.name == "Name"
     ][0]
     assert p_widget.value == reg.par.dict[k].p
-    # "Clone by key" was removed; no AutocompleteInput should remain.
-    assert not detail_popup.body.select(pn.widgets.AutocompleteInput)
+    # The header's "Clone by key" input is always present alongside the
+    # pre-populated form, as an alternative way to load a different key.
+    assert len(detail_popup.body.select(pn.widgets.AutocompleteInput)) == 1
 
 
 def test_export_icon_click_triggers_hidden_download() -> None:
@@ -302,19 +320,67 @@ def test_add_parameter_button_opens_green_popup_without_redundant_heading() -> N
     assert not any("Add Parameter" in (text or "") for text in markdowns)
 
 
-def test_add_form_buttons_no_clone_by_key() -> None:
+def test_add_form_buttons_include_clone_by_key() -> None:
     page, _, detail_popup = _standalone()
 
     _click(page, "Add parameter", button_type="success")
 
     # Nothing has been loaded yet, so build_param_detail_popup (and its
     # "Save" button) hasn't been built into the form yet -- only the
-    # "Load from file" trigger is present at this point.
+    # header row's "Clone by key" and "Load from file" triggers are
+    # present at this point.
     buttons = {
         b.name: b.button_type for b in detail_popup.body.select(pn.widgets.Button)
     }
-    assert buttons == {"Load from file": "warning"}
-    assert not detail_popup.body.select(pn.widgets.AutocompleteInput)
+    assert buttons == {"Clone by key": "primary", "Load from file": "warning"}
+    key_inputs = detail_popup.body.select(pn.widgets.AutocompleteInput)
+    assert len(key_inputs) == 1
+    assert reg.par.dict["t"].k in key_inputs[0].options
+
+
+def test_add_form_clone_by_key_populates_fields() -> None:
+    page, _, detail_popup = _standalone()
+    _click(page, "Add parameter", button_type="success")
+
+    key_input = detail_popup.body.select(pn.widgets.AutocompleteInput)[0]
+    key_input.value = "t"
+    clone_button = [
+        b
+        for b in detail_popup.body.select(pn.widgets.Button)
+        if b.name == "Clone by key"
+    ][0]
+    clone_button.clicks += 1
+
+    source_instance = get_param_instance("t")
+    p_widget = [
+        w for w in detail_popup.body.select(pn.widgets.TextInput) if w.name == "Name"
+    ][0]
+    assert p_widget.value == source_instance.p
+    save_buttons = [
+        b for b in detail_popup.body.select(pn.widgets.Button) if b.name == "Save"
+    ]
+    assert len(save_buttons) == 1
+
+
+def test_add_form_clone_by_key_unknown_key_shows_error() -> None:
+    page, _, detail_popup = _standalone()
+    _click(page, "Add parameter", button_type="success")
+
+    key_input = detail_popup.body.select(pn.widgets.AutocompleteInput)[0]
+    key_input.value = "__not_a_real_key__"
+    clone_button = [
+        b
+        for b in detail_popup.body.select(pn.widgets.Button)
+        if b.name == "Clone by key"
+    ][0]
+    clone_button.clicks += 1
+
+    status = [
+        m
+        for m in detail_popup.body.select(pn.pane.Markdown)
+        if "Unknown parameter key" in (m.object or "")
+    ]
+    assert status
 
 
 def test_add_form_load_from_file_reconstructs_instance() -> None:

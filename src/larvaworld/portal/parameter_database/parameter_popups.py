@@ -13,6 +13,7 @@ from typing import Any, Callable, Optional
 
 import panel as pn
 
+from larvaworld.lib import reg
 from larvaworld.lib.reg.data_aux import LarvaworldParam
 from larvaworld.portal.buttons import build_load_file_button
 
@@ -139,13 +140,19 @@ def _detail_field_widget(
             height=70,
             sizing_mode="stretch_width",
         )
+    if attr == "required_ks":
+        return pn.widgets.MultiChoice(
+            name=label,
+            options=sorted(reg.par.dict.keys()),
+            value=list(instance.required_ks) if instance.required_ks else [],
+            disabled=not field_editable,
+            sizing_mode="stretch_width",
+        )
     if attr == "u":
         value = str(instance.u)
     elif attr == "func":
         func = instance.func
         value = f"{func.__module__}.{func.__qualname__}" if func is not None else "—"
-    elif attr == "required_ks":
-        value = ", ".join(instance.required_ks) if instance.required_ks else ""
     else:
         value = getattr(instance, attr)
     return pn.widgets.TextInput(
@@ -197,7 +204,7 @@ def _build_detail_grid(
 
 def _field_widget_value(attr: str, widget: pn.viewable.Viewable) -> Any:
     if attr == "required_ks":
-        return [s.strip() for s in str(widget.value).split(",") if s.strip()]
+        return list(widget.value)
     return widget.value
 
 
@@ -237,9 +244,11 @@ def build_param_detail_popup(
             raise ValueError("build_param_detail_popup requires either k or instance.")
         instance = get_param_instance(k)
 
-    heading = pn.pane.Markdown("### Parameter configuration", margin=(0, 0, 10, 0))
+    # No redundant "Parameter configuration" heading here -- the popup's own
+    # title ("Parameter: <name>" for Inspect, "Add Parameter" for Add)
+    # already says what this is.
     grid, field_widgets = _build_detail_grid(instance, editable=editable)
-    children: list[pn.viewable.Viewable] = [heading, grid]
+    children: list[pn.viewable.Viewable] = [grid]
 
     if editable and on_save is not None:
         status_pane = pn.pane.Markdown("", margin=(4, 0, 0, 0))
@@ -279,6 +288,20 @@ def _build_add_parameter_popup(
     pre-loads that row), the form starts already populated with that
     parameter's config instead of empty.
     """
+    clone_key_input = pn.widgets.AutocompleteInput(
+        name="",
+        placeholder="Parameter key to clone",
+        options=sorted(reg.par.dict.keys()),
+        case_sensitive=False,
+        restrict=False,
+        width=200,
+        margin=(0, 4, 0, 0),
+    )
+    clone_key_button = pn.widgets.Button(
+        name="Clone by key",
+        button_type="primary",
+        margin=(0, 8, 0, 0),
+    )
     load_file_button, config_input = build_load_file_button(
         "Load from file",
         accept=".pkl,.json",
@@ -332,8 +355,11 @@ def _build_add_parameter_popup(
         _show_instance(instance)
 
     config_input.param.watch(_load_file, "value")
+    clone_key_button.on_click(lambda _: _load_key(clone_key_input.value))
 
     header = pn.Row(
+        clone_key_input,
+        clone_key_button,
         config_input,
         load_file_button,
         status_pane,

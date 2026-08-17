@@ -145,7 +145,7 @@ _POPUP_STYLESHEET = """
 }
 
 .lw-parameter-db-panel-surface--confirm {
-  width: 380px;
+  width: 320px;
   max-width: calc(100vw - 48px);
   height: auto;
   max-height: 50vh;
@@ -315,10 +315,19 @@ def _build_remove_confirm_popup(
 
     return pn.Column(
         pn.pane.Markdown(
-            f"Remove parameter **{disp}** (`{k}`)? This cannot be undone.",
+            f"Remove parameter **{disp}** (`{k}`)?",
+            margin=(0, 0, 4, 0),
+        ),
+        pn.pane.Markdown(
+            "*This cannot be undone.*",
             margin=(0, 0, 12, 0),
         ),
-        pn.Row(confirm_button, cancel_button, margin=0),
+        pn.Row(
+            confirm_button,
+            cancel_button,
+            margin=0,
+            styles={"justify-content": "center"},
+        ),
         status_pane,
         css_classes=["lw-parameter-db-remove-confirm"],
         margin=0,
@@ -621,7 +630,7 @@ def build_parameter_db_content(
         detail_popup.visible = True
 
     def _open_remove_confirm(k: str) -> None:
-        detail_popup.title = "Remove Parameter"
+        detail_popup.title = f"Remove Parameter {k}"
         detail_popup.theme_class = "lw-parameter-db-panel-surface--red"
         detail_popup.size_modifier_class = "lw-parameter-db-panel-surface--confirm"
         detail_popup.body[:] = [_build_remove_confirm_popup(k, table, _hide_detail)]

@@ -847,7 +847,7 @@ class _EnvironmentBuilderController:
         self.select_mode = pn.widgets.Toggle(
             name="Select on canvas",
             value=False,
-            button_type="primary",
+            button_type="warning",
         )
         self.selected_object = pn.widgets.Select(
             name="Inspect object",
@@ -1095,11 +1095,11 @@ class _EnvironmentBuilderController:
         )
         self.apply_selected_btn = pn.widgets.Button(
             name="Apply changes",
-            button_type="primary",
+            button_type="success",
         )
         self.delete_selected_btn = pn.widgets.Button(
             name="Delete selected",
-            button_type="warning",
+            button_type="danger",
         )
         for key, widget in (
             ("select_mode", self.select_mode),
@@ -1534,6 +1534,8 @@ class _EnvironmentBuilderController:
         self._table_columns = [
             "id",
             "type",
+            "amount",
+            "color",
             "x",
             "y",
             "x2",
@@ -1543,8 +1545,6 @@ class _EnvironmentBuilderController:
             "spread_y",
             "count",
             "width",
-            "color",
-            "amount",
             "odor_id",
         ]
         self.table = pn.widgets.Tabulator(
@@ -3106,13 +3106,13 @@ class _EnvironmentBuilderController:
         self._set_selected_object(self._objects[row_index].object_id)
 
     def _on_select_mode_change(self, *_: object) -> None:
+        # "Select" stays yellow (the portal-wide load/select color) in both
+        # states -- only the status text distinguishes select vs. insert mode.
         if self.select_mode.value:
-            self.select_mode.button_type = "success"
             self.status.object = (
                 "Select mode enabled. Click an object on the canvas to inspect it."
             )
         else:
-            self.select_mode.button_type = "primary"
             self.status.object = (
                 f"Click canvas to add a {self.object_type.value.lower()}."
             )
@@ -4562,6 +4562,8 @@ class _EnvironmentBuilderController:
             {
                 "id": obj.object_id,
                 "type": obj.object_type,
+                "amount": obj.amount,
+                "color": obj.color,
                 "x": obj.x,
                 "y": obj.y,
                 "x2": obj.x2,
@@ -4571,13 +4573,11 @@ class _EnvironmentBuilderController:
                 "spread_y": obj.distribution_scale_y,
                 "count": obj.distribution_n,
                 "width": obj.width,
-                "color": obj.color,
-                "amount": obj.amount,
                 "odor_id": obj.odor_id,
             }
             for obj in self._objects
         ]
-        self.table.value = pd.DataFrame(rows)
+        self.table.value = pd.DataFrame(rows, columns=self._table_columns)
 
     def _build_export_config(self) -> dict[str, object]:
         base_config = util.AttrDict(self._loaded_config).get_copy()

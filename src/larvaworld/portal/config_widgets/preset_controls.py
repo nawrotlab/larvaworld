@@ -297,16 +297,16 @@ class PresetControlsController:
             name="Refresh list", button_type="default", sizing_mode="stretch_width"
         )
         self.load_button = pn.widgets.Button(
-            name="Load", button_type="primary", sizing_mode="stretch_width"
+            name="Load", button_type="warning", sizing_mode="stretch_width"
         )
         self.save_button = pn.widgets.Button(
             name="Save",
-            button_type="primary",
+            button_type="success",
             sizing_mode="stretch_width",
         )
         self.delete_button = pn.widgets.Button(
             name="Delete",
-            button_type="warning",
+            button_type="danger",
             sizing_mode="stretch_width",
         )
         self.save_target = (
