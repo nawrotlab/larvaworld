@@ -1,6 +1,8 @@
-"""Regression test for comp_orientations' orientation-wrapping arithmetic."""
+"""Regression tests for angular-kinematics computation in LarvaDataset."""
 
 from __future__ import annotations
+
+from pathlib import Path
 
 import numpy as np
 
@@ -34,3 +36,33 @@ def test_comp_orientations_matches_correct_arctan2_wrap(real_dataset) -> None:
         valid = ~np.isnan(actual) & ~np.isnan(expected)
         assert valid.sum() > 0
         np.testing.assert_allclose(actual[valid], expected[valid], atol=1e-9)
+
+
+def test_reconstruct_at_Nsegs_produces_a_separately_stored_comparable_dataset(
+    real_dataset, tmp_path: Path
+) -> None:
+    d = real_dataset
+    new_dir = str(tmp_path / "reconstructed_2seg")
+
+    d2 = d.reconstruct_at_Nsegs(2, new_id="test_2seg", new_dir=new_dir)
+
+    assert d2.id == "test_2seg"
+    assert d2.dir == new_dir
+    assert d2.config.dir == new_dir
+    assert (tmp_path / "reconstructed_2seg" / "data" / "data.h5").exists()
+    assert (tmp_path / "reconstructed_2seg" / "data" / "conf.txt").exists()
+
+    # front/rear vectors now split the body at its midpoint, not the
+    # original dataset's own (tighter) front_vector/rear_vector span.
+    assert d2.config.front_vector != d.config.front_vector
+    assert d2.config.rear_vector != d.config.rear_vector
+
+    for k in ["bend", "front_orientation_velocity", "front_orientation_acceleration"]:
+        assert k in d2.s.columns
+        values = d2.s[k].dropna().to_numpy()
+        assert values.size > 0
+        assert np.all(np.isfinite(values))
+
+    # The original dataset itself must be untouched (deepcopy, not mutation).
+    assert d.config.dir != new_dir
+    assert d.id == "30controls"

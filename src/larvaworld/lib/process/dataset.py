@@ -2407,6 +2407,57 @@ class BaseLarvaDataset(ParamLarvaDataset):
         if save:
             self.save_config()
 
+    def reconstruct_at_Nsegs(
+        self,
+        Nsegs: int = 2,
+        new_id: Optional[str] = None,
+        new_dir: Optional[str] = None,
+    ) -> "LarvaDataset":
+        """
+        Return a new, separately-stored LarvaDataset whose bend/orientation
+        angular kinematics are recomputed from a coarse Nsegs-vector body
+        approximation (front vector + rear vector split at the body
+        midpoint), matching what ReplayRun's draw_Nsegs=2 reconstructs
+        visually, instead of the original dataset's own (possibly more
+        finely-tuned) front_vector/rear_vector configuration. Lets angular
+        parameters computed on the two be directly compared.
+
+        Args:
+            Nsegs: Number of body segments to reconstruct at. Only 2 is
+                currently supported (a single front/rear vector split at
+                the midline midpoint) -- front_vector/rear_vector is
+                inherently a 2-vector scheme; more segments would need a
+                different ("from_angles") bend-computation path.
+            new_id: ID for the new dataset. Defaults to "{id}_{Nsegs}seg".
+            new_dir: Directory to store the new dataset. Defaults to
+                "{self.dir}_{Nsegs}seg".
+
+        Returns:
+            The new, already-saved LarvaDataset.
+        """
+        if Nsegs != 2:
+            raise NotImplementedError(
+                "reconstruct_at_Nsegs only supports Nsegs=2 (front_vector/"
+                "rear_vector is inherently a 2-vector body scheme)."
+            )
+
+        d2 = copy.deepcopy(self)
+        c2 = d2.config
+        mid = (c2.Npoints + 1) // 2
+        c2.front_vector = (1, mid)
+        c2.rear_vector = (-mid, -1)
+        c2.refID = None
+        new_dir = new_dir or f"{self.dir}_{Nsegs}seg"
+        c2.dir = new_dir
+        d2.dir = new_dir
+
+        d2.comp_orientations(mode="minimal", recompute=True)
+        d2.comp_bend(recompute=True)
+        d2.comp_ang_moments(recompute=True)
+        d2.set_id(new_id or f"{self.id}_{Nsegs}seg", save=False)
+        d2.save()
+        return d2
+
 
 class LarvaDataset(BaseLarvaDataset):
     def __init__(self, **kwargs: Any) -> None:
