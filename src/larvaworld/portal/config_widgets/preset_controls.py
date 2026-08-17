@@ -264,6 +264,7 @@ class PresetControlsController:
         title: str | None = "Stored Configurations",
         preset_name_after_refresh: bool = False,
         confirm_destructive: bool = True,
+        dual_write: bool = False,
     ) -> None:
         self.conftype = str(conftype)
         self.workspace_store = workspace_store
@@ -277,6 +278,23 @@ class PresetControlsController:
         self.on_status = on_status
         self.preset_name_after_refresh = bool(preset_name_after_refresh)
         self.confirm_destructive = bool(confirm_destructive)
+        # Some callers (e.g. Environment Builder) treat a workspace preset
+        # and its same-named registry entry as one linked unit rather than
+        # two independent presets: Save always writes both, Delete always
+        # removes both. This deliberately bypasses the normal single-
+        # target save_target toggle -- only meaningful (and only allowed)
+        # when the policy permits saving/deleting both sides.
+        self.dual_write = bool(dual_write)
+        if self.dual_write and not (
+            policy.can_save_workspace
+            and policy.can_save_registry
+            and policy.can_delete_workspace
+            and policy.can_delete_registry
+        ):
+            raise ValueError(
+                "dual_write requires a policy that allows saving and "
+                "deleting both workspace and registry presets."
+            )
         self.catalog = PresetCatalog(refs=tuple(), by_token={})
         self._pending_confirmation: _PendingConfirmation | None = None
 
@@ -316,7 +334,7 @@ class PresetControlsController:
                 value="Workspace",
                 button_type="default",
             )
-            if self.policy.can_save_registry
+            if self.policy.can_save_registry and not self.dual_write
             else None
         )
         self.reset_button = (
@@ -539,6 +557,15 @@ class PresetControlsController:
             self._set_status(str(exc), tone="warning")
             return False
 
+        if self.dual_write:
+            if self.before_save is not None:
+                try:
+                    self.before_save(target_name, PresetSource.WORKSPACE)
+                except Exception as exc:
+                    self._set_status(str(exc), tone="warning")
+                    return False
+            return self._save_dual(target_name)
+
         target_source = PresetSource.WORKSPACE
         if self.save_target is not None and self.save_target.value == "Registry":
             target_source = PresetSource.REGISTRY
@@ -631,11 +658,52 @@ class PresetControlsController:
             return False
         return _execute()
 
+    def _save_dual(self, target_name: str) -> bool:
+        exists = self.workspace_store.exists_name(
+            target_name
+        ) or self.registry_store.exists(target_name)
+
+        def _execute() -> bool:
+            try:
+                workspace_payload = self.build_workspace_payload(target_name)
+                registry_payload = self.build_registry_payload(target_name)
+                target = self.workspace_store.save(target_name, workspace_payload)
+                self.registry_store.save(target_name, registry_payload)
+            except Exception as exc:
+                self._set_status(f"Save failed: {exc}", tone="danger")
+                return False
+            self.refresh_list()
+            token = self._token_for_workspace(target.name)
+            if token in self.catalog.by_token:
+                self.preset_select.value = token
+            ref = self._resolve_saved_ref(source=PresetSource.WORKSPACE, token=token)
+            if ref is not None:
+                self._run_on_save_callback(ref, workspace_payload)
+            self._set_status(
+                f'Saved "{target.stem}" to workspace and registry.', tone="success"
+            )
+            return True
+
+        if exists and self.confirm_destructive:
+            self._request_confirmation(
+                (
+                    f'"{target_name}" already exists in the workspace and/or '
+                    "registry. Overwrite both?"
+                ),
+                _execute,
+            )
+            self._set_status("Overwrite confirmation required.", tone="warning")
+            return False
+        return _execute()
+
     def delete_selected(self) -> bool:
         ref = self._selected_ref()
         if ref is None:
             self._set_status("Select a preset to delete.", tone="warning")
             return False
+
+        if self.dual_write:
+            return self._delete_dual(ref.name)
 
         if ref.source == PresetSource.REGISTRY and not self.policy.can_delete_registry:
             self._set_status(
@@ -667,6 +735,51 @@ class PresetControlsController:
 
         if self.confirm_destructive:
             self._request_confirmation(f"Delete {ref.display_label}?", _execute)
+            self._set_status("Delete confirmation required.", tone="warning")
+            return False
+        return _execute()
+
+    def _delete_dual(self, name: str) -> bool:
+        def _execute() -> bool:
+            deleted_workspace = False
+            deleted_registry = False
+            try:
+                if self.workspace_store.exists_name(name):
+                    filename = f"{WorkspacePresetStore.normalize_name(name)}.json"
+                    self.workspace_store.delete(filename)
+                    deleted_workspace = True
+            except Exception as exc:
+                self._set_status(f"Delete failed: {exc}", tone="danger")
+                return False
+            try:
+                if self.registry_store.exists(name):
+                    self.registry_store.delete(name)
+                    deleted_registry = True
+            except Exception as exc:
+                self._set_status(f"Delete failed: {exc}", tone="danger")
+                return False
+            self.refresh_list()
+            if not (deleted_workspace or deleted_registry):
+                self._set_status(
+                    f'Preset "{name}" was already missing from workspace and registry.',
+                    tone="warning",
+                )
+                return True
+            removed = " and ".join(
+                target
+                for target, deleted in (
+                    ("workspace", deleted_workspace),
+                    ("registry", deleted_registry),
+                )
+                if deleted
+            )
+            self._set_status(f'Deleted "{name}" from {removed}.', tone="success")
+            return True
+
+        if self.confirm_destructive:
+            self._request_confirmation(
+                f'Delete "{name}" from workspace and registry?', _execute
+            )
             self._set_status("Delete confirmation required.", tone="warning")
             return False
         return _execute()
