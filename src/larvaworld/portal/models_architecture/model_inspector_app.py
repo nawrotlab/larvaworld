@@ -22,12 +22,14 @@ from larvaworld.lib.model import Effector
 from larvaworld.lib.model import agents, deb
 from larvaworld.lib.model import moduleDB as MD
 from larvaworld.lib.param import class_objs
+from larvaworld.portal.buttons import build_load_file_button
 from larvaworld.portal.config_widgets.preset_controls import (
     ADVANCED_PRESET_POLICY,
-    USER_PRESET_POLICY,
     PresetControlsController,
     PresetRef,
+    PresetSource,
     WorkspacePresetStore,
+    build_preset_controls_panel,
 )
 from larvaworld.portal.config_widgets.widget_base import param_controls
 from larvaworld.portal.models_architecture.model_inspector_data import (
@@ -36,7 +38,7 @@ from larvaworld.portal.models_architecture.model_inspector_data import (
     DEFAULT_LIVE_PREVIEW_REPORTER_KEYS,
     LIVE_PREVIEW_REPORTER_KEYS,
     build_inspection_brain_from_config,
-    compare_model_inspections,
+    compare_model_inspections_many,
     inspect_model,
     inspect_model_from_config,
     inspect_model_modules_from_config,
@@ -314,18 +316,18 @@ def _coerce_like_template(template: Any, value: Any) -> Any:
 
 
 class _ModelInspectorController:
-    def __init__(self, *, advanced_preset_controls: bool = False) -> None:
+    def __init__(self) -> None:
         model_ids = list_model_ids()
         if not model_ids:
             raise ModelInspectorError("no_models", "No model presets are available.")
         self._model_ids = model_ids
-        self._advanced_preset_controls = bool(advanced_preset_controls)
         self._model_preset_workspace_available = False
         self._brain = None
         self._runtime = None
         self._callback = None
-        self._draft_model_id: str | None = None
-        self._draft_model: Any | None = None
+        default_model = "explorer" if "explorer" in model_ids else model_ids[0]
+        self._draft_model_id: str | None = default_model
+        self._draft_model: Any | None = load_model_draft(default_model)
         self._draft_validation_issues: tuple[DraftValidationIssue, ...] = ()
         self._is_running = False
         self._has_local_edits = False
@@ -407,97 +409,19 @@ class _ModelInspectorController:
             ]
         )
 
-        model_df = pd.DataFrame({"ID": model_ids})
-        self.model_select_table = pn.widgets.Tabulator(
-            model_df,
-            show_index=False,
-            selectable="checkbox",
-            height=200,
-            sizing_mode="stretch_width",
-            css_classes=["lw-model-inspector-table"],
-        )
-        default_model = "explorer" if "explorer" in model_ids else model_ids[0]
-        # Select default_model's own row -- not row 0, which is whatever
-        # model_ids happens to list first and is generally a different
-        # model than "explorer".
-        default_index = model_ids.index(default_model) if model_ids else None
-        self.model_select_table.selection = (
-            [default_index] if default_index is not None else []
-        )
-        self._primary_model_id = default_model
-
-        class _SelectProxy:
-            def __init__(self, controller, is_compare=False):
-                self.controller = controller
-                self.is_compare = is_compare
-
-            @property
-            def disabled(self):
-                if self.is_compare and hasattr(self.controller, "comparison_select"):
-                    return self.controller.comparison_select.disabled
-                return False
-
-            @disabled.setter
-            def disabled(self, value: bool):
-                if self.is_compare and hasattr(self.controller, "comparison_select"):
-                    self.controller.comparison_select.disabled = value
-
-            @property
-            def value(self):
-                if self.is_compare:
-                    selected = self.controller._get_selected_model_ids()
-                    return selected[1] if len(selected) > 1 else ""
-                else:
-                    return self.controller._get_primary_model_id()
-
-            @value.setter
-            def value(self, model_id: str):
-                if self.is_compare:
-                    if not model_id:
-                        selected = self.controller._get_selected_model_ids()
-                        if selected:
-                            idx = int(
-                                self.controller.model_select_table.value[
-                                    self.controller.model_select_table.value["ID"]
-                                    == selected[0]
-                                ].index[0]
-                            )
-                            self.controller.model_select_table.selection = [idx]
-                        else:
-                            self.controller.model_select_table.selection = []
-                        return
-                    df = self.controller.model_select_table.value
-                    if model_id in df["ID"].values:
-                        idx = int(df[df["ID"] == model_id].index[0])
-                        primary_id = self.controller._get_primary_model_id()
-                        primary_idx = int(
-                            self.controller.model_select_table.value[
-                                self.controller.model_select_table.value["ID"]
-                                == primary_id
-                            ].index[0]
-                        )
-                        self.controller.model_select_table.selection = [
-                            primary_idx,
-                            idx,
-                        ]
-                else:
-                    df = self.controller.model_select_table.value
-                    if model_id in df["ID"].values:
-                        idx = int(df[df["ID"] == model_id].index[0])
-                        self.controller.model_select_table.selection = [idx]
-
-            def param(self):
-                return type("Param", (), {"watch": lambda *a, **kw: None})()
-
-        self.primary_select = _SelectProxy(self, is_compare=False)
-        self.compare_select = _SelectProxy(self, is_compare=True)
-        self._comparison_model_id: str | None = None
-        self.comparison_select = pn.widgets.Select(
+        # Multi-model comparison lives in its own bottom section (not the
+        # top preset panel, which is single-model-only): a MultiChoice
+        # doubles as both "pick a model to add" (its own search dropdown)
+        # and "the space of already-added models, removable by pressing
+        # them" (its tag pills) -- always seeded with the current primary.
+        self.compare_models_select = pn.widgets.MultiChoice(
             name="Compare against",
-            options={},
-            value="",
+            options=list(self._model_ids),
+            value=[self._draft_model_id],
             sizing_mode="stretch_width",
-            visible=False,
+        )
+        self.compare_run_button = pn.widgets.Button(
+            name="Draw", button_type="primary", sizing_mode="stretch_width"
         )
         self.run_button = pn.widgets.Button(name="Run", button_type="success")
         self.pause_button = pn.widgets.Button(name="Pause", button_type="primary")
@@ -571,13 +495,20 @@ class _ModelInspectorController:
             sizing_mode="stretch_width", margin=(6, 0, 0, 0)
         )
         self.model_preset_controls = self._build_model_preset_controls()
-        self.download_json_button = pn.widgets.FileDownload(
-            name="Download JSON",
+        self.import_model_btn, self.import_model_input = build_load_file_button(
+            "Import", accept=".json,application/json", button_type="default"
+        )
+        self.export_model_download_btn = pn.widgets.Button(
+            name="Export", button_type="default"
+        )
+        self.export_model_btn = pn.widgets.FileDownload(
+            name="",
+            label="Export",
             button_type="default",
             callback=self._export_draft_json,
             filename=self._draft_download_filename(),
-            sizing_mode="stretch_width",
         )
+        self.export_model_btn.css_classes = ["lw-model-inspector-hidden-download-proxy"]
 
         self._sources = {
             key: ColumnDataSource(data={"time": [], key: []})
@@ -602,10 +533,14 @@ class _ModelInspectorController:
         self.plot_reporters_checkbox_phase.param.watch(
             self._on_plot_reporters_change, "value"
         )
-        self.model_select_table.param.watch(
-            self._on_models_selection_change, "selection"
+        self.compare_run_button.on_click(self._on_compare_draw)
+        self.export_model_download_btn.js_on_click(
+            args={"download_proxy": self.export_model_btn},
+            code="""
+                download_proxy.setv({clicks: download_proxy.clicks + 1});
+            """,
         )
-        self.comparison_select.param.watch(self._on_comparison_select_change, "value")
+        self.import_model_input.param.watch(self._on_import_model_file, "value")
         self.sensitivity_button.on_click(self._on_sensitivity_analysis)
         self.run_button.on_click(self._on_run)
         self.pause_button.on_click(self._on_pause)
@@ -629,35 +564,10 @@ class _ModelInspectorController:
         self._update_probe_meta()
         self._update_summary_sections()
 
-    def _get_selected_model_ids(self) -> list[str]:
-        """Get list of selected model IDs from the Tabulator, with the
-        current primary model first if it's part of the selection.
-
-        `.selection` indices are sorted ascending to build the list, which
-        on its own would silently make whichever selected model's *row*
-        sorts first "the primary" (selected_ids[0]) -- e.g. picking a
-        comparison model whose row happens to precede the actual primary's
-        would swap them. `_SelectProxy`'s setters already always place the
-        primary's index first when building `.selection`; this restores
-        that ordering after the ascending sort, rather than just undoing
-        it.
-        """
-        if not self.model_select_table.selection:
-            return []
-        df = self.model_select_table.value
-        selected_indices = sorted(int(idx) for idx in self.model_select_table.selection)
-        ids = [df.iloc[idx]["ID"] for idx in selected_indices if idx < len(df)]
-        if self._primary_model_id in ids and ids[0] != self._primary_model_id:
-            ids.remove(self._primary_model_id)
-            ids.insert(0, self._primary_model_id)
-        return ids
-
     def _get_primary_model_id(self) -> str:
-        """Get the primary (first selected) model ID."""
-        selected = self._get_selected_model_ids()
-        if selected:
-            return selected[0]
-        return self._primary_model_id
+        """Get the primary model ID -- the model currently loaded via the
+        top Stored Configurations panel."""
+        return self._draft_model_id
 
     def _set_status(self, message: str) -> None:
         self._status_message = message
@@ -688,34 +598,26 @@ class _ModelInspectorController:
         return f"{safe}_draft.json"
 
     def _build_model_preset_controls(self) -> PresetControlsController:
-        policy = (
-            ADVANCED_PRESET_POLICY
-            if self._advanced_preset_controls
-            else USER_PRESET_POLICY
-        )
         workspace_dir = self._fallback_model_preset_workspace_dir()
         try:
             workspace_dir = self._model_preset_workspace_dir()
             self._model_preset_workspace_available = True
         except WorkspaceError:
             self._model_preset_workspace_available = False
-        kwargs: dict[str, Any] = {}
-        if self._advanced_preset_controls:
-            kwargs["build_registry_payload"] = self._draft_payload_for_storage
         return PresetControlsController(
             conftype="Model",
             workspace_store=WorkspacePresetStore(
                 workspace_dir,
                 directory_key="model-inspector-models",
             ),
-            policy=policy,
+            policy=ADVANCED_PRESET_POLICY,
             build_workspace_payload=self._draft_payload_for_storage,
+            build_registry_payload=self._draft_payload_for_storage,
             on_load=self._on_model_preset_loaded,
             on_save=self._on_model_preset_saved,
             on_status=self._on_model_preset_status,
-            title="Model Presets",
+            title="Stored Configurations",
             preset_name_after_refresh=True,
-            **kwargs,
         )
 
     def _refresh_model_preset_controls(self) -> None:
@@ -754,6 +656,23 @@ class _ModelInspectorController:
         self._set_status(self._with_validation_status(f"Saved {ref.display_label}."))
 
     def _on_model_preset_loaded(self, ref: PresetRef, payload: Any) -> None:
+        if ref.source == PresetSource.REGISTRY:
+            self._pause_callback()
+            self._draft_model = load_model_draft(ref.name)
+            self._draft_model_id = ref.name
+            self._draft_validation_issues = ()
+            self._has_local_edits = False
+            if hasattr(self.model_preset_controls, "preset_name"):
+                self.model_preset_controls.preset_name.value = ref.name
+            self._sync_compare_selection_primary()
+            self._clear_compare_results()
+            self._sync_preview_after_draft_change(
+                message=f"Loaded {ref.display_label}.",
+                clear_trace=True,
+                mark_dirty=False,
+                ui_scope="full",
+            )
+            return
         self._replace_draft_from_loaded_preset(ref, payload)
 
     def _replace_draft_from_loaded_preset(self, ref: PresetRef, payload: Any) -> None:
@@ -764,6 +683,9 @@ class _ModelInspectorController:
                 "invalid_model_preset",
                 f'Loaded preset "{ref.display_label}" is missing a valid "brain" payload.',
             )
+        # Workspace/file-sourced presets are draft-config snapshots, not
+        # themselves tied to a registry model id -- coerce against the
+        # last-known primary's template, keeping that primary id.
         primary = self._get_primary_model_id()
         template = load_model_draft(str(primary))
         self._draft_model = util.AttrDict(
@@ -772,6 +694,8 @@ class _ModelInspectorController:
         self._draft_model_id = str(primary)
         if hasattr(self.model_preset_controls, "preset_name"):
             self.model_preset_controls.preset_name.value = ref.name
+        self._sync_compare_selection_primary()
+        self._clear_compare_results()
         self._sync_preview_after_draft_change(
             message=f"Loaded {ref.display_label}.",
             clear_trace=True,
@@ -779,64 +703,93 @@ class _ModelInspectorController:
             ui_scope="full",
         )
 
-    def _on_models_selection_change(self, _event=None) -> None:
-        selected_ids = self._get_selected_model_ids()
-        if not selected_ids:
-            self.model_select_table.selection = [0] if self._model_ids else []
+    def _sync_compare_selection_primary(self) -> None:
+        primary = self._draft_model_id
+        current = list(self.compare_models_select.value or [])
+        if primary not in current:
+            self.compare_models_select.value = [primary, *current]
+
+    def _clear_compare_results(self) -> None:
+        self.compare_title.object = ""
+        self.compare_table.object = pd.DataFrame()
+        self._update_summary_sections()
+
+    def _on_import_model_file(self, _event: param.parameterized.Event) -> None:
+        raw_value = self.import_model_input.value
+        if raw_value in (None, b"", ""):
             return
-        primary = selected_ids[0]
-        primary_changed = primary != self._primary_model_id
-        self._primary_model_id = primary
-        # Only a primary-model change warrants pausing the live preview,
-        # resetting the draft, and rebuilding every module card -- e.g.
-        # picking/changing the *comparison* model (selected_ids[1:])
-        # alongside an unchanged primary must not interrupt an in-progress
-        # preview or discard local draft edits.
-        if primary_changed:
-            self._pause_callback()
-            self._reset_draft_to_selected_model()
-            self._refresh_model_preset_controls()
-            self.download_json_button.filename = self._draft_download_filename()
-            self._sync_preview_after_draft_change(
-                message=f'Model changed to "{primary}".'
-                if len(selected_ids) == 1
-                else f"Multiple models selected: {len(selected_ids)}.",
-                clear_trace=True,
-                mark_dirty=False,
-                ui_scope="full",
-            )
-        self._refresh_inspection_tables()
-        self._update_comparison_selector()
+        filename = str(getattr(self.import_model_input, "filename", "") or "").strip()
+        loaded_name = Path(filename).stem if filename else "imported_model"
+        try:
+            if isinstance(raw_value, (bytes, bytearray)):
+                text = raw_value.decode("utf-8")
+            elif isinstance(raw_value, str):
+                text = raw_value
+            else:
+                raise ValueError("Unsupported uploaded file payload type.")
+            payload = json.loads(text)
+        except Exception as exc:
+            self._set_status(f"Failed to load file: {exc}")
+            return
+        if not isinstance(payload, dict):
+            self._set_status("Model file is not a valid model configuration.")
+            return
+        file_ref = PresetRef(
+            source=PresetSource.WORKSPACE,
+            name=loaded_name,
+            display_label=f"file / {loaded_name}",
+            token="",
+            conftype="Model",
+        )
+        try:
+            self._replace_draft_from_loaded_preset(file_ref, payload)
+        except ModelInspectorError as exc:
+            self._set_status(f"Failed to load file: {exc}")
 
-    def _update_comparison_selector(self) -> None:
-        """Update comparison model selector based on selected models."""
-        selected_ids = self._get_selected_model_ids()
-        if len(selected_ids) <= 1:
-            self.comparison_select.visible = False
-            self.comparison_select.options = {}
-            self.comparison_select.value = ""
-            self._comparison_model_id = None
+    def _on_compare_draw(self, _event=None) -> None:
+        """Render the primary's module table alone, or an N-way diff
+        table against every other model currently in compare_models_select
+        -- explicit action, not auto-refreshed on selection change."""
+        if self._has_local_edits:
+            self.compare_title.object = "#### Comparison hidden during local edits"
+            self.compare_table.object = pd.DataFrame()
+            self._update_summary_sections()
             return
 
-        primary = selected_ids[0]
-        comparison_options = {
-            model_id: model_id for model_id in selected_ids[1:] if model_id != primary
-        }
-
-        if not comparison_options:
-            self.comparison_select.visible = False
+        primary = self._draft_model_id
+        others = [
+            model_id
+            for model_id in (self.compare_models_select.value or [])
+            if model_id != primary
+        ]
+        try:
+            draft = self._require_draft_model()
+            inspections = [inspect_model_from_config(primary, draft)] + [
+                inspect_model(model_id) for model_id in others
+            ]
+        except ModelInspectorError as exc:
+            self._set_status(f"Comparison failed ({exc.code}): {exc}")
             return
 
-        self.comparison_select.visible = True
-        self.comparison_select.options = comparison_options
-        if self._comparison_model_id not in comparison_options.values():
-            self._comparison_model_id = list(comparison_options.values())[0]
-        self.comparison_select.value = self._comparison_model_id
+        if len(inspections) == 1:
+            self.compare_title.object = ""
+            self.compare_table.object = pd.DataFrame()
+            self._update_summary_sections()
+            return
 
-    def _on_comparison_select_change(self, _event=None) -> None:
-        """Handle comparison model selection change."""
-        self._comparison_model_id = self.comparison_select.value
-        self._refresh_inspection_tables()
+        model_ids_ordered = [primary, *others]
+        rows = compare_model_inspections_many(inspections)
+        df_rows = []
+        for row in rows:
+            entry: dict[str, Any] = {"Module": row.module_id}
+            for model_id, inspection in zip(model_ids_ordered, row.inspections):
+                entry[f"{model_id} present"] = inspection.present
+                entry[f"{model_id} mode"] = inspection.mode or "—"
+            entry["Changed"] = row.changed
+            df_rows.append(entry)
+        self.compare_title.object = f"#### Comparison: {', '.join(model_ids_ordered)}"
+        self.compare_table.object = pd.DataFrame(df_rows)
+        self._update_summary_sections()
 
     def _on_sensitivity_analysis(self, _event=None) -> None:
         """Run sensitivity analysis on A_in parameter."""
@@ -1453,64 +1406,16 @@ class _ModelInspectorController:
         )
         self._module_specs_by_id = {spec.module_id: spec for spec in module_specs}
 
+        # Comparison is a separate, explicit "Draw" action (see
+        # _on_compare_draw) -- only clear a stale comparison table here
+        # while local edits make it potentially misleading; don't
+        # recompute it on every inspection refresh.
         if self._has_local_edits:
             self.compare_title.object = "#### Comparison hidden during local edits"
             self.compare_table.object = pd.DataFrame()
-            self.comparison_select.disabled = True
-            self._update_summary_sections()
-            return module_specs
-
-        selected_ids = self._get_selected_model_ids()
-        if len(selected_ids) <= 1:
-            self.compare_title.object = ""
-            self.compare_table.object = pd.DataFrame()
-            self.comparison_select.disabled = False
-            self._update_summary_sections()
-            return module_specs
-
-        compare_id = self._comparison_model_id or (
-            selected_ids[1] if len(selected_ids) > 1 else ""
-        )
-        if not compare_id or compare_id == primary_id:
-            self.compare_title.object = ""
-            self.compare_table.object = pd.DataFrame()
-            self._update_summary_sections()
-            return module_specs
-
-        try:
-            comparison = inspect_model(compare_id)
-            diffs = compare_model_inspections(primary, comparison)
-        except ModelInspectorError as exc:
-            self._set_status(f"Comparison failed ({exc.code}): {exc}")
-            self.compare_title.object = ""
-            self.compare_table.object = pd.DataFrame()
-            self.comparison_select.disabled = False
-            self._update_summary_sections()
-            return module_specs
-
-        compare_suffix = ""
-        if len(selected_ids) > 2:
-            compare_suffix = f" (1 of {len(selected_ids) - 1} available)"
-        self.compare_title.object = (
-            f"#### Comparison: `{primary_id}` vs `{compare_id}`{compare_suffix}"
-        )
-        self.compare_table.object = pd.DataFrame(
-            [
-                {
-                    "Module": item.module_id,
-                    "Primary present": item.primary.present,
-                    "Comparison present": item.comparison.present,
-                    "Primary mode": item.primary.mode or "—",
-                    "Comparison mode": item.comparison.mode or "—",
-                    "Changed fields": ", ".join(item.changed_fields)
-                    if item.changed_fields
-                    else "none",
-                    "Equal": item.equal,
-                }
-                for item in diffs
-            ]
-        )
-        self.comparison_select.disabled = False
+            self.compare_run_button.disabled = True
+        else:
+            self.compare_run_button.disabled = False
         self._update_summary_sections()
         return module_specs
 
@@ -1683,16 +1588,26 @@ class _ModelInspectorController:
             self.sensitivity_button,
             sizing_mode="stretch_width",
         )
+        model_preset_panel = build_preset_controls_panel(
+            self.model_preset_controls,
+            reset_slot=self.model_preset_controls.reset_button,
+            extra_sections=[
+                pn.Column(
+                    self.import_model_input,
+                    self.export_model_btn,
+                    pn.Row(
+                        self.import_model_btn,
+                        self.export_model_download_btn,
+                        sizing_mode="stretch_width",
+                        margin=(4, 0, 0, 0),
+                    ),
+                    sizing_mode="stretch_width",
+                    margin=0,
+                )
+            ],
+        )
         primary_controls = pn.Column(
-            pn.pane.Markdown("#### Select models", margin=(0, 0, 2, 0)),
-            pn.pane.HTML(
-                '<div style="font-size:11px;color:rgba(17,17,17,0.72);margin-bottom:6px;">'
-                "Use checkboxes to select. First = primary, others = comparisons."
-                "</div>",
-                margin=(0, 0, 6, 0),
-            ),
-            self.model_select_table,
-            self.comparison_select,
+            model_preset_panel,
             self.status_pane,
             self.validation_pane,
             self.sensitivity_pane,
@@ -1705,16 +1620,8 @@ class _ModelInspectorController:
             sizing_mode="stretch_width",
             css_classes=["lw-model-inspector-controls-box"],
         )
-        preset_controls = pn.Column(
-            pn.pane.Markdown("#### Draft presets", margin=(0, 0, 2, 0)),
-            self.model_preset_controls.view,
-            self.download_json_button,
-            sizing_mode="stretch_width",
-            css_classes=["lw-model-inspector-controls-box"],
-        )
         controls_box = pn.Column(
             primary_controls,
-            preset_controls,
             width=CONTROLS_COLUMN_WIDTH,
             styles={
                 "flex": f"0 0 {CONTROLS_COLUMN_WIDTH}px",
@@ -1758,11 +1665,24 @@ class _ModelInspectorController:
             sizing_mode="stretch_width",
             styles={"align-items": "flex-start"},
         )
+        compare_controls = pn.Column(
+            pn.pane.Markdown("#### Compare models", margin=(0, 0, 2, 0)),
+            self.compare_models_select,
+            self.compare_run_button,
+            width=CONTROLS_COLUMN_WIDTH,
+            styles={"flex": f"0 0 {CONTROLS_COLUMN_WIDTH}px"},
+        )
+        compare_row = pn.Row(
+            compare_controls,
+            self.summary_sections_box,
+            sizing_mode="stretch_width",
+            styles={"align-items": "flex-start", "margin-top": "12px"},
+        )
         return pn.Column(
             info_panel,
             top_row,
             self.module_sections_box,
-            self.summary_sections_box,
+            compare_row,
             css_classes=["lw-model-inspector-root"],
             sizing_mode="stretch_width",
         )

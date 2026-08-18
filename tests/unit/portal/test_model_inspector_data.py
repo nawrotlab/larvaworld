@@ -17,6 +17,7 @@ from larvaworld.portal.models_architecture.model_inspector_data import (
     MODEL_MODULE_ORDER,
     build_inspection_brain_from_config,
     compare_model_inspections,
+    compare_model_inspections_many,
     default_brain_module_config,
     default_larva_module_config,
     default_memory_config,
@@ -737,6 +738,52 @@ def test_compare_model_inspections_detects_changes() -> None:
     )
     diffs = compare_model_inspections(inspect_model(primary), inspect_model(comparison))
     assert any(not diff.equal for diff in diffs)
+
+
+def test_compare_model_inspections_many_single_model_is_never_changed() -> None:
+    model_id = list_model_ids()[0]
+    rows = compare_model_inspections_many([inspect_model(model_id)])
+    assert rows
+    assert all(not row.changed for row in rows)
+    assert all(len(row.inspections) == 1 for row in rows)
+
+
+def test_compare_model_inspections_many_matches_pairwise_for_two_models() -> None:
+    ids = list_model_ids()
+    if len(ids) < 2:
+        pytest.skip("Need at least two models to compare.")
+    primary = "explorer" if "explorer" in ids else ids[0]
+    comparison = (
+        "navigator" if "navigator" in ids and primary != "navigator" else ids[1]
+    )
+    pairwise = compare_model_inspections(
+        inspect_model(primary), inspect_model(comparison)
+    )
+    many = compare_model_inspections_many(
+        [inspect_model(primary), inspect_model(comparison)]
+    )
+    assert [row.module_id for row in many] == [diff.module_id for diff in pairwise]
+    assert [row.changed for row in many] == [not diff.equal for diff in pairwise]
+    for row in many:
+        assert len(row.inspections) == 2
+
+
+def test_compare_model_inspections_many_n_way_flags_any_divergent_model() -> None:
+    ids = list_model_ids()
+    if len(ids) < 3:
+        pytest.skip("Need at least three models for an N-way comparison.")
+    inspections = [inspect_model(model_id) for model_id in ids[:3]]
+    rows = compare_model_inspections_many(inspections)
+    assert all(len(row.inspections) == 3 for row in rows)
+    # changed is True iff any non-primary model differs from the primary
+    for row in rows:
+        baseline = row.inspections[0]
+        expected = any(
+            (member.present, member.mode, member.parameters)
+            != (baseline.present, baseline.mode, baseline.parameters)
+            for member in row.inspections[1:]
+        )
+        assert row.changed == expected
 
 
 def test_probe_output_schema_and_reporter_metadata() -> None:

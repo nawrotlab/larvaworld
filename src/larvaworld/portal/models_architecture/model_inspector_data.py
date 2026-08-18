@@ -16,6 +16,7 @@ from larvaworld.portal.models_architecture.model_inspector_models import (
     ModelInspectorError,
     ModuleInspection,
     ModuleComparison,
+    ModuleComparisonMany,
     ProbeIssue,
     ProbeResult,
 )
@@ -518,6 +519,36 @@ def compare_model_inspections(
     return diffs
 
 
+def compare_model_inspections_many(
+    inspections: list[ModelInspection],
+) -> list[ModuleComparisonMany]:
+    """N-way generalization of compare_model_inspections: one row per
+    module, one ModuleInspection per model (primary first, i.e.
+    inspections[0]), with `changed` true if any non-primary model differs
+    from the primary in presence, mode, or parameters."""
+    module_ids = _ordered_module_ids(*inspections)
+    maps = [_module_map(inspection) for inspection in inspections]
+
+    rows: list[ModuleComparisonMany] = []
+    for module_id in module_ids:
+        members = tuple(
+            module_map.get(module_id) or _missing_module_inspection(module_id)
+            for module_map in maps
+        )
+        baseline = members[0]
+        changed = any(
+            (member.present, member.mode, member.parameters)
+            != (baseline.present, baseline.mode, baseline.parameters)
+            for member in members[1:]
+        )
+        rows.append(
+            ModuleComparisonMany(
+                module_id=module_id, inspections=members, changed=changed
+            )
+        )
+    return rows
+
+
 def run_model_probe(
     model_id: str,
     *,
@@ -962,12 +993,10 @@ def _module_map(inspection: ModelInspection) -> dict[str, ModuleInspection]:
     return {module.module_id: module for module in modules}
 
 
-def _ordered_module_ids(
-    primary: ModelInspection, comparison: ModelInspection
-) -> list[str]:
+def _ordered_module_ids(*inspections: ModelInspection) -> list[str]:
     ids: list[str] = list(BASELINE_MODULES)
     seen = set(ids)
-    for inspection in (primary, comparison):
+    for inspection in inspections:
         for module in inspection.optional_modules:
             if module.module_id in seen:
                 continue

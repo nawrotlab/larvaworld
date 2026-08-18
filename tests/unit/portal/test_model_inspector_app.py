@@ -5,12 +5,14 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+import larvaworld
 import pandas as pd
 import panel as pn
 import pytest
 
-from larvaworld.lib import reg
+from larvaworld.lib import reg, util
 from larvaworld.lib.model import moduleDB as MD
+from larvaworld.lib.reg import config as reg_config
 from larvaworld.portal.config_widgets.preset_controls import PresetSource
 from larvaworld.portal.models_architecture.model_inspector_app import (
     _ModelInspectorController,
@@ -36,6 +38,35 @@ def workspace_config_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     clear_active_workspace_path()
 
 
+@pytest.fixture()
+def isolated_model_conf_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    # Opt-in isolation for the handful of tests that actually exercise
+    # registry save/delete/reset on reg.conf.Model (now unconditionally
+    # available -- see _build_model_preset_controls). CONF_DIR is shared
+    # by every conftype, so every conftype gets seeded and restored here,
+    # not just Model (see the equivalent fixture in
+    # test_single_experiment_app.py for why: a partial seed would
+    # silently wipe any other conftype's in-memory dict to empty on its
+    # next .load()).
+    original_conf_dir = reg_config.CONF_DIR
+    original_dicts = {
+        conftype: reg.conf[conftype].dict for conftype in larvaworld.CONFTYPES
+    }
+    tmp_conf_dir = tmp_path / "confDicts"
+    tmp_conf_dir.mkdir()
+    for conftype, conf_dict in original_dicts.items():
+        util.save_dict(
+            util.AttrDict(conf_dict).get_copy(), f"{tmp_conf_dir}/{conftype}.txt"
+        )
+    monkeypatch.setattr(reg_config, "CONF_DIR", str(tmp_conf_dir))
+    try:
+        yield tmp_conf_dir
+    finally:
+        monkeypatch.setattr(reg_config, "CONF_DIR", original_conf_dir)
+        for conftype, conf_dict in original_dicts.items():
+            reg.conf[conftype].dict = conf_dict
+
+
 def _guard_registry_writes(monkeypatch: pytest.MonkeyPatch) -> None:
     def _boom(*_args, **_kwargs):
         raise AssertionError("registry write path must not be called")
@@ -59,6 +90,19 @@ def _workspace_preset_token(controller: _ModelInspectorController, name: str) ->
     label = f"Workspace / {name}"
     assert label in controller.model_preset_controls.preset_select.options
     return controller.model_preset_controls.preset_select.options[label]
+
+
+def _load_registry_model(controller: _ModelInspectorController, model_id: str) -> None:
+    """Load `model_id` as the primary model via the top Stored
+    Configurations panel -- the replacement for the old
+    `controller.primary_select.value = model_id`."""
+    controller.model_preset_controls.refresh_list()
+    label = f"Registry / {model_id}"
+    assert label in controller.model_preset_controls.preset_select.options
+    controller.model_preset_controls.preset_select.value = (
+        controller.model_preset_controls.preset_select.options[label]
+    )
+    assert controller.model_preset_controls.load_selected() is True
 
 
 def _collect_cards(viewable) -> list[pn.Card]:
@@ -170,10 +214,9 @@ def test_model_inspector_app_returns_viewable(monkeypatch: pytest.MonkeyPatch) -
 def test_controller_initializes_primary_only(monkeypatch: pytest.MonkeyPatch) -> None:
     _guard_registry_writes(monkeypatch)
     controller = _ModelInspectorController()
-    assert controller.primary_select.value is not None
-    assert controller.compare_select.value == ""
+    assert controller._draft_model_id is not None
+    assert controller.compare_models_select.value == [controller._draft_model_id]
     assert controller._draft_model is not None
-    assert controller._draft_model_id == str(controller.primary_select.value)
     assert isinstance(controller.primary_table.object, pd.DataFrame)
     assert controller.module_sections_box.objects
 
@@ -239,7 +282,7 @@ def test_controller_comparison_hidden_after_local_edits(
     amp_widget = _find_widget_in_card(crawler_card, pn.widgets.Widget, "amp")
     old_value = controller._draft_model.brain["crawler"]["amp"]
     amp_widget.value = old_value + 0.25
-    assert controller.compare_select.disabled is True
+    assert controller.compare_run_button.disabled is True
     assert "hidden during local edits" in controller.compare_title.object
 
 
@@ -266,7 +309,7 @@ def test_controller_merges_optional_modules_into_summary(
         inspection = inspect_model(model_id)
         if not inspection.optional_modules:
             continue
-        controller.primary_select.value = model_id
+        _load_registry_model(controller, model_id)
         summary = controller.primary_table.object
         assert isinstance(summary, pd.DataFrame)
         assert "Category" in summary.columns
@@ -356,7 +399,7 @@ def test_controller_rebuilds_cards_on_primary_model_change_without_replacing_con
     _guard_registry_writes(monkeypatch)
     controller = _ModelInspectorController()
     container_id = id(controller.module_sections_box)
-    current = str(controller.primary_select.value)
+    current = str(controller._draft_model_id)
     candidates = [
         model_id for model_id in reg.conf.Model.confIDs if model_id != current
     ]
@@ -364,7 +407,7 @@ def test_controller_rebuilds_cards_on_primary_model_change_without_replacing_con
         pytest.skip("Need at least two models to validate module section refresh.")
     other_model_id = candidates[0]
     expected_specs = inspect_model_modules(other_model_id)
-    controller.primary_select.value = other_model_id
+    _load_registry_model(controller, other_model_id)
     assert id(controller.module_sections_box) == container_id
     assert controller._draft_model_id == other_model_id
     titles = _collect_module_card_titles(controller.module_sections_box)
@@ -379,14 +422,14 @@ def test_controller_primary_change_replaces_draft_object(
 ) -> None:
     _guard_registry_writes(monkeypatch)
     controller = _ModelInspectorController()
-    current = str(controller.primary_select.value)
+    current = str(controller._draft_model_id)
     candidates = [
         model_id for model_id in reg.conf.Model.confIDs if model_id != current
     ]
     if not candidates:
         pytest.skip("Need at least two models to validate draft replacement.")
     old_draft_id = id(controller._draft_model)
-    controller.primary_select.value = candidates[0]
+    _load_registry_model(controller, candidates[0])
     assert id(controller._draft_model) != old_draft_id
 
 
@@ -395,7 +438,7 @@ def test_controller_refresh_reads_from_draft_not_registry(
 ) -> None:
     _guard_registry_writes(monkeypatch)
     controller = _ModelInspectorController()
-    canonical = load_model_draft(str(controller.primary_select.value))
+    canonical = load_model_draft(str(controller._draft_model_id))
     original_mode = canonical.brain["crawler"]["mode"]
     # Set draft to a different mode than the original
     new_mode = "gaussian" if original_mode != "gaussian" else "square"
@@ -404,7 +447,7 @@ def test_controller_refresh_reads_from_draft_not_registry(
     titles = _collect_module_card_titles(controller.module_sections_box)
     crawler_title = next(title for title in titles if title.startswith("crawler |"))
     assert crawler_title == f"crawler | {new_mode} | configured"
-    canonical_after = load_model_draft(str(controller.primary_select.value))
+    canonical_after = load_model_draft(str(controller._draft_model_id))
     # Verify draft changed but canonical didn't
     assert canonical_after.brain["crawler"]["mode"] == original_mode
     assert canonical_after.brain["crawler"]["mode"] != new_mode
@@ -455,7 +498,7 @@ def test_brain_parameter_edit_writes_draft_only(
         new_value = old_value
     amp_widget.value = new_value
     assert controller._draft_model.brain["crawler"]["amp"] == new_value
-    canonical = load_model_draft(str(controller.primary_select.value))
+    canonical = load_model_draft(str(controller._draft_model_id))
     assert canonical.brain["crawler"]["amp"] != new_value
     assert controller._has_local_edits is True
 
@@ -622,7 +665,7 @@ def test_memory_parameter_edit_writes_draft(
     old_alpha = controller._draft_model.brain["memory"]["alpha"]
     alpha_widget.value = old_alpha + 0.1
     assert controller._draft_model.brain["memory"]["alpha"] == old_alpha + 0.1
-    canonical = load_model_draft(str(controller.primary_select.value))
+    canonical = load_model_draft(str(controller._draft_model_id))
     if canonical.brain["memory"] is not None and "alpha" in canonical.brain["memory"]:
         assert canonical.brain["memory"]["alpha"] != old_alpha + 0.1
 
@@ -717,7 +760,7 @@ def test_branch_intermitter_invalid_beta_blocks_live_preview(
     if "CON_CON_SQ_BR" not in reg.conf.Model.confIDs:
         pytest.skip("CON_CON_SQ_BR is required for this validation test.")
     controller = _ModelInspectorController()
-    controller.primary_select.value = "CON_CON_SQ_BR"
+    _load_registry_model(controller, "CON_CON_SQ_BR")
     assert any(
         issue.code == "intermitter_branch_beta_invalid"
         for issue in controller._draft_validation_issues
@@ -738,7 +781,7 @@ def test_intermitter_card_shows_branch_beta_validation_error(
     if "CON_CON_SQ_BR" not in reg.conf.Model.confIDs:
         pytest.skip("CON_CON_SQ_BR is required for this validation test.")
     controller = _ModelInspectorController()
-    controller.primary_select.value = "CON_CON_SQ_BR"
+    _load_registry_model(controller, "CON_CON_SQ_BR")
     intermitter_card = _find_card(controller.module_sections_box, "intermitter")
     card_text = _collect_text(intermitter_card)
     assert "Branch intermitter requires" in card_text
@@ -759,10 +802,14 @@ def test_module_edit_hides_comparison(
     candidates = [
         model_id
         for model_id in reg.conf.Model.confIDs
-        if model_id != controller.primary_select.value
+        if model_id != controller._draft_model_id
     ]
     if candidates:
-        controller.compare_select.value = candidates[0]
+        controller.compare_models_select.value = [
+            controller._draft_model_id,
+            candidates[0],
+        ]
+        controller._on_compare_draw()
     crawler_card = _find_card(controller.module_sections_box, "crawler")
     mode_select = _find_widget_in_card(crawler_card, pn.widgets.Select, "Mode")
     options = list(mode_select.options)
@@ -771,7 +818,7 @@ def test_module_edit_hides_comparison(
         pytest.skip("No alternate crawler mode available.")
     mode_select.value = target
     assert controller._has_local_edits is True
-    assert controller.compare_select.disabled is True
+    assert controller.compare_run_button.disabled is True
     assert "hidden during local edits" in controller.compare_title.object
 
 
@@ -964,8 +1011,8 @@ def test_controller_reset_to_preset_clears_local_edit_state(
     controller._draft_model.brain["crawler"]["mode"] = "constant"
     controller._on_reset_to_preset()
     assert controller._has_local_edits is False
-    assert controller.compare_select.disabled is False
-    canonical = load_model_draft(str(controller.primary_select.value))
+    assert controller.compare_run_button.disabled is False
+    canonical = load_model_draft(str(controller._draft_model_id))
     assert (
         controller._draft_model.brain["crawler"]["mode"]
         == canonical.brain["crawler"]["mode"]
@@ -1050,7 +1097,7 @@ def test_controller_runtime_builder_receives_draft(
         app_module, "build_inspection_brain_from_config", _fake_builder, raising=True
     )
     controller._ensure_brain_for_selected_model()
-    assert captured["model_id"] == str(controller.primary_select.value)
+    assert captured["model_id"] == str(controller._draft_model_id)
     assert captured["model_conf"] is controller._draft_model
 
 
@@ -1083,15 +1130,15 @@ def test_preview_runtime_rebuild_uses_edited_draft_mode(
     target = next((opt for opt in options if opt != mode_select.value), None)
     if target is None:
         pytest.skip("No alternate crawler mode available.")
-    canonical_mode = load_model_draft(str(controller.primary_select.value)).brain[
-        "crawler"
-    ]["mode"]
+    canonical_mode = load_model_draft(str(controller._draft_model_id)).brain["crawler"][
+        "mode"
+    ]
     mode_select.value = target
     latest = captured["calls"][-1]
     assert latest["model_conf"] is controller._draft_model
     assert latest["crawler_mode"] == controller._draft_model.brain["crawler"]["mode"]
     assert (
-        load_model_draft(str(controller.primary_select.value)).brain["crawler"]["mode"]
+        load_model_draft(str(controller._draft_model_id)).brain["crawler"]["mode"]
         == canonical_mode
     )
 
@@ -1127,7 +1174,7 @@ def test_preview_runtime_rebuild_uses_edited_draft_parameter(
     assert latest["model_conf"] is controller._draft_model
     assert latest["crawler_amp"] == controller._draft_model.brain["crawler"]["amp"]
     assert (
-        load_model_draft(str(controller.primary_select.value)).brain["crawler"]["amp"]
+        load_model_draft(str(controller._draft_model_id)).brain["crawler"]["amp"]
         == old_amp
     )
 
@@ -1198,9 +1245,9 @@ def test_reset_to_preset_changes_preview_back_to_canonical(
     )
     crawler_card = _find_card(controller.module_sections_box, "crawler")
     amp_widget = _find_widget_in_card(crawler_card, pn.widgets.Widget, "amp")
-    canonical_amp = load_model_draft(str(controller.primary_select.value)).brain[
-        "crawler"
-    ]["amp"]
+    canonical_amp = load_model_draft(str(controller._draft_model_id)).brain["crawler"][
+        "amp"
+    ]
     amp_widget.value = canonical_amp + 0.25
     assert controller._draft_model.brain["crawler"]["amp"] != canonical_amp
     controller._on_reset_to_preset()
@@ -1215,22 +1262,21 @@ def test_comparison_remains_canonical_only_and_hidden_during_draft_edits(
 ) -> None:
     _guard_registry_writes(monkeypatch)
     controller = _ModelInspectorController()
-    candidates = [
-        m for m in reg.conf.Model.confIDs if m != controller.primary_select.value
-    ]
+    candidates = [m for m in reg.conf.Model.confIDs if m != controller._draft_model_id]
     if not candidates:
         pytest.skip("Need at least two models for comparison behavior test.")
-    controller.compare_select.value = candidates[0]
+    controller.compare_models_select.value = [controller._draft_model_id, candidates[0]]
+    controller._on_compare_draw()
     assert not controller.compare_table.object.empty
     crawler_card = _find_card(controller.module_sections_box, "crawler")
     amp_widget = _find_widget_in_card(crawler_card, pn.widgets.Widget, "amp")
     amp_widget.value = controller._draft_model.brain["crawler"]["amp"] + 0.2
     assert controller._has_local_edits is True
-    assert controller.compare_select.disabled is True
+    assert controller.compare_run_button.disabled is True
     assert "hidden during local edits" in controller.compare_title.object
     assert controller.compare_table.object.empty
     controller._on_reset_to_preset()
-    assert controller.compare_select.disabled is False
+    assert controller.compare_run_button.disabled is False
 
 
 def test_live_preview_probe_table_still_updates_after_draft_edit(
@@ -1251,7 +1297,7 @@ def test_live_preview_probe_table_still_updates_after_draft_edit(
     controller._on_pause()
 
 
-def test_model_preset_controls_are_visible_and_default_to_workspace_user_policy(
+def test_model_preset_controls_are_visible_and_default_to_full_registry_access(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -1260,11 +1306,15 @@ def test_model_preset_controls_are_visible_and_default_to_workspace_user_policy(
     controller = _ModelInspectorController()
     assert controller.model_preset_controls.view is not None
     assert controller.model_preset_controls.policy.can_save_workspace is True
-    assert controller.model_preset_controls.policy.can_save_registry is False
-    assert controller.model_preset_controls.policy.can_delete_registry is False
-    assert controller.model_preset_controls.policy.can_reset_registry is False
-    assert controller.model_preset_controls.save_target is None
-    assert controller.download_json_button is not None
+    assert controller.model_preset_controls.policy.can_save_registry is True
+    assert controller.model_preset_controls.policy.can_delete_registry is True
+    assert controller.model_preset_controls.policy.can_reset_registry is True
+    # dual_write=False here (unlike Environment Builder): workspace and
+    # registry are independent targets, so save_target stays a real toggle.
+    assert controller.model_preset_controls.save_target is not None
+    assert controller.model_preset_controls.reset_button is not None
+    assert controller.export_model_btn is not None
+    assert controller.import_model_input is not None
 
 
 def test_workspace_model_preset_save_load_delete_roundtrips_current_draft(
@@ -1291,7 +1341,7 @@ def test_workspace_model_preset_save_load_delete_roundtrips_current_draft(
     assert controller.model_preset_controls.load_selected() is True
     assert controller._draft_model.brain["crawler"]["amp"] == saved_amp
     assert controller._has_local_edits is True
-    assert controller.compare_select.disabled is True
+    assert controller.compare_run_button.disabled is True
     assert controller.model_preset_controls.delete_selected() is False
     assert controller.model_preset_controls.confirm_pending_action() is True
     assert not saved_path.exists()
@@ -1311,6 +1361,54 @@ def test_json_download_exports_current_draft_payload(
     payload = json.loads(controller._draft_json_text())
     assert payload["brain"]["crawler"]["amp"] == expected_amp
     assert payload == controller._draft_payload_for_storage()
+
+
+def test_import_model_file_replaces_draft(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    _activate_test_workspace(tmp_path)
+    controller = _ModelInspectorController()
+    crawler_card = _find_card(controller.module_sections_box, "crawler")
+    amp_widget = _find_widget_in_card(crawler_card, pn.widgets.Widget, "amp")
+    exported_amp = controller._draft_model.brain["crawler"]["amp"] + 0.17
+    amp_widget.value = exported_amp
+    payload_text = controller._draft_json_text()
+
+    controller._on_reset_to_preset()
+    assert controller._draft_model.brain["crawler"]["amp"] != exported_amp
+
+    controller.import_model_input.filename = "my_export.json"
+    controller.import_model_input.value = payload_text.encode("utf-8")
+
+    assert controller._draft_model.brain["crawler"]["amp"] == exported_amp
+    assert controller._has_local_edits is True
+    assert controller.model_preset_controls.preset_name.value == "my_export"
+    refreshed_card = _find_card(controller.module_sections_box, "crawler")
+    refreshed_amp = _find_widget_in_card(refreshed_card, pn.widgets.Widget, "amp")
+    assert refreshed_amp.value == exported_amp
+
+
+def test_import_model_file_rejects_invalid_payload(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    _activate_test_workspace(tmp_path)
+    controller = _ModelInspectorController()
+    controller.import_model_input.filename = "bad.json"
+    controller.import_model_input.value = b"[1, 2, 3]"
+    assert "not a valid model configuration" in controller.status_pane.object
+
+
+def test_compare_models_select_defaults_to_registry_catalog(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _guard_registry_writes(monkeypatch)
+    controller = _ModelInspectorController()
+    assert set(controller.compare_models_select.options) == set(controller._model_ids)
+    assert controller.compare_models_select.value == [controller._draft_model_id]
 
 
 def test_loading_workspace_model_preset_replaces_draft_and_refreshes_ui(
@@ -1340,29 +1438,26 @@ def test_loading_workspace_model_preset_replaces_draft_and_refreshes_ui(
     assert controller._runtime is not None
 
 
-def test_registry_model_presets_are_read_only_in_normal_mode(
-    monkeypatch: pytest.MonkeyPatch,
+def test_registry_model_preset_save_and_delete_round_trip(
     tmp_path: Path,
+    isolated_model_conf_dir: Path,
 ) -> None:
-    _guard_registry_writes(monkeypatch)
     _activate_test_workspace(tmp_path)
     controller = _ModelInspectorController()
-    registry_ref = next(
-        (
-            ref
-            for ref in controller.model_preset_controls.catalog.refs
-            if ref.source == PresetSource.REGISTRY
-        ),
-        None,
-    )
-    if registry_ref is None:
-        pytest.skip("No registry preset available for read-only policy test.")
-    controller.model_preset_controls.preset_select.value = registry_ref.token
-    assert controller.model_preset_controls.delete_selected() is False
-    assert "read-only" in str(controller.model_preset_controls.status.object)
-    assert controller.model_preset_controls.save_target is None
-    controller.model_preset_controls.preset_name.value = "workspace_only_write"
+
+    controller.model_preset_controls.preset_name.value = "portal_test_registry_model"
+    controller.model_preset_controls.save_target.value = "Registry"
     assert controller.model_preset_controls.save_current() is True
+    assert "portal_test_registry_model" in reg.conf.Model.dict
+
+    controller.model_preset_controls.preset_select.value = (
+        controller.model_preset_controls.preset_select.options[
+            "Registry / portal_test_registry_model"
+        ]
+    )
+    assert controller.model_preset_controls.delete_selected() is False
+    assert controller.model_preset_controls.confirm_pending_action() is True
+    assert "portal_test_registry_model" not in reg.conf.Model.dict
 
 
 def test_loading_registry_model_preset_replaces_draft_without_registry_write(
@@ -1372,7 +1467,7 @@ def test_loading_registry_model_preset_replaces_draft_without_registry_write(
     _guard_registry_writes(monkeypatch)
     _activate_test_workspace(tmp_path)
     controller = _ModelInspectorController()
-    current_primary = str(controller.primary_select.value)
+    current_primary = str(controller._draft_model_id)
     registry_ref = next(
         (
             ref
@@ -1387,8 +1482,12 @@ def test_loading_registry_model_preset_replaces_draft_without_registry_write(
     controller.model_preset_controls.preset_select.value = registry_ref.token
     assert controller.model_preset_controls.load_selected() is True
     assert controller._draft_model.brain["crawler"]["mode"] == expected_mode
-    assert controller._has_local_edits is True
-    assert controller.compare_select.disabled is True
+    # Registry-sourced loads switch the canonical primary model (like the
+    # old table-selection flow) rather than restoring a possibly-edited
+    # draft snapshot -- unlike workspace/file-sourced loads, this is not
+    # a "local edit".
+    assert controller._has_local_edits is False
+    assert controller.compare_run_button.disabled is False
 
 
 def test_workspace_unavailable_disables_model_preset_write_controls(
@@ -1401,17 +1500,6 @@ def test_workspace_unavailable_disables_model_preset_write_controls(
     assert controller.model_preset_controls.load_button.disabled is True
     assert controller.model_preset_controls.delete_button.disabled is True
     assert controller.module_sections_box.objects
-
-
-def test_advanced_model_preset_mode_exposes_registry_target_only_when_explicit(
-    tmp_path: Path,
-) -> None:
-    _activate_test_workspace(tmp_path)
-    controller = _ModelInspectorController(advanced_preset_controls=True)
-    assert controller.model_preset_controls.policy.can_save_registry is True
-    assert controller.model_preset_controls.policy.can_delete_registry is True
-    assert controller.model_preset_controls.policy.can_reset_registry is True
-    assert controller.model_preset_controls.save_target is not None
 
 
 def test_safe_parameter_edit_does_not_replace_sections_slots_or_cards(
@@ -1441,14 +1529,15 @@ def test_compare_change_does_not_rebuild_module_cards(
     candidates = [
         model_id
         for model_id in reg.conf.Model.confIDs
-        if model_id != controller.primary_select.value
+        if model_id != controller._draft_model_id
     ]
     if not candidates:
         pytest.skip("Need alternate model for comparison change test.")
     sections_before = list(controller.module_sections_box.objects)
     crawler_card_before = _find_card(controller.module_sections_box, "crawler")
     body_card_before = _find_card(controller.module_sections_box, "body")
-    controller.compare_select.value = candidates[0]
+    controller.compare_models_select.value = [controller._draft_model_id, candidates[0]]
+    controller._on_compare_draw()
     assert list(controller.module_sections_box.objects) == sections_before
     assert _find_card(controller.module_sections_box, "crawler") is crawler_card_before
     assert _find_card(controller.module_sections_box, "body") is body_card_before
@@ -1463,7 +1552,7 @@ def test_summary_box_stacks_comparison_table_below_configured_modules(
     candidates = [
         model_id
         for model_id in reg.conf.Model.confIDs
-        if model_id != controller.primary_select.value
+        if model_id != controller._draft_model_id
     ]
     if not candidates:
         pytest.skip("Need alternate model for comparison layout test.")
@@ -1476,7 +1565,8 @@ def test_summary_box_stacks_comparison_table_below_configured_modules(
     )
     assert controller.primary_table in controller.summary_sections_box.objects
     assert controller.compare_table not in controller.summary_sections_box.objects
-    controller.compare_select.value = candidates[0]
+    controller.compare_models_select.value = [controller._draft_model_id, candidates[0]]
+    controller._on_compare_draw()
     children = list(controller.summary_sections_box.objects)
     primary_index = children.index(controller.primary_table)
     compare_index = children.index(controller.compare_table)

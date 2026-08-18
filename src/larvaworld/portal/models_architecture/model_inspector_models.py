@@ -64,6 +64,17 @@ class ModuleComparison:
 
 
 @dataclass(frozen=True)
+class ModuleComparisonMany:
+    module_id: str
+    #: One inspection per compared model, in the same order as the models
+    #: passed to compare_model_inspections_many (primary first).
+    inspections: tuple[ModuleInspection, ...]
+    #: True if any non-primary model differs from the primary in
+    #: presence, mode, or parameters.
+    changed: bool
+
+
+@dataclass(frozen=True)
 class ProbeIssue:
     code: str
     message: str
