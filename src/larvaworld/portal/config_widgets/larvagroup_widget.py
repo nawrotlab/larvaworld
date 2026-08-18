@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any
 
-import panel as pn
 import param
 
 from larvaworld.lib import reg, util
@@ -111,7 +110,6 @@ def build_larva_groups_widget(
     *,
     parameter_name: str = "larva_groups",
     wrap: bool = True,
-    on_select_widget: Callable[[pn.widgets.Select], None] | None = None,
 ) -> object:
     parameter = owner.param.objects(instance=False).get(parameter_name)
     if not isinstance(parameter, ClassDict):
@@ -130,5 +128,4 @@ def build_larva_groups_widget(
         item_label="larva group",
         build_item_editor=_build_larva_group_item,
         wrap=wrap,
-        on_select_widget=on_select_widget,
     )

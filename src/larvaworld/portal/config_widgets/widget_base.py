@@ -537,7 +537,6 @@ def classdict_editor(
     box_css_classes: list[str] | None = None,
     title_css_classes: list[str] | None = None,
     wrap: bool = True,
-    on_select_widget: Callable[[pn.widgets.Select], None] | None = None,
 ) -> pn.Column:
     section_title = title or name.replace("_", " ").title()
     label = item_label or section_title.rstrip("s")
@@ -549,14 +548,6 @@ def classdict_editor(
         value="",
         sizing_mode="stretch_width",
     )
-    if on_select_widget is not None:
-        # Lets a caller (e.g. a click-to-place canvas driving this same
-        # editor) set `select.value` externally to change which item is
-        # being edited, and observe `select.param.watch(..., "value")`
-        # firing this editor's own _refresh() -- without this hook, the
-        # Select instance is a local closure variable with no external
-        # handle at all.
-        on_select_widget(select)
     key_input = pn.widgets.TextInput(
         name=f"New {label.lower()} ID",
         placeholder=f"Enter a {label.lower()} key",

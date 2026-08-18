@@ -22,6 +22,7 @@ __all__ = [
     "RegistryPresetStore",
     "WorkspacePresetStore",
     "PresetControlsController",
+    "build_preset_controls_panel",
     "build_user_preset_controls",
     "build_advanced_preset_controls",
 ]
@@ -812,6 +813,69 @@ class PresetControlsController:
             self._set_status("Reset confirmation required.", tone="warning")
             return False
         return _execute()
+
+
+def build_preset_controls_panel(
+    controller: PresetControlsController,
+    *,
+    title: str = "Stored Configurations",
+    name_field: Any = None,
+    reset_slot: pn.widgets.Button | None = None,
+    extra_sections: list[Any] | None = None,
+    show_status: bool = True,
+) -> pn.Card:
+    """Canonical "Stored Configurations" layout, shared across portal apps
+    (Environment Builder, Single Experiment) so the same preset
+    save/load/delete UI looks and behaves identically everywhere.
+
+    Order: name field -> preset select -> [refresh, reset_slot] row ->
+    [save, load, delete] row -> storage info -> extra_sections (app-
+    specific extras, e.g. Environment Builder's file import/export) ->
+    confirmation host -> status (if show_status).
+
+    Args:
+        controller: The panel's PresetControlsController.
+        title: Card title.
+        name_field: Widget/view for the preset name field. Defaults to
+            `controller.preset_name`; pass a different view (e.g. a
+            relabeled param pane) to customize its presentation only.
+        reset_slot: Optional button placed next to Refresh (e.g. a
+            registry-reset or reset-to-defaults action).
+        extra_sections: Optional app-specific views appended after the
+            storage info, before the confirmation host.
+        show_status: Whether to include `controller.status`. Some apps
+            route preset status messages into their own shared status
+            pane instead (via `on_status`) and omit this.
+    """
+    if name_field is None:
+        name_field = controller.preset_name
+    refresh_row = [controller.refresh_button]
+    if reset_slot is not None:
+        refresh_row.append(reset_slot)
+    children: list[Any] = [
+        name_field,
+        controller.preset_select,
+        pn.Row(*refresh_row, sizing_mode="stretch_width", margin=(4, 0, 0, 0)),
+        pn.Row(
+            controller.save_button,
+            controller.load_button,
+            controller.delete_button,
+            sizing_mode="stretch_width",
+            margin=(4, 0, 0, 0),
+        ),
+        controller.storage_info,
+    ]
+    if extra_sections:
+        children.extend(extra_sections)
+    children.append(controller.confirmation_host)
+    if show_status:
+        children.append(controller.status)
+    return pn.Card(
+        pn.Column(*children, sizing_mode="stretch_width", margin=0),
+        title=title,
+        collapsed=False,
+        sizing_mode="stretch_width",
+    )
 
 
 def _payload_to_jsonable(payload: Any) -> Any:

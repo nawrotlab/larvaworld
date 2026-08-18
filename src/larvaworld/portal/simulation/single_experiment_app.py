@@ -8,7 +8,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from bokeh.events import Tap
 import panel as pn
 import param
 
@@ -23,11 +22,6 @@ from larvaworld.portal.canvas_widgets import (
     EnvironmentCanvas,
     LarvaPreviewFrame,
     env_params_to_canvas_state,
-)
-from larvaworld.portal.canvas_widgets.placement_controller import (
-    HitCandidate,
-    TapDispatcher,
-    pick_nearest,
 )
 from larvaworld.portal.landing_registry import (
     DOCS_EXPERIMENT_TYPES,
@@ -45,10 +39,12 @@ from larvaworld.portal.config_widgets.larvagroup_widget import (
 from larvaworld.portal.config_widgets.sim_ops_widget import build_sim_ops_widget
 from larvaworld.portal.config_widgets.preset_controls import (
     USER_PRESET_POLICY,
+    PresetActionPolicy,
     PresetControlsController,
     PresetRef,
     PresetSource,
     WorkspacePresetStore,
+    build_preset_controls_panel,
 )
 from larvaworld.portal.config_widgets.trials_widget import build_trials_widget
 from larvaworld.portal.simulation.parameter_resolution import (
@@ -274,6 +270,21 @@ _EXPERIMENT_TEMPLATE_SAVE_KEYS = (
     "trials",
     "enrichment",
     "collections",
+)
+# Dual-write save/delete (a workspace template and its same-named registry
+# Exp entry treated as one linked unit -- see PresetControlsController's
+# dual_write docs), but deliberately without registry reset: resetting the
+# *entire* Exp registry from inside a single-experiment editing context is
+# far more destructive/unexpected than the equivalent in the dedicated
+# Environment Builder app, so that capability stays off here.
+_EXPERIMENT_TEMPLATE_PRESET_POLICY = PresetActionPolicy(
+    can_load_registry=True,
+    can_load_workspace=True,
+    can_save_registry=True,
+    can_save_workspace=True,
+    can_delete_registry=True,
+    can_delete_workspace=True,
+    can_reset_registry=False,
 )
 
 
@@ -751,16 +762,16 @@ class _FrameSimulationPreview:
 
 class _SingleExperimentController:
     @staticmethod
-    def _new_preview_canvas(*, editable: bool = False) -> EnvironmentCanvas:
+    def _new_preview_canvas() -> EnvironmentCanvas:
         try:
             return EnvironmentCanvas(
-                editable=editable,
+                editable=False,
                 width=_PREVIEW_CANVAS_WIDTH,
                 height=_PREVIEW_CANVAS_HEIGHT,
                 snap_heads_to_midline=True,
             )
         except TypeError:
-            return EnvironmentCanvas(editable=editable)
+            return EnvironmentCanvas(editable=False)
 
     @staticmethod
     def _initial_preview_content() -> list[pn.viewable.Viewable]:
@@ -827,23 +838,9 @@ class _SingleExperimentController:
         self.environment_save_btn = self.environment_preset_controls.save_button
         self.environment_template_default_btn.width = None
         self.environment_template_default_btn.sizing_mode = "stretch_width"
-        self.environment_preset_view = pn.Column(
-            self.environment_preset_controls.preset_select,
-            pn.Row(
-                self.environment_preset_controls.refresh_button,
-                self.environment_template_default_btn,
-                sizing_mode="stretch_width",
-            ),
-            self.environment_preset_controls.preset_name,
-            pn.Row(
-                self.environment_preset_controls.save_button,
-                self.environment_preset_controls.load_button,
-                self.environment_preset_controls.delete_button,
-                sizing_mode="stretch_width",
-            ),
-            self.environment_preset_controls.confirmation_host,
-            self.environment_preset_controls.status,
-            sizing_mode="stretch_width",
+        self.environment_preset_view = build_preset_controls_panel(
+            self.environment_preset_controls,
+            reset_slot=self.environment_template_default_btn,
         )
         self.experiment_template_preset_controls = PresetControlsController(
             conftype="Exp",
@@ -851,7 +848,17 @@ class _SingleExperimentController:
                 Path.cwd(),
                 directory_key="single-experiment-templates",
             ),
-            policy=USER_PRESET_POLICY,
+            policy=_EXPERIMENT_TEMPLATE_PRESET_POLICY,
+            dual_write=True,
+            # No build_registry_payload -- reuses the same whitelisted
+            # workspace payload for the registry side too (see
+            # _experiment_template_payload). Round-tripping the live,
+            # UI-resolved parameters through ExpConf(**...) the way
+            # _build_typed_experiment_from_selected_template does for the
+            # *stored* template's original values doesn't hold here: some
+            # nested fields (e.g. ProcessConf.dsp_stops) come back with a
+            # type ExpConf's strict param validation rejects once passed
+            # through the live parameter-resolution/XY-coercion pipeline.
             build_workspace_payload=lambda _name: self._experiment_template_payload(),
             before_save=self._before_save_experiment_template_preset,
             on_load=self._on_experiment_template_preset_loaded,
@@ -879,7 +886,7 @@ class _SingleExperimentController:
             "", css_classes=["lw-single-exp-env-save-inline"], margin=0
         )
         self.experiment_template_save_box = pn.Column(
-            self.experiment_template_preset_controls.view,
+            build_preset_controls_panel(self.experiment_template_preset_controls),
             self.experiment_template_save_hint,
             self.experiment_template_save_inline,
             css_classes=["lw-single-exp-template-save-box"],
@@ -988,11 +995,6 @@ class _SingleExperimentController:
         ] = {}
         self._typed_experiment_for_larva_groups: Any | None = None
         self._larva_groups_group_view: pn.viewable.Viewable | None = None
-        self._larva_groups_select: pn.widgets.Select | None = None
-        self._live_larva_canvas: EnvironmentCanvas | None = None
-        self._live_larva_canvas_select_mode: pn.widgets.Toggle | None = None
-        self._live_larva_canvas_status: pn.pane.Markdown | None = None
-        self._larva_group_id_counter = 1
         self._typed_experiment_for_enrichment: Any | None = None
         self._enrichment_group_view: pn.viewable.Viewable | None = None
         self._typed_experiment_for_env_params: Any | None = None
@@ -2036,7 +2038,6 @@ class _SingleExperimentController:
             self._bind_larva_groups_state_watchers()
         self._refresh_experiment_template_save_state(reset_baseline=False)
         self._refresh_summary()
-        self._rebuild_live_larva_canvas()
 
     def _on_experiment_template_save_name_change(self, *_: object) -> None:
         if self._loading_experiment_template_preset:
@@ -3141,188 +3142,9 @@ class _SingleExperimentController:
             section="larva_groups",
         )
         self._bind_larva_groups_state_watchers()
-        # Structural changes (add/delete a whole group, whether via the
-        # form's own buttons or _on_larva_canvas_insert) reassign the
-        # entire larva_groups dict -- watch that directly for the canvas
-        # rebuild, since _bind_larva_groups_state_watchers only attaches
-        # per-field watchers to each *existing* group instance and won't
-        # see a whole-dict reassignment. Per-field edits within an
-        # existing group are covered separately, by
-        # _on_experiment_template_parameter_widget_change.
-        self._typed_experiment_for_larva_groups.param.watch(
-            self._on_larva_groups_structure_change, "larva_groups"
+        self._larva_groups_group_view = build_larva_groups_widget(
+            self._typed_experiment_for_larva_groups
         )
-        self._larva_groups_select = None
-        form_view = build_larva_groups_widget(
-            self._typed_experiment_for_larva_groups,
-            on_select_widget=self._capture_larva_groups_select,
-        )
-        self._larva_groups_group_view = pn.Row(
-            form_view,
-            self._larva_group_canvas_card(),
-            sizing_mode="stretch_width",
-        )
-        self._rebuild_live_larva_canvas()
-
-    def _on_larva_groups_structure_change(self, *_: object) -> None:
-        # Fires when the whole larva_groups dict is reassigned (an add or
-        # delete, whether from the form's own buttons or
-        # _on_larva_canvas_insert) -- re-bind per-field watchers so a
-        # newly added group's own fields are covered too, then rebuild
-        # the canvas to reflect the new membership.
-        self._bind_larva_groups_state_watchers()
-        self._rebuild_live_larva_canvas()
-
-    def _capture_larva_groups_select(self, select: pn.widgets.Select) -> None:
-        # Lets canvas-driven selection (_on_larva_canvas_tap) set
-        # select.value directly and have classdict_editor's own existing
-        # "value" watcher open that group's edit form -- no parallel
-        # selection state needed. The reverse (choosing a group in the
-        # form) drives the canvas highlight via the same watcher below.
-        self._larva_groups_select = select
-        select.param.watch(self._on_larva_groups_select_change, "value")
-
-    def _on_larva_groups_select_change(self, *_: object) -> None:
-        if self._live_larva_canvas is None:
-            return
-        self._highlight_selected_larva_group()
-
-    def _larva_group_canvas_card(self) -> pn.viewable.Viewable:
-        # Built once and reused across template switches (unlike
-        # _larva_groups_group_view/form_view, which are rebuilt every
-        # time) -- rebuilding the Bokeh canvas itself on every refresh
-        # would drop its tap wiring and cause visible flicker for no
-        # benefit, since only its *data* needs to change.
-        if self._live_larva_canvas is not None:
-            return self._live_larva_canvas_card
-        self._live_larva_canvas = self._new_preview_canvas(editable=True)
-        # `.fig` (a real Bokeh figure) is only present on the actual
-        # EnvironmentCanvas -- tests substitute lightweight doubles for the
-        # read-only preview path that don't implement it. Degrade to a
-        # non-interactive canvas rather than erroring in that case.
-        fig = getattr(self._live_larva_canvas, "fig", None)
-        if fig is not None:
-            fig.on_event(Tap, self._on_larva_canvas_tap)
-        self._live_larva_canvas_select_mode = pn.widgets.Toggle(
-            name="Select on canvas", value=False, button_type="warning"
-        )
-        self._live_larva_canvas_status = pn.pane.Markdown(
-            "Click the arena to place a new larva group.",
-            margin=(4, 0, 0, 0),
-        )
-        self._live_larva_canvas_card = pn.Card(
-            pn.pane.Markdown(
-                "Click the arena to add a larva group. Toggle **Select on "
-                "canvas** to click an existing group instead and edit it "
-                "in the form on the left.",
-                margin=(0, 0, 4, 0),
-            ),
-            self._live_larva_canvas_select_mode,
-            _preview_canvas_row(self._live_larva_canvas.view()),
-            self._live_larva_canvas_status,
-            title="Place larva groups",
-            collapsible=True,
-            sizing_mode="stretch_width",
-        )
-        return self._live_larva_canvas_card
-
-    def _rebuild_live_larva_canvas(self) -> None:
-        if self._live_larva_canvas is None:
-            return
-        try:
-            parameters = self._resolve_experiment_parameters()
-            state = env_params_to_canvas_state(
-                parameters.env_params,
-                larva_groups=parameters.get("larva_groups", {}),
-                show_group_shapes=True,
-            )
-        except Exception:
-            # Auto-refresh fires on every keystroke; a transiently invalid
-            # in-progress edit shouldn't blank or crash the canvas -- the
-            # next valid edit will refresh it correctly.
-            return
-        self._live_larva_canvas.set_state(state)
-        self._highlight_selected_larva_group()
-
-    def _highlight_selected_larva_group(self) -> None:
-        # `set_selected_object` (real highlight rendering) isn't part of
-        # the lightweight canvas doubles the read-only preview tests
-        # substitute -- no-op rather than error when it's absent.
-        highlight = getattr(self._live_larva_canvas, "set_selected_object", None)
-        if highlight is None or self._larva_groups_select is None:
-            return
-        highlight(self._larva_groups_select.value or None)
-
-    def _next_larva_group_id(self) -> str:
-        existing = set(self._typed_experiment_for_larva_groups.larva_groups.keys())
-        while True:
-            candidate = f"larva_group_{self._larva_group_id_counter:03d}"
-            self._larva_group_id_counter += 1
-            if candidate not in existing:
-                return candidate
-
-    def _new_larva_group_from_click(self, x: float, y: float) -> Any:
-        group = reg.gen.LarvaGroup()
-        group_id = self._next_larva_group_id()
-        group.group_id = group_id
-        group.distribution.loc = (round(x, 4), round(y, 4))
-        return group_id, group
-
-    def _pick_larva_group_at(self, x: float, y: float) -> str | None:
-        if self._live_larva_canvas is None or self._live_larva_canvas._state is None:
-            return None
-        candidates: list[HitCandidate[str]] = []
-        for obj in self._live_larva_canvas._state.objects:
-            if obj.object_type != "larva_group" or obj.x is None or obj.y is None:
-                continue
-            radius = max(
-                float(obj.distribution_scale_x or 0.008),
-                float(obj.distribution_scale_y or 0.008),
-                0.006,
-            )
-            distance = ((x - obj.x) ** 2 + (y - obj.y) ** 2) ** 0.5
-            if distance <= radius:
-                candidates.append(HitCandidate(obj.object_id, distance, obj.object_id))
-        nearest = pick_nearest(candidates)
-        return None if nearest is None else nearest.ref
-
-    def _on_larva_canvas_select(self, x: float, y: float) -> None:
-        target_id = self._pick_larva_group_at(x, y)
-        if self._live_larva_canvas_status is not None:
-            self._live_larva_canvas_status.object = (
-                f'Selected "{target_id}" -- edit it in the form on the left.'
-                if target_id is not None
-                else "No larva group found at that location."
-            )
-        if target_id is not None and self._larva_groups_select is not None:
-            self._larva_groups_select.value = target_id
-
-    def _on_larva_canvas_insert(self, x: float, y: float) -> None:
-        if self._typed_experiment_for_larva_groups is None:
-            return
-        group_id, group = self._new_larva_group_from_click(x, y)
-        current = util.AttrDict(self._typed_experiment_for_larva_groups.larva_groups)
-        current[group_id] = group
-        # Same whole-dict reassignment classdict_editor's own "Add" button
-        # uses -- fires its dict-level watcher, so the form's dropdown and
-        # editor pick up the new group exactly as if it had been added there.
-        self._typed_experiment_for_larva_groups.larva_groups = current
-        if self._live_larva_canvas_status is not None:
-            self._live_larva_canvas_status.object = (
-                f'Added larva group "{group_id}" at ({x:.3f}, {y:.3f}). '
-                "Set its model and other fields in the form on the left."
-            )
-
-    def _on_larva_canvas_tap(self, event: Any) -> None:
-        dispatcher = TapDispatcher(
-            select_mode=lambda: bool(
-                self._live_larva_canvas_select_mode is not None
-                and self._live_larva_canvas_select_mode.value
-            ),
-            on_select=self._on_larva_canvas_select,
-            on_insert=self._on_larva_canvas_insert,
-        )
-        dispatcher.on_tap(event)
 
     def _build_typed_experiment_from_selected_template(self) -> Any:
         from larvaworld.lib.reg.generators import ExpConf

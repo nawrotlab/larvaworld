@@ -98,32 +98,3 @@ def test_larva_groups_widget_adds_group_with_matching_group_id() -> None:
 
     assert "new_group" in exp.larva_groups
     assert exp.larva_groups["new_group"].group_id == "new_group"
-
-
-def test_larva_groups_widget_exposes_select_via_on_select_widget() -> None:
-    # A caller (e.g. a click-to-place canvas) needs a live handle on the
-    # editor's own Select widget to drive selection externally -- without
-    # on_select_widget, `select` is a local closure variable with no way
-    # to reach it from outside classdict_editor/build_larva_groups_widget.
-    exp = ExpConf()
-    exp.larva_groups["group_a"] = {
-        "group_id": "group_a",
-        "model": "explorer",
-        "distribution": {"N": 3, "loc": (0.0, 0.0), "scale": (0.0, 0.0)},
-    }
-    captured: list[pn.widgets.Select] = []
-
-    widget = build_larva_groups_widget(exp, on_select_widget=captured.append)
-
-    assert len(captured) == 1
-    select = captured[0]
-    assert isinstance(select, pn.widgets.Select)
-    assert select.value == "group_a"
-    # It's the actual live widget embedded in the returned view, not a copy.
-    assert select in widget.select(pn.widgets.Select)
-
-
-def test_larva_groups_widget_without_on_select_widget_is_unaffected() -> None:
-    exp = ExpConf()
-    widget = build_larva_groups_widget(exp)
-    assert pn.Column(widget).get_root() is not None
