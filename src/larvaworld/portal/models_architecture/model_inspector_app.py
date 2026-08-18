@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 import io
 import json
-import math
 import time
 from collections.abc import Mapping
 from html import escape
@@ -18,6 +17,7 @@ from bokeh.models import ColumnDataSource
 from bokeh.plotting import figure
 
 from larvaworld.lib import reg, util
+from larvaworld.lib.reg.graph import GraphRegistry
 from larvaworld.lib.model import Effector
 from larvaworld.lib.model import agents, deb
 from larvaworld.lib.model import moduleDB as MD
@@ -38,9 +38,6 @@ from larvaworld.portal.models_architecture.model_inspector_data import (
     DEFAULT_LIVE_PREVIEW_REPORTER_KEYS,
     LIVE_PREVIEW_REPORTER_KEYS,
     build_inspection_brain_from_config,
-    compare_model_inspections_many,
-    inspect_model,
-    inspect_model_from_config,
     inspect_model_modules_from_config,
     load_model_draft,
     list_model_ids,
@@ -96,6 +93,10 @@ MODEL_INSPECTOR_RAW_CSS = """
   padding: 10px 12px;
   border: 1px solid rgba(17, 17, 17, 0.1);
   background: rgba(248, 250, 252, 0.94);
+}
+
+.lw-model-inspector-hidden-download-proxy {
+  display: none;
 }
 
 .lw-model-inspector-controls-box {
@@ -321,6 +322,10 @@ class _ModelInspectorController:
         if not model_ids:
             raise ModelInspectorError("no_models", "No model presets are available.")
         self._model_ids = model_ids
+        try:
+            self.graph_registry = GraphRegistry()
+        except Exception:
+            self.graph_registry = None
         self._model_preset_workspace_available = False
         self._brain = None
         self._runtime = None
@@ -428,12 +433,6 @@ class _ModelInspectorController:
         self.clear_trace_button = pn.widgets.Button(
             name="Clear trace", button_type="primary"
         )
-        self.sensitivity_button = pn.widgets.Button(
-            name="Sensitivity Analysis",
-            button_type="default",
-            sizing_mode="stretch_width",
-        )
-        self.sensitivity_pane = pn.pane.HTML("", margin=(6, 0, 0, 0))
         self.reset_preset_button = pn.widgets.Button(
             name="Reset to model preset",
             button_type="warning",
@@ -467,19 +466,11 @@ class _ModelInspectorController:
             step=0.01,
         )
 
-        self.primary_table = pn.pane.DataFrame(
-            pd.DataFrame(),
-            sizing_mode="stretch_width",
-        )
         self.module_sections_box = pn.Column(sizing_mode="stretch_width")
         self._module_card_slots: dict[str, pn.Column] = {}
         self._module_specs_by_id: dict[str, ModelModuleSpec] = {}
-        self.compare_table = pn.pane.DataFrame(
-            pd.DataFrame(),
-            sizing_mode="stretch_width",
-        )
-        self.compare_title = pn.pane.Markdown("", margin=(0, 0, 6, 0))
-        self.summary_sections_box = pn.Column(
+        self.compare_figure_pane = pn.pane.HTML(
+            "",
             sizing_mode="stretch_width",
             css_classes=["lw-model-inspector-section-box"],
         )
@@ -514,7 +505,6 @@ class _ModelInspectorController:
             key: ColumnDataSource(data={"time": [], key: []})
             for key in LIVE_PREVIEW_REPORTER_KEYS
         }
-        self._trajectory_source = ColumnDataSource(data={"x": [], "y": [], "time": []})
         self._performance_stats: dict[str, Any] = {
             "total_steps": 0,
             "total_time": 0.0,
@@ -541,7 +531,6 @@ class _ModelInspectorController:
             """,
         )
         self.import_model_input.param.watch(self._on_import_model_file, "value")
-        self.sensitivity_button.on_click(self._on_sensitivity_analysis)
         self.run_button.on_click(self._on_run)
         self.pause_button.on_click(self._on_pause)
         self.clear_trace_button.on_click(self._on_clear_trace)
@@ -562,7 +551,6 @@ class _ModelInspectorController:
         self._refresh_inspection()
         self._init_live_plots()
         self._update_probe_meta()
-        self._update_summary_sections()
 
     def _get_primary_model_id(self) -> str:
         """Get the primary model ID -- the model currently loaded via the
@@ -710,9 +698,7 @@ class _ModelInspectorController:
             self.compare_models_select.value = [primary, *current]
 
     def _clear_compare_results(self) -> None:
-        self.compare_title.object = ""
-        self.compare_table.object = pd.DataFrame()
-        self._update_summary_sections()
+        self.compare_figure_pane.object = ""
 
     def _on_import_model_file(self, _event: param.parameterized.Event) -> None:
         raw_value = self.import_model_input.value
@@ -747,13 +733,24 @@ class _ModelInspectorController:
             self._set_status(f"Failed to load file: {exc}")
 
     def _on_compare_draw(self, _event=None) -> None:
-        """Render the primary's module table alone, or an N-way diff
-        table against every other model currently in compare_models_select
-        -- explicit action, not auto-refreshed on selection change."""
+        """Render the primary's own "model table" plot alone, or a "model
+        diff" plot against every other model currently in
+        compare_models_select -- both real graph-registry plot functions
+        (lib/plot/table.py), not a hand-rolled DataFrame. Explicit action,
+        not auto-refreshed on selection change."""
         if self._has_local_edits:
-            self.compare_title.object = "#### Comparison hidden during local edits"
-            self.compare_table.object = pd.DataFrame()
-            self._update_summary_sections()
+            self._set_status(
+                self._with_validation_status(
+                    "Comparison hidden during local edits. Reset or save first."
+                )
+            )
+            self.compare_figure_pane.object = ""
+            return
+
+        if self.graph_registry is None:
+            self._set_status(
+                "Plot registry is not available. Please check your larvaworld installation."
+            )
             return
 
         primary = self._draft_model_id
@@ -763,65 +760,42 @@ class _ModelInspectorController:
             if model_id != primary
         ]
         try:
-            draft = self._require_draft_model()
-            inspections = [inspect_model_from_config(primary, draft)] + [
-                inspect_model(model_id) for model_id in others
-            ]
+            if not others:
+                fig = self.graph_registry.run(
+                    "model table",
+                    mID=primary,
+                    m=self._require_draft_model(),
+                    return_fig=True,
+                )
+            else:
+                model_ids = [primary, *others]
+                fig = self.graph_registry.run(
+                    "model diff", mIDs=model_ids, dIDs=model_ids, return_fig=True
+                )
         except ModelInspectorError as exc:
             self._set_status(f"Comparison failed ({exc.code}): {exc}")
             return
-
-        if len(inspections) == 1:
-            self.compare_title.object = ""
-            self.compare_table.object = pd.DataFrame()
-            self._update_summary_sections()
+        except Exception as exc:
+            self._set_status(f"Comparison failed: {exc}")
             return
+        self._render_compare_figure(fig)
 
-        model_ids_ordered = [primary, *others]
-        rows = compare_model_inspections_many(inspections)
-        df_rows = []
-        for row in rows:
-            entry: dict[str, Any] = {"Module": row.module_id}
-            for model_id, inspection in zip(model_ids_ordered, row.inspections):
-                entry[f"{model_id} present"] = inspection.present
-                entry[f"{model_id} mode"] = inspection.mode or "—"
-            entry["Changed"] = row.changed
-            df_rows.append(entry)
-        self.compare_title.object = f"#### Comparison: {', '.join(model_ids_ordered)}"
-        self.compare_table.object = pd.DataFrame(df_rows)
-        self._update_summary_sections()
+    def _render_compare_figure(self, fig: Any) -> None:
+        try:
+            import base64
+            from io import BytesIO
 
-    def _on_sensitivity_analysis(self, _event=None) -> None:
-        """Run sensitivity analysis on A_in parameter."""
-        if self._brain is None:
-            self.sensitivity_pane.object = _status_html(
-                "Sensitivity analysis requires a ready brain."
+            buf = BytesIO()
+            fig.savefig(buf, format="png", dpi=150, bbox_inches="tight")
+            buf.seek(0)
+            b64 = base64.b64encode(buf.read()).decode("ascii")
+            self.compare_figure_pane.object = (
+                '<div style="border: 1px solid #ccc; border-radius: 8px; padding: 12px; overflow-x: auto;">'
+                f'<img src="data:image/png;base64,{b64}" style="max-width:100%;" />'
+                "</div>"
             )
-            return
-
-        baseline_a_in = self._a_in()
-        param_name = "A_in"
-        param_values = [v / 10.0 for v in range(1, 11)]
-        results: dict[float, dict[str, float]] = {}
-
-        for a_in_val in param_values:
-            self._brain.locomotor.reset()
-            lin_sum = 0.0
-            for _ in range(50):
-                lin, _, _ = self._brain.locomotor.step(A_in=a_in_val)
-                lin_sum += lin
-            results[a_in_val] = {"avg_lin": lin_sum / 50}
-
-        html = (
-            f'<div class="lw-model-inspector-status">'
-            f"<strong>Sensitivity Analysis: {param_name}</strong><br>"
-            f"Testing {param_name} range [0.1, 1.0] for effect on linear velocity<br>"
-        )
-        for val, metrics in sorted(results.items()):
-            html += f"{param_name}={val:.1f}: avg_lin={metrics['avg_lin']:.4f}<br>"
-        html += "</div>"
-        self.sensitivity_pane.object = html
-        self.a_in_input.value = baseline_a_in
+        except Exception as exc:
+            self._set_status(f"Could not render the comparison figure: {exc}")
 
     def _on_run(self, _event=None) -> None:
         if self._is_running:
@@ -1172,24 +1146,6 @@ class _ModelInspectorController:
         self._reporter_paths = reporter_paths
         self._reporter_available = reporter_available
 
-    def _compute_trajectory_position(self, df: pd.DataFrame) -> tuple[list, list]:
-        """Compute 2D trajectory position from lin and ang velocities."""
-        if df.empty or "lin" not in df.columns or "ang" not in df.columns:
-            return [], []
-        x_pos = [0.0]
-        y_pos = [0.0]
-        heading = 0.0
-        for idx in range(len(df)):
-            if idx == 0:
-                continue
-            lin = float(df.iloc[idx]["lin"])
-            ang = float(df.iloc[idx]["ang"])
-            dt = self._active_dt
-            heading += ang * dt
-            x_pos.append(x_pos[-1] + lin * dt * math.cos(heading))
-            y_pos.append(y_pos[-1] + lin * dt * math.sin(heading))
-        return x_pos, y_pos
-
     def _tick_live_preview(self) -> None:
         if self._brain is None or self._runtime is None:
             self._pause_callback()
@@ -1234,15 +1190,6 @@ class _ModelInspectorController:
         self._probe_df = self._probe_df.tail(self._trace_window()).reset_index(
             drop=True
         )
-        try:
-            x_pos, y_pos = self._compute_trajectory_position(self._probe_df)
-            self._trajectory_source.data = {
-                "x": x_pos,
-                "y": y_pos,
-                "time": self._probe_df["time"].tolist(),
-            }
-        except Exception:
-            pass
         self._refresh_probe_table()
         self._step_times.append(step_time)
         self._performance_stats["total_steps"] = len(self._step_times)
@@ -1263,7 +1210,6 @@ class _ModelInspectorController:
         self._step = 0
         for key in LIVE_PREVIEW_REPORTER_KEYS:
             self._sources[key].data = {"time": [], key: []}
-        self._trajectory_source.data = {"x": [], "y": [], "time": []}
         self._step_times.clear()
         self._performance_stats = {
             "total_steps": 0,
@@ -1364,18 +1310,6 @@ class _ModelInspectorController:
             "</div>"
         )
 
-    def _update_summary_sections(self) -> None:
-        children: list[pn.viewable.Viewable] = [
-            pn.pane.Markdown("#### Configured modules (summary)", margin=(0, 0, 6, 0)),
-            self.primary_table,
-        ]
-        if self.compare_title.object:
-            children.append(pn.Spacer(height=8))
-            children.append(self.compare_title)
-        if not self.compare_table.object.empty:
-            children.append(self.compare_table)
-        self.summary_sections_box.objects = children
-
     def _refresh_inspection(self) -> None:
         self._refresh_draft_validation()
         module_specs = self._refresh_inspection_tables()
@@ -1386,37 +1320,23 @@ class _ModelInspectorController:
         primary_id = self._get_primary_model_id()
         try:
             draft = self._require_draft_model()
-            primary = inspect_model_from_config(primary_id, draft)
             module_specs = inspect_model_modules_from_config(primary_id, draft)
         except ModelInspectorError as exc:
             self._set_status(f"Inspection failed ({exc.code}): {exc}")
-            self.primary_table.object = pd.DataFrame()
-            self.compare_table.object = pd.DataFrame()
-            self.compare_title.object = ""
             self.module_sections_box.objects = [
                 pn.pane.Markdown("Module inspection unavailable.", margin=0)
             ]
             self._module_card_slots.clear()
             self._module_specs_by_id.clear()
-            self._update_summary_sections()
             return None
 
-        self.primary_table.object = _modules_to_dataframe(
-            primary.baseline_modules, primary.optional_modules
-        )
         self._module_specs_by_id = {spec.module_id: spec for spec in module_specs}
 
         # Comparison is a separate, explicit "Draw" action (see
-        # _on_compare_draw) -- only clear a stale comparison table here
-        # while local edits make it potentially misleading; don't
-        # recompute it on every inspection refresh.
-        if self._has_local_edits:
-            self.compare_title.object = "#### Comparison hidden during local edits"
-            self.compare_table.object = pd.DataFrame()
-            self.compare_run_button.disabled = True
-        else:
-            self.compare_run_button.disabled = False
-        self._update_summary_sections()
+        # _on_compare_draw) -- only disable the button here while local
+        # edits make a comparison potentially misleading; don't
+        # recompute the figure on every inspection refresh.
+        self.compare_run_button.disabled = self._has_local_edits
         return module_specs
 
     def _refresh_all_module_cards(
@@ -1522,26 +1442,6 @@ class _ModelInspectorController:
 
     def _init_live_plots(self) -> None:
         plots: list[pn.viewable.Viewable] = []
-        trajectory_fig = figure(
-            title="Simulated Trajectory (2D Position)",
-            height=280,
-            width=900,
-            x_axis_label="X position",
-            y_axis_label="Y position",
-            tools="pan,wheel_zoom,box_zoom,save,reset",
-            active_drag=None,
-            sizing_mode="stretch_width",
-        )
-        trajectory_fig.line("x", "y", source=self._trajectory_source, line_width=2)
-        trajectory_fig.circle(
-            "x",
-            "y",
-            source=self._trajectory_source,
-            size=4,
-            color="navy",
-            alpha=0.5,
-        )
-        plots.append(pn.pane.Bokeh(trajectory_fig, sizing_mode="stretch_width"))
         for reporter in self._selected_plot_reporter_keys():
             reporter_label = _reporter_plot_label(reporter)
             fig = figure(
@@ -1585,8 +1485,11 @@ class _ModelInspectorController:
                 sizing_mode="stretch_width",
             ),
             self.reset_preset_button,
-            self.sensitivity_button,
             sizing_mode="stretch_width",
+        )
+        self.model_preset_controls.reset_button.name = "Reset registry"
+        self.model_preset_controls.reset_button.param.update(
+            width=160, sizing_mode="fixed"
         )
         model_preset_panel = build_preset_controls_panel(
             self.model_preset_controls,
@@ -1610,7 +1513,6 @@ class _ModelInspectorController:
             model_preset_panel,
             self.status_pane,
             self.validation_pane,
-            self.sensitivity_pane,
             pn.pane.Markdown("#### Preview settings", margin=(8, 0, 2, 0)),
             self.max_steps_input,
             self.a_in_input,
@@ -1674,7 +1576,7 @@ class _ModelInspectorController:
         )
         compare_row = pn.Row(
             compare_controls,
-            self.summary_sections_box,
+            self.compare_figure_pane,
             sizing_mode="stretch_width",
             styles={"align-items": "flex-start", "margin-top": "12px"},
         )
@@ -1686,24 +1588,6 @@ class _ModelInspectorController:
             css_classes=["lw-model-inspector-root"],
             sizing_mode="stretch_width",
         )
-
-
-def _modules_to_dataframe(
-    baseline_modules: tuple[ModuleInspection, ...],
-    optional_modules: tuple[ModuleInspection, ...],
-) -> pd.DataFrame:
-    return pd.DataFrame(
-        [
-            {
-                "Category": "Baseline" if module.is_baseline else "Optional",
-                "Module": module.module_id,
-                "Present": module.present,
-                "Mode": module.mode or "—",
-                "Parameters": repr(module.parameters),
-            }
-            for module in (*baseline_modules, *optional_modules)
-        ]
-    )
 
 
 def _module_settings_card(

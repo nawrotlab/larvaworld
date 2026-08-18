@@ -217,7 +217,6 @@ def test_controller_initializes_primary_only(monkeypatch: pytest.MonkeyPatch) ->
     assert controller._draft_model_id is not None
     assert controller.compare_models_select.value == [controller._draft_model_id]
     assert controller._draft_model is not None
-    assert isinstance(controller.primary_table.object, pd.DataFrame)
     assert controller.module_sections_box.objects
 
 
@@ -283,7 +282,8 @@ def test_controller_comparison_hidden_after_local_edits(
     old_value = controller._draft_model.brain["crawler"]["amp"]
     amp_widget.value = old_value + 0.25
     assert controller.compare_run_button.disabled is True
-    assert "hidden during local edits" in controller.compare_title.object
+    controller._on_compare_draw()
+    assert "hidden during local edits" in _status_text(controller)
 
 
 def test_status_and_validation_panes_are_visible(
@@ -310,12 +310,11 @@ def test_controller_merges_optional_modules_into_summary(
         if not inspection.optional_modules:
             continue
         _load_registry_model(controller, model_id)
-        summary = controller.primary_table.object
-        assert isinstance(summary, pd.DataFrame)
-        assert "Category" in summary.columns
-        assert set(summary["Category"]) >= {"Baseline", "Optional"}
+        specs = controller._module_specs_by_id
+        assert specs
         optional_ids = {module.module_id for module in inspection.optional_modules}
-        assert optional_ids.issubset(set(summary["Module"]))
+        assert optional_ids.issubset(set(specs.keys()))
+        assert any(spec.subgroup == "Optional" for spec in specs.values())
         return
     pytest.skip("No model with configured optional modules was found.")
 
@@ -819,7 +818,8 @@ def test_module_edit_hides_comparison(
     mode_select.value = target
     assert controller._has_local_edits is True
     assert controller.compare_run_button.disabled is True
-    assert "hidden during local edits" in controller.compare_title.object
+    controller._on_compare_draw()
+    assert "hidden during local edits" in _status_text(controller)
 
 
 def test_card_validation_issue_rendering_is_generic(
@@ -1267,14 +1267,15 @@ def test_comparison_remains_canonical_only_and_hidden_during_draft_edits(
         pytest.skip("Need at least two models for comparison behavior test.")
     controller.compare_models_select.value = [controller._draft_model_id, candidates[0]]
     controller._on_compare_draw()
-    assert not controller.compare_table.object.empty
+    assert controller.compare_figure_pane.object
     crawler_card = _find_card(controller.module_sections_box, "crawler")
     amp_widget = _find_widget_in_card(crawler_card, pn.widgets.Widget, "amp")
     amp_widget.value = controller._draft_model.brain["crawler"]["amp"] + 0.2
     assert controller._has_local_edits is True
     assert controller.compare_run_button.disabled is True
-    assert "hidden during local edits" in controller.compare_title.object
-    assert controller.compare_table.object.empty
+    controller._on_compare_draw()
+    assert "hidden during local edits" in _status_text(controller)
+    assert controller.compare_figure_pane.object == ""
     controller._on_reset_to_preset()
     assert controller.compare_run_button.disabled is False
 
@@ -1541,12 +1542,15 @@ def test_compare_change_does_not_rebuild_module_cards(
     assert list(controller.module_sections_box.objects) == sections_before
     assert _find_card(controller.module_sections_box, "crawler") is crawler_card_before
     assert _find_card(controller.module_sections_box, "body") is body_card_before
-    assert isinstance(controller.compare_table.object, pd.DataFrame)
+    assert controller.compare_figure_pane.object
 
 
-def test_summary_box_stacks_comparison_table_below_configured_modules(
+def test_compare_figure_pane_renders_model_table_then_model_diff(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # "model table"/"model diff" are real graph-registry plot functions
+    # (lib/plot/table.py) rendered as an embedded PNG, not a hand-rolled
+    # DataFrame -- see _on_compare_draw/_render_compare_figure.
     _guard_registry_writes(monkeypatch)
     controller = _ModelInspectorController()
     candidates = [
@@ -1556,21 +1560,19 @@ def test_summary_box_stacks_comparison_table_below_configured_modules(
     ]
     if not candidates:
         pytest.skip("Need alternate model for comparison layout test.")
-    assert controller.summary_sections_box.css_classes == [
+    assert controller.compare_figure_pane.css_classes == [
         "lw-model-inspector-section-box"
     ]
-    assert all(
-        "lw-model-inspector-section-box" not in getattr(child, "css_classes", [])
-        for child in controller.summary_sections_box.objects
-    )
-    assert controller.primary_table in controller.summary_sections_box.objects
-    assert controller.compare_table not in controller.summary_sections_box.objects
+    assert controller.compare_figure_pane.object == ""
+
+    controller._on_compare_draw()
+    assert "<img" in controller.compare_figure_pane.object
+    single_model_figure = controller.compare_figure_pane.object
+
     controller.compare_models_select.value = [controller._draft_model_id, candidates[0]]
     controller._on_compare_draw()
-    children = list(controller.summary_sections_box.objects)
-    primary_index = children.index(controller.primary_table)
-    compare_index = children.index(controller.compare_table)
-    assert primary_index < compare_index
+    assert "<img" in controller.compare_figure_pane.object
+    assert controller.compare_figure_pane.object != single_model_figure
 
 
 def test_mode_change_replaces_only_changed_card_slot_contents(
