@@ -37,6 +37,7 @@ from larvaworld.portal.config_widgets.preset_controls import (
     PresetControlsController,
     PresetRef,
     WorkspacePresetStore,
+    build_preset_controls_panel,
 )
 from larvaworld.portal.landing_registry import DOCS_ARENAS_SUBSTRATES
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
@@ -5421,44 +5422,31 @@ class _EnvironmentBuilderV2Controller:
             collapsed=False,
             sizing_mode="stretch_width",
         )
-        presets = pn.Card(
-            pn.Column(
-                self._param_pane(
-                    self.presets,
-                    ["preset_name"],
-                    widget_overrides={"preset_name": {"type": pn.widgets.TextInput}},
-                ),
-                self.runtime.preset_select,
-                self.runtime.refresh_presets_btn,
-                pn.Row(
-                    self.runtime.save_preset_btn,
-                    self.runtime.load_preset_btn,
-                    self.runtime.delete_preset_btn,
+        self.runtime.clear_all_btn.param.update(width=160, sizing_mode="fixed")
+        presets = build_preset_controls_panel(
+            self.runtime.preset_controls,
+            name_field=self._param_pane(
+                self.presets,
+                ["preset_name"],
+                widget_overrides={"preset_name": {"type": pn.widgets.TextInput}},
+            ),
+            reset_slot=self.runtime.clear_all_btn,
+            extra_sections=[
+                pn.Column(
+                    self.runtime.load_file_input,
+                    self.runtime.export_btn,
+                    pn.Row(
+                        self.runtime.load_file_btn,
+                        self.runtime.download_file_btn,
+                        sizing_mode="stretch_width",
+                        margin=(4, 0, 0, 0),
+                    ),
                     sizing_mode="stretch_width",
-                    margin=(4, 0, 0, 0),
-                ),
-                self.runtime.preset_meta,
-                self.runtime.load_file_input,
-                self.runtime.export_btn,
-                pn.Row(
-                    self.runtime.load_file_btn,
-                    self.runtime.download_file_btn,
-                    sizing_mode="stretch_width",
-                    margin=(4, 0, 0, 0),
-                ),
-                pn.Row(
-                    self.runtime.clear_all_btn,
-                    sizing_mode="stretch_width",
-                    margin=(4, 0, 0, 0),
+                    margin=0,
                 ),
                 self.runtime.reset_confirm_panel,
-                self.runtime.preset_overwrite_confirm,
-                sizing_mode="stretch_width",
-                margin=0,
-            ),
-            title="Stored Configurations",
-            collapsed=False,
-            sizing_mode="stretch_width",
+            ],
+            show_status=False,
         )
         table_card = pn.Card(
             self.runtime.table,
