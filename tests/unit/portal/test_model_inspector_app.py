@@ -220,6 +220,26 @@ def test_controller_initializes_primary_only(monkeypatch: pytest.MonkeyPatch) ->
     assert controller.module_sections_box.objects
 
 
+def test_model_preset_select_defaults_to_explorer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # PresetControlsController.refresh_list() alone defaults preset_select
+    # to whichever catalog entry sorts first, with no awareness of the
+    # "explorer" default this controller's own draft loads on construction
+    # -- the visible dropdown must agree with what's actually loaded.
+    _guard_registry_writes(monkeypatch)
+    if "explorer" not in reg.conf.Model.confIDs:
+        pytest.skip('"explorer" model is not available in this environment.')
+    controller = _ModelInspectorController()
+    assert controller._draft_model_id == "explorer"
+    selected_label = next(
+        label
+        for label, token in controller.model_preset_controls.preset_select.options.items()
+        if token == controller.model_preset_controls.preset_select.value
+    )
+    assert selected_label == "Registry / explorer"
+
+
 def test_module_cards_have_draft_backed_parameter_editors(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

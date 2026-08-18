@@ -486,6 +486,22 @@ class _ModelInspectorController:
             sizing_mode="stretch_width", margin=(6, 0, 0, 0)
         )
         self.model_preset_controls = self._build_model_preset_controls()
+        # PresetControlsController.refresh_list() defaults preset_select to
+        # whichever catalog entry happens to sort first, with no awareness
+        # of the "explorer" default this controller's own draft already
+        # loaded above -- point the visible dropdown at the same entry so
+        # it doesn't silently disagree with what's actually loaded.
+        default_registry_ref = next(
+            (
+                ref
+                for ref in self.model_preset_controls.catalog.refs
+                if ref.source == PresetSource.REGISTRY
+                and ref.name == self._draft_model_id
+            ),
+            None,
+        )
+        if default_registry_ref is not None:
+            self.model_preset_controls.preset_select.value = default_registry_ref.token
         self.import_model_btn, self.import_model_input = build_load_file_button(
             "Import", accept=".json,application/json", button_type="default"
         )
