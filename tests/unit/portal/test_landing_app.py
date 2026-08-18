@@ -36,3 +36,25 @@ def test_landing_app_with_active_workspace_renders_template(tmp_path: Path) -> N
 
     assert isinstance(app, pn.template.MaterialTemplate)
     assert app.main.objects
+
+
+def test_landing_app_banner_renders_below_quick_start(tmp_path: Path) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+
+    app = landing_app()
+    root = next(
+        child
+        for child in app.main
+        if "lw-portal-root" in getattr(child, "css_classes", [])
+    )
+    css_classes = [tuple(getattr(child, "css_classes", ())) for child in root.objects]
+    quick_start_index = next(
+        i
+        for i, classes in enumerate(css_classes)
+        if any(c.startswith("lw-portal-quick-start") for c in classes)
+    )
+    banner_index = next(
+        i for i, classes in enumerate(css_classes) if "lw-portal-banner" in classes
+    )
+    assert quick_start_index < banner_index

@@ -161,6 +161,7 @@ def landing_app() -> pn.viewable.Viewable:
     topbar = build_template_header()
     template.header.append(topbar)
 
+    banner: pn.viewable.Viewable | None = None
     slides = _banner_slides()
     if slides:
         active_slide = {"index": 0, "play_token": 0}
@@ -232,7 +233,6 @@ def landing_app() -> pn.viewable.Viewable:
             sizing_mode="stretch_width",
             margin=(4, 0, 10, 0),
         )
-        root.append(banner)
         _set_slide(0)
 
         doc = pn.state.curdoc
@@ -451,6 +451,8 @@ def landing_app() -> pn.viewable.Viewable:
             )
         )
     root.append(quick_start)
+    if banner is not None:
+        root.append(banner)
 
     # Lanes
     for lane in LANES:
