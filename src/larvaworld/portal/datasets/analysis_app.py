@@ -79,6 +79,24 @@ ANALYSIS_RAW_CSS = """
   align-items: flex-start;
 }
 
+.lw-analysis-top-row {
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.lw-analysis-top-row > :first-child {
+  flex: 2 1 0%;
+}
+
+.lw-analysis-top-row > :last-child {
+  flex: 1 1 0%;
+  min-width: 340px;
+}
+
+.lw-analysis-plot-list .bk-input-group {
+  gap: 2px;
+}
+
 .lw-analysis-table .tabulator {
   border-radius: 10px;
   border: 1px solid rgba(90, 71, 96, 0.12);
@@ -144,6 +162,7 @@ class _AnalysisController:
         self._all_records = []
         self._selected_datasets = []
         self._loaded_datasets: dict[str, LarvaDataset] = {}
+        self._all_plots_by_group: dict[str, list[str]] = {}
         self._valid_plots_by_group: dict[str, list[str]] = {}
         self._current_plot_id: str | None = None
         self._current_figure = None
@@ -159,22 +178,35 @@ class _AnalysisController:
         self.refresh_plots_button = pn.widgets.Button(
             name="Check plot availability",
             button_type="primary",
-            width=180,
+            sizing_mode="stretch_width",
         )
-        self.plot_group_select = pn.widgets.Select(
+        self.plot_category_filter = pn.widgets.CheckBoxGroup(
             name="Plot category",
-            options={},
-            width=220,
+            options=[],
+            value=[],
+            inline=False,
         )
-        self.plot_function_select = pn.widgets.Select(
+        self.plot_function_list = pn.widgets.RadioBoxGroup(
             name="Plot function",
-            options={},
-            width=220,
+            options=[],
+            inline=False,
+        )
+        self.plot_function_scroll = pn.Column(
+            self.plot_function_list,
+            scroll=True,
+            height=260,
+            sizing_mode="stretch_width",
+            css_classes=["lw-analysis-plot-list"],
         )
         self.run_plot_button = pn.widgets.Button(
             name="Generate plot",
             button_type="primary",
-            width=120,
+            sizing_mode="stretch_width",
+        )
+        self.export_plot_button = pn.widgets.Button(
+            name="Export",
+            button_type="default",
+            sizing_mode="stretch_width",
         )
         self.status_pane = pn.pane.HTML("", margin=0)
         self.figure_pane = pn.pane.Markdown("", margin=0)
@@ -182,10 +214,59 @@ class _AnalysisController:
 
         self.dataset_table.param.watch(self._on_dataset_selection_change, "selection")
         self.refresh_plots_button.on_click(self._handle_refresh_plots)
-        self.plot_group_select.param.watch(self._on_plot_group_change, "value")
+        self.plot_category_filter.param.watch(self._refresh_plot_function_list, "value")
         self.run_plot_button.on_click(self._handle_run_plot)
+        self.export_plot_button.on_click(self._handle_export_plot)
 
+        self._init_plot_catalog()
         self._load_records()
+
+    def _init_plot_catalog(self) -> None:
+        self._all_plots_by_group = self._all_plot_functions_by_group()
+        group_ids = list(self._all_plots_by_group.keys())
+        self.plot_category_filter.options = group_ids
+        self.plot_category_filter.value = list(group_ids)
+        self._refresh_plot_function_list()
+
+    def _all_plot_functions_by_group(self) -> dict[str, list[str]]:
+        if self.graph_registry is None:
+            return {}
+        catalog: dict[str, list[str]] = {}
+        for group_id, entries in self.graph_registry.build_graphgroups().items():
+            seen_fids: set[str] = set()
+            fids: list[str] = []
+            for entry in entries:
+                fid = entry.get("plotID")
+                if (
+                    fid is None
+                    or fid in seen_fids
+                    or fid not in self.graph_registry.dict
+                ):
+                    continue
+                seen_fids.add(fid)
+                fids.append(fid)
+            if fids:
+                catalog[group_id] = sorted(fids)
+        return catalog
+
+    def _refresh_plot_function_list(self, *_events) -> None:
+        selected_groups = self.plot_category_filter.value or []
+        seen: set[str] = set()
+        fids: list[str] = []
+        for group_id in selected_groups:
+            for fid in self._all_plots_by_group.get(group_id, []):
+                if fid not in seen:
+                    seen.add(fid)
+                    fids.append(fid)
+        fids.sort()
+        current = self.plot_function_list.value
+        self.plot_function_list.options = fids
+        if current in fids:
+            self.plot_function_list.value = current
+        elif fids:
+            self.plot_function_list.value = fids[0]
+        else:
+            self.plot_function_list.value = None
 
     def _load_records(self) -> None:
         if self.workspace is None:
@@ -216,17 +297,20 @@ class _AnalysisController:
     def _update_dataset_table(self) -> None:
         rows = []
         for i, record in enumerate(self._all_records):
-            source_label = "Imported" if record.origin == "imported" else "Simulated"
+            source_label = (
+                "Simulated" if record.origin == "simulation_run" else "Imported"
+            )
             rows.append(
                 {
                     "ID": i,
                     "Dataset ID": record.dataset_id,
                     "Source": source_label,
+                    "Format": record.lab_id or "—",
                     "Group": record.group_id or "—",
                     "N agents": record.n_agents if record.n_agents is not None else "—",
                 }
             )
-        columns = ["ID", "Dataset ID", "Source", "Group", "N agents"]
+        columns = ["ID", "Dataset ID", "Source", "Format", "Group", "N agents"]
         if rows:
             df = pd.DataFrame(rows, columns=columns)
         else:
@@ -296,41 +380,19 @@ class _AnalysisController:
             )
             return
 
-        group_options = {}
-        for group_id, valid_fids in self._valid_plots_by_group.items():
-            if valid_fids:
-                group_options[group_id] = group_id
-
-        if not group_options:
+        valid_count = sum(len(v) for v in self._valid_plots_by_group.values())
+        if not valid_count:
             self._set_status(
                 "No plots are available for the selected dataset(s).",
                 tone="warning",
             )
-            self.plot_group_select.options = {}
-            self.plot_function_select.options = {}
             return
-
-        self.plot_group_select.options = group_options
-        if group_options:
-            self.plot_group_select.value = list(group_options.keys())[0]
-            self._on_plot_group_change()
 
         self._set_status(
-            f"Found {sum(len(v) for v in self._valid_plots_by_group.values())} plot(s) for the selected dataset(s).",
+            f"Found {valid_count} plot(s) for the selected dataset(s). "
+            "Pick a plot function on the right and generate.",
             tone="success",
         )
-
-    def _on_plot_group_change(self, *_events) -> None:
-        group_id = self.plot_group_select.value
-        if not group_id or group_id not in self._valid_plots_by_group:
-            self.plot_function_select.options = {}
-            return
-
-        valid_fids = self._valid_plots_by_group[group_id]
-        func_options = {fid: fid for fid in valid_fids}
-        self.plot_function_select.options = func_options
-        if func_options:
-            self.plot_function_select.value = list(func_options.keys())[0]
 
     def _plot_save_kwargs(self, plot_id: str, dataset_ids: list[str]) -> dict[str, Any]:
         """Save kwargs pointing at the workspace's "analysis" folder, same convention as `save_param_config_to_workspace`'s "parameters" folder."""
@@ -359,7 +421,7 @@ class _AnalysisController:
             )
             return
 
-        plot_id = self.plot_function_select.value
+        plot_id = self.plot_function_list.value
         if not plot_id:
             self._set_status("Select a plot function first.", tone="warning")
             return
@@ -387,6 +449,56 @@ class _AnalysisController:
         except Exception as exc:
             self._set_status(
                 f"Failed to generate plot '{plot_id}'.",
+                tone="danger",
+                detail=str(exc),
+            )
+
+    def _handle_export_plot(self, _event=None) -> None:
+        # Re-runs the currently generated plot to (re-)save it to the
+        # workspace analysis folder. A plain re-save of the already-held
+        # figure isn't reliable here: the save_to directory/filename a
+        # plot function ultimately writes to is decided inside its own
+        # process_plot() call (nested subfolder/save_as handling that
+        # varies per plot function), so only the plot function itself can
+        # reproduce that path correctly -- re-running it is also what
+        # already happens implicitly on Generate, this just re-triggers
+        # it as an explicit, visible action.
+        if self._current_plot_id is None or not self._loaded_datasets:
+            self._set_status("Generate a plot first.", tone="warning")
+            return
+
+        if self.graph_registry is None:
+            self._set_status(
+                "Plot registry is not available. Please check your larvaworld installation.",
+                tone="danger",
+            )
+            return
+
+        plot_id = self._current_plot_id
+        dataset_ids = [record.dataset_id for record in self._selected_datasets]
+        datasets = [self._loaded_datasets[did] for did in dataset_ids]
+        save_kwargs = self._plot_save_kwargs(plot_id, dataset_ids)
+        if not save_kwargs:
+            self._set_status("Cannot export: no active workspace.", tone="warning")
+            return
+
+        self._set_status("Exporting plot…", tone="neutral")
+        try:
+            fig = run_plot_for_datasets(
+                self.graph_registry,
+                plot_id,
+                datasets,
+                dataset_ids,
+                default_kwargs=save_kwargs,
+            )
+            self._current_figure = fig
+            self._set_status(
+                f"Plot '{plot_id}' exported to the workspace analysis folder.",
+                tone="success",
+            )
+        except Exception as exc:
+            self._set_status(
+                f"Failed to export plot '{plot_id}'.",
                 tone="danger",
                 detail=str(exc),
             )
@@ -460,13 +572,40 @@ class _AnalysisController:
             collapsed=False,
             sizing_mode="stretch_width",
         )
-        controls_row = pn.Row(
-            self.refresh_plots_button,
-            self.plot_group_select,
-            self.plot_function_select,
-            self.run_plot_button,
+        plot_picker_card = pn.Card(
+            pn.Row(
+                pn.Column(
+                    pn.pane.Markdown("**Category**", margin=(0, 0, 4, 0)),
+                    self.plot_category_filter,
+                    sizing_mode="fixed",
+                    width=170,
+                    margin=0,
+                ),
+                pn.Column(
+                    pn.pane.Markdown("**Function**", margin=(0, 0, 4, 0)),
+                    self.plot_function_scroll,
+                    sizing_mode="stretch_width",
+                    margin=0,
+                ),
+                sizing_mode="stretch_width",
+                margin=0,
+            ),
+            pn.Row(
+                self.refresh_plots_button,
+                self.run_plot_button,
+                self.export_plot_button,
+                sizing_mode="stretch_width",
+                margin=(10, 0, 0, 0),
+            ),
+            title="Plots",
+            collapsed=False,
             sizing_mode="stretch_width",
-            margin=(10, 0, 10, 0),
+        )
+        top_row = pn.Row(
+            dataset_card,
+            plot_picker_card,
+            sizing_mode="stretch_width",
+            css_classes=["lw-analysis-top-row"],
         )
         plot_card = pn.Card(
             self.figure_pane,
@@ -475,9 +614,8 @@ class _AnalysisController:
             sizing_mode="stretch_width",
         )
         main_col = pn.Column(
-            dataset_card,
+            top_row,
             self.status_pane,
-            controls_row,
             plot_card,
             sizing_mode="stretch_width",
             margin=0,
@@ -485,31 +623,23 @@ class _AnalysisController:
         self.main_content.objects = [main_col]
 
     def view(self) -> pn.viewable.Viewable:
-        intro_text = pn.pane.HTML(
+        intro = pn.pane.Markdown(
             (
-                "<p>Select one or more datasets to analyze. "
-                "Choose a plot category and function to generate analysis visualizations. "
-                "Only compatible plots will be available for your dataset selection.</p>"
-                "<p>Works with preprocessed and processed datasets. "
-                "Use Dataset Manager to apply preprocessing/processing steps first.</p>"
+                "### Analysis\n"
+                "Select one or more datasets to analyze. Choose a plot category and function "
+                "to generate analysis visualizations. Only compatible plots will be available "
+                "for your dataset selection. Works with preprocessed and processed datasets; "
+                "use Dataset Manager to apply preprocessing/processing steps first."
             ),
+            css_classes=["lw-analysis-intro"],
             margin=0,
-        )
-        info_panel = pn.Card(
-            intro_text,
-            title="ℹ️ About Analysis",
-            collapsed=True,
-            collapsible=True,
-            css_classes=["lw-portal-app-info"],
-            sizing_mode="stretch_width",
-            margin=(0, 0, 12, 0),
         )
         scope = pn.pane.HTML(
             '<div class="lw-analysis-scope">Scope: Dataset analysis & plotting</div>',
             margin=0,
         )
         return pn.Column(
-            info_panel,
+            intro,
             scope,
             self.main_content,
             css_classes=["lw-analysis-root"],

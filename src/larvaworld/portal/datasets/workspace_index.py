@@ -126,7 +126,7 @@ def _simulation_record_from_conf_path(
             dataset_dir,
         )
         return None
-    if len(rel.parts) < 4:
+    if len(rel.parts) < 3:
         logger.debug(
             "Ignoring simulation dataset with unsupported layout: %s", dataset_dir
         )
@@ -134,6 +134,10 @@ def _simulation_record_from_conf_path(
     run_id = rel.parts[0].strip()
     if not run_id:
         return None
+    # Single Experiment writes runs directly as <run_id>/data/conf.txt (3
+    # parts); batch/multi-member runs add an extra subfolder per member
+    # (<run_id>/<member_id>/data/conf.txt, >=4 parts).
+    member_id = dataset_dir.name if len(rel.parts) >= 4 else None
 
     config = load_dict(str(conf_path))
     if not config:
@@ -173,7 +177,7 @@ def _simulation_record_from_conf_path(
         h5_path=h5_path,
         group_id=group_id,
         run_id=run_id,
-        member_id=dataset_dir.name,
+        member_id=member_id,
         ref_id=ref_id,
         n_agents=n_agents,
     )

@@ -225,6 +225,46 @@ def test_list_workspace_simulation_datasets_discovers_run_records(
     ]
 
 
+def test_list_workspace_simulation_datasets_discovers_single_experiment_layout(
+    tmp_path: Path,
+) -> None:
+    # Single Experiment writes runs directly as <run_id>/data/conf.txt (no
+    # extra per-member subfolder) -- this shape must be discovered too, not
+    # just the batch/multi-member <run_id>/<member_id>/data/conf.txt layout
+    # exercised by _write_simulation_dataset above.
+    workspace = initialize_workspace(tmp_path / "workspace")
+    run_dir = workspace.experiments_dir / "run_gamma"
+    data_dir = run_dir / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "id": "run_gamma",
+        "dir": str(run_dir),
+        "group_id": "dish",
+        "agent_ids": ["run_gamma_a0"],
+        "N": 1,
+    }
+    (data_dir / "conf.txt").write_text(json.dumps(payload), encoding="utf-8")
+    (data_dir / "data.h5").write_bytes(b"placeholder")
+
+    records = workspace_index.list_workspace_simulation_datasets(workspace=workspace)
+
+    assert records == [
+        WorkspaceReplayDatasetRecord(
+            origin="simulation_run",
+            dataset_id="run_gamma",
+            dataset_dir=run_dir.resolve(),
+            data_dir=data_dir.resolve(),
+            conf_path=(data_dir / "conf.txt").resolve(),
+            h5_path=(data_dir / "data.h5").resolve(),
+            group_id="dish",
+            run_id="run_gamma",
+            member_id=None,
+            ref_id=None,
+            n_agents=1,
+        )
+    ]
+
+
 def test_list_workspace_simulation_datasets_uses_structural_discovery(
     tmp_path: Path,
 ) -> None:

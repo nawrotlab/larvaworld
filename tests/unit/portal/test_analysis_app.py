@@ -78,8 +78,8 @@ def test_analysis_refresh_plots_finds_real_valid_plots_for_bundled_dataset(
 
     controller._handle_refresh_plots()
 
-    assert controller.plot_group_select.options
-    assert controller.plot_function_select.options
+    assert controller.plot_category_filter.options
+    assert controller.plot_function_list.options
     assert "danger" not in controller.status_pane.object
     total_valid = sum(len(v) for v in controller._valid_plots_by_group.values())
     assert total_valid > 0
@@ -100,10 +100,10 @@ def test_analysis_run_plot_renders_and_saves_to_workspace_analysis_folder(
     controller.dataset_table.selection = [bundled_idx]
     controller._on_dataset_selection_change()
     controller._handle_refresh_plots()
-    assert controller.plot_function_select.options
+    assert controller.plot_function_list.options
 
-    plot_id = next(iter(controller.plot_function_select.options.values()))
-    controller.plot_function_select.value = plot_id
+    plot_id = controller.plot_function_list.options[0]
+    controller.plot_function_list.value = plot_id
 
     controller._handle_run_plot()
 
@@ -117,6 +117,83 @@ def test_analysis_run_plot_renders_and_saves_to_workspace_analysis_folder(
     saved_files = list(analysis_dir.rglob("*"))
     saved_files = [p for p in saved_files if p.is_file()]
     assert saved_files, f"Expected a saved plot under {analysis_dir}"
+
+
+def test_analysis_plot_catalog_populated_before_any_dataset_selection(
+    tmp_path: Path,
+) -> None:
+    # The plot picker must list every known plot function up front,
+    # independent of "Check plot availability" -- unlike the old
+    # per-dataset-validity-gated dropdowns.
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+
+    controller = analysis_app._AnalysisController()
+
+    assert controller.plot_category_filter.options
+    assert (
+        controller.plot_category_filter.value == controller.plot_category_filter.options
+    )
+    assert controller.plot_function_list.options
+    assert controller.plot_function_list.value in controller.plot_function_list.options
+
+
+def test_analysis_plot_category_filter_narrows_function_list(tmp_path: Path) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+
+    controller = analysis_app._AnalysisController()
+    all_fids = set(controller.plot_function_list.options)
+    first_group = controller.plot_category_filter.options[0]
+
+    controller.plot_category_filter.value = [first_group]
+
+    narrowed_fids = set(controller.plot_function_list.options)
+    assert narrowed_fids == set(controller._all_plots_by_group[first_group])
+    assert narrowed_fids <= all_fids
+    if len(controller.plot_category_filter.options) > 1:
+        assert narrowed_fids != all_fids
+
+
+def test_analysis_export_plot_saves_currently_generated_plot(tmp_path: Path) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+
+    controller = analysis_app._AnalysisController()
+    bundled_idx = next(
+        i
+        for i, record in enumerate(controller._all_records)
+        if record.dataset_id == "30controls"
+    )
+    controller.dataset_table.selection = [bundled_idx]
+    controller._on_dataset_selection_change()
+    controller._handle_refresh_plots()
+    controller.plot_function_list.value = controller.plot_function_list.options[0]
+    controller._handle_run_plot()
+    assert controller._current_figure is not None
+
+    analysis_dir = workspace.analysis_dir
+    for path in analysis_dir.rglob("*"):
+        if path.is_file():
+            path.unlink()
+    assert not any(p.is_file() for p in analysis_dir.rglob("*"))
+
+    controller._handle_export_plot()
+
+    assert "danger" not in controller.status_pane.object
+    saved_files = [p for p in analysis_dir.rglob("*") if p.is_file()]
+    assert saved_files, f"Expected export to save a plot under {analysis_dir}"
+
+
+def test_analysis_export_plot_without_generated_plot_warns(tmp_path: Path) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+
+    controller = analysis_app._AnalysisController()
+
+    controller._handle_export_plot()
+
+    assert "Generate a plot first" in controller.status_pane.object
 
 
 def test_analysis_default_ref_dataset_matches_bundled_record(tmp_path: Path) -> None:
