@@ -18,6 +18,14 @@ from .. import reg, util
 from ..reg import SimConfiguration
 from ..reg import LarvaGroupMutator
 from ..util import AttrDict
+from .manifest import (
+    RunManifestSession,
+    attach_manifest_to_datasets,
+    derive_seed,
+    deterministic_random_context,
+    json_ready,
+    prepare_master_seed,
+)
 
 __all__: list[str] = [
     "EvalRun",
@@ -40,7 +48,13 @@ class EvalConf(LarvaGroupMutator, DataEvaluation):
 # (note that the args N,modelIDS, groupIDs are common in LarvaGroupMutator and SimConfigurationParams)
 class EvalRun(EvalConf, SimConfiguration):
     def __init__(
-        self, enrichment: bool = True, screen_kws: dict[str, Any] = {}, **kwargs: Any
+        self,
+        enrichment: bool = True,
+        screen_kws: dict[str, Any] = {},
+        dataset: Any = None,
+        _record_manifest: bool = True,
+        _source_manifest: str | None = None,
+        **kwargs: Any,
     ) -> None:
         """Model evaluation mode. This mode is used to evaluate a number of larva models
         for similarity with a preexisting reference dataset, most often one retained
@@ -52,7 +66,9 @@ class EvalRun(EvalConf, SimConfiguration):
             screen_kws (dict, optional): The screen visualization parameters. Defaults to {}.
         """
 
-        EvalConf.__init__(self, runtype="Eval", **kwargs)
+        self._record_manifest = _record_manifest
+        self._source_manifest = _source_manifest
+        EvalConf.__init__(self, dataset=dataset, runtype="Eval", **kwargs)
         kwargs["dt"] = self.target.config.dt
         if "duration" not in kwargs:
             kwargs["duration"] = self.target.config.Nticks * kwargs["dt"] / 60
@@ -77,7 +93,90 @@ class EvalRun(EvalConf, SimConfiguration):
         )
         self.error_plot_dir = f"{self.plot_dir}/errors"
 
-    def simulate(self) -> Any:
+    def _manifest_invocation(self, seed: int) -> dict[str, Any]:
+        eval_kwargs = self.nestedConf
+        for key in ("dir", "id", "runtype"):
+            eval_kwargs.pop(key, None)
+        return {
+            "run_class": f"{type(self).__module__}:{type(self).__qualname__}",
+            "resolved_parameters": json_ready(eval_kwargs),
+            "constructor": {
+                "eval_kwargs": json_ready(eval_kwargs),
+                "resolved_children": [
+                    {
+                        "child_id": "evaluation_exp",
+                        "seed": derive_seed(seed, "evaluation_exp"),
+                        "parameters": json_ready(self._resolved_child_parameters()),
+                    }
+                ],
+            },
+            "runtime_options": {
+                "store_data": bool(self.store_data),
+                "screen_kws": json_ready(self.screen_kws),
+            },
+            "execute": {"method": "simulate", "kwargs": {"seed": seed}},
+        }
+
+    def _resolved_child_parameters(self) -> Any:
+        if self.experiment in reg.conf.Exp.confIDs:
+            parameters = reg.conf.Exp.getID(self.experiment).get_copy()
+            parameters.env_params = copy.deepcopy(
+                self.target.config.env_params.nestedConf
+            )
+            return parameters
+        return {
+            "modelIDs": self.modelIDs,
+            "groupIDs": self.groupIDs,
+            "N": self.N,
+            "dt": self.dt,
+            "duration": self.duration,
+            "environment": self.target.config.env_params.nestedConf,
+        }
+
+    def simulate(self, seed: int | None = None) -> Any:
+        master_seed = prepare_master_seed(seed)
+        child_seed = derive_seed(master_seed, "evaluation_exp")
+        session = None
+        if self._record_manifest:
+            session = RunManifestSession(
+                run=self,
+                invocation=self._manifest_invocation(master_seed),
+                seed=master_seed,
+                child_seeds={"evaluation_exp": child_seed},
+                source_manifest=self._source_manifest,
+            )
+        try:
+            with deterministic_random_context(child_seed):
+                datasets = self._simulate_datasets(
+                    child_seed=child_seed,
+                    parent_manifest=session.reference if session is not None else None,
+                )
+            self.datasets = datasets
+            if session is not None:
+                attach_manifest_to_datasets(self.datasets, session)
+                if self.store_data:
+                    for dataset in self.datasets:
+                        dataset.save_config()
+            self.analyze()
+            if self.store_data:
+                self.store()
+            if session is not None:
+                session.finish(
+                    datasets=self.datasets, scientific_result=self.error_dicts
+                )
+            return self.datasets
+        except KeyboardInterrupt as exc:
+            if session is not None:
+                session.abort(str(exc) or "Evaluation interrupted")
+            raise
+        except BaseException as exc:
+            if session is not None:
+                session.fail(exc)
+            raise
+
+    def _simulate_datasets(
+        self, *, child_seed: int, parent_manifest: dict[str, str] | None
+    ) -> Any:
         kws = {
             "dt": self.dt,
             "duration": self.duration,
@@ -158,10 +257,9 @@ class EvalRun(EvalConf, SimConfiguration):
                 }
             )
             run = ExpRun(**kws0)
-            self.datasets = run.simulate()
-        self.analyze()
-        if self.store_data:
-            self.store()
+            run._record_manifest = False
+            run._parent_manifest = parent_manifest
+            self.datasets = run.simulate(seed=child_seed)
         return self.datasets
 
     def get_error_plots(self, error_dict: Any, mode: str = "pooled") -> AttrDict:

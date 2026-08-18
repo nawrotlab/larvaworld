@@ -6,6 +6,8 @@ from pathlib import Path
 import pandas as pd
 import panel as pn
 
+from larvaworld.lib.process.dataset import LarvaDataset
+from larvaworld.lib.util.dictsNlists import load_dict
 from larvaworld.portal.datasets.manager_helpers import (
     UnifiedDatasetRecord,
     annotate_dataset,
@@ -239,6 +241,22 @@ def _details_html(
                 + "".join(proc_items)
             )
 
+    manifest_html = ""
+    try:
+        provenance = load_dict(str(record.conf_path)).get("provenance")
+        reference = (
+            provenance.get("run_manifest") if isinstance(provenance, dict) else None
+        )
+        if isinstance(reference, dict):
+            manifest_html = (
+                '<div style="margin-top:8px;"><strong>Source manifest ID</strong>: '
+                f"{escape(str(reference.get('manifest_id') or '—'))}</div>"
+                "<div><strong>Source manifest path</strong>: "
+                f"{escape(str(reference.get('path') or '—'))}</div>"
+            )
+    except Exception:
+        pass
+
     return (
         '<div class="lw-dataset-manager-status">'
         f"<div><strong>Dataset ID</strong>: {escape(record.dataset_id)}</div>"
@@ -252,6 +270,7 @@ def _details_html(
         f"<div><strong>data.h5</strong>: {escape(str(record.h5_path))}</div>"
         f"<div><strong>Config file present</strong>: {conf_present}</div>"
         f"<div><strong>HDF file present</strong>: {h5_present}</div>"
+        f"{manifest_html}"
         f"{proc_html}"
         "</div>"
     )
@@ -367,6 +386,12 @@ class _DatasetManagerController:
             width=160,
             disabled=True,
         )
+        self.inspect_manifest_button = pn.widgets.Button(
+            name="Inspect source manifest",
+            button_type="default",
+            width=180,
+            disabled=True,
+        )
         self.delete_button = pn.widgets.Button(
             name="Delete dataset",
             button_type="danger",
@@ -395,6 +420,9 @@ class _DatasetManagerController:
 
         self.count_pane = pn.pane.HTML("", margin=(0, 0, 0, 0))
         self.details_pane = pn.pane.HTML(_details_html(None), margin=0)
+        self.manifest_inspector = pn.pane.JSON(
+            object={}, depth=4, visible=False, sizing_mode="stretch_width", margin=0
+        )
         self.action_status = pn.pane.HTML("", margin=0)
         self.empty_state = pn.pane.HTML("", margin=0)
         self.main_content = pn.Column(sizing_mode="stretch_width", margin=0)
@@ -515,6 +543,7 @@ class _DatasetManagerController:
                 }
             """,
         )
+        self.inspect_manifest_button.on_click(self._handle_inspect_manifest)
         self.preprocess_button.on_click(self._handle_preprocess)
         self.process_button.on_click(self._handle_process)
         self.annotate_button.on_click(self._handle_annotate)
@@ -541,6 +570,9 @@ class _DatasetManagerController:
         self.delete_confirm_panel.visible = False
         self.delete_confirm_text.object = ""
         self.copy_path_button.disabled = True
+        self.inspect_manifest_button.disabled = True
+        self.manifest_inspector.object = {}
+        self.manifest_inspector.visible = False
         self.delete_button.disabled = True
 
     def _load_records(self) -> None:
@@ -663,6 +695,7 @@ class _DatasetManagerController:
                 pn.Row(
                     self.refresh_list_button,
                     self.copy_path_button,
+                    self.inspect_manifest_button,
                     self.delete_button,
                     sizing_mode="stretch_width",
                 ),
@@ -697,6 +730,7 @@ class _DatasetManagerController:
                 ),
                 self.delete_confirm_panel,
                 self.action_status,
+                self.manifest_inspector,
                 sizing_mode="stretch_width",
             ),
             title="Actions",
@@ -739,6 +773,14 @@ class _DatasetManagerController:
         self._copy_source.value = str(record.dataset_dir)
         self.refid_input.value = record.ref_id or ""
         self.copy_path_button.disabled = False
+        try:
+            provenance = load_dict(str(record.conf_path)).get("provenance")
+            self.inspect_manifest_button.disabled = not (
+                isinstance(provenance, dict)
+                and isinstance(provenance.get("run_manifest"), dict)
+            )
+        except Exception:
+            self.inspect_manifest_button.disabled = True
         self.delete_button.disabled = record.origin != "imported"
         self.preprocess_button.disabled = False
         self.process_button.disabled = False
@@ -746,6 +788,27 @@ class _DatasetManagerController:
         self.update_refid_button.disabled = False
         self.subsample_button.disabled = False
         self.timeslice_button.disabled = False
+
+    def _handle_inspect_manifest(self, _event=None) -> None:
+        if self._selected_record is None:
+            return
+        try:
+            dataset = LarvaDataset(
+                dir=str(self._selected_record.dataset_dir),
+                refID=self._selected_record.ref_id,
+                load_data=False,
+            )
+            self.manifest_inspector.object = dataset.load_run_manifest()
+            self.manifest_inspector.visible = True
+            self._set_action_status("Source manifest loaded.", tone="success")
+        except Exception as exc:
+            self.manifest_inspector.object = {}
+            self.manifest_inspector.visible = False
+            self._set_action_status(
+                "Source manifest could not be resolved.",
+                tone="danger",
+                detail=str(exc),
+            )
 
     def _handle_refresh(self, _event=None) -> None:
         self._load_records()

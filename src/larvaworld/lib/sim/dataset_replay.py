@@ -7,6 +7,12 @@ import numpy as np
 
 from .. import reg, util
 from .base_run import BaseRun, render_configuration_text
+from .manifest import (
+    RunManifestSession,
+    deterministic_random_context,
+    json_ready,
+    prepare_master_seed,
+)
 from ..util import nam
 
 __all__: list[str] = [
@@ -20,6 +26,8 @@ class ReplayRun(BaseRun):
         parameters: Any,
         dataset: Any | None = None,
         screen_kws: dict = {},
+        _record_manifest: bool = True,
+        _source_manifest: str | None = None,
         **kwargs: Any,
     ):
         """
@@ -32,6 +40,9 @@ class ReplayRun(BaseRun):
             **kwargs: Arguments passed to parent class
 
         """
+        self._record_manifest = _record_manifest
+        self._source_manifest = _source_manifest
+        self._manifest_parameters = copy.deepcopy(parameters)
         dir = parameters.refDir if "refDir" in parameters else None
         d = reg.conf.Ref.retrieve_dataset(dataset=dataset, id=parameters.refID, dir=dir)
 
@@ -60,6 +71,54 @@ class ReplayRun(BaseRun):
         super().__init__(
             runtype="Replay", parameters=parameters, screen_kws=screen_kws, **kwargs
         )
+
+    def _manifest_invocation(
+        self, seed: int, steps: Any | None, display: bool
+    ) -> dict[str, Any]:
+        return {
+            "run_class": f"{type(self).__module__}:{type(self).__qualname__}",
+            "resolved_parameters": json_ready(self.p),
+            "constructor": {"replay_parameters": json_ready(self._manifest_parameters)},
+            "runtime_options": {
+                "store_data": bool(self.store_data),
+                "screen_kws": json_ready(self.screen_kws),
+            },
+            "execute": {
+                "method": "run",
+                "kwargs": {"steps": steps, "seed": seed, "display": display},
+            },
+        }
+
+    def run(
+        self,
+        steps: Any | None = None,
+        seed: Any | None = None,
+        display: bool = True,
+    ):
+        master_seed = prepare_master_seed(seed)
+        if not self._record_manifest:
+            with deterministic_random_context(master_seed):
+                return super().run(steps=steps, seed=master_seed, display=display)
+        session = RunManifestSession(
+            run=self,
+            invocation=self._manifest_invocation(master_seed, steps, display),
+            seed=master_seed,
+            source_manifest=self._source_manifest,
+        )
+        try:
+            with deterministic_random_context(master_seed):
+                result = super().run(steps=steps, seed=master_seed, display=display)
+            if getattr(self, "aborted", False):
+                session.abort()
+            else:
+                session.finish(datasets=[self.refDataset])
+            return result
+        except KeyboardInterrupt as exc:
+            session.abort(str(exc) or "Replay interrupted")
+            raise
+        except BaseException as exc:
+            session.fail(exc)
+            raise
 
     @property
     def configuration_items(self) -> dict[str, Any]:

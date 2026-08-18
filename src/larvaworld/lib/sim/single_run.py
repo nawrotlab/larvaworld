@@ -16,6 +16,13 @@ from ..reg import LarvaGroup
 from ..process import LarvaDatasetCollection
 from .base_run import BaseRun
 from .conditions import get_exp_condition
+from .manifest import (
+    RunManifestSession,
+    attach_manifest_to_datasets,
+    deterministic_random_context,
+    json_ready,
+    prepare_master_seed,
+)
 
 __all__: list[str] = [
     "ExpRun",
@@ -28,6 +35,9 @@ class ExpRun(BaseRun):
         experiment: Optional[str] = None,
         parameters: Optional[dict] = None,
         parameter_dict: dict = {},
+        _record_manifest: bool = True,
+        _parent_manifest: Optional[dict] = None,
+        _source_manifest: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
         """
@@ -37,10 +47,63 @@ class ExpRun(BaseRun):
             **kwargs: Arguments passed to the setup method
 
         """
+        self._record_manifest = _record_manifest
+        self._parent_manifest = _parent_manifest
+        self._source_manifest = _source_manifest
         super().__init__(
             runtype="Exp", experiment=experiment, parameters=parameters, **kwargs
         )
         self.parameter_dict = parameter_dict
+
+    def _manifest_invocation(
+        self, execute_kwargs: dict[str, Any], *, method: str = "simulate"
+    ) -> dict[str, Any]:
+        return {
+            "run_class": f"{type(self).__module__}:{type(self).__qualname__}",
+            "resolved_parameters": json_ready(self.parameters),
+            "constructor": {"parameter_dict": json_ready(self.parameter_dict)},
+            "runtime_options": {
+                "store_data": bool(self.store_data),
+                "screen_kws": json_ready(self.screen_kws),
+            },
+            "execute": {"method": method, "kwargs": json_ready(execute_kwargs)},
+        }
+
+    def run(
+        self,
+        steps: Any | None = None,
+        seed: Any | None = None,
+        display: bool = True,
+    ):
+        if (
+            getattr(self, "_manifest_managed_by_simulate", False)
+            or not self._record_manifest
+        ):
+            return super().run(steps=steps, seed=seed, display=display)
+        master_seed = prepare_master_seed(seed)
+        session = RunManifestSession(
+            run=self,
+            invocation=self._manifest_invocation(
+                {"steps": steps, "seed": master_seed, "display": display},
+                method="run",
+            ),
+            seed=master_seed,
+            source_manifest=self._source_manifest,
+        )
+        try:
+            with deterministic_random_context(master_seed):
+                result = super().run(steps=steps, seed=master_seed, display=display)
+            if getattr(self, "aborted", False):
+                session.abort()
+            else:
+                session.finish(scientific_result=getattr(self, "reporters", None))
+            return result
+        except KeyboardInterrupt as exc:
+            session.abort(str(exc) or "Simulation interrupted")
+            raise
+        except BaseException as exc:
+            session.fail(exc)
+            raise
 
     def setup(self) -> None:
         """
@@ -99,29 +162,63 @@ class ExpRun(BaseRun):
         Returns:
             list: A list of datasets collected during the simulation.
         """
-        vprint(f"--- Simulation {self.id} initialized!--- ", 2)
-        start = time.time()
-        self.run(**kwargs)
-        if getattr(self, "aborted", False):
-            self.datasets = []
-            return self.datasets
-        self.data_collection = LarvaDatasetCollection.from_agentpy_output(self.output)
-        self.datasets = self.data_collection.datasets
-        end = time.time()
-        dur = np.round(end - start).astype(int)
-        vprint(f"--- Simulation {self.id} completed in {dur} seconds!--- ", 2)
-        if getattr(self, "aborted", False):
-            return self.datasets
+        execute_kwargs = dict(kwargs)
+        requested_seed = execute_kwargs.pop("seed", None)
+        master_seed = prepare_master_seed(requested_seed)
+        session = None
+        if self._record_manifest:
+            session = RunManifestSession(
+                run=self,
+                invocation=self._manifest_invocation(
+                    {**execute_kwargs, "seed": master_seed}
+                ),
+                seed=master_seed,
+                source_manifest=self._source_manifest,
+            )
+        try:
+            vprint(f"--- Simulation {self.id} initialized!--- ", 2)
+            start = time.time()
+            with deterministic_random_context(master_seed):
+                self._manifest_managed_by_simulate = True
+                try:
+                    self.run(seed=master_seed, **execute_kwargs)
+                finally:
+                    self._manifest_managed_by_simulate = False
+            if getattr(self, "aborted", False):
+                self.datasets = []
+                if session is not None:
+                    session.abort()
+                return self.datasets
+            self.data_collection = LarvaDatasetCollection.from_agentpy_output(
+                self.output
+            )
+            self.datasets = self.data_collection.datasets
+            manifest_source = session or self._parent_manifest
+            if manifest_source is not None:
+                attach_manifest_to_datasets(self.datasets, manifest_source)
+            end = time.time()
+            dur = np.round(end - start).astype(int)
+            vprint(f"--- Simulation {self.id} completed in {dur} seconds!--- ", 2)
 
-        if self.p.enrichment:
-            for d in self.datasets:
-                vprint(f"--- Enriching dataset {d.id} ---", 2)
-                d.enrich(**self.p.enrichment, is_last=False)
-                vprint(f"--- Dataset {d.id} enriched ---", 2)
-                vprint("--------------------------------", 2)
-        if self.store_data and not getattr(self, "aborted", False):
-            self.store()
-        return self.datasets
+            if self.p.enrichment:
+                for d in self.datasets:
+                    vprint(f"--- Enriching dataset {d.id} ---", 2)
+                    d.enrich(**self.p.enrichment, is_last=False)
+                    vprint(f"--- Dataset {d.id} enriched ---", 2)
+                    vprint("--------------------------------", 2)
+            if self.store_data:
+                self.store()
+            if session is not None:
+                session.finish(datasets=self.datasets, scientific_result=self.results)
+            return self.datasets
+        except KeyboardInterrupt as exc:
+            if session is not None:
+                session.abort(str(exc) or "Simulation interrupted")
+            raise
+        except BaseException as exc:
+            if session is not None:
+                session.fail(exc)
+            raise
 
     def build_agents(self, larva_groups: dict, parameter_dict: dict = {}) -> None:
         """

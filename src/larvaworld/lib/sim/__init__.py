@@ -19,6 +19,13 @@ __all__: list[str] = [
     "GAlauncher",
     "EvalRun",
     "sim_model",
+    "RunManifestSession",
+    "RunManifestError",
+    "RunManifestResolutionError",
+    "discover_run_manifests",
+    "load_run_manifest",
+    "validate_run_manifest",
+    "rerun_from_manifest",
 ]
 
 _NAME_TO_MODULE = {
@@ -32,6 +39,13 @@ _NAME_TO_MODULE = {
     "GAlauncher": "larvaworld.lib.sim.genetic_algorithm",
     "EvalRun": "larvaworld.lib.sim.model_evaluation",
     "sim_model": "larvaworld.lib.sim.agent_simulations",
+    "RunManifestSession": "larvaworld.lib.sim.manifest",
+    "RunManifestError": "larvaworld.lib.sim.manifest",
+    "RunManifestResolutionError": "larvaworld.lib.sim.manifest",
+    "discover_run_manifests": "larvaworld.lib.sim.manifest",
+    "load_run_manifest": "larvaworld.lib.sim.manifest",
+    "validate_run_manifest": "larvaworld.lib.sim.manifest",
+    "rerun_from_manifest": "larvaworld.lib.sim.manifest",
 }
 
 

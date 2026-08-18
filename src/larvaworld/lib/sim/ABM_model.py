@@ -295,7 +295,12 @@ class BasicABModel:
         """Stops :meth:`Model.run` during an active simulation."""
         self.running = False
 
-    def run(self, steps: Any | None = None, seed: Any | None = None):
+    def run(
+        self,
+        steps: Any | None = None,
+        seed: Any | None = None,
+        display: bool = True,
+    ):
         """
         Executes the simulation of the model.
         Can also be used to continue a partly-run simulation
@@ -324,6 +329,9 @@ class BasicABModel:
             DataDict: Recorded variables and reporters.
 
         """
+        # Rendering is configured through ``screen_kws``; retain this
+        # AgentPy-compatible argument for existing Larvaworld callers.
+        _ = display
         dt0 = datetime.now()
         self.sim_setup(steps, seed)
         while self.running:
@@ -437,6 +445,7 @@ class ABModel(BasicABModel, reg.generators.SimConfigurationParams):
             **kwargs: Arguments passed to the setup method
 
         """
+        run_id = kwargs.pop("_run_id", None)
         reg.generators.SimConfigurationParams.__init__(self, **kwargs)
         self.parameters.steps = self.Nsteps
         self.parameters.agentpy_output_kws = {
@@ -444,4 +453,6 @@ class ABModel(BasicABModel, reg.generators.SimConfigurationParams):
             "exp_id": self.id,
             "path": f"{self.dir}/agentpy_output",
         }
-        BasicABModel.__init__(self, parameters=self.parameters, id=self.id)
+        BasicABModel.__init__(
+            self, parameters=self.parameters, id=self.id, _run_id=run_id
+        )

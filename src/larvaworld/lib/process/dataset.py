@@ -11,6 +11,7 @@ import os
 import random
 import shutil
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -84,6 +85,11 @@ class DatasetConfig(RuntimeDataOps, SimMetricOps, SimTimeOps):
     )
     EEB_poly1d = param.Parameter(
         doc="The polynomial describing the exploration-exploitation balance."
+    )
+    provenance = param.Dict(
+        default=None,
+        allow_None=True,
+        doc="Optional source run manifest and derived-dataset lineage metadata.",
     )
 
     @property
@@ -252,6 +258,19 @@ class ParamLarvaDataset(param.Parameterized):
     @property
     def ids(self):
         return self.config.agent_ids
+
+    @property
+    def run_manifest_path(self):
+        """Resolve this dataset's source manifest, including catalog fallback."""
+        from ..sim.manifest import resolve_dataset_manifest_path
+
+        return resolve_dataset_manifest_path(self)
+
+    def load_run_manifest(self):
+        """Load and validate this dataset's source ``run_manifest.json``."""
+        from ..sim.manifest import load_run_manifest
+
+        return load_run_manifest(self.run_manifest_path)
 
     @property
     def s(self):
@@ -1340,6 +1359,23 @@ class ParamLarvaDataset(param.Parameterized):
             )
             p.env_params.arena = reg.gen.Arena(dims=(xy_max, xy_max)).nestedConf
 
+        from ..sim.manifest import append_dataset_lineage
+
+        append_dataset_lineage(
+            self,
+            d,
+            operation="replay_view_transform",
+            parameters={
+                "agent_ids": p.agent_ids,
+                "time_range": p.time_range,
+                "track_point": p.track_point,
+                "fix_point": p.fix_point,
+                "fix_segment": p.fix_segment,
+                "transposition": p.transposition,
+                "draw_Nsegs": p.draw_Nsegs,
+            },
+        )
+
         return d, bg
 
     def align_trajectories(
@@ -2335,6 +2371,11 @@ class BaseLarvaDataset(ParamLarvaDataset):
                 try:
                     config = reg.conf.Ref.getRef(dir=dir, id=refID)
                     config.update(**kwargs)
+                    if dir is not None:
+                        # The config may have moved together with its run
+                        # folder. The explicit load location is authoritative;
+                        # provenance paths remain relative to this directory.
+                        config["dir"] = str(Path(dir).expanduser().resolve())
                 except:
                     config = self.generate_config(dir=dir, refID=refID, **kwargs)
             kws = config
@@ -2407,6 +2448,76 @@ class BaseLarvaDataset(ParamLarvaDataset):
         if save:
             self.save_config()
 
+    def derive_subsample(
+        self,
+        N: int,
+        *,
+        new_id: Optional[str] = None,
+        new_dir: Optional[str] = None,
+        seed: Optional[int] = None,
+    ) -> "LarvaDataset":
+        """Create and save a dataset containing a reproducible agent subset."""
+        if N <= 0:
+            raise ValueError("N must be greater than zero.")
+        available = list(self.ids)
+        if N > len(available):
+            raise ValueError(
+                f"Cannot select {N} agents from a dataset containing {len(available)}."
+            )
+        rng = random.Random(seed)
+        selected_ids = rng.sample(available, N)
+        d2 = copy.deepcopy(self)
+        c2 = d2.config
+        c2.refID = None
+        c2.dir = new_dir or f"{self.dir}_subsample_{N}"
+        d2.dir = c2.dir
+        d2.set_data(
+            step=self.s.loc[(slice(None), selected_ids), :].copy(),
+            end=self.e.loc[selected_ids].copy(),
+        )
+        d2.set_id(new_id or f"{self.id}_subsample_{N}", save=False)
+        from ..sim.manifest import append_dataset_lineage
+
+        append_dataset_lineage(
+            self,
+            d2,
+            operation="subsample",
+            parameters={"N": N, "seed": seed, "agent_ids": selected_ids},
+        )
+        d2.save()
+        return d2
+
+    def derive_timeseries_slice(
+        self,
+        time_range: tuple[float, float],
+        *,
+        new_id: Optional[str] = None,
+        new_dir: Optional[str] = None,
+    ) -> "LarvaDataset":
+        """Create and save a time-sliced dataset with inherited provenance."""
+        start, stop = time_range
+        if start < 0 or stop <= start:
+            raise ValueError("time_range must satisfy 0 <= start < stop.")
+        sliced_step = self.timeseries_slice(time_range=time_range).copy()
+        selected_ids = sliced_step.index.unique("AgentID").tolist()
+        d2 = copy.deepcopy(self)
+        c2 = d2.config
+        c2.refID = None
+        c2.dir = new_dir or f"{self.dir}_slice_{start:g}_{stop:g}s"
+        d2.dir = c2.dir
+        d2.set_data(step=sliced_step, end=self.e.loc[selected_ids].copy())
+        d2.set_id(new_id or f"{self.id}_slice_{start:g}_{stop:g}s", save=False)
+        from ..sim.manifest import append_dataset_lineage
+
+        append_dataset_lineage(
+            self,
+            d2,
+            operation="timeseries_slice",
+            parameters={"start": start, "stop": stop},
+        )
+        d2.save()
+        return d2
+
     def reconstruct_at_Nsegs(
         self,
         Nsegs: int = 2,
@@ -2469,6 +2580,14 @@ class BaseLarvaDataset(ParamLarvaDataset):
         d2.comp_bend(recompute=True)
         d2.comp_ang_moments(recompute=True)
         d2.set_id(new_id or f"{self.id}_{Nsegs}seg", save=False)
+        from ..sim.manifest import append_dataset_lineage
+
+        append_dataset_lineage(
+            self,
+            d2,
+            operation="reconstruct_at_Nsegs",
+            parameters={"Nsegs": Nsegs},
+        )
         d2.save()
         return d2
 

@@ -80,6 +80,8 @@ def test_reconstruct_at_Nsegs_produces_a_separately_stored_comparable_dataset(
     # The original dataset itself must be untouched (deepcopy, not mutation).
     assert d.config.dir != new_dir
     assert d.id == "30controls"
+    assert d2.config.provenance["origin"] == "derived"
+    assert d2.config.provenance["lineage"][-1]["operation"] == ("reconstruct_at_Nsegs")
 
 
 def test_reconstruct_at_Nsegs_bend_closely_matches_original(

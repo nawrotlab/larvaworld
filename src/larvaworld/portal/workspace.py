@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -46,6 +47,7 @@ class WorkspaceValidation:
 @dataclass(frozen=True)
 class WorkspaceState:
     root: Path
+    workspace_id: str
     name: str
     metadata_path: Path
     environments_dir: Path
@@ -133,6 +135,97 @@ def write_global_workspace_config(data: dict[str, object]) -> None:
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
+def _known_workspace_entry(
+    *, root: Path, workspace_id: str, name: str, last_opened_at: str | None = None
+) -> dict[str, str]:
+    return {
+        "workspace_id": workspace_id,
+        "name": name,
+        "path": str(root),
+        "last_opened_at": last_opened_at or _utc_now_iso(),
+    }
+
+
+def _remember_workspace(
+    *, root: Path, workspace_id: str, name: str, mark_opened: bool = True
+) -> None:
+    """Add or refresh a workspace in the global, path-portable catalog."""
+    data = read_global_workspace_config()
+    raw_known = data.get("known_workspaces", [])
+    known = (
+        [item for item in raw_known if isinstance(item, dict)]
+        if isinstance(raw_known, list)
+        else []
+    )
+    previous = next(
+        (item for item in known if item.get("workspace_id") == workspace_id), None
+    )
+    previous_opened = previous.get("last_opened_at") if previous else None
+    entry = _known_workspace_entry(
+        root=root,
+        workspace_id=workspace_id,
+        name=name,
+        last_opened_at=None if mark_opened else previous_opened,
+    )
+    filtered = [
+        item
+        for item in known
+        if item.get("workspace_id") != workspace_id
+        and _resolve_path(str(item.get("path", ""))) != root
+    ]
+    filtered.append(entry)
+    data["known_workspaces"] = sorted(
+        filtered, key=lambda item: str(item.get("name", "")).casefold()
+    )
+    write_global_workspace_config(data)
+
+
+def get_known_workspaces() -> list[dict[str, object]]:
+    """Return known workspaces, retaining unavailable paths for inspection."""
+    data = read_global_workspace_config()
+    raw_known = data.get("known_workspaces", [])
+    if not isinstance(raw_known, list):
+        return []
+    records: list[dict[str, object]] = []
+    seen_ids: set[str] = set()
+    for item in raw_known:
+        if not isinstance(item, dict):
+            continue
+        workspace_id = item.get("workspace_id")
+        raw_path = item.get("path")
+        if not isinstance(workspace_id, str) or not isinstance(raw_path, str):
+            continue
+        root = _resolve_path(raw_path)
+        # A moved workspace may have been opened again under a new path. The
+        # last catalog entry for its stable UUID is the authoritative one.
+        if workspace_id in seen_ids:
+            continue
+        seen_ids.add(workspace_id)
+        records.append(
+            {
+                "workspace_id": workspace_id,
+                "name": item.get("name") or _default_workspace_name(root),
+                "path": root,
+                "last_opened_at": item.get("last_opened_at"),
+                "available": root.is_dir(),
+            }
+        )
+    return records
+
+
+def forget_known_workspace(workspace_id: str) -> None:
+    """Forget a catalog reference without deleting any workspace files."""
+    data = read_global_workspace_config()
+    raw_known = data.get("known_workspaces", [])
+    if isinstance(raw_known, list):
+        data["known_workspaces"] = [
+            item
+            for item in raw_known
+            if not isinstance(item, dict) or item.get("workspace_id") != workspace_id
+        ]
+    write_global_workspace_config(data)
+
+
 def get_active_workspace_path() -> Path | None:
     data = read_global_workspace_config()
     raw = data.get("active_workspace")
@@ -143,12 +236,26 @@ def get_active_workspace_path() -> Path | None:
 
 def set_active_workspace_path(path: str | Path) -> Path:
     resolved = _resolve_path(path)
-    write_global_workspace_config({"active_workspace": str(resolved)})
+    data = read_global_workspace_config()
+    data["active_workspace"] = str(resolved)
+    write_global_workspace_config(data)
+    try:
+        metadata = read_workspace_metadata(resolved)
+        workspace_id = metadata.get("workspace_id")
+        name = metadata.get("workspace_name")
+        if isinstance(workspace_id, str) and workspace_id and isinstance(name, str):
+            _remember_workspace(
+                root=resolved, workspace_id=workspace_id, name=name, mark_opened=True
+            )
+    except (OSError, json.JSONDecodeError):
+        pass
     return resolved
 
 
 def clear_active_workspace_path() -> None:
-    write_global_workspace_config({})
+    data = read_global_workspace_config()
+    data.pop("active_workspace", None)
+    write_global_workspace_config(data)
 
 
 def read_workspace_metadata(path: str | Path) -> dict[str, object]:
@@ -217,6 +324,7 @@ def initialize_workspace(
         (resolved / dirname).mkdir(parents=True, exist_ok=True)
 
     created_at = _utc_now_iso()
+    workspace_id = str(uuid.uuid4())
     metadata_path = _workspace_metadata_path(resolved)
     if metadata_path.exists():
         try:
@@ -224,11 +332,15 @@ def initialize_workspace(
             existing_created = existing.get("created_at")
             if isinstance(existing_created, str) and existing_created.strip():
                 created_at = existing_created
+            existing_workspace_id = existing.get("workspace_id")
+            if isinstance(existing_workspace_id, str) and existing_workspace_id.strip():
+                workspace_id = existing_workspace_id
         except (OSError, json.JSONDecodeError):
             pass
 
     metadata: dict[str, object] = {
         "schema_version": WORKSPACE_SCHEMA_VERSION,
+        "workspace_id": workspace_id,
         "workspace_name": (name or _default_workspace_name(resolved)).strip()
         or _default_workspace_name(resolved),
         "created_at": created_at,
@@ -236,7 +348,14 @@ def initialize_workspace(
         "folders": {kind: dirname for kind, dirname in WORKSPACE_DIR_NAMES.items()},
     }
     write_workspace_metadata(resolved, metadata)
-    return load_workspace(resolved)
+    state = load_workspace(resolved)
+    _remember_workspace(
+        root=state.root,
+        workspace_id=state.workspace_id,
+        name=state.name,
+        mark_opened=True,
+    )
+    return state
 
 
 def load_workspace(path: str | Path) -> WorkspaceState:
@@ -250,12 +369,21 @@ def load_workspace(path: str | Path) -> WorkspaceState:
         raise WorkspaceError("Workspace is not initialized.")
 
     metadata = read_workspace_metadata(resolved)
+    workspace_id = metadata.get("workspace_id")
+    if not isinstance(workspace_id, str) or not workspace_id.strip():
+        # Schema-v1 workspaces created before manifest support are upgraded
+        # in place the first time they are opened.
+        workspace_id = str(uuid.uuid4())
+        metadata["workspace_id"] = workspace_id
+        metadata["updated_at"] = _utc_now_iso()
+        write_workspace_metadata(resolved, metadata)
     name = metadata.get("workspace_name")
     if not isinstance(name, str) or not name.strip():
         name = _default_workspace_name(resolved)
 
-    return WorkspaceState(
+    state = WorkspaceState(
         root=resolved,
+        workspace_id=workspace_id,
         name=name,
         metadata_path=_workspace_metadata_path(resolved),
         environments_dir=resolved / WORKSPACE_DIR_NAMES["environments"],
@@ -265,6 +393,13 @@ def load_workspace(path: str | Path) -> WorkspaceState:
         metadata_dir=resolved / WORKSPACE_DIR_NAMES["metadata"],
         parameters_dir=resolved / WORKSPACE_DIR_NAMES["parameters"],
     )
+    _remember_workspace(
+        root=state.root,
+        workspace_id=state.workspace_id,
+        name=state.name,
+        mark_opened=True,
+    )
+    return state
 
 
 def get_active_workspace() -> WorkspaceState | None:

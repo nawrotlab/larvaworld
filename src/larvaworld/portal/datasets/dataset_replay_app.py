@@ -25,6 +25,7 @@ from larvaworld.portal.datasets.replay_models import (
     ReplaySource,
 )
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
+from larvaworld.portal.manifest_catalog import ManifestCatalogController
 from larvaworld.portal.runtime.display_shortcuts import (
     DISPLAY_SHORTCUTS_RAW_CSS,
     build_display_shortcuts_dialog,
@@ -149,6 +150,9 @@ class _DatasetReplayController:
 
     def __init__(self) -> None:
         self.workspace = get_active_workspace()
+        self.manifest_catalog = ManifestCatalogController(
+            modes=("Replay",), title="Dataset Replay Manifests"
+        )
         self.canvas = EnvironmentCanvas(
             width=_REPLAY_CANVAS_WIDTH,
             height=_REPLAY_CANVAS_HEIGHT,
@@ -673,6 +677,17 @@ class _DatasetReplayController:
             )
         return screen_kws, video_target
 
+    def _native_replay_run_dir(self, selected_member_token: str) -> Path:
+        root = get_workspace_dir("experiments", workspace=self.workspace)
+        base_name = self._native_replay_video_name(selected_member_token)
+        candidate = root / f"replay_{base_name}"
+        if not candidate.exists():
+            return candidate
+        index = 2
+        while (root / f"replay_{base_name}_{index}").exists():
+            index += 1
+        return root / f"replay_{base_name}_{index}"
+
     def _selected_time_range(self) -> tuple[float, float] | None:
         if not self.use_time_range.value:
             return _replay_param_default("time_range")
@@ -818,6 +833,7 @@ class _DatasetReplayController:
         dataset: LarvaDataset | None,
         screen_kws: dict[str, Any],
         video_target: Path | None,
+        run_dir: Path,
     ) -> None:
         launcher = None
         try:
@@ -826,6 +842,8 @@ class _DatasetReplayController:
                 dataset=dataset,
                 screen_kws=screen_kws,
                 store_data=False,
+                id=run_dir.name,
+                dir=str(run_dir),
             )
             launcher.run()
         except Exception as exc:
@@ -843,6 +861,7 @@ class _DatasetReplayController:
             self._set_status(f"Native replay finished. Video target: {video_target}.")
         else:
             self._set_status("Native pygame replay finished.")
+        self.manifest_catalog.refresh()
         self._set_native_replay_controls_disabled(False)
 
     def _on_open_pygame_replay(self, *_: object) -> None:
@@ -875,6 +894,7 @@ class _DatasetReplayController:
             self._set_status(f"Native replay failed: {exc}")
             return
         screen_kws, video_target = self._native_replay_screen_kws(selected_member_token)
+        run_dir = self._native_replay_run_dir(selected_member_token)
 
         if video_target is not None:
             self._set_status(
@@ -896,6 +916,7 @@ class _DatasetReplayController:
                     dataset=dataset,
                     screen_kws=screen_kws,
                     video_target=video_target,
+                    run_dir=run_dir,
                 )
             )
             return
@@ -904,6 +925,7 @@ class _DatasetReplayController:
             dataset=dataset,
             screen_kws=screen_kws,
             video_target=video_target,
+            run_dir=run_dir,
         )
 
     def _render(self) -> None:
@@ -1055,6 +1077,7 @@ class _DatasetReplayController:
             intro,
             self.display_shortcuts_dialog,
             pn.Row(controls, main, sizing_mode="stretch_width"),
+            self.manifest_catalog.view(),
             css_classes=["lw-dataset-replay-root"],
             sizing_mode="stretch_width",
         )

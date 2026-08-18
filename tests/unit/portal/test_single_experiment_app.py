@@ -611,7 +611,7 @@ def test_single_experiment_preview_metadata_summarizes_applied_settings(
     assert "larvae = 5" in html
 
 
-def test_single_experiment_resolved_plan_payload_serializes_parameters(
+def test_single_experiment_manifest_catalog_targets_exp_runs(
     tmp_path: Path,
 ) -> None:
     workspace_root = tmp_path / "workspace"
@@ -619,19 +619,8 @@ def test_single_experiment_resolved_plan_payload_serializes_parameters(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    parameters = controller._build_parameters()
 
-    payload = controller._resolved_plan_payload(
-        experiment="dish",
-        run_name="dish_demo",
-        selected_env="template default",
-        parameters=parameters,
-    )
-
-    assert payload["experiment"] == "dish"
-    assert payload["run_name"] == "dish_demo"
-    assert payload["selected_environment"] == "template default"
-    assert payload["parameters"]["env_params"]["arena"]["geometry"] == "circular"
+    assert controller.manifest_catalog.modes == ("Exp",)
 
 
 def test_single_experiment_preview_runtime_parameters_strip_preview_only_overhead(
@@ -649,7 +638,7 @@ def test_single_experiment_preview_runtime_parameters_strip_preview_only_overhea
     assert preview_parameters.enrichment is None
 
 
-def test_single_experiment_run_experiment_writes_plan_and_reports_storage(
+def test_single_experiment_run_experiment_uses_run_manifest_and_reports_storage(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -664,6 +653,9 @@ def test_single_experiment_run_experiment_writes_plan_and_reports_storage(
             simulated.update(kwargs)
 
         def simulate(self):
+            run_dir = Path(simulated["dir"])
+            run_dir.mkdir(parents=True)
+            (run_dir / "run_manifest.json").write_text("{}", encoding="utf-8")
             return ["dataset_a", "dataset_b"]
 
     monkeypatch.setattr(
@@ -676,14 +668,15 @@ def test_single_experiment_run_experiment_writes_plan_and_reports_storage(
     controller._on_run_experiment()
 
     run_dir = workspace_root / "simulations" / "dish_demo"
-    plan_path = run_dir / "resolved_experiment.json"
+    manifest_path = run_dir / "run_manifest.json"
 
     assert simulated["store_data"] is True
     assert simulated["id"] == "dish_demo"
     assert simulated["dir"] == str(run_dir)
-    assert plan_path.exists()
+    assert manifest_path.exists()
+    assert not (run_dir / "resolved_experiment.json").exists()
     assert "Stored outputs in" in controller.status.object
-    assert "resolved_experiment.json" in controller.status.object
+    assert "run_manifest.json" in controller.status.object
 
 
 @pytest.mark.skip(reason=SINGLE_EXPERIMENT_APP_INCOMPLETE_REASON)

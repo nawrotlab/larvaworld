@@ -181,14 +181,18 @@ def subsample_dataset(
     """
     try:
         ds = LarvaDataset(dir=str(record.dataset_dir), refID=record.ref_id)
-        smaller_ds = ds.sample_larvagroup(N=n_agents)
         output_dir = (
             get_workspace_dir("datasets", workspace=workspace)
             / "imported"
             / output_name
         )
-        output_dir.mkdir(parents=True, exist_ok=True)
-        smaller_ds.save(str(output_dir))
+        if output_dir.exists():
+            raise FileExistsError(f"Output dataset already exists: {output_dir}")
+        ds.derive_subsample(
+            n_agents,
+            new_id=output_name,
+            new_dir=str(output_dir),
+        )
         return True, f"Subsampled dataset saved to '{output_name}'."
     except Exception as exc:
         return False, f"Subsampling failed: {str(exc)}"
@@ -207,14 +211,18 @@ def timeslice_dataset(
     """
     try:
         ds = LarvaDataset(dir=str(record.dataset_dir), refID=record.ref_id)
-        sliced_ds = ds.timeseries_slice(time_range=time_range)
         output_dir = (
             get_workspace_dir("datasets", workspace=workspace)
             / "imported"
             / output_name
         )
-        output_dir.mkdir(parents=True, exist_ok=True)
-        sliced_ds.save(str(output_dir))
+        if output_dir.exists():
+            raise FileExistsError(f"Output dataset already exists: {output_dir}")
+        ds.derive_timeseries_slice(
+            time_range,
+            new_id=output_name,
+            new_dir=str(output_dir),
+        )
         return True, f"Time-sliced dataset saved to '{output_name}'."
     except Exception as exc:
         return False, f"Time-slicing failed: {str(exc)}"

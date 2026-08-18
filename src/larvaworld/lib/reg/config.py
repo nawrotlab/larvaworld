@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 import os
+from contextvars import ContextVar
 import param
 
 from ... import vprint, CONF_DIR, DATA_DIR, CONFTYPES
@@ -20,6 +21,11 @@ __all__: list[str] = [
     "conf",
     "resetConfs",
 ]
+
+
+_REGISTRY_PERSISTENCE_SUSPENDED: ContextVar[bool] = ContextVar(
+    "larvaworld_registry_persistence_suspended", default=False
+)
 
 
 def next_idx(id: str, conftype: str = "Exp") -> int:
@@ -52,7 +58,8 @@ def next_idx(id: str, conftype: str = "Exp") -> int:
     if id not in d[conftype]:
         d[conftype][id] = 0
     d[conftype][id] += 1
-    util.save_dict(d, f)
+    if not _REGISTRY_PERSISTENCE_SUSPENDED.get():
+        util.save_dict(d, f)
     return d[conftype][id]
 
 
@@ -197,6 +204,8 @@ class ConfType(param.Parameterized):
             bool: True if the save operation was successful, False otherwise.
 
         """
+        if _REGISTRY_PERSISTENCE_SUSPENDED.get():
+            return True
         return util.save_dict(self.dict, self.path_to_dict)
 
     def set_dict(self, d: dict[str, Any]) -> None:

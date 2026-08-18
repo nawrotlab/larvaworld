@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from .single_run import ExpRun
 
+import copy
 import itertools
 
 import agentpy as ap
@@ -15,6 +16,13 @@ from ... import vprint
 from .. import reg, util
 from ..param import ClassAttr, NestedConf, PositiveInteger, PositiveNumber
 from ..plot import plot_2d, plot_3pars, plot_heatmap_PI
+from .manifest import (
+    RunManifestSession,
+    derive_seed,
+    deterministic_random_context,
+    json_ready,
+    prepare_master_seed,
+)
 
 __all__: list[str] = [
     "OptimizationOps",
@@ -120,6 +128,9 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
         exp: Any = None,
         exp_kws: dict[str, Any] = {},
         store_data: bool = False,
+        dir: str | None = None,
+        _record_manifest: bool = True,
+        _source_manifest: str | None = None,
         **kwargs: Any,
     ) -> None:
         """
@@ -155,17 +166,33 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
         # Local import to avoid sim/__init__ indirection and potential cycles
         from .single_run import ExpRun  # type: ignore
 
+        self._record_manifest = _record_manifest
+        self._source_manifest = _source_manifest
+        self._manifest_space_search = copy.deepcopy(space_search)
+        self._manifest_space_kws = copy.deepcopy(space_kws)
+        self._manifest_exp_kws = copy.deepcopy(exp_kws)
         reg.generators.SimConfiguration.__init__(
-            self, runtype="Batch", experiment=experiment, id=id, store_data=store_data
+            self,
+            runtype="Batch",
+            experiment=experiment,
+            id=id,
+            dir=dir,
+            store_data=store_data,
         )
 
-        ap.Experiment.__init__(
-            self,
-            model_class=ExpRun,
-            sample=space_search_sample(space_search, **space_kws),
-            store_data=False,
-            **kwargs,
-        )
+        name_parameter = self.param["name"]
+        name_was_constant = name_parameter.constant
+        name_parameter.constant = False
+        try:
+            ap.Experiment.__init__(
+                self,
+                model_class=ExpRun,
+                sample=space_search_sample(space_search, **space_kws),
+                store_data=False,
+                **kwargs,
+            )
+        finally:
+            name_parameter.constant = name_was_constant
         self.df_path = f"{self.dir}/results.h5"
         self.exp_conf = reg.conf.Exp.expand(exp) if isinstance(exp, str) else exp
         self.exp_conf.update(**exp_kws)
@@ -173,6 +200,83 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
         self.datasets = {}
         self.results = None
         self.figs = {}
+
+    def _manifest_model_kwargs(self) -> dict[str, Any]:
+        return {
+            key: copy.deepcopy(value)
+            for key, value in self._model_kwargs.items()
+            if key
+            not in {
+                "store_data",
+                "_record_manifest",
+                "_parent_manifest",
+                "_source_manifest",
+            }
+        }
+
+    def _resolved_child_parameters(self, sample_index: int) -> Any:
+        parameters = self.exp_conf.update_existingnestdict_by_suffix(
+            self.sample[sample_index]
+        )
+        model_kwargs = self._manifest_model_kwargs()
+        for key, value in model_kwargs.items():
+            if key in parameters and value is not None:
+                parameters[key] = copy.deepcopy(value)
+        if "larva_groups" in parameters and any(
+            model_kwargs.get(key) is not None
+            for key in ("modelIDs", "groupIDs", "N", "sample")
+        ):
+            from ..reg.larvagroup import update_larva_groups
+
+            parameters.larva_groups = update_larva_groups(
+                parameters.larva_groups,
+                modelIDs=model_kwargs.get("modelIDs"),
+                groupIDs=model_kwargs.get("groupIDs"),
+                Ns=model_kwargs.get("N"),
+                sample=model_kwargs.get("sample"),
+            )
+        return parameters
+
+    def _manifest_invocation(
+        self,
+        seed: int,
+        execute_kwargs: dict[str, Any],
+        child_seeds: dict[str, int],
+        method: str,
+    ):
+        resolved_children = []
+        for run_id in self.run_ids:
+            sample_index = 0 if run_id[0] is None else run_id[0]
+            resolved_children.append(
+                {
+                    "run_id": repr(run_id),
+                    "parameters": json_ready(
+                        self._resolved_child_parameters(sample_index)
+                    ),
+                    "seed": child_seeds[repr(run_id)],
+                }
+            )
+        return {
+            "run_class": f"{type(self).__module__}:{type(self).__qualname__}",
+            "resolved_parameters": json_ready(self.exp_conf),
+            "constructor": {
+                "space_search": json_ready(self._manifest_space_search),
+                "space_kws": json_ready(self._manifest_space_kws),
+                "exp": json_ready(self.exp_conf),
+                "exp_kws": json_ready(self._manifest_exp_kws),
+                "iterations": int(self.iterations),
+                "model_kwargs": json_ready(self._manifest_model_kwargs()),
+                "resolved_children": resolved_children,
+            },
+            "runtime_options": {
+                "store_data": bool(self.store_data),
+                "screen_kws": json_ready(self._model_kwargs.get("screen_kws", {})),
+            },
+            "execute": {
+                "method": method,
+                "kwargs": json_ready({**execute_kwargs, "seed": seed}),
+            },
+        }
 
     def _single_sim(self, run_id: Any):
         """Perform a single simulation."""
@@ -220,14 +324,77 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
         except:
             pass
 
-    def simulate(self, **kwargs: Any):
-        self.run(**kwargs)
-        if "PI" in self.experiment:
-            self.PI_heatmap()
-        self.plot_results()
-        util.storeH5(self.par_df, key="results", path=self.df_path, mode="w")
-        vprint(f"Simulation {self.id} stored in directory {self.dir}", 2)
-        return self.par_df, self.figs
+    def run(self, seed: int | None = None, **kwargs: Any):
+        """Run the AgentPy experiment and return its original output object."""
+        return self._execute_batch(
+            seed=seed,
+            execute_kwargs=kwargs,
+            method="run",
+            postprocess=False,
+        )
+
+    def simulate(self, seed: int | None = None, **kwargs: Any):
+        return self._execute_batch(
+            seed=seed,
+            execute_kwargs=kwargs,
+            method="simulate",
+            postprocess=True,
+        )
+
+    def _execute_batch(
+        self,
+        *,
+        seed: int | None,
+        execute_kwargs: dict[str, Any],
+        method: str,
+        postprocess: bool,
+    ):
+        master_seed = prepare_master_seed(seed)
+        child_seeds = {
+            repr(run_id): derive_seed(master_seed, run_id) for run_id in self.run_ids
+        }
+        session = None
+        if self._record_manifest:
+            session = RunManifestSession(
+                run=self,
+                invocation=self._manifest_invocation(
+                    master_seed, execute_kwargs, child_seeds, method
+                ),
+                seed=master_seed,
+                child_seeds=child_seeds,
+                source_manifest=self._source_manifest,
+            )
+            self._model_kwargs["_parent_manifest"] = session.reference
+        self._model_kwargs["_record_manifest"] = False
+        self._random = {run_id: child_seeds[repr(run_id)] for run_id in self.run_ids}
+        try:
+            with deterministic_random_context(master_seed):
+                result = ap.Experiment.run(self, **execute_kwargs)
+            if postprocess and self.store_data:
+                if "PI" in self.experiment:
+                    self.PI_heatmap()
+                self.plot_results()
+                util.storeH5(self.par_df, key="results", path=self.df_path, mode="w")
+                vprint(f"Simulation {self.id} stored in directory {self.dir}", 2)
+            all_datasets = [
+                dataset
+                for datasets in self.datasets.values()
+                for dataset in (datasets or [])
+            ]
+            if session is not None:
+                session.finish(
+                    datasets=all_datasets,
+                    scientific_result=self.par_df,
+                )
+            return (self.par_df, self.figs) if postprocess else result
+        except KeyboardInterrupt as exc:
+            if session is not None:
+                session.abort(str(exc) or "Batch interrupted")
+            raise
+        except BaseException as exc:
+            if session is not None:
+                session.fail(exc)
+            raise
 
     def plot_results(self) -> None:
         p_ns = self.par_names

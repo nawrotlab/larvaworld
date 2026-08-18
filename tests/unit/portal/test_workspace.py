@@ -8,6 +8,7 @@ import pytest
 from larvaworld.portal.workspace import (
     WorkspaceError,
     clear_active_workspace_path,
+    get_known_workspaces,
     get_active_workspace,
     get_active_workspace_path,
     get_notebook_workspace_dir,
@@ -45,6 +46,7 @@ def test_initialize_workspace_creates_expected_layout(tmp_path: Path) -> None:
 
     assert state.root == workspace_root.resolve()
     assert state.name == "Portal Workspace"
+    assert state.workspace_id
     assert state.environments_dir.is_dir()
     assert state.experiments_dir.is_dir()
     assert state.datasets_dir.is_dir()
@@ -59,6 +61,7 @@ def test_initialize_workspace_creates_expected_layout(tmp_path: Path) -> None:
     metadata = json.loads(state.metadata_path.read_text(encoding="utf-8"))
     assert metadata["workspace_name"] == "Portal Workspace"
     assert metadata["schema_version"] == 1
+    assert metadata["workspace_id"] == state.workspace_id
 
 
 def test_load_workspace_returns_resolved_paths(tmp_path: Path) -> None:
@@ -121,3 +124,22 @@ def test_load_workspace_requires_initialized_metadata(tmp_path: Path) -> None:
 
     with pytest.raises(WorkspaceError, match="not initialized"):
         load_workspace(workspace_root)
+
+
+def test_known_workspace_catalog_tracks_moved_workspace_by_uuid(
+    tmp_path: Path,
+) -> None:
+    original = tmp_path / "workspace"
+    state = initialize_workspace(original, name="Portable")
+    moved = tmp_path / "moved-workspace"
+    original.rename(moved)
+
+    moved_state = load_workspace(moved)
+    known = get_known_workspaces()
+
+    assert moved_state.workspace_id == state.workspace_id
+    matching = [
+        record for record in known if record["workspace_id"] == state.workspace_id
+    ]
+    assert len(matching) == 1
+    assert matching[0]["path"] == moved.resolve()

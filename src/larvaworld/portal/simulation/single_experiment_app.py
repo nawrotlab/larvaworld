@@ -28,6 +28,7 @@ from larvaworld.portal.landing_registry import (
     DOCS_SINGLE_EXPERIMENTS,
 )
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
+from larvaworld.portal.manifest_catalog import ManifestCatalogController
 from larvaworld.portal.config_widgets.collections_widget import (
     build_collections_widget,
 )
@@ -793,6 +794,9 @@ class _SingleExperimentController:
         ]
 
     def __init__(self) -> None:
+        self.manifest_catalog = ManifestCatalogController(
+            modes=("Exp",), title="Single Experiment Manifests"
+        )
         experiment_ids = list(reg.conf.Exp.confIDs)
         default_experiment = "dish" if "dish" in experiment_ids else experiment_ids[0]
         experiment_options = {
@@ -3328,40 +3332,6 @@ class _SingleExperimentController:
             suffix += 1
         return base_dir / f"{run_id}_{suffix}"
 
-    @staticmethod
-    def _resolved_plan_payload(
-        *,
-        experiment: str,
-        run_name: str,
-        selected_env: str,
-        parameters: util.AttrDict,
-    ) -> dict[str, Any]:
-        return {
-            "saved_at": datetime.now().isoformat(timespec="seconds"),
-            "experiment": experiment,
-            "run_name": run_name,
-            "selected_environment": selected_env,
-            "parameters": _json_ready(parameters.get_copy()),
-        }
-
-    def _write_resolved_plan(
-        self,
-        *,
-        run_dir: Path,
-        parameters: util.AttrDict,
-        selected_env: str,
-    ) -> Path:
-        run_dir.mkdir(parents=True, exist_ok=False)
-        plan_path = run_dir / "resolved_experiment.json"
-        payload = self._resolved_plan_payload(
-            experiment=self._selected_experiment(),
-            run_name=self.run_name.value or run_dir.name,
-            selected_env=selected_env,
-            parameters=parameters,
-        )
-        plan_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-        return plan_path
-
     def _runtime_screen_kws(self, run_dir: Path) -> dict[str, Any]:
         kws: dict[str, Any] = {
             "show_display": bool(self.show_display.value),
@@ -3424,11 +3394,6 @@ class _SingleExperimentController:
         warning_note = self._pending_run_warning_note
         self._pending_run_warning_note = ""
         try:
-            plan_path = self._write_resolved_plan(
-                run_dir=run_dir,
-                parameters=parameters,
-                selected_env=selected_env,
-            )
             screen_kws = self._runtime_screen_kws(run_dir)
             launcher = sim.ExpRun(
                 experiment=self._selected_experiment(),
@@ -3439,6 +3404,7 @@ class _SingleExperimentController:
                 screen_kws=screen_kws,
             )
             datasets = launcher.simulate()
+            manifest_path = run_dir / "run_manifest.json"
         except Exception as exc:
             self.status.object = f"Single experiment run failed: {exc}{warning_note}"
             self._set_run_controls_disabled(False)
@@ -3454,7 +3420,7 @@ class _SingleExperimentController:
         self.status.object = (
             f'Completed run "{self._selected_experiment()}". '
             f"Stored outputs in <code>{run_dir}</code>. "
-            f"Saved resolved config to <code>{plan_path.name}</code>. "
+            f"Saved reproducible config to <code>{manifest_path.name}</code>. "
             f"Datasets produced: {dataset_count}."
             + (
                 f' Video target: <code>{run_dir / ((_safe_slug((self.video_filename.value or "").strip() or run_dir.name)) + ".mp4")}</code>.'
@@ -3463,6 +3429,7 @@ class _SingleExperimentController:
             )
             + warning_note
         )
+        self.manifest_catalog.refresh()
         self._set_run_controls_disabled(False)
 
     @staticmethod
@@ -3852,6 +3819,7 @@ class _SingleExperimentController:
             self.display_shortcuts_dialog,
             content,
             lower,
+            self.manifest_catalog.view(),
             css_classes=["lw-single-exp-root"],
             sizing_mode="stretch_width",
         )

@@ -178,6 +178,16 @@ class SimConfiguration(RuntimeOps, SimMetricOps, SimOps):
 
     @property
     def path_to_runtype_data(self) -> str:
+        try:
+            from larvaworld.portal.workspace import get_active_workspace
+
+            workspace = get_active_workspace()
+            if workspace is not None:
+                return str(workspace.experiments_dir)
+        except Exception:
+            # Core/API usage remains available without the optional Portal
+            # stack or a configured workspace.
+            pass
         return f"{SIM_DIR}/{self.runtype.lower()}_runs"
 
     def generate_id(self, runtype: str, exp: str) -> str:
@@ -904,6 +914,11 @@ class LabFormat(NestedConf):
                 life=[age, epochs],
             ).nestedConf,
             "env_params": self.env_params.nestedConf,
+            "provenance": {
+                "origin": "imported",
+                "run_manifest": None,
+                "lineage": [],
+            },
             **self.tracker.nestedConf,
             "step": step,
             "end": end,

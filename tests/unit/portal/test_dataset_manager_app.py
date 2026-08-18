@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 from larvaworld import DATA_DIR
 from larvaworld.lib import reg
+from larvaworld.lib.sim.manifest import RunManifestSession
 from larvaworld.portal.datasets import dataset_manager_app
 from larvaworld.portal.datasets.manager_helpers import UnifiedDatasetRecord
 from larvaworld.portal.datasets.models import WorkspaceDatasetRecord
@@ -247,6 +249,83 @@ def test_dataset_manager_selection_populates_details_and_actions(
     assert str(record.h5_path) in controller.details_pane.object
     assert controller.copy_path_button.disabled is False
     assert controller.delete_button.disabled is False
+
+
+def test_dataset_manager_inspects_simulated_dataset_source_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    run_dir = workspace.experiments_dir / "source-run"
+    session = RunManifestSession(
+        run=SimpleNamespace(
+            dir=str(run_dir),
+            id="source-run",
+            runtype="Exp",
+            experiment="dish",
+            store_data=True,
+            parameters={},
+            screen_kws={},
+        ),
+        seed=3,
+    )
+    session.finish()
+    dataset_dir = run_dir / "data" / "group"
+    data_dir = dataset_dir / "data"
+    data_dir.mkdir(parents=True)
+    conf_path = data_dir / "conf.txt"
+    conf_path.write_text(
+        json.dumps(
+            {
+                "id": "group",
+                "dir": str(dataset_dir),
+                "refID": None,
+                "group_id": "group",
+                "agent_ids": [],
+                "provenance": {
+                    "origin": "simulation",
+                    "run_manifest": {
+                        "manifest_id": session.manifest["run"]["manifest_id"],
+                        "workspace_id": workspace.workspace_id,
+                        "path": "../../run_manifest.json",
+                    },
+                    "lineage": [],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    h5_path = data_dir / "data.h5"
+    h5_path.write_bytes(b"")
+    record = UnifiedDatasetRecord(
+        origin="simulation_run",
+        dataset_id="group",
+        dataset_dir=dataset_dir,
+        data_dir=data_dir,
+        conf_path=conf_path,
+        h5_path=h5_path,
+        lab_id=None,
+        group_id="group",
+        ref_id=None,
+        n_agents=0,
+        run_id="source-run",
+        member_id="group",
+    )
+    monkeypatch.setattr(
+        dataset_manager_app, "list_workspace_datasets", lambda workspace=None: [record]
+    )
+
+    controller = dataset_manager_app._DatasetManagerController()
+    _select_first_row(controller)
+    controller._handle_inspect_manifest()
+
+    assert session.manifest["run"]["manifest_id"] in controller.details_pane.object
+    assert controller.inspect_manifest_button.disabled is False
+    assert controller.manifest_inspector.visible is True
+    assert (
+        controller.manifest_inspector.object["run"]["manifest_id"]
+        == (session.manifest["run"]["manifest_id"])
+    )
 
 
 def test_dataset_manager_refresh_reloads_catalog(
