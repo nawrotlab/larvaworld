@@ -171,15 +171,18 @@ def test_build_standalone_page_has_table_and_detail_popup() -> None:
 
 
 def test_standalone_table_has_no_fixed_height() -> None:
-    # wide=True (standalone): the table grows to its full row count instead
-    # of scrolling internally.
+    # The table grows to its full row count instead of scrolling
+    # internally -- true for both the standalone page and the
+    # portal-embedded popup (see test_portal_embedded_table_has_no_fixed_height).
     _, table, _ = _standalone()
     assert table.height is None
 
 
-def test_portal_embedded_table_has_fixed_height() -> None:
-    # wide=False (portal popup): limited popup height, so the table keeps
-    # its own scrollbar.
+def test_portal_embedded_table_has_no_fixed_height() -> None:
+    # No inner scrollbar in the portal popup either: the popup's own
+    # outer container (.lw-parameter-db-panel-surface) already scrolls/
+    # resizes, so the table itself shouldn't nest a second nested
+    # scrollbar inside that.
     from larvaworld.portal.parameter_database.parameter_db_app import (
         _build_detail_popup,
         build_parameter_db_content,
@@ -187,7 +190,7 @@ def test_portal_embedded_table_has_fixed_height() -> None:
 
     content = build_parameter_db_content(_build_detail_popup())
     table = content.select(pn.widgets.Tabulator)[0]
-    assert table.height == 500
+    assert table.height is None
 
 
 def test_sidebar_has_only_add_parameter_button() -> None:

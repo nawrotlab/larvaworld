@@ -528,7 +528,7 @@ _ACTION_COLUMNS: list[tuple[str, str, str]] = [
 
 
 def build_parameter_db_content(
-    detail_popup: "_DraggableResizablePopup", *, wide: bool = False
+    detail_popup: "_DraggableResizablePopup",
 ) -> pn.viewable.Viewable:
     """Build the Parameter Database popup body: a sortable/searchable table
     of every registered parameter (with per-row Inspect/Remove/Clone/Export
@@ -540,12 +540,13 @@ def build_parameter_db_content(
     this function only points its `title`/`body`/`visible` at the right
     content when a row action or Add parameter is clicked.
 
-    `wide` selects the table's height: True for the standalone page (full
-    browser width/height available, table grows to its full length, no
-    inner scrollbar), False (default) for the portal-embedded popup
-    (capped at ~1100px minus the sidebar, with an inner scrollbar since
-    the popup itself has limited height). Data-column widths aren't
-    hardcoded in either case -- `layout="fit_data_table"` (the default)
+    The table has no height/inner scrollbar of its own -- it always grows
+    to its full row count -- in both the standalone page and the
+    portal-embedded popup. In the popup, `.lw-parameter-db-panel-surface`
+    (its own outer container, see `_POPUP_STYLESHEET`) already provides
+    `overflow: auto` and `resize: both`, so a tall table scrolls/resizes
+    there instead of in a second, nested scrollbar. Data-column widths
+    aren't hardcoded either -- `layout="fit_data_table"` (the default)
     auto-sizes each one to its actual rendered content, which fits real
     values better than a guessed pixel preset; only the four action
     columns (fixed-size icons, not data) get an explicit width below.
@@ -591,11 +592,6 @@ def build_parameter_db_content(
         css_classes=["lw-parameter-db-table"],
         stylesheets=[_TABLE_STYLESHEET],
     )
-    if not wide:
-        # Portal popup: fixed height with its own scrollbar (limited screen
-        # space). Standalone page: grow to the full row count instead, so
-        # the page scrolls rather than the table having an inner slider.
-        table_kwargs["height"] = 500
     table = pn.widgets.Tabulator(df, **table_kwargs)
 
     column_visibility = pn.widgets.CheckBoxGroup(
@@ -808,7 +804,7 @@ def build_standalone_page() -> pn.viewable.Viewable:
     )
     return pn.Column(
         title,
-        build_parameter_db_content(detail_popup, wide=True),
+        build_parameter_db_content(detail_popup),
         detail_popup,
         sizing_mode="stretch_width",
         margin=0,
