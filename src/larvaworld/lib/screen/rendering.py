@@ -60,7 +60,7 @@ class ScreenTextFont(NestedConf):
         if not self.font:
             self.update_font()
 
-    @param.depends("text", "text_color", "text_centre", watch=True)
+    @param.depends("text", "text_color", "text_centre", "max_text_width", watch=True)
     def render_text(self) -> None:
         if not self.font:
             self.update_font()
