@@ -16,6 +16,7 @@ is what makes a "press once and watch" experience safe on a laptop.
 
 from __future__ import annotations
 
+from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Callable
 
@@ -25,12 +26,13 @@ from larvaworld.lib import sim, util
 from larvaworld.portal.canvas_widgets.environment_models import LarvaPreviewFrame
 from larvaworld.portal.simulation.preview_frames import capture_larva_frame
 
-#: Steps advanced per event-loop tick. Small enough to keep the UI responsive,
-#: large enough that playback does not crawl.
-DEFAULT_CHUNK_SIZE = 5
+#: One simulation step per event-loop tick keeps navigation controls responsive
+#: while a live preview is running.
+DEFAULT_CHUNK_SIZE = 1
 
-#: Milliseconds between chunks.
-DEFAULT_TICK_INTERVAL_MS = 40
+#: Leave time between simulation steps for Bokeh to process canvas interactions
+#: such as legend clicks while a live preview is running.
+DEFAULT_TICK_INTERVAL_MS = 100
 
 
 def runtime_parameters(parameters: util.AttrDict) -> util.AttrDict:
@@ -104,9 +106,9 @@ def build_bounded_launcher(
 class ChunkedFrameRunner:
     """Advance a launcher in small chunks, emitting frames as they are produced.
 
-    Each chunk runs inside a Panel periodic callback, so the document stays
-    responsive and the arena visibly animates instead of freezing until the run
-    completes.
+    Interactive runs compute a frame and its following simulation step on a
+    worker thread. The Panel callback only publishes completed frames, keeping
+    the Bokeh document free to process navigation and canvas interactions.
     """
 
     def __init__(
@@ -131,33 +133,59 @@ class ChunkedFrameRunner:
         self.trail_length = trail_length
         self.frames: list[LarvaPreviewFrame] = []
         self._callback: Any = None
+        self._document: Any | None = None
+        self._worker: ThreadPoolExecutor | None = None
+        self._frame_future: Future[LarvaPreviewFrame] | None = None
+        self._submitted_frames = 0
         self._finished = False
 
     @property
     def finished(self) -> bool:
         return self._finished
 
-    def start(self, *, interval_ms: int = DEFAULT_TICK_INTERVAL_MS) -> None:
-        """Begin stepping. Falls back to a synchronous run with no Panel document."""
-        if pn.state.curdoc is None:
+    def start(
+        self,
+        *,
+        interval_ms: int = DEFAULT_TICK_INTERVAL_MS,
+        document: Any | None = None,
+    ) -> None:
+        """Begin stepping, scheduling on an explicit Bokeh document when supplied.
+
+        The synchronous fallback is reserved for headless callers. Interactive
+        controllers should pass their session document so a transient callback
+        context cannot turn a live preview into a blocking run.
+        """
+        document = document or pn.state.curdoc
+        if document is None:
             self.run_to_completion()
             return
-        self._callback = pn.state.add_periodic_callback(
-            self._advance_chunk, period=interval_ms
+        self._worker = ThreadPoolExecutor(
+            max_workers=1,
+            thread_name_prefix="lw-preview",
+        )
+        self._document = document
+        self._callback = document.add_periodic_callback(
+            self._advance_chunk,
+            interval_ms,
         )
 
     def stop(self) -> None:
         if self._callback is not None:
             try:
-                self._callback.stop()
+                self._document.remove_periodic_callback(self._callback)
             except (ValueError, RuntimeError):
                 pass
             self._callback = None
+            self._document = None
+        if self._worker is not None:
+            self._worker.shutdown(wait=False, cancel_futures=True)
+            self._worker = None
+            self._frame_future = None
 
     def run_to_completion(self) -> list[LarvaPreviewFrame]:
         """Step synchronously until the cap is reached. Used headless and in tests."""
         while not self._finished:
-            self._advance_chunk()
+            self._advance_synchronously()
         return self.frames
 
     def _capture(self) -> None:
@@ -173,7 +201,7 @@ class ChunkedFrameRunner:
         if self.on_complete is not None:
             self.on_complete(self.frames)
 
-    def _advance_chunk(self) -> None:
+    def _advance_synchronously(self) -> None:
         if self._finished:
             return
         try:
@@ -196,6 +224,45 @@ class ChunkedFrameRunner:
             self.on_progress(len(self.frames), self.total_steps)
         if len(self.frames) >= self.total_steps:
             self._finish()
+
+    def _compute_frame(self, frame_index: int) -> LarvaPreviewFrame:
+        """Capture one frame and advance the simulation off the Bokeh thread."""
+        frame = capture_larva_frame(self.launcher, trail_length=self.trail_length)
+        if frame_index + 1 < self.total_steps:
+            self.launcher.sim_step()
+        return frame
+
+    def _advance_chunk(self) -> None:
+        """Publish one completed worker frame and schedule the next one."""
+        if self._finished or self._worker is None:
+            return
+        if self._frame_future is not None:
+            if not self._frame_future.done():
+                return
+            try:
+                frame = self._frame_future.result()
+            except Exception as exc:
+                self._finished = True
+                self.stop()
+                if self.on_error is not None:
+                    self.on_error(exc)
+                else:
+                    raise
+                return
+            self._frame_future = None
+            self.frames.append(frame)
+            self.on_frame(frame)
+            if self.on_progress is not None:
+                self.on_progress(len(self.frames), self.total_steps)
+            if len(self.frames) >= self.total_steps:
+                self._finish()
+                return
+
+        self._frame_future = self._worker.submit(
+            self._compute_frame,
+            self._submitted_frames,
+        )
+        self._submitted_frames += 1
 
 
 class FramePlayback:

@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+from threading import Event
+
 import pytest
+from bokeh.document import Document
 
 from larvaworld.portal.canvas_widgets.environment_models import LarvaPreviewFrame
-from larvaworld.portal.simulation.run_playback import ChunkedFrameRunner
+from larvaworld.portal.simulation.run_playback import (
+    DEFAULT_TICK_INTERVAL_MS,
+    ChunkedFrameRunner,
+)
 
 
 class _FakeLauncher:
@@ -127,6 +133,52 @@ def test_stop_is_safe_before_start() -> None:
     )
     runner.stop()
     assert runner.finished is False
+
+
+def test_runner_uses_explicit_document_without_blocking() -> None:
+    runner = ChunkedFrameRunner(
+        _FakeLauncher(), total_steps=5, on_frame=lambda _frame: None
+    )
+    document = Document()
+
+    runner.start(document=document)
+
+    assert runner._callback is not None
+    assert runner._callback in document.session_callbacks
+    assert runner._callback.period == DEFAULT_TICK_INTERVAL_MS
+    assert runner.frames == []
+    runner.stop()
+    assert document.session_callbacks == []
+
+
+def test_interactive_runner_computes_steps_outside_the_document_callback() -> None:
+    class _BlockingLauncher(_FakeLauncher):
+        def __init__(self) -> None:
+            super().__init__()
+            self.entered_step = Event()
+            self.release_step = Event()
+
+        def sim_step(self) -> None:
+            self.entered_step.set()
+            assert self.release_step.wait(timeout=2)
+            super().sim_step()
+
+    launcher = _BlockingLauncher()
+    delivered: list[LarvaPreviewFrame] = []
+    runner = ChunkedFrameRunner(launcher, total_steps=2, on_frame=delivered.append)
+    runner.start(document=Document())
+
+    runner._advance_chunk()
+    assert launcher.entered_step.wait(timeout=1)
+    assert delivered == []
+
+    launcher.release_step.set()
+    assert runner._frame_future is not None
+    runner._frame_future.result(timeout=1)
+    runner._advance_chunk()
+
+    assert len(delivered) == 1
+    runner.stop()
 
 
 # ---- runtime_parameters / build_bounded_launcher --------------------------

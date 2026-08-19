@@ -133,6 +133,7 @@ class _ExploreController:
 
     def __init__(self) -> None:
         self.body = pn.Column(sizing_mode="stretch_width", margin=0)
+        self._document = pn.state.curdoc
         self._runner: Any = None
         self._temp_dir: tempfile.TemporaryDirectory[str] | None = None
         self.show_gallery()
@@ -211,7 +212,7 @@ class _ExploreController:
         try:
             parameters = util.AttrDict(reg.conf.Exp.expand(scenario.exp_id))
             parameters = self._apply_scenario_overrides(parameters, scenario)
-            canvas = EnvironmentCanvas(editable=False)
+            canvas = EnvironmentCanvas(editable=False, show_larva_groups=False)
             canvas.set_state(
                 env_params_to_canvas_state(
                     parameters.env_params,
@@ -282,7 +283,7 @@ class _ExploreController:
             status,
             pn.pane.HTML(watch_for, margin=(10, 0, 0, 0), visible=bool(watch_for)),
         ]
-        self._runner.start()
+        self._runner.start(document=self._document)
 
     @staticmethod
     def _apply_scenario_overrides(parameters: Any, scenario: Scenario) -> Any:

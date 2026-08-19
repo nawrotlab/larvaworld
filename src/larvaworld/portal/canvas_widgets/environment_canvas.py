@@ -307,11 +307,13 @@ class EnvironmentCanvas:
         height: int = ENV_CANVAS_HEIGHT,
         editable: bool = False,
         snap_heads_to_midline: bool = False,
+        show_larva_groups: bool = True,
     ) -> None:
         self.width = int(width)
         self.height = int(height)
         self.editable = bool(editable)
         self.snap_heads_to_midline = bool(snap_heads_to_midline)
+        self._show_larva_groups = bool(show_larva_groups)
         self._state: EnvironmentCanvasState | None = None
         self._arena = CanvasArena("rectangular", (0.2, 0.2))
 
@@ -898,6 +900,7 @@ class EnvironmentCanvas:
         )
         self.fig.add_layout(self._environment_legend)
         self.fig.add_layout(self._larva_legend)
+        self.set_larva_groups_visible(self._show_larva_groups)
 
         self._pane = pn.pane.Bokeh(self.fig, sizing_mode="stretch_width")
 
@@ -983,6 +986,17 @@ class EnvironmentCanvas:
                 renderers=[self._dynamic_ring_renderer],
             ),
         ]
+
+    def set_larva_groups_visible(self, visible: bool) -> None:
+        """Show or hide the static larva-group preview renderers."""
+        self._show_larva_groups = bool(visible)
+        for renderer in (
+            self._larva_group_circle_renderer,
+            self._larva_group_ellipse_renderer,
+            self._larva_group_rect_renderer,
+            self._larva_group_member_renderer,
+        ):
+            renderer.visible = self._show_larva_groups
 
     def view(self) -> pn.viewable.Viewable:
         return self._pane

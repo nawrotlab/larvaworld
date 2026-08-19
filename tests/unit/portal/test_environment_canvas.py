@@ -277,6 +277,22 @@ def test_environment_canvas_legend_order_matches_builder_with_larva_extension() 
     assert canvas.fig.legend[1].location == "top_right"
 
 
+def test_environment_canvas_can_start_with_larva_groups_hidden() -> None:
+    canvas = EnvironmentCanvas(show_larva_groups=False)
+
+    assert all(
+        renderer.visible is False
+        for renderer in _legend_item(canvas, "Larva groups").renderers
+    )
+
+    canvas.set_larva_groups_visible(True)
+
+    assert all(
+        renderer.visible is True
+        for renderer in _legend_item(canvas, "Larva groups").renderers
+    )
+
+
 def test_environment_canvas_legends_do_not_mix_layer_groups() -> None:
     canvas = EnvironmentCanvas()
     left_labels = set(_legend_labels(canvas.fig.legend[0]))
