@@ -152,6 +152,7 @@ cython_debug/
 
 # larvaworld package additional created folders
 /src/larvaworld/data/JovanicGroup/
+/src/larvaworld/data/DeepLabCutGroup/
 /src/larvaworld/data/SimGroup/
 /src/larvaworld/data/SchleyerGroup/processed/
 /src/larvaworld/data/SchleyerGroup/raw/naive
