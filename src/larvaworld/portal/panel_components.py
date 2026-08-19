@@ -871,7 +871,8 @@ PORTAL_RAW_CSS = """
   position: absolute;
   top: -35px;
   right: 8px;
-  z-index: 7;
+  /* Stay below the MaterialTemplate header so its popovers overlay landing content. */
+  z-index: 1;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;

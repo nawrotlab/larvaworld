@@ -9,6 +9,7 @@ import pytest
 
 from larvaworld.portal.landing_app import landing_app
 from larvaworld.portal.landing_registry import ITEMS, LANES, QUICK_START_MODES
+from larvaworld.portal.panel_components import PORTAL_RAW_CSS
 from larvaworld.portal.registry_logic import compute_badges
 from larvaworld.portal.workspace import (
     clear_active_workspace_path,
@@ -74,6 +75,12 @@ def test_landing_app_banner_renders_below_quick_start(tmp_path: Path) -> None:
         i for i, classes in enumerate(css_classes) if "lw-portal-banner" in classes
     )
     assert quick_start_index < banner_index
+
+
+def test_quick_start_tabs_stack_below_template_header() -> None:
+    quick_start_css = PORTAL_RAW_CSS.split(".lw-portal-quick-start-tabs", 1)[1]
+
+    assert "z-index: 1;" in quick_start_css.split("}", 1)[0]
 
 
 def test_planned_items_are_hidden_by_default(tmp_path: Path) -> None:
