@@ -60,6 +60,7 @@ from larvaworld.portal.runtime.display_shortcuts import (
     build_display_shortcuts_dialog,
 )
 from larvaworld.portal.simulation.preview_frames import generate_preview_frames
+from larvaworld.portal.simulation.run_playback import FramePlayback
 from larvaworld.portal.workspace import WorkspaceError, get_workspace_dir
 
 
@@ -699,58 +700,13 @@ def _join_help_parts(*parts: str | None) -> str | None:
     return "\n\n".join(cleaned)
 
 
-class _FrameSimulationPreview:
-    def __init__(
-        self,
-        *,
-        canvas: EnvironmentCanvas,
-        frames: list[LarvaPreviewFrame],
-        dt: float,
-    ) -> None:
-        if not frames:
-            raise ValueError("frames must not be empty")
-        self.canvas = canvas
-        self.frames = list(frames)
-        self.dt = max(0.0, float(dt))
-        self.frame_player = pn.widgets.Player(
-            name="Frame",
-            start=0,
-            end=len(self.frames) - 1,
-            value=0,
-            step=1,
-            interval=max(50, min(1000, int(self.dt * 1000))),
-            loop_policy="once",
-            show_loop_controls=False,
-            width=420,
-        )
-        self.metadata = pn.pane.HTML("", sizing_mode="stretch_width")
-        self.frame_player.param.watch(self._on_player_change, "value")
-        self._show_frame(0)
+class _FrameSimulationPreview(FramePlayback):
+    """Frame playback laid out for the Single Experiment preview card.
 
-    def _set_metadata(self, index: int) -> None:
-        frame = self.frames[index]
-        end_index = len(self.frames) - 1
-        timestamp = frame.tick * self.dt
-        end_time = self.frames[-1].tick * self.dt
-        self.metadata.object = (
-            '<div class="lw-single-exp-preview-meta">'
-            f"<strong>Frame:</strong> {index}/{end_index}; "
-            f"<strong>Tick:</strong> {frame.tick}; "
-            f"<strong>Time:</strong> {timestamp:.1f} s; "
-            f"<strong>Displayed range:</strong> 0.0-{end_time:.1f} s."
-            "</div>"
-        )
-
-    def _show_frame(self, index: int) -> None:
-        clamped = max(0, min(index, len(self.frames) - 1))
-        if int(self.frame_player.value) != clamped:
-            self.frame_player.value = clamped
-            return
-        self.canvas.set_larva_frame(self.frames[clamped])
-        self._set_metadata(clamped)
-
-    def _on_player_change(self, event: Any) -> None:
-        self._show_frame(int(event.new))
+    Behaviour comes from the shared :class:`FramePlayback`; only the canvas
+    wrapper differs, because this app keeps the display-shortcuts legend out of
+    the preview row.
+    """
 
     def view(self) -> pn.viewable.Viewable:
         return pn.Column(

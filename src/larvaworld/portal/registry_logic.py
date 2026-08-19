@@ -111,9 +111,9 @@ def resolve_target(item: LandingItem) -> str | None:
 def compute_badges(item: LandingItem) -> list[str]:
     badges: list[str] = []
 
-    if item.level == "core":
-        badges.append("Core")
-    elif item.level == "advanced":
+    # "core" is the overwhelming majority, so badging it carries no information
+    # and only adds noise to every card. Only the exceptions are badged.
+    if item.level == "advanced":
         badges.append("Advanced")
     elif item.level == "demo":
         badges.append("Demo")

@@ -148,10 +148,15 @@ def _status_html(
 
 
 def _default_workspace_candidate() -> Path:
+    """Path prefilled in the workspace picker.
+
+    A previously activated workspace always wins, so the prompt is a one-press
+    confirmation the first time and does not reappear afterwards.
+    """
     active = get_active_workspace_path()
     if active is not None:
         return active
-    return Path.home() / "Documents" / "Larvaworld" / "workspace"
+    return Path.home() / "larvaworld"
 
 
 @dataclass
@@ -186,8 +191,8 @@ class WorkspaceUiController:
             css_classes=["lw-portal-workspace-browse-btn"],
         )
         self.init_button = pn.widgets.Button(
-            name="Initialize",
-            button_type="default",
+            name="Use this folder",
+            button_type="primary",
             margin=0,
             sizing_mode="stretch_width",
         )
@@ -266,9 +271,12 @@ class WorkspaceUiController:
             ):
                 self.path_input.value = str(current)
             self.current_pane.object = _status_html(
-                text="No active workspace is configured.",
+                text="A workspace is where Larvaworld keeps your runs and datasets.",
                 tone="warning",
-                detail="Select an initialized workspace or initialize a new one.",
+                detail=(
+                    "The suggested folder below works fine. Press "
+                    '"Use this folder" to continue - you will not be asked again.'
+                ),
                 theme=self.theme,
             )
         else:

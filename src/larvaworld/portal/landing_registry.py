@@ -56,9 +56,9 @@ NOTEBOOK_TUTORIAL_BY_ITEM_ID: dict[str, str] = {
 # ---- Deterministic ordering: these lists define display order. ----
 
 PINNED_QUICK_START: list[str] = [
+    "wf.explore",
     "wf.run_experiment",
     "wf.export_center",
-    "wf.deb_explorer",
 ]
 
 QUICK_START_MODES: list[QuickStartModeSpec] = [
@@ -67,9 +67,9 @@ QUICK_START_MODES: list[QuickStartModeSpec] = [
         title="User mode",
         color="#e7c575",
         item_ids=[
+            "wf.explore",
             "wf.run_experiment",
             "wf.export_center",
-            "wf.deb_explorer",
         ],
     ),
     QuickStartModeSpec(
@@ -101,6 +101,7 @@ LANES: list[LaneSpec] = [
         title="Simulation & Optimization",
         lane="simulate",
         item_ids=[
+            "wf.explore",
             "wf.run_experiment",
             "wf.model_evaluation",
             "wf.ga_optimization",
@@ -133,6 +134,28 @@ LANES: list[LaneSpec] = [
 
 ITEMS: dict[str, LandingItem] = {
     # ---- Real Panel apps (id == panel_app_id) ----
+    "wf.explore": LandingItem(
+        id="wf.explore",
+        kind="panel_app",
+        status="ready",
+        lane="simulate",
+        level="core",
+        title="Explore",
+        subtitle=(
+            "Pick a ready-made behavioral scenario.\n"
+            "Watch virtual larvae move in the arena.\n"
+            "Read what the behavior means. No setup."
+        ),
+        cta="Watch",
+        panel_app_id="wf.explore",
+        learn_more=LearnMore(docs_url=DOCS_EXPERIMENT_TYPES),
+        preview_md=(
+            "### Explore\n"
+            "- Browse curated experiments grouped by behavior\n"
+            "- Run a short simulation with one click and no configuration\n"
+            "- See the resulting trajectories and a plain-language explanation\n"
+        ),
+    ),
     "track_viewer": LandingItem(
         id="track_viewer",
         kind="panel_app",
@@ -265,7 +288,6 @@ ITEMS: dict[str, LandingItem] = {
             issue_url=GITHUB_ISSUES,
             docs_url=DOCS_SINGLE_EXPERIMENTS,
         ),
-        badges=["Developer"],
         preview_md=(
             "### Single Experiment\n"
             "- Pick an experiment template from the Larvaworld registry\n"
@@ -443,7 +465,6 @@ ITEMS: dict[str, LandingItem] = {
             issue_url=GITHUB_ISSUES,
             docs_url=DOCS_ARENAS_SUBSTRATES,
         ),
-        badges=["Developer"],
         preview_md=(
             "### Environment Builder\n"
             "- Configure arena geometry, borders, and obstacles\n"

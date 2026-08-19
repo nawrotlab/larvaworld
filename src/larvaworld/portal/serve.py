@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import base64
-import atexit
 import os
 import signal
 import sys
@@ -13,9 +12,6 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any, Callable
 
-from larvaworld.portal.workspace import clear_active_workspace_path
-
-
 # String-only mapping to keep unit tests free of heavy imports.
 APP_ID_TO_FACTORY_PATH: dict[str, str] = {
     # Portal apps
@@ -23,6 +19,7 @@ APP_ID_TO_FACTORY_PATH: dict[str, str] = {
     "loading": "larvaworld.portal.serve:loading_app",
     "landing": "larvaworld.portal.landing_app:landing_app",
     "notebook": "larvaworld.portal.notebook_launch_app:notebook_launch_app",
+    "wf.explore": "larvaworld.portal.explore.explore_app:explore_app",
     "wf.run_experiment": "larvaworld.portal.simulation.single_experiment_app:single_experiment_app",
     "wf.open_dataset": "larvaworld.portal.datasets.import_datasets_app:import_datasets_app",
     "wf.dataset_manager": "larvaworld.portal.datasets.dataset_manager_app:dataset_manager_app",
@@ -203,15 +200,17 @@ def _start_bootstrap_once() -> None:
 def loading_app() -> Any:
     import panel as pn
     from larvaworld.portal.panel_components import PORTAL_RAW_CSS
+    from larvaworld.portal.workspace import get_active_workspace
     from larvaworld.portal.workspace_ui import WorkspaceUiController
 
     _start_bootstrap_once()
-    clear_active_workspace_path()
 
     pn.extension(raw_css=[PORTAL_RAW_CSS])
 
     redirect = pn.pane.HTML("", margin=0)
-    workspace_state = {"confirmed": False}
+    # The active workspace persists across restarts, so a returning user is
+    # already confirmed here and never sees the workspace prompt again.
+    workspace_state = {"confirmed": get_active_workspace() is not None}
     workspace_ui = WorkspaceUiController(
         theme="dark",
         on_workspace_change=lambda workspace: (
@@ -235,8 +234,9 @@ def loading_app() -> Any:
         pn.pane.HTML(
             (
                 '<div style="font-size:13px;line-height:1.5;color:#cbd5e1;">'
-                "Select or initialize a Larvaworld workspace before entering the portal. "
-                "Notebooks and other persistent workflows are disabled until a workspace is configured."
+                "Larvaworld stores your simulation runs, imported datasets and saved "
+                "configurations in a workspace folder. The suggested folder below is "
+                "ready to use - confirm it once and Larvaworld will remember it."
                 "</div>"
             ),
             margin=(0, 0, 14, 0),
@@ -299,6 +299,12 @@ def loading_app() -> Any:
             if workspace_state["confirmed"]:
                 card.visible = True
                 workspace_card.visible = False
+                if not redirect.object:
+                    redirect.object = (
+                        '<script>window.location.replace("/landing");</script>'
+                        '<div style="font-size:12px;color:#86efac;">'
+                        "Workspace ready. Redirecting to landing...</div>"
+                    )
             else:
                 card.visible = False
                 redirect.object = ""
@@ -441,11 +447,7 @@ def main() -> None:
 
     sys.excepthook = _suppress_websocket_excepthook
 
-    def _cleanup() -> None:
-        clear_active_workspace_path()
-
     def _signal_handler(sig: int, frame: object) -> None:
-        _cleanup()
         sys.exit(0)
 
     # Set up event loop exception handler
@@ -455,7 +457,6 @@ def main() -> None:
     except RuntimeError:
         pass
 
-    atexit.register(_cleanup)
     signal.signal(signal.SIGINT, _signal_handler)
     if sys.platform != "win32":
         signal.signal(signal.SIGTERM, _signal_handler)

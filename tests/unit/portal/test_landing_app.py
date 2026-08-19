@@ -8,11 +8,27 @@ import panel as pn
 import pytest
 
 from larvaworld.portal.landing_app import landing_app
+from larvaworld.portal.landing_registry import ITEMS, LANES, QUICK_START_MODES
+from larvaworld.portal.registry_logic import compute_badges
 from larvaworld.portal.workspace import (
     clear_active_workspace_path,
     initialize_workspace,
     set_active_workspace_path,
 )
+
+
+def _walk(obj, seen=None):
+    seen = seen if seen is not None else set()
+    if id(obj) in seen:
+        return
+    seen.add(id(obj))
+    yield obj
+    for child in getattr(obj, "objects", []) or []:
+        yield from _walk(child, seen)
+
+
+def _rendered_text(app) -> str:
+    return " ".join(str(getattr(n, "object", "")) for n in _walk(app.main))
 
 
 @pytest.fixture(autouse=True)
@@ -58,3 +74,81 @@ def test_landing_app_banner_renders_below_quick_start(tmp_path: Path) -> None:
         i for i, classes in enumerate(css_classes) if "lw-portal-banner" in classes
     )
     assert quick_start_index < banner_index
+
+
+def test_planned_items_are_hidden_by_default(tmp_path: Path) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+
+    text = _rendered_text(landing_app())
+
+    planned = [
+        ITEMS[item_id]
+        for lane in LANES
+        for item_id in lane.item_ids
+        if ITEMS[item_id].status == "planned"
+    ]
+    assert planned, "expected the registry to still contain planned placeholders"
+    for item in planned:
+        assert item.title not in text
+    assert "Under construction" not in text
+
+
+def test_ready_items_are_shown_by_default(tmp_path: Path) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+
+    text = _rendered_text(landing_app())
+
+    ready = [
+        ITEMS[item_id]
+        for lane in LANES
+        for item_id in lane.item_ids
+        if ITEMS[item_id].status == "ready"
+    ]
+    for item in ready:
+        assert item.title in text
+
+
+def test_show_planned_toggle_reveals_placeholders(tmp_path: Path) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+
+    app = landing_app()
+    toggle = next(
+        node for node in _walk(app.main) if isinstance(node, pn.widgets.Checkbox)
+    )
+    assert toggle.value is False
+
+    toggle.value = True
+    text = _rendered_text(app)
+
+    planned = [
+        ITEMS[item_id]
+        for lane in LANES
+        for item_id in lane.item_ids
+        if ITEMS[item_id].status == "planned"
+    ]
+    for item in planned:
+        assert item.title in text
+
+
+def test_default_user_quick_start_entries_are_all_ready() -> None:
+    user_mode = next(m for m in QUICK_START_MODES if m.mode_id == "user")
+
+    assert len(user_mode.item_ids) == 3
+    for item_id in user_mode.item_ids:
+        assert (
+            ITEMS[item_id].status == "ready"
+        ), f"quick-start entry '{item_id}' is not usable on a fresh install"
+
+
+def test_core_badge_is_not_rendered() -> None:
+    # "Core" applied to nearly every item, so it carried no information.
+    for item in ITEMS.values():
+        assert "Core" not in compute_badges(item)
+
+
+def test_student_facing_apps_are_not_badged_developer() -> None:
+    for item_id in ("wf.explore", "wf.run_experiment", "wf.environment_builder"):
+        assert "Developer" not in compute_badges(ITEMS[item_id])

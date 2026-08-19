@@ -284,6 +284,16 @@ def landing_app() -> pn.viewable.Viewable:
         """
     )
 
+    # Planned placeholders are dead ends for a first-time visitor, so they stay
+    # out of the default view and appear only behind an explicit toggle.
+    show_planned = {"value": False}
+
+    def _is_visible(item_id: str) -> bool:
+        item = ITEMS.get(item_id)
+        if item is None or item.status == "hidden":
+            return False
+        return item.status == "ready" or show_planned["value"]
+
     def _quick_start_grid(mode_id: str) -> pn.viewable.Viewable:
         mode = mode_by_id[mode_id]
         cards = [
@@ -296,7 +306,7 @@ def landing_app() -> pn.viewable.Viewable:
                 notebook_disabled_reason=notebook_disabled_reason,
             )
             for item_id in mode.item_ids
-            if item_id in ITEMS and ITEMS[item_id].status != "hidden"
+            if _is_visible(item_id)
         ]
         return pn.GridBox(
             *cards,
@@ -455,22 +465,50 @@ def landing_app() -> pn.viewable.Viewable:
         root.append(banner)
 
     # Lanes
-    for lane in LANES:
-        lane_items = [
-            ITEMS[item_id]
-            for item_id in lane.item_ids
-            if ITEMS[item_id].status != "hidden"
-        ]
-        root.append(
-            render_lane(
-                lane,
-                items=lane_items,
-                notebook_urls=notebook_urls,
-                notebook_names=notebook_names,
-                notebook_enabled=notebook_enabled,
-                notebook_disabled_reason=notebook_disabled_reason,
+    lanes_container = pn.Column(sizing_mode="stretch_width", margin=0)
+
+    def _build_lanes() -> list[pn.viewable.Viewable]:
+        views: list[pn.viewable.Viewable] = []
+        for lane in LANES:
+            lane_items = [
+                ITEMS[item_id] for item_id in lane.item_ids if _is_visible(item_id)
+            ]
+            if not lane_items:
+                continue
+            views.append(
+                render_lane(
+                    lane,
+                    items=lane_items,
+                    notebook_urls=notebook_urls,
+                    notebook_names=notebook_names,
+                    notebook_enabled=notebook_enabled,
+                    notebook_disabled_reason=notebook_disabled_reason,
+                )
             )
-        )
+        return views
+
+    planned_count = sum(
+        1
+        for lane in LANES
+        for item_id in lane.item_ids
+        if ITEMS[item_id].status == "planned"
+    )
+    show_planned_toggle = pn.widgets.Checkbox(
+        name=f"Show planned features ({planned_count} not built yet)",
+        value=False,
+        margin=(10, 0, 0, 2),
+    )
+
+    def _on_show_planned(event: object) -> None:
+        show_planned["value"] = bool(getattr(event, "new", False))
+        lanes_container[:] = _build_lanes()
+        quick_start_cards[:] = [_quick_start_grid(active_mode_id)]
+
+    show_planned_toggle.param.watch(_on_show_planned, "value")
+
+    lanes_container[:] = _build_lanes()
+    root.append(lanes_container)
+    root.append(show_planned_toggle)
 
     template.main.append(root)
     template.main.append(build_footer())
