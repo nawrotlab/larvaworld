@@ -616,3 +616,59 @@ class TestFixateLarva:
 
         with pytest.raises(ValueError, match="not part of the dataset"):
             fixate_larva(s, c, arena_dims=(1.0, 1.0), P1="centroid")
+
+
+def _fake_dataset(agent_ids, group_id, value):
+    """A stand-in exposing only what concat_datasets reads from a dataset."""
+    from types import SimpleNamespace
+
+    return SimpleNamespace(
+        endpoint_data=pd.DataFrame(
+            {"metric": [value] * len(agent_ids)},
+            index=pd.Index(agent_ids, name="AgentID"),
+        ),
+        group_id=group_id,
+    )
+
+
+@pytest.mark.fast
+def test_concat_datasets_keeps_the_index_usable_when_agent_ids_repeat():
+    """
+    Agent IDs are only unique within a dataset, so two datasets numbering their agents the
+    same way used to pool into a frame with a duplicated index, which seaborn cannot align
+    against and which made every comparative plot of such a pair raise
+    "cannot reindex on an axis with duplicate labels". The IDs move to a column instead.
+    """
+    ddic = {
+        "a": _fake_dataset(["Larva_0", "Larva_1"], "g", 1.0),
+        "b": _fake_dataset(["Larva_0", "Larva_2"], "g", 2.0),
+    }
+
+    from larvaworld.lib.util.xy import concat_datasets
+
+    df = concat_datasets(ddic, key="end")
+
+    assert df.index.is_unique
+    assert list(df["AgentID"]) == ["Larva_0", "Larva_1", "Larva_0", "Larva_2"]
+    assert list(df["DatasetID"]) == ["a", "a", "b", "b"]
+    assert len(df) == 4
+
+
+@pytest.mark.fast
+def test_concat_datasets_leaves_a_unique_index_alone():
+    """
+    Verify the repair only applies when the pooled index is actually unusable, so datasets
+    with distinct agent IDs keep indexing by AgentID as before.
+    """
+    ddic = {
+        "a": _fake_dataset(["Larva_0", "Larva_1"], "g", 1.0),
+        "b": _fake_dataset(["Larva_2", "Larva_3"], "g", 2.0),
+    }
+
+    from larvaworld.lib.util.xy import concat_datasets
+
+    df = concat_datasets(ddic, key="end")
+
+    assert df.index.name == "AgentID"
+    assert "AgentID" not in df.columns
+    assert list(df.index) == ["Larva_0", "Larva_1", "Larva_2", "Larva_3"]

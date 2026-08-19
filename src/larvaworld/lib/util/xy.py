@@ -830,6 +830,12 @@ def concat_datasets(
             dt = dts[0]
             dic = {"sec": 1, "min": 60, "hour": 60 * 60, "day": 24 * 60 * 60}
             df0["Step"] *= dt / dic[unit]
+    if not df0.index.is_unique:
+        # Agent IDs are only unique within a dataset, so pooling datasets that number
+        # their agents the same way leaves a duplicated index, which plotting libraries
+        # cannot align against. The IDs are kept as a column, where the DatasetID and
+        # GroupID columns already carry the grouping the plots plot by.
+        df0.reset_index(drop=False, inplace=True)
     return df0
 
 
