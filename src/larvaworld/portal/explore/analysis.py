@@ -445,19 +445,6 @@ def _build_figure(spec: _PlotSpec, datasets: Sequence[Any]) -> Any:
             show=False,
             **spec.kwargs,
         )
-    return _compact_figure(figure)
-
-
-def _compact_figure(figure: Any) -> Any:
-    """Limit preview figures to a compact responsive vertical footprint."""
-    try:
-        width, height = figure.get_size_inches()
-        compact_height = min(float(height), max(2.8, float(width) * 0.52))
-        if compact_height < height:
-            figure.set_size_inches(width, compact_height, forward=True)
-            figure.tight_layout()
-    except (AttributeError, TypeError, ValueError):
-        pass
     return figure
 
 

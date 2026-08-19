@@ -661,7 +661,7 @@ class _ExploreController:
                     pn.pane.Matplotlib(
                         item.figure,
                         tight=True,
-                        sizing_mode="stretch_width",
+                        sizing_mode="scale_width",
                         margin=0,
                     ),
                     css_classes=["lw-explore-analysis-figure"],
