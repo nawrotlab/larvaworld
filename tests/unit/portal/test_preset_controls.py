@@ -17,6 +17,8 @@ from larvaworld.portal.config_widgets.preset_controls import (
     RegistryPresetStore,
     WorkspacePresetStore,
     build_advanced_preset_controls,
+    build_preset_controls_panel,
+    build_preset_select_only_panel,
     build_user_preset_controls,
 )
 
@@ -515,3 +517,84 @@ def test_policy_constants_match_expected_permissions() -> None:
     assert ADVANCED_PRESET_POLICY.can_save_registry is True
     assert ADVANCED_PRESET_POLICY.can_delete_registry is True
     assert ADVANCED_PRESET_POLICY.can_reset_registry is True
+
+
+def test_build_preset_controls_panel_hides_save_target_by_default(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    controller = _new_controller(
+        tmp_path / "presets", policy=ADVANCED_PRESET_POLICY, dual_write=False
+    )
+    assert controller.save_target is not None
+
+    panel = build_preset_controls_panel(controller)
+
+    rendered = list(panel.select(pn.widgets.RadioButtonGroup))
+    assert controller.save_target not in rendered
+
+
+def test_build_preset_controls_panel_shows_save_target_when_passed(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    controller = _new_controller(
+        tmp_path / "presets", policy=ADVANCED_PRESET_POLICY, dual_write=False
+    )
+    assert controller.save_target is not None
+
+    panel = build_preset_controls_panel(
+        controller, save_target_slot=controller.save_target
+    )
+
+    rendered = list(panel.select(pn.widgets.RadioButtonGroup))
+    assert controller.save_target in rendered
+
+
+def test_build_preset_select_only_panel_has_no_crud_buttons(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    workspace_dir = tmp_path / "presets"
+    workspace_dir.mkdir(parents=True)
+    (workspace_dir / "dish.json").write_text("{}\n", encoding="utf-8")
+
+    controller = _new_controller(workspace_dir)
+    panel = build_preset_select_only_panel(controller)
+
+    buttons = list(panel.select(pn.widgets.Button))
+    assert buttons == []
+    selects = list(panel.select(pn.widgets.Select))
+    assert selects == [controller.preset_select]
+    assert "Workspace / dish" in controller.preset_select.options
+
+
+def test_build_preset_select_only_panel_auto_loads_on_selection_change(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    workspace_dir = tmp_path / "presets"
+    workspace_dir.mkdir(parents=True)
+    (workspace_dir / "dish.json").write_text("{}\n", encoding="utf-8")
+
+    loaded: list[str] = []
+    controller = _new_controller(
+        workspace_dir, on_load=lambda ref, _payload: loaded.append(ref.name)
+    )
+    build_preset_select_only_panel(controller)
+
+    controller.preset_select.value = controller.preset_select.options[
+        "Workspace / dish"
+    ]
+
+    assert loaded == ["dish"]
+
+
+def test_build_preset_select_only_panel_optional_title(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    controller = _new_controller(tmp_path / "presets")
+
+    untitled = build_preset_select_only_panel(controller)
+    assert list(untitled.select(pn.pane.Markdown)) == []
+
+    titled = build_preset_select_only_panel(controller, title="Environment")
+    markdown_panes = list(titled.select(pn.pane.Markdown))
+    assert len(markdown_panes) == 1
+    assert "Environment" in markdown_panes[0].object

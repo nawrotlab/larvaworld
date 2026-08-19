@@ -11,6 +11,15 @@ import panel as pn
 import param
 
 from larvaworld.lib import reg
+from larvaworld.portal.buttons import (
+    cancel_button,
+    confirm_button,
+    delete_button,
+    load_button,
+    refresh_button,
+    reset_button,
+    save_button,
+)
 
 __all__ = [
     "PresetSource",
@@ -23,6 +32,7 @@ __all__ = [
     "WorkspacePresetStore",
     "PresetControlsController",
     "build_preset_controls_panel",
+    "build_preset_select_only_panel",
     "build_user_preset_controls",
     "build_advanced_preset_controls",
 ]
@@ -312,22 +322,10 @@ class PresetControlsController:
         self.preset_select = pn.widgets.Select(
             name="Preset to load", options={}, sizing_mode="stretch_width"
         )
-        self.refresh_button = pn.widgets.Button(
-            name="Refresh list", button_type="default", sizing_mode="stretch_width"
-        )
-        self.load_button = pn.widgets.Button(
-            name="Load", button_type="warning", sizing_mode="stretch_width"
-        )
-        self.save_button = pn.widgets.Button(
-            name="Save",
-            button_type="success",
-            sizing_mode="stretch_width",
-        )
-        self.delete_button = pn.widgets.Button(
-            name="Delete",
-            button_type="danger",
-            sizing_mode="stretch_width",
-        )
+        self.refresh_button = refresh_button(name="Refresh list")
+        self.load_button = load_button(name="Load")
+        self.save_button = save_button(name="Save")
+        self.delete_button = delete_button(name="Delete")
         self.save_target = (
             pn.widgets.RadioButtonGroup(
                 name="Save target",
@@ -339,10 +337,7 @@ class PresetControlsController:
             else None
         )
         self.reset_button = (
-            pn.widgets.Button(
-                name="Reset registry defaults",
-                button_type="danger",
-            )
+            reset_button(name="Reset registry defaults", sizing_mode=None)
             if self.policy.can_reset_registry
             else None
         )
@@ -452,13 +447,19 @@ class PresetControlsController:
             return False
 
         options = {ref.display_label: ref.token for ref in self.catalog.refs}
-        self.preset_select.options = options
-        if current in self.catalog.by_token:
-            self.preset_select.value = current
-        elif options:
-            self.preset_select.value = next(iter(options.values()))
-        else:
-            self.preset_select.value = None
+        # discard_events: repopulating the list and falling back to a sane
+        # value when the previous selection vanished is bookkeeping, not a
+        # user pick -- must not fire a consumer's "auto-load on selection
+        # change" watcher (see build_preset_select_only_panel), which would
+        # otherwise silently load whatever this falls back to.
+        with param.parameterized.discard_events(self.preset_select):
+            self.preset_select.options = options
+            if current in self.catalog.by_token:
+                self.preset_select.value = current
+            elif options:
+                self.preset_select.value = next(iter(options.values()))
+            else:
+                self.preset_select.value = None
 
         self._set_storage_info()
         self._set_status("Refreshed preset list.", tone="success")
@@ -491,17 +492,13 @@ class PresetControlsController:
             message=message, execute=execute
         )
 
-        confirm_button = pn.widgets.Button(
-            name="Confirm", button_type="danger", sizing_mode="stretch_width"
-        )
-        cancel_button = pn.widgets.Button(
-            name="Cancel", button_type="default", sizing_mode="stretch_width"
-        )
-        confirm_button.on_click(lambda _event: self.confirm_pending_action())
-        cancel_button.on_click(lambda _event: self.cancel_pending_action())
+        confirm_btn = confirm_button(name="Confirm")
+        cancel_btn = cancel_button(name="Cancel")
+        confirm_btn.on_click(lambda _event: self.confirm_pending_action())
+        cancel_btn.on_click(lambda _event: self.cancel_pending_action())
         self.confirmation_host.objects = [
             pn.pane.HTML(f"<div>{message}</div>", margin=(0, 0, 6, 0)),
-            pn.Row(confirm_button, cancel_button, sizing_mode="stretch_width"),
+            pn.Row(confirm_btn, cancel_btn, sizing_mode="stretch_width"),
         ]
 
     def confirm_pending_action(self) -> bool:
@@ -821,17 +818,19 @@ def build_preset_controls_panel(
     title: str = "Stored Configurations",
     name_field: Any = None,
     reset_slot: pn.widgets.Button | None = None,
+    save_target_slot: pn.widgets.RadioButtonGroup | None = None,
     extra_sections: list[Any] | None = None,
     show_status: bool = True,
 ) -> pn.Card:
     """Canonical "Stored Configurations" layout, shared across portal apps
-    (Environment Builder, Single Experiment) so the same preset
-    save/load/delete UI looks and behaves identically everywhere.
+    (Environment Builder, Single Experiment, Model Inspector) so the same
+    preset save/load/delete UI looks and behaves identically everywhere.
 
     Order: name field -> preset select -> [refresh, reset_slot] row ->
-    [save, load, delete] row -> storage info -> extra_sections (app-
-    specific extras, e.g. Environment Builder's file import/export) ->
-    confirmation host -> status (if show_status).
+    save_target_slot (if given) -> [save, load, delete] row -> storage
+    info -> extra_sections (app-specific extras, e.g. Environment
+    Builder's file import/export) -> confirmation host -> status (if
+    show_status).
 
     Args:
         controller: The panel's PresetControlsController.
@@ -841,6 +840,14 @@ def build_preset_controls_panel(
             relabeled param pane) to customize its presentation only.
         reset_slot: Optional button placed next to Refresh (e.g. a
             registry-reset or reset-to-defaults action).
+        save_target_slot: Optional Workspace/Registry `RadioButtonGroup`
+            (`controller.save_target`) placed just above the Save/Load/
+            Delete row, so the target of the next Save is visible and
+            actually choosable. `PresetControlsController` builds this
+            widget whenever its policy allows registry saves and
+            `dual_write` is off, but leaves it unrendered unless a caller
+            passes it here -- pass `controller.save_target` explicitly to
+            surface it.
         extra_sections: Optional app-specific views appended after the
             storage info, before the confirmation host.
         show_status: Whether to include `controller.status`. Some apps
@@ -856,15 +863,21 @@ def build_preset_controls_panel(
         name_field,
         controller.preset_select,
         pn.Row(*refresh_row, sizing_mode="stretch_width", margin=(4, 0, 0, 0)),
-        pn.Row(
-            controller.save_button,
-            controller.load_button,
-            controller.delete_button,
-            sizing_mode="stretch_width",
-            margin=(4, 0, 0, 0),
-        ),
-        controller.storage_info,
     ]
+    if save_target_slot is not None:
+        children.append(save_target_slot)
+    children.extend(
+        [
+            pn.Row(
+                controller.save_button,
+                controller.load_button,
+                controller.delete_button,
+                sizing_mode="stretch_width",
+                margin=(4, 0, 0, 0),
+            ),
+            controller.storage_info,
+        ]
+    )
     if extra_sections:
         children.extend(extra_sections)
     children.append(controller.confirmation_host)
@@ -876,6 +889,46 @@ def build_preset_controls_panel(
         collapsed=False,
         sizing_mode="stretch_width",
     )
+
+
+def build_preset_select_only_panel(
+    controller: PresetControlsController,
+    *,
+    title: str | None = None,
+) -> pn.viewable.Viewable:
+    """
+    Minimal "pick a stored config" view: just `controller.preset_select`,
+    with the selected entry loaded automatically on change -- no visible
+    Refresh/Save/Load/Delete/Reset buttons. Use where a screen only needs
+    to *pick* a stored config inline (e.g. embedded in another editor),
+    not manage it; use `build_preset_controls_panel` for a full,
+    self-contained management panel instead.
+
+    Reuses `controller` entirely for data/catalog/loading -- only the
+    rendering differs from `build_preset_controls_panel`. `controller`
+    still needs its own `policy`/`on_load`/etc. configured normally; this
+    function just calls `controller.refresh_list()` once to populate the
+    dropdown and wires selection changes straight to
+    `controller.load_selected()`, standing in for an explicit Load click.
+
+    Args:
+        controller: The panel's PresetControlsController.
+        title: Optional label shown above the dropdown. `None` omits it.
+
+    Returns:
+        A `pn.Column` with the (optional) title and the select widget --
+        not a `pn.Card`, so it doesn't nest a Card inside a caller's own
+        Card/Column.
+    """
+    controller.refresh_list()
+    controller.preset_select.param.watch(
+        lambda _event: controller.load_selected(), "value"
+    )
+    children: list[Any] = []
+    if title is not None:
+        children.append(pn.pane.Markdown(f"##### {title}", margin=(0, 0, 4, 0)))
+    children.append(controller.preset_select)
+    return pn.Column(*children, sizing_mode="stretch_width", margin=0)
 
 
 def _payload_to_jsonable(payload: Any) -> Any:
