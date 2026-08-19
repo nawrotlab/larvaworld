@@ -35,19 +35,29 @@ DEFAULT_CHUNK_SIZE = 1
 DEFAULT_TICK_INTERVAL_MS = 100
 
 
-def runtime_parameters(parameters: util.AttrDict) -> util.AttrDict:
-    """Strip data-collection and enrichment from a config for display-only runs.
+def runtime_parameters(
+    parameters: util.AttrDict,
+    *,
+    analysis_enrichment: dict[str, Any] | None = None,
+) -> util.AttrDict:
+    """Prepare a configuration for a non-persistent portal preview.
 
     Args:
         parameters: A resolved experiment configuration.
+        analysis_enrichment: Minimal enrichment configuration for an in-memory
+            analysis preview. When omitted, data collection and enrichment are
+            disabled, preserving the existing display-only behavior.
 
     Returns:
-        A copy with ``collections`` and ``enrichment`` cleared, so the run does
-        no bookkeeping it will not use.
+        A copy configured either for display-only playback or for in-memory
+        analysis. Neither mode stores data or writes a run manifest.
     """
     preview_parameters = util.AttrDict(parameters.get_copy())
-    preview_parameters["collections"] = []
-    preview_parameters["enrichment"] = None
+    if analysis_enrichment is None:
+        preview_parameters["collections"] = []
+        preview_parameters["enrichment"] = None
+    else:
+        preview_parameters["enrichment"] = util.AttrDict(analysis_enrichment)
     return preview_parameters
 
 
@@ -57,6 +67,7 @@ def build_bounded_launcher(
     run_dir: Path,
     *,
     step_cap: int,
+    analysis_enrichment: dict[str, Any] | None = None,
 ) -> tuple[Any, str | None]:
     """Build an ``ExpRun`` set up to run at most ``step_cap`` steps.
 
@@ -69,11 +80,17 @@ def build_bounded_launcher(
         run_dir: Directory handed to the launcher; nothing is written there
             because ``store_data`` is disabled.
         step_cap: Maximum simulation steps.
+        analysis_enrichment: Minimal in-memory enrichment configuration. When
+            supplied, the source configuration's collectors are retained so a
+            dataset can be built after frame generation.
 
     Returns:
         The launcher and an optional note describing any fallback applied.
     """
-    preview_parameters = runtime_parameters(parameters)
+    preview_parameters = runtime_parameters(
+        parameters,
+        analysis_enrichment=analysis_enrichment,
+    )
     try:
         launcher = sim.ExpRun(
             experiment=experiment,
@@ -81,6 +98,7 @@ def build_bounded_launcher(
             id=run_dir.name,
             dir=str(run_dir),
             store_data=False,
+            _record_manifest=False,
         )
         launcher.sim_setup(steps=step_cap)
         return launcher, None
@@ -95,12 +113,41 @@ def build_bounded_launcher(
             id=run_dir.name,
             dir=str(run_dir),
             store_data=False,
+            _record_manifest=False,
         )
         launcher.sim_setup(steps=step_cap)
         return (
             launcher,
             "Overlap elimination was disabled for this run so the arena could be built.",
         )
+
+
+def finalize_preview_datasets(launcher: Any) -> list[Any]:
+    """Build and enrich datasets from an already-stepped preview launcher.
+
+    The Explore canvas advances a launcher manually so each state can become a
+    playback frame. This helper completes its in-memory AgentPy output without
+    calling ``store()`` or writing a manifest, then creates transient datasets
+    suitable for plots and summary metrics.
+    """
+    from larvaworld.lib.process import LarvaDatasetCollection
+
+    if getattr(launcher, "_preview_datasets_finalized", False):
+        return list(launcher.datasets or [])
+
+    launcher.running = False
+    launcher.end()
+    launcher.create_output()
+    collection = LarvaDatasetCollection.from_agentpy_output(launcher.output)
+    datasets = list(collection.datasets)
+    enrichment = launcher.p.get("enrichment")
+    if enrichment:
+        for dataset in datasets:
+            dataset.enrich(**enrichment, is_last=False)
+    launcher.data_collection = collection
+    launcher.datasets = datasets
+    launcher._preview_datasets_finalized = True
+    return datasets
 
 
 class ChunkedFrameRunner:

@@ -86,6 +86,15 @@ EXPLORE_RAW_CSS = """
   margin: 0 0 10px 0;
 }
 
+.lw-explore-summary {
+  font-size: 14px;
+  line-height: 1.55;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(181,194,176,0.7);
+  background: rgba(181,194,176,0.16);
+}
+
 .lw-explore-watchfor {
   font-size: 13px;
   line-height: 1.6;
@@ -93,6 +102,109 @@ EXPLORE_RAW_CSS = """
   border-radius: 10px;
   border: 1px solid rgba(181,194,176,0.7);
   background: rgba(181,194,176,0.16);
+}
+
+.lw-explore-preview-placeholder {
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(181,194,176,0.7);
+  background: rgba(181,194,176,0.16);
+}
+
+.lw-explore-result-grid {
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.lw-explore-playback {
+  flex: 1 1 560px;
+  min-width: 0;
+}
+
+.lw-explore-analysis {
+  flex: 1 1 380px;
+  min-width: 300px;
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.025);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.lw-explore-analysis-title {
+  font-size: 16px;
+  font-weight: 650;
+  margin: 0 0 3px 0;
+}
+
+.lw-explore-analysis-note {
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(0,0,0,0.65);
+  margin: 0 0 10px 0;
+}
+
+.lw-explore-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.lw-explore-dataset-tables-title {
+  font-size: 13px;
+  font-weight: 650;
+  margin: 4px 0 4px 0;
+}
+
+.lw-explore-metric {
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.03);
+  padding: 8px 10px;
+}
+
+.lw-explore-metric-label {
+  font-size: 11px;
+  color: rgba(0,0,0,0.62);
+}
+
+.lw-explore-metric-value {
+  font-size: 16px;
+  font-weight: 650;
+  margin-top: 2px;
+}
+
+.lw-explore-analysis-figure-title {
+  font-size: 13px;
+  font-weight: 650;
+  margin: 0;
+}
+
+.lw-explore-analysis-figure + .lw-explore-analysis-figure {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.lw-explore-analysis-warning {
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 8px;
+  color: #7a4a00;
+}
+
+@media (max-width: 900px) {
+  .lw-explore-result-grid {
+    flex-direction: column;
+  }
+
+  .lw-explore-analysis {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 .lw-explore-explanation {
@@ -128,14 +240,56 @@ def _estimated_seconds(scenario: Scenario, dt: float) -> float:
     return scenario.step_cap * dt
 
 
+def _preview_dataset_tables_view(datasets: list[Any]) -> pn.viewable.Viewable:
+    """Build Step/Endpoint actions for one selected in-memory preview dataset."""
+    from larvaworld.portal.datasets import LarvaDatasetTablesWidget
+
+    tables = LarvaDatasetTablesWidget(datasets[0])
+    title = pn.pane.HTML(
+        '<div class="lw-explore-dataset-tables-title">Inspect preview data</div>',
+        margin=0,
+    )
+    if len(datasets) == 1:
+        return pn.Column(title, tables.view(), sizing_mode="stretch_width", margin=0)
+
+    options: dict[str, int] = {}
+    for index, dataset in enumerate(datasets):
+        config = getattr(dataset, "config", None)
+        label = str(
+            getattr(config, "id", None)
+            or getattr(config, "group_id", None)
+            or f"Dataset {index + 1}"
+        )
+        if label in options:
+            label = f"{label} ({index + 1})"
+        options[label] = index
+    selector = pn.widgets.Select(
+        name="Larva group",
+        options=options,
+        value=0,
+        sizing_mode="stretch_width",
+        margin=(0, 0, 4, 0),
+    )
+    selector.param.watch(
+        lambda event: tables.set_dataset(datasets[event.new]),
+        "value",
+    )
+    return pn.Column(
+        title,
+        selector,
+        tables.view(),
+        sizing_mode="stretch_width",
+        margin=0,
+    )
+
+
 class _ExploreController:
     """Drives the gallery -> running -> result flow."""
 
     def __init__(self) -> None:
         self.body = pn.Column(sizing_mode="stretch_width", margin=0)
-        self._document = pn.state.curdoc
-        self._runner: Any = None
         self._temp_dir: tempfile.TemporaryDirectory[str] | None = None
+        self._analysis_figures: list[Any] = []
         self.show_gallery()
 
     # ---- gallery -------------------------------------------------------
@@ -162,7 +316,7 @@ class _ExploreController:
         )
 
     def show_gallery(self) -> None:
-        self._stop_runner()
+        self._release_preview_resources()
         sections: list[pn.viewable.Viewable] = [
             pn.pane.HTML(
                 '<div class="lw-explore-intro">'
@@ -192,8 +346,29 @@ class _ExploreController:
 
     # ---- running -------------------------------------------------------
 
+    @staticmethod
+    def _scenario_summary(scenario: Scenario) -> pn.pane.HTML:
+        """Return the stable explanation shown before a scenario runs."""
+        teaser = " ".join(scenario.teaser.split())
+        explanation = " ".join(scenario.explanation.split())
+        literature = ""
+        if scenario.literature:
+            literature = (
+                '<div class="lw-explore-literature">Paradigm after '
+                f"{escape(scenario.literature)}.</div>"
+            )
+        return pn.pane.HTML(
+            '<div class="lw-explore-summary">'
+            "<strong>Experiment summary</strong><br/>"
+            f"{escape(teaser)}<br/><br/>"
+            f"{escape(explanation)}"
+            f"{literature}"
+            "</div>",
+            margin=(10, 0, 0, 0),
+        )
+
     def start_scenario(self, scenario: Scenario) -> None:
-        """Build the run and start streaming frames into the canvas."""
+        """Show a static scenario canvas and offer an offline simulation preview."""
         # Imported lazily: these pull in the registry and the simulation stack,
         # which must not be paid for at portal startup.
         from larvaworld.lib import reg, util
@@ -203,16 +378,12 @@ class _ExploreController:
         from larvaworld.portal.canvas_widgets.environment_mapping import (
             env_params_to_canvas_state,
         )
-        from larvaworld.portal.simulation.run_playback import (
-            ChunkedFrameRunner,
-            build_bounded_launcher,
-        )
 
-        self._stop_runner()
+        self._release_preview_resources()
         try:
             parameters = util.AttrDict(reg.conf.Exp.expand(scenario.exp_id))
             parameters = self._apply_scenario_overrides(parameters, scenario)
-            canvas = EnvironmentCanvas(editable=False, show_larva_groups=False)
+            canvas = EnvironmentCanvas(editable=False, show_larva_groups=True)
             canvas.set_state(
                 env_params_to_canvas_state(
                     parameters.env_params,
@@ -220,6 +391,82 @@ class _ExploreController:
                     show_group_shapes=False,
                 )
             )
+        except Exception as exc:
+            self._show_error(scenario, exc)
+            return
+
+        back = pn.widgets.Button(
+            name="< All scenarios", button_type="default", width=140
+        )
+        back.on_click(lambda _event: self.show_gallery())
+        generate_preview = run_button(name="Generate simulation preview", width=240)
+        generate_preview.on_click(
+            lambda _event: self._request_simulation_preview(scenario, parameters)
+        )
+        self.body[:] = [
+            pn.Row(back, generate_preview, margin=0),
+            pn.pane.HTML(
+                f'<div class="lw-explore-stage-title">{escape(scenario.title)}</div>'
+                f'<div class="lw-explore-stage-teaser">{escape(scenario.teaser)}</div>',
+                margin=(10, 0, 0, 0),
+            ),
+            self._scenario_summary(scenario),
+            canvas.view(),
+        ]
+
+    def _request_simulation_preview(self, scenario: Scenario, parameters: Any) -> None:
+        """Render the preparation state before generating all preview frames."""
+        back = pn.widgets.Button(
+            name="< All scenarios", button_type="default", width=140
+        )
+        back.on_click(lambda _event: self.show_gallery())
+        self.body[:] = [
+            back,
+            pn.pane.HTML(
+                f'<div class="lw-explore-stage-title">{escape(scenario.title)}</div>',
+                margin=(10, 0, 0, 0),
+            ),
+            self._scenario_summary(scenario),
+            pn.pane.HTML(
+                (
+                    '<div class="lw-explore-preview-placeholder">'
+                    "Generating simulation preview. The environment and agents are being initialized."
+                    "</div>"
+                ),
+                margin=0,
+            ),
+        ]
+        document = pn.state.curdoc
+        if document is None:
+            self._generate_simulation_preview(scenario, parameters)
+            return
+        document.add_next_tick_callback(
+            lambda: self._generate_simulation_preview(scenario, parameters)
+        )
+
+    def _generate_simulation_preview(self, scenario: Scenario, parameters: Any) -> None:
+        """Generate all frames before exposing the interactive canvas playback."""
+        from larvaworld.portal.canvas_widgets.environment_canvas import (
+            EnvironmentCanvas,
+        )
+        from larvaworld.portal.canvas_widgets.environment_mapping import (
+            env_params_to_canvas_state,
+        )
+        from larvaworld.portal.explore.analysis import (
+            PreviewAnalysisResult,
+            build_preview_analysis,
+            preview_enrichment,
+        )
+        from larvaworld.portal.simulation.preview_frames import generate_preview_frames
+        from larvaworld.portal.simulation.run_playback import (
+            build_bounded_launcher,
+            finalize_preview_datasets,
+        )
+
+        launcher = None
+        datasets: list[Any] = []
+        analysis = PreviewAnalysisResult()
+        try:
             self._temp_dir = tempfile.TemporaryDirectory(prefix="lw_explore_")
             run_dir = Path(self._temp_dir.name) / scenario.id
             run_dir.mkdir(parents=True, exist_ok=True)
@@ -228,62 +475,53 @@ class _ExploreController:
                 parameters,
                 run_dir,
                 step_cap=scenario.step_cap,
+                analysis_enrichment=preview_enrichment(scenario.id),
+            )
+            frames = generate_preview_frames(
+                launcher,
+                preview_steps=scenario.step_cap,
+            )
+            if not frames:
+                raise ValueError("No preview frames were generated.")
+            try:
+                datasets = finalize_preview_datasets(launcher)
+            except Exception as exc:
+                analysis.warnings.append(
+                    f"Preview datasets were unavailable: {type(exc).__name__}: {exc}"
+                )
+            else:
+                try:
+                    analysis = build_preview_analysis(scenario.id, datasets)
+                    self._analysis_figures = [item.figure for item in analysis.figures]
+                except Exception as exc:
+                    analysis.warnings.append(
+                        f"Preview analysis was unavailable: {type(exc).__name__}: {exc}"
+                    )
+            canvas = EnvironmentCanvas(editable=False, show_larva_groups=False)
+            canvas.set_state(
+                env_params_to_canvas_state(
+                    parameters.env_params,
+                    larva_groups=None,
+                    show_group_shapes=False,
+                )
+            )
+            self.show_result(
+                scenario,
+                canvas,
+                frames,
+                dt=float(launcher.dt),
+                note=note,
+                analysis=analysis,
+                datasets=datasets,
             )
         except Exception as exc:
             self._show_error(scenario, exc)
-            return
-
-        progress = pn.indicators.Progress(
-            value=0, max=scenario.step_cap, sizing_mode="stretch_width"
-        )
-        status = pn.pane.HTML("Starting...", margin=(4, 0, 0, 0))
-        dt = float(parameters.get("dt", 0.1))
-
-        def _on_progress(done: int, total: int) -> None:
-            progress.value = done
-            status.object = (
-                f"Running... {done}/{total} steps "
-                f"({done * dt:.1f}s of simulated time)"
-            )
-
-        def _on_complete(frames: list[Any]) -> None:
-            self.show_result(scenario, canvas, frames, dt=dt, note=note)
-
-        self._runner = ChunkedFrameRunner(
-            launcher,
-            total_steps=scenario.step_cap,
-            on_frame=canvas.set_larva_frame,
-            on_progress=_on_progress,
-            on_complete=_on_complete,
-            on_error=lambda exc: self._show_error(scenario, exc),
-        )
-
-        watch_for = ""
-        if scenario.watch_for:
-            bullets = "".join(f"<li>{escape(hint)}</li>" for hint in scenario.watch_for)
-            watch_for = (
-                '<div class="lw-explore-watchfor"><strong>What to watch for</strong>'
-                f"<ul style='margin:6px 0 0 0;padding-left:20px;'>{bullets}</ul></div>"
-            )
-
-        back = pn.widgets.Button(
-            name="< All scenarios", button_type="default", width=140
-        )
-        back.on_click(lambda _event: self.show_gallery())
-
-        self.body[:] = [
-            back,
-            pn.pane.HTML(
-                f'<div class="lw-explore-stage-title">{escape(scenario.title)}</div>'
-                f'<div class="lw-explore-stage-teaser">{escape(scenario.teaser)}</div>',
-                margin=(10, 0, 0, 0),
-            ),
-            canvas.view(),
-            progress,
-            status,
-            pn.pane.HTML(watch_for, margin=(10, 0, 0, 0), visible=bool(watch_for)),
-        ]
-        self._runner.start(document=self._document)
+        finally:
+            try:
+                if launcher is not None and getattr(launcher, "screen_manager", None):
+                    launcher.screen_manager.close()
+            except Exception:
+                pass
 
     @staticmethod
     def _apply_scenario_overrides(parameters: Any, scenario: Scenario) -> Any:
@@ -313,6 +551,8 @@ class _ExploreController:
         *,
         dt: float,
         note: str | None,
+        analysis: Any | None = None,
+        datasets: list[Any] | None = None,
     ) -> None:
         from larvaworld.portal.simulation.run_playback import FramePlayback
 
@@ -321,21 +561,6 @@ class _ExploreController:
             playback_view: pn.viewable.Viewable = playback.view()
         except ValueError:
             playback_view = canvas.view()
-
-        literature = ""
-        if scenario.literature:
-            literature = (
-                '<div class="lw-explore-literature">Paradigm after '
-                f"{escape(scenario.literature)}.</div>"
-            )
-        explanation = pn.pane.HTML(
-            '<div class="lw-explore-explanation">'
-            "<strong>What you just saw</strong><br/>"
-            f"{escape(scenario.explanation)}"
-            f"{literature}"
-            "</div>",
-            margin=(12, 0, 0, 0),
-        )
 
         again = run_button(name="Run it again", width=150)
         again.on_click(lambda _event: self.start_scenario(scenario))
@@ -354,6 +579,37 @@ class _ExploreController:
             margin=0,
             visible=bool(note),
         )
+        observations = (
+            "This animation is one simulated run. Replay it to inspect the "
+            "movement pattern in more detail."
+        )
+        if scenario.watch_for:
+            bullets = "".join(f"<li>{escape(hint)}</li>" for hint in scenario.watch_for)
+            observations = (
+                "This animation is one simulated run. Look for these visual cues "
+                "in the paths and behavior:"
+                f"<ul style='margin:6px 0 0 0;padding-left:20px;'>{bullets}</ul>"
+            )
+        observation_pane = pn.pane.HTML(
+            '<div class="lw-explore-watchfor"><strong>What you just saw</strong><br/>'
+            f"{observations}"
+            "</div>",
+            margin=(10, 0, 0, 0),
+        )
+        result_view: pn.viewable.Viewable = playback_view
+        if analysis is not None:
+            result_view = pn.Row(
+                pn.Column(
+                    playback_view,
+                    css_classes=["lw-explore-playback"],
+                    sizing_mode="stretch_width",
+                    margin=0,
+                ),
+                self._analysis_view(analysis, datasets=datasets or []),
+                css_classes=["lw-explore-result-grid"],
+                sizing_mode="stretch_width",
+                margin=(0, 0, 0, 0),
+            )
 
         self.body[:] = [
             pn.Row(back, again, advanced, margin=0),
@@ -361,10 +617,72 @@ class _ExploreController:
                 f'<div class="lw-explore-stage-title">{escape(scenario.title)}</div>',
                 margin=(10, 0, 0, 0),
             ),
-            playback_view,
+            self._scenario_summary(scenario),
+            result_view,
+            observation_pane,
             note_pane,
-            explanation,
         ]
+
+    @staticmethod
+    def _analysis_view(
+        analysis: Any,
+        *,
+        datasets: list[Any],
+    ) -> pn.viewable.Viewable:
+        """Render transient metrics and Matplotlib plots beside the playback."""
+        cards = "".join(
+            '<div class="lw-explore-metric">'
+            f'<div class="lw-explore-metric-label">{escape(metric.label)}</div>'
+            '<div class="lw-explore-metric-value">'
+            f"{metric.value:.3g}{(' ' + escape(metric.unit)) if metric.unit else ''}"
+            "</div></div>"
+            for metric in analysis.metrics
+        )
+        contents: list[pn.viewable.Viewable] = [
+            pn.pane.HTML(
+                '<div class="lw-explore-analysis-title">Preview analysis</div>'
+                '<div class="lw-explore-analysis-note">'
+                "Calculated from this shortened simulation run; it is not a full experiment analysis."
+                "</div>"
+                f'<div class="lw-explore-metrics">{cards}</div>',
+                margin=0,
+            )
+        ]
+        if datasets:
+            contents.append(_preview_dataset_tables_view(datasets))
+        for item in analysis.figures:
+            contents.append(
+                pn.Column(
+                    pn.pane.HTML(
+                        '<div class="lw-explore-analysis-figure-title">'
+                        f"{escape(item.title)}</div>",
+                        margin=0,
+                    ),
+                    pn.pane.Matplotlib(
+                        item.figure,
+                        tight=True,
+                        sizing_mode="stretch_width",
+                        margin=0,
+                    ),
+                    css_classes=["lw-explore-analysis-figure"],
+                    sizing_mode="stretch_width",
+                    margin=0,
+                )
+            )
+        if analysis.warnings:
+            warnings = "<br/>".join(escape(message) for message in analysis.warnings)
+            contents.append(
+                pn.pane.HTML(
+                    f'<div class="lw-explore-analysis-warning">{warnings}</div>',
+                    margin=0,
+                )
+            )
+        return pn.Column(
+            *contents,
+            css_classes=["lw-explore-analysis"],
+            sizing_mode="stretch_width",
+            margin=0,
+        )
 
     # ---- errors and teardown -------------------------------------------
 
@@ -386,10 +704,17 @@ class _ExploreController:
             ),
         ]
 
-    def _stop_runner(self) -> None:
-        if self._runner is not None:
-            self._runner.stop()
-            self._runner = None
+    def _release_preview_resources(self) -> None:
+        if self._analysis_figures:
+            from larvaworld.portal.explore.analysis import (
+                PreviewFigure,
+                close_preview_figures,
+            )
+
+            close_preview_figures(
+                [PreviewFigure("", figure) for figure in self._analysis_figures]
+            )
+            self._analysis_figures = []
         if self._temp_dir is not None:
             try:
                 self._temp_dir.cleanup()
@@ -406,7 +731,7 @@ class _ExploreController:
 
 
 def explore_app() -> pn.viewable.Viewable:
-    pn.extension(raw_css=[PORTAL_RAW_CSS, EXPLORE_RAW_CSS])
+    pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS, EXPLORE_RAW_CSS])
     controller = _ExploreController()
     template = pn.template.MaterialTemplate(
         title="",

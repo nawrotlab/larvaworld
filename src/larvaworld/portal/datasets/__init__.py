@@ -9,10 +9,13 @@ __all__: list[str] = [
     "WorkspaceDatasetRecord",
     "build_workspace_proc_folder",
     "discover_raw_datasets",
+    "EndpointDataFrameTable",
     "get_workspace_dataset",
     "import_into_workspace",
+    "LarvaDatasetTablesWidget",
     "list_workspace_datasets",
     "list_workspace_simulation_datasets",
+    "StepDataFrameTable",
 ]
 
 
@@ -22,6 +25,13 @@ def __getattr__(name: str) -> Any:
         return getattr(module, name)
     if name in {"RawDatasetCandidate", "discover_raw_datasets"}:
         module = import_module("larvaworld.portal.datasets.discovery")
+        return getattr(module, name)
+    if name in {
+        "EndpointDataFrameTable",
+        "LarvaDatasetTablesWidget",
+        "StepDataFrameTable",
+    }:
+        module = import_module("larvaworld.portal.datasets.dataframe_widgets")
         return getattr(module, name)
     if name in {"build_workspace_proc_folder", "import_into_workspace"}:
         module = import_module("larvaworld.portal.datasets.import_adapter")

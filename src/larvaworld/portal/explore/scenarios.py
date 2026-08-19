@@ -156,6 +156,24 @@ SCENARIOS: tuple[Scenario, ...] = (
         ),
     ),
     Scenario(
+        id="CS_UCS_off",
+        exp_id="PItest_off",
+        category="chemotaxis",
+        title="Odor choice without food reward",
+        teaser="Two odor cues remain in the arena after the food reward is removed.",
+        explanation=(
+            "This is the test-phase environment for odor preference experiments. "
+            "The conditioned stimuli remain available, but there is no food reward, "
+            "so the resulting paths isolate odor-driven choice from feeding behavior."
+        ),
+        step_cap=600,
+        n_agents=10,
+        watch_for=(
+            "Choices between the two odor sources",
+            "Search paths without feeding stops",
+        ),
+    ),
+    Scenario(
         id="patchy_food",
         exp_id="patchy_food",
         category="foraging",
