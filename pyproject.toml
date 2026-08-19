@@ -152,13 +152,12 @@ lint.per-file-ignores."tests/**/*" = [
 lint.isort.known-first-party = [ "larvaworld", "tests" ]
 
 [tool.pytest.ini_options]
-addopts = """\
-    -v
-    -Wdefault
-    -n auto
-    --cov=larvaworld
-    --cov-report=xml
-    """
+# Kept deliberately light: parallelism and coverage are opt-in, not default.
+# `-n auto` spawns one worker per core and each worker pays a ~4s registry
+# import that dominates the actual test work -- it made a 9-test run take 104s
+# instead of 5s, and was a net loss even on the full suite. CI passes
+# `-n auto --cov=larvaworld --cov-report=xml` explicitly (.github/workflows/ci.yml).
+addopts = "-v -Wdefault"
 pythonpath = [ "src" ]
 markers = [
     "fast: Fast unit/logic tests without heavy simulations or plotting.",

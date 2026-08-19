@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 import json
+import os
+import shutil
 from pathlib import Path
 
 import panel as pn
@@ -47,8 +49,31 @@ def workspace_config_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
     clear_active_workspace_path()
 
 
+@pytest.fixture(scope="session")
+def _conf_dir_snapshot(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Serialize every conftype once per session.
+
+    Snapshotting is identical for every test, but deep-copying and pickling all
+    8 conftypes (Model alone holds 612 entries) costs ~0.18s. Doing it per test
+    burned ~20s across this module, so it is done once and copied thereafter.
+    """
+    import larvaworld as _lw
+
+    snapshot_dir = tmp_path_factory.mktemp("conf_snapshot")
+    for conftype in _lw.CONFTYPES:
+        util.save_dict(
+            util.AttrDict(reg.conf[conftype].dict).get_copy(),
+            f"{snapshot_dir}/{conftype}.txt",
+        )
+    return snapshot_dir
+
+
 @pytest.fixture(autouse=True)
-def isolated_exp_conf_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+def isolated_exp_conf_dir(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    _conf_dir_snapshot: Path,
+) -> Path:
     # experiment_template_preset_controls saves/deletes dual-write to
     # reg.conf.Exp (registry + workspace, as one linked unit) -- any test
     # that saves/deletes an experiment template now writes to the Exp
@@ -64,16 +89,15 @@ def isolated_exp_conf_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Pa
     # only Exp.txt would silently wipe every other conftype's in-memory
     # dict to empty on its next .load() (missing file -> empty AttrDict),
     # so every conftype gets seeded and restored here, not just Exp.
+    #
+    # The seed files come from a session-scoped snapshot and are copied
+    # rather than regenerated, which keeps per-test cost to a file copy.
     original_conf_dir = reg_config.CONF_DIR
     original_dicts = {
         conftype: reg.conf[conftype].dict for conftype in larvaworld.CONFTYPES
     }
     tmp_conf_dir = tmp_path / "confDicts"
-    tmp_conf_dir.mkdir()
-    for conftype, conf_dict in original_dicts.items():
-        util.save_dict(
-            util.AttrDict(conf_dict).get_copy(), f"{tmp_conf_dir}/{conftype}.txt"
-        )
+    shutil.copytree(_conf_dir_snapshot, tmp_conf_dir)
     monkeypatch.setattr(reg_config, "CONF_DIR", str(tmp_conf_dir))
     try:
         yield tmp_conf_dir
@@ -3311,6 +3335,38 @@ def test_single_experiment_uses_typed_widgets_for_model_and_optional_odor_fields
     assert parameters.flatten()[odor_spread_path] == pytest.approx(0.03)
 
 
+#: Experiments chosen to cover every distinct configuration family the
+#: parameter editor can render: bare arena, odorscape, food grid, discrete
+#: sources, windscape, thermoscape, borders, multi-phase trials, multiple
+#: larva groups and Box2D bodies. Rebuilding the editor costs ~1.5s per
+#: experiment, so the default run samples these rather than sweeping all 58
+#: (see the exhaustive variant below).
+_TEXT_FALLBACK_REPRESENTATIVE_EXPERIMENTS = (
+    "dish",
+    "chemotaxis",
+    "food_grid",
+    "patchy_food",
+    "anemotaxis",
+    "thermotaxis",
+    "maze",
+    "PItrain_mini",
+    "RvsS",
+    "realistic_imitation",
+)
+
+
+def _text_fallback_kinds(
+    controller: _SingleExperimentController, exp_token: object
+) -> set[str]:
+    controller.experiment.value = exp_token
+    controller._on_experiment_change()
+    return {
+        kind
+        for kind, _control in controller._parameter_widgets.values()
+        if kind in {"str", "json", "optional_str"}
+    }
+
+
 def test_single_experiment_parameter_editor_has_no_text_fallback_widgets(
     tmp_path: Path,
 ) -> None:
@@ -3319,15 +3375,40 @@ def test_single_experiment_parameter_editor_has_no_text_fallback_widgets(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    raw_kinds = set()
+    options = controller.experiment.options
+    tokens = {
+        name: options[f"Registry / {name}"]
+        for name in _TEXT_FALLBACK_REPRESENTATIVE_EXPERIMENTS
+        if f"Registry / {name}" in options
+    }
+    assert tokens, "no representative experiments resolved from the registry"
+
+    raw_kinds: set[str] = set()
+    for exp_token in tokens.values():
+        raw_kinds |= _text_fallback_kinds(controller, exp_token)
+
+    assert raw_kinds == set()
+
+
+@pytest.mark.heavy
+@pytest.mark.skipif(
+    os.getenv("LARVAWORLD_EXHAUSTIVE_TESTS") != "1",
+    reason=(
+        "Sweeps all registry experiments (~90s). "
+        "Enable with LARVAWORLD_EXHAUSTIVE_TESTS=1; CI runs it on every build."
+    ),
+)
+def test_single_experiment_parameter_editor_has_no_text_fallback_widgets_exhaustive(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    raw_kinds: set[str] = set()
     for exp_token in controller.experiment.options.values():
-        controller.experiment.value = exp_token
-        controller._on_experiment_change()
-        raw_kinds.update(
-            kind
-            for kind, _control in controller._parameter_widgets.values()
-            if kind in {"str", "json", "optional_str"}
-        )
+        raw_kinds |= _text_fallback_kinds(controller, exp_token)
 
     assert raw_kinds == set()
 

@@ -138,6 +138,9 @@ jobs:
       - name: Run full test suite (parallel + coverage)
         run: poetry run pytest -n auto --cov=larvaworld --cov-report=term --cov-report=xml
         shell: bash
+        env:
+          # Runs the exhaustive registry sweeps that are skipped locally for speed.
+          LARVAWORLD_EXHAUSTIVE_TESTS: "1"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -187,6 +190,9 @@ jobs:
       - name: Run full test suite (parallel + coverage)
         run: poetry run pytest -n auto --cov=larvaworld --cov-report=term --cov-report=xml
         shell: bash
+        env:
+          # Runs the exhaustive registry sweeps that are skipped locally for speed.
+          LARVAWORLD_EXHAUSTIVE_TESTS: "1"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -236,6 +242,9 @@ jobs:
       - name: Run full test suite (parallel + coverage)
         run: poetry run pytest -n auto --cov=larvaworld --cov-report=term --cov-report=xml
         shell: bash
+        env:
+          # Runs the exhaustive registry sweeps that are skipped locally for speed.
+          LARVAWORLD_EXHAUSTIVE_TESTS: "1"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -299,6 +308,9 @@ jobs:
       - name: Run full test suite (parallel + coverage)
         run: poetry run pytest -n auto --cov=larvaworld --cov-report=term --cov-report=xml
         shell: bash
+        env:
+          # Runs the exhaustive registry sweeps that are skipped locally for speed.
+          LARVAWORLD_EXHAUSTIVE_TESTS: "1"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
