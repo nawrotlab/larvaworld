@@ -23,7 +23,7 @@ def test_notebook_launch_app_shows_initializing_message_before_launch(
     calls: list[str] = []
 
     monkeypatch.setattr(
-        notebook_launch_app, "_query_param", lambda _name: "wf.dataset_manager"
+        notebook_launch_app, "_query_param", lambda _name: "wf.open_dataset"
     )
     monkeypatch.setattr(
         notebook_launch_app,
@@ -47,7 +47,7 @@ def test_notebook_launch_app_redirects_after_onload_launch(
     onload_callbacks: list,
 ) -> None:
     monkeypatch.setattr(
-        notebook_launch_app, "_query_param", lambda _name: "wf.dataset_manager"
+        notebook_launch_app, "_query_param", lambda _name: "wf.open_dataset"
     )
     monkeypatch.setattr(
         notebook_launch_app,
@@ -67,7 +67,7 @@ def test_notebook_launch_app_shows_error_after_onload_failure(
     onload_callbacks: list,
 ) -> None:
     monkeypatch.setattr(
-        notebook_launch_app, "_query_param", lambda _name: "wf.dataset_manager"
+        notebook_launch_app, "_query_param", lambda _name: "wf.open_dataset"
     )
     monkeypatch.setattr(
         notebook_launch_app,

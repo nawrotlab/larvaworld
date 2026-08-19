@@ -43,7 +43,6 @@ NOTEBOOK_TUTORIAL_BY_ITEM_ID: dict[str, str] = {
     "wf.run_experiment": "single_simulation.ipynb",
     "wf.open_dataset": "import_datasets.ipynb",
     "track_viewer": "replay.ipynb",
-    "wf.dataset_manager": "import_datasets.ipynb",
     "larva_models": "library_interface.ipynb",
     "locomotory_modules": "custom_module.ipynb",
     "wf.environment_builder": "environment_configuration.ipynb",
