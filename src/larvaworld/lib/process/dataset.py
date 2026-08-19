@@ -2047,8 +2047,18 @@ class ParamLarvaDataset(param.Parameterized):
         s, e, c = self.data
         self.comp_centroid(**kwargs)
         self.comp_length(**kwargs)
-        if not c.traj_xy.exist_in(s) and c.point_xy.exist_in(s):
-            s[c.traj_xy] = s[c.point_xy]
+        if not c.traj_xy.exist_in(s):
+            if c.point_xy.exist_in(s):
+                s[c.traj_xy] = s[c.point_xy]
+            elif c.Npoints > 0 and c.midline_xy.exist_in(s):
+                # A tracked point index of -1 asks for the centroid, but the contour it is
+                # normally averaged from is absent for trackers that record only a midline.
+                # The midline's own mean is then the available estimate of the centroid.
+                s[c.traj_xy] = np.mean(self.midline_xy_data, axis=1)
+                vprint(
+                    "Trajectory taken as the midline centroid, no tracked point available",
+                    1,
+                )
         self.comp_operators(pars=c.traj_xy)
         for point in ["", "centroid"]:
             self.comp_xy_moments(point, **kwargs)
