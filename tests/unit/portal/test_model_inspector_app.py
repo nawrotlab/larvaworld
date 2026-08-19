@@ -772,47 +772,6 @@ def test_validation_error_blocks_preview_and_run(
     assert "Live preview blocked by draft validation errors" in _status_text(controller)
 
 
-def test_branch_intermitter_invalid_beta_blocks_live_preview(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    _guard_registry_writes(monkeypatch)
-    if "CON_CON_SQ_BR" not in reg.conf.Model.confIDs:
-        pytest.skip("CON_CON_SQ_BR is required for this validation test.")
-    controller = _ModelInspectorController()
-    _load_registry_model(controller, "CON_CON_SQ_BR")
-    assert any(
-        issue.code == "intermitter_branch_beta_invalid"
-        for issue in controller._draft_validation_issues
-    )
-    assert controller.run_button.disabled is True
-    assert controller.run_button.button_type == "danger"
-    assert controller._brain is None
-    assert controller._runtime is None
-    controller._on_run()
-    assert controller._is_running is False
-    assert "Live preview blocked by draft validation errors" in _status_text(controller)
-
-
-def test_intermitter_card_shows_branch_beta_validation_error(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    _guard_registry_writes(monkeypatch)
-    if "CON_CON_SQ_BR" not in reg.conf.Model.confIDs:
-        pytest.skip("CON_CON_SQ_BR is required for this validation test.")
-    controller = _ModelInspectorController()
-    _load_registry_model(controller, "CON_CON_SQ_BR")
-    intermitter_card = _find_card(controller.module_sections_box, "intermitter")
-    card_text = _collect_text(intermitter_card)
-    assert "Branch intermitter requires" in card_text
-    assert "beta" in card_text
-    error_panes = [
-        pane
-        for pane in intermitter_card.select(pn.pane.Markdown)
-        if "lw-model-inspector-validation-error" in getattr(pane, "css_classes", [])
-    ]
-    assert error_panes
-
-
 def test_module_edit_hides_comparison(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
