@@ -3,6 +3,7 @@ import panel as pn
 import pytest
 
 from larvaworld.lib.param import NestedConf, OrientedPoint, TrackerOps
+from larvaworld.lib.param.xy_distro import Spatial_Distro
 
 
 def test_oriented_point():
@@ -19,6 +20,19 @@ def test_oriented_point():
     # 2D Array of points
     p10, p11 = np.array([(-1.0, 1.0), (1.0, 1.0)]), [(1, 1), (1, 3)]
     assert P.translate(p10) == pytest.approx(p11)
+
+
+def test_resolve_kwargs_coerces_list_to_tuple_for_numeric_tuple_params() -> None:
+    # NestedConf.resolve_kwargs must accept list values for NumericTuple
+    # (and Range) params, since a config round-tripped through JSON (e.g.
+    # a saved/reloaded portal preset) turns tuples into lists, which
+    # param.NumericTuple's own validator otherwise rejects outright.
+    distro = Spatial_Distro(loc=[1.0, 2.0], scale=[0.5, 0.25])
+
+    assert distro.loc == (1.0, 2.0)
+    assert distro.scale == (0.5, 0.25)
+    assert isinstance(distro.loc, tuple)
+    assert isinstance(distro.scale, tuple)
 
 
 def test_tracker_ops_clamps_vectors_when_npoints_shrinks() -> None:

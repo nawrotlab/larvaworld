@@ -138,12 +138,17 @@ class NestedConf(Conf):
         """
         Auto-instantiate `ClassAttr`/`ClassDict` values passed as plain
         dict configs, so `super().__init__` receives proper instances.
-        Overrides `Conf.resolve_kwargs` (defaults-merging) with this
-        NestedConf-specific coercion instead.
+        Also coerces list values for `NumericTuple`/`Range`-typed
+        parameters back into tuples, since round-tripping a config
+        through JSON (e.g. a saved/reloaded preset) turns tuples into
+        lists, which `param`'s own validators reject outright. Overrides
+        `Conf.resolve_kwargs` (defaults-merging) with this NestedConf-
+        specific coercion instead.
 
         :param kwargs: The raw constructor kwargs.
         :return: The same kwargs as an AttrDict, with any `ClassAttr`/
-            `ClassDict`-typed entries coerced.
+            `ClassDict`-typed entries coerced, and any `NumericTuple`/
+            `Range`-typed entries normalized from list to tuple.
         """
         kwargs = util.AttrDict(kwargs)
         for k, p in cls.param.objects(instance=False).items():
@@ -154,6 +159,10 @@ class NestedConf(Conf):
                     kwargs[k] = p.class_(**dict(kwargs[k]))
             elif type(p) == ClassDict:
                 kwargs[k] = _coerce_classdict_value(p, kwargs[k])
+            elif isinstance(p, (param.NumericTuple, param.Range)) and isinstance(
+                kwargs[k], list
+            ):
+                kwargs[k] = tuple(kwargs[k])
         return kwargs
 
     @property
