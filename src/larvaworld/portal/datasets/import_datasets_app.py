@@ -969,7 +969,7 @@ class _ImportDatasetsController:
                 parent_dir = candidate.parent_dir
                 source_path = (
                     raw_root.resolve()
-                    if parent_dir == "."
+                    if raw_root.is_file() or parent_dir == "."
                     else (raw_root / parent_dir).resolve()
                 )
             grouped.setdefault(parent_dir, []).append(candidate)
@@ -1186,7 +1186,7 @@ class _ImportDatasetsController:
             return
         self._set_status(
             "Opening folder picker...",
-            detail="Select the raw dataset root folder.",
+            detail="Select the raw dataset root folder, or enter a DeepLabCut ZIP path manually.",
         )
         self._sync_controls()
         selected, error = pick_directory(

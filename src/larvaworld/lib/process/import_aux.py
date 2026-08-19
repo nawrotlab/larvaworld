@@ -3,10 +3,17 @@ Helper methods used for importing data
 """
 
 from __future__ import annotations
+from collections import OrderedDict
+from contextlib import contextmanager
+from pathlib import Path, PurePosixPath
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import os
 import os.path
+import re
+import stat
+import tempfile
+import zipfile
 
 import numpy as np
 import pandas as pd
@@ -30,7 +37,405 @@ __all__: list[str] = [
     "interpolate_timeseries_dataframe",
     "finalize_timeseries_dataframe",
     "generate_dataframes",
+    "DLCImportError",
+    "DLCScaleValidationError",
+    "discover_deeplabcut_source_directories",
+    "read_deeplabcut_tracks",
 ]
+
+
+_DLC_SUFFIXES = (".h5", ".hdf5", ".csv")
+_DLC_SCALE_RANGE_MM = (0.1, 10.0)
+
+
+class DLCImportError(ValueError):
+    """Raised when a DeepLabCut source cannot be converted safely."""
+
+
+class DLCScaleValidationError(DLCImportError):
+    """Raised when declared coordinate units imply an implausible larva length."""
+
+
+def _is_dlc_data_file(path: Path | PurePosixPath) -> bool:
+    return path.suffix.lower() in _DLC_SUFFIXES
+
+
+def _safe_zip_infos(archive: zipfile.ZipFile) -> list[zipfile.ZipInfo]:
+    """Return archive members after rejecting unsafe ZIP paths and links."""
+    infos = archive.infolist()
+    for info in infos:
+        member = PurePosixPath(info.filename)
+        if (
+            member.is_absolute()
+            or ".." in member.parts
+            or "\\" in info.filename
+            or info.flag_bits & 0x1
+        ):
+            raise DLCImportError(f"Unsafe ZIP member: {info.filename!r}")
+        mode = info.external_attr >> 16
+        if stat.S_ISLNK(mode):
+            raise DLCImportError(f"ZIP symlinks are not supported: {info.filename!r}")
+    return infos
+
+
+@contextmanager
+def _materialized_zip_source(source: Path):
+    """Extract a validated ZIP into a temporary directory for one import."""
+    try:
+        archive = zipfile.ZipFile(source)
+    except (OSError, zipfile.BadZipFile) as exc:
+        raise DLCImportError(f"Invalid DeepLabCut ZIP archive: {source}") from exc
+    with archive, tempfile.TemporaryDirectory(prefix="larvaworld-dlc-") as temp_dir:
+        infos = _safe_zip_infos(archive)
+        archive.extractall(temp_dir, members=infos)
+        yield Path(temp_dir)
+
+
+def discover_deeplabcut_source_directories(source: str | Path) -> list[str]:
+    """Return relative directories containing DLC CSV/HDF5 files in a folder or ZIP."""
+    path = Path(source).expanduser()
+    if path.is_dir():
+        directories = {
+            file.parent.relative_to(path).as_posix()
+            for file in path.rglob("*")
+            if file.is_file() and _is_dlc_data_file(file)
+        }
+        return sorted(directories)
+    if not path.is_file() or path.suffix.lower() != ".zip":
+        return []
+
+    try:
+        with zipfile.ZipFile(path) as archive:
+            infos = _safe_zip_infos(archive)
+    except (OSError, zipfile.BadZipFile) as exc:
+        raise DLCImportError(f"Invalid DeepLabCut ZIP archive: {path}") from exc
+    directories = {
+        PurePosixPath(info.filename).parent.as_posix() or "."
+        for info in infos
+        if not info.is_dir() and _is_dlc_data_file(PurePosixPath(info.filename))
+    }
+    return sorted(directories)
+
+
+def _direct_dlc_files(directory: Path) -> list[Path]:
+    if not directory.is_dir():
+        return []
+    return sorted(
+        file
+        for file in directory.iterdir()
+        if file.is_file() and _is_dlc_data_file(file)
+    )
+
+
+def _deduplicated_paths(paths: Sequence[Path]) -> list[Path]:
+    unique: OrderedDict[Path, None] = OrderedDict()
+    for path in paths:
+        unique[path.resolve()] = None
+    return list(unique)
+
+
+@contextmanager
+def _deeplabcut_source_roots(
+    source_dir: str | list[str], parent_dir: str, merged: bool
+):
+    source_paths = (
+        [Path(path).expanduser() for path in source_dir]
+        if isinstance(source_dir, list)
+        else [Path(source_dir).expanduser()]
+    )
+    if (
+        len(source_paths) == 1
+        and source_paths[0].is_file()
+        and source_paths[0].suffix.lower() == ".zip"
+    ):
+        with _materialized_zip_source(source_paths[0]) as extracted_root:
+            selected = (extracted_root / parent_dir).resolve()
+            try:
+                selected.relative_to(extracted_root.resolve())
+            except ValueError as exc:
+                raise DLCImportError(
+                    f"Unsafe ZIP source directory: {parent_dir!r}"
+                ) from exc
+            if not selected.is_dir():
+                raise DLCImportError(
+                    f"DeepLabCut source directory {parent_dir!r} was not found in {source_paths[0]}."
+                )
+            if merged:
+                roots = [selected] if _direct_dlc_files(selected) else []
+                roots.extend(
+                    path for path in sorted(selected.iterdir()) if path.is_dir()
+                )
+            else:
+                roots = [selected]
+            yield _deduplicated_paths(roots)
+        return
+
+    roots: list[Path] = []
+    for source_path in source_paths:
+        if source_path.is_dir():
+            roots.append(source_path)
+        elif _is_dlc_data_file(source_path):
+            roots.append(source_path.parent)
+    yield _deduplicated_paths(roots)
+
+
+def _recording_key(path: Path) -> str:
+    stem = path.stem
+    return stem.split("DLC_", 1)[0].rstrip("_-.") or stem
+
+
+def _recording_sources(roots: Sequence[Path]) -> list[list[Path]]:
+    groups: OrderedDict[tuple[Path, str], list[Path]] = OrderedDict()
+    for root in roots:
+        for file in _direct_dlc_files(root):
+            groups.setdefault((file.parent.resolve(), _recording_key(file)), []).append(
+                file
+            )
+
+    preferred_suffixes = {".h5": 0, ".hdf5": 0, ".csv": 1}
+    return [
+        sorted(
+            files, key=lambda file: (preferred_suffixes[file.suffix.lower()], file.name)
+        )
+        for _, files in groups.items()
+    ]
+
+
+def _read_deeplabcut_dataframe(file: Path) -> pd.DataFrame:
+    if file.suffix.lower() == ".csv":
+        dataframe = pd.read_csv(file, header=[0, 1, 2], index_col=0)
+    else:
+        dataframe = pd.read_hdf(file)
+    if not isinstance(dataframe.columns, pd.MultiIndex):
+        raise DLCImportError(
+            f"DeepLabCut file {file} does not have MultiIndex columns."
+        )
+    return dataframe
+
+
+def _dlc_column_levels(dataframe: pd.DataFrame) -> tuple[int, int]:
+    names = [
+        str(name).lower() if name is not None else ""
+        for name in dataframe.columns.names
+    ]
+    coord_level = next((i for i, name in enumerate(names) if name == "coords"), None)
+    if coord_level is None:
+        coord_level = next(
+            (
+                i
+                for i in range(dataframe.columns.nlevels)
+                if {"x", "y"}.issubset(
+                    {
+                        str(value).lower()
+                        for value in dataframe.columns.get_level_values(i)
+                    }
+                )
+            ),
+            None,
+        )
+    if coord_level is None:
+        raise DLCImportError(
+            "DeepLabCut columns must include x and y coordinate labels."
+        )
+    bodypart_level = next(
+        (i for i, name in enumerate(names) if name in {"bodypart", "bodyparts"}), None
+    )
+    if bodypart_level is None:
+        bodypart_level = coord_level - 1
+    if bodypart_level < 0:
+        raise DLCImportError("DeepLabCut columns do not identify body parts.")
+    return bodypart_level, coord_level
+
+
+def _lateral_bodypoint(
+    name: str, known_names: Sequence[str] | None = None
+) -> tuple[str, str] | None:
+    normalized = name.strip()
+    short = re.fullmatch(r"(.+?)[_\-\s]+([lr])", normalized, flags=re.IGNORECASE)
+    if short is not None:
+        return short.group(1).strip(), short.group(2).lower()
+    long = re.fullmatch(r"(.+?)[_\-\s]*(left|right)", normalized, flags=re.IGNORECASE)
+    if long is not None:
+        return long.group(1).strip(), long.group(2)[0].lower()
+    compact = re.fullmatch(r"(.+?)([lr])", normalized, flags=re.IGNORECASE)
+    if compact is not None and known_names is not None:
+        base, side = compact.group(1), compact.group(2).lower()
+        partner = f"{base}{'R' if side == 'l' else 'L'}"
+        if any(candidate.lower() == partner.lower() for candidate in known_names):
+            return base, side
+    return None
+
+
+def _resolved_dlc_points(
+    dataframe: pd.DataFrame,
+) -> tuple[list[str], list[tuple[pd.Series, pd.Series]]]:
+    """Resolve ordered DLC points, including left/right pairs and he/T*/A* labels.
+
+    The default source order is head to tail. ``he`` denotes the head point;
+    ``T1``, ``T2``, ... denote thoracic points and ``A1``, ``A2``, ... denote
+    abdominal points. Left/right pairs are averaged into one midline point.
+    """
+    bodypart_level, coord_level = _dlc_column_levels(dataframe)
+    columns: OrderedDict[str, dict[str, pd.Series]] = OrderedDict()
+    for column in dataframe.columns:
+        coord = str(column[coord_level]).lower()
+        if coord not in {"x", "y"}:
+            continue
+        bodypart = str(column[bodypart_level]).strip()
+        if not bodypart:
+            raise DLCImportError("DeepLabCut bodypoint names cannot be empty.")
+        values = columns.setdefault(bodypart, {})
+        if coord in values:
+            raise DLCImportError(
+                f"DeepLabCut bodypoint {bodypart!r} has multiple {coord!r} columns."
+            )
+        values[coord] = dataframe[column]
+
+    for bodypart, values in columns.items():
+        if set(values) != {"x", "y"}:
+            raise DLCImportError(
+                f"DeepLabCut bodypoint {bodypart!r} must contain exactly x and y coordinates."
+            )
+
+    resolved_names: list[str] = []
+    resolved_values: list[tuple[pd.Series, pd.Series]] = []
+    resolved_lateral: set[str] = set()
+    for bodypart, values in columns.items():
+        lateral = _lateral_bodypoint(bodypart, columns)
+        if lateral is None:
+            resolved_names.append(bodypart)
+            resolved_values.append((values["x"], values["y"]))
+            continue
+        base, side = lateral
+        if base in resolved_lateral:
+            continue
+        partner = next(
+            (
+                candidate
+                for candidate in columns
+                if _lateral_bodypoint(candidate, columns)
+                == (base, "r" if side == "l" else "l")
+            ),
+            None,
+        )
+        if partner is None:
+            raise DLCImportError(
+                f"DeepLabCut lateral bodypoint {bodypart!r} is missing its left/right partner."
+            )
+        resolved_lateral.add(base)
+        partner_values = columns[partner]
+        resolved_names.append(base)
+        resolved_values.append(
+            (
+                (values["x"] + partner_values["x"]) / 2,
+                (values["y"] + partner_values["y"]) / 2,
+            )
+        )
+
+    if not resolved_values:
+        raise DLCImportError("No DeepLabCut x/y bodypoint coordinates were found.")
+    return resolved_names, resolved_values
+
+
+def _canonical_dlc_track(
+    dataframe: pd.DataFrame,
+) -> tuple[pd.DataFrame, tuple[str, ...]]:
+    point_names, point_values = _resolved_dlc_points(dataframe)
+    columns = util.nam.midline_xy(len(point_values), flat=True)
+    track = pd.DataFrame(index=dataframe.index)
+    for (x_values, y_values), x_column, y_column in zip(
+        point_values, columns[::2], columns[1::2]
+    ):
+        track[x_column] = pd.to_numeric(x_values, errors="coerce")
+        track[y_column] = pd.to_numeric(y_values, errors="coerce")
+    numeric_index = pd.to_numeric(track.index, errors="coerce")
+    track.index = (
+        pd.Index(numeric_index, name=track.index.name)
+        if not np.isnan(numeric_index).any()
+        else pd.RangeIndex(len(track))
+    )
+    return track, tuple(point_names)
+
+
+def _validate_dlc_scale(tracks: Sequence[pd.DataFrame], npoints: int) -> None:
+    if npoints < 2:
+        return
+    columns = util.nam.midline_xy(npoints, flat=True)
+    lengths = np.concatenate(
+        [
+            np.hypot(
+                track[columns[-2]].to_numpy() - track[columns[0]].to_numpy(),
+                track[columns[-1]].to_numpy() - track[columns[1]].to_numpy(),
+            )
+            for track in tracks
+        ]
+    )
+    median_length = float(np.nanmedian(lengths))
+    low, high = _DLC_SCALE_RANGE_MM
+    if np.isfinite(median_length) and not low <= median_length <= high:
+        raise DLCScaleValidationError(
+            f"DeepLabCut median head-tail length is {median_length:.3g} mm; expected roughly "
+            f"{low:g}-{high:g} mm. Provide a valid filesystem.pixel_to_mm for pixel coordinates."
+        )
+
+
+def read_deeplabcut_tracks(
+    source_dir: str | list[str],
+    parent_dir: str = ".",
+    merged: bool = False,
+    pixel_to_mm: float | None = None,
+) -> tuple[list[pd.DataFrame], int]:
+    """Read generic single-animal DeepLabCut CSV/HDF5 tracks.
+
+    DLC likelihood columns are ignored. Source bodypoints default to header order
+    from head to tail. The aliases ``he``, ``T1``/``T2``/... (thoracic), and
+    ``A1``/``A2``/... (abdominal) are therefore accepted as an ordered midline.
+    Coordinates whose median head-tail length is outside the expected millimetre
+    range require a valid ``pixel_to_mm`` conversion factor.
+    """
+    with _deeplabcut_source_roots(source_dir, parent_dir, merged) as roots:
+        recordings = _recording_sources(roots)
+        if not recordings:
+            raise DLCImportError("No DeepLabCut CSV or HDF5 tracking files were found.")
+
+        tracks: list[pd.DataFrame] = []
+        schema: tuple[str, ...] | None = None
+        for files in recordings:
+            errors: list[str] = []
+            for file in files:
+                try:
+                    track, point_names = _canonical_dlc_track(
+                        _read_deeplabcut_dataframe(file)
+                    )
+                    break
+                except (
+                    OSError,
+                    ValueError,
+                    KeyError,
+                    ImportError,
+                    DLCImportError,
+                ) as exc:
+                    errors.append(f"{file.name}: {exc}")
+            else:
+                raise DLCImportError(
+                    "Unable to read DeepLabCut recording: " + "; ".join(errors)
+                )
+            if schema is None:
+                schema = point_names
+            elif schema != point_names:
+                raise DLCImportError(
+                    f"DeepLabCut recordings have incompatible point schemas: {schema} != {point_names}."
+                )
+            tracks.append(track)
+
+    if pixel_to_mm is not None:
+        if pixel_to_mm <= 0:
+            raise DLCScaleValidationError("DeepLabCut pixel_to_mm must be positive.")
+        for track in tracks:
+            track.loc[:, :] = track.to_numpy() * float(pixel_to_mm)
+    npoints = len(schema or ())
+    _validate_dlc_scale(tracks, npoints)
+    return tracks, npoints
 
 
 def init_endpoint_dataframe_from_timeseries(

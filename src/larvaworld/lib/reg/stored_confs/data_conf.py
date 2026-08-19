@@ -119,6 +119,25 @@ def LabFormat_dict() -> util.AttrDict:
             ),
             "preprocess": PreprocessConf(filter_f=0.1, transposition="arena"),
         },
+        "DeepLabCut": {
+            "tracker": TrackerOps(
+                XY_unit="mm",
+                fr=30.0,
+                Npoints=5,
+                Ncontour=0,
+                front_vector=(1, 3),
+                rear_vector=(-3, -1),
+                point_idx=-1,
+            ),
+            "filesystem": Filesystem(
+                structure="per_larva",
+                file_sufs=[".h5", ".hdf5", ".csv"],
+            ),
+            "env_params": reg.gen.Env(
+                arena=reg.gen.Arena(dims=(0.15, 0.15), geometry="circular")
+            ),
+            "preprocess": PreprocessConf(rescale_by=0.001),
+        },
     }
 
     return util.AttrDict(

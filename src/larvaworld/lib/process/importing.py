@@ -14,6 +14,7 @@ from ..process.import_aux import (
     get_Schleyer_metadata_inv_x,
     init_endpoint_dataframe_from_timeseries,
     match_larva_ids,
+    read_deeplabcut_tracks,
     read_timeseries_from_raw_files_per_larva,
     read_timeseries_from_raw_files_per_parameter,
 )
@@ -23,6 +24,7 @@ __all__: list[str] = [
     "import_Schleyer",
     "import_Berni",
     "import_Arguello",
+    "import_DeepLabCut",
     "lab_specific_import_functions",
 ]
 
@@ -186,9 +188,29 @@ def import_Arguello(
     return generate_dataframes(dfs, tracker.dt, **kwargs)
 
 
+def import_DeepLabCut(
+    source_dir: str | list[str],
+    tracker: Any,
+    filesystem: Any,
+    parent_dir: str = ".",
+    merged: bool = False,
+    **kwargs: Any,
+) -> Tuple[Any, Any]:
+    """Build a Larvaworld dataset from single-animal DeepLabCut exports."""
+    dfs, npoints = read_deeplabcut_tracks(
+        source_dir=source_dir,
+        parent_dir=parent_dir,
+        merged=merged,
+        pixel_to_mm=filesystem.pixel_to_mm,
+    )
+    tracker.Npoints = npoints
+    return generate_dataframes(dfs, tracker.dt, **kwargs)
+
+
 lab_specific_import_functions: dict[str, Callable[..., tuple[Any, Any]]] = {
     "Jovanic": import_Jovanic,
     "Berni": import_Berni,
     "Schleyer": import_Schleyer,
     "Arguello": import_Arguello,
+    "DeepLabCut": import_DeepLabCut,
 }

@@ -5,6 +5,7 @@ import inspect
 from pathlib import Path
 
 from larvaworld.lib import reg
+from larvaworld.lib.process import discover_deeplabcut_source_directories
 
 
 @dataclass(frozen=True)
@@ -29,13 +30,21 @@ def _relative_parent_dir(raw_root: Path, source_path: Path) -> str:
 
 
 def _matching_files(source_path: Path, filesystem: object) -> list[Path]:
+    suffixes = [
+        suffix
+        for suffix in [
+            getattr(filesystem, "file_suf", ""),
+            *getattr(filesystem, "file_sufs", []),
+        ]
+        if suffix
+    ]
     names = []
     for name in sorted(source_path.iterdir()):
         if not name.is_file():
             continue
         if filesystem.file_pref and not name.name.startswith(filesystem.file_pref):
             continue
-        if filesystem.file_suf and not name.name.endswith(filesystem.file_suf):
+        if suffixes and not any(name.name.endswith(suffix) for suffix in suffixes):
             continue
         if filesystem.file_sep and filesystem.file_sep not in name.name:
             continue
@@ -44,7 +53,12 @@ def _matching_files(source_path: Path, filesystem: object) -> list[Path]:
 
 
 def _candidate_warnings(source_path: Path, filesystem: object) -> list[str]:
-    if filesystem.file_pref or filesystem.file_suf or filesystem.file_sep:
+    if (
+        filesystem.file_pref
+        or filesystem.file_suf
+        or getattr(filesystem, "file_sufs", [])
+        or filesystem.file_sep
+    ):
         if not _matching_files(source_path, filesystem):
             return ["No matching raw files detected in the candidate directory."]
     return []
@@ -159,16 +173,38 @@ def _dedupe_candidates(
 
 
 def discover_raw_datasets(lab_id: str, raw_root: Path) -> list[RawDatasetCandidate]:
+    raw_path = Path(raw_root).expanduser()
+    lab_id_str = str(lab_id).strip()
+    if not lab_id_str:
+        raise ValueError("No lab format selected. Choose a LabFormat before discovery.")
+
+    if lab_id_str == "DeepLabCut":
+        source_dirs = discover_deeplabcut_source_directories(raw_path)
+        candidates = []
+        for parent_dir in source_dirs:
+            candidate_id = raw_path.stem if parent_dir == "." else Path(parent_dir).name
+            source_path = (
+                raw_path.resolve()
+                if raw_path.is_file()
+                else (raw_path / parent_dir).resolve()
+            )
+            candidates.append(
+                RawDatasetCandidate(
+                    candidate_id=candidate_id,
+                    parent_dir=parent_dir,
+                    display_name=(candidate_id if parent_dir == "." else parent_dir),
+                    source_path=source_path,
+                    warnings=[],
+                )
+            )
+        return _dedupe_candidates(candidates)
+
     normalized_root = _normalized_root(raw_root)
     if normalized_root is None:
         # A missing/invalid root simply has no candidates -- same
         # "not found" contract as the sibling missing-root check just
         # below (import-override resolution), not an error condition.
         return []
-
-    lab_id_str = str(lab_id).strip()
-    if not lab_id_str:
-        raise ValueError("No lab format selected. Choose a LabFormat before discovery.")
 
     try:
         lab = reg.conf.LabFormat.get(lab_id_str)

@@ -426,17 +426,31 @@ class Filesystem(NestedConf):
     folder_suff = param.String(doc="A suffix for detecting a raw-data folder.")
     file_pref = param.String(default="", doc="A prefix for detecting a raw-data file.")
     file_suf = param.String(default="", doc="A suffix for detecting a raw-data file.")
+    file_sufs = param.List(
+        default=[],
+        item_type=str,
+        doc="Additional suffixes for detecting raw-data files.",
+    )
     file_sep = param.String(doc="A separator for detecting a raw-data file.")
+    pixel_to_mm = OptionalPositiveNumber(
+        default=None,
+        softmax=10.0,
+        doc="Optional conversion factor from source pixels to millimetres.",
+    )
     structure = param.Selector(
         objects=["per_larva", "per_parameter"],
         doc="Whether each raw file corresponds to all parameters of a single larva or to a single parameter over all larvae.",
     )
 
     def valid_files_in_folder(self, dir) -> list[str]:
+        suffixes = [suffix for suffix in [self.file_suf, *self.file_sufs] if suffix]
         return [
             os.path.join(dir, n)
             for n in os.listdir(dir)
-            if (n.endswith(self.file_suf) and n.startswith(self.file_pref))
+            if (
+                (not suffixes or any(n.endswith(suffix) for suffix in suffixes))
+                and n.startswith(self.file_pref)
+            )
         ]
 
 

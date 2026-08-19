@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional
 import inspect
 import os
 import shutil
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -818,6 +819,9 @@ class LabFormat(NestedConf):
     ) -> str | list[str]:
         if raw_folder is None:
             raw_folder = self.raw_folder
+        raw_path = Path(raw_folder).expanduser()
+        if raw_path.is_file() and raw_path.suffix.lower() == ".zip":
+            return str(raw_path)
         source_dir = f"{raw_folder}/{parent_dir}"
         if merged:
             source_dir = [f"{source_dir}/{f}" for f in os.listdir(source_dir)]
@@ -865,6 +869,10 @@ class LabFormat(NestedConf):
         }
         if "source_dir" in import_params:
             import_kws["source_dir"] = source_dir
+        if "parent_dir" in import_params:
+            import_kws["parent_dir"] = parent_dir
+        if "merged" in import_params:
+            import_kws["merged"] = merged
         if "source_files" in import_params and "source_files" not in import_kws:
             source_dirs = [source_dir] if isinstance(source_dir, str) else source_dir
             import_kws["source_files"] = util.flatten_list(

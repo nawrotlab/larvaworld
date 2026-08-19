@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 from types import SimpleNamespace
 
+from larvaworld.lib import reg
 import larvaworld.lib.process.importing as importing
 
 
@@ -180,7 +181,14 @@ def test_import_single_track_variants(monkeypatch, tracker, filesystem, func_nam
 
 
 def test_lab_specific_import_functions_mapping():
-    expected = {"Jovanic", "Berni", "Schleyer", "Arguello"}
+    expected = {"Jovanic", "Berni", "Schleyer", "Arguello", "DeepLabCut"}
     assert expected == set(importing.lab_specific_import_functions.keys())
     for name in expected:
         assert callable(importing.lab_specific_import_functions[name])
+
+
+def test_deeplabcut_labformat_is_registered():
+    lab = reg.conf.LabFormat.get("DeepLabCut")
+
+    assert lab.tracker.fr == 30.0
+    assert lab.filesystem.file_sufs == [".h5", ".hdf5", ".csv"]

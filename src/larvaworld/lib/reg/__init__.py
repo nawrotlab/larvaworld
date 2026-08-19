@@ -387,6 +387,19 @@ try:
 except Exception:
     pass
 
+if "DeepLabCut" not in conf.LabFormat.confIDs:
+    config.resetConfs(conftypes=["LabFormat"])
+
+_legacy_scale_confirmation_entries = [
+    entry
+    for entry in conf.LabFormat.dict.values()
+    if "confirm_suspect_scale" in entry.get("filesystem", {})
+]
+if _legacy_scale_confirmation_entries:
+    for entry in _legacy_scale_confirmation_entries:
+        entry["filesystem"].pop("confirm_suspect_scale")
+    conf.LabFormat.save()
+
 config.resetConfs(init=True)
 
 vprint("Registry configured!", 2)

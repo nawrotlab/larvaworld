@@ -23,6 +23,7 @@ __all__: list[str] = [
     "import_Jovanic",
     "import_Berni",
     "import_Arguello",
+    "import_DeepLabCut",
     "lab_specific_import_functions",
     # Calibration functions
     "vel_definition",
@@ -32,6 +33,7 @@ __all__: list[str] = [
     # Import aux functions
     "read_timeseries_from_raw_files_per_parameter",
     "convert_spine_files_to_per_parameter_txt",
+    "discover_deeplabcut_source_directories",
 ]
 
 _NAME_TO_MODULE = {
@@ -49,6 +51,7 @@ _NAME_TO_MODULE = {
     "import_Jovanic": "larvaworld.lib.process.importing",
     "import_Berni": "larvaworld.lib.process.importing",
     "import_Arguello": "larvaworld.lib.process.importing",
+    "import_DeepLabCut": "larvaworld.lib.process.importing",
     "lab_specific_import_functions": "larvaworld.lib.process.importing",
     # Calibration functions
     "vel_definition": "larvaworld.lib.process.calibration",
@@ -58,6 +61,7 @@ _NAME_TO_MODULE = {
     # Import aux functions
     "read_timeseries_from_raw_files_per_parameter": "larvaworld.lib.process.import_aux",
     "convert_spine_files_to_per_parameter_txt": "larvaworld.lib.process.import_aux",
+    "discover_deeplabcut_source_directories": "larvaworld.lib.process.import_aux",
 }
 
 
