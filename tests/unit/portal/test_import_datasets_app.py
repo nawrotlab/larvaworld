@@ -4,6 +4,7 @@ from html import unescape
 from pathlib import Path
 from types import SimpleNamespace
 
+from bokeh.document import Document
 import panel as pn
 import pytest
 
@@ -293,6 +294,18 @@ def test_import_datasets_tracker_panel_uses_safe_numeric_widgets() -> None:
     assert "timestep" in float_inputs
     assert "# midline 2D points" in int_inputs
     assert "# contour 2D points" in int_inputs
+
+
+def test_import_datasets_optional_pixel_scale_is_serializable() -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+    pixel_scale = _find_widget(controller, "Pixel to mm")
+
+    assert isinstance(pixel_scale, pn.widgets.FloatInput)
+    assert pixel_scale.value is None
+
+    document = Document()
+    import_datasets_app.import_datasets_app().server_doc(document)
+    document.to_json()
 
 
 def test_import_datasets_tracker_vector_sliders_follow_points_and_bend() -> None:

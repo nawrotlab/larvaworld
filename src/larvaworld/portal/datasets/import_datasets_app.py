@@ -764,7 +764,11 @@ class _ImportDatasetsController:
         )
         general_column = pn.Column(
             self._param_section("General", self._working_lab, parameters=["labID"]),
-            self._param_section("Filesystem", self._working_lab.filesystem),
+            self._param_section(
+                "Filesystem",
+                self._working_lab.filesystem,
+                widget_overrides={"pixel_to_mm": {"type": pn.widgets.FloatInput}},
+            ),
             self._param_section(
                 "Preprocess",
                 self._working_lab.preprocess,
