@@ -18,6 +18,7 @@ from .. import reg, util
 __all__: list[str] = [
     "init_endpoint_dataframe_from_timeseries",
     "read_timeseries_from_raw_files_per_parameter",
+    "convert_spine_files_to_per_parameter_txt",
     "read_timeseries_from_raw_files_per_larva",
     "get_Schleyer_metadata_inv_x",
     "constrain_selected_tracks",
@@ -144,6 +145,127 @@ def read_timeseries_from_raw_files_per_parameter(
     df.set_index(keys=[aID], inplace=True, drop=True)
     df["Step"] = df["t"] / dt
     return df
+
+
+# The filename suffixes of the per-parameter txt files, in the order they are written.
+PER_PARAMETER_TXT_SUFFIXES: tuple[str, ...] = ("larvaid", "t", "x_spine", "y_spine")
+
+
+def convert_spine_files_to_per_parameter_txt(
+    source_files: Sequence[str],
+    target_dir: str,
+    source_id: str,
+    Npoints: int = 11,
+    id_offset: int = 100000,
+    id_base: int = 0,
+    id_prefix: str = "Larva_",
+    overwrite: bool = False,
+) -> dict[str, int]:
+    """
+    Converts raw tracker `.spine` files into the per-parameter txt files of the Jovanic format.
+
+    A `.spine` file holds one row per tracked larva per frame, with whitespace-separated
+    columns ``[recording_tag, track_id, t, x1, y1, x2, y2, ..., xN, yN]``, the midline
+    coordinates being interleaved. Track IDs are unique only within a single recording.
+
+    This function concatenates any number of such files into the four tab-separated,
+    header-less files expected by `read_timeseries_from_raw_files_per_parameter`, namely
+    ``{source_id}_larvaid.txt``, ``{source_id}_t.txt``, ``{source_id}_x_spine.txt`` and
+    ``{source_id}_y_spine.txt``. The recording tag column is dropped, the track IDs of each
+    file are offset so that they remain unique after concatenation, and the interleaved
+    coordinates are split into a block of x and a block of y columns.
+
+    Args:
+        source_files: Paths of the `.spine` files to concatenate, in the desired order.
+        target_dir: Directory to write the per-parameter txt files into. Created if missing.
+        source_id: The dataset ID, used as the filename prefix of the written files.
+        Npoints: The number of tracked midline points per larva. Defaults to 11.
+        id_offset: The per-file increment applied to the track IDs to keep them unique.
+            Defaults to 100000.
+        id_base: A constant added to every track ID. Pass a distinct value per dataset when
+            several datasets are to be compared, so that their agent IDs stay distinct as
+            well. Defaults to 0.
+        id_prefix: A string prepended to every track ID, making the agent IDs strings as
+            everywhere else in larvaworld. Purely numeric agent IDs are rejected downstream
+            when the dataset is replayed as a simulation, so only pass an empty string if
+            the imported dataset is meant for dataframe-level analysis alone.
+            Defaults to 'Larva_'.
+        overwrite: Whether to rewrite the files if they already exist. Defaults to False.
+
+    Returns:
+        A dictionary with the number of source files, rows and unique tracks written.
+
+    Raises:
+        ValueError: If no source files are given, if a file does not have the
+            ``3 + 2 * Npoints`` columns implied by Npoints, or if a file holds track IDs
+            that are not smaller than id_offset.
+
+    Notes:
+        The optional ``{source_id}_state.txt`` file of the Jovanic format holds behavioral
+        state annotations. It is not part of the raw tracker output and is therefore not
+        written here; the reader treats it as optional.
+
+    """
+    if len(source_files) == 0:
+        raise ValueError(f"No source files provided for the dataset '{source_id}'.")
+
+    Ncols = 3 + 2 * Npoints
+    paths = {
+        suf: f"{target_dir}/{source_id}_{suf}.txt" for suf in PER_PARAMETER_TXT_SUFFIXES
+    }
+
+    if not overwrite and all(os.path.isfile(f) for f in paths.values()):
+        ids = pd.read_csv(paths["larvaid"], header=None, sep="\t")
+        vprint(
+            f"**--- Per-parameter txt files for '{source_id}' already exist. Skipping conversion -----",
+            1,
+        )
+        return {
+            "files": len(source_files),
+            "rows": ids.shape[0],
+            "tracks": int(ids[0].nunique()),
+        }
+
+    dfs = []
+    for i, f in enumerate(source_files):
+        df = pd.read_csv(f, sep=r"\s+", header=None)
+        if df.shape[1] != Ncols:
+            raise ValueError(
+                f"File '{f}' has {df.shape[1]} columns while {Ncols} are expected for Npoints={Npoints}."
+            )
+        # Drop the recording tag column and make the track IDs unique across files.
+        df = df.iloc[:, 1:]
+        df.columns = range(df.shape[1])
+        if df[0].max() >= id_offset:
+            raise ValueError(
+                f"File '{f}' holds track IDs of at least {id_offset}, which breaks the ID offsetting. "
+                f"Raise the id_offset argument."
+            )
+        df[0] = df[0] + id_base + (i + 1) * id_offset
+        dfs.append(df)
+
+    d = pd.concat(dfs, ignore_index=True)
+
+    os.makedirs(target_dir, exist_ok=True)
+    kws = {"header": False, "index": False, "sep": "\t"}
+    # Columns of the concatenated dataframe : [track_id, t, x1, y1, ..., xN, yN]
+    larvaids = id_prefix + d[0].astype(str) if id_prefix else d[0]
+    larvaids.to_csv(paths["larvaid"], **kws)
+    d[[1]].to_csv(paths["t"], **kws)
+    d.iloc[:, 2::2].to_csv(paths["x_spine"], **kws)
+    d.iloc[:, 3::2].to_csv(paths["y_spine"], **kws)
+
+    res = {
+        "files": len(source_files),
+        "rows": d.shape[0],
+        "tracks": int(d[0].nunique()),
+    }
+    vprint(
+        f"**--- Converted {res['files']} spine files to the per-parameter format of '{source_id}' "
+        f"({res['rows']} rows, {res['tracks']} tracks) -----",
+        1,
+    )
+    return res
 
 
 def read_timeseries_from_raw_files_per_larva(

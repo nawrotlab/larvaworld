@@ -31,6 +31,7 @@ __all__: list[str] = [
     "comp_segmentation",
     # Import aux functions
     "read_timeseries_from_raw_files_per_parameter",
+    "convert_spine_files_to_per_parameter_txt",
 ]
 
 _NAME_TO_MODULE = {
@@ -56,6 +57,7 @@ _NAME_TO_MODULE = {
     "comp_segmentation": "larvaworld.lib.process.calibration",
     # Import aux functions
     "read_timeseries_from_raw_files_per_parameter": "larvaworld.lib.process.import_aux",
+    "convert_spine_files_to_per_parameter_txt": "larvaworld.lib.process.import_aux",
 }
 
 
