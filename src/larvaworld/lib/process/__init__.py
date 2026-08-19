@@ -33,6 +33,9 @@ __all__: list[str] = [
     # Import aux functions
     "read_timeseries_from_raw_files_per_parameter",
     "convert_spine_files_to_per_parameter_txt",
+    "estimate_timestep_from_timeseries",
+    "count_midline_points_in_raw_data",
+    "estimate_arena_dimensions",
     "discover_deeplabcut_source_directories",
 ]
 
@@ -61,6 +64,9 @@ _NAME_TO_MODULE = {
     # Import aux functions
     "read_timeseries_from_raw_files_per_parameter": "larvaworld.lib.process.import_aux",
     "convert_spine_files_to_per_parameter_txt": "larvaworld.lib.process.import_aux",
+    "estimate_timestep_from_timeseries": "larvaworld.lib.process.import_aux",
+    "count_midline_points_in_raw_data": "larvaworld.lib.process.import_aux",
+    "estimate_arena_dimensions": "larvaworld.lib.process.import_aux",
     "discover_deeplabcut_source_directories": "larvaworld.lib.process.import_aux",
 }
 

@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
+import glob
 import os
 import os.path
 import re
@@ -24,6 +25,9 @@ from .. import reg, util
 
 __all__: list[str] = [
     "init_endpoint_dataframe_from_timeseries",
+    "estimate_timestep_from_timeseries",
+    "count_midline_points_in_raw_data",
+    "estimate_arena_dimensions",
     "read_timeseries_from_raw_files_per_parameter",
     "convert_spine_files_to_per_parameter_txt",
     "read_timeseries_from_raw_files_per_larva",
@@ -470,12 +474,171 @@ def init_endpoint_dataframe_from_timeseries(
     return e
 
 
+def estimate_timestep_from_timeseries(
+    df: pd.DataFrame,
+    t_col: str = "t",
+    agent_level: str = "AgentID",
+) -> float:
+    """
+    Estimates the mean tracking timestep from the timestamps of a raw timeseries.
+
+    Trackers that record at a variable framerate cannot be described by the nominal
+    framerate stored in their lab format. This computes the timestep actually realized
+    by a recording, as the mean interval between consecutive samples of the same agent.
+    Intervals are taken per agent so that the transition from one agent's last sample to
+    the next agent's first one is never counted as a timestep.
+
+    Args:
+        df: The raw timeseries dataframe, indexed by agent ID and holding a column of
+            timestamps in seconds.
+        t_col: The name of the timestamp column. Defaults to 't'.
+        agent_level: The name of the index level holding the agent IDs.
+            Defaults to 'AgentID'.
+
+    Returns:
+        The mean timestep in seconds.
+
+    Raises:
+        ValueError: If the timestamps yield no positive interval to average over,
+            meaning every agent is tracked for a single sample.
+
+    Notes:
+        Only positive intervals are averaged. The mean is meaningful when tracks are
+        contiguous, which holds for trackers that assign a new agent ID after losing an
+        animal rather than leaving a gap in the existing track. For a tracker that does
+        leave long gaps within a track, the mean is pulled above the true timestep; the
+        estimate is reported through `vprint` so such a case is visible.
+
+    """
+    diffs = df.groupby(level=agent_level)[t_col].diff()
+    diffs = diffs[diffs > 0]
+    if diffs.empty:
+        raise ValueError(
+            f"Cannot estimate the timestep : no positive interval between consecutive "
+            f"'{t_col}' values within any agent."
+        )
+    dt = float(diffs.mean())
+    vprint(
+        f"**--- Timestep estimated from the data : dt={dt:.4f} s (fr={1 / dt:.2f} Hz) -----",
+        1,
+    )
+    return dt
+
+
+def count_midline_points_in_raw_data(
+    source_dir: str,
+    source_id: Optional[str] = None,
+    structure: str = "per_parameter",
+) -> Optional[int]:
+    """
+    Counts the midline points a raw dataset actually holds.
+
+    The number of tracked midline points is a property of the recording, not of the lab,
+    so a lab format's nominal value can disagree with the data at hand. This inspects the
+    first line of the raw files to count the points that are really there.
+
+    Two raw layouts are recognized, both of the 'per_parameter' structure : the
+    per-parameter txt files, where the x-coordinate file holds one column per midline
+    point, and the tracker's own `.spine` files, where a recording tag, an agent ID and a
+    timestamp are followed by one interleaved x/y pair per midline point.
+
+    Args:
+        source_dir: The folder holding the dataset's files.
+        source_id: The ID of the dataset, used as the filename prefix.
+        structure: The lab-format's filesystem structure. Defaults to 'per_parameter'.
+
+    Returns:
+        The number of midline points, or None if it cannot be determined from the raw
+        files, in which case the caller should fall back to the lab-format's value.
+
+    Notes:
+        The 'per_larva' structure is not counted from the data : there the mapping of file
+        columns onto midline, contour and centroid points is defined by the lab format's
+        read_sequence rather than by the file itself, so the file alone is not conclusive.
+
+    """
+    if structure != "per_parameter" or not source_id:
+        return None
+
+    def _first_line(path: str) -> Optional[str]:
+        try:
+            with open(path) as f:
+                return f.readline()
+        except OSError:
+            return None
+
+    # The per-parameter txt files hold one column per midline point.
+    line = _first_line(f"{source_dir}/{source_id}_x_spine.txt")
+    if line is not None:
+        Npoints = len(line.strip().split("\t"))
+        return Npoints if Npoints > 0 else None
+
+    # A raw spine file holds [tag, agent ID, t] followed by interleaved x/y pairs.
+    spine_files = sorted(
+        glob.glob(f"{source_dir}/{source_id}/**/*.spine", recursive=True)
+    ) or sorted(glob.glob(f"{source_dir}/{source_id}*.spine"))
+    if spine_files:
+        line = _first_line(spine_files[0])
+        if line is not None:
+            Ncols = len(line.split())
+            if Ncols > 3 and (Ncols - 3) % 2 == 0:
+                return (Ncols - 3) // 2
+    return None
+
+
+def estimate_arena_dimensions(
+    s: pd.DataFrame,
+    rescale_by: Optional[float] = None,
+) -> Optional[Tuple[float, float]]:
+    """
+    Estimates the arena dimensions from the space covered by the tracked coordinates.
+
+    The extent the animals cover approximates the tracked arena, which is useful when the
+    lab format's nominal arena does not describe the setup a dataset was recorded in. The
+    estimate is a lower bound : it is the area the animals actually visited, so it shrinks
+    if they avoided the borders or if few animals were tracked.
+
+    Args:
+        s: The timeseries dataframe, holding the coordinate columns of the tracked points.
+        rescale_by: The factor converting the coordinates to meters, matching the lab
+            format's preprocessing. Applied to the estimate if provided.
+
+    Returns:
+        The (x, y) arena dimensions in the units implied by rescale_by, or None if the
+        dataframe holds no usable coordinates, in which case the caller should fall back
+        to the lab-format's value.
+
+    """
+    x_cols = [c for c in s.columns if str(c).endswith("_x")]
+    y_cols = [c for c in s.columns if str(c).endswith("_y")]
+    if not x_cols or not y_cols:
+        return None
+    x = s[x_cols].to_numpy(dtype=float)
+    y = s[y_cols].to_numpy(dtype=float)
+    if not np.any(np.isfinite(x)) or not np.any(np.isfinite(y)):
+        return None
+    width = float(np.nanmax(x) - np.nanmin(x))
+    height = float(np.nanmax(y) - np.nanmin(y))
+    if not np.isfinite(width) or not np.isfinite(height) or width <= 0 or height <= 0:
+        return None
+    if rescale_by:
+        width *= rescale_by
+        height *= rescale_by
+    vprint(
+        f"**--- Arena dimensions estimated from the data : "
+        f"({width:.4f}, {height:.4f}) -----",
+        1,
+    )
+    return width, height
+
+
 def read_timeseries_from_raw_files_per_parameter(
     pref: str,
     tracker: Optional[Any] = None,
     dt: Optional[float] = None,
     Npoints: Optional[int] = None,
     Ncontour: Optional[int] = None,
+    estimate_dt: bool = False,
 ) -> pd.DataFrame:
     """
     Reads timeseries data stored in txt files of the lab-specific Jovanic format and returns them as a pd.Dataframe.
@@ -494,6 +657,12 @@ def read_timeseries_from_raw_files_per_parameter(
     dt : float, optional
         The tracker timestep.
         If not provided it is set to the lab-format's default value
+    estimate_dt : boolean
+        Whether to estimate the timestep from the timestamps of the data instead of
+        using the lab-format's nominal value. The estimate replaces the dt argument and
+        is written back to the tracker, so that it also reaches the imported dataset's
+        configuration. Meant for trackers of a variable framerate.
+        Defaults to False
 
     Returns
     -------
@@ -548,6 +717,15 @@ def read_timeseries_from_raw_files_per_parameter(
     # df[aID] = "Larva_" + df[aID].astype(str)
 
     df.set_index(keys=[aID], inplace=True, drop=True)
+
+    # A variable-framerate tracker is not described by its nominal timestep. Estimate the
+    # realized one before it is used to build the tick index, and write it back so that
+    # the rest of the import and the stored dataset configuration agree with the data.
+    if estimate_dt:
+        dt = estimate_timestep_from_timeseries(df, t_col=t, agent_level=aID)
+        if tracker is not None:
+            tracker.dt = dt
+
     df["Step"] = df["t"] / dt
     return df
 

@@ -855,18 +855,56 @@ class LabFormat(NestedConf):
         raw_folder: Optional[str] = None,
         merged: bool = False,
         save_mode: str = "semifull",
+        estimate_dt: Optional[bool] = None,
+        estimate_midline_points: bool = True,
         **kwargs: Any,
     ) -> tuple[pd.DataFrame | None, pd.DataFrame | None]:
         source_dir = self.get_source_dir(parent_dir, raw_folder, merged)
+        # The number of tracked midline points is a property of the recording rather than
+        # of the lab, so prefer the count found in the raw data over the lab-format's
+        # nominal value. The nominal value is kept if the data cannot settle the question.
+        if estimate_midline_points:
+            from ..process.import_aux import count_midline_points_in_raw_data
+
+            Npoints = count_midline_points_in_raw_data(
+                source_dir=source_dir[0]
+                if isinstance(source_dir, list)
+                else source_dir,
+                source_id=kwargs.get("source_id"),
+                structure=self.filesystem.structure,
+            )
+            if Npoints is not None and Npoints != self.tracker.Npoints:
+                vprint(
+                    f"**--- Midline points counted in the data : {Npoints}, "
+                    f"overriding the {self.labID} value of {self.tracker.Npoints} -----",
+                    1,
+                )
+                self.tracker.Npoints = Npoints
         if self.filesystem.structure == "per_larva":
             read_sequence = self.filesystem.read_sequence
             store_sequence = self.get_store_sequence(save_mode)
+        # A constant-framerate tracker is fully described by its nominal timestep, so the
+        # timestep is never estimated for one. A variable-framerate tracker is not, so its
+        # timestep is estimated from the data unless the caller opts out, in which case
+        # the lab-format's nominal value is used.
+        if self.tracker.constant_framerate:
+            estimate_dt = False
+        elif estimate_dt is None:
+            estimate_dt = True
         import_params = inspect.signature(self.import_func).parameters
         import_kws = {
             "tracker": self.tracker,
             "filesystem": self.filesystem,
             **kwargs,
         }
+        if "estimate_dt" in import_params:
+            import_kws["estimate_dt"] = estimate_dt
+        elif estimate_dt:
+            vprint(
+                f"**--- The {self.labID} import does not support timestep estimation. "
+                f"Using the lab-format value dt={self.tracker.dt} -----",
+                2,
+            )
         if "source_dir" in import_params:
             import_kws["source_dir"] = source_dir
         if "parent_dir" in import_params:
@@ -955,6 +993,7 @@ class LabFormat(NestedConf):
         refID: Optional[str] = None,
         enrich_conf: Optional[AttrDict | dict[str, Any]] = None,
         save_dataset: bool = True,
+        estimate_arena_dimensions: bool = False,
         **kwargs: Any,
     ) -> LarvaDataset | None:
         """
@@ -1003,6 +1042,25 @@ class LabFormat(NestedConf):
              Defaults to True.
          enrich_conf: dict, optional
              The configuration for enriching the imported dataset with secondary parameters.
+         estimate_dt: boolean, optional
+             Whether to estimate the tracker timestep from the timestamps of the data
+             instead of using the lab-format's nominal value. Only meaningful for lab
+             formats declaring a variable framerate (tracker.constant_framerate=False),
+             where it defaults to True and can be set to False to keep the nominal value.
+             A constant-framerate format never estimates its timestep. The estimate
+             replaces the lab-format's dt and fr in the imported dataset's configuration.
+         estimate_midline_points: boolean
+             Whether to count the tracked midline points in the raw data and use that
+             count when it differs from the lab-format's value. If the count cannot be
+             determined from the raw files the lab-format's value is kept.
+             Defaults to True.
+         estimate_arena_dimensions: boolean
+             Whether to estimate the arena dimensions from the space the tracked
+             coordinates cover and use them instead of the lab-format's arena. The
+             estimate is a lower bound, as it only covers the area the animals visited,
+             so the lab-format's arena is preferable whenever it is known. If the
+             estimation fails the lab-format's arena is kept.
+             Defaults to False.
          **kwargs: keyword arguments
              Additional keyword arguments to be passed to the lab_specific build-function.
 
@@ -1025,6 +1083,23 @@ class LabFormat(NestedConf):
             return None
         else:
             step = step.astype(float)
+            # The arena is estimated from the imported coordinates rather than from the
+            # raw files, so that it works the same for every lab format. The coordinates
+            # are still in the tracker's own unit at this point, so the lab-format's
+            # rescaling factor is applied to reach the meters the arena is defined in.
+            if estimate_arena_dimensions:
+                from ..process.import_aux import (
+                    estimate_arena_dimensions as _estimate_arena,
+                )
+
+                dims = _estimate_arena(step, rescale_by=self.preprocess.rescale_by)
+                if dims is not None:
+                    vprint(
+                        f"**--- Overriding the {self.labID} arena "
+                        f"{tuple(self.env_params.arena.dims)} with {dims} -----",
+                        1,
+                    )
+                    self.env_params.arena.dims = dims
             d = self.build_dataset(
                 step,
                 end,

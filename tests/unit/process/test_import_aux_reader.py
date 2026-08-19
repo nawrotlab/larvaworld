@@ -230,3 +230,158 @@ def test_convert_spine_files_rejects_invalid_input(tmp_path):
             target_dir=(tmp_path / "converted").as_posix(),
             source_id="Fed",
         )
+
+
+@pytest.mark.fast
+def test_estimate_timestep_averages_within_agents_only(tmp_path):
+    """
+    Verify that the timestep is averaged over intervals within each agent, so that the
+    jump from one agent's last timestamp to the next agent's first one is not counted.
+    """
+    # Two agents recorded over the same window at a 0.1 s timestep.
+    df = pd.DataFrame(
+        {
+            "AgentID": [1, 1, 1, 2, 2, 2],
+            "t": [0.0, 0.1, 0.2, 5.0, 5.1, 5.2],
+        }
+    ).set_index("AgentID")
+
+    dt = import_aux.estimate_timestep_from_timeseries(df)
+    # Averaging across agents would have included the 4.8 s jump and given ~1.0 s.
+    assert dt == pytest.approx(0.1)
+
+
+@pytest.mark.fast
+def test_estimate_timestep_recovers_a_variable_framerate():
+    """
+    Verify that an irregular timestamp series yields its mean interval, and that a
+    series with no interval to average over is reported explicitly.
+    """
+    times = [0.0, 0.09, 0.17, 0.28, 0.36]
+    df = pd.DataFrame({"AgentID": [1] * len(times), "t": times}).set_index("AgentID")
+    assert import_aux.estimate_timestep_from_timeseries(df) == pytest.approx(0.36 / 4)
+
+    # One sample per agent leaves no interval to average.
+    single = pd.DataFrame({"AgentID": [1, 2], "t": [0.0, 5.0]}).set_index("AgentID")
+    with pytest.raises(ValueError, match="no positive interval"):
+        import_aux.estimate_timestep_from_timeseries(single)
+
+
+@pytest.mark.fast
+def test_reader_estimates_timestep_and_writes_it_back_to_the_tracker(tmp_path):
+    """
+    Verify that the per-parameter reader replaces the tracker's nominal timestep with the
+    one realized by the data when estimation is requested, and that the resulting Step
+    index is built from the estimate rather than from the nominal value.
+    """
+    prefix = tmp_path / "sample"
+    times = [0.0, 0.1, 0.2, 0.0, 0.1, 0.2]
+    data_map = {
+        "_larvaid.txt": pd.DataFrame([1, 1, 1, 2, 2, 2]),
+        "_t.txt": pd.DataFrame(times),
+        "_x_spine.txt": pd.DataFrame([[0.0, 1.0]] * 6),
+        "_y_spine.txt": pd.DataFrame([[0.0, -1.0]] * 6),
+    }
+    for suffix, frame in data_map.items():
+        frame.to_csv(prefix.as_posix() + suffix, header=False, index=False, sep="\t")
+
+    # The tracker's nominal timestep (0.5 s) is five times the realized one (0.1 s).
+    tracker = SimpleNamespace(Npoints=2, Ncontour=0, dt=0.5)
+    result = import_aux.read_timeseries_from_raw_files_per_parameter(
+        prefix.as_posix(), tracker=tracker, estimate_dt=True
+    )
+
+    assert tracker.dt == pytest.approx(0.1)
+    # Step = t / dt, so the estimate must drive the tick index.
+    np.testing.assert_allclose(
+        result["Step"].values, [0.0, 1.0, 2.0, 0.0, 1.0, 2.0], atol=1e-9
+    )
+
+    # Without estimation the nominal timestep is kept and the ticks are compressed.
+    tracker2 = SimpleNamespace(Npoints=2, Ncontour=0, dt=0.5)
+    nominal = import_aux.read_timeseries_from_raw_files_per_parameter(
+        prefix.as_posix(), tracker=tracker2
+    )
+    assert tracker2.dt == 0.5
+    np.testing.assert_allclose(
+        nominal["Step"].values, [0.0, 0.2, 0.4, 0.0, 0.2, 0.4], atol=1e-9
+    )
+
+
+@pytest.mark.fast
+def test_count_midline_points_from_per_parameter_and_spine_files(tmp_path):
+    """
+    Verify that the midline points are counted from the x-coordinate file when the
+    per-parameter txt files exist, and from a raw spine file otherwise.
+    """
+    d = tmp_path / "exp"
+    d.mkdir()
+    # 3 midline points -> 3 columns in the x file.
+    pd.DataFrame([[0.0, 1.0, 2.0]]).to_csv(
+        d / "Fed_x_spine.txt", header=False, index=False, sep="\t"
+    )
+    assert import_aux.count_midline_points_in_raw_data(d.as_posix(), "Fed") == 3
+
+    # Without the txt files, a spine file of [tag, id, t] + 2 interleaved pairs -> 2.
+    other = tmp_path / "raw"
+    (other / "Starved" / "rec1").mkdir(parents=True)
+    (other / "Starved" / "rec1" / "a.spine").write_text("tag 1 0.0 0.0 10.0 1.0 11.0\n")
+    assert import_aux.count_midline_points_in_raw_data(other.as_posix(), "Starved") == 2
+
+
+@pytest.mark.fast
+def test_count_midline_points_returns_none_when_undeterminable(tmp_path):
+    """
+    Verify that the counter declines to guess, so that callers fall back to the
+    lab-format's own value rather than to a fabricated one.
+    """
+    d = tmp_path / "exp"
+    d.mkdir()
+    pd.DataFrame([[0.0, 1.0]]).to_csv(
+        d / "Fed_x_spine.txt", header=False, index=False, sep="\t"
+    )
+
+    # The per_larva structure maps columns via the lab format, not via the file.
+    assert (
+        import_aux.count_midline_points_in_raw_data(d.as_posix(), "Fed", "per_larva")
+        is None
+    )
+    # No dataset ID to build a filename prefix from.
+    assert import_aux.count_midline_points_in_raw_data(d.as_posix(), None) is None
+    # Nothing to read.
+    assert import_aux.count_midline_points_in_raw_data("no/such/dir", "Fed") is None
+
+
+@pytest.mark.fast
+def test_estimate_arena_dimensions_spans_all_tracked_points(tmp_path):
+    """
+    Verify that the arena estimate spans every coordinate column, and that the rescaling
+    factor converting the tracker's unit to meters is applied.
+    """
+    s = pd.DataFrame(
+        {
+            "head_x": [0.0, 100.0],
+            "tail_x": [10.0, 90.0],
+            "head_y": [0.0, 50.0],
+            "tail_y": [5.0, 45.0],
+        }
+    )
+    assert import_aux.estimate_arena_dimensions(s) == (100.0, 50.0)
+    # mm -> m
+    assert import_aux.estimate_arena_dimensions(s, rescale_by=0.001) == (0.1, 0.05)
+
+
+@pytest.mark.fast
+def test_estimate_arena_dimensions_declines_on_unusable_data():
+    """
+    Verify that data without coordinates, without finite values, or covering no area at
+    all yields None, so that callers keep the lab-format's arena.
+    """
+    # No coordinate columns.
+    assert import_aux.estimate_arena_dimensions(pd.DataFrame({"t": [0.0, 1.0]})) is None
+    # All-NaN coordinates.
+    nans = pd.DataFrame({"head_x": [np.nan], "head_y": [np.nan]})
+    assert import_aux.estimate_arena_dimensions(nans) is None
+    # A single point covers no area.
+    point = pd.DataFrame({"head_x": [1.0, 1.0], "head_y": [2.0, 2.0]})
+    assert import_aux.estimate_arena_dimensions(point) is None
