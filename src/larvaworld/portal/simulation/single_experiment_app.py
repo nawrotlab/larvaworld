@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import html
+import io
 import json
 import re
 from dataclasses import dataclass
@@ -17,6 +18,12 @@ from larvaworld.lib.sim.validation import (
     CompatibilityIssue,
     CompatibilityReport,
     validate_experiment_environment_compatibility,
+)
+from larvaworld.portal.buttons import (
+    export_button,
+    import_button,
+    reset_button,
+    run_button,
 )
 from larvaworld.portal.canvas_widgets import (
     EnvironmentCanvas,
@@ -46,6 +53,7 @@ from larvaworld.portal.config_widgets.preset_controls import (
     PresetSource,
     WorkspacePresetStore,
     build_preset_controls_panel,
+    build_preset_select_only_panel,
 )
 from larvaworld.portal.config_widgets.trials_widget import build_trials_widget
 from larvaworld.portal.simulation.parameter_resolution import (
@@ -275,10 +283,9 @@ _EXPERIMENT_TEMPLATE_SAVE_KEYS = (
 )
 # Dual-write save/delete (a workspace template and its same-named registry
 # Exp entry treated as one linked unit -- see PresetControlsController's
-# dual_write docs), but deliberately without registry reset: resetting the
-# *entire* Exp registry from inside a single-experiment editing context is
-# far more destructive/unexpected than the equivalent in the dedicated
-# Environment Builder app, so that capability stays off here.
+# dual_write docs). Registry reset is allowed for full parity with the Env
+# and Model apps' own Stored Configurations panels; PresetControlsController
+# guards it behind its standard confirm_destructive dialog either way.
 _EXPERIMENT_TEMPLATE_PRESET_POLICY = PresetActionPolicy(
     can_load_registry=True,
     can_load_workspace=True,
@@ -286,7 +293,7 @@ _EXPERIMENT_TEMPLATE_PRESET_POLICY = PresetActionPolicy(
     can_save_workspace=True,
     can_delete_registry=True,
     can_delete_workspace=True,
-    can_reset_registry=False,
+    can_reset_registry=True,
 )
 
 
@@ -770,10 +777,7 @@ class _SingleExperimentController:
             name="Run name",
             value=_default_run_name(self.selection.experiment_template),
         )
-        self.environment_template_default_btn = pn.widgets.Button(
-            name="Reset to defaults",
-            button_type="default",
-        )
+        self.environment_template_default_btn = reset_button(name="Reset to defaults")
         self.environment_preset_controls = PresetControlsController(
             conftype="Env",
             workspace_store=WorkspacePresetStore(
@@ -798,9 +802,13 @@ class _SingleExperimentController:
         self.environment_save_btn = self.environment_preset_controls.save_button
         self.environment_template_default_btn.width = None
         self.environment_template_default_btn.sizing_mode = "stretch_width"
-        self.environment_preset_view = build_preset_controls_panel(
-            self.environment_preset_controls,
-            reset_slot=self.environment_template_default_btn,
+        self.environment_preset_view = pn.Column(
+            build_preset_select_only_panel(
+                self.environment_preset_controls, title="Stored Configurations"
+            ),
+            self.environment_template_default_btn,
+            sizing_mode="stretch_width",
+            margin=0,
         )
         self.experiment_template_preset_controls = PresetControlsController(
             conftype="Exp",
@@ -845,8 +853,42 @@ class _SingleExperimentController:
         self.experiment_template_save_inline = pn.pane.HTML(
             "", css_classes=["lw-single-exp-env-save-inline"], margin=0
         )
+        if self.experiment_template_preset_controls.reset_button is not None:
+            self.experiment_template_preset_controls.reset_button.name = "Reset Presets"
+            self.experiment_template_preset_controls.reset_button.param.update(
+                width=160, sizing_mode="fixed"
+            )
+        (
+            self.experiment_template_import_btn,
+            self.experiment_template_import_input,
+        ) = import_button("Import", accept=".json,application/json")
+        (
+            self.experiment_template_export_btn,
+            self.experiment_template_export_download,
+        ) = export_button(
+            "Export",
+            callback=self._export_experiment_template_json,
+            filename=self._experiment_template_download_filename(),
+        )
         self.experiment_template_save_box = pn.Column(
-            build_preset_controls_panel(self.experiment_template_preset_controls),
+            build_preset_controls_panel(
+                self.experiment_template_preset_controls,
+                reset_slot=self.experiment_template_preset_controls.reset_button,
+                extra_sections=[
+                    pn.Column(
+                        self.experiment_template_import_input,
+                        self.experiment_template_export_download,
+                        pn.Row(
+                            self.experiment_template_import_btn,
+                            self.experiment_template_export_btn,
+                            sizing_mode="stretch_width",
+                            margin=(4, 0, 0, 0),
+                        ),
+                        sizing_mode="stretch_width",
+                        margin=0,
+                    ),
+                ],
+            ),
             self.experiment_template_save_hint,
             self.experiment_template_save_inline,
             css_classes=["lw-single-exp-template-save-box"],
@@ -861,10 +903,7 @@ class _SingleExperimentController:
             name="Generate simulation preview",
             button_type="primary",
         )
-        self.run_btn = pn.widgets.Button(
-            name="Run experiment",
-            button_type="success",
-        )
+        self.run_btn = run_button(name="Run experiment")
         self.preview_frames_input = pn.widgets.IntInput(
             name="Preview frames",
             value=_PREVIEW_STEP_CAP,
@@ -1045,6 +1084,9 @@ class _SingleExperimentController:
             self._on_use_template_default_environment
         )
         self.refresh_environments_btn.on_click(self._on_refresh_environments)
+        self.experiment_template_import_input.param.watch(
+            self._on_import_experiment_template_file, "value"
+        )
         self.prepare_btn.on_click(self._on_prepare_preview)
         self.simulation_preview_btn.on_click(self._on_generate_simulation_preview)
         self.run_btn.on_click(self._on_run_experiment)
@@ -1219,12 +1261,25 @@ class _SingleExperimentController:
         self.selection.param.environment_preset.objects = self._environment_options()
 
     def _sync_environment_preset_select(self) -> None:
+        # discard_events: this is bookkeeping to keep the widget's displayed
+        # value in sync with already-applied selection state, not a new
+        # user pick -- must not re-trigger the select-only environment
+        # panel's auto-load watcher (build_preset_select_only_panel), which
+        # would otherwise reload whatever this resolves to and stomp
+        # environment_save_name/other in-progress state on every refresh.
         options = self._environment_options()
         selected = self.selection.environment_preset
-        self.environment_preset_controls.preset_select.options = options
-        self.environment_preset_controls.preset_select.value = (
-            selected if selected in options.values() else "__template__"
-        )
+        # Both assignments must be inside discard_events: Select widgets
+        # eagerly auto-correct `.value` the moment `.options` changes if the
+        # current value becomes invalid, firing a value-changed event of its
+        # own before the explicit `.value = ...` below ever runs.
+        with param.parameterized.discard_events(
+            self.environment_preset_controls.preset_select
+        ):
+            self.environment_preset_controls.preset_select.options = options
+            self.environment_preset_controls.preset_select.value = (
+                selected if selected in options.values() else "__template__"
+            )
 
     def _load_selected_environment(self) -> util.AttrDict | None:
         selected = self.selection.environment_preset
@@ -1821,6 +1876,52 @@ class _SingleExperimentController:
             if key in parameters:
                 payload[key] = _json_ready(_normalize_scalar(parameters[key]))
         return payload
+
+    def _experiment_template_download_filename(self) -> str:
+        safe_name = _safe_preset_slug(self._selected_experiment()) or "experiment"
+        return f"{safe_name}_template.json"
+
+    def _export_experiment_template_json(self) -> io.StringIO:
+        payload = self._experiment_template_payload()
+        return io.StringIO(json.dumps(payload, indent=2))
+
+    def _on_import_experiment_template_file(self, _: param.parameterized.Event) -> None:
+        raw_value = self.experiment_template_import_input.value
+        if raw_value in (None, b"", ""):
+            return
+        filename = str(
+            getattr(self.experiment_template_import_input, "filename", "") or ""
+        ).strip()
+        try:
+            if isinstance(raw_value, (bytes, bytearray)):
+                text = raw_value.decode("utf-8")
+            elif isinstance(raw_value, str):
+                text = raw_value
+            else:
+                raise ValueError("Unsupported uploaded file payload type.")
+            payload = self._normalize_workspace_experiment_template_payload(
+                json.loads(text)
+            )
+        except Exception as exc:
+            self.status.object = f"Failed to load file: {exc}"
+            return
+
+        raw_name = Path(filename).stem if filename else "imported_experiment_template"
+        safe_name = _safe_preset_slug(raw_name) or "imported_experiment_template"
+        try:
+            saved_path = self.experiment_template_preset_controls.workspace_store.save(
+                safe_name, dict(payload)
+            )
+        except Exception as exc:
+            self.status.object = f"Failed to import file: {exc}"
+            return
+
+        self.experiment_template_preset_controls.refresh_list()
+        token = self.experiment_template_preset_controls._token_for_workspace(
+            saved_path.name
+        )
+        self.experiment_template_preset_controls.preset_select.value = token
+        self.experiment_template_preset_controls.load_selected()
 
     @staticmethod
     def _canonical_experiment_template_signature(payload: dict[str, Any]) -> str:

@@ -1643,7 +1643,15 @@ def test_single_experiment_environment_preset_box_is_first_in_environment_parame
     assert controller.environment_template_default_btn in preset_box.select(
         pn.widgets.Button
     )
-    assert controller.refresh_environments_btn in preset_box.select(pn.widgets.Button)
+    # This panel is the minimal dropdown-only selector (build_preset_select_
+    # only_panel): no visible Refresh/Save/Load/Delete/Reset buttons, just
+    # the select -- picking an entry loads it immediately.
+    assert controller.environment_preset_controls.preset_select in preset_box.select(
+        pn.widgets.Select
+    )
+    assert controller.refresh_environments_btn not in preset_box.select(
+        pn.widgets.Button
+    )
     assert controller.environment_preset_controls.reset_button is None
 
 
@@ -1796,7 +1804,13 @@ def test_single_experiment_template_save_box_in_configuration_and_disabled_initi
     assert controller.experiment_template_preset_controls.preset_select in (
         preset_card.select(pn.widgets.Select)
     )
-    assert controller.experiment_template_preset_controls.reset_button is None
+    assert controller.experiment_template_preset_controls.reset_button is not None
+    assert controller.experiment_template_preset_controls.reset_button.name == (
+        "Reset Presets"
+    )
+    assert controller.experiment_template_preset_controls.reset_button in (
+        preset_card.select(pn.widgets.Button)
+    )
     assert controller.experiment_template_save_name.disabled is True
     assert controller.experiment_template_save_btn.disabled is True
 
@@ -1978,7 +1992,7 @@ def test_single_experiment_template_helper_select_does_not_mutate_state(
     assert controller._selected_experiment() == "dish"
 
 
-def test_single_experiment_template_helper_hides_registry_reset_action(
+def test_single_experiment_template_helper_allows_registry_reset_action(
     tmp_path: Path,
 ) -> None:
     workspace_root = tmp_path / "workspace"
@@ -1986,16 +2000,17 @@ def test_single_experiment_template_helper_hides_registry_reset_action(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    assert controller.experiment_template_preset_controls.reset_button is None
+    assert controller.experiment_template_preset_controls.reset_button is not None
 
 
 def test_single_experiment_template_helper_allows_dual_write_registry_actions(
     tmp_path: Path,
 ) -> None:
     # Save/delete are dual-write (workspace + registry, linked as one unit,
-    # matching Environment Builder) but registry reset stays unavailable --
-    # see _EXPERIMENT_TEMPLATE_PRESET_POLICY's docstring-comment in
-    # single_experiment_app.py.
+    # matching Environment Builder); registry reset is also allowed, for
+    # full parity with the Environment Builder and Model Inspector's own
+    # Stored Configurations panels -- see _EXPERIMENT_TEMPLATE_PRESET_POLICY
+    # in single_experiment_app.py.
     workspace_root = tmp_path / "workspace"
     initialize_workspace(workspace_root)
     set_active_workspace_path(workspace_root)
@@ -2009,11 +2024,82 @@ def test_single_experiment_template_helper_allows_dual_write_registry_actions(
         is True
     )
     assert (
-        controller.experiment_template_preset_controls.policy.can_reset_registry
-        is False
+        controller.experiment_template_preset_controls.policy.can_reset_registry is True
     )
     assert controller.experiment_template_preset_controls.dual_write is True
-    assert controller.experiment_template_preset_controls.reset_button is None
+    assert controller.experiment_template_preset_controls.reset_button is not None
+
+
+def test_single_experiment_template_export_json_matches_current_payload(
+    tmp_path: Path,
+    isolated_exp_conf_dir: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    exported = json.loads(controller._export_experiment_template_json().getvalue())
+
+    assert exported == controller._experiment_template_payload()
+    assert exported["experiment"] == controller._selected_experiment()
+
+
+def test_single_experiment_template_import_json_file_loads_it(
+    tmp_path: Path,
+    isolated_exp_conf_dir: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    payload = controller._experiment_template_payload()
+
+    controller.experiment_template_import_input.filename = "my_imported_template.json"
+    controller.experiment_template_import_input.value = (
+        json.dumps(payload) + "\n"
+    ).encode("utf-8")
+    controller._on_import_experiment_template_file(None)  # type: ignore[arg-type]
+
+    preset_path = (
+        workspace_root
+        / "metadata"
+        / "experiment_templates"
+        / "my_imported_template.json"
+    )
+    assert preset_path.is_file()
+    assert json.loads(preset_path.read_text(encoding="utf-8")) == payload
+    assert controller.experiment_template_save_name.value == "my_imported_template"
+    assert controller._active_workspace_template_payload is not None
+    assert (
+        controller._active_workspace_template_payload["experiment"]
+        == payload["experiment"]
+    )
+
+
+def test_single_experiment_template_import_rejects_unknown_experiment(
+    tmp_path: Path,
+    isolated_exp_conf_dir: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    bad_payload = {"experiment": "not_a_real_registered_experiment"}
+
+    controller.experiment_template_import_input.filename = "bad_template.json"
+    controller.experiment_template_import_input.value = (
+        json.dumps(bad_payload) + "\n"
+    ).encode("utf-8")
+    controller._on_import_experiment_template_file(None)  # type: ignore[arg-type]
+
+    preset_path = (
+        workspace_root / "metadata" / "experiment_templates" / "bad_template.json"
+    )
+    assert not preset_path.is_file()
+    assert "Failed to load file" in controller.status.object
 
 
 def test_single_experiment_template_dual_write_save_and_delete_round_trip(
