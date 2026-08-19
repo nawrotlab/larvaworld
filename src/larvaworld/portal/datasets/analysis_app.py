@@ -8,6 +8,7 @@ import panel as pn
 
 from larvaworld.lib.reg.graph import GraphRegistry
 from larvaworld.lib.process.dataset import LarvaDataset
+from larvaworld.portal.buttons import draw_button, refresh_button
 from larvaworld.portal.datasets.analysis_helpers import (
     get_valid_plots_for_datasets,
     run_plot_for_datasets,
@@ -175,10 +176,8 @@ class _AnalysisController:
             sizing_mode="stretch_width",
             css_classes=["lw-analysis-table"],
         )
-        self.refresh_plots_button = pn.widgets.Button(
-            name="Check plot availability",
-            button_type="primary",
-            sizing_mode="stretch_width",
+        self.refresh_plots_button = refresh_button(
+            name="Check plot availability", button_type="primary"
         )
         self.plot_category_filter = pn.widgets.CheckBoxGroup(
             name="Plot category",
@@ -198,14 +197,10 @@ class _AnalysisController:
             sizing_mode="stretch_width",
             css_classes=["lw-analysis-plot-list"],
         )
-        self.run_plot_button = pn.widgets.Button(
-            name="Generate plot",
-            button_type="primary",
-            sizing_mode="stretch_width",
-        )
+        self.run_plot_button = draw_button(name="Generate plot")
         self.export_plot_button = pn.widgets.Button(
             name="Export",
-            button_type="default",
+            button_type="light",
             sizing_mode="stretch_width",
         )
         self.status_pane = pn.pane.HTML("", margin=0)

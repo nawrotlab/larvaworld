@@ -12,6 +12,8 @@ from typing import Any, Callable, Optional
 import panel as pn
 import param
 
+from larvaworld.portal.buttons import add_button, cancel_button, confirm_button
+
 from . import parameter_db_data
 from .parameter_funcs import (
     get_param_instance,
@@ -293,10 +295,8 @@ def _build_remove_confirm_popup(
 ) -> pn.viewable.Viewable:
     disp = get_param_instance(k).disp
     status_pane = pn.pane.Markdown("", margin=(8, 0, 0, 0))
-    confirm_button = pn.widgets.Button(
-        name="Delete", button_type="danger", margin=(0, 8, 0, 0)
-    )
-    cancel_button = pn.widgets.Button(name="Cancel", margin=0)
+    confirm_btn = confirm_button(name="Delete", margin=(0, 8, 0, 0), sizing_mode=None)
+    cancel_btn = cancel_button(name="Cancel", margin=0, sizing_mode=None)
 
     def _confirm(_: object) -> None:
         try:
@@ -310,8 +310,8 @@ def _build_remove_confirm_popup(
     def _cancel(_: object) -> None:
         hide()
 
-    confirm_button.on_click(_confirm)
-    cancel_button.on_click(_cancel)
+    confirm_btn.on_click(_confirm)
+    cancel_btn.on_click(_cancel)
 
     return pn.Column(
         pn.pane.Markdown(
@@ -323,8 +323,8 @@ def _build_remove_confirm_popup(
             margin=(0, 0, 12, 0),
         ),
         pn.Row(
-            confirm_button,
-            cancel_button,
+            confirm_btn,
+            cancel_btn,
             margin=0,
             styles={"justify-content": "center"},
         ),
@@ -701,16 +701,11 @@ def build_parameter_db_content(
     table.on_click(_on_clone_icon_click, column="Clone")
     table.on_click(_on_export_icon_click, column="Export")
 
-    add_button = pn.widgets.Button(
-        name="Add parameter",
-        button_type="success",
-        sizing_mode="stretch_width",
-        margin=0,
-    )
-    add_button.on_click(_add_parameter)
+    add_btn = add_button(name="Add parameter", margin=0)
+    add_btn.on_click(_add_parameter)
 
     sidebar = pn.Column(
-        add_button,
+        add_btn,
         columns_section,
         export_download,  # visible=False: not shown, only drives the download
         css_classes=["lw-parameter-db-sidebar"],

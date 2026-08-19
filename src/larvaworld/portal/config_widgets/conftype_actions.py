@@ -7,6 +7,14 @@ import panel as pn
 import param
 
 from larvaworld.lib import reg
+from larvaworld.portal.buttons import (
+    cancel_button,
+    confirm_button,
+    delete_button,
+    load_button,
+    reset_button,
+    save_button,
+)
 
 __all__ = ["ConftypeActionsController", "build_conftype_actions"]
 
@@ -67,9 +75,9 @@ class ConftypeActionsController:
         save_button_name: str = "Save",
         delete_button_name: str = "Delete",
         reset_button_name: str = "Reset configurations",
-        load_button_type: str = "primary",
-        save_button_type: str = "primary",
-        delete_button_type: str = "warning",
+        load_button_type: str = "warning",
+        save_button_type: str = "success",
+        delete_button_type: str = "danger",
         reset_button_type: str = "danger",
         button_width: int | None = None,
         sizing_mode: str = "stretch_width",
@@ -97,22 +105,22 @@ class ConftypeActionsController:
         self.on_status = on_status
         self.confirm_reset = confirm_reset
 
-        self.load_button = pn.widgets.Button(
+        self.load_button = load_button(
             name=load_button_name,
             button_type=load_button_type,
             **_widget_size(width=button_width, sizing_mode=sizing_mode),
         )
-        self.save_button = pn.widgets.Button(
+        self.save_button = save_button(
             name=save_button_name,
             button_type=save_button_type,
             **_widget_size(width=button_width, sizing_mode=sizing_mode),
         )
-        self.delete_button = pn.widgets.Button(
+        self.delete_button = delete_button(
             name=delete_button_name,
             button_type=delete_button_type,
             **_widget_size(width=button_width, sizing_mode=sizing_mode),
         )
-        self.reset_button = pn.widgets.Button(
+        self.reset_button = reset_button(
             name=reset_button_name,
             button_type=reset_button_type,
             visible=allow_reset,
@@ -233,16 +241,8 @@ class ConftypeActionsController:
         if not self.confirm_reset:
             self.reset_store()
             return
-        confirm = pn.widgets.Button(
-            name="Yes, recreate store",
-            button_type="danger",
-            sizing_mode="stretch_width",
-        )
-        cancel = pn.widgets.Button(
-            name="No, cancel",
-            button_type="default",
-            sizing_mode="stretch_width",
-        )
+        confirm = confirm_button(name="Yes, recreate store")
+        cancel = cancel_button(name="No, cancel")
         message = pn.pane.HTML(
             (
                 '<div style="font-size:12px;color:#9a3412;">'

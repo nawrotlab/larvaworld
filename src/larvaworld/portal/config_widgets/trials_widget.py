@@ -6,6 +6,7 @@ import panel as pn
 import param
 
 from larvaworld.lib import reg, util
+from larvaworld.portal.buttons import add_button, remove_button
 
 from .widget_base import collapsible_family_box, family_box, parameterized_editor
 
@@ -63,10 +64,8 @@ def build_trials_widget(
         value="",
         sizing_mode="stretch_width",
     )
-    add_button = pn.widgets.Button(name="Add epoch", button_type="primary", width=130)
-    delete_button = pn.widgets.Button(
-        name="Delete epoch", button_type="warning", width=130
-    )
+    add_btn = add_button(name="Add epoch", width=130)
+    delete_btn = remove_button(name="Delete epoch", width=130)
     editor_host = pn.Column(sizing_mode="stretch_width", margin=0)
 
     watchers: list[tuple[param.Parameterized, param.parameterized.Watcher]] = []
@@ -102,7 +101,7 @@ def build_trials_widget(
             if select.value not in options.values():
                 select.value = "0"
             select.disabled = False
-            delete_button.disabled = False
+            delete_btn.disabled = False
             current_epoch = epochs[int(select.value)]
             _watch_epoch(current_epoch)
             editor_host.objects = [
@@ -122,7 +121,7 @@ def build_trials_widget(
             select.options = {"No epochs yet": ""}
             select.value = ""
             select.disabled = True
-            delete_button.disabled = True
+            delete_btn.disabled = True
             editor_host.objects = [
                 pn.pane.HTML(
                     '<div class="lw-import-datasets-config-help">No epochs configured.</div>',
@@ -156,16 +155,16 @@ def build_trials_widget(
         _refresh()
 
     select.param.watch(lambda *_: _refresh(), "value")
-    add_button.on_click(_handle_add)
-    delete_button.on_click(_handle_delete)
+    add_btn.on_click(_handle_add)
+    delete_btn.on_click(_handle_delete)
     owner.param.watch(_handle_owner_trials_change, "trials")
     _refresh()
 
     content = pn.Column(
         select,
         pn.Row(
-            add_button,
-            delete_button,
+            add_btn,
+            delete_btn,
             align="end",
             css_classes=["lw-import-datasets-inline-action-row"],
             sizing_mode="stretch_width",

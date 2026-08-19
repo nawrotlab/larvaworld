@@ -9,6 +9,7 @@ import panel as pn
 
 from larvaworld.lib import reg
 from larvaworld.lib.reg.generators import LabFormat
+from larvaworld.portal.buttons import reset_button
 from larvaworld.portal.config_widgets import (
     ConftypeActionsController,
     build_env_params_widget,
@@ -422,10 +423,8 @@ class _ImportDatasetsController:
             width=110,
             css_classes=["lw-import-datasets-source-browse"],
         )
-        self.reset_button = pn.widgets.Button(
-            name="Reset source",
-            button_type="default",
-            width=140,
+        self.reset_button = reset_button(
+            name="Reset source", button_type="default", width=140
         )
         self.discover_button = pn.widgets.Button(
             name="Discover datasets",

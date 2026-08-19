@@ -8,6 +8,7 @@ import param
 
 from larvaworld.lib import util
 from larvaworld.lib.param.custom import ClassAttr, ClassDict
+from larvaworld.portal.buttons import add_button, remove_button
 
 __all__ = [
     "classattr_section",
@@ -553,16 +554,8 @@ def classdict_editor(
         placeholder=f"Enter a {label.lower()} key",
         sizing_mode="stretch_width",
     )
-    add_button = pn.widgets.Button(
-        name=f"Add {label.lower()}",
-        button_type="primary",
-        width=150,
-    )
-    delete_button = pn.widgets.Button(
-        name=f"Delete {label.lower()}",
-        button_type="warning",
-        width=150,
-    )
+    add_btn = add_button(name=f"Add {label.lower()}", width=150)
+    delete_btn = remove_button(name=f"Delete {label.lower()}", width=150)
     editor_host = pn.Column(sizing_mode="stretch_width", margin=0)
 
     def _assign_items(new_items: util.AttrDict) -> None:
@@ -581,7 +574,7 @@ def classdict_editor(
                 lambda item, key: family_box(key, parameterized_editor(item))
             )
             editor_host.objects = [builder(current_item, str(current_key))]
-            delete_button.disabled = False
+            delete_btn.disabled = False
         else:
             select.options = {empty_label: ""}
             select.value = ""
@@ -592,7 +585,7 @@ def classdict_editor(
                     margin=0,
                 )
             ]
-            delete_button.disabled = True
+            delete_btn.disabled = True
 
     def _build_new_item(item_key: str) -> param.Parameterized:
         item = parameter.item_type()
@@ -631,8 +624,8 @@ def classdict_editor(
         _refresh()
 
     select.param.watch(lambda *_: _refresh(), "value")
-    add_button.on_click(_handle_add)
-    delete_button.on_click(_handle_delete)
+    add_btn.on_click(_handle_add)
+    delete_btn.on_click(_handle_delete)
     owner.param.watch(lambda *_: _refresh(), name)
     _refresh()
 
@@ -646,8 +639,8 @@ def classdict_editor(
             select,
             key_input,
             pn.Row(
-                add_button,
-                delete_button,
+                add_btn,
+                delete_btn,
                 align="end",
                 css_classes=["lw-import-datasets-inline-action-row"],
                 sizing_mode="stretch_width",

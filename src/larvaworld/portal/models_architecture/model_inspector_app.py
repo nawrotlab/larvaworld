@@ -22,7 +22,14 @@ from larvaworld.lib.model import Effector
 from larvaworld.lib.model import agents, deb
 from larvaworld.lib.model import moduleDB as MD
 from larvaworld.lib.param import class_objs
-from larvaworld.portal.buttons import build_load_file_button
+from larvaworld.portal.buttons import (
+    draw_button,
+    export_button,
+    import_button,
+    pause_button,
+    reset_button,
+    run_button,
+)
 from larvaworld.portal.config_widgets.preset_controls import (
     ADVANCED_PRESET_POLICY,
     PresetControlsController,
@@ -93,10 +100,6 @@ MODEL_INSPECTOR_RAW_CSS = """
   padding: 10px 12px;
   border: 1px solid rgba(17, 17, 17, 0.1);
   background: rgba(248, 250, 252, 0.94);
-}
-
-.lw-model-inspector-hidden-download-proxy {
-  display: none;
 }
 
 .lw-model-inspector-controls-box {
@@ -425,22 +428,16 @@ class _ModelInspectorController:
             value=[self._draft_model_id],
             sizing_mode="stretch_width",
         )
-        self.compare_run_button = pn.widgets.Button(
-            name="Draw", button_type="primary", sizing_mode="stretch_width"
-        )
-        self.run_button = pn.widgets.Button(name="Run", button_type="success")
-        self.pause_button = pn.widgets.Button(name="Pause", button_type="primary")
+        self.compare_run_button = draw_button(name="Draw")
+        self.run_button = run_button(name="Run", sizing_mode=None)
+        self.pause_button = pause_button(name="Pause", sizing_mode=None)
         self.clear_trace_button = pn.widgets.Button(
             name="Clear trace", button_type="primary"
         )
-        self.reset_preset_button = pn.widgets.Button(
-            name="Reset to model preset",
-            button_type="warning",
-            sizing_mode="stretch_width",
-        )
+        self.reset_preset_button = reset_button(name="Reset to model preset")
         self.export_button = pn.widgets.Button(
             name="📥 Export JSON",
-            button_type="default",
+            button_type="light",
             sizing_mode="stretch_width",
         )
         self.export_status = pn.pane.HTML("", margin=(6, 0, 0, 0))
@@ -502,20 +499,14 @@ class _ModelInspectorController:
         )
         if default_registry_ref is not None:
             self.model_preset_controls.preset_select.value = default_registry_ref.token
-        self.import_model_btn, self.import_model_input = build_load_file_button(
-            "Import", accept=".json,application/json", button_type="default"
+        self.import_model_btn, self.import_model_input = import_button(
+            "Import", accept=".json,application/json"
         )
-        self.export_model_download_btn = pn.widgets.Button(
-            name="Export", button_type="default"
-        )
-        self.export_model_btn = pn.widgets.FileDownload(
-            name="",
-            label="Export",
-            button_type="default",
+        self.export_model_download_btn, self.export_model_btn = export_button(
+            "Export",
             callback=self._export_draft_json,
             filename=self._draft_download_filename(),
         )
-        self.export_model_btn.css_classes = ["lw-model-inspector-hidden-download-proxy"]
 
         self._sources = {
             key: ColumnDataSource(data={"time": [], key: []})
@@ -540,12 +531,6 @@ class _ModelInspectorController:
             self._on_plot_reporters_change, "value"
         )
         self.compare_run_button.on_click(self._on_compare_draw)
-        self.export_model_download_btn.js_on_click(
-            args={"download_proxy": self.export_model_btn},
-            code="""
-                download_proxy.setv({clicks: download_proxy.clicks + 1});
-            """,
-        )
         self.import_model_input.param.watch(self._on_import_model_file, "value")
         self.run_button.on_click(self._on_run)
         self.pause_button.on_click(self._on_pause)
@@ -1503,13 +1488,14 @@ class _ModelInspectorController:
             self.reset_preset_button,
             sizing_mode="stretch_width",
         )
-        self.model_preset_controls.reset_button.name = "Reset registry"
+        self.model_preset_controls.reset_button.name = "Reset Presets"
         self.model_preset_controls.reset_button.param.update(
             width=160, sizing_mode="fixed"
         )
         model_preset_panel = build_preset_controls_panel(
             self.model_preset_controls,
             reset_slot=self.model_preset_controls.reset_button,
+            save_target_slot=self.model_preset_controls.save_target,
             extra_sections=[
                 pn.Column(
                     self.import_model_input,

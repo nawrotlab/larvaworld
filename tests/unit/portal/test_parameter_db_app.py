@@ -335,7 +335,7 @@ def test_add_form_buttons_include_clone_by_key() -> None:
     buttons = {
         b.name: b.button_type for b in detail_popup.body.select(pn.widgets.Button)
     }
-    assert buttons == {"Clone by key": "primary", "Load from file": "warning"}
+    assert buttons == {"Clone by key": "primary", "Load from file": "light"}
     key_inputs = detail_popup.body.select(pn.widgets.AutocompleteInput)
     assert len(key_inputs) == 1
     assert reg.par.dict["t"].k in key_inputs[0].options
@@ -433,7 +433,7 @@ def test_clone_then_add_registers_new_param_with_edited_doc() -> None:
     doc_widget.value = "custom doc text"
 
     rows_before = len(table.value)
-    _click(detail_popup.body, "Save", button_type="primary")
+    _click(detail_popup.body, "Save", button_type="success")
 
     assert "x_clone_add_test_k" in reg.par.dict
     assert reg.par.kdict["x_clone_add_test_k"].description == "custom doc text"

@@ -8,6 +8,12 @@ import panel as pn
 
 from larvaworld.lib.process.dataset import LarvaDataset
 from larvaworld.lib.util.dictsNlists import load_dict
+from larvaworld.portal.buttons import (
+    cancel_button,
+    confirm_button,
+    delete_button,
+    refresh_button,
+)
 from larvaworld.portal.datasets.manager_helpers import (
     UnifiedDatasetRecord,
     annotate_dataset,
@@ -370,16 +376,10 @@ class _DatasetManagerController:
             value="",
             width=220,
         )
-        self.refresh_button = pn.widgets.Button(
-            name="Refresh",
-            button_type="primary",
-            width=120,
+        self.refresh_button = refresh_button(
+            name="Refresh", button_type="primary", width=120
         )
-        self.refresh_list_button = pn.widgets.Button(
-            name="Refresh list",
-            button_type="default",
-            width=140,
-        )
+        self.refresh_list_button = refresh_button(name="Refresh list", width=140)
         self.copy_path_button = pn.widgets.Button(
             name="Copy dataset path",
             button_type="default",
@@ -392,22 +392,11 @@ class _DatasetManagerController:
             width=180,
             disabled=True,
         )
-        self.delete_button = pn.widgets.Button(
-            name="Delete dataset",
-            button_type="danger",
-            width=140,
-            disabled=True,
+        self.delete_button = delete_button(
+            name="Delete dataset", width=140, disabled=True
         )
-        self.confirm_delete_button = pn.widgets.Button(
-            name="Yes, delete",
-            button_type="danger",
-            sizing_mode="stretch_width",
-        )
-        self.cancel_delete_button = pn.widgets.Button(
-            name="Cancel",
-            button_type="default",
-            sizing_mode="stretch_width",
-        )
+        self.confirm_delete_button = confirm_button(name="Yes, delete")
+        self.cancel_delete_button = cancel_button(name="Cancel")
         self.table = pn.widgets.Tabulator(
             pd.DataFrame(columns=TABLE_COLUMNS),
             show_index=False,

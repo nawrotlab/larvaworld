@@ -25,7 +25,15 @@ from larvaworld.lib.param.custom import ClassAttr, ClassDict
 from larvaworld.lib.param.composition import Substrate, substrate_dict
 from larvaworld.lib.param.spatial import Area
 from larvaworld.lib.param.xy_distro import Spatial_Distro
-from larvaworld.portal.buttons import build_load_file_button
+from larvaworld.portal.buttons import (
+    add_button,
+    cancel_button,
+    confirm_button,
+    delete_button,
+    export_button,
+    import_button,
+    remove_button,
+)
 from larvaworld.portal.canvas_widgets.placement_controller import (
     HitCandidate,
     SelectionSync,
@@ -1066,13 +1074,9 @@ class _EnvironmentBuilderController:
             height=180,
             sizing_mode="stretch_width",
         )
-        self.add_wind_puff_btn = pn.widgets.Button(
-            name="Add air puff",
-            button_type="default",
-        )
-        self.remove_wind_puff_btn = pn.widgets.Button(
-            name="Remove selected air puff",
-            button_type="warning",
+        self.add_wind_puff_btn = add_button(name="Add air puff", sizing_mode=None)
+        self.remove_wind_puff_btn = remove_button(
+            name="Remove selected air puff", sizing_mode=None
         )
         self.thermoscape_enabled = pn.widgets.Checkbox(
             name="Enable thermoscape", value=False
@@ -1100,21 +1104,18 @@ class _EnvironmentBuilderController:
             height=180,
             sizing_mode="stretch_width",
         )
-        self.add_thermo_source_btn = pn.widgets.Button(
-            name="Add thermal source",
-            button_type="default",
+        self.add_thermo_source_btn = add_button(
+            name="Add thermal source", sizing_mode=None
         )
-        self.remove_thermo_source_btn = pn.widgets.Button(
-            name="Remove selected thermal source",
-            button_type="warning",
+        self.remove_thermo_source_btn = remove_button(
+            name="Remove selected thermal source", sizing_mode=None
         )
         self.apply_selected_btn = pn.widgets.Button(
             name="Apply changes",
             button_type="success",
         )
-        self.delete_selected_btn = pn.widgets.Button(
-            name="Delete selected",
-            button_type="danger",
+        self.delete_selected_btn = delete_button(
+            name="Delete selected", sizing_mode=None
         )
         for key, widget in (
             ("select_mode", self.select_mode),
@@ -1313,12 +1314,8 @@ class _EnvironmentBuilderController:
         self.refresh_presets_btn = self.preset_controls.refresh_button
         self.preset_meta = self.preset_controls.storage_info
         self.preset_overwrite_confirm = self.preset_controls.confirmation_host
-        self.load_file_btn, self.load_file_input = build_load_file_button(
-            "Import", accept=".json,application/json", button_type="default"
-        )
-        self.download_file_btn = pn.widgets.Button(
-            name="Export",
-            button_type="default",
+        self.load_file_btn, self.load_file_input = import_button(
+            "Import", accept=".json,application/json"
         )
         self.clear_last_btn = pn.widgets.Button(name="Undo last", button_type="default")
         self.clear_all_btn = pn.widgets.Button(
@@ -1327,14 +1324,11 @@ class _EnvironmentBuilderController:
         self.clear_arena_btn = pn.widgets.Button(
             name="Clear arena", button_type="warning"
         )
-        self.export_btn = pn.widgets.FileDownload(
-            name="",
-            label="Export",
-            button_type="default",
+        self.download_file_btn, self.export_btn = export_button(
+            "Export",
             callback=self._export_json,
             filename="environment_builder_config.json",
         )
-        self.export_btn.css_classes = ["lw-env-builder-hidden-download-proxy"]
         self._register_field(self.preset_name, "preset_name")
         self._register_field(self.preset_select, "preset_select")
         self._suspend_arena_update = False
@@ -1358,16 +1352,8 @@ class _EnvironmentBuilderController:
                 "color": "rgba(95, 20, 20, 0.95)",
             },
         )
-        self.confirm_reset_btn = pn.widgets.Button(
-            name="Yes, reset",
-            button_type="danger",
-            sizing_mode="stretch_width",
-        )
-        self.cancel_reset_btn = pn.widgets.Button(
-            name="No, cancel",
-            button_type="default",
-            sizing_mode="stretch_width",
-        )
+        self.confirm_reset_btn = confirm_button(name="Yes, reset")
+        self.cancel_reset_btn = cancel_button(name="No, cancel")
         self.reset_confirm_panel = pn.Column(
             self.reset_confirm_text,
             pn.Row(
@@ -1997,12 +1983,6 @@ class _EnvironmentBuilderController:
             _preset_btn.on_click(
                 lambda _event: self._sync_preset_controls_availability()
             )
-        self.download_file_btn.js_on_click(
-            args={"download_proxy": self.export_btn},
-            code="""
-                download_proxy.setv({clicks: download_proxy.clicks + 1});
-            """,
-        )
         self.load_file_input.param.watch(self._on_load_file, "value")
         self.clear_last_btn.on_click(self._on_clear_last)
         self.confirm_reset_btn.on_click(self._on_confirm_reset_configurations)
@@ -4768,7 +4748,6 @@ class _EnvironmentBuilderV2Controller:
         self._syncing_area_dims = False
         self._syncing_group_scale = False
         self._syncing_food_grid_dims = False
-        self.runtime.clear_all_btn.name = "Reset configurations"
         self.runtime.selected_color.width = 52
         self.runtime.selected_color.sizing_mode = "fixed"
         self.runtime.select_mode.width = None
@@ -5422,6 +5401,7 @@ class _EnvironmentBuilderV2Controller:
             collapsed=False,
             sizing_mode="stretch_width",
         )
+        self.runtime.clear_all_btn.name = "Reset Presets"
         self.runtime.clear_all_btn.param.update(width=160, sizing_mode="fixed")
         presets = build_preset_controls_panel(
             self.runtime.preset_controls,

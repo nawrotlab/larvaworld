@@ -10,6 +10,7 @@ import param
 
 from larvaworld.lib import util
 from larvaworld.lib.reg import keymap
+from larvaworld.portal.buttons import reset_button, save_button
 from larvaworld.portal.workspace import (
     WorkspaceError,
     get_active_workspace,
@@ -226,16 +227,8 @@ class DisplayShortcutsController(param.Parameterized):
             button_type="default",
             width=120,
         )
-        self._save_btn = pn.widgets.Button(
-            name="Save shortcuts",
-            button_type="primary",
-            width=132,
-        )
-        self._reset_btn = pn.widgets.Button(
-            name="Reset all to defaults",
-            button_type="default",
-            width=164,
-        )
+        self._save_btn = save_button(name="Save shortcuts", width=132)
+        self._reset_btn = reset_button(name="Reset all to defaults", width=164)
         self._key_buttons: dict[str, pn.widgets.Button] = {}
         self._view_obj: pn.viewable.Viewable | None = None
         self._edit_btn.on_click(self._toggle_editing)

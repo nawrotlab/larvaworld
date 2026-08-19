@@ -15,7 +15,7 @@ import panel as pn
 
 from larvaworld.lib import reg
 from larvaworld.lib.reg.data_aux import LarvaworldParam
-from larvaworld.portal.buttons import build_load_file_button
+from larvaworld.portal.buttons import import_button, save_button
 
 from . import parameter_db_data
 from .parameter_funcs import get_param_instance, param_from_file, register_new_param
@@ -252,9 +252,7 @@ def build_param_detail_popup(
 
     if editable and on_save is not None:
         status_pane = pn.pane.Markdown("", margin=(4, 0, 0, 0))
-        save_button = pn.widgets.Button(
-            name="Save", button_type="primary", margin=(8, 0, 0, 0)
-        )
+        save_btn = save_button(name="Save", margin=(8, 0, 0, 0), sizing_mode=None)
 
         def _on_click(_: object) -> None:
             fields = dict(instance.to_config())
@@ -267,8 +265,8 @@ def build_param_detail_popup(
             except (ValueError, KeyError) as exc:
                 status_pane.object = f":red_circle: {exc}"
 
-        save_button.on_click(_on_click)
-        children.extend([save_button, status_pane])
+        save_btn.on_click(_on_click)
+        children.extend([save_btn, status_pane])
 
     return pn.Column(*children, css_classes=["lw-parameter-db-detail"], margin=0)
 
@@ -302,11 +300,11 @@ def _build_add_parameter_popup(
         button_type="primary",
         margin=(0, 8, 0, 0),
     )
-    load_file_button, config_input = build_load_file_button(
+    load_file_button, config_input = import_button(
         "Load from file",
         accept=".pkl,.json",
-        button_type="warning",
         margin=(0, 8, 0, 0),
+        sizing_mode=None,
     )
     status_pane = pn.pane.Markdown("", margin=(0, 0, 0, 8))
     detail_panel = pn.Column(

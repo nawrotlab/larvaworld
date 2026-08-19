@@ -10,6 +10,7 @@ import panel as pn
 
 from larvaworld.lib import reg, sim
 from larvaworld.lib.process.dataset import LarvaDataset
+from larvaworld.portal.buttons import run_button
 from larvaworld.portal.canvas_widgets import EnvironmentCanvas
 from larvaworld.portal.datasets.replay_data import (
     build_environment_state_for_member,
@@ -284,9 +285,7 @@ class _DatasetReplayController:
             end=120,
             disabled=True,
         )
-        self.open_pygame_replay_btn = pn.widgets.Button(
-            name="Run replay", button_type="primary"
-        )
+        self.open_pygame_replay_btn = run_button(name="Run replay", sizing_mode=None)
         self.display_shortcuts_dialog_controller = build_display_shortcuts_dialog(
             note=(
                 "These shortcuts apply only to the native pygame display opened by "

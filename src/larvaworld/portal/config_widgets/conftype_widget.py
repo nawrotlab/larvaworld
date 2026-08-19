@@ -12,6 +12,7 @@ from larvaworld.lib.param.nested_parameter_group import NestedConf
 from larvaworld.portal.config_widgets.conftype_actions import (
     ConftypeActionsController,
 )
+from larvaworld.portal.buttons import add_button, remove_button
 from larvaworld.portal.config_widgets.enrichment_widget import build_enrichment_widget
 
 __all__ = [
@@ -349,11 +350,7 @@ class ConftypeWidgetController:
         content = pn.Column(sizing_mode="stretch_width")
 
         if nested_value is None:
-            create_button = pn.widgets.Button(
-                name=f"Initialize {title}",
-                button_type="primary",
-                sizing_mode="stretch_width",
-            )
+            create_btn = add_button(name=f"Initialize {title}")
 
             def _create(_event: Any = None) -> None:
                 try:
@@ -366,8 +363,8 @@ class ConftypeWidgetController:
                 self._render_editor()
                 self._set_status(f'Initialized "{title}".', tone="success")
 
-            create_button.on_click(_create)
-            content.append(create_button)
+            create_btn.on_click(_create)
+            content.append(create_btn)
         else:
             if name == "enrichment":
                 content.append(build_enrichment_widget(nested_value, wrap=False))
@@ -406,16 +403,8 @@ class ConftypeWidgetController:
             placeholder="Enter a key and click Add item",
             sizing_mode="stretch_width",
         )
-        add_button = pn.widgets.Button(
-            name="Add item",
-            button_type="primary",
-            sizing_mode="stretch_width",
-        )
-        delete_button = pn.widgets.Button(
-            name="Delete item",
-            button_type="warning",
-            sizing_mode="stretch_width",
-        )
+        add_btn = add_button(name="Add item")
+        delete_btn = remove_button(name="Delete item")
         editor_host = pn.Column(sizing_mode="stretch_width")
 
         def _refresh_nested_editor() -> None:
@@ -483,8 +472,8 @@ class ConftypeWidgetController:
             _refresh_nested_editor()
             self._set_status(f'Deleted "{item_key}" from "{title}".', tone="success")
 
-        add_button.on_click(_add_item)
-        delete_button.on_click(_delete_item)
+        add_btn.on_click(_add_item)
+        delete_btn.on_click(_delete_item)
         select.param.watch(lambda _event: _refresh_nested_editor(), "value")
 
         _refresh_nested_editor()
@@ -493,7 +482,7 @@ class ConftypeWidgetController:
             pn.Column(
                 select,
                 key_input,
-                pn.Row(add_button, delete_button, sizing_mode="stretch_width"),
+                pn.Row(add_btn, delete_btn, sizing_mode="stretch_width"),
                 editor_host,
                 sizing_mode="stretch_width",
             ),
