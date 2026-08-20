@@ -114,6 +114,8 @@ sphinx-autoapi = "*"
 sphinxcontrib-mermaid = "*"
 nbsphinx = "*"
 myst-nb = "*"
+sphinx-design = "*"
+sphinx-copybutton = "*"
 
 [tool.ruff]
 target-version = "py310"
