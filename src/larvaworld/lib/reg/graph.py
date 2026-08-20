@@ -299,7 +299,9 @@ class GraphRegistry:
         ID = source_ID
         gID = f"locomotion_relative_to_source_{ID}"
         d0 = [
-            # FIXME Currently the bearing related plots are buggy
+            # The 'bearing/turn' entries below are disabled: they raise on the
+            # datasets this group is built for. What remains are the timeplots
+            # of bearing and distance to the source, which do run.
             # self.entry('bearing/turn', name=f'bearing to {ID}', min_angle=5.0, ref_angle=None, source_ID=ID, **kwargs),
             # self.entry('bearing/turn', name='bearing to 270deg', min_angle=5.0, ref_angle=270, source_ID=ID, **kwargs),
             *[
@@ -311,7 +313,7 @@ class GraphRegistry:
                 ]
             ],
         ]
-        # FIXME Currently the bearing related plots are buggy
+        # Also disabled, for the same reason:
         # for chunk in ['stride', 'pause', 'Lturn', 'Rturn']:
         #     for dur in [0.0, 0.5, 1.0]:
         #         d0.append(self.entry('bearing to source/epoch', name=f'{chunk}_bearing2_{ID}_min_{dur}_sec',
@@ -350,13 +352,18 @@ class GraphRegistry:
                 "chemo": ["chemo"],
                 "RL": ["RL"],
                 # 'dispersion': ['comparative_analysis'],
-                "dispersion": ["endpoint", "distro", "dsp"],
+                # The free exploration assays. Their enrichment computes the
+                # kinematics, bout annotation and stride-cycle interference that
+                # these groups draw, so all of them apply. `dsp` is left out of
+                # `dish`, whose 10 cm arena is too small for dispersal to mean
+                # anything past the first seconds.
+                "dish": ["endpoint", "distro", "stride", "track"],
+                "dispersion": ["endpoint", "distro", "dsp", "stride", "track"],
             }
             for k, v in dic.items():
                 if k in exp:
                     groups += v
 
-        # FIXME Currently the source related plots don't work as expected. Timeplot takes forever and bearing related plots are buggy
         groups += [
             self.source_graphgroup(id, pos=pos, **kwargs) for id, pos in sources.items()
         ]
@@ -417,7 +424,8 @@ class GraphRegistry:
                         ks=["c_odor1", "dc_odor1", "A_olf", "A_T", "I_T"],
                         individuals=False,
                     ),
-                    self.entry("trajectories"),
+                    # 'trajectories' is not repeated here: the 'traj' group is
+                    # part of every analysis, so it would be drawn twice.
                     # self.entry('turn amplitude'),
                     # self.entry('angular pars', Npars=5),
                 ],

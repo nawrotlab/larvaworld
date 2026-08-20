@@ -398,6 +398,22 @@ def annotated_turnplot(**kwargs: Any) -> Any:
     return track_annotated(epoch="turn", **kwargs)
 
 
+def _min_agent_count(**kwargs: Any) -> Optional[int]:
+    """The number of agents the smallest of the given datasets holds.
+
+    Returns None when the datasets cannot be resolved from `kwargs`, in which
+    case the caller keeps whatever agent indices it was given.
+    """
+    from ..process.dataset import LarvaDatasetCollection
+
+    source_kws = {k: kwargs.get(k) for k in ["datasets", "refIDs", "dirs", "group_id"]}
+    if not any(source_kws.values()):
+        return None
+    ds = LarvaDatasetCollection.get_datasets(None, **source_kws)
+    Ns = [len(d.config.agent_ids) for d in ds if d is not None]
+    return min(Ns) if Ns else None
+
+
 def track_annotated_data(
     name: Optional[str] = None,
     subfolder: str = "tracks",
@@ -430,7 +446,18 @@ def track_annotated_data(
     """
     if name is None:
         name = f"annotated_{epoch}plot"
+
+    # `agent_idx` defaults to a fixed set of indices, so a dataset smaller than
+    # that would raise an IndexError below. Keep only the indices every dataset
+    # actually has, and fall back to its first agents if none of them do.
+    Navailable = _min_agent_count(**kwargs)
+    if Navailable is not None:
+        agent_idx = [i for i in agent_idx if i < Navailable] or list(
+            range(min(len(agent_idx), Navailable))
+        )
     Nidx = len(agent_idx)
+    if Nidx == 0:
+        return None
 
     P = plot.AutoPlot(
         name=name,
