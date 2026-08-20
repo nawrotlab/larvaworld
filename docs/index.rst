@@ -114,10 +114,7 @@ For the scientific background, model assumptions and validation results, please 
    :caption: Tutorials
    :hidden:
 
-   tutorials/configuration
-   tutorials/simulation
-   tutorials/data
-   tutorials/development
+   tutorials/index
 
 .. toctree::
    :maxdepth: 1

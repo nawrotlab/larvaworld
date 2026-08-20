@@ -418,4 +418,4 @@ Do you need to run a simulation?
 - {doc}`architecture_overview` - Platform architecture
 - {doc}`experiment_types` - Pre-configured experiments
 - {doc}`../working_with_larvaworld/single_experiments` - Running experiments
-- Tutorials: {doc}`../tutorials/configuration`, {doc}`../tutorials/simulation`, {doc}`../tutorials/data`, {doc}`../tutorials/development`
+- Tutorials: {doc}`../tutorials/index`

@@ -81,6 +81,7 @@ docs/_build/
 /docs/source/content/
 /docs/build/
 /docs/tutorials/media
+/docs/tutorials/*/media/
 /dist/
 /docs/diagram/
 

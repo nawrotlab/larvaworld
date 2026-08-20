@@ -459,4 +459,4 @@ For keyboard controls during visualization, see {doc}`../visualization/keyboard_
 - {doc}`../concepts/experiment_configuration_pipeline` - Configuration system
 - {doc}`../agents_environments/arenas_and_substrates` - Environment setup
 - {doc}`../data_pipeline/data_processing` - Data processing pipeline
-- {doc}`../tutorials/cli` - Step-by-step tutorial
+- {doc}`../tutorials/1_getting_started/command_line_interface` - Step-by-step tutorial

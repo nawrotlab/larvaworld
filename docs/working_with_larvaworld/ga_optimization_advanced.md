@@ -410,4 +410,4 @@ for phenotype in ["rover", "sitter"]:
 - {doc}`../concepts/simulation_modes` - Simulation mode comparison
 - {doc}`model_evaluation` - Model evaluation (Eval mode)
 - {doc}`../data_pipeline/reference_datasets` - Reference datasets
-- {doc}`../tutorials/genetic_algorithm_optimization` - Step-by-step tutorial
+- {doc}`../tutorials/4_optimization_and_evaluation/genetic_algorithm_optimization` - Step-by-step tutorial

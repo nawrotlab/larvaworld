@@ -454,7 +454,7 @@ mm = reg.conf.Model.getID("explorer").get_copy()
 mm.brain.turner.mode = "custom"
 ```
 
-For detailed tutorial, see {doc}`../tutorials/custom_module`.
+For detailed tutorial, see {doc}`../tutorials/5_extending_larvaworld/custom_brain_modules`.
 
 ---
 
@@ -464,4 +464,4 @@ For detailed tutorial, see {doc}`../tutorials/custom_module`.
 - {doc}`../agents_environments/larva_agent_architecture` - Agent architecture
 - {doc}`../agents_environments/brain_module_architecture` - Brain module details
 - {doc}`simulation_modes` - Simulation execution modes
-- {doc}`../tutorials/custom_module` - Adding custom modules
+- {doc}`../tutorials/5_extending_larvaworld/custom_brain_modules` - Adding custom modules
