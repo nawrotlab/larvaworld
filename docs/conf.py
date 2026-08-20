@@ -62,7 +62,9 @@ exclude_patterns = [
 # Options for HTML output
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
-# html_css_files = ["custom.css"]  # Disabled to use default RTD theme styling
+# custom.css targets the Furo theme and stays disabled while the RTD theme is used.
+# html_css_files = ["custom.css"]
+html_css_files = ["tutorials.css"]  # opt-in helpers for the tutorial course pages
 
 # AutoAPI configuration
 autoapi_dirs = ["../src/larvaworld"]

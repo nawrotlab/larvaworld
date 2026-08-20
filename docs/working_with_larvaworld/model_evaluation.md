@@ -392,4 +392,4 @@ eval_run.simulate()
 - {doc}`../data_pipeline/lab_formats_import` - Importing experimental data
 - {doc}`../data_pipeline/data_processing` - Data processing pipeline
 - {doc}`../data_pipeline/reference_datasets` - Reference dataset management
-- {doc}`../tutorials/4_optimization_and_evaluation/model_evaluation` - Step-by-step tutorial
+- {doc}`../tutorials/5_optimization_and_evaluation/model_evaluation` - Step-by-step tutorial

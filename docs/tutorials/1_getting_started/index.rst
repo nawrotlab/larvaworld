@@ -1,6 +1,8 @@
-#####################
-1 · Getting started
-#####################
+.. rst-class:: lw-centered
+
+###################
+Getting started
+###################
 
 Four lessons that take you from *what is this platform for* to *I can configure and run my own
 virtual experiment from Python*. Nothing here needs experimental data, an internet connection or a
@@ -79,7 +81,8 @@ The lessons
 
 ----
 
-**Next:** :doc:`../2_experimental_data/index` — bring real tracking data into the same environment.
+**Next:** :doc:`../2_simulated_experiments/index` — see the platform reproduce published
+behavioral assays.
 
 .. toctree::
    :hidden:

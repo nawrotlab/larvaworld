@@ -1,6 +1,8 @@
-###############################
-3 · Models & environments
-###############################
+.. rst-class:: lw-centered
+
+#########################
+Models & environments
+#########################
 
 Everything a simulation needs — the arena, the food, the odor plume, the wind, the larvae
 themselves — is a *configuration*: a nested, typed, named object kept in Larvaworld's registry.
@@ -67,7 +69,7 @@ The lessons
 
 ----
 
-**Next:** :doc:`../4_optimization_and_evaluation/index` — find out how good your model actually is.
+**Next:** :doc:`../5_optimization_and_evaluation/index` — find out how good your model actually is.
 
 .. toctree::
    :hidden:

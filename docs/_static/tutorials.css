@@ -1,0 +1,15 @@
+/* Larvaworld tutorial course - small additions on top of the RTD theme.
+   Scoped to elements that explicitly opt in, so no other page is affected. */
+
+/* Centered page title, opted into with `.. rst-class:: lw-centered` above the
+   title of the tutorial landing page and its section index pages. */
+.lw-centered > h1,
+h1.lw-centered {
+  text-align: center;
+}
+
+/* The author line under a centered title. */
+.lw-center-text,
+.lw-center-text p {
+  text-align: center;
+}

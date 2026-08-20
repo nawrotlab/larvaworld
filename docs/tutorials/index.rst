@@ -1,6 +1,12 @@
-#########
-Tutorials
-#########
+.. rst-class:: lw-centered
+
+##################################
+Larvaworld educational tutorials
+##################################
+
+.. rst-class:: lw-center-text
+
+**Dr. Panagiotis Sakagiannis, Dr. Alexandros Marantis**
 
 A guided course through Larvaworld, from running your first virtual experiment to importing your
 own tracking data and writing your own behavioral modules.
@@ -15,15 +21,15 @@ so you can also enter the course wherever your work starts.
    .. grid-item-card:: :octicon:`beaker;1.5em;sd-mr-1` Coming from the lab?
       :class-card: sd-border-1
 
-      Start with :doc:`2_experimental_data/index`. You will import a published tracking dataset,
-      have Larvaworld compute the standard kinematic metrics for you, and compare groups — without
-      simulating anything.
+      Start with :doc:`2_simulated_experiments/index` to see the assays you know reproduced in a
+      few lines, then :doc:`3_experimental_data/index` to bring your own tracking data in and have
+      Larvaworld compute the standard kinematic metrics for you.
 
    .. grid-item-card:: :octicon:`cpu;1.5em;sd-mr-1` Coming from modeling?
       :class-card: sd-border-1
 
       Start with :doc:`1_getting_started/index`, then go to
-      :doc:`3_models_and_environments/index`. You will run a preconfigured experiment, then take
+      :doc:`4_models_and_environments/index`. You will run a preconfigured experiment, then take
       apart the configuration that produced it.
 
 .. dropdown:: Before you start
@@ -61,8 +67,8 @@ so you can also enter the course wherever your work starts.
    show the output of everything *except* those cells. Flip a switch in your own copy when you want
    the heavy version.
 
-The course
-==========
+Course contents
+===============
 
 .. grid:: 1 1 2 2
    :gutter: 3
@@ -77,18 +83,28 @@ The course
       +++
       :bdg-primary:`beginner` :bdg-secondary:`~75 min` :bdg-success:`no data needed`
 
-   .. grid-item-card:: :octicon:`database;1.5em;sd-mr-1` 2 · Experimental data
-      :link: 2_experimental_data/index
+   .. grid-item-card:: :octicon:`beaker;1.5em;sd-mr-1` 2 · Simulated experiments
+      :link: 2_simulated_experiments/index
+      :link-type: doc
+
+      Four published behavioral assays, each reproduced by running one stored experiment: free
+      exploration, dispersal against real larvae, chemotaxis, and an odor preference test.
+
+      +++
+      :bdg-primary:`beginner` :bdg-secondary:`~60 min` :bdg-success:`no data needed`
+
+   .. grid-item-card:: :octicon:`database;1.5em;sd-mr-1` 3 · Experimental data
+      :link: 3_experimental_data/index
       :link-type: doc
 
       Import tracking data from any supported lab format, let Larvaworld annotate it, and replay it
-      as a simulation. Four complete worked examples on published datasets.
+      as a simulation. Three complete worked examples on published datasets.
 
       +++
       :bdg-primary:`beginner` :bdg-secondary:`~2 h` :bdg-warning:`downloads data`
 
-   .. grid-item-card:: :octicon:`gear;1.5em;sd-mr-1` 3 · Models & environments
-      :link: 3_models_and_environments/index
+   .. grid-item-card:: :octicon:`gear;1.5em;sd-mr-1` 4 · Models & environments
+      :link: 4_models_and_environments/index
       :link-type: doc
 
       The configuration registry, arenas and food sources, and the odor, temperature and wind
@@ -97,8 +113,8 @@ The course
       +++
       :bdg-primary:`intermediate` :bdg-secondary:`~60 min` :bdg-success:`no data needed`
 
-   .. grid-item-card:: :octicon:`graph;1.5em;sd-mr-1` 4 · Optimization & evaluation
-      :link: 4_optimization_and_evaluation/index
+   .. grid-item-card:: :octicon:`graph;1.5em;sd-mr-1` 5 · Optimization & evaluation
+      :link: 5_optimization_and_evaluation/index
       :link-type: doc
 
       Measure how well a model reproduces real behavior, then let a genetic algorithm close the
@@ -107,8 +123,8 @@ The course
       +++
       :bdg-primary:`intermediate` :bdg-secondary:`~90 min` :bdg-info:`uses a reference dataset`
 
-   .. grid-item-card:: :octicon:`tools;1.5em;sd-mr-1` 5 · Extending Larvaworld
-      :link: 5_extending_larvaworld/index
+   .. grid-item-card:: :octicon:`tools;1.5em;sd-mr-1` 6 · Extending Larvaworld
+      :link: 6_extending_larvaworld/index
       :link-type: doc
 
       Write your own behavioral module and plug it into the brain, or drive a module from an
@@ -126,10 +142,11 @@ Suggested paths
 
       You have tracking data and want metrics, figures and group comparisons.
 
-      #. :doc:`2_experimental_data/import_datasets` — what a lab format is and how an import works
-      #. :doc:`2_experimental_data/import_free_exploration_dataset` — a complete worked example
-      #. :doc:`2_experimental_data/replay` — see your recordings move again
-      #. :doc:`4_optimization_and_evaluation/model_evaluation` — compare your data against a model
+      #. :doc:`2_simulated_experiments/free_exploration` — what a behavioral assay looks like here
+      #. :doc:`3_experimental_data/import_datasets` — what a lab format is and how an import works
+      #. :doc:`3_experimental_data/import_free_exploration_dataset` — a complete worked example
+      #. :doc:`3_experimental_data/replay` — see your recordings move again
+      #. :doc:`5_optimization_and_evaluation/model_evaluation` — compare your data against a model
 
    .. tab-item:: Modeler
 
@@ -137,17 +154,17 @@ Suggested paths
 
       #. :doc:`1_getting_started/single_simulation` — run a preconfigured experiment
       #. :doc:`1_getting_started/python_api_basics` — configure your own
-      #. :doc:`3_models_and_environments/configuration_registry` — where configurations come from
-      #. :doc:`4_optimization_and_evaluation/ga_turner_noise_optimization` — fit a module to data
+      #. :doc:`4_models_and_environments/configuration_registry` — where stored configurations come from
+      #. :doc:`5_optimization_and_evaluation/ga_turner_noise_optimization` — fit a module to data
 
    .. tab-item:: Developer
 
       You want to extend the platform itself.
 
       #. :doc:`1_getting_started/python_api_basics` — the objects you will be working with
-      #. :doc:`3_models_and_environments/configuration_registry` — the registry contract
-      #. :doc:`5_extending_larvaworld/custom_brain_modules` — write and register a module
-      #. :doc:`5_extending_larvaworld/remote_model_interface` — talk to an external simulator
+      #. :doc:`4_models_and_environments/configuration_registry` — the registry contract
+      #. :doc:`6_extending_larvaworld/custom_brain_modules` — write and register a module
+      #. :doc:`6_extending_larvaworld/remote_model_interface` — talk to an external simulator
 
 Reference material
 ==================
@@ -186,12 +203,25 @@ list of options for something, these are the pages to read:
 
       The browser Portal: what each app does and how to launch it.
 
+Citation
+========
+
+If this course, or Larvaworld itself, contributed to work you publish, please cite the platform
+paper:
+
+   Sakagiannis, P., Rapp, H., Jovanic, T., & Nawrot, M. P. (2025). *Larvaworld: A behavioral
+   simulation and analysis platform for Drosophila larva.* bioRxiv 2025.06.15.659765.
+   https://doi.org/10.1101/2025.06.15.659765
+
+The BibTeX entry is on the documentation home page, under :ref:`citation_ref`.
+
 .. toctree::
    :hidden:
    :maxdepth: 2
 
-   1_getting_started/index
-   2_experimental_data/index
-   3_models_and_environments/index
-   4_optimization_and_evaluation/index
-   5_extending_larvaworld/index
+   1 · Getting started <1_getting_started/index>
+   2 · Simulated experiments <2_simulated_experiments/index>
+   3 · Experimental data <3_experimental_data/index>
+   4 · Models & environments <4_models_and_environments/index>
+   5 · Optimization & evaluation <5_optimization_and_evaluation/index>
+   6 · Extending Larvaworld <6_extending_larvaworld/index>

@@ -1,6 +1,8 @@
-##################################
-5 · Extending Larvaworld
-##################################
+.. rst-class:: lw-centered
+
+########################
+Extending Larvaworld
+########################
 
 Larvaworld's brain is deliberately modular: each behavioral module is a small Python class that maps
 an input state to an output state, and each one can be swapped for your own. This section shows both
@@ -9,7 +11,7 @@ socket.
 
 .. rubric:: Prerequisites
 
-:doc:`../1_getting_started/python_api_basics` and :doc:`../3_models_and_environments/configuration_registry`.
+:doc:`../1_getting_started/python_api_basics` and :doc:`../4_models_and_environments/configuration_registry`.
 The second lesson additionally needs ``brian2`` if you want to run it rather than read it.
 
 The lessons

@@ -278,4 +278,4 @@ for ref_id in datasets:
 - {doc}`../data_pipeline/reference_datasets` - Reference dataset management
 - {doc}`../visualization/keyboard_controls` - Interactive controls
 - {doc}`../visualization/visualization_snapshots` - Visualization examples
-- {doc}`../tutorials/2_experimental_data/replay` - Step-by-step tutorial
+- {doc}`../tutorials/3_experimental_data/replay` - Step-by-step tutorial

@@ -1,12 +1,14 @@
-##########################
-2 · Experimental data
-##########################
+.. rst-class:: lw-centered
+
+#####################
+Experimental data
+#####################
 
 Larvaworld reads tracking data from several labs' formats and converts it into one standardized
 dataset structure — the *same* structure a simulation produces. Everything downstream (metrics,
 figures, replay, model evaluation) therefore works identically on recorded and simulated animals.
 
-This section covers the import machinery once, then four complete worked examples on published
+This section covers the import machinery once, then three complete worked examples on published
 datasets. Each example downloads its own data and needs nothing but the cells being run in order.
 
 .. rubric:: Prerequisites
@@ -17,7 +19,7 @@ configurations in a registry. Disk space and patience for the downloads noted on
 Start here
 ==========
 
-.. grid:: 1 1 2 2
+.. grid:: 1 1 1 1
    :gutter: 3
 
    .. grid-item-card:: :octicon:`database;1.5em;sd-mr-1` Importing experimental data
@@ -29,16 +31,6 @@ Start here
 
       +++
       :bdg-primary:`start here` :bdg-secondary:`~30 min`
-
-   .. grid-item-card:: :octicon:`repo-template;1.5em;sd-mr-1` Import a public dataset — template
-      :link: import_public_dataset_template
-      :link-type: doc
-
-      A blank worked example to copy for your own data: fetch, identify the tracker, import,
-      analyse, visualize.
-
-      +++
-      :bdg-info:`template` :bdg-secondary:`~30 min`
 
 Worked examples
 ===============
@@ -115,14 +107,13 @@ And then
 
 ----
 
-**Next:** :doc:`../3_models_and_environments/index` — build the virtual side of the comparison.
+**Next:** :doc:`../4_models_and_environments/index` — build the virtual side of the comparison.
 
 .. toctree::
    :hidden:
    :maxdepth: 1
 
    import_datasets
-   import_public_dataset_template
    import_free_exploration_dataset
    import_DeepLabCut_dataset
    import_feeding_state_locomotion_dataset

@@ -1,6 +1,8 @@
-######################################
-4 · Optimization & evaluation
-######################################
+.. rst-class:: lw-centered
+
+#############################
+Optimization & evaluation
+#############################
 
 A model is only interesting if you can say how well it reproduces the animal. This section is about
 measuring that distance and then closing it: first evaluating a set of candidate models against a
@@ -67,7 +69,7 @@ The lessons
 
 ----
 
-**Next:** :doc:`../5_extending_larvaworld/index` — when fitting parameters is not enough and you
+**Next:** :doc:`../6_extending_larvaworld/index` — when fitting parameters is not enough and you
 need new behavior.
 
 .. toctree::

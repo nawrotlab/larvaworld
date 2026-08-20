@@ -111,10 +111,10 @@ For the scientific background, model assumptions and validation results, please 
 
 .. toctree::
    :maxdepth: 2
-   :caption: Tutorials
+   :caption: Education
    :hidden:
 
-   tutorials/index
+   Tutorial Course <tutorials/index>
 
 .. toctree::
    :maxdepth: 1
