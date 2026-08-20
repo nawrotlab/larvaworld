@@ -39,16 +39,19 @@ DOCS_GA_OPTIMIZATION = (
 )
 DOCS_COMPARE_DATASETS = f"{DOCS_MODEL_EVALUATION}#statistical-comparison-plots"
 
+# Paths are relative to ``docs/tutorials`` and include the tutorial section folder.
 NOTEBOOK_TUTORIAL_BY_ITEM_ID: dict[str, str] = {
-    "wf.run_experiment": "single_simulation.ipynb",
-    "wf.open_dataset": "import_datasets.ipynb",
-    "track_viewer": "replay.ipynb",
-    "larva_models": "library_interface.ipynb",
-    "locomotory_modules": "custom_module.ipynb",
-    "wf.environment_builder": "environment_configuration.ipynb",
-    "wf.model_evaluation": "model_evaluation.ipynb",
-    "wf.ga_optimization": "genetic_algorithm_optimization.ipynb",
-    "wf.compare_datasets": "model_evaluation.ipynb",
+    "wf.run_experiment": "1_getting_started/single_simulation.ipynb",
+    "wf.open_dataset": "2_experimental_data/import_datasets.ipynb",
+    "track_viewer": "2_experimental_data/replay.ipynb",
+    "larva_models": "1_getting_started/python_api_basics.ipynb",
+    "locomotory_modules": "5_extending_larvaworld/custom_brain_modules.ipynb",
+    "wf.environment_builder": "3_models_and_environments/environment_configuration.ipynb",
+    "wf.model_evaluation": "4_optimization_and_evaluation/model_evaluation.ipynb",
+    "wf.ga_optimization": (
+        "4_optimization_and_evaluation/genetic_algorithm_optimization.ipynb"
+    ),
+    "wf.compare_datasets": "4_optimization_and_evaluation/model_evaluation.ipynb",
 }
 
 
