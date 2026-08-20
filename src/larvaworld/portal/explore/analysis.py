@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from io import BytesIO
 from typing import Any, Mapping, Sequence
 
 import numpy as np
@@ -15,6 +16,7 @@ __all__ = [
     "build_preview_analysis",
     "close_preview_figures",
     "preview_enrichment",
+    "render_preview_figure_images",
 ]
 
 
@@ -29,10 +31,11 @@ class PreviewMetric:
 
 @dataclass(frozen=True)
 class PreviewFigure:
-    """A generated Matplotlib figure and its user-facing title."""
+    """A preview plot before or after worker-side PNG rendering."""
 
     title: str
-    figure: Any
+    figure: Any | None = None
+    png: bytes | None = None
 
 
 @dataclass
@@ -467,9 +470,53 @@ def build_preview_analysis(
     return result
 
 
+def render_preview_figure_images(
+    result: PreviewAnalysisResult,
+    *,
+    dpi: int = 144,
+) -> None:
+    """Render and close preview figures in their creating worker thread.
+
+    Matplotlib figures are not thread-safe. Explore creates them in its
+    background worker, so passing the live figures to Panel would make the
+    Bokeh document render objects owned by another thread. Converting them to
+    immutable PNG bytes here keeps all Matplotlib work on one thread and makes
+    result rendering a lightweight image update.
+    """
+    rendered: list[PreviewFigure] = []
+    for item in result.figures:
+        if item.png is not None:
+            rendered.append(item)
+            continue
+        if item.figure is None:
+            result.warnings.append(f"{item.title} had no renderable figure.")
+            continue
+
+        buffer = BytesIO()
+        try:
+            figure = item.figure
+            figure.canvas.print_figure(
+                buffer,
+                format="png",
+                facecolor=figure.get_facecolor(),
+                edgecolor=figure.get_edgecolor(),
+                dpi=dpi,
+                bbox_inches="tight",
+            )
+            rendered.append(PreviewFigure(title=item.title, png=buffer.getvalue()))
+        except Exception as exc:
+            result.warnings.append(
+                f"{item.title} could not be rendered: {type(exc).__name__}: {exc}"
+            )
+        finally:
+            close_preview_figures([item])
+    result.figures = rendered
+
+
 def close_preview_figures(figures: Sequence[PreviewFigure]) -> None:
     """Release Matplotlib resources when leaving an Explore result page."""
     from matplotlib import pyplot as plt
 
     for item in figures:
-        plt.close(item.figure)
+        if item.figure is not None:
+            plt.close(item.figure)

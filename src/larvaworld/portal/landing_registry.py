@@ -8,6 +8,7 @@ from larvaworld.portal.registry_types import (
 )
 
 DOCS_ROOT = "https://larvaworld.readthedocs.io/en/latest/"
+DOCS_TUTORIALS = f"{DOCS_ROOT}tutorials/index.html#tutorials"
 GITHUB_ROOT = "https://github.com/nawrotlab/larvaworld"
 GITHUB_ISSUES = f"{GITHUB_ROOT}/issues"
 PYPI_ROOT = "https://pypi.org/project/larvaworld/"
@@ -144,9 +145,9 @@ ITEMS: dict[str, LandingItem] = {
         level="core",
         title="Explore",
         subtitle=(
-            "Pick a ready-made behavioral scenario.\n"
-            "Watch virtual larvae move in the arena.\n"
-            "Read what the behavior means. No setup."
+            "Run a ready-made behavioral simulation.\n"
+            "The simulation produces datasets with Step and Endpoint data.\n"
+            "Those datasets are used to generate the preview figures. No setup."
         ),
         cta="Watch",
         panel_app_id="wf.explore",
@@ -155,7 +156,8 @@ ITEMS: dict[str, LandingItem] = {
             "### Explore\n"
             "- Browse curated experiments grouped by behavior\n"
             "- Run a short simulation with one click and no configuration\n"
-            "- See the resulting trajectories and a plain-language explanation\n"
+            "- Inspect the Step and Endpoint data produced by the simulation\n"
+            "- See figures generated from those datasets and a plain-language explanation\n"
         ),
     ),
     "track_viewer": LandingItem(

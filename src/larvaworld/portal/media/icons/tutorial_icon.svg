@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-labelledby="title">
+  <title id="title">Tutorial course</title>
+  <path fill="#2f4858" d="M2.2 8.2 12 3.4l9.8 4.8L12 13 2.2 8.2Z"/>
+  <path fill="none" stroke="#2f4858" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M6.1 10.5v4.6c0 1.8 2.6 3.3 5.9 3.3s5.9-1.5 5.9-3.3v-4.6"/>
+  <path fill="none" stroke="#f4a340" stroke-linecap="round" stroke-width="1.7" d="M21.8 8.2v5.5"/>
+  <circle cx="21.8" cy="15.2" r="1.25" fill="#f4a340"/>
+</svg>

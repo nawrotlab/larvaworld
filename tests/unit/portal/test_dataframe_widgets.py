@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pandas as pd
 import panel as pn
 import pytest
+from bokeh.document import Document
 
 from larvaworld.portal.datasets import (
     EndpointDataFrameTable,
@@ -130,12 +131,18 @@ def test_dataset_widget_loads_each_dataframe_only_on_its_button(
     widget = LarvaDatasetTablesWidget(dataset)
 
     assert dataset.loaded == []
+    assert widget.step_popup not in widget.view().objects
+    assert widget.endpoint_popup not in widget.view().objects
     assert widget.step_button.disabled is False
     assert widget.endpoint_button.disabled is False
+    assert "Step-by-step parameter timeseries" in widget.step_button.stylesheets[0]
+    assert "Endpoint parameter measurements" in widget.endpoint_button.stylesheets[0]
 
     widget.step_button.clicks += 1
 
     assert dataset.loaded == ["s"]
+    assert widget.step_popup in widget.view().objects
+    assert widget.endpoint_popup not in widget.view().objects
     assert widget.step_popup.visible is True
     assert widget.endpoint_popup.visible is False
     assert widget.step_table.dataframe is step_dataframe
@@ -144,6 +151,7 @@ def test_dataset_widget_loads_each_dataframe_only_on_its_button(
     widget.endpoint_button.clicks += 1
 
     assert dataset.loaded == ["s", "e"]
+    assert widget.endpoint_popup in widget.view().objects
     assert widget.step_popup.visible is True
     assert widget.endpoint_popup.visible is True
     assert widget.endpoint_table.dataframe is endpoint_dataframe
@@ -222,7 +230,14 @@ def test_dataset_widget_closes_each_popup_independently(
     widget.step_popup._close_button_click(None)
 
     assert widget.step_popup.visible is False
+    assert widget.step_popup not in widget.view().objects
     assert widget.endpoint_popup.visible is True
+    assert widget.endpoint_popup in widget.view().objects
+
+    widget._open_step()
+
+    assert widget.step_popup.visible is True
+    assert widget.step_popup in widget.view().objects
 
 
 def test_widget_view_renders_as_a_panel_viewable(
@@ -233,3 +248,43 @@ def test_widget_view_renders_as_a_panel_viewable(
     widget = LarvaDatasetTablesWidget(_LazyDataset(step_dataframe, endpoint_dataframe))
 
     assert pn.Column(widget.view()).get_root() is not None
+
+
+def test_popup_mounts_visible_after_the_widget_is_already_rendered(
+    step_dataframe: pd.DataFrame,
+    endpoint_dataframe: pd.DataFrame,
+) -> None:
+    pn.extension("tabulator")
+    widget = LarvaDatasetTablesWidget(_LazyDataset(step_dataframe, endpoint_dataframe))
+    document = Document()
+    root = widget.view().get_root(document)
+    document.add_root(root)
+
+    assert widget.step_popup._models == {}
+    assert widget.step_popup._drag_handle._models == {}
+    assert widget.step_table.table._models == {}
+
+    widget._open_step()
+
+    assert widget.step_popup.visible is True
+    assert widget.step_popup._models
+    assert widget.step_popup._drag_handle._models
+    assert widget.step_table.table._models
+    popup_model = next(iter(widget.step_popup._models.values()))[0]
+    assert popup_model.visible is True
+    assert "mousemove" in widget.step_popup._drag_handle.object
+
+    first_table_model = next(iter(widget.step_table.table._models.values()))[0]
+    widget.step_popup._close_button_click(None)
+
+    assert widget.step_popup not in widget.view().objects
+    assert widget.step_popup._models == {}
+    assert widget.step_table.table._models == {}
+
+    widget._open_step()
+
+    assert widget.step_popup in widget.view().objects
+    assert widget.step_popup.visible is True
+    assert widget.step_table.table.value is step_dataframe
+    reopened_table_model = next(iter(widget.step_table.table._models.values()))[0]
+    assert reopened_table_model is not first_table_model

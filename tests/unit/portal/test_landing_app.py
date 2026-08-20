@@ -9,7 +9,7 @@ import pytest
 
 from larvaworld.portal.landing_app import landing_app
 from larvaworld.portal.landing_registry import ITEMS, LANES, QUICK_START_MODES
-from larvaworld.portal.panel_components import PORTAL_RAW_CSS
+from larvaworld.portal.panel_components import PORTAL_RAW_CSS, _header_links_html
 from larvaworld.portal.registry_logic import compute_badges
 from larvaworld.portal.workspace import (
     clear_active_workspace_path,
@@ -81,6 +81,20 @@ def test_quick_start_tabs_stack_below_template_header() -> None:
     quick_start_css = PORTAL_RAW_CSS.split(".lw-portal-quick-start-tabs", 1)[1]
 
     assert "z-index: 1;" in quick_start_css.split("}", 1)[0]
+
+
+def test_landing_header_places_tutorials_between_docs_and_github() -> None:
+    links = _header_links_html()
+
+    docs_index = links.index('title="Read the Docs"')
+    tutorials_index = links.index('title="Tutorial course"')
+    github_index = links.index('title="GitHub"')
+
+    assert docs_index < tutorials_index < github_index
+    assert (
+        "https://larvaworld.readthedocs.io/en/latest/tutorials/" "index.html#tutorials"
+    ) in links
+    assert 'alt="Education icon"' in links
 
 
 def test_planned_items_are_hidden_by_default(tmp_path: Path) -> None:

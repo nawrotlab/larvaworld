@@ -13,6 +13,7 @@ from larvaworld.portal.parameter_database.parameter_db_app import (
 )
 from larvaworld.portal.landing_registry import (
     DOCS_ROOT,
+    DOCS_TUTORIALS,
     GITHUB_ISSUES,
     GITHUB_ROOT,
     PYPI_ROOT,
@@ -1449,6 +1450,7 @@ def _resolve_portal_version() -> str:
 
 _LOGO_DATA_URI = _load_icon_data_uri("LarvaWorld_logo.png", "image/png")
 _RTD_ICON_DATA_URI = _load_icon_data_uri("RTD_logo.svg", "image/svg+xml")
+_TUTORIAL_ICON_DATA_URI = _load_icon_data_uri("tutorial_icon.svg", "image/svg+xml")
 _GITHUB_ICON_DATA_URI = _load_icon_data_uri("github_logo.svg", "image/svg+xml")
 _PYPI_ICON_DATA_URI = _load_icon_data_uri("pypi_logo.svg", "image/svg+xml")
 _ABOUT_ICON_DATA_URI = _load_icon_data_uri("info_icon.svg", "image/svg+xml")
@@ -1500,6 +1502,13 @@ def _header_links_html() -> str:
             'alt="Read the Docs logo"/>'
         )
 
+    tutorial_icon = '<span style="font-size:22px;" aria-hidden="true">🎓</span>'
+    if _TUTORIAL_ICON_DATA_URI:
+        tutorial_icon = (
+            f'<img class="lw-portal-header-icon" src="{_TUTORIAL_ICON_DATA_URI}" '
+            'alt="Education icon"/>'
+        )
+
     github_icon = ""
     if _GITHUB_ICON_DATA_URI:
         github_icon = (
@@ -1519,6 +1528,11 @@ def _header_links_html() -> str:
         f'<a class="lw-portal-icon-link" href="{escape(DOCS_ROOT)}" '
         'target="_blank" rel="noopener noreferrer" title="Read the Docs">'
         f"{docs_icon}"
+        "</a>"
+        f'<a class="lw-portal-icon-link" href="{escape(DOCS_TUTORIALS)}" '
+        'target="_blank" rel="noopener noreferrer" title="Tutorial course" '
+        'aria-label="Tutorial course">'
+        f"{tutorial_icon}"
         "</a>"
         f'<a class="lw-portal-icon-link" href="{escape(GITHUB_ROOT)}" '
         'target="_blank" rel="noopener noreferrer" title="GitHub">'

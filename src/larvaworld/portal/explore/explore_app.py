@@ -11,9 +11,10 @@ graduate to the Single Experiment app via a deep link.
 
 from __future__ import annotations
 
-import tempfile
+from concurrent.futures import Future, ThreadPoolExecutor
 from html import escape
-from pathlib import Path
+from io import BytesIO
+from queue import Empty
 from typing import Any
 
 import panel as pn
@@ -104,13 +105,17 @@ EXPLORE_RAW_CSS = """
   background: rgba(181,194,176,0.16);
 }
 
-.lw-explore-preview-placeholder {
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(181,194,176,0.7);
-  background: rgba(181,194,176,0.16);
+.lw-explore-preview-controls {
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lw-explore-preview-status {
+  color: rgba(0,0,0,0.68);
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: nowrap;
 }
 
 .lw-explore-result-grid {
@@ -288,8 +293,23 @@ class _ExploreController:
 
     def __init__(self) -> None:
         self.body = pn.Column(sizing_mode="stretch_width", margin=0)
-        self._temp_dir: tempfile.TemporaryDirectory[str] | None = None
+        self._temp_dir: Any | None = None
         self._analysis_figures: list[Any] = []
+        self._preview_executor = ThreadPoolExecutor(
+            max_workers=1,
+            thread_name_prefix="lw-explore",
+        )
+        self._preview_job: Any | None = None
+        self._preview_future: Future[Any] | None = None
+        self._preview_document: Any | None = None
+        self._preview_poll_callback: Any | None = None
+        self._preview_request_id = 0
+        self._preview_status: pn.pane.HTML | None = None
+        self._preview_progress: pn.indicators.Progress | None = None
+        self._scenario_controls: pn.Row | None = None
+        self._generate_preview_button: pn.widgets.Button | None = None
+        self._active_scenario_id: str | None = None
+        self._closed = False
         self.show_gallery()
 
     # ---- gallery -------------------------------------------------------
@@ -317,12 +337,17 @@ class _ExploreController:
 
     def show_gallery(self) -> None:
         self._release_preview_resources()
+        self._scenario_controls = None
+        self._generate_preview_button = None
+        self._active_scenario_id = None
         sections: list[pn.viewable.Viewable] = [
             pn.pane.HTML(
                 '<div class="lw-explore-intro">'
                 "Each scenario below is a complete behavioral experiment that is "
-                "ready to run. Pick one and watch what the virtual larvae do - "
-                "there is nothing to configure."
+                "ready to run. Each preview simulation produces one or more datasets "
+                "containing Step and Endpoint data. Explore uses those datasets to "
+                "generate the figures shown beside the canvas. Pick a scenario and "
+                "watch what the virtual larvae do - there is nothing to configure."
                 "</div>",
                 margin=0,
             )
@@ -403,8 +428,17 @@ class _ExploreController:
         generate_preview.on_click(
             lambda _event: self._request_simulation_preview(scenario, parameters)
         )
+        controls = pn.Row(
+            back,
+            generate_preview,
+            css_classes=["lw-explore-preview-controls"],
+            margin=0,
+        )
+        self._scenario_controls = controls
+        self._generate_preview_button = generate_preview
+        self._active_scenario_id = scenario.id
         self.body[:] = [
-            pn.Row(back, generate_preview, margin=0),
+            controls,
             pn.pane.HTML(
                 f'<div class="lw-explore-stage-title">{escape(scenario.title)}</div>'
                 f'<div class="lw-explore-stage-teaser">{escape(scenario.teaser)}</div>',
@@ -415,113 +449,282 @@ class _ExploreController:
         ]
 
     def _request_simulation_preview(self, scenario: Scenario, parameters: Any) -> None:
-        """Render the preparation state before generating all preview frames."""
-        back = pn.widgets.Button(
-            name="< All scenarios", button_type="default", width=140
+        """Start a non-blocking preview and render its progress immediately."""
+        from larvaworld.portal.explore.preview_job import ExplorePreviewJob
+
+        self._release_preview_resources()
+        self._preview_request_id += 1
+        request_id = self._preview_request_id
+        cancel = pn.widgets.Button(name="Cancel", button_type="warning", width=100)
+        cancel.on_click(lambda _event: self._cancel_preview_to_scenario(scenario))
+        status = pn.pane.HTML(
+            '<div class="lw-explore-preview-status">'
+            "Initializing environment and agents."
+            "</div>",
+            width=250,
+            margin=(0, 4, 0, 0),
         )
-        back.on_click(lambda _event: self.show_gallery())
-        self.body[:] = [
-            back,
-            pn.pane.HTML(
-                f'<div class="lw-explore-stage-title">{escape(scenario.title)}</div>',
-                margin=(10, 0, 0, 0),
-            ),
-            self._scenario_summary(scenario),
-            pn.pane.HTML(
-                (
-                    '<div class="lw-explore-preview-placeholder">'
-                    "Generating simulation preview. The environment and agents are being initialized."
-                    "</div>"
-                ),
+        progress = pn.indicators.Progress(
+            name="Preparing simulation preview",
+            value=-1,
+            max=max(1, int(scenario.step_cap)),
+            bar_color="primary",
+            width=180,
+            height=18,
+            sizing_mode="fixed",
+            margin=(0, 4, 0, 4),
+        )
+        self._preview_status = status
+        self._preview_progress = progress
+        if (
+            self._scenario_controls is not None
+            and self._generate_preview_button is not None
+            and self._active_scenario_id == scenario.id
+        ):
+            self._generate_preview_button.disabled = True
+            self._generate_preview_button.loading = True
+            self._scenario_controls.objects = [
+                self._scenario_controls.objects[0],
+                self._generate_preview_button,
+                progress,
+                status,
+                cancel,
+            ]
+        else:
+            back = pn.widgets.Button(
+                name="< All scenarios", button_type="default", width=140
+            )
+            back.on_click(lambda _event: self.show_gallery())
+            generate_preview = run_button(
+                name="Generate simulation preview",
+                width=240,
+            )
+            generate_preview.disabled = True
+            generate_preview.loading = True
+            controls = pn.Row(
+                back,
+                generate_preview,
+                progress,
+                status,
+                cancel,
+                css_classes=["lw-explore-preview-controls"],
                 margin=0,
-            ),
-        ]
+            )
+            self._scenario_controls = controls
+            self._generate_preview_button = generate_preview
+            self._active_scenario_id = scenario.id
+            self.body[:] = [
+                controls,
+                pn.pane.HTML(
+                    '<div class="lw-explore-stage-title">'
+                    f"{escape(scenario.title)}</div>",
+                    margin=(10, 0, 0, 0),
+                ),
+                self._scenario_summary(scenario),
+            ]
+        job = ExplorePreviewJob(scenario=scenario, parameters=parameters)
         document = pn.state.curdoc
         if document is None:
-            self._generate_simulation_preview(scenario, parameters)
+            self._run_preview_headless(job, request_id, scenario, parameters)
             return
-        document.add_next_tick_callback(
-            lambda: self._generate_simulation_preview(scenario, parameters)
+        self._preview_job = job
+        self._preview_future = self._preview_executor.submit(job.run)
+        self._preview_document = document
+        self._preview_poll_callback = document.add_periodic_callback(
+            lambda: self._poll_preview_job(request_id, scenario, parameters),
+            100,
+        )
+        self._preview_future.add_done_callback(
+            lambda future: self._schedule_preview_completion(
+                document, request_id, scenario, parameters, future
+            )
         )
 
-    def _generate_simulation_preview(self, scenario: Scenario, parameters: Any) -> None:
-        """Generate all frames before exposing the interactive canvas playback."""
+    def _run_preview_headless(
+        self,
+        job: Any,
+        request_id: int,
+        scenario: Scenario,
+        parameters: Any,
+    ) -> None:
+        """Keep a synchronous fallback for tests and non-server callers."""
+        from larvaworld.portal.explore.preview_job import _PreviewCancelled
+
+        self._preview_job = job
+        try:
+            payload = job.run()
+        except _PreviewCancelled:
+            self.start_scenario(scenario)
+        except Exception as exc:
+            self._show_error(scenario, exc)
+        else:
+            if request_id == self._preview_request_id:
+                self._show_preview_payload(scenario, parameters, payload)
+            else:
+                payload.release()
+        finally:
+            self._clear_active_preview()
+
+    def _poll_preview_job(
+        self,
+        request_id: int,
+        scenario: Scenario,
+        parameters: Any,
+    ) -> None:
+        """Publish worker progress and move a completed result onto the UI thread."""
+        if request_id != self._preview_request_id:
+            return
+        job = self._preview_job
+        if job is None or self._preview_future is None:
+            return
+        self._update_preview_progress(job)
+
+    def _schedule_preview_completion(
+        self,
+        document: Any,
+        request_id: int,
+        scenario: Scenario,
+        parameters: Any,
+        future: Future[Any],
+    ) -> None:
+        """Schedule worker completion on the owning Bokeh document.
+
+        Progress is polled at a fixed cadence, but completion must not wait for
+        another periodic callback after the worker has returned. Bokeh's next
+        tick queue is safe to request from the worker thread; the callback
+        itself runs on the document thread and is the only place that updates
+        Panel objects.
+        """
+        try:
+            document.add_next_tick_callback(
+                lambda: self._complete_preview_job(
+                    request_id, scenario, parameters, future
+                )
+            )
+        except (AttributeError, RuntimeError, ValueError):
+            # A session may disappear while its worker finishes. The result is
+            # no longer renderable, but still owns figures and a temp directory.
+            self._release_discarded_preview(future)
+
+    def _complete_preview_job(
+        self,
+        request_id: int,
+        scenario: Scenario,
+        parameters: Any,
+        future: Future[Any],
+    ) -> None:
+        """Render one completed future exactly once on the document thread."""
+        if request_id != self._preview_request_id or future is not self._preview_future:
+            self._release_discarded_preview(future)
+            return
+        if not future.done():
+            return
+
+        try:
+            payload = future.result()
+        except Exception as exc:
+            from larvaworld.portal.explore.preview_job import _PreviewCancelled
+
+            self._clear_active_preview()
+            if isinstance(exc, _PreviewCancelled):
+                self.start_scenario(scenario)
+            else:
+                self._show_error(scenario, exc)
+            return
+        try:
+            self._show_preview_payload(scenario, parameters, payload)
+        except Exception as exc:
+            payload.release()
+            self._show_error(scenario, exc)
+        finally:
+            # Keep the periodic callback alive until the result view has
+            # replaced the progress view. Removing it before the handoff can
+            # leave an interactive session visibly stuck at the final progress
+            # event when Bokeh is under load.
+            self._clear_active_preview()
+
+    def _update_preview_progress(self, job: Any) -> None:
+        """Apply only the latest queued progress event to the Panel widgets."""
+        event = None
+        while True:
+            try:
+                event = job.progress_queue.get_nowait()
+            except Empty:
+                break
+        if (
+            event is None
+            or self._preview_status is None
+            or self._preview_progress is None
+        ):
+            return
+
+        messages = {
+            "initializing": "Initializing environment and agents.",
+            "dataset": "Preparing preview dataset.",
+            "analysis": "Building preview analysis.",
+            "ready": "Finishing simulation preview.",
+        }
+        if event.phase == "frames":
+            completed = int(event.completed or 0)
+            total = max(1, int(event.total or 1))
+            self._preview_status.object = (
+                '<div class="lw-explore-preview-status">'
+                f"Generating simulation preview: {completed} / {total} frames."
+                "</div>"
+            )
+            self._preview_progress.max = total
+            self._preview_progress.value = completed
+            return
+        self._preview_status.object = (
+            '<div class="lw-explore-preview-status">'
+            f"{messages.get(event.phase, 'Generating simulation preview.')}"
+            "</div>"
+        )
+        if event.phase == "ready":
+            self._preview_progress.value = int(event.completed or 0)
+        else:
+            self._preview_progress.value = -1
+
+    def _show_preview_payload(
+        self,
+        scenario: Scenario,
+        parameters: Any,
+        payload: Any,
+    ) -> None:
+        """Create Panel canvas objects only after the worker has completed."""
         from larvaworld.portal.canvas_widgets.environment_canvas import (
             EnvironmentCanvas,
         )
         from larvaworld.portal.canvas_widgets.environment_mapping import (
             env_params_to_canvas_state,
         )
-        from larvaworld.portal.explore.analysis import (
-            PreviewAnalysisResult,
-            build_preview_analysis,
-            preview_enrichment,
+
+        canvas = EnvironmentCanvas(editable=False, show_larva_groups=False)
+        canvas.set_state(
+            env_params_to_canvas_state(
+                parameters.env_params,
+                larva_groups=None,
+                show_group_shapes=False,
+            )
         )
-        from larvaworld.portal.simulation.preview_frames import generate_preview_frames
-        from larvaworld.portal.simulation.run_playback import (
-            build_bounded_launcher,
-            finalize_preview_datasets,
+        self._temp_dir = payload.temporary_directory
+        self._analysis_figures = [
+            item.figure for item in payload.analysis.figures if item.figure is not None
+        ]
+        self.show_result(
+            scenario,
+            canvas,
+            payload.frames,
+            dt=payload.dt,
+            note=payload.note,
+            analysis=payload.analysis,
+            datasets=payload.datasets,
         )
 
-        launcher = None
-        datasets: list[Any] = []
-        analysis = PreviewAnalysisResult()
-        try:
-            self._temp_dir = tempfile.TemporaryDirectory(prefix="lw_explore_")
-            run_dir = Path(self._temp_dir.name) / scenario.id
-            run_dir.mkdir(parents=True, exist_ok=True)
-            launcher, note = build_bounded_launcher(
-                scenario.exp_id,
-                parameters,
-                run_dir,
-                step_cap=scenario.step_cap,
-                analysis_enrichment=preview_enrichment(scenario.id),
-            )
-            frames = generate_preview_frames(
-                launcher,
-                preview_steps=scenario.step_cap,
-            )
-            if not frames:
-                raise ValueError("No preview frames were generated.")
-            try:
-                datasets = finalize_preview_datasets(launcher)
-            except Exception as exc:
-                analysis.warnings.append(
-                    f"Preview datasets were unavailable: {type(exc).__name__}: {exc}"
-                )
-            else:
-                try:
-                    analysis = build_preview_analysis(scenario.id, datasets)
-                    self._analysis_figures = [item.figure for item in analysis.figures]
-                except Exception as exc:
-                    analysis.warnings.append(
-                        f"Preview analysis was unavailable: {type(exc).__name__}: {exc}"
-                    )
-            canvas = EnvironmentCanvas(editable=False, show_larva_groups=False)
-            canvas.set_state(
-                env_params_to_canvas_state(
-                    parameters.env_params,
-                    larva_groups=None,
-                    show_group_shapes=False,
-                )
-            )
-            self.show_result(
-                scenario,
-                canvas,
-                frames,
-                dt=float(launcher.dt),
-                note=note,
-                analysis=analysis,
-                datasets=datasets,
-            )
-        except Exception as exc:
-            self._show_error(scenario, exc)
-        finally:
-            try:
-                if launcher is not None and getattr(launcher, "screen_manager", None):
-                    launcher.screen_manager.close()
-            except Exception:
-                pass
+    def _cancel_preview_to_scenario(self, scenario: Scenario) -> None:
+        """Cancel the active worker and return immediately to the static scenario."""
+        self._cancel_active_preview()
+        self.start_scenario(scenario)
 
     @staticmethod
     def _apply_scenario_overrides(parameters: Any, scenario: Scenario) -> Any:
@@ -555,6 +758,10 @@ class _ExploreController:
         datasets: list[Any] | None = None,
     ) -> None:
         from larvaworld.portal.simulation.run_playback import FramePlayback
+
+        self._scenario_controls = None
+        self._generate_preview_button = None
+        self._active_scenario_id = None
 
         try:
             playback = FramePlayback(canvas=canvas, frames=frames, dt=dt)
@@ -651,6 +858,23 @@ class _ExploreController:
         if datasets:
             contents.append(_preview_dataset_tables_view(datasets))
         for item in analysis.figures:
+            if item.png is not None:
+                plot_pane: pn.viewable.Viewable = pn.pane.PNG(
+                    BytesIO(item.png),
+                    sizing_mode="scale_width",
+                    margin=0,
+                )
+            elif item.figure is not None:
+                # Compatibility fallback for direct/headless callers. Normal
+                # Explore jobs deliver PNG bytes rendered by their worker.
+                plot_pane = pn.pane.Matplotlib(
+                    item.figure,
+                    tight=True,
+                    sizing_mode="scale_width",
+                    margin=0,
+                )
+            else:
+                continue
             contents.append(
                 pn.Column(
                     pn.pane.HTML(
@@ -658,12 +882,7 @@ class _ExploreController:
                         f"{escape(item.title)}</div>",
                         margin=0,
                     ),
-                    pn.pane.Matplotlib(
-                        item.figure,
-                        tight=True,
-                        sizing_mode="scale_width",
-                        margin=0,
-                    ),
+                    plot_pane,
                     css_classes=["lw-explore-analysis-figure"],
                     sizing_mode="stretch_width",
                     margin=0,
@@ -687,6 +906,9 @@ class _ExploreController:
     # ---- errors and teardown -------------------------------------------
 
     def _show_error(self, scenario: Scenario, exc: Exception) -> None:
+        self._scenario_controls = None
+        self._generate_preview_button = None
+        self._active_scenario_id = None
         back = pn.widgets.Button(
             name="< All scenarios", button_type="default", width=150
         )
@@ -704,7 +926,46 @@ class _ExploreController:
             ),
         ]
 
+    def _stop_preview_poll(self) -> None:
+        if self._preview_poll_callback is not None:
+            try:
+                self._preview_document.remove_periodic_callback(
+                    self._preview_poll_callback
+                )
+            except (AttributeError, RuntimeError, ValueError):
+                pass
+        self._preview_poll_callback = None
+        self._preview_document = None
+
+    def _clear_active_preview(self) -> None:
+        self._stop_preview_poll()
+        self._preview_job = None
+        self._preview_future = None
+        self._preview_status = None
+        self._preview_progress = None
+
+    @staticmethod
+    def _release_discarded_preview(future: Future[Any]) -> None:
+        """Clean up a result that completed after its view was discarded."""
+        try:
+            payload = future.result()
+        except BaseException:
+            return
+        payload.release()
+
+    def _cancel_active_preview(self) -> None:
+        job = self._preview_job
+        future = self._preview_future
+        self._preview_request_id += 1
+        self._clear_active_preview()
+        if job is not None:
+            job.cancel()
+        if future is not None:
+            future.cancel()
+            future.add_done_callback(self._release_discarded_preview)
+
     def _release_preview_resources(self) -> None:
+        self._cancel_active_preview()
         if self._analysis_figures:
             from larvaworld.portal.explore.analysis import (
                 PreviewFigure,
@@ -722,6 +983,14 @@ class _ExploreController:
                 pass
             self._temp_dir = None
 
+    def close(self) -> None:
+        """Release background work and preview resources when a session ends."""
+        if self._closed:
+            return
+        self._closed = True
+        self._release_preview_resources()
+        self._preview_executor.shutdown(wait=False, cancel_futures=True)
+
     def view(self) -> pn.viewable.Viewable:
         return pn.Column(
             self.body,
@@ -731,8 +1000,16 @@ class _ExploreController:
 
 
 def explore_app() -> pn.viewable.Viewable:
-    pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS, EXPLORE_RAW_CSS])
+    pn.extension(
+        "tabulator",
+        raw_css=[PORTAL_RAW_CSS, EXPLORE_RAW_CSS],
+    )
     controller = _ExploreController()
+    try:
+        pn.state.on_session_destroyed(lambda _session_context: controller.close())
+    except RuntimeError:
+        # Headless construction has no Bokeh session to attach a teardown hook.
+        pass
     template = pn.template.MaterialTemplate(
         title="",
         header_background="#b5c2b0",

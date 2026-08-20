@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from html import escape
-from typing import TYPE_CHECKING, Any, ClassVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, ClassVar
 
 import pandas as pd
 import panel as pn
-import param
 
 from larvaworld.lib.param.custom import EndpointDataFrame, StepDataFrame
 
@@ -20,105 +20,6 @@ __all__: list[str] = [
     "StepDataFrameTable",
 ]
 
-
-_POPUP_STYLESHEET = """
-.lw-dataset-table-popup {
-  position: fixed;
-  top: 9vh;
-  width: min(720px, calc(50vw - 36px));
-  height: min(76vh, 780px);
-  min-width: 440px;
-  min-height: 360px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  resize: both;
-  border: 1px solid rgba(15, 23, 42, 0.24);
-  border-radius: 12px;
-  background: #ffffff;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.28);
-  color: #111111;
-  z-index: 2100;
-  box-sizing: border-box;
-}
-
-.lw-dataset-table-popup--step {
-  left: 24px;
-}
-
-.lw-dataset-table-popup--endpoint {
-  right: 24px;
-}
-
-.lw-dataset-table-popup-header {
-  position: relative;
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-height: 42px;
-  padding: 0 10px 0 16px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.12);
-  background: rgba(15, 23, 42, 0.04);
-  cursor: grab;
-  user-select: none;
-}
-
-.lw-dataset-table-popup-header:active {
-  cursor: grabbing;
-}
-
-.lw-dataset-table-popup-title {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 15px;
-  font-weight: 650;
-  white-space: nowrap;
-}
-
-.lw-dataset-table-popup-close {
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: #111111;
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-  z-index: 1;
-}
-
-.lw-dataset-table-popup-close:hover {
-  background: rgba(15, 23, 42, 0.10);
-}
-
-.lw-dataset-table-popup-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-  padding: 12px;
-  box-sizing: border-box;
-}
-
-@media (max-width: 900px) {
-  .lw-dataset-table-popup {
-    top: 6vh;
-    width: calc(100vw - 32px);
-    max-width: none;
-    min-width: 0;
-    height: 82vh;
-  }
-
-  .lw-dataset-table-popup--step,
-  .lw-dataset-table-popup--endpoint {
-    right: 16px;
-    left: 16px;
-  }
-}
-"""
 
 _TABLE_STYLESHEET = """
 .tabulator {
@@ -135,6 +36,39 @@ _TABLE_STYLESHEET = """
 """
 
 
+def _button_tooltip_stylesheet(text: str) -> str:
+    """Return a self-contained hover tooltip stylesheet for a Panel button."""
+    return f"""
+:host {{
+  overflow: visible !important;
+}}
+
+.bk-btn {{
+  position: relative;
+  overflow: visible !important;
+}}
+
+.bk-btn:hover::after {{
+  content: "{text}";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 7px);
+  transform: translateX(-50%);
+  z-index: 10020;
+  padding: 5px 8px;
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+}}
+"""
+
+
 def _index_levels(
     parameter_type: type[StepDataFrame | EndpointDataFrame],
 ) -> tuple[str, ...]:
@@ -143,64 +77,169 @@ def _index_levels(
     return tuple(parameter.levels or ())
 
 
-class _FloatingTablePopup(pn.reactive.ReactiveHTML):
-    """A floating, draggable, independently resizable in-app table window."""
-
-    body = param.Parameter()
-    title = param.String(default="Dataset table")
-    position_class = param.String(default="")
-    stylesheets = param.List(default=[_POPUP_STYLESHEET])
-
-    _template = """
-    <div id="popup_surface" class="lw-dataset-table-popup ${position_class}"
-         onmousedown="${script('bring_to_front')}">
-      <div id="drag_handle" class="lw-dataset-table-popup-header"
-           onmousedown="${script('start_drag')}">
-        <span class="lw-dataset-table-popup-title">${title}</span>
-        <button id="close_button" type="button" class="lw-dataset-table-popup-close"
-                onclick="${_close_button_click}">×</button>
-      </div>
-      <div id="body_slot" class="lw-dataset-table-popup-body">${body}</div>
-    </div>
+def _popup_drag_handle_html(title: str) -> str:
+    """Return a plain HTML drag handle without a custom Bokeh model."""
+    return f"""
+    <div style="height:32px;display:flex;align-items:center;padding:0 4px;
+                box-sizing:border-box;font-weight:650;cursor:grab;user-select:none;"
+         onmousedown="
+           if (event.button !== 0) return;
+           let node = this;
+           let popup = null;
+           while (node &amp;&amp; !popup) {{
+             popup = node.closest ? node.closest('.lw-dataset-table-popup') : null;
+             if (popup) break;
+             const root = node.getRootNode ? node.getRootNode() : null;
+             node = root &amp;&amp; root.host ? root.host : null;
+           }}
+           if (!popup) return;
+           event.preventDefault();
+           this.style.cursor = 'grabbing';
+           window.__larvaworldDatasetTablePopupZ =
+             (window.__larvaworldDatasetTablePopupZ || 10000) + 1;
+           popup.style.zIndex = window.__larvaworldDatasetTablePopupZ;
+           const rect = popup.getBoundingClientRect();
+           const startX = event.clientX;
+           const startY = event.clientY;
+           const baseLeft = rect.left;
+           const baseTop = rect.top;
+           popup.style.left = rect.left + 'px';
+           popup.style.right = 'auto';
+           popup.style.top = rect.top + 'px';
+           const handle = this;
+           const move = function(moveEvent) {{
+             const maxLeft = Math.max(0, window.innerWidth - popup.offsetWidth);
+             const maxTop = Math.max(0, window.innerHeight - popup.offsetHeight);
+             const left = Math.min(
+               maxLeft,
+               Math.max(0, baseLeft + moveEvent.clientX - startX)
+             );
+             const top = Math.min(
+               maxTop,
+               Math.max(0, baseTop + moveEvent.clientY - startY)
+             );
+             popup.style.left = left + 'px';
+             popup.style.top = top + 'px';
+           }};
+           const stop = function() {{
+             handle.style.cursor = 'grab';
+             document.removeEventListener('mousemove', move);
+             document.removeEventListener('mouseup', stop);
+             window.removeEventListener('blur', stop);
+           }};
+           document.addEventListener('mousemove', move);
+           document.addEventListener('mouseup', stop);
+           window.addEventListener('blur', stop);
+         ">{escape(title)}</div>
     """
 
-    _scripts = {
-        "bring_to_front": """
-          window.__larvaworldDatasetTablePopupZ =
-            (window.__larvaworldDatasetTablePopupZ || 2100) + 1;
-          popup_surface.style.zIndex = window.__larvaworldDatasetTablePopupZ;
-        """,
-        "start_drag": """
-          if (event.target.closest('button')) {
-            return;
-          }
-          const surface = popup_surface;
-          const rect = surface.getBoundingClientRect();
-          surface.style.position = 'fixed';
-          surface.style.margin = '0';
-          surface.style.right = 'auto';
-          surface.style.transform = 'none';
-          surface.style.left = rect.left + 'px';
-          surface.style.top = rect.top + 'px';
-          const startX = event.clientX;
-          const startY = event.clientY;
-          const baseLeft = rect.left;
-          const baseTop = rect.top;
-          function onMove(moveEvent) {
-            surface.style.left = (baseLeft + moveEvent.clientX - startX) + 'px';
-            surface.style.top = (baseTop + moveEvent.clientY - startY) + 'px';
-          }
-          function onUp() {
-            document.removeEventListener('mousemove', onMove);
-            document.removeEventListener('mouseup', onUp);
-          }
-          document.addEventListener('mousemove', onMove);
-          document.addEventListener('mouseup', onUp);
-        """,
-    }
+
+class _FloatingTablePopup(pn.Column):
+    """Dependency-free floating Panel window for one dataset table."""
+
+    def __init__(
+        self,
+        *,
+        title: str,
+        body: pn.viewable.Viewable,
+        position_class: str,
+        visible: bool = False,
+    ) -> None:
+        drag_handle = pn.pane.HTML(
+            _popup_drag_handle_html(title),
+            margin=0,
+            sizing_mode="stretch_width",
+            height=32,
+            sanitize_html=False,
+        )
+        close_button = pn.widgets.Button(
+            name="×",
+            button_type="light",
+            width=36,
+            height=32,
+            margin=0,
+        )
+        body_slot = pn.Column(
+            body,
+            sizing_mode="stretch_both",
+            margin=0,
+            styles={"overflow": "auto"},
+        )
+        position_styles = (
+            {"left": "24px"} if position_class.endswith("--step") else {"right": "24px"}
+        )
+        super().__init__(
+            pn.Row(
+                drag_handle,
+                close_button,
+                sizing_mode="stretch_width",
+                margin=0,
+                styles={
+                    "align-items": "center",
+                    "border-bottom": "1px solid rgba(15, 23, 42, 0.14)",
+                    "padding": "8px 10px",
+                },
+            ),
+            body_slot,
+            css_classes=["lw-dataset-table-popup", position_class],
+            width=720,
+            height=600,
+            sizing_mode="fixed",
+            margin=0,
+            styles={
+                "position": "fixed",
+                "top": "72px",
+                "z-index": "10000",
+                "background": "#ffffff",
+                "border": "1px solid rgba(15, 23, 42, 0.22)",
+                "border-radius": "12px",
+                "box-shadow": "0 18px 48px rgba(15, 23, 42, 0.28)",
+                "overflow": "hidden",
+                "resize": "both",
+                "min-width": "360px",
+                "min-height": "280px",
+                "max-width": "calc(100vw - 48px)",
+                "max-height": "calc(100vh - 96px)",
+                **position_styles,
+            },
+            visible=visible,
+        )
+        self._drag_handle = drag_handle
+        self._close_button = close_button
+        self._body_slot = body_slot
+        self._title = title
+        self._close_callback: Callable[[], None] | None = None
+        self._close_button.on_click(self._close_button_click)
+
+    @property
+    def body(self) -> pn.viewable.Viewable:
+        """Return the single table body hosted by the floating panel."""
+        return self._body_slot.objects[0]
+
+    @body.setter
+    def body(self, value: pn.viewable.Viewable) -> None:
+        self._body_slot.objects = [value]
+
+    @property
+    def title(self) -> str:
+        """Return the title shown in the floating-panel header."""
+        return self._title
+
+    @title.setter
+    def title(self, value: str) -> None:
+        self._title = value
+        self._drag_handle.object = _popup_drag_handle_html(value)
+
+    def set_close_callback(self, callback: Callable[[], None]) -> None:
+        """Set the host callback that unmounts this popup from its document."""
+        self._close_callback = callback
 
     def _close_button_click(self, _event: object) -> None:
-        self.visible = False
+        """Close this window without affecting the other dataset table."""
+        if self._close_callback is None:
+            self.visible = False
+            return
+        self._close_callback()
 
 
 class _DataFrameTable:
@@ -330,41 +369,49 @@ class LarvaDatasetTablesWidget:
             button_type="default",
             width=100,
             disabled=True,
+            stylesheets=[
+                _button_tooltip_stylesheet("Step-by-step parameter timeseries")
+            ],
         )
         self.endpoint_button = pn.widgets.Button(
             name="Endpoint",
             button_type="default",
             width=100,
             disabled=True,
+            stylesheets=[_button_tooltip_stylesheet("Endpoint parameter measurements")],
         )
         self._step_error = pn.pane.HTML(margin=(0, 0, 8, 0), visible=False)
         self._endpoint_error = pn.pane.HTML(margin=(0, 0, 8, 0), visible=False)
+        self._step_popup_body = pn.Column(
+            self._step_error,
+            self.step_table.view(),
+            sizing_mode="stretch_width",
+            margin=0,
+        )
+        self._endpoint_popup_body = pn.Column(
+            self._endpoint_error,
+            self.endpoint_table.view(),
+            sizing_mode="stretch_width",
+            margin=0,
+        )
         self.step_popup = _FloatingTablePopup(
             title="Step data",
-            body=pn.Column(
-                self._step_error,
-                self.step_table.view(),
-                sizing_mode="stretch_width",
-                margin=0,
-            ),
+            body=self._step_popup_body,
             position_class="lw-dataset-table-popup--step",
             visible=False,
         )
         self.endpoint_popup = _FloatingTablePopup(
             title="Endpoint data",
-            body=pn.Column(
-                self._endpoint_error,
-                self.endpoint_table.view(),
-                sizing_mode="stretch_width",
-                margin=0,
-            ),
+            body=self._endpoint_popup_body,
             position_class="lw-dataset-table-popup--endpoint",
             visible=False,
         )
+        self.step_popup.set_close_callback(lambda: self._unmount_popup(self.step_popup))
+        self.endpoint_popup.set_close_callback(
+            lambda: self._unmount_popup(self.endpoint_popup)
+        )
         self._view = pn.Column(
             pn.Row(self.step_button, self.endpoint_button, margin=0),
-            self.step_popup,
-            self.endpoint_popup,
             sizing_mode="stretch_width",
             margin=0,
         )
@@ -382,8 +429,8 @@ class LarvaDatasetTablesWidget:
         self._dataset = dataset
         self.step_button.disabled = dataset is None
         self.endpoint_button.disabled = dataset is None
-        self.step_popup.visible = False
-        self.endpoint_popup.visible = False
+        self._unmount_popup(self.step_popup)
+        self._unmount_popup(self.endpoint_popup)
         self.step_popup.title = self._popup_title("Step data")
         self.endpoint_popup.title = self._popup_title("Endpoint data")
         self._clear_error(self._step_error)
@@ -392,7 +439,7 @@ class LarvaDatasetTablesWidget:
         self.endpoint_table.clear()
 
     def view(self) -> pn.viewable.Viewable:
-        """Return buttons and both floating popup windows as one viewable."""
+        """Return buttons and any floating table windows currently open."""
         return self._view
 
     def _popup_title(self, title: str) -> str:
@@ -432,6 +479,18 @@ class LarvaDatasetTablesWidget:
             attribute="e",
         )
 
+    def _mount_popup(self, popup: _FloatingTablePopup) -> None:
+        """Attach the standard Panel popup only while its table is open."""
+        if popup not in self._view.objects:
+            self._view.append(popup)
+        popup.visible = True
+
+    def _unmount_popup(self, popup: _FloatingTablePopup) -> None:
+        """Remove a popup and its table models from the current document."""
+        if popup in self._view.objects:
+            self._view.remove(popup)
+        popup.visible = False
+
     def _open_table(
         self,
         *,
@@ -440,13 +499,13 @@ class LarvaDatasetTablesWidget:
         error_pane: pn.pane.HTML,
         attribute: str,
     ) -> None:
-        popup.visible = True
         self._clear_error(error_pane)
         if self._dataset is None:
             table.clear(message="Select a dataset before opening this table.")
-            return
-        try:
-            table.update(getattr(self._dataset, attribute))
-        except Exception as exc:
-            table.clear(message="The table could not be loaded.")
-            self._show_error(error_pane, exc)
+        else:
+            try:
+                table.update(getattr(self._dataset, attribute))
+            except Exception as exc:
+                table.clear(message="The table could not be loaded.")
+                self._show_error(error_pane, exc)
+        self._mount_popup(popup)
