@@ -106,7 +106,7 @@ class BrainModule(NestedConf):
         if mode in self.short_modes:
             mode = [k for k in self.modes if self.ModeShortNames[k] == mode][0]
         if mode in self.default_dict:
-            d = self.default_dict[mode]
+            d = self.default_dict[mode].get_copy()
             d.update_existingdict(kwargs)
             if include_mode:
                 d["mode"] = mode
@@ -458,15 +458,16 @@ class LarvaModuleDB(BrainModuleDB):
         return d.update_existingnestdict(kwargs)
 
     def larvaConf(self, ms: AttrDict = AttrDict(), mkws: AttrDict = AttrDict()):
+        # `mkws` is read, never filled in. It belongs to the caller, and when
+        # the argument is omitted it is the shared default of this method, so
+        # writing the missing keys back into it made every later call inherit
+        # them.
         C = AttrDict({"brain": self.brainConf(ms=ms, mkws=mkws)})
         for k, c in self.LarvaModsDefaultDict.items():
-            if k in self.LarvaModsOptional:
-                if k not in mkws:
-                    C[k] = None
-                    continue
-            if k not in mkws:
-                mkws[k] = {}
-            C[k] = c.update_existingnestdict(mkws[k])
+            if k in self.LarvaModsOptional and k not in mkws:
+                C[k] = None
+                continue
+            C[k] = c.update_existingnestdict(mkws[k] if k in mkws else {})
         return C
 
 
