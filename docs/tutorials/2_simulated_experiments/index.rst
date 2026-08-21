@@ -4,7 +4,7 @@
 Simulated experiments
 #########################
 
-Five behavioral assays, each reproduced by running one **stored experiment** and changing nothing
+Six behavioral assays, each reproduced by running one **stored experiment** and changing nothing
 but how many larvae take part.
 
 These lessons are the shortest path from *what does this platform do?* to an answer. They assume no
@@ -74,6 +74,16 @@ The experiments
       +++
       :bdg-primary:`beginner` :bdg-secondary:`~15 min` :bdg-info:`writes a video`
 
+   .. grid-item-card:: :octicon:`versions;1.5em;sd-mr-1` Comparing four models
+      :link: model_comparison
+      :link-type: doc
+
+      One odorous patch and four kinds of larva that differ only in whether they can smell and
+      whether they can eat, which isolates what each behavioral module contributes.
+
+      +++
+      :bdg-primary:`intermediate` :bdg-secondary:`~40 min` :bdg-info:`four groups at once`
+
 .. dropdown:: What you will be able to do afterwards
    :icon: light-bulb
 
@@ -85,6 +95,7 @@ The experiments
    - Compare a simulated population against a recorded one on the same axes.
    - Compute and interpret a preference index.
    - Read a time budget of crawling, pausing and feeding, and render a depleting substrate.
+   - Run several larva models side by side and attribute a difference in behavior to a module.
 
 .. dropdown:: Related reference pages
    :icon: link
@@ -107,3 +118,4 @@ The experiments
    chemotaxis
    odor_preference
    feeding
+   model_comparison

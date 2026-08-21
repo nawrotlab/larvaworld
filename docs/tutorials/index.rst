@@ -87,12 +87,12 @@ Course contents
       :link: 2_simulated_experiments/index
       :link-type: doc
 
-      Five published behavioral assays, each reproduced by running one stored experiment: free
-      exploration, dispersal against real larvae, chemotaxis, an odor preference test, and feeding
-      on a depletable substrate.
+      Six behavioral assays, each reproduced by running one stored experiment: free exploration,
+      dispersal against real larvae, chemotaxis, an odor preference test, feeding on a depletable
+      substrate, and a four-way comparison of larva models on one food patch.
 
       +++
-      :bdg-primary:`beginner` :bdg-secondary:`~75 min` :bdg-success:`no data needed`
+      :bdg-primary:`beginner` :bdg-secondary:`~115 min` :bdg-success:`no data needed`
 
    .. grid-item-card:: :octicon:`database;1.5em;sd-mr-1` 3 · Experimental data
       :link: 3_experimental_data/index
