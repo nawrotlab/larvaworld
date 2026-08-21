@@ -69,21 +69,35 @@ def plot_food_amount(
         >>> fig = plot_food_amount(datasets=[d1, d2], scaled=True, filt_amount=True)
     """
     name = "food_intake"
-    ylab = r"Cumulative food intake $(mg)$"
-    par = "ingested_food_volume"
+    ylab = "Cumulative food intake"
+    # The gut module records the ingested volume; a model without energetics
+    # only has the amount its feeder consumed. Both answer "how much did it
+    # eat", so fall back to the second when the first was not recorded.
+    par = reg.getPar("f_am_V")
+    par_fallback = reg.getPar("f_am")
     if scaled:
         name = f"scaled_{name}"
         ylab = r"Cumulative food intake as % larval mass"
-        par = "ingested_body_mass_ratio"
+        par = reg.getPar("sf_am_M")
+        par_fallback = None
     if filt_amount:
         name = f"filtered_{name}"
-        ylab = r"Food intake $(mg)$"
+        ylab = "Food intake"
     if filt_amount and scaled:
         ylab = "Food intake as % larval mass"
+    # A caller-supplied name wins, so graphgroup entries can label the figure.
+    name = kwargs.pop("name", name)
     P = plot.AutoPlot(name=name, **kwargs)
 
     for lab, d, c in P.data_palette:
-        dst_df = d.step_data[par]
+        cols = d.step_data.columns
+        p = par if par in cols else par_fallback
+        if p is None or p not in cols:
+            raise ValueError(
+                f"Dataset {d.id!r} records neither {par!r} nor {par_fallback!r}, "
+                "so its food intake cannot be plotted."
+            )
+        dst_df = d.step_data[p]
         dst_m = dst_df.groupby(level="Step").quantile(q=0.5)
         dst_u = dst_df.groupby(level="Step").quantile(q=0.75)
         dst_b = dst_df.groupby(level="Step").quantile(q=0.25)

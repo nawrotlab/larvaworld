@@ -138,9 +138,12 @@ def barplot(
     """
     Nks = len(ks)
 
+    # A caller-supplied name wins, so graphgroup entries can label the figure.
+    name = kwargs.pop("name", ks[0])
+
     P = plot.AutoPlot(
         ks=ks,
-        name=ks[0],
+        name=name,
         build_kws={"N": Nks, "Ncols": int(np.ceil(Nks / 3)), "w": 8, "h": 6},
         **kwargs,
     )

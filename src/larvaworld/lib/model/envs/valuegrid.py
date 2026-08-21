@@ -370,6 +370,10 @@ class FoodGrid(ValueGrid):
 
     unique_id = param.String("FoodGrid")
     color = param.Color(default="green")
+    # Unlike the odor, wind and temperature layers, a food grid is a physical
+    # feature of the arena rather than an abstract sensory field, so it is drawn
+    # by default: cells fade from green to white as the food in them is eaten.
+    visible = param.Boolean(default=True)
     fixed_max = param.Boolean(default=True)
     initial_value = param.Number(10**-6)
     substrate = ClassAttr(
