@@ -726,8 +726,18 @@ def Model_dict():
     MD = moduleDB
     LMs = MD.LocoModsBasic
 
-    def olf_kws(g={"Odor": 150.0}, mode="default", **kwargs):
-        return MD.module_conf(mID="olfactor", mode=mode, gain_dict=g, **kwargs)
+    def olf_kws(g={"Odor": 150.0}, mode="default", brute_force=False, **kwargs):
+        # `brute_force` is stated on every olfactor rather than left out. It
+        # selects between the two ways this sensor reaches locomotion - False
+        # feeds the turner and steers, True suppresses that output and only
+        # interrupts locomotion on a falling concentration - so it must never be
+        # inherited by accident. `module_conf` hands out the shared per-mode
+        # default dict and updates it in place, so an omitted argument silently
+        # kept whatever the previous caller passed; every forager below was
+        # built after the `_brute` navigator and picked up its True this way.
+        return MD.module_conf(
+            mID="olfactor", mode=mode, gain_dict=g, brute_force=brute_force, **kwargs
+        )
 
     E = {}
 
