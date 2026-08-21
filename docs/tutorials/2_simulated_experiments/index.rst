@@ -4,8 +4,8 @@
 Simulated experiments
 #########################
 
-Four behavioral assays from the published literature, each reproduced by running one **stored
-experiment** and changing nothing but how many larvae take part.
+Five behavioral assays, each reproduced by running one **stored experiment** and changing nothing
+but how many larvae take part.
 
 These lessons are the shortest path from *what does this platform do?* to an answer. They assume no
 knowledge of how a configuration is built — every experiment used here already exists in the
@@ -64,6 +64,16 @@ The experiments
       +++
       :bdg-primary:`beginner` :bdg-secondary:`~10 min`
 
+   .. grid-item-card:: :octicon:`container;1.5em;sd-mr-1` Feeding
+      :link: feeding
+      :link-type: doc
+
+      A floor made entirely of food: how much the larvae eat, how they split their time between
+      crawling and feeding, and the substrate visibly disappearing beneath them.
+
+      +++
+      :bdg-primary:`beginner` :bdg-secondary:`~15 min` :bdg-info:`writes a video`
+
 .. dropdown:: What you will be able to do afterwards
    :icon: light-bulb
 
@@ -74,6 +84,7 @@ The experiments
    - Produce the standard figures for an assay by calling plots by name.
    - Compare a simulated population against a recorded one on the same axes.
    - Compute and interpret a preference index.
+   - Read a time budget of crawling, pausing and feeding, and render a depleting substrate.
 
 .. dropdown:: Related reference pages
    :icon: link
@@ -95,3 +106,4 @@ The experiments
    dispersion
    chemotaxis
    odor_preference
+   feeding
