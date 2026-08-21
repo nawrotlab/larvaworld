@@ -454,7 +454,16 @@ def Exp_dict():
                     env="uniform_food",
                     l=lgID("feeder", N=5, s=(0.005, 0.005)),
                 ),
-                "food_grid": fE("food_grid", env="food_grid", l=lgID("feeder", N=5)),
+                # Bout annotation is requested so that the ethogram of the
+                # analysis has the crawl and pause epochs to draw.
+                "food_grid": fE(
+                    "food_grid",
+                    env="food_grid",
+                    l=lgID("feeder", N=5),
+                    en=ENR.source_proc(
+                        anot_keys=["bout_detection", "bout_distribution"]
+                    ),
+                ),
                 "single_odor_patch": fE(
                     "single_odor_patch",
                     env="single_odor_patch",

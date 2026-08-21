@@ -352,6 +352,9 @@ class GraphRegistry:
                 "chemo": ["chemo"],
                 "RL": ["RL"],
                 # 'dispersion': ['comparative_analysis'],
+                # Feeding on a food grid: how much was eaten, and how the time
+                # was split between locomotion and feeding.
+                "food_grid": ["intake"],
                 # The free exploration assays. Their enrichment computes the
                 # kinematics, bout annotation and stride-cycle interference that
                 # these groups draw, so all of them apply. `dsp` is left out of
