@@ -361,7 +361,9 @@ class Life(NestedConf):
     @classmethod
     def from_epoch_ticks(cls, ticks=[], subs=None, reach_pupation=False):
         assert all([tick > 0 for tick in ticks])
-        ticks.sort()
+        # Sorted into a new list: `ticks` belongs to the caller, and unpassed it
+        # is the shared default of this method.
+        ticks = sorted(ticks)
         age_range = []
         age = 0
         for tick in ticks:

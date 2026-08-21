@@ -59,6 +59,13 @@ class TestSharedDefaultArguments:
         assert a.build_kws is not b.build_kws
         assert b.build_kws["subplot_kw"] == {}
 
+    def test_from_epoch_ticks_does_not_sort_the_caller_list(self):
+        from larvaworld.lib.param.composition import Life
+
+        ticks = [10, 3, 7]
+        Life.from_epoch_ticks(ticks=ticks, subs=[1.0, "standard"])
+        assert ticks == [10, 3, 7]
+
     def test_the_plot_build_kws_default_stays_empty(self):
         import inspect
 
