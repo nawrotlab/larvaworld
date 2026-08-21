@@ -40,6 +40,11 @@ class ReplayRun(BaseRun):
             **kwargs: Arguments passed to parent class
 
         """
+        # The screen settings below are derived from the dataset, so they are
+        # written into a copy: `screen_kws` is the caller's dict, and when the
+        # argument is omitted it is the shared default of this constructor,
+        # which would carry one replay's settings into the next.
+        screen_kws = dict(screen_kws)
         self._record_manifest = _record_manifest
         self._source_manifest = _source_manifest
         self._manifest_parameters = copy.deepcopy(parameters)

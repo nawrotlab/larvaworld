@@ -110,6 +110,11 @@ class BasePlot:
 
         self.return_fig = return_fig
         self.show = show
+        # A copy: `build_kws` is the caller's dict, and when the argument is
+        # omitted it is the shared default of this constructor, so both the
+        # subplot settings and the resolved Ndatasets/Nks below would persist
+        # into every later plot built without an explicit `build_kws`.
+        build_kws = dict(build_kws)
         build_kws["subplot_kw"] = subplot_kw
         self.build_kws = build_kws
         for k, v in self.build_kws.items():

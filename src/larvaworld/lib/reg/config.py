@@ -367,11 +367,19 @@ class ConfType(param.Parameterized):
             dict or None: The expanded configuration dictionary if successful, otherwise None.
 
         """
+        # A copy throughout. `expand` exists so that a caller can adjust a
+        # configuration before running it, and both the configuration itself and
+        # every sub-configuration substituted into it below are live objects of
+        # the registry: without copying, `p = expand(id); p.enrichment = {}`
+        # silently reconfigures the stored experiment for the rest of the
+        # process, and reaches into the Env and Model stores as well.
         if conf is None:
             if id in self.dict:
-                conf = self.dict[id]
+                conf = self.dict[id].get_copy()
             else:
                 return None
+        else:
+            conf = util.AttrDict(conf).get_copy()
         subks = self.CONFTYPE_SUBKEYS[self.conftype]
         if len(subks) > 0:
             for subID, subk in subks.items():
@@ -379,10 +387,10 @@ class ConfType(param.Parameterized):
                 if subID == "larva_groups" and subk == "Model":
                     for k, v in conf["larva_groups"].items():
                         if v.model in ids:
-                            v.model = reg.conf[subk].getID(v.model)
+                            v.model = reg.conf[subk].getID(v.model).get_copy()
                 else:
                     if conf[subID] in ids:
-                        conf[subID] = reg.conf[subk].getID(conf[subID])
+                        conf[subID] = reg.conf[subk].getID(conf[subID]).get_copy()
 
         return conf
 
