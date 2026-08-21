@@ -1232,7 +1232,10 @@ class ParamRegistry(ParamClass):
             print(f"Parameter {p.disp} not found")
 
     def compute(self, k: str, d: Any) -> None:
-        p = self.kdict[k]
+        # `kdict` is populated lazily, so a parameter that has never been asked
+        # for is absent from it. `get` realizes the key before indexing; do the
+        # same here, or computing a not-yet-realized parameter raises KeyError.
+        p = self.get_param(k)
         res = p.exists(d)
         if not any(list(res.values())):
             k0s = p.required_ks

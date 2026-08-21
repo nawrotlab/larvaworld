@@ -214,7 +214,16 @@ def Exp_dict():
                 **kwargs,
             ).nestedConf
 
-        def fE(id, dur=10.0, en=ENR.source_proc(), env="patch_grid", **kwargs):
+        # The food and patch assays. Their analyses draw turn amplitudes, turn
+        # durations and ethograms, all of which are built from annotated bouts,
+        # so the annotation is requested by default.
+        def fE(
+            id,
+            dur=10.0,
+            en=ENR.source_proc(anot_keys=["bout_detection", "bout_distribution"]),
+            env="patch_grid",
+            **kwargs,
+        ):
             return exp(id, dur=dur, en=en, env=env, **kwargs)
 
         def tE(id, dur=600.0, en=ENR.source_proc(), env="single_patch", **kwargs):
@@ -454,16 +463,7 @@ def Exp_dict():
                     env="uniform_food",
                     l=lgID("feeder", N=5, s=(0.005, 0.005)),
                 ),
-                # Bout annotation is requested so that the ethogram of the
-                # analysis has the crawl and pause epochs to draw.
-                "food_grid": fE(
-                    "food_grid",
-                    env="food_grid",
-                    l=lgID("feeder", N=5),
-                    en=ENR.source_proc(
-                        anot_keys=["bout_detection", "bout_distribution"]
-                    ),
-                ),
+                "food_grid": fE("food_grid", env="food_grid", l=lgID("feeder", N=5)),
                 "single_odor_patch": fE(
                     "single_odor_patch",
                     env="single_odor_patch",

@@ -530,23 +530,11 @@ class GraphRegistry:
                     ),
                     self.entry("navigation index"),
                     self.entry("turn amplitude"),
-                    self.entry("turn duration"),
-                    self.entry(
-                        "turn amplitude VS Y pos",
-                        "turn angle VS Y pos (scatter)",
-                        mode="scatter",
-                    ),
-                    self.entry(
-                        "turn amplitude VS Y pos",
-                        "turn angle VS Y pos (hist)",
-                        mode="hist",
-                    ),
-                    self.entry(
-                        "turn amplitude VS Y pos",
-                        "bearing correction VS Y pos",
-                        mode="hist",
-                        ref_angle=270,
-                    ),
+                    # 'turn duration' and the three 'turn amplitude VS Y pos'
+                    # entries are left out: they ask `get_par` for per-turn
+                    # quantities, which it cannot serve because those live in
+                    # the epoch dictionaries rather than in the step or endpoint
+                    # data. Restoring them needs that data path, not a plot fix.
                 ],
                 "survival": [
                     # 'foraging_list',

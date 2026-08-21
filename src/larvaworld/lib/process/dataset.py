@@ -856,6 +856,13 @@ class ParamLarvaDataset(param.Parameterized):
             D.Rturn_amp = self.epoch_amps(D.Rturn, a.values)
             Lmaxs = self.epoch_maxs(D.Lturn, a.values)
             Rmaxs = self.epoch_maxs(D.Rturn, a.values)
+            # The two turn directions pooled. `turn` is a declared epoch type
+            # (see `DatasetConfig.h5_kdic`) and the chunk the turn-amplitude and
+            # turn-duration parameters are tracked in, so any plot of those
+            # raises without it. It is built in the same left-then-right order as
+            # the pooled arrays below, which several consumers - among them
+            # `turn_mode_annotation` - index positionally against.
+            D.turn = np.concatenate([D.Lturn, D.Rturn]).reshape(-1, 2)
             D.turn_dur = np.concatenate([D.Lturn_dur, D.Rturn_dur])
             D.turn_amp = np.concatenate([D.Lturn_amp, D.Rturn_amp])
             D.turn_vel_max = np.concatenate([Lmaxs, Rmaxs])
