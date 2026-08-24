@@ -434,6 +434,53 @@ class AmPPredictionTester:
 
         return fig
 
+    def compute_error_statistics(self) -> dict[str, float]:
+        """
+        Compute summary error statistics for both engines.
+
+        Returns
+        -------
+        dict
+            Keys: "closed_median_RE", "closed_mean_RE", "stepped_median_RE",
+                  "stepped_mean_RE", "n_predictions"
+            Values: relative error metrics
+        """
+        if self.comparison is None:
+            self.build_comparison()
+
+        df = self.comparison
+        stats = {
+            "n_predictions": len(df.dropna(subset=["simulated_closed"])),
+            "closed_median_RE": df["RE_closed"].median(),
+            "closed_mean_RE": df["RE_closed"].mean(),
+            "closed_max_RE": df["RE_closed"].max(),
+            "stepped_median_RE": df["RE_stepped"].median(),
+            "stepped_mean_RE": df["RE_stepped"].mean(),
+            "stepped_max_RE": df["RE_stepped"].max(),
+        }
+        return stats
+
+    def print_error_summary(self) -> None:
+        """Print a summary of prediction accuracy statistics."""
+        stats = self.compute_error_statistics()
+        print("\n" + "=" * 80)
+        print("PREDICTION ACCURACY SUMMARY")
+        print("=" * 80)
+        print(f"Number of zero-variate predictions: {stats['n_predictions']}")
+        print(
+            f"\nClosed-form ODE engine:"
+            f"\n  Median relative error: {stats['closed_median_RE']:.4f}"
+            f"\n  Mean relative error:   {stats['closed_mean_RE']:.4f}"
+            f"\n  Max relative error:    {stats['closed_max_RE']:.4f}"
+        )
+        print(
+            f"\nStepped Euler engine:"
+            f"\n  Median relative error: {stats['stepped_median_RE']:.4f}"
+            f"\n  Mean relative error:   {stats['stepped_mean_RE']:.4f}"
+            f"\n  Max relative error:    {stats['stepped_max_RE']:.4f}"
+        )
+        print("=" * 80)
+
     def run_full_pipeline(self, plot: bool = True) -> None:
         """
         Run the complete prediction testing pipeline.
@@ -452,6 +499,7 @@ class AmPPredictionTester:
         self.extract_predictions()
         self.build_comparison()
         self.print_comparison()
+        self.print_error_summary()
 
         if plot:
             self.plot_predictions()
