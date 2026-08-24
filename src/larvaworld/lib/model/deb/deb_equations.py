@@ -48,6 +48,8 @@ import math
 import numpy as np
 from numpy.lib import scimath
 
+from larvaworld.lib.util import AttrDict
+
 __all__: list[str] = [
     "STAGES",
     "Stage",
@@ -1088,6 +1090,25 @@ def run_stage(
     return run(pars, state=state, **kwargs)
 
 
+# AmP symbol -> LifeHistory accessor mapping for test_predictions()
+# Covers only symbols currently implementable from the existing 4-stage model.
+# Deferred symbols (t1, t2, L1, L2, Ri, am_BD_LD) require porting additional
+# DEBtool routines (get_tj_habp, get_tm_mod_habp, ultimate-state fecundity);
+# ground truth exists in MATLAB source at:
+#   G:\Το Drive μου\DEB projects\Drosophila DEB model\code\Drosophilla_DEB_Evridiki\
+#     predict_Drosophila_melanogaster.m (zero- and uni-variate predictions)
+#     get_tj_habp.m, get_tm_mod_habp.m (instar/emergence/lifespan ODE solvers)
+# See plans/deb_amp_predictions_and_univariate_plots.md for full task scope.
+_PREDICTION_ACCESSORS: dict[str, Callable[["LifeHistory"], Optional[float]]] = {
+    "ab": lambda lh: lh.age_at_birth,
+    "tj": lambda lh: lh.time_to_pupation,
+    "tje": lambda lh: lh.durations.get(Stage.PUPA),
+    "Lb": lambda lh: lh.Lw_b,
+    "Lj": lambda lh: lh.Lw_p,
+    "Wd_e_f": lambda lh: lh.Wd_at("imago"),
+}
+
+
 @dataclass
 class LifeHistory:
     """
@@ -1172,6 +1193,32 @@ class LifeHistory:
         """Physical length (cm) of the state entering ``stage``, ``L / del_M``."""
         L = self.L_at(stage)
         return None if L is None else L / self.pars.del_M
+
+    def Wd_at(self, stage: str) -> Optional[float]:
+        """Dry weight (g) of the state entering ``stage``."""
+        st = self.state_at.get(resolve_stage(stage))
+        return None if st is None else dry_weight(self.pars, st.V, st.E)
+
+    def test_predictions(self):
+        """
+        Compare LifeHistory against AmP prediction symbols.
+
+        Returns a dict of symbols that this simulation can reproduce, each with
+        .observed, .predicted, .RE, and .simulated (this run) fields.
+        Symbols not in _PREDICTION_ACCESSORS (t1/t2/L1/L2, Ri, am_BD_LD, *_F424/*_JAZZ,
+        psd.*) are silently skipped — they require ground-truth routines not yet
+        ported or alternate-diet simulations not yet run.
+        """
+        P = self.pars.predictions.get_copy()
+        PP = AttrDict({})
+        for k in P:
+            accessor = _PREDICTION_ACCESSORS.get(k)
+            if accessor is not None:
+                v = accessor(self)
+                if v is not None:
+                    P[k].simulated = v
+                    PP[k] = P[k]
+        return PP
 
 
 def run_life_cycle(
