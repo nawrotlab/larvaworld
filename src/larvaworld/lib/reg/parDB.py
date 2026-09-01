@@ -755,7 +755,10 @@ class ParamClass:
         self.add_freq(k0="l")
         self.add_operators(k0="l")
 
-        for point in ["", "centroid"]:
+        # The midline endpoints are registered alongside the tracked point and the
+        # centroid, so that their pathlengths and speeds are describable parameters
+        # rather than bare dataframe columns.
+        for point in ["", "centroid", "head", "tail"]:
             px, py = nam.xy(point)
             self.add(
                 **{"p": px, "disp": f"{point} X position", "sym": f"{point} X", **kws}
@@ -840,6 +843,43 @@ class ParamClass:
         for dur in [1, 2, 5, 10, 20, 60]:
             self.add_tor(dur=dur)
         self.add(**{"p": "anemotaxis", "sym": "anemotaxis"})
+        self.build_occupancy()
+
+    def build_occupancy(self) -> None:
+        """Parameters describing where in a bounded arena an agent spends its time.
+
+        The radial position is normalized by the arena radius, so that 0 is the arena
+        centre and 1 its boundary, and the measures are comparable across arena sizes.
+        A uniformly distributed agent yields a mean normalized radius of 2/3 rather
+        than 1/2, because the area available grows with the radius; the border
+        occupancies compare against the corresponding area fractions.
+        """
+        self.add(
+            p="radial_position",
+            k="rr",
+            param_class=param.Magnitude,
+            sym=nam.tex.sub("r", "norm"),
+            disp="normalized radial position",
+            required_ks=["x", "y"],
+        )
+        self.add_operators(k0="rr")
+        for pct in (10, 25):
+            self.add(
+                p=f"border_occupancy_{pct}",
+                k=f"bocc{pct}",
+                param_class=param.Magnitude,
+                sym=nam.tex.sub("f", f"b{pct}"),
+                disp=f"time fraction in the outer {pct}% of the arena radius",
+                required_ks=["rr"],
+            )
+        self.add(
+            p="centrophily",
+            k="cphi",
+            sym=nam.tex.sub("C", "phi"),
+            disp="centrophily index",
+            lim=(-1.0, 1.0),
+            required_ks=["rr"],
+        )
 
     def build_chunks(self) -> None:
         d0 = {

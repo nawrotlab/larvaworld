@@ -1984,6 +1984,62 @@ class ParamLarvaDataset(param.Parameterized):
         e[csdst] = s[sdst].dropna().groupby("AgentID").sum()
         e[nam.mean(svel)] = s[svel].dropna().groupby("AgentID").mean()
 
+    @valid(required={"config_attrs": ["traj_xy"]})
+    def comp_occupancy(self, border_pcts=(10, 25), **kwargs):
+        """
+        Computes where in the arena each agent spends its time.
+
+        The radial position of every tracked timepoint is normalized by the arena
+        radius, giving 0 at the arena centre and 1 at its boundary. This is summarized
+        per agent as the mean normalized radius, the fraction of time spent within the
+        outer bands of the radius, and a centrophily index.
+
+        The reference for all three is a uniformly distributed agent rather than the
+        arena centre : since the area available grows with the radius, uniform use of a
+        circular arena gives a mean normalized radius of 2/3, not 1/2, and places a
+        fraction 1-(1-pct/100)^2 of the time in the outer pct% of the radius. The
+        centrophily index rescales the mean radius against that expectation, so that it
+        is 0 for uniform use, positive when the agent prefers the centre and negative
+        when it prefers the border.
+
+        Args:
+            border_pcts: The outer percentages of the arena radius to report occupancy
+                for. Defaults to (10, 25).
+            **kwargs: Ignored, for signature compatibility with the other comp_ methods.
+
+        Notes:
+            Only meaningful for a bounded arena the agents were actually confined to.
+            The radius is taken as half the smaller arena dimension, so for a strongly
+            non-circular arena the normalization is the inscribed circle and radii above
+            1 are possible.
+
+        """
+        s, e, c = self.data
+        xy = c.traj_xy
+        if not xy.exist_in(s):
+            vprint("No trajectory coordinates, skipping occupancy analysis.", 1)
+            return
+        arena = c.env_params.arena
+        radius = float(np.min(arena.dims)) / 2
+        if not np.isfinite(radius) or radius <= 0:
+            vprint("Arena has no positive radius, skipping occupancy analysis.", 1)
+            return
+
+        p_rr = reg.getPar("rr")
+        s[p_rr] = np.hypot(s[xy[0]].values, s[xy[1]].values) / radius
+        self.comp_operators(pars=[p_rr])
+
+        g = s[p_rr].dropna().groupby("AgentID")
+        for pct in border_pcts:
+            threshold = 1 - pct / 100
+            e[reg.getPar(f"bocc{pct}")] = g.apply(lambda r: (r > threshold).mean())
+        # Uniform use of a disc gives a mean normalized radius of 2/3. Expressing the
+        # deviation as a fraction of that makes the index 0 for uniform use, positive
+        # towards the centre and negative towards the border.
+        uniform_mean = 2 / 3
+        e[reg.getPar("cphi")] = (uniform_mean - e[reg.getPar("rr_mu")]) / uniform_mean
+        vprint("Occupancy analysis complete.", 1)
+
     @valid(required={"ps": ["x", "y", "dst"]})
     def comp_tortuosity(self, dur=20, **kwargs):
         s, e, c = self.data
@@ -2070,8 +2126,18 @@ class ParamLarvaDataset(param.Parameterized):
                     1,
                 )
         self.comp_operators(pars=c.traj_xy)
-        for point in ["", "centroid"]:
+        # The midline endpoints move differently from the body midpoint : peristalsis and
+        # head sweeps add displacement that the tracked point averages out, so their
+        # pathlengths are reported separately when the midline is tracked.
+        midline_ends = (
+            [c.midline_points[0], c.midline_points[-1]] if c.Npoints > 1 else []
+        )
+        points = ["", "centroid"] + [
+            pt for pt in midline_ends if nam.xy(pt).exist_in(s)
+        ]
+        for point in points:
             self.comp_xy_moments(point, **kwargs)
+        self.comp_occupancy(**kwargs)
         vprint("Spatial analysis complete.", 1)
 
     def scale_to_length(self, pars=None, keys=None):
