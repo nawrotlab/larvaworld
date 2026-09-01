@@ -108,3 +108,57 @@ def test_endpoint_durations_survive_the_track_constraining_step():
 
     assert (e["cum_dur"] > 0).all()
     assert (e["dt"] > 0).all()
+
+
+def _dataset_with_offset_tracks(tmp_path, offsets):
+    """A dataset whose tracks are identical up to a per-agent translation."""
+    from larvaworld.lib.process.dataset import LarvaDataset
+
+    agent_ids = [f"Larva_{i}" for i in range(len(offsets))]
+    index = pd.MultiIndex.from_product(
+        [range(NTICKS), agent_ids], names=["Step", "AgentID"]
+    )
+    # A track spanning [-1, 1] about its own centre, before the offset is applied.
+    base = np.linspace(-1.0, 1.0, NTICKS)
+    x = np.concatenate([[base[t] + ox for ox, _ in offsets] for t in range(NTICKS)])
+    y = np.concatenate([[base[t] + oy for _, oy in offsets] for t in range(NTICKS)])
+    step = pd.DataFrame({"x": x, "y": y}, index=index)
+    end = pd.DataFrame(
+        {"length": np.ones(len(agent_ids))},
+        index=pd.Index(agent_ids, name="AgentID"),
+    )
+    return LarvaDataset(
+        dir=str(tmp_path / "centered"),
+        id="centered",
+        agent_ids=agent_ids,
+        dt=DT,
+        Nsteps=NTICKS,
+        step=step,
+        end=end,
+        load_data=False,
+    )
+
+
+def test_align_trajectories_center_puts_each_track_on_the_origin(tmp_path):
+    """Each track is centred on its own bounding-box midpoint, whatever its offset."""
+    d = _dataset_with_offset_tracks(tmp_path, [(5.0, 6.0), (-3.0, 2.0), (0.0, 0.0)])
+
+    centered = d.align_trajectories(transposition="center", replace=False)
+
+    for aID in d.ids:
+        xy = centered.xs(aID, level="AgentID")[["x", "y"]].to_numpy(dtype=float)
+        midpoint = (xy.max(axis=0) + xy.min(axis=0)) / 2
+        assert midpoint == pytest.approx([0.0, 0.0], abs=1e-9)
+
+
+def test_align_trajectories_center_is_a_midpoint_not_a_half_range(tmp_path):
+    """A track offset by (dx, dy) must shift by exactly that, not by half its span."""
+    offset = (5.0, 6.0)
+    d = _dataset_with_offset_tracks(tmp_path, [offset])
+
+    centered = d.align_trajectories(transposition="center", replace=False)
+
+    aID = d.ids[0]
+    before = d.step_data.xs(aID, level="AgentID")[["x", "y"]].to_numpy(dtype=float)
+    after = centered.xs(aID, level="AgentID")[["x", "y"]].to_numpy(dtype=float)
+    np.testing.assert_allclose(before - after, np.broadcast_to(offset, before.shape))

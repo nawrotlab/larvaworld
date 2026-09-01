@@ -1434,10 +1434,13 @@ class ParamLarvaDataset(param.Parameterized):
                 vprint(
                     "Centralizing trajectories in trajectory center using min-max positions"
                 )
+                # The centering offset is the midpoint of each track's bounding box,
+                # (max + min) / 2. Subtracting the half-range, (max - min) / 2, would
+                # leave the track offset by its own minimum instead of centering it.
                 xy = [
                     (
                         s[XY].xs(id, level="AgentID").max().values
-                        - s[XY].xs(id, level="AgentID").min().values
+                        + s[XY].xs(id, level="AgentID").min().values
                     )
                     / 2
                     for id in self.ids
