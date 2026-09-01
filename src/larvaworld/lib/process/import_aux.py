@@ -1042,7 +1042,13 @@ def constrain_selected_tracks(
             df["head_x"].dropna().groupby(aID).count().nlargest(max_Nagents).index
         ]
         vprint(f"**--- Number of tracks limited to {max_Nagents} larvae -----", 1)
-    df.sort_index(inplace=True)
+    # The index holds only the AgentID at this point, and it is not unique : the
+    # (Step, AgentID) index is set later, by finalize_timeseries_dataframe. Sorting groups
+    # each agent's rows together, but only a stable sort keeps them in temporal order
+    # within a group. An unstable one reorders samples inside a track, which leaves the
+    # timestamps non-monotonic and makes the endpoint metrics derived from the first and
+    # last timestamp of each agent meaningless.
+    df.sort_index(inplace=True, kind="stable")
     return df
 
 
