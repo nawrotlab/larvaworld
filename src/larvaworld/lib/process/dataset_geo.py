@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import movingpandas as mpd
 import numpy as np
 import pandas as pd
+from pint_pandas import PintType
 
 warnings.filterwarnings("ignore")
 
@@ -48,6 +49,10 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
     ) -> None:
         if step is not None:
             self.init_mpd(step, dt=dt)
+        # dt is consumed above to build the trajectories, but it also defines the
+        # dataset's framerate, so it has to reach the configuration as well.
+        if dt is not None:
+            kwargs.setdefault("dt", dt)
         BaseLarvaDataset.__init__(self, **kwargs)
 
     # @property
@@ -75,7 +80,6 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
             >>> gdf.geometry  # 'xy' column with Point objects
         """
         import geopandas as gpd
-        from pint_pandas import PintType
 
         if len(step.index.names) != 1 or "datetime" not in step.index.names:
             max_tick = step[["x", "y"]].dropna().index.unique("Step").max()
@@ -172,8 +176,6 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
 
     @property
     def dt_mag(self):
-        from pint_pandas import PintType
-
         assert self.config.dt is not None
         _dt = self.config.dt * PintType.ureg.s
         return _dt.magnitude
@@ -203,7 +205,6 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         for tr in self:
             tr.add_speed(name=name, **kwargs)
             tr.df = tr.df.loc[tr.df["xy"] != None]
-        from pint_pandas import PintType
 
         self.set_dtype(name, self.spatial_unit / PintType.ureg.s)
 
@@ -221,7 +222,6 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         for tr in self:
             tr.add_acceleration(name=name, **kwargs)
             tr.df = tr.df.loc[tr.df["xy"] != None]
-        from pint_pandas import PintType
 
         self.set_dtype(name, self.spatial_unit / PintType.ureg.s**2)
 
@@ -563,7 +563,6 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
             >>> interp_df = self.interpolate_traj(dt=0.1)
             >>> interp_df.loc[10]  # All agents at timestep 10
         """
-        from pint_pandas import PintType
 
         dtu = dt * PintType.ureg.sec
         e = self.endpoint_data
