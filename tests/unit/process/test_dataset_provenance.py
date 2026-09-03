@@ -91,8 +91,11 @@ def test_derived_lineage_preserves_manifest_and_recalculates_path(
             "parameters": {"start": 10, "stop": 120},
         }
     ]
-    assert derived.config.provenance["run_manifest"]["path"] == str(
-        Path("../../run/run_manifest.json")
+    # Manifest paths are stored POSIX-style so that provenance written on one
+    # platform resolves on another.
+    assert (
+        derived.config.provenance["run_manifest"]["path"]
+        == "../../run/run_manifest.json"
     )
 
 
