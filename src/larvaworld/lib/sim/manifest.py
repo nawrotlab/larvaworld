@@ -478,7 +478,9 @@ def manifest_reference(
     return {
         "manifest_id": manifest["run"]["manifest_id"],
         "workspace_id": manifest["run"]["workspace_id"],
-        "path": os.path.relpath(path, start=dataset_root),
+        # Stored in JSON and read back on any platform, so the separator must be
+        # POSIX rather than the host's.
+        "path": Path(os.path.relpath(path, start=dataset_root)).as_posix(),
     }
 
 
@@ -502,10 +504,12 @@ def attach_manifest_to_datasets(
             reference = {
                 "manifest_id": str(manifest["manifest_id"]),
                 "workspace_id": str(manifest["workspace_id"]),
-                "path": os.path.relpath(
-                    Path(raw_path).expanduser().resolve(),
-                    start=Path(dataset_dir).expanduser().resolve(),
-                ),
+                "path": Path(
+                    os.path.relpath(
+                        Path(raw_path).expanduser().resolve(),
+                        start=Path(dataset_dir).expanduser().resolve(),
+                    )
+                ).as_posix(),
             }
         else:
             reference = manifest_reference(manifest, dataset_dir)
@@ -802,10 +806,12 @@ class RunManifestSession:
         return {
             "manifest_id": reference["manifest_id"],
             "workspace_id": reference["workspace_id"],
-            "path": os.path.relpath(
-                self.manifest_path,
-                start=Path(dataset_dir).expanduser().resolve(),
-            ),
+            "path": Path(
+                os.path.relpath(
+                    self.manifest_path,
+                    start=Path(dataset_dir).expanduser().resolve(),
+                )
+            ).as_posix(),
         }
 
     def set_child_seeds(self, child_seeds: Mapping[str, int]) -> None:
@@ -1430,9 +1436,11 @@ def append_dataset_lineage(
             manifest_path = resolve_dataset_manifest_path(parent)
             raw_dir = getattr(derived_config, "dir", None)
             if isinstance(raw_dir, str) and raw_dir:
-                reference["path"] = os.path.relpath(
-                    manifest_path, start=Path(raw_dir).expanduser().resolve()
-                )
+                reference["path"] = Path(
+                    os.path.relpath(
+                        manifest_path, start=Path(raw_dir).expanduser().resolve()
+                    )
+                ).as_posix()
         except RunManifestError:
             pass
     derived_config.provenance = provenance
