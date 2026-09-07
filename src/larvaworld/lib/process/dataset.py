@@ -194,6 +194,19 @@ class DatasetConfig(RuntimeDataOps, SimMetricOps, SimTimeOps):
 
 
 class ParamLarvaDataset(param.Parameterized):
+    """
+    Parameter-backed container for a larva dataset and its derived metrics.
+
+    Holds the timeseries (``step_data``), the per-agent endpoint metrics
+    (``endpoint_data``) and the dataset metadata (``config``), and provides the
+    processing that derives one from the other: spatial, angular, dispersal and
+    tortuosity metrics, behavioural epoch annotation and the parameter
+    accessors used throughout analysis.
+
+    This class defines the data model and its computations; the storage layer
+    lives in :class:`BaseLarvaDataset` and :class:`LarvaDataset`.
+    """
+
     config = ClassAttr(DatasetConfig, doc="The dataset metadata")
     step_data = StepDataFrame(doc="The timeseries data")
     endpoint_data = EndpointDataFrame(doc="The endpoint data")
@@ -202,6 +215,14 @@ class ParamLarvaDataset(param.Parameterized):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the dataset, splitting the config keywords from the rest.
+
+        Args:
+            **kwargs: Dataset parameters. Keys belonging to
+                :class:`DatasetConfig` are collected into a ``config``, and any
+                unrecognized keys are kept as additional metadata in
+                ``config2``.
+        """
         if "config" not in kwargs:
             kws = AttrDict()
             for k in DatasetConfig.param_keys():
@@ -230,7 +251,12 @@ class ParamLarvaDataset(param.Parameterized):
 
         self._cycle_curves = None
 
-    def validate_IDs(self):
+    def validate_IDs(self) -> None:
+        """Check that the step and endpoint data describe the same agents.
+
+        When the two disagree, the step data is restricted to the endpoint
+        data's agent IDs.
+        """
         try:
             s1 = self.s.index.unique("AgentID").tolist()
             s2 = self.e.index.values.tolist()
@@ -241,22 +267,26 @@ class ParamLarvaDataset(param.Parameterized):
         except:
             pass
 
-    def update_ids_in_data(self):
+    def update_ids_in_data(self) -> None:
+        """Restrict the step and endpoint data to the configured agent IDs."""
         self.set_data(
             step=self.s.loc[(slice(None), self.ids), :], end=self.e.loc[self.ids]
         )
 
     @param.depends("step_data", watch=True)
-    def update_Nticks(self):
+    def update_Nticks(self) -> None:
+        """Refresh the tick count and duration from the step data."""
         self.c.Nticks = self.s.index.unique("Step").size
         self.c.duration = self.c.dt * self.c.Nticks / 60
 
     @property
-    def c(self):
+    def c(self) -> "DatasetConfig":
+        """Shorthand for the dataset configuration."""
         return self.config
 
     @property
-    def ids(self):
+    def ids(self) -> list[str]:
+        """The agent IDs held by the dataset."""
         return self.config.agent_ids
 
     @property
@@ -273,38 +303,57 @@ class ParamLarvaDataset(param.Parameterized):
         return load_run_manifest(self.run_manifest_path)
 
     @property
-    def s(self):
+    def s(self) -> pd.DataFrame:
+        """The timeseries data, loaded from disk on first access."""
         if self.step_data is None:
             self.load()
         return self.step_data
 
     @property
-    def e(self):
+    def e(self) -> pd.DataFrame:
+        """The endpoint data, loaded from disk on first access."""
         if self.endpoint_data is None:
             self.load(step=False)
         return self.endpoint_data
 
     @property
-    def end_ps(self):
+    def end_ps(self) -> SuperList:
+        """The endpoint parameter names, sorted."""
         return SuperList(self.e.columns).sorted
 
     @property
-    def step_ps(self):
+    def step_ps(self) -> SuperList:
+        """The timeseries parameter names, sorted."""
         return SuperList(self.s.columns).sorted
 
     @property
-    def end_ks(self):
+    def end_ks(self) -> SuperList:
+        """The registry short keys of the endpoint parameters, sorted."""
         return SuperList(reg.getPar(d=self.end_ps, to_return="k")).sorted
 
     @property
-    def step_ks(self):
+    def step_ks(self) -> SuperList:
+        """The registry short keys of the timeseries parameters, sorted."""
         return SuperList(reg.getPar(d=self.step_ps, to_return="k")).sorted
 
     @property
-    def min_tick(self):
+    def min_tick(self) -> int:
+        """The first timestep index present in the data."""
         return self.s.index.unique("Step").min()
 
-    def timeseries_slice(self, time_range=None, df=None):
+    def timeseries_slice(
+        self, time_range: tuple[float, float] | None = None, df: Any = None
+    ) -> pd.DataFrame:
+        """Restrict timeseries data to a time window.
+
+        Args:
+            time_range: The ``(start, stop)`` window in seconds. When None, the
+                data is returned unrestricted.
+            df: The dataframe to slice. Defaults to the dataset's step data.
+
+        Returns:
+            The restricted timeseries.
+        """
         if df is None:
             df = self.s
         if time_range is None:
@@ -317,6 +366,15 @@ class ParamLarvaDataset(param.Parameterized):
             return df_slice
 
     def required(**pars):
+        """Build a decorator skipping a method when its inputs are missing.
+
+        Args:
+            **pars: Data requirements, forwarded to :meth:`data_exists`.
+
+        Returns:
+            The decorator.
+        """
+
         def wrap(f):
             def wrapped_f(self, *args, **kwargs):
                 if self.data_exists(**pars):
@@ -327,6 +385,20 @@ class ParamLarvaDataset(param.Parameterized):
         return wrap
 
     def valid(required=None, returned=None):
+        """Build a decorator guarding a computation by its inputs and outputs.
+
+        The wrapped method is skipped when its inputs are absent, and also when
+        its outputs already exist, so that repeated processing is idempotent.
+
+        Args:
+            required: Data that must exist for the method to run, in the form
+                accepted by :meth:`data_exists`.
+            returned: Data the method produces. When it already exists, the
+                method is skipped.
+
+        Returns:
+            The decorator.
+        """
         _verbose = -3
 
         def wrap(f):
@@ -363,7 +435,29 @@ class ParamLarvaDataset(param.Parameterized):
 
         return wrap
 
-    def data_exists(self, ks=[], ps=[], eks=[], eps=[], config_attrs=[], attrs=[]):
+    def data_exists(
+        self,
+        ks: list[str] = [],
+        ps: list[str] = [],
+        eks: list[str] = [],
+        eps: list[str] = [],
+        config_attrs: list[str] = [],
+        attrs: list[str] = [],
+    ) -> bool:
+        """Report whether the named data is present in the dataset.
+
+        Args:
+            ks: Registry keys expected in the timeseries data.
+            ps: Parameter names expected in the timeseries data.
+            eks: Registry keys expected in the endpoint data.
+            eps: Parameter names expected in the endpoint data.
+            config_attrs: Configuration attributes naming timeseries columns
+                that must exist.
+            attrs: Attributes that must be set on the dataset itself.
+
+        Returns:
+            True only if every requirement is met.
+        """
         if not all([hasattr(self, attr) for attr in attrs]):
             return False
         spars = SuperList(
@@ -375,7 +469,8 @@ class ParamLarvaDataset(param.Parameterized):
         return epars.exist_in(self.s)
 
     @property
-    def chunk_dicts(self):
+    def chunk_dicts(self) -> AttrDict:
+        """The per-agent behavioural chunk annotations, loaded on demand."""
         try:
             assert self._chunk_dicts is not None
         except AssertionError:
@@ -390,13 +485,19 @@ class ParamLarvaDataset(param.Parameterized):
         return self._chunk_dicts
 
     @chunk_dicts.setter
-    def chunk_dicts(self, d):
+    def chunk_dicts(self, d: AttrDict) -> None:
+        """Store the chunk annotations, both in memory and on disk.
+
+        Args:
+            d: The per-agent chunk annotations.
+        """
         self._chunk_dicts = d
         self.store(d, "chunk_dicts")
         vprint("Chunk dictionaries stored.", 1)
 
     @property
-    def epoch_dicts(self):
+    def epoch_dicts(self) -> AttrDict:
+        """The per-agent epoch tick ranges, keyed by epoch type."""
         try:
             assert self._epoch_dicts is not None
         except AssertionError:
@@ -411,12 +512,18 @@ class ParamLarvaDataset(param.Parameterized):
         return self._epoch_dicts
 
     @epoch_dicts.setter
-    def epoch_dicts(self, d):
+    def epoch_dicts(self, d: AttrDict) -> None:
+        """Store the epoch tick ranges, both in memory and on disk.
+
+        Args:
+            d: The per-agent epoch ranges, keyed by epoch type.
+        """
         self._epoch_dicts = d
         self.store(d, "epoch_dicts")
 
     @property
-    def fitted_epochs(self):
+    def fitted_epochs(self) -> AttrDict:
+        """The distributions fitted to the observed epoch durations."""
         try:
             assert self._fitted_epochs is not None
         except AssertionError:
@@ -431,12 +538,18 @@ class ParamLarvaDataset(param.Parameterized):
         return self._fitted_epochs
 
     @fitted_epochs.setter
-    def fitted_epochs(self, d):
+    def fitted_epochs(self, d: AttrDict) -> None:
+        """Store the fitted epoch distributions, in memory and on disk.
+
+        Args:
+            d: The fitted distributions, keyed by epoch type.
+        """
         self._fitted_epochs = d
         self.store(d, "fitted_epochs")
 
     @property
-    def pooled_epochs(self):
+    def pooled_epochs(self) -> AttrDict:
+        """The epoch distributions pooled across all agents."""
         try:
             assert self._pooled_epochs is not None
         except AssertionError:
@@ -447,12 +560,18 @@ class ParamLarvaDataset(param.Parameterized):
         return self._pooled_epochs
 
     @pooled_epochs.setter
-    def pooled_epochs(self, d):
+    def pooled_epochs(self, d: AttrDict) -> None:
+        """Store the pooled epoch distributions, in memory and on disk.
+
+        Args:
+            d: The pooled distributions, keyed by epoch type.
+        """
         self._pooled_epochs = d
         self.save_dict(d, "pooled_epochs.txt")
 
     @property
-    def cycle_curves(self):
+    def cycle_curves(self) -> AttrDict:
+        """The per-agent stride-cycle curves of the tracked parameters."""
         try:
             assert self._cycle_curves is not None
         except AssertionError:
@@ -462,12 +581,18 @@ class ParamLarvaDataset(param.Parameterized):
         return self._cycle_curves
 
     @cycle_curves.setter
-    def cycle_curves(self, d):
+    def cycle_curves(self, d: AttrDict) -> None:
+        """Store the stride-cycle curves, in memory and on disk.
+
+        Args:
+            d: The cycle curves, keyed by parameter.
+        """
         self._cycle_curves = d
         self.store(d, "cycle_curves")
 
     @property
-    def pooled_cycle_curves(self):
+    def pooled_cycle_curves(self) -> Any:
+        """The stride-cycle curves pooled across agents, computed on demand."""
         try:
             assert self.c.pooled_cycle_curves is not None
         except AssertionError:
@@ -475,10 +600,24 @@ class ParamLarvaDataset(param.Parameterized):
         return self.c.pooled_cycle_curves
 
     @pooled_cycle_curves.setter
-    def pooled_cycle_curves(self, d):
+    def pooled_cycle_curves(self, d: Any) -> None:
+        """Store the pooled stride-cycle curves in the configuration.
+
+        Args:
+            d: The pooled cycle curves, keyed by parameter.
+        """
         self.c.pooled_cycle_curves = d
 
-    def track_par_in_chunk(self, chunk, par):
+    def track_par_in_chunk(self, chunk: str, par: str) -> None:
+        """Record a parameter's value at the start and end of each epoch.
+
+        The step data gains three columns: the value at chunk start, the value
+        at chunk stop, and their difference.
+
+        Args:
+            chunk: The behavioural epoch type.
+            par: The parameter to track.
+        """
         A = self.empty_df(dim3=3)
         for i, id in enumerate(self.ids):
             E = self.epoch_dicts[chunk][id]
@@ -492,7 +631,17 @@ class ParamLarvaDataset(param.Parameterized):
                 A[t1s, i, 2] = b1s - b0s
         self.s[nam.atStartStopChunk(par, chunk)] = A.reshape([-1, 3])
 
-    def epochs_pose_by_ID(self, chunk, id):
+    def epochs_pose_by_ID(self, chunk: str, id: str) -> tuple[Any, Any]:
+        """Return one agent's pose at the start and end of each epoch.
+
+        Args:
+            chunk: The behavioural epoch type.
+            id: The agent ID.
+
+        Returns:
+            The ``(x, y, orientation)`` triplets at epoch start and at epoch
+            stop.
+        """
         E = self.epoch_dicts[chunk][id]
         if E.shape[0] > 0:
             S = self.s[self.c.traj_xy + [nam.unwrap(nam.orient("front"))]].xs(
@@ -502,16 +651,45 @@ class ParamLarvaDataset(param.Parameterized):
         else:
             return np.array([[], [], []]), np.array([[], [], []])
 
-    def epochs_bearing_by_ID(self, chunk, id, loc=(0.0, 0.0)):
+    def epochs_bearing_by_ID(
+        self, chunk: str, id: str, loc: tuple[float, float] = (0.0, 0.0)
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Return one agent's bearing to a point at each epoch boundary.
+
+        Args:
+            chunk: The behavioural epoch type.
+            id: The agent ID.
+            loc: The reference point bearings are measured towards.
+
+        Returns:
+            The bearings at epoch start and at epoch stop.
+        """
         b0s, b1s = self.epochs_pose_by_ID(chunk, id)
         p0 = np.array([util.comp_bearing_solo(x, y, o, loc=loc) for x, y, o in b0s])
         p1 = np.array([util.comp_bearing_solo(x, y, o, loc=loc) for x, y, o in b1s])
         return p0, p1
 
-    def epoch_durs(self, epochs):
+    def epoch_durs(self, epochs: np.ndarray) -> np.ndarray:
+        """Convert epoch tick ranges into durations in seconds.
+
+        Args:
+            epochs: The epoch start and stop ticks.
+
+        Returns:
+            The epoch durations.
+        """
         return (np.diff(epochs).flatten()) * self.c.dt
 
-    def epoch_amps(self, epochs, a):
+    def epoch_amps(self, epochs: np.ndarray, a: np.ndarray) -> np.ndarray:
+        """Integrate a signal over each epoch.
+
+        Args:
+            epochs: The epoch start and stop ticks.
+            a: The signal to integrate, indexed by tick.
+
+        Returns:
+            The integral of the signal within each epoch.
+        """
         return np.array(
             [
                 np.trapz(a[p][~np.isnan(a[p])], dx=self.c.dt)
@@ -519,10 +697,27 @@ class ParamLarvaDataset(param.Parameterized):
             ]
         )
 
-    def epoch_maxs(self, epochs, a):
+    def epoch_maxs(self, epochs: np.ndarray, a: np.ndarray) -> np.ndarray:
+        """Return a signal's maximum within each epoch.
+
+        Args:
+            epochs: The epoch start and stop ticks.
+            a: The signal, indexed by tick.
+
+        Returns:
+            The peak value within each epoch.
+        """
         return np.array([np.max(a[p]) for p in util.epoch_slices(epochs)])
 
-    def epoch_idx(self, epochs):
+    def epoch_idx(self, epochs: np.ndarray) -> Any:
+        """Return the tick indices covered by a set of epochs.
+
+        Args:
+            epochs: The epoch start and stop ticks.
+
+        Returns:
+            The concatenated indices of every epoch, empty if there are none.
+        """
         slices = util.epoch_slices(epochs)
         if len(slices) == 0:
             return []
@@ -531,7 +726,15 @@ class ParamLarvaDataset(param.Parameterized):
         else:
             return np.concatenate(slices)
 
-    def comp_chunk_bearing(self, chunk):
+    def comp_chunk_bearing(self, chunk: str) -> None:
+        """Compute bearing change towards each source across epochs.
+
+        For every configured source, the step data gains three columns: the
+        bearing at epoch start, at epoch stop, and their difference.
+
+        Args:
+            chunk: The behavioural epoch type.
+        """
         for n, loc in self.c.sources.items():
             A = self.empty_df(dim3=3)
             for i, id in enumerate(self.ids):
@@ -543,7 +746,17 @@ class ParamLarvaDataset(param.Parameterized):
                     A[ep[:, 1], i, 2] = b1s - b0s
             self.s[nam.atStartStopChunk(nam.bearing_to(n), chunk)] = A.reshape([-1, 3])
 
-    def detect_epochs(self, idx, min_dur=None):
+    def detect_epochs(self, idx: np.ndarray, min_dur: float | None = None) -> Any:
+        """Group consecutive ticks into epochs.
+
+        Args:
+            idx: The ticks satisfying the epoch condition.
+            min_dur: Minimum epoch duration in seconds. Shorter epochs are
+                discarded. Defaults to two timesteps.
+
+        Returns:
+            The start and stop ticks of each retained epoch.
+        """
         dt = self.c.dt
         if min_dur is None:
             min_dur = 2 * dt
@@ -750,6 +963,17 @@ class ParamLarvaDataset(param.Parameterized):
     def crawl_annotation(
         self, strides_enabled: bool = True, vel_thr: float = 0.3
     ) -> AttrDict:
+        """Detect crawling epochs: strides, runs and pauses.
+
+        Args:
+            strides_enabled: When True, detect individual strides from the
+                stride-cycle signal. Forced off for single-point datasets,
+                where that signal is unavailable.
+            vel_thr: Scaled-velocity threshold separating runs from pauses.
+
+        Returns:
+            The detected epochs and their derived endpoint metrics.
+        """
         if self.c.Npoints <= 1:
             strides_enabled = False
         l, v, sv, fov = reg.getPar(["l", "v", "sv", "fov"])
@@ -841,7 +1065,18 @@ class ParamLarvaDataset(param.Parameterized):
             self.e[str_sd_std] = self.e[str_d_std] / self.e[l]
         return DD
 
-    def turn_annotation(self, min_dur=None):
+    def turn_annotation(self, min_dur: float | None = None) -> AttrDict:
+        """Detect turning epochs from the front-orientation velocity.
+
+        Turns are the stretches of constant angular-velocity sign, split into
+        left and right turns.
+
+        Args:
+            min_dur: Minimum turn duration in seconds.
+
+        Returns:
+            The detected turn epochs and their derived endpoint metrics.
+        """
         S = self.s[reg.getPar("fov")]
         ps = reg.getPar(["Ltur_N", "Rtur_N", "tur_N", "tur_H"])
         vs = np.zeros([self.c.N, len(ps)]) * np.nan
@@ -874,7 +1109,12 @@ class ParamLarvaDataset(param.Parameterized):
         self.e[ps] = vs
         return DD
 
-    def turn_mode_annotation(self):
+    def turn_mode_annotation(self) -> AttrDict:
+        """Split turns into weathervaning and head-casting by amplitude.
+
+        Returns:
+            The per-agent amplitude quantiles of each turn mode.
+        """
         wNh = {}
         wNh_ps = [
             "weathervane_q25_amp",
@@ -901,7 +1141,13 @@ class ParamLarvaDataset(param.Parameterized):
             )
         self.e[wNh_ps] = pd.DataFrame.from_dict(wNh).T
 
-    def patch_residency_annotation(self):
+    def patch_residency_annotation(self) -> AttrDict:
+        """Compute on-food and off-food residency metrics.
+
+        Returns:
+            The per-agent time, distance and velocity split by food patch
+            occupancy.
+        """
         dst, on_tr, on_t_mu, cum_on_d, on_d_mu, on_v_mu, cum_on_t, cum_t = reg.getPar(
             [
                 "d",
@@ -939,7 +1185,12 @@ class ParamLarvaDataset(param.Parameterized):
         self.e[on_v_mu] = self.e[cum_on_d] / self.e[cum_t]
         return DD
 
-    def detect_epoch_on_food_overlap(self, chunk):
+    def detect_epoch_on_food_overlap(self, chunk: str) -> None:
+        """Split an epoch type's counts and durations by food occupancy.
+
+        Args:
+            chunk: The behavioural epoch type.
+        """
         on = nam.on_food
         CT = self.e[nam.cum(nam.dur(on))]
         D0 = self.epoch_dicts["on_food"]
@@ -956,7 +1207,23 @@ class ParamLarvaDataset(param.Parameterized):
         self.e[f"{nam.dur_ratio(chunk)}_{on}"] = self.e[cdur_on] / CT
         self.e[f"{nam.mean(nam.num(chunk))}_{on}"] = self.e[cc_N_on] / CT
 
-    def detect_bouts(self, vel_thr=0.3, strides_enabled=True, castsNweathervanes=True):
+    def detect_bouts(
+        self,
+        vel_thr: float = 0.3,
+        strides_enabled: bool = True,
+        castsNweathervanes: bool = True,
+    ) -> None:
+        """Run the full behavioural epoch detection pipeline.
+
+        Annotates turns and crawling epochs, optionally splits turns into
+        weathervanes and head-casts, and stores the result in
+        :attr:`epoch_dicts`.
+
+        Args:
+            vel_thr: Scaled-velocity threshold separating runs from pauses.
+            strides_enabled: Whether to detect individual strides.
+            castsNweathervanes: Whether to split turns by mode.
+        """
         self.comp_freqs()
         Dtur = self.turn_annotation()
         vprint("Turn annotation complete.", 1)
@@ -1031,7 +1298,11 @@ class ParamLarvaDataset(param.Parameterized):
 
         vprint("Completed bout detection.", 1)
 
-    def fit_pooled_epochs(self):
+    def fit_pooled_epochs(self) -> None:
+        """Fit duration distributions to the pooled epochs.
+
+        The fitted distributions are stored in :attr:`fitted_epochs`.
+        """
         try:
             D = self.pooled_epochs
             assert D is not None
@@ -1052,7 +1323,15 @@ class ParamLarvaDataset(param.Parameterized):
         except:
             vprint("Failed to fit pooled epoch durations.", 1)
 
-    def generate_pooled_epochs(self, mID):
+    def generate_pooled_epochs(self, mID: str) -> Any:
+        """Sample pooled epochs from a model's intermittency module.
+
+        Args:
+            mID: The model configuration ID to sample from.
+
+        Returns:
+            The generated epoch distributions.
+        """
         m = reg.conf.Model.getID(mID)
         Im = self.c.get_sample_bout_distros(m.get_copy()).brain.intermitter
         try:
@@ -1079,7 +1358,11 @@ class ParamLarvaDataset(param.Parameterized):
         except:
             vprint("Failed to generate pooled epoch durations.", 1)
 
-    def comp_bout_distros(self):
+    def comp_bout_distros(self) -> None:
+        """Select the best-fitting epoch distribution per epoch type.
+
+        The result is written into the dataset configuration.
+        """
         c = self.config
         c.bout_distros = AttrDict()
         for k, dic in self.fitted_epochs.items():
@@ -1091,7 +1374,12 @@ class ParamLarvaDataset(param.Parameterized):
                 vprint(f"Failed to complete {k} bout distribution analysis.", 1)
         self.register_bout_distros()
 
-    def register_bout_distros(self):
+    def register_bout_distros(self) -> None:
+        """Derive the intermittency configuration from the epoch distributions.
+
+        Stores the run and pause distributions, together with the exploration
+        versus exploitation balance, in the dataset configuration.
+        """
         s, e, c = self.data
         from ..model.modules.intermitter import get_EEB_poly1d
 
@@ -1112,7 +1400,15 @@ class ParamLarvaDataset(param.Parameterized):
         except:
             pass
 
-    def comp_cycle_curves(self, Nbins=64):
+    def comp_cycle_curves(self, Nbins: int = 64) -> AttrDict:
+        """Compute the stride-cycle curve of each tracked parameter.
+
+        Args:
+            Nbins: Number of phase bins the stride cycle is resampled onto.
+
+        Returns:
+            The per-agent cycle curves, keyed by parameter.
+        """
         CC = AttrDict()
         for sh in ["sv", "fov", "rov", "foa", "b"]:
             ss = self.s[reg.getPar(sh)]
@@ -1140,7 +1436,15 @@ class ParamLarvaDataset(param.Parameterized):
 
         return CC
 
-    def comp_attenuation(self, Nbins=64):
+    def comp_attenuation(self, Nbins: int = 64) -> None:
+        """Fit the stride-cycle attenuation of angular velocity.
+
+        Quantifies how much the crawling rhythm suppresses turning, and stores
+        the fitted coefficients in the dataset configuration.
+
+        Args:
+            Nbins: Number of phase bins the stride cycle is resampled onto.
+        """
         p_sv, pau_fov_mu = reg.getPar(["sv", "pau_fov_mu"])
         x = np.linspace(0, 2 * np.pi, Nbins)
         CC = self.cycle_curves
@@ -1155,7 +1459,14 @@ class ParamLarvaDataset(param.Parameterized):
         except:
             pass
 
-    def comp_interference(self, Nbins=64):
+    def comp_interference(self, Nbins: int = 64) -> None:
+        """Run the full crawl-turn interference analysis.
+
+        Computes the cycle curves, their attenuation, and the pooled curves.
+
+        Args:
+            Nbins: Number of phase bins the stride cycle is resampled onto.
+        """
         try:
             self.cycle_curves = self.comp_cycle_curves(Nbins=Nbins)
             self.comp_attenuation(Nbins=Nbins)
@@ -1164,7 +1475,8 @@ class ParamLarvaDataset(param.Parameterized):
         except:
             vprint("Failed to complete stridecycle interference analysis.", 1)
 
-    def comp_pooled_cycle_curves(self):
+    def comp_pooled_cycle_curves(self) -> None:
+        """Pool the per-agent stride-cycle curves into a median curve."""
         try:
             self.pooled_cycle_curves = AttrDict(
                 {
@@ -1190,6 +1502,15 @@ class ParamLarvaDataset(param.Parameterized):
         is_last=False,
         **kwargs,
     ):
+        """Run the requested behavioural annotation steps.
+
+        Args:
+            anot_keys: The annotation steps to run: ``"bout_detection"``,
+                ``"bout_distribution"``, ``"interference"``,
+                ``"source_attraction"`` and ``"patch_residency"``.
+            is_last: When True, save the dataset once annotation completes.
+            **kwargs: Forwarded to the individual annotation steps.
+        """
         if "bout_detection" in anot_keys:
             self.detect_bouts()
             self.comp_pooled_epochs()
@@ -1214,7 +1535,8 @@ class ParamLarvaDataset(param.Parameterized):
         if is_last:
             self.save()
 
-    def interpolate_nan_values(self):
+    def interpolate_nan_values(self) -> None:
+        """Fill gaps in the tracked xy coordinates by linear interpolation."""
         s, e, c = self.data
         pars = c.all_xy.existing(s)
         Npars = len(pars)
@@ -1226,7 +1548,14 @@ class ParamLarvaDataset(param.Parameterized):
             s.loc[(slice(None), id), pars] = A
         vprint("All parameters interpolated", 1)
 
-    def filter(self, filter_f=2.0, recompute=False):
+    def filter(self, filter_f: float = 2.0, recompute: bool = False) -> None:
+        """Low-pass filter the tracked xy coordinates.
+
+        Args:
+            filter_f: Cut-off frequency in Hz.
+            recompute: When True, filter again even if the dataset has already
+                been filtered.
+        """
         s, e, c = self.data
         assert isinstance(filter_f, float)
         if c.filtered_at is not None and not recompute:
@@ -1248,7 +1577,14 @@ class ParamLarvaDataset(param.Parameterized):
             s[p] = f_array[:, j, :].flatten()
         vprint(f"All spatial parameters filtered at {filter_f} Hz", 1)
 
-    def rescale(self, recompute=False, rescale_by=1.0):
+    def rescale(self, recompute: bool = False, rescale_by: float = 1.0) -> None:
+        """Rescale every spatial parameter by a constant factor.
+
+        Args:
+            recompute: When True, rescale again even if the dataset has already
+                been rescaled.
+            rescale_by: The multiplicative factor.
+        """
         s, e, c = self.data
         assert isinstance(rescale_by, float)
         if c.rescaled_by is not None and not recompute:
@@ -1268,7 +1604,19 @@ class ParamLarvaDataset(param.Parameterized):
             e["length"] = e["length"].apply(lambda x: x * rescale_by)
         vprint(f"Dataset rescaled by {rescale_by}.", 1)
 
-    def exclude_rows(self, flag="collision_flag", accepted=[0], rejected=None):
+    def exclude_rows(
+        self,
+        flag: str = "collision_flag",
+        accepted: list[Any] | None = [0],
+        rejected: list[Any] | None = None,
+    ) -> None:
+        """Blank out the timesteps rejected by a quality flag.
+
+        Args:
+            flag: The step-data column holding the flag.
+            accepted: The only accepted flag value; other rows become NaN.
+            rejected: A rejected flag value; matching rows become NaN.
+        """
         s, e, c = self.data
         if accepted is not None:
             s.loc[s[flag] != accepted[0]] = np.nan
@@ -1388,6 +1736,25 @@ class ParamLarvaDataset(param.Parameterized):
     def align_trajectories(
         self, track_point=None, arena_dims=None, transposition="origin", replace=True
     ):
+        """Transpose trajectories onto a common reference frame.
+
+        Args:
+            track_point: The body point trajectories are aligned by. Defaults
+                to the dataset's tracking point.
+            arena_dims: The arena dimensions, used by the ``"arena"`` mode.
+            transposition: ``"origin"`` shifts each track to start at its
+                first tracked position, ``"arena"`` centres tracks on the
+                arena midpoint, and ``"center"`` centres each track on the
+                midpoint of its own bounding box.
+            replace: When True, transpose the dataset's own step data in
+                place; otherwise operate on a copy of the coordinates.
+
+        Returns:
+            The transposed coordinates.
+
+        Raises:
+            ValueError: If the requested track point has no coordinates.
+        """
         s, e, c = self.data
 
         assert transposition in ["arena", "origin", "center"]
@@ -1475,12 +1842,34 @@ class ParamLarvaDataset(param.Parameterized):
         if transposition is not None:
             self.align_trajectories(transposition=transposition)
 
-    def merge_configs(self):
+    def merge_configs(self) -> None:
+        """Fold the additional metadata into the typed configuration.
+
+        Each entry of ``config2`` is given a guessed parameter type and added
+        to ``config`` as a real parameter.
+        """
         d = param.guess_param_types(**self.config2)
         for n, p in d.items():
             self.config.param.add_parameter(n, p)
 
-    def set_data(self, step=None, end=None, agents=None, **kwargs):
+    def set_data(
+        self,
+        step: pd.DataFrame | None = None,
+        end: pd.DataFrame | None = None,
+        agents: Any = None,
+        **kwargs: Any,
+    ) -> None:
+        """Attach timeseries and endpoint data to the dataset.
+
+        Both frames are sorted by their index so that later slicing is
+        well-defined.
+
+        Args:
+            step: The timeseries data.
+            end: The endpoint data.
+            agents: Agent objects to derive both frames from instead.
+            **kwargs: Accepted for signature compatibility; unused.
+        """
         if step is not None:
             self.step_data = step.sort_index(level=self.param.step_data.levels)
         if end is not None:
@@ -1490,10 +1879,19 @@ class ParamLarvaDataset(param.Parameterized):
         self.validate_IDs()
 
     @property
-    def data(self):
+    def data(self) -> tuple[pd.DataFrame, pd.DataFrame, "DatasetConfig"]:
+        """The timeseries, endpoint data and configuration, as one triplet."""
         return self.s, self.e, self.c
 
-    def path_to_file(self, file="data.h5"):
+    def path_to_file(self, file: str = "data.h5") -> str | None:
+        """Return the path of a file in the dataset's data directory.
+
+        Args:
+            file: The file name.
+
+        Returns:
+            The path, or None if the dataset has no directory.
+        """
         f = self.c.data_dir
         if f is not None:
             return f"{f}/{file}"
@@ -1501,10 +1899,18 @@ class ParamLarvaDataset(param.Parameterized):
             return None
 
     @property
-    def path_to_config(self):
+    def path_to_config(self) -> str | None:
+        """The path of the dataset's stored configuration."""
         return self.path_to_file("conf.txt")
 
-    def store(self, df, key, file="data.h5"):
+    def store(self, df: Any, key: str, file: str = "data.h5") -> None:
+        """Write a dataframe into the dataset's HDF5 store.
+
+        Args:
+            df: The data to store. Non-dataframes are converted first.
+            key: The HDF5 key to store under.
+            file: The store's file name.
+        """
         path = self.path_to_file(file)
         if path is not None:
             if not isinstance(df, pd.DataFrame):
@@ -1512,12 +1918,27 @@ class ParamLarvaDataset(param.Parameterized):
             else:
                 df.to_hdf(path, key)
 
-    def save_dict(self, d, file):
+    def save_dict(self, d: dict, file: str) -> None:
+        """Write a dictionary into the dataset's data directory.
+
+        Args:
+            d: The dictionary to store.
+            file: The file name.
+        """
         path = self.path_to_file(file)
         if path is not None:
             util.save_dict(d, path)
 
-    def read(self, key, file="data.h5"):
+    def read(self, key: str, file: str = "data.h5") -> Any:
+        """Read a dataframe from the dataset's HDF5 store.
+
+        Args:
+            key: The HDF5 key to read.
+            file: The store's file name.
+
+        Returns:
+            The stored data, or None if the key or file is absent.
+        """
         path = self.path_to_file(file)
         if path is not None:
             try:
@@ -1527,12 +1948,27 @@ class ParamLarvaDataset(param.Parameterized):
         else:
             return None
 
-    def load(self, step=True, h5_ks=None):
+    def load(self, step: bool = True, h5_ks: list[str] | None = None) -> None:
+        """Read the dataset's stored data back into memory.
+
+        Args:
+            step: Whether to load the timeseries data as well as the endpoint
+                data.
+            h5_ks: The parameter groups to load. Defaults to all of them.
+        """
         s = self._load_step(h5_ks=h5_ks) if step else None
         e = self.read("end")
         self.set_data(step=s, end=e)
 
-    def _load_step(self, h5_ks=None):
+    def _load_step(self, h5_ks: list[str] | None = None) -> pd.DataFrame:
+        """Read the timeseries data and merge in the requested groups.
+
+        Args:
+            h5_ks: The parameter groups to merge. Defaults to all of them.
+
+        Returns:
+            The assembled timeseries data.
+        """
         s = self.read("step")
         if h5_ks is None:
             h5_ks = list(self.config.h5_kdic.keys())
@@ -1544,7 +1980,15 @@ class ParamLarvaDataset(param.Parameterized):
                     s = s.join(ss[ps])
         return s
 
-    def _save_step(self, s):
+    def _save_step(self, s: pd.DataFrame) -> None:
+        """Write the timeseries data, split across its parameter groups.
+
+        Columns belonging to a group are stored under that group's key; the
+        remainder is stored under ``"step"``.
+
+        Args:
+            s: The timeseries data to store.
+        """
         s = s.loc[:, ~s.columns.duplicated()]
         stored_ps = []
         for h5_k, ps in self.c.h5_kdic.items():
@@ -1555,7 +1999,12 @@ class ParamLarvaDataset(param.Parameterized):
 
         self.store(s.drop(stored_ps, axis=1, errors="ignore"), "step")
 
-    def save(self, refID=None):
+    def save(self, refID: str | None = None) -> None:
+        """Write the dataset and its configuration to disk.
+
+        Args:
+            refID: Reference ID to register the stored dataset under.
+        """
         if self.s is not None:
             self._save_step(s=self.s)
         if self.e is not None:
@@ -1563,7 +2012,13 @@ class ParamLarvaDataset(param.Parameterized):
         self.save_config(refID=refID)
         vprint(f"***** Dataset {self.c.id} stored.-----", 1)
 
-    def save_config(self, refID=None):
+    def save_config(self, refID: str | None = None) -> None:
+        """Write the dataset configuration to disk.
+
+        Args:
+            refID: Reference ID to register the dataset under. When given, it
+                is also recorded in the configuration.
+        """
         c = self.c
         if refID is not None:
             c.refID = refID
@@ -1572,7 +2027,16 @@ class ParamLarvaDataset(param.Parameterized):
             vprint(f"Saved reference dataset under : {c.refID}", 1)
         self.save_dict(c.nestedConf, "conf.txt")
 
-    def load_traj(self, mode="default"):
+    def load_traj(self, mode: str = "default") -> pd.DataFrame:
+        """Read the trajectory coordinates, computing them if not yet stored.
+
+        Args:
+            mode: The trajectory variant: ``"default"`` for the raw
+                coordinates, or one of the transposed alignments.
+
+        Returns:
+            The trajectory coordinates.
+        """
         key = f"traj.{mode}"
         df = self.read(key)
         if df is None:
@@ -1644,7 +2108,8 @@ class ParamLarvaDataset(param.Parameterized):
             self.store_dicts(type, dicts)
 
     @property
-    def contour_xy_data_byID(self):
+    def contour_xy_data_byID(self) -> AttrDict:
+        """The contour coordinates per agent, as ``(ticks, points, 2)``."""
         if self.c.Ncontour == 0:
             return AttrDict(
                 {id: np.zeros([self.c.Nticks, 2]) * np.nan for id in self.ids}
@@ -1657,7 +2122,8 @@ class ParamLarvaDataset(param.Parameterized):
         )
 
     @property
-    def midline_xy_data_byID(self):
+    def midline_xy_data_byID(self) -> AttrDict:
+        """The midline coordinates per agent, as ``(ticks, points, 2)``."""
         if self.c.Npoints == 0:
             return AttrDict(
                 {id: np.zeros([self.c.Nticks, 2]) * np.nan for id in self.ids}
@@ -1670,22 +2136,42 @@ class ParamLarvaDataset(param.Parameterized):
         )
 
     @property
-    def traj_xy_data_byID(self):
+    def traj_xy_data_byID(self) -> AttrDict:
+        """The trajectory coordinates per agent."""
         return self.data_by_ID(self.s[self.c.traj_xy])
 
-    def data_by_ID(self, data):
+    def data_by_ID(self, data: pd.DataFrame) -> AttrDict:
+        """Split timeseries data into one array per agent.
+
+        Args:
+            data: The timeseries data to split.
+
+        Returns:
+            The per-agent arrays, keyed by agent ID.
+        """
         grouped = data.groupby("AgentID")
         return AttrDict({id: df.values for id, df in grouped})
 
     @property
-    def midline_xy_data(self):
+    def midline_xy_data(self) -> np.ndarray:
+        """All midline coordinates, as ``(rows, points, 2)``."""
         return self.s[self.c.midline_xy].values.reshape([-1, self.c.Npoints, 2])
 
     @property
-    def contour_xy_data(self):
+    def contour_xy_data(self) -> np.ndarray:
+        """All contour coordinates, as ``(rows, points, 2)``."""
         return self.s[self.c.contour_xy].values.reshape([-1, self.c.Ncontour, 2])
 
-    def empty_df(self, dim3=1):
+    def empty_df(self, dim3: int = 1) -> np.ndarray:
+        """Allocate a NaN array shaped like the dataset's timeseries.
+
+        Args:
+            dim3: Size of the trailing dimension. 1 gives a
+                ``(ticks, agents)`` array, larger values append a third axis.
+
+        Returns:
+            The allocated array.
+        """
         c = self.c
         if dim3 == 1:
             return np.zeros([c.Nticks, c.N]) * np.nan
@@ -1733,19 +2219,29 @@ class ParamLarvaDataset(param.Parameterized):
             A[s0 : s0 + Nt, i] = Ai
         return A
 
-    def midline_xy_1less(self, mid):
+    def midline_xy_1less(self, mid: np.ndarray) -> np.ndarray:
+        """Return the midpoints of the segments between midline points.
+
+        Args:
+            mid: The midline coordinates, as ``(ticks, points, 2)``.
+
+        Returns:
+            The segment midpoints, with one point fewer.
+        """
         mid2 = copy.deepcopy(mid[:, :-1, :])
         for i in range(mid.shape[1] - 1):
             mid2[:, i, :] = (mid[:, i, :] + mid[:, i + 1, :]) / 2
         return mid2
 
     @property
-    def midline_seg_xy_data_byID(self):
+    def midline_seg_xy_data_byID(self) -> AttrDict:
+        """The midline segment midpoints per agent."""
         g = self.midline_xy_data_byID
         return AttrDict({id: self.midline_xy_1less(mid) for id, mid in g.items()})
 
     @property
-    def midline_seg_orients_data_byID(self):
+    def midline_seg_orients_data_byID(self) -> AttrDict:
+        """The midline segment orientations per agent."""
         g = self.midline_xy_data_byID
         return AttrDict(
             {id: self.midline_seg_orients_from_mid(mid) for id, mid in g.items()}
@@ -2380,6 +2876,14 @@ class ParamLarvaDataset(param.Parameterized):
 
 
 class BaseLarvaDataset(ParamLarvaDataset):
+    """
+    Storage layer shared by every dataset format.
+
+    Adds directory layout, loading and saving on top of the data model defined
+    by :class:`ParamLarvaDataset`, and dispatches construction to the concrete
+    subclass appropriate for the requested storage backend.
+    """
+
     @staticmethod
     def initGeo(to_Geo: bool = False, **kwargs: Any) -> "BaseLarvaDataset":
         if to_Geo:
@@ -2679,20 +3183,31 @@ class BaseLarvaDataset(ParamLarvaDataset):
 
 
 class LarvaDataset(BaseLarvaDataset):
-    def __init__(self, **kwargs: Any) -> None:
-        """
-        This is the default dataset class. Timeseries are stored as a pd.Dataframe 'step_data' with a 2-level index : 'Step' for the timestep index and 'AgentID' for the agent unique ID.
-        Data is stored as a single HDF5 file or as nested dictionaries. The core file is 'data.h5' with keys like 'step' for timeseries and 'end' for endpoint metrics.
-        To lesser the burdain of loading and saving all timeseries parameters as columns in a single pd.Dataframe, the most common parameters have been split in a set of groupings,
-         available via keys that access specific entries of the "data.h5". The keys of "self.h5_kdic" dictionary store the parameters that every "h5key" keeps :
-        -   'contour': The contour xy coordinates,
-        -   'midline': The midline xy coordinates,
-        -   'epochs': The behavioral epoch detection and annotation,
-        -   'base_spatial': The most basic spatial parameters,
-        -   'angular': The angular parameters,
-        -   'dspNtor':  Dispersal and tortuosity,
+    """
+    The default dataset class, storing timeseries in a single HDF5 file.
 
-        All parameters not included in any of these groups stays with the original "step" key that is always saved and loaded
+    Timeseries live in a ``pd.DataFrame`` ``step_data`` with a two-level index:
+    ``Step`` for the timestep and ``AgentID`` for the agent's unique ID. Data
+    is stored in ``data.h5``, whose keys group the most common parameters so
+    that they can be loaded selectively rather than all at once. The groups,
+    given by ``self.h5_kdic``, are:
+
+    - ``contour``: the contour xy coordinates
+    - ``midline``: the midline xy coordinates
+    - ``epochs``: the behavioural epoch detection and annotation
+    - ``base_spatial``: the most basic spatial parameters
+    - ``angular``: the angular parameters
+    - ``dspNtor``: dispersal and tortuosity
+
+    Every parameter outside these groups stays under the ``step`` key, which is
+    always saved and loaded.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        """Build the dataset.
+
+        Args:
+            **kwargs: Forwarded to :class:`BaseLarvaDataset`.
         """
         super().__init__(**kwargs)
 
@@ -2775,6 +3290,14 @@ class LarvaDataset(BaseLarvaDataset):
 
 
 class LarvaDatasetCollection:
+    """
+    A group of datasets analysed and plotted together.
+
+    Keeps a set of datasets alongside the labels and colours used to
+    distinguish them in comparative analysis, and exposes the shared
+    configuration and the pooled accessors that plotting code works from.
+    """
+
     def __init__(
         self,
         labels: Optional[list[str]] = None,

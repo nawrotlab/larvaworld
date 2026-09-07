@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections import OrderedDict
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 import glob
 import os
@@ -61,6 +61,14 @@ class DLCScaleValidationError(DLCImportError):
 
 
 def _is_dlc_data_file(path: Path | PurePosixPath) -> bool:
+    """Report whether a path names a DeepLabCut track file.
+
+    Args:
+        path: The path to test.
+
+    Returns:
+        True if the suffix is one DeepLabCut writes tracks to.
+    """
     return path.suffix.lower() in _DLC_SUFFIXES
 
 
@@ -83,7 +91,7 @@ def _safe_zip_infos(archive: zipfile.ZipFile) -> list[zipfile.ZipInfo]:
 
 
 @contextmanager
-def _materialized_zip_source(source: Path):
+def _materialized_zip_source(source: Path) -> Iterator[Path]:
     """Extract a validated ZIP into a temporary directory for one import."""
     try:
         archive = zipfile.ZipFile(source)
@@ -122,6 +130,15 @@ def discover_deeplabcut_source_directories(source: str | Path) -> list[str]:
 
 
 def _direct_dlc_files(directory: Path) -> list[Path]:
+    """List the DeepLabCut track files directly inside a directory.
+
+    Args:
+        directory: The directory to scan. Subdirectories are not descended.
+
+    Returns:
+        The matching files, sorted by name. Empty if the path is not a
+        directory.
+    """
     if not directory.is_dir():
         return []
     return sorted(
@@ -132,6 +149,17 @@ def _direct_dlc_files(directory: Path) -> list[Path]:
 
 
 def _deduplicated_paths(paths: Sequence[Path]) -> list[Path]:
+    """Drop duplicate paths while preserving order.
+
+    Paths are compared after resolution, so different spellings of the same
+    location collapse to one entry.
+
+    Args:
+        paths: The paths to deduplicate.
+
+    Returns:
+        The resolved, unique paths in first-occurrence order.
+    """
     unique: OrderedDict[Path, None] = OrderedDict()
     for path in paths:
         unique[path.resolve()] = None
@@ -141,7 +169,21 @@ def _deduplicated_paths(paths: Sequence[Path]) -> list[Path]:
 @contextmanager
 def _deeplabcut_source_roots(
     source_dir: str | list[str], parent_dir: str, merged: bool
-):
+) -> Iterator[list[Path]]:
+    """Resolve the directories holding a DeepLabCut import's track files.
+
+    A ZIP source is extracted for the duration of the context and cleaned up on
+    exit, so the yielded roots are only valid inside the ``with`` block.
+
+    Args:
+        source_dir: One source directory, several of them, or a ZIP archive.
+        parent_dir: Directory the sources are resolved relative to.
+        merged: When True, the sources are treated as one merged recording
+            rather than as separate ones.
+
+    Yields:
+        The resolved, deduplicated source directories.
+    """
     source_paths = (
         [Path(path).expanduser() for path in source_dir]
         if isinstance(source_dir, list)
@@ -184,11 +226,34 @@ def _deeplabcut_source_roots(
 
 
 def _recording_key(path: Path) -> str:
+    """Derive the recording identity shared by a file's DeepLabCut variants.
+
+    DeepLabCut appends a ``DLC_...`` scorer suffix to each exported file; this
+    strips it so that the ``.h5`` and ``.csv`` exports of one recording group
+    together.
+
+    Args:
+        path: The track file path.
+
+    Returns:
+        The recording key.
+    """
     stem = path.stem
     return stem.split("DLC_", 1)[0].rstrip("_-.") or stem
 
 
 def _recording_sources(roots: Sequence[Path]) -> list[list[Path]]:
+    """Group the track files under the given roots by recording.
+
+    Where one recording was exported in several formats, the HDF5 export is
+    preferred over the CSV one.
+
+    Args:
+        roots: The directories to scan.
+
+    Returns:
+        One list of files per recording, in discovery order.
+    """
     groups: OrderedDict[tuple[Path, str], list[Path]] = OrderedDict()
     for root in roots:
         for file in _direct_dlc_files(root):
@@ -206,6 +271,18 @@ def _recording_sources(roots: Sequence[Path]) -> list[list[Path]]:
 
 
 def _read_deeplabcut_dataframe(file: Path) -> pd.DataFrame:
+    """Read one DeepLabCut export into a dataframe.
+
+    Args:
+        file: The ``.csv``, ``.h5`` or ``.hdf5`` file to read.
+
+    Returns:
+        The track data, with its MultiIndex columns preserved.
+
+    Raises:
+        DLCImportError: If the file does not carry MultiIndex columns, and so
+            is not a DeepLabCut export.
+    """
     if file.suffix.lower() == ".csv":
         dataframe = pd.read_csv(file, header=[0, 1, 2], index_col=0)
     else:
@@ -218,6 +295,18 @@ def _read_deeplabcut_dataframe(file: Path) -> pd.DataFrame:
 
 
 def _dlc_column_levels(dataframe: pd.DataFrame) -> tuple[int, int]:
+    """Locate the body-part and coordinate levels of a DeepLabCut frame.
+
+    The level names vary between DeepLabCut versions and export paths, so they
+    are detected rather than assumed.
+
+    Args:
+        dataframe: The track data.
+
+    Returns:
+        The positional index of the body-part level and of the coordinate
+        level.
+    """
     names = [
         str(name).lower() if name is not None else ""
         for name in dataframe.columns.names
@@ -254,6 +343,21 @@ def _dlc_column_levels(dataframe: pd.DataFrame) -> tuple[int, int]:
 def _lateral_bodypoint(
     name: str, known_names: Sequence[str] | None = None
 ) -> tuple[str, str] | None:
+    """Split a left/right body-point name into its base and its side.
+
+    Recognizes both the short form (``"tail_l"``) and the long one
+    (``"tail_left"``).
+
+    Args:
+        name: The body-point name.
+        known_names: The other body-point names. Required to split the
+            separator-less compact form (``"tailL"``), which is only accepted
+            when the opposite-side partner is also present.
+
+    Returns:
+        The base name and the side as ``"l"`` or ``"r"``, or None if the name
+        is not one half of a lateral pair.
+    """
     normalized = name.strip()
     short = re.fullmatch(r"(.+?)[_\-\s]+([lr])", normalized, flags=re.IGNORECASE)
     if short is not None:
@@ -344,6 +448,15 @@ def _resolved_dlc_points(
 def _canonical_dlc_track(
     dataframe: pd.DataFrame,
 ) -> tuple[pd.DataFrame, tuple[str, ...]]:
+    """Convert a DeepLabCut frame into larvaworld's midline column layout.
+
+    Args:
+        dataframe: The raw DeepLabCut track data.
+
+    Returns:
+        The track in canonical ``point<i>_x`` / ``point<i>_y`` columns, and the
+        resolved body-point names in midline order.
+    """
     point_names, point_values = _resolved_dlc_points(dataframe)
     columns = util.nam.midline_xy(len(point_values), flat=True)
     track = pd.DataFrame(index=dataframe.index)
@@ -362,6 +475,20 @@ def _canonical_dlc_track(
 
 
 def _validate_dlc_scale(tracks: Sequence[pd.DataFrame], npoints: int) -> None:
+    """Check that imported DeepLabCut tracks are in millimetres.
+
+    The median head-to-tail length across the tracks is compared against the
+    range plausible for larva data, which catches imports left in pixel units.
+    No check is performed for fewer than two midline points.
+
+    Args:
+        tracks: The canonical tracks to check.
+        npoints: The number of midline points per track.
+
+    Raises:
+        DLCScaleValidationError: If the median length falls outside the
+            expected millimetre range, indicating a missing ``pixel_to_mm``.
+    """
     if npoints < 2:
         return
     columns = util.nam.midline_xy(npoints, flat=True)
@@ -561,6 +688,7 @@ def count_midline_points_in_raw_data(
         return None
 
     def _first_line(path: str) -> Optional[str]:
+        """Read a file's first line, returning None if it cannot be opened."""
         try:
             with open(path) as f:
                 return f.readline()
@@ -935,6 +1063,7 @@ def get_Schleyer_metadata_inv_x(dir: str) -> bool:
     try:
 
         def read_Schleyer_metadata(dir):
+            """Parse a Schleyer-lab recording's ``metadata.txt`` into a dict."""
             d = {}
             with open(os.path.join(dir, "vidAndLogs/metadata.txt")) as f:
                 for j, line in enumerate(f):
@@ -961,6 +1090,7 @@ def get_Schleyer_metadata_inv_x(dir: str) -> bool:
         #         return invert_x_array
 
         def get_odor_pos(meta_dict, arena_dims):
+            """Read the odor source position, in arena-relative coordinates."""
             ar_x, ar_y = arena_dims
             try:
                 odor_side = meta_dict["OdorA_Side"]
@@ -1101,11 +1231,17 @@ def match_larva_ids_including_by_length(
     pairs = {}
 
     def common_member(a, b):
+        """Return the elements shared by two collections."""
         a_set = set(a)
         b_set = set(b)
         return a_set & b_set
 
     def eval(t0, xy0, l0, t1, xy1, l1):
+        """Score how plausibly two track fragments are the same animal.
+
+        Combines the time gap, the body-length mismatch and the spatial jump
+        into one weighted cost; non-positive time gaps are rejected outright.
+        """
         tt = t1 - t0
         if tt <= 0:
             return max_error * 2
@@ -1114,6 +1250,7 @@ def match_larva_ids_including_by_length(
         return wt * tt + wl * ll + ws * dd
 
     def get_extrema(ss, pars):
+        """Collect each track's first and last timestamp and position."""
         ids = ss.index.unique().tolist()
 
         mins = ss[t].groupby(aID).min()
@@ -1126,6 +1263,7 @@ def match_larva_ids_including_by_length(
         return ids, mins, maxs, first_xy, last_xy, durs
 
     def update_extrema(id0, id1, ids, mins, maxs, first_xy, last_xy):
+        """Fold track ``id0`` into ``id1`` and drop its extrema entries."""
         mins[id1], first_xy[id1] = mins[id0], first_xy[id0]
         del mins[id0]
         del maxs[id0]
@@ -1180,6 +1318,16 @@ def match_larva_ids_including_by_length(
 
 
 def comp_length(df: pd.DataFrame, e: pd.DataFrame, Npoints: int) -> None:
+    """Compute per-step body length and its per-agent median.
+
+    Length is the sum of the distances between consecutive midline points. The
+    step data gains a ``length`` column and the endpoint data its median.
+
+    Args:
+        df: The step data, modified in place.
+        e: The endpoint data, modified in place.
+        Npoints: The number of midline points.
+    """
     xys = util.nam.xy(util.nam.midline(Npoints, type="point"), flat=True)
     xy2 = df[xys].values.reshape(-1, Npoints, 2)
     xy3 = np.sum(np.diff(xy2, axis=1) ** 2, axis=2)

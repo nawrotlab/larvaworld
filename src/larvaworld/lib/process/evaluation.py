@@ -247,11 +247,13 @@ def RSS_dic(dd: LarvaDataset, d: LarvaDataset) -> float:
     ff = dd.pooled_cycle_curves
 
     def RSS0(ff, f, sh, mode):
+        """Residual sum of squares for one shape under one cycle mode."""
         vs0 = np.array(f[sh][mode])
         vs = np.array(ff[sh][mode])
         return RSS(vs0, vs)
 
     def RSS1(ff, f, sh):
+        """Residual sums of squares for one shape, across all cycle modes."""
         dic = {}
         for mode in f[sh]:
             dic[mode] = RSS0(ff, f, sh, mode)
@@ -547,6 +549,13 @@ class Evaluation(NestedConf):
     )
 
     def __init__(self, dataset: Optional[Any] = None, **kwargs: Any) -> None:
+        """Load the reference dataset and derive the evaluation targets.
+
+        Args:
+            dataset: The reference dataset. When None, it is retrieved from the
+                registry using the configured ``refID`` or ``refDir``.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.target = reg.conf.Ref.retrieve_dataset(
             dataset=dataset,
@@ -558,6 +567,11 @@ class Evaluation(NestedConf):
         self.build(d=self.target)
 
     def build(self, d: LarvaDataset) -> None:
+        """Extract the reference distributions and symbols from a dataset.
+
+        Args:
+            d: The reference dataset the simulations are evaluated against.
+        """
         self.target_data = get_target_data(d, eval_metrics=self.eval_metrics)
         self.evaluation = arrange_evaluation(
             data=self.target_data, eval_metrics=self.eval_metrics
@@ -587,23 +601,34 @@ class Evaluation(NestedConf):
             self.rss_sym = {sh: sh for sh in self.cycle_curve_metrics}
 
     @property
-    def s_pars(self):
+    def s_pars(self) -> SuperList:
+        """The step-data parameters being evaluated."""
         return SuperList(self.evaluation.step.pars).flatten
 
     @property
-    def e_pars(self):
+    def e_pars(self) -> SuperList:
+        """The endpoint-data parameters being evaluated."""
         return SuperList(self.evaluation.end.pars).flatten
 
     @property
-    def s_symbols(self):
+    def s_symbols(self) -> SuperList:
+        """The display symbols of the evaluated step-data parameters."""
         return SuperList(self.evaluation.step.symbols).flatten
 
     @property
-    def e_symbols(self):
+    def e_symbols(self) -> SuperList:
+        """The display symbols of the evaluated endpoint-data parameters."""
         return SuperList(self.evaluation.end.symbols).flatten
 
     @property
-    def func_eval_metric_solo(self):
+    def func_eval_metric_solo(self) -> Any:
+        """Build the single-dataset distribution-error function.
+
+        Returns:
+            A callable scoring one dataset's step data against the reference
+            distributions with a Kolmogorov-Smirnov statistic.
+        """
+
         def func(ss):
             return AttrDict(
                 {
@@ -619,7 +644,14 @@ class Evaluation(NestedConf):
         return func
 
     @property
-    def func_eval_metric_multi(self):
+    def func_eval_metric_multi(self) -> Any:
+        """Build the multi-dataset distribution-error function.
+
+        Returns:
+            A callable scoring several datasets at once against the pooled
+            reference distributions.
+        """
+
         def gfunc(s):
             return AttrDict(
                 {
@@ -636,7 +668,14 @@ class Evaluation(NestedConf):
         return gfunc
 
     @property
-    def func_cycle_curve_solo(self):
+    def func_cycle_curve_solo(self) -> Any:
+        """Build the single-dataset cycle-curve error function.
+
+        Returns:
+            A callable scoring one dataset's cycle curves against the reference
+            curves with a residual sum of squares.
+        """
+
         def func(ss):
             c0 = cycle_curve_dict(
                 s=ss, dt=self.target.config.dt, shs=self.cycle_curve_metrics
@@ -656,7 +695,13 @@ class Evaluation(NestedConf):
         return func
 
     @property
-    def func_cycle_curve_multi(self):
+    def func_cycle_curve_multi(self) -> Any:
+        """Build the multi-dataset cycle-curve error function.
+
+        Returns:
+            A callable scoring several datasets' cycle curves at once.
+        """
+
         def gfunc(s):
             rss0 = cycle_curve_dict_multi(
                 s=s, dt=self.target.config.dt, shs=self.cycle_curve_metrics
@@ -678,7 +723,14 @@ class Evaluation(NestedConf):
         return gfunc
 
     @property
-    def fit_func_multi(self):
+    def fit_func_multi(self) -> Any:
+        """Build the combined multi-dataset fitness function.
+
+        Returns:
+            A callable returning the cycle-curve and distribution errors for
+            several datasets, restricted to the configured metrics.
+        """
+
         def fit_func(s):
             fit_dicts = AttrDict()
             if len(self.cycle_curve_metrics) > 0:
@@ -690,7 +742,14 @@ class Evaluation(NestedConf):
         return fit_func
 
     @property
-    def fit_func_solo(self):
+    def fit_func_solo(self) -> Any:
+        """Build the combined single-dataset fitness function.
+
+        Returns:
+            A callable returning the cycle-curve and distribution errors for
+            one dataset, restricted to the configured metrics.
+        """
+
         def fit_func(ss):
             fit_dicts = AttrDict()
             if len(self.cycle_curve_metrics) > 0:
@@ -701,7 +760,17 @@ class Evaluation(NestedConf):
 
         return fit_func
 
-    def eval_datasets(self, ds, mode, min_size=20):
+    def eval_datasets(self, ds: Any, mode: str, min_size: int = 20) -> Any:
+        """Score datasets against the reference data.
+
+        Args:
+            ds: The datasets to evaluate.
+            mode: The pooling mode passed to the evaluation backend.
+            min_size: Minimum sample size for a parameter to be scored.
+
+        Returns:
+            The per-dataset error values.
+        """
         return eval_fast(
             datasets=ds,
             data=self.target_data,
@@ -744,11 +813,27 @@ class DataEvaluation(Evaluation):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Initialize the evaluation and its empty error store.
+
+        Args:
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
         self.error_dicts = AttrDict()
 
-    def norm_error_dict(self, error_dict, mode="raw"):
+    def norm_error_dict(self, error_dict: Any, mode: str = "raw") -> Any:
+        """Normalize error tables so metrics become comparable.
+
+        Args:
+            error_dict: Mapping of error type to its table of values.
+            mode: ``"raw"`` returns the values unchanged, ``"minmax"`` rescales
+                each table to the unit range, and ``"std"`` standardizes each
+                table to zero mean and unit variance.
+
+        Returns:
+            The normalized error tables.
+        """
         if mode == "raw":
             return error_dict
         elif mode == "minmax":

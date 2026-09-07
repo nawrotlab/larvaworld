@@ -5,6 +5,8 @@ This module contains all methods and classes relevant in data management,analysi
 
 from __future__ import annotations
 
+from typing import Any
+
 __displayname__ = "Data management"
 
 # Public API: expose core dataset classes, evaluation helpers, and lab importers.
@@ -71,7 +73,21 @@ _NAME_TO_MODULE = {
 }
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> Any:
+    """Resolve a public name by importing its module on first access.
+
+    Keeps package import lightweight by deferring the submodule imports until
+    one of their exported names is actually used.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved object, also cached in the module globals.
+
+    Raises:
+        AttributeError: If no submodule exports that name.
+    """
     module_path = _NAME_TO_MODULE.get(name)
     if module_path is None:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -84,4 +100,5 @@ def __getattr__(name: str):
 
 
 def __dir__() -> list[str]:
+    """Return the public names, including the not-yet-imported ones."""
     return sorted(list(globals().keys()) + list(__all__))
