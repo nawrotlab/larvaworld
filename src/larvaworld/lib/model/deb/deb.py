@@ -137,7 +137,17 @@ _ALIASES: dict[str, str] = {
 
 
 def _delegate(name: str) -> property:
+    """Build a read-only property forwarding to the parameter set.
+
+    Args:
+        name: The attribute name on ``self.pars`` to expose.
+
+    Returns:
+        The forwarding property.
+    """
+
     def getter(self: "DEB_model") -> Any:
+        """Read the delegated parameter."""
         return getattr(self.pars, name)
 
     getter.__name__ = name
@@ -164,6 +174,13 @@ class DEB_model(NestedConf):
     T = PositiveNumber(298.15, doc="The ambient temperature (K)")
 
     def __init__(self, print_output: bool = False, **kwargs: Any) -> None:
+        """Build the model and initialize its state at the embryo stage.
+
+        Args:
+            print_output: When True, report the life-stage transitions as they
+                occur.
+            **kwargs: Model parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.print_output = print_output
         self.stages = list(de.STAGES)
@@ -373,6 +390,7 @@ class DEB_basic(DEB_model):
 
     @property
     def alive(self) -> bool:
+        """Whether the animal is still alive."""
         return self._state.alive
 
     @property
@@ -400,10 +418,12 @@ class DEB_basic(DEB_model):
 
     @property
     def dt_in_sec(self) -> float:
+        """The integration timestep in seconds. The model itself runs in days."""
         return self.dt * 24 * 60 * 60
 
     @property
     def steps_per_day(self) -> int:
+        """The number of integration steps in one simulated day."""
         return int(1 / self.dt)
 
     @property
@@ -539,6 +559,7 @@ class DEB_basic(DEB_model):
 
     @property
     def J_X_A(self) -> float:
+        """The food ingestion rate at the current size and functional response."""
         return self.J_X_Am / self.Lb * self.V * self.base_f
 
     @property
@@ -552,39 +573,69 @@ class DEB_basic(DEB_model):
 
     @property
     def fr_feed(self) -> float:
+        """The feeding-motion frequency in Hz.
+
+        Derived from the filtering rate and the volume ingested per bite, and
+        corrected for temperature.
+        """
         freq = self.F / self.V_bite * self.T_factor
         return freq / (24 * 60 * 60)
 
     def get_best_EEB(self, cRef: Dict[str, Any]) -> float:
+        """Find the exploitation balance matching this model's feeding rate.
+
+        Inverts the polynomial that a reference dataset fitted between the
+        exploration-exploitation balance and the resulting feeding frequency.
+
+        Args:
+            cRef: The reference dataset configuration holding the fit.
+
+        Returns:
+            The balance reproducing :attr:`fr_feed`, clipped to the unit range.
+        """
         z = np.poly1d(cRef["EEB_poly1d"])
         return np.clip(z(self.fr_feed), a_min=0, a_max=1)
 
     @property
     def ingested_body_mass_ratio(self) -> float:
+        """Food ingested so far, as a percentage of body wet weight."""
         return self.gut.ingested_mass() / self.Ww * 100
 
     @property
     def ingested_body_volume_ratio(self) -> float:
+        """Food ingested so far, as a percentage of structural volume."""
         return self.gut.ingested_volume / self.V * 100
 
     @property
     def ingested_gut_volume_ratio(self) -> float:
+        """Food ingested so far, as a percentage of gut capacity."""
         return self.gut.ingested_volume / (self.V * self.gut.V_gm) * 100
 
     @property
     def ingested_body_area_ratio(self) -> float:
+        """Food ingested so far, as a percentage of body surface area.
+
+        Notes:
+            The volume ratio is raised to the power 1/2, whereas DEB surface
+            area scales as ``V^(2/3)`` elsewhere in this package. Kept as-is
+            because it is covered by the DEB contract test; flagged here rather
+            than changed.
+        """
         return (self.gut.ingested_volume / self.V) ** (1 / 2) * 100
 
     @property
     def amount_absorbed(self) -> float:
+        """The mass absorbed from the gut so far, in milligrams."""
         return self.gut.absorbed_mass("mg")
 
     @property
     def volume_ingested(self) -> float:
+        """The total volume of food ingested so far."""
         return self.gut.ingested_volume
 
     @property
     def deb_f_deviation(self) -> float:
+        """Departure of the functional response from full provisioning."""
         return self.f - 1
 
 
@@ -653,6 +704,13 @@ class DEB(DEB_basic):
     def set_intermitter(
         self, base_hunger: float = 0.5, intermitter: Any | None = None
     ) -> None:
+        """Attach the behavioural intermitter that hunger feeds into.
+
+        Args:
+            base_hunger: The hunger level at full reserve. Overridden by the
+                intermitter's own base balance when hunger drives the EEB.
+            intermitter: The intermittency module to couple to, if any.
+        """
         self.intermitter = intermitter
         if self.intermitter is not None and self.hunger_as_EEB:
             base_hunger = self.intermitter.base_EEB
@@ -660,11 +718,18 @@ class DEB(DEB_basic):
         self.update_hunger()
 
     def update(self) -> None:
+        """Advance one timestep, then refresh hunger and the recorded state."""
         super().update()
         self.update_hunger()
         self.update_dict()
 
     def update_hunger(self) -> None:
+        """Recompute hunger from reserve density and propagate it.
+
+        Hunger rises linearly as the scaled reserve density falls below full,
+        clipped to the unit range. When the model drives behaviour, the result
+        is written into the intermitter as its exploitation balance.
+        """
         self.hunger = np.clip(
             self.base_hunger + self.hunger_gain * (1 - self.e), a_min=0, a_max=1
         )
@@ -673,6 +738,7 @@ class DEB(DEB_basic):
 
     @property
     def EEB(self) -> Optional[float]:
+        """The intermitter's exploration-exploitation balance, if attached."""
         return None if self.intermitter is None else self.intermitter.EEB
 
     # -- life-event times ----------------------------------------------------
@@ -699,11 +765,13 @@ class DEB(DEB_basic):
 
     @property
     def death_time_in_hours(self) -> float:
+        """Age at death in hours, or NaN while the animal is alive."""
         return self.age * 24 if not self.alive else np.nan
 
     # -- recording -----------------------------------------------------------
 
     def update_dict(self) -> None:
+        """Append the current state to the recorded trajectory."""
         if self.dict is None:
             return
         dict_values = [
@@ -724,6 +792,11 @@ class DEB(DEB_basic):
         self.gut.update_dict()
 
     def finalize_dict(self) -> Dict[str, Any]:
+        """Close the recorded trajectory and add the life-event times.
+
+        Returns:
+            The recorded state over time, empty if recording was disabled.
+        """
         d = self.dict
         if d is None:
             return {}
@@ -764,6 +837,12 @@ class DEB(DEB_basic):
         return d
 
     def save_dict(self, path: Optional[str] = None) -> None:
+        """Write the recorded trajectory to disk.
+
+        Args:
+            path: Destination directory. Defaults to the model's configured
+                output directory; nothing is written when neither is set.
+        """
         if path is None:
             path = self.save_to
         if path is None or self.dict is None:
@@ -775,6 +854,17 @@ class DEB(DEB_basic):
     def default_growth(
         cls, id: str = "DEB default", life_history: Any | None = None, **kwargs: Any
     ) -> Dict[str, Any]:
+        """Run a model through its default life history and record it.
+
+        Args:
+            id: Label for the recorded trajectory.
+            life_history: The life history to impose. Defaults to growth at
+                full food to the end of the larval stage.
+            **kwargs: Model parameters.
+
+        Returns:
+            The recorded state over time.
+        """
         if life_history is None:
             life_history = Life.from_epoch_ticks(reach_pupation=True)
         d = cls(id=id, **kwargs)
@@ -782,6 +872,16 @@ class DEB(DEB_basic):
         return d.finalize_dict()
 
     def run_larva_stage_offline(self, intermitter: Any) -> None:
+        """Run the larval stage driven by an intermitter, without a simulation.
+
+        Steps the intermittency module directly and feeds its accumulated
+        feeding events into the model, so that the behaviour-energetics
+        coupling can be evaluated without running the full agent simulation.
+
+        Args:
+            intermitter: The intermittency module generating the feeding
+                events.
+        """
         I = intermitter
         assert I is not None
         cum_feeds = 0
