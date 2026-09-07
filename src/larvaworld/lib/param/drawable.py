@@ -49,6 +49,12 @@ class Viewable(NestedConf):
     selected = param.Boolean(False, doc="Whether the entity is selected or not")
 
     def __init__(self, **kwargs):
+        """Build the viewable object.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class. A colour
+                given as a tuple is normalized first.
+        """
         if "color" in kwargs:
             if isinstance(kwargs["color"], tuple):
                 kwargs["color"] = util.colortuple2str(kwargs["color"])
@@ -60,20 +66,38 @@ class Viewable(NestedConf):
 
     @default_color.setter
     def default_color(self, new_color) -> None:
+        """The colour the object reverts to."""
         self.param.color.default = new_color
 
     def set_color(self, color) -> None:
+        """Set the current display colour.
+
+        Args:
+            color: The new colour.
+        """
         self.color = color
 
     def set_default_color(self, color) -> None:
+        """Set both the default and the current colour.
+
+        Args:
+            color: The new colour.
+        """
         self.default_color = color
         self.color = color
 
     def invert_default_color(self) -> None:
+        """Invert the default colour, for drawing on a dark background."""
         c00, c01 = util.invert_color(self.default_color)
         self.set_default_color(c01)
 
     def _draw(self, v, **kwargs) -> None:
+        """Render the object if it is visible.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Forwarded to :meth:`draw`.
+        """
         if self.visible:
             self.draw(v, **kwargs)
             if self.selected:
@@ -82,13 +106,30 @@ class Viewable(NestedConf):
                 self.id_box._draw(v, **kwargs)
 
     def draw_selected(self, v, **kwargs) -> None:
+        """Render the object's selection highlight. Does nothing by default.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Subclass-specific arguments.
+        """
         pass
 
     def draw(self, v, **kwargs) -> None:
+        """Render the object. Subclasses override this.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Subclass-specific arguments.
+        """
         pass
 
     # @property
     def toggle_vis(self) -> bool:
+        """Flip the object's visibility.
+
+        Returns:
+            The visibility after the change.
+        """
         self.visible = not self.visible
         return self.visible
 
@@ -117,6 +158,11 @@ class ViewableToggleable(Viewable):
     )
 
     def __init__(self, **kwargs):
+        """Build the object and resolve its active and inactive colours.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         if self.active_color is None:
             self.active_color = self.color
@@ -126,9 +172,11 @@ class ViewableToggleable(Viewable):
 
     @param.depends("active", watch=True)
     def update_color(self) -> None:
+        """Apply the colour matching the current active state."""
         self.color = self.active_color if self.active else self.inactive_color
 
     def toggle(self) -> None:
+        """Flip the active state and update the colour."""
         self.active = not self.active
 
 
@@ -145,6 +193,12 @@ class ViewableLine(Viewable, LineExtended):
     """
 
     def draw(self, v, **kwargs) -> None:
+        """Render the object as a polyline.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Accepted for signature compatibility; unused.
+        """
         try:
             v.draw_polyline(
                 vertices=self.vertices,
@@ -172,4 +226,10 @@ class Contour(Viewable, LineClosed):
     """
 
     def draw(self, v, **kwargs) -> None:
+        """Render the contour as a filled polygon.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Accepted for signature compatibility; unused.
+        """
         v.draw_polygon(self.vertices, filled=True, color=self.color)

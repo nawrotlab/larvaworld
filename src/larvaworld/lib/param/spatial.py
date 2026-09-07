@@ -66,14 +66,25 @@ class Pos2D(NestedConf):
     pos = NumericTuple2DRobust(doc="The xy spatial position coordinates")
 
     def __init__(self, **kwargs):
+        """Build the point and record its initial position.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.initial_pos = self.pos
         self.last_pos = self.pos
 
     def get_position(self) -> tuple[float, float]:
+        """Return the current position."""
         return tuple(self.pos)
 
     def set_position(self, pos) -> None:
+        """Move to a position, remembering the previous one.
+
+        Args:
+            pos: The new position.
+        """
         if not isinstance(pos, tuple):
             pos = tuple(pos)
         self.last_pos = self.get_position()
@@ -81,14 +92,17 @@ class Pos2D(NestedConf):
 
     @property
     def x(self) -> float:
+        """The x coordinate."""
         return self.pos[0]
 
     @property
     def y(self) -> float:
+        """The y coordinate."""
         return self.pos[1]
 
     @property
     def last_delta_pos(self) -> float:
+        """The distance moved since the previous position."""
         x0, y0 = self.last_pos
         x1, y1 = self.get_position()
         return ((x1 - x0) ** 2 + (y1 - y0) ** 2) ** (1 / 2)
@@ -133,9 +147,22 @@ class RadiallyExtended(Pos2D):
     )
 
     def __init__(self, **kwargs):
+        """Build the radially extended point.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     def get_shape(self, scale=1) -> geometry.Point | None:
+        """Return the object's circular footprint.
+
+        Args:
+            scale: Factor applied to the radius.
+
+        Returns:
+            The footprint geometry.
+        """
         p = self.get_position()
         return (
             geometry.Point(p).buffer(self.radius * scale)
@@ -144,6 +171,14 @@ class RadiallyExtended(Pos2D):
         )
 
     def contained(self, point) -> bool:
+        """Report whether a point lies inside the footprint.
+
+        Args:
+            point: The point to test.
+
+        Returns:
+            True when the point is within the radius.
+        """
         return (
             geometry.Point(self.get_position()).distance(geometry.Point(point))
             <= self.radius
@@ -173,16 +208,30 @@ class OrientedPoint(Pos2D):
     )
 
     def __init__(self, **kwargs):
+        """Build the oriented point and record its initial pose.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.initial_orientation = self.orientation
         self.last_orientation = self.orientation
 
     @property
     def rotationMatrix(self) -> np.ndarray:
+        """The matrix rotating body coordinates into world coordinates."""
         a = -self.orientation
         return np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
 
     def translate(self, point) -> tuple | list[tuple]:
+        """Map a body-relative offset into world coordinates.
+
+        Args:
+            point: The offset, in the object's own frame.
+
+        Returns:
+            The corresponding world position.
+        """
         p = np.array(self.pos) + np.array(point) @ self.rotationMatrix
         if isinstance(point, tuple):
             return tuple(p)
@@ -190,21 +239,35 @@ class OrientedPoint(Pos2D):
             return util.np2Dtotuples(p)
 
     def set_orientation(self, orientation) -> None:
+        """Set the heading, remembering the previous one.
+
+        Args:
+            orientation: The new heading in radians.
+        """
         self.last_orientation = self.get_orientation()
         self.orientation = orientation
 
     def get_orientation(self) -> float:
+        """Return the current heading in radians."""
         return self.orientation
 
     def get_pose(self) -> tuple[np.ndarray, float]:
+        """Return the position and heading together."""
         return np.array(self.pos), self.orientation
 
     def update_pose(self, pos, orientation) -> None:
+        """Set position and heading at once, wrapping the heading.
+
+        Args:
+            pos: The new position.
+            orientation: The new heading in radians.
+        """
         self.set_position(pos)
         self.set_orientation(orientation % (np.pi * 2))
 
     @property
     def last_delta_orientation(self) -> float:
+        """The heading change since the previous timestep."""
         a0 = self.last_orientation
         a1 = self.get_orientation()
         return a1 - a0
@@ -230,6 +293,11 @@ class MobilePoint(OrientedPoint):
     """
 
     def __init__(self, **kwargs):
+        """Build the movable point with zeroed velocities.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.lin_vel = 0.0
         self.ang_vel = 0.0
@@ -238,18 +306,38 @@ class MobilePoint(OrientedPoint):
         self.dst = 0.0
 
     def get_angularvelocity(self) -> float:
+        """Return the angular velocity."""
         return self.ang_vel
 
     def get_linearvelocity(self) -> float:
+        """Return the linear velocity."""
         return self.lin_vel
 
     def set_linearvelocity(self, lin_vel) -> None:
+        """Set the linear velocity.
+
+        Args:
+            lin_vel: The new linear velocity.
+        """
         self.lin_vel = lin_vel
 
     def set_angularvelocity(self, ang_vel) -> None:
+        """Set the angular velocity.
+
+        Args:
+            ang_vel: The new angular velocity.
+        """
         self.ang_vel = ang_vel
 
     def update_all(self, pos, orientation, lin_vel, ang_vel) -> None:
+        """Set the pose and both velocities at once.
+
+        Args:
+            pos: The new position.
+            orientation: The new heading in radians.
+            lin_vel: The new linear velocity.
+            ang_vel: The new angular velocity.
+        """
         self.set_position(pos)
         self.set_orientation(orientation % (np.pi * 2))
         self.set_linearvelocity(lin_vel)
@@ -275,17 +363,30 @@ class MobileVector(MobilePoint):
     length = PositiveNumber(1, doc="The initial length of the body in meters")
 
     def __init__(self, **kwargs):
+        """Build the movable vector.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     @property
     def front_end(self) -> tuple:
+        """The vector's leading endpoint."""
         return self.translate((self.length / 2, 0))
 
     @property
     def rear_end(self) -> tuple:
+        """The vector's trailing endpoint."""
         return self.translate((-self.length / 2, 0))
 
     def drag_to_front(self, fp, d_or=0) -> None:
+        """Move the vector so its rear end follows a new front position.
+
+        Args:
+            front: The new leading endpoint.
+            d_or: The heading change applied at the same time.
+        """
         o = self.get_orientation() + d_or
         k = np.array([np.cos(o), np.sin(o)])
         p = fp - k * self.length / 2
@@ -315,10 +416,12 @@ class LineExtended(NestedConf):
 
     @property
     def Nvertices(self) -> int:
+        """The number of vertices."""
         return len(self.vertices)
 
     @property
     def _edges(self) -> list[list[tuple]]:
+        """The consecutive vertex pairs forming the line's segments."""
         vs = self.vertices
         edges = [[vs[i], vs[i + 1]] for i in range(self.Nvertices - 1)]
         if self.closed:
@@ -364,18 +467,31 @@ class Area2D(NestedConf):
 
     @property
     def w(self) -> float:
+        """The area's width."""
         return self.dims[0]
 
     @property
     def h(self) -> float:
+        """The area's height."""
         return self.dims[1]
 
     @property
     def range(self) -> np.ndarray:
+        """The area's extent, as ``[xmin, xmax, ymin, ymax]``."""
         X, Y = self.dims
         return np.array([-X / 2, X / 2, -Y / 2, Y / 2])
 
     def adjust_pos_to_area(self, pos, area, scaling_factor=1) -> tuple | None:
+        """Convert a position into this area's coordinate frame.
+
+        Args:
+            pos: The position to convert.
+            area: The area it is currently expressed in.
+            scaling_factor: Factor applied to the converted position.
+
+        Returns:
+            The converted position, or None when none was given.
+        """
         if pos is None:
             return None
         if any(np.isnan(pos)):
@@ -408,6 +524,15 @@ class Area2DPixel(Area2D):
     # dims = PositiveIntegerRange((100, 100), softmax=10000, step=1, doc='The arena dimensions in pixels')
 
     def get_rect_at_pos(self, pos=(0, 0), area=None, **kwargs):
+        """Return a pixel rectangle centred on a position.
+
+        Args:
+            pos: The centre position.
+            area: The area the position is expressed in.
+
+        Returns:
+            The pixel rectangle.
+        """
         if area is not None:
             pos = self.adjust_pos_to_area(pos=pos, area=area)
 
@@ -424,6 +549,15 @@ class Area2DPixel(Area2D):
             return None
 
     def get_relative_pos(self, pos_scale, reference=None) -> tuple[int, int]:
+        """Scale a relative position against a reference size.
+
+        Args:
+            pos_scale: The position as a fraction of the reference.
+            reference: The reference size. Defaults to this area's own.
+
+        Returns:
+            The absolute pixel position.
+        """
         if reference is None:
             reference = (self.w, self.h)
         w, h = pos_scale
@@ -432,6 +566,14 @@ class Area2DPixel(Area2D):
         return x_pos, y_pos
 
     def get_relative_font_size(self, font_size_scale) -> int:
+        """Return a font size scaled to this area's width.
+
+        Args:
+            font_size_scale: The size as a fraction of the width.
+
+        Returns:
+            The font size in pixels.
+        """
         return int(self.w * font_size_scale)
 
 
@@ -481,11 +623,17 @@ class PosPixelRel2Point(Pos2DPixel):
     )
 
     def __init__(self, **kwargs):
+        """Build the position and resolve it against its reference point.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.update_pos()
 
     @param.depends("pos_scale", "reference_point", watch=True)
     def update_pos(self) -> None:
+        """Recompute the position from the reference point."""
         w, h = self.pos_scale
         x_pos = int(self.reference_point.x * w)
         y_pos = int(self.reference_point.y * h)
@@ -517,11 +665,17 @@ class PosPixelRel2Area(Pos2DPixel):
     )
 
     def __init__(self, **kwargs):
+        """Build the position and resolve it against its reference area.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.update_pos()
 
     @param.depends("pos_scale", "reference_area", watch=True)
     def update_pos(self) -> None:
+        """Recompute the position from the reference area."""
         w, h = self.pos_scale
         x_pos = int(self.reference_area.w * w)
         y_pos = int(self.reference_area.h * h)
@@ -549,6 +703,11 @@ class BoundedArea(Area, LineClosed):
     )
 
     def __init__(self, vertices=None, **kwargs):
+        """Build the area and its boundary vertices.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         Area.__init__(self, **kwargs)
         X, Y = self.dims
         if vertices is None:
@@ -567,7 +726,16 @@ class BoundedArea(Area, LineClosed):
 
     @property
     def polygon(self) -> Polygon:
+        """The boundary polygon, scaled by the boundary margin."""
         return Polygon(np.array(self.vertices) * self.boundary_margin)
 
     def in_area(self, p) -> bool:
+        """Report whether a point lies inside the boundary.
+
+        Args:
+            p: The point to test.
+
+        Returns:
+            True when the point is contained.
+        """
         return self.polygon.contains(geometry.Point(p))

@@ -34,6 +34,14 @@ class UnitParam(param.Parameter):
 
     @staticmethod
     def _normalize_unit(value: Any) -> Any:
+        """Coerce a value into a pint unit.
+
+        Args:
+            value: A unit, a unit string, or None.
+
+        Returns:
+            The pint unit; dimensionless when None was given.
+        """
         if value is None:
             return units.dimensionless
         if isinstance(value, str):
@@ -62,11 +70,27 @@ class UnitParam(param.Parameter):
 
     @staticmethod
     def _dimensionality(u: Any):
+        """Return a unit's dimensionality.
+
+        Args:
+            u: The unit, or a parameter carrying one.
+
+        Returns:
+            The pint dimensionality.
+        """
         value = getattr(u, "default", u)
         return UnitParam._normalize_unit(value).dimensionality
 
     @staticmethod
     def is_dimensionless(u: Any) -> bool:
+        """Report whether a unit measures dimensionless.
+
+        Args:
+            u: The unit, or a parameter carrying one.
+
+        Returns:
+            True when the unit's dimensionality is dimensionless.
+        """
         value = getattr(u, "default", u)
         if isinstance(value, str):
             return value in {"", "-", "dimensionless"}
@@ -74,21 +98,53 @@ class UnitParam(param.Parameter):
 
     @staticmethod
     def is_time(u: Any) -> bool:
+        """Report whether a unit measures a time.
+
+        Args:
+            u: The unit, or a parameter carrying one.
+
+        Returns:
+            True when the unit's dimensionality is a time.
+        """
         value = UnitParam._normalize_unit(getattr(u, "default", u))
         return value.dimensionality == units.s.dimensionality
 
     @staticmethod
     def is_distance(u: Any) -> bool:
+        """Report whether a unit measures a distance.
+
+        Args:
+            u: The unit, or a parameter carrying one.
+
+        Returns:
+            True when the unit's dimensionality is a distance.
+        """
         value = UnitParam._normalize_unit(getattr(u, "default", u))
         return value.dimensionality == units.m.dimensionality
 
     @staticmethod
     def is_angle(u: Any) -> bool:
+        """Report whether a unit measures an angle.
+
+        Args:
+            u: The unit, or a parameter carrying one.
+
+        Returns:
+            True when the unit's dimensionality is an angle.
+        """
         value = UnitParam._normalize_unit(getattr(u, "default", u))
         return value.dimensionality == units.rad.dimensionality
 
     @staticmethod
     def is_velocity(u: Any) -> bool:
+        """Report whether a unit measures a velocity, translational or angular.
+
+        Args:
+            u: The unit, or a parameter carrying one.
+
+        Returns:
+            True when the unit's dimensionality is a velocity, translational or angular.
+        """
         value = UnitParam._normalize_unit(getattr(u, "default", u))
         return value.dimensionality == (units.m / units.s).dimensionality or (
             value.dimensionality.get("[length]", 0) == 1
@@ -97,31 +153,73 @@ class UnitParam(param.Parameter):
 
     @staticmethod
     def is_translational_velocity(u: Any) -> bool:
+        """Report whether a unit measures a translational velocity.
+
+        Args:
+            u: The unit, or a parameter carrying one.
+
+        Returns:
+            True when the unit's dimensionality is a translational velocity.
+        """
         value = UnitParam._normalize_unit(getattr(u, "default", u))
         return value.dimensionality == (units.m / units.s).dimensionality
 
     @staticmethod
     def is_translational_acceleration(u: Any) -> bool:
+        """Report whether a unit measures a translational acceleration.
+
+        Args:
+            u: The unit, or a parameter carrying one.
+
+        Returns:
+            True when the unit's dimensionality is a translational acceleration.
+        """
         value = UnitParam._normalize_unit(getattr(u, "default", u))
         return value.dimensionality == (units.m / units.s**2).dimensionality
 
     @staticmethod
     def is_angular_velocity(u: Any) -> bool:
+        """Report whether a unit measures an angular velocity.
+
+        Args:
+            u: The unit, or a parameter carrying one.
+
+        Returns:
+            True when the unit's dimensionality is an angular velocity.
+        """
         value = UnitParam._normalize_unit(getattr(u, "default", u))
         return value.dimensionality == (units.rad / units.s).dimensionality
 
     @staticmethod
     def is_angular_acceleration(u: Any) -> bool:
+        """Report whether a unit measures an angular acceleration.
+
+        Args:
+            u: The unit, or a parameter carrying one.
+
+        Returns:
+            True when the unit's dimensionality is an angular acceleration.
+        """
         value = UnitParam._normalize_unit(getattr(u, "default", u))
         return value.dimensionality == (units.rad / units.s**2).dimensionality
 
     @staticmethod
     def label(unit: Any) -> str:
+        """Return a unit's display label.
+
+        Args:
+            unit: The unit, or a parameter carrying one.
+
+        Returns:
+            The unit rendered as text.
+        """
         value = UnitParam._normalize_unit(getattr(unit, "default", unit))
         return str(value)
 
 
 class TimeUnitParam(UnitParam):
+    """A unit parameter restricted to units of time."""
+
     def __init__(self, default=units.s, doc: Optional[str] = None, **kwargs):
         """Build the parameter.
 
@@ -138,6 +236,8 @@ class TimeUnitParam(UnitParam):
 
 
 class DistanceUnitParam(UnitParam):
+    """A unit parameter restricted to units of distance."""
+
     def __init__(self, default=units.m, doc: Optional[str] = None, **kwargs):
         """Build the parameter.
 
@@ -154,6 +254,8 @@ class DistanceUnitParam(UnitParam):
 
 
 class AngleUnitParam(UnitParam):
+    """A unit parameter restricted to units of angle."""
+
     def __init__(self, default=units.rad, doc: Optional[str] = None, **kwargs):
         """Build the parameter.
 
@@ -170,6 +272,8 @@ class AngleUnitParam(UnitParam):
 
 
 class TranslationalVelocityUnitParam(UnitParam):
+    """A unit parameter restricted to units of translational velocity."""
+
     def __init__(self, default=units.m / units.s, doc: Optional[str] = None, **kwargs):
         """Build the parameter.
 
@@ -186,6 +290,8 @@ class TranslationalVelocityUnitParam(UnitParam):
 
 
 class TranslationalAccelerationUnitParam(UnitParam):
+    """A unit parameter restricted to units of translational acceleration."""
+
     def __init__(
         self, default=units.m / units.s**2, doc: Optional[str] = None, **kwargs
     ):
@@ -206,6 +312,8 @@ class TranslationalAccelerationUnitParam(UnitParam):
 
 
 class AngularVelocityUnitParam(UnitParam):
+    """A unit parameter restricted to units of angular velocity."""
+
     def __init__(
         self, default=units.rad / units.s, doc: Optional[str] = None, **kwargs
     ):
@@ -224,6 +332,8 @@ class AngularVelocityUnitParam(UnitParam):
 
 
 class AngularAccelerationUnitParam(UnitParam):
+    """A unit parameter restricted to units of angular acceleration."""
+
     def __init__(
         self, default=units.rad / units.s**2, doc: Optional[str] = None, **kwargs
     ):

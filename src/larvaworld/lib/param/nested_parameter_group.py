@@ -271,6 +271,8 @@ def class_generator(A0: Any, mode: str = "Unit"):
     """
 
     class A(NestedConf):
+        """Throwaway class built to inspect a parameter set's defaults."""
+
         def __init__(self, **kwargs: Any):
             if hasattr(A, "distribution"):
                 D = A.distribution.__class__

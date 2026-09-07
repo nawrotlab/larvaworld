@@ -65,6 +65,11 @@ class Compound(NestedConf):
     nN = PositiveInteger(doc="number of nitrogen atoms")
 
     def __init__(self, **kwargs):
+        """Build the compound and derive its molecular weight.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.ww = self.nC + self.nH / 12 * 1 + self.nO / 12 * 16 + self.nN / 12 * 14
 
@@ -117,6 +122,12 @@ class Substrate(NestedConf):
     )
 
     def __init__(self, quality=1.0, type=None, **kwargs):
+        """Build the substrate.
+
+        Args:
+            type: A stored substrate name, whose composition is adopted.
+            **kwargs: Composition values overriding the stored ones.
+        """
         if type is not None and type in substrate_dict:
             composition = substrate_dict[type].composition
         else:
@@ -131,6 +142,15 @@ class Substrate(NestedConf):
         self.X_ratio = self.get_X_ratio()
 
     def get_d_X(self, compounds=None, quality=None) -> float:
+        """Return the density of the nutritious compounds.
+
+        Args:
+            quality: The substrate quality. Defaults to its own.
+            compounds: The compounds counted. Defaults to the nutritious ones.
+
+        Returns:
+            The density.
+        """
         if quality is None:
             quality = self.quality
         if compounds is None:
@@ -138,6 +158,14 @@ class Substrate(NestedConf):
         return sum([self.composition[c] for c in compounds]) * quality
 
     def get_w_X(self, compounds=None) -> float:
+        """Return the mean molecular weight of the nutritious compounds.
+
+        Args:
+            compounds: The compounds counted. Defaults to the nutritious ones.
+
+        Returns:
+            The molecular weight.
+        """
         if compounds is None:
             compounds = nutritious_compounds
         d_X = self.get_d_X(compounds, quality=1)
@@ -150,6 +178,15 @@ class Substrate(NestedConf):
             return 0.0
 
     def get_X(self, quality=None, compounds=None) -> float:
+        """Return the molar concentration of the nutritious compounds.
+
+        Args:
+            quality: The substrate quality. Defaults to its own.
+            compounds: The compounds counted. Defaults to the nutritious ones.
+
+        Returns:
+            The concentration.
+        """
         if quality is None:
             quality = self.quality
         if compounds is None:
@@ -161,18 +198,52 @@ class Substrate(NestedConf):
             return 0.0
 
     def get_mol(self, V, **kwargs) -> float:
+        """Return the moles contained in a volume.
+
+        Args:
+            V: The volume.
+            **kwargs: Forwarded to :meth:`get_X`.
+
+        Returns:
+            The number of moles.
+        """
         return self.get_X(**kwargs) * V
 
     def get_f(self, K, **kwargs) -> float:
+        """Return the scaled functional response at this concentration.
+
+        Args:
+            K: The half-saturation constant.
+            **kwargs: Forwarded to :meth:`get_X`.
+
+        Returns:
+            The functional response, between 0 and 1.
+        """
         X = self.get_X(**kwargs)
         return X / (K + X)
 
     def get_C(self, quality=None) -> float:
+        """Return the total molar concentration, water included.
+
+        Args:
+            **kwargs: Forwarded to :meth:`get_X`.
+
+        Returns:
+            The concentration.
+        """
         return self.d_water / compound_dict["water"].w + self.get_X(
             quality, compounds=all_compounds
         )
 
     def get_X_ratio(self, **kwargs) -> float:
+        """Return the nutritious fraction of the total concentration.
+
+        Args:
+            **kwargs: Forwarded to :meth:`get_X`.
+
+        Returns:
+            The ratio.
+        """
         return self.get_X(**kwargs) / self.get_C(**kwargs)
 
 
@@ -232,11 +303,17 @@ class Odor(NestedConf):
     )
 
     def __init__(self, **kwargs):
+        """Build the odor and its spatial distribution.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self._update_distro()
 
     @param.depends("intensity", "spread", watch=True)
     def _update_distro(self) -> None:
+        """Rebuild the Gaussian distribution after intensity or spread changed."""
         if self.intensity is not None and self.spread is not None:
             self.dist = multivariate_normal(
                 [0, 0], [[self.spread, 0], [0, self.spread]]
@@ -247,12 +324,21 @@ class Odor(NestedConf):
             self.peak_value = 0.0
 
     def gaussian_value(self, pos) -> float | None:
+        """Return the concentration at a position.
+
+        Args:
+            pos: The position, relative to the source.
+
+        Returns:
+            The concentration, or None when no distribution is defined.
+        """
         if self.dist:
             return self.dist.pdf(pos) * self.peak_value
         else:
             return None
 
     def draw_dist(self) -> None:
+        """Plot the odor's concentration profile for inspection."""
         import matplotlib.pyplot as plt
         import numpy as np
         from scipy.stats import multivariate_normal
@@ -270,14 +356,41 @@ class Odor(NestedConf):
 
     @classmethod
     def oG(cls, c=1, id="Odor"):
+        """Build a Gaussian-plume odor of a given strength.
+
+        Args:
+            c: The strength multiplier.
+            id: The odor identifier.
+
+        Returns:
+            The odor.
+        """
         return cls(id=id, intensity=2.0 * c, spread=0.01 * np.sqrt(c))
 
     @classmethod
     def oD(cls, c=1, id="Odor"):
+        """Build a diffusion-layer odor of a given strength.
+
+        Args:
+            c: The strength multiplier.
+            id: The odor identifier.
+
+        Returns:
+            The odor.
+        """
         return cls(id=id, intensity=300.0 * c, spread=0.1 * np.sqrt(c))
 
     @classmethod
     def oO(cls, o, **kwargs):
+        """Build an odor of the requested kind.
+
+        Args:
+            o: ``"G"`` for a Gaussian plume, ``"D"`` for a diffusion layer.
+            **kwargs: Forwarded to the chosen constructor.
+
+        Returns:
+            The odor.
+        """
         if o == "G":
             return cls.oG(**kwargs)
         elif o == "D":
@@ -315,18 +428,33 @@ class Epoch(NestedConf):
     )
 
     def __init__(self, **kwargs):
+        """Build the epoch, expanding any shorthand keyword forms.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         kwargs = expand_kws_shortcuts(kwargs)
         super().__init__(**kwargs)
 
     @property
     def start(self) -> float:
+        """The epoch's start age, in hours."""
         return self.age_range[0]
 
     @property
     def end(self) -> float | None:
+        """The epoch's end age in hours, or None if open-ended."""
         return self.age_range[1]
 
     def ticks(self, dt) -> int | float:
+        """Return the epoch's duration in simulation ticks.
+
+        Args:
+            dt: The timestep in seconds.
+
+        Returns:
+            The number of ticks, or None for an open-ended epoch.
+        """
         if self.end is not None:
             return int((self.end - self.start) / 24 / dt)
         else:
@@ -367,6 +495,16 @@ class Life(NestedConf):
 
     @classmethod
     def from_epoch_ticks(cls, ticks=[], subs=None, reach_pupation=False):
+        """Build a life history from epoch durations given in ticks.
+
+        Args:
+            ticks: The duration of each epoch, all strictly positive.
+            dt: The timestep in seconds.
+            **kwargs: Further life-history settings.
+
+        Returns:
+            The life history.
+        """
         assert all([tick > 0 for tick in ticks])
         # Sorted into a new list: `ticks` belongs to the caller, and unpassed it
         # is the shared default of this method.
@@ -401,6 +539,17 @@ class Life(NestedConf):
         substrate_type="standard",
         reach_pupation=False,
     ):
+        """Build a life history with a starvation period before the simulation.
+
+        Args:
+            h: The starvation duration in hours.
+            age: The age at which the simulation starts, in hours.
+            rearing_quality: The substrate quality before starvation.
+            final_quality: The quality after it. Defaults to the rearing one.
+
+        Returns:
+            The life history.
+        """
         if final_quality is None:
             final_quality = rearing_quality
         sub_r = [rearing_quality, substrate_type]
