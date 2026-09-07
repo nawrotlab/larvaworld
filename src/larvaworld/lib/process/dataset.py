@@ -51,6 +51,11 @@ class DatasetConfig(RuntimeDataOps, SimMetricOps, SimTimeOps):
     """
 
     def __init__(self, **kwargs: Any) -> None:  # type: ignore[override]
+        """Build the configuration.
+
+        Args:
+            **kwargs: Configuration parameters, forwarded to ``param``.
+        """
         super().__init__(**kwargs)
 
     Nticks = OptionalPositiveInteger(default=None)
@@ -169,16 +174,29 @@ class DatasetConfig(RuntimeDataOps, SimMetricOps, SimTimeOps):
         return dic
 
     @param.depends("agent_ids", watch=True)
-    def update_Nagents(self):
+    def update_Nagents(self) -> None:
+        """Keep the agent count in step with the agent ID list."""
         self.N = len(self.agent_ids)
 
     @property
-    def arena_vertices(self):
+    def arena_vertices(self) -> np.ndarray:
+        """The arena boundary vertices, derived from its dims and geometry."""
         a = self.env_params.arena
         vs = BoundedArea(dims=a.dims, geometry=a.geometry).vertices
         return np.array(vs)
 
-    def get_sample_bout_distros(self, m):
+    def get_sample_bout_distros(self, m: AttrDict) -> AttrDict:
+        """Fill a model's intermittency distributions from this dataset.
+
+        Only the distributions the dataset actually provides are substituted;
+        the model's own values are kept otherwise.
+
+        Args:
+            m: The model configuration to populate.
+
+        Returns:
+            The same model configuration, modified in place.
+        """
         B = self.bout_distros
         dic = {
             "pause_dist": "pause_dur",
@@ -1831,6 +1849,21 @@ class ParamLarvaDataset(param.Parameterized):
         transposition=None,
         recompute=False,
     ):
+        """Apply the requested preprocessing steps to the raw tracked data.
+
+        Every step is optional and skipped unless its argument is given.
+
+        Args:
+            drop_collisions: When True, blank out the timesteps flagged as
+                collisions.
+            interpolate_nans: When True, fill gaps in the xy coordinates.
+            filter_f: Low-pass cut-off frequency in Hz.
+            rescale_by: Factor to rescale every spatial parameter by.
+            transposition: Trajectory alignment mode, as accepted by
+                :meth:`align_trajectories`.
+            recompute: When True, filter or rescale again even if the dataset
+                already records having been processed that way.
+        """
         if drop_collisions:
             self.exclude_rows()
         if interpolate_nans:
@@ -2423,7 +2456,24 @@ class ParamLarvaDataset(param.Parameterized):
 
             s["bend"] = a
 
-    def comp_ang_moments(self, pars=None, mode="minimal", recompute=False):
+    def comp_ang_moments(
+        self,
+        pars: list[str] | None = None,
+        mode: str = "minimal",
+        recompute: bool = False,
+    ) -> None:
+        """Compute angular velocities and accelerations.
+
+        Orientation parameters are unwrapped before differentiation so that the
+        wrap-around at +/-180 degrees does not produce spurious velocities. The
+        endpoint data gains the summary operators of each parameter.
+
+        Args:
+            pars: The angular parameters to process. Defaults to the bend, the
+                body orientations, and the segment angles and orientations.
+            mode: Retained for signature compatibility.
+            recompute: Retained for signature compatibility.
+        """
         s, e, c = self.data
         if pars is None:
             ho, to, fo, ro = nam.orient(["head", "tail", "front", "rear"])
@@ -2450,7 +2500,17 @@ class ParamLarvaDataset(param.Parameterized):
 
             self.comp_operators(pars=[p, vel, acc])
 
-    def comp_xy_moments(self, point="", **kwargs):
+    def comp_xy_moments(self, point: str = "", **kwargs: Any) -> None:
+        """Compute distance, velocity and acceleration for a body point.
+
+        Cumulative and body-length-scaled counterparts are derived as well.
+        Does nothing when the point's coordinates are absent.
+
+        Args:
+            point: The body point to process. An empty string uses the
+                dataset's trajectory coordinates.
+            **kwargs: Accepted for signature compatibility; unused.
+        """
         s, e, c = self.data
         xy = nam.xy(point)
         if not xy.exist_in(s):
@@ -2537,7 +2597,15 @@ class ParamLarvaDataset(param.Parameterized):
         vprint("Occupancy analysis complete.", 1)
 
     @valid(required={"ps": ["x", "y", "dst"]})
-    def comp_tortuosity(self, dur=20, **kwargs):
+    def comp_tortuosity(self, dur: int = 20, **kwargs: Any) -> None:
+        """Compute the straightness index over a rolling window.
+
+        The endpoint data gains the mean and standard deviation of the index.
+
+        Args:
+            dur: The rolling window duration in seconds.
+            **kwargs: Forwarded to the per-agent computation.
+        """
         s, e, c = self.data
         p = reg.getPar(f"tor{dur}")
         w = int(dur / c.dt / 2)
@@ -2553,7 +2621,17 @@ class ParamLarvaDataset(param.Parameterized):
         vprint("Tortuosity analysis complete.", 1)
 
     @valid(required={"config_attrs": ["traj_xy"]})
-    def comp_dispersal(self, t0=0, t1=60, **kwargs):
+    def comp_dispersal(self, t0: float = 0, t1: float = 60, **kwargs: Any) -> None:
+        """Compute dispersal from the origin over a time window.
+
+        The body-length-scaled counterpart and the summary operators of both
+        are derived as well.
+
+        Args:
+            t0: Window start in seconds.
+            t1: Window end in seconds.
+            **kwargs: Forwarded to the per-agent computation.
+        """
         s, e, c = self.data
         p = reg.getPar(f"dsp_{int(t0)}_{int(t1)}")
         s[p] = self.apply_per_agent(
@@ -2567,7 +2645,15 @@ class ParamLarvaDataset(param.Parameterized):
         self.comp_operators(pars=[p, sp])
         vprint("Dispersal analysis complete.", 1)
 
-    def comp_operators(self, pars):
+    def comp_operators(self, pars: list[str]) -> None:
+        """Reduce timeseries parameters to their per-agent summary statistics.
+
+        The endpoint data gains the maximum, mean, standard deviation, initial,
+        final and cumulative value of each parameter.
+
+        Args:
+            pars: The timeseries parameters to summarize.
+        """
         s, e, c = self.data
         for p in pars:
             g = s[p].dropna().groupby("AgentID")
@@ -2582,7 +2668,14 @@ class ParamLarvaDataset(param.Parameterized):
         required={"config_attrs": ["contour_xy"]},
         returned={"config_attrs": ["centroid_xy"]},
     )
-    def comp_centroid(self, **kwargs):
+    def comp_centroid(self, **kwargs: Any) -> None:
+        """Compute the centroid as the mean of the contour points.
+
+        Does nothing when the dataset carries no contour.
+
+        Args:
+            **kwargs: Accepted for signature compatibility; unused.
+        """
         c = self.config
         if c.Ncontour > 0:
             self.step_data[c.centroid_xy] = (
@@ -2590,7 +2683,16 @@ class ParamLarvaDataset(param.Parameterized):
             )
 
     @valid(required={"config_attrs": ["midline_xy"]}, returned={"eks": ["l"]})
-    def comp_length(self, mode="minimal", recompute=False):
+    def comp_length(self, mode: str = "minimal", recompute: bool = False) -> None:
+        """Compute body length from the midline points.
+
+        Length is summed over the midline segments per timestep; the endpoint
+        data gains its per-agent median.
+
+        Args:
+            mode: Retained for signature compatibility.
+            recompute: When True, recompute even if length already exists.
+        """
         if "length" in self.end_ps and not recompute:
             vprint(
                 "Length is already computed. If you want to recompute it, set recompute_length to True",
@@ -2605,7 +2707,15 @@ class ParamLarvaDataset(param.Parameterized):
                 self.step_data["length"].groupby("AgentID").quantile(q=0.5)
             )
 
-    def comp_spatial(self, **kwargs):
+    def comp_spatial(self, **kwargs: Any) -> None:
+        """Compute the full set of spatial metrics.
+
+        Derives the centroid and body length, then the distance, velocity and
+        acceleration moments of the tracked points, and their scaled forms.
+
+        Args:
+            **kwargs: Forwarded to the individual computations.
+        """
         s, e, c = self.data
         self.comp_centroid(**kwargs)
         self.comp_length(**kwargs)
@@ -2636,7 +2746,17 @@ class ParamLarvaDataset(param.Parameterized):
         self.comp_occupancy(**kwargs)
         vprint("Spatial analysis complete.", 1)
 
-    def scale_to_length(self, pars=None, keys=None):
+    def scale_to_length(
+        self, pars: list[str] | None = None, keys: list[str] | None = None
+    ) -> None:
+        """Add body-length-scaled copies of the given parameters.
+
+        Body length is computed first if it is not yet available.
+
+        Args:
+            pars: The parameter names to scale.
+            keys: Registry parameter keys, used when ``pars`` is not given.
+        """
         s, e, c = self.data
         if "length" not in self.end_ps:
             self.comp_length()
@@ -2657,7 +2777,12 @@ class ParamLarvaDataset(param.Parameterized):
             e[nam.scal(e_pars)] = (e[e_pars].values.T / l.values).T
 
     @required(ks=["fo"], config_attrs=["traj_xy"])
-    def comp_source_metrics(self):
+    def comp_source_metrics(self) -> None:
+        """Compute bearing and distance to every configured odor source.
+
+        For each source the step data gains the bearing, the distance and its
+        scaled form, and the endpoint data their summary operators.
+        """
         s, e, c = self.data
         fo = reg.getPar("fo")
         for n, pos in c.source_xy.items():
@@ -2689,7 +2814,11 @@ class ParamLarvaDataset(param.Parameterized):
 
             vprint("Bearing and distance to source computed", 1)
 
-    def comp_wind(self):
+    def comp_wind(self) -> None:
+        """Compute anemotaxis metrics when the environment defines wind.
+
+        Does nothing for environments without a windscape.
+        """
         w = self.config.env_params.windscape
         if w is not None:
             wo = w.wind_direction
@@ -2699,7 +2828,13 @@ class ParamLarvaDataset(param.Parameterized):
             except:
                 self.comp_final_anemotaxis(woo)
 
-    def comp_wind_metrics(self, woo, wo):
+    def comp_wind_metrics(self, woo: float, wo: float) -> None:
+        """Compute per-agent bearing to the wind source and anemotaxis.
+
+        Args:
+            woo: The wind direction in radians.
+            wo: The wind direction in degrees.
+        """
         s, e, c = self.data
         for id in self.ids:
             xy = s[c.traj_xy].xs(id, level="AgentID", drop_level=True).values
@@ -2715,7 +2850,12 @@ class ParamLarvaDataset(param.Parameterized):
         )
         e["anemotaxis"] = s["anemotaxis"].groupby("AgentID").last()
 
-    def comp_final_anemotaxis(self, woo):
+    def comp_final_anemotaxis(self, woo: float) -> None:
+        """Compute net displacement projected onto the wind axis.
+
+        Args:
+            woo: The wind direction in radians.
+        """
         s, e, c = self.data
         xy0 = s[c.traj_xy].groupby("AgentID").first()
         xy1 = s[c.traj_xy].groupby("AgentID").last()
@@ -2726,7 +2866,20 @@ class ParamLarvaDataset(param.Parameterized):
         a = np.array([util.angle_dif(ang, woo) for ang in angs])
         e["anemotaxis"] = d * np.cos(a)
 
-    def comp_PI2(self, xys, x=0.04):
+    def comp_PI2(self, xys: pd.DataFrame, x: float = 0.04) -> float:
+        """Compute a continuous preference index from relative source distance.
+
+        Unlike :meth:`comp_PI`, which scores final positions, this averages the
+        normalized difference between the distances to the two sources across
+        the whole track.
+
+        Args:
+            xys: The trajectory coordinates.
+            x: The half-separation between the two sources.
+
+        Returns:
+            The population-mean preference index.
+        """
         Nticks = xys.index.unique("Step").size
         ids = xys.index.unique("AgentID").values
         N = len(ids)
@@ -2740,7 +2893,22 @@ class ParamLarvaDataset(param.Parameterized):
         mu_dLR_mu = np.mean(dLR_mu)
         return mu_dLR_mu
 
-    def comp_PI(self, arena_xdim, xs, return_num=False):
+    def comp_PI(
+        self, arena_xdim: float, xs: Any, return_num: bool = False
+    ) -> float | tuple[float, int]:
+        """Compute the preference index from final x positions.
+
+        Agents are scored as left or right only when they lie outside a central
+        neutral zone spanning a fifth of the arena width.
+
+        Args:
+            arena_xdim: The arena width.
+            xs: The final x position of each agent.
+            return_num: When True, also return the number of agents scored.
+
+        Returns:
+            The preference index, or the index and the agent count.
+        """
         N = len(xs)
         r = 0.2 * arena_xdim
         xs = np.array(xs)
@@ -2753,7 +2921,15 @@ class ParamLarvaDataset(param.Parameterized):
         else:
             return pI
 
-    def comp_dataPI(self):
+    def comp_dataPI(self) -> None:
+        """Compute the dataset's preference indices and store them in config.
+
+        The x positions are taken from the first available source among the
+        endpoint data, the final tracked position and the centroid.
+
+        Raises:
+            ValueError: If no x coordinate can be found.
+        """
         s, e, c = self.data
         if "x" in self.end_ps:
             xs = e["x"].values
@@ -2783,6 +2959,19 @@ class ParamLarvaDataset(param.Parameterized):
         is_last=False,
         **kwargs,
     ):
+        """Run the requested processing steps over the dataset.
+
+        Args:
+            proc_keys: The steps to run: ``"angular"``, ``"spatial"``,
+                ``"source"``, ``"wind"`` and ``"PI"``. Dispersal and tortuosity
+                are always computed, over the ranges given below.
+            dsp_starts: Dispersal window start times, in seconds.
+            dsp_stops: Dispersal window end times, in seconds. Every start is
+                paired with every stop.
+            tor_durs: Tortuosity window durations, in seconds.
+            is_last: When True, save the dataset once processing completes.
+            **kwargs: Forwarded to the individual steps.
+        """
         if "angular" in proc_keys:
             self.comp_angular()
         if "spatial" in proc_keys:
@@ -2800,7 +2989,19 @@ class ParamLarvaDataset(param.Parameterized):
         if is_last:
             self.save()
 
-    def get_par(self, par=None, k=None, key="step"):
+    def get_par(
+        self, par: str | None = None, k: str | None = None, key: str = "step"
+    ) -> Any:
+        """Read one parameter from the dataset, computing it if necessary.
+
+        Args:
+            par: The parameter name.
+            k: The registry key, resolved to a name when ``par`` is not given.
+            key: Which store to read from, ``"step"`` or ``"end"``.
+
+        Returns:
+            The parameter values, or None if they cannot be obtained.
+        """
         if par is None and k is not None:
             par = reg.getPar(k)
 
@@ -2820,7 +3021,17 @@ class ParamLarvaDataset(param.Parameterized):
                 k = reg.getPar(p=par, to_return="k")
             return reg.par.get(k=k, d=self, compute=True)
 
-    def sample_larvagroup(self, N=1, ps=[]):
+    def sample_larvagroup(self, N: int = 1, ps: list[str] = []) -> dict:
+        """Draw model parameters from this dataset's endpoint distributions.
+
+        Args:
+            N: The number of samples to draw.
+            ps: The parameters to sample. Defaults to those the registry marks
+                as sampleable and the dataset provides.
+
+        Returns:
+            The sampled values, keyed by parameter name.
+        """
         ps = reg.sample_ps(ps, self.e)
         E = self.e[ps]
         if len(ps) == 0:
@@ -2836,7 +3047,26 @@ class ParamLarvaDataset(param.Parameterized):
             {p: v for p, v in zip(reg.getPar(d=ps, to_return="flatname"), vs)}
         )
 
-    def imitate_larvagroup(self, N=None, ps=None):
+    def imitate_larvagroup(
+        self, N: int | None = None, ps: list[str] | None = None
+    ) -> tuple[list[str], list[Any], list[float], dict]:
+        """Build a larva group reproducing individual agents of this dataset.
+
+        Unlike :meth:`sample_larvagroup`, which samples from the pooled
+        distributions, this copies the initial pose and parameters of specific
+        agents so the group mirrors the recorded individuals.
+
+        Args:
+            N: The number of agents to imitate. Defaults to the dataset's own
+                agent count.
+            ps: The parameters to copy.
+
+        Returns:
+            The sampled agent IDs, their initial positions, their initial
+            orientations, and their per-agent parameter values. Orientations
+            fall back to uniform-random when the dataset does not record them,
+            and a NaN parameter value falls back to that parameter's mean.
+        """
         if N is None:
             N = self.c.N
         e = self.e
@@ -2860,11 +3090,17 @@ class ParamLarvaDataset(param.Parameterized):
         return ids, poss, ors, dic
 
     @property
-    def existing_dispersion_ranges(self):
+    def existing_dispersion_ranges(self) -> list[tuple[int, int]]:
+        """The time windows for which dispersal has already been computed."""
         l = util.ItemList(self.step_ps.pref("disp")).split("_")
         return [(int(ll[1]), int(ll[2])) for ll in l]
 
-    def convert_to_pint(self):
+    def convert_to_pint(self) -> None:
+        """Attach physical units to the timeseries columns.
+
+        Columns whose unit the registry knows are converted to pint dtypes and
+        then dequantified back into plain columns carrying unit metadata.
+        """
         from pint_pandas.pint_array import PintDataFrameAccessor
 
         s = reg.par.df_to_pint(self.s)
@@ -2886,6 +3122,16 @@ class BaseLarvaDataset(ParamLarvaDataset):
 
     @staticmethod
     def initGeo(to_Geo: bool = False, **kwargs: Any) -> "BaseLarvaDataset":
+        """Build a dataset of the requested storage flavour.
+
+        Args:
+            to_Geo: When True, build a movingpandas-backed
+                :class:`GeoLarvaDataset` if that backend is importable.
+            **kwargs: Forwarded to the chosen dataset class.
+
+        Returns:
+            The constructed dataset, falling back to :class:`LarvaDataset`.
+        """
         if to_Geo:
             try:
                 from importlib import import_module
@@ -2977,7 +3223,16 @@ class BaseLarvaDataset(ParamLarvaDataset):
         elif step is not None or end is not None:
             self.set_data(step=step, end=end, agents=agents)
 
-    def generate_config(self, **kwargs):
+    def generate_config(self, **kwargs: Any) -> AttrDict:
+        """Build a dataset configuration from defaults and overrides.
+
+        Args:
+            **kwargs: Configuration values overriding the defaults, together
+                with any extra metadata to carry on the dataset.
+
+        Returns:
+            The assembled configuration.
+        """
         c0 = AttrDict(
             {
                 "id": "unnamed",
@@ -3028,11 +3283,18 @@ class BaseLarvaDataset(ParamLarvaDataset):
         vprint(f"Generated new conf {c0.id}", 1)
         return c0
 
-    def delete(self):
+    def delete(self) -> None:
+        """Remove the dataset's directory and all its stored data."""
         shutil.rmtree(self.config.dir)
         vprint(f"Dataset {self.id} deleted", 2)
 
-    def set_id(self, id, save=True):
+    def set_id(self, id: str, save: bool = True) -> None:
+        """Rename the dataset.
+
+        Args:
+            id: The new dataset ID.
+            save: When True, persist the updated configuration.
+        """
         self.id = id
         self.config.id = id
         if save:
@@ -3211,7 +3473,13 @@ class LarvaDataset(BaseLarvaDataset):
         """
         super().__init__(**kwargs)
 
-    def visualize(self, parameters={}, **kwargs):
+    def visualize(self, parameters: dict = {}, **kwargs: Any) -> None:
+        """Replay the dataset in the simulation viewer.
+
+        Args:
+            parameters: Replay configuration overrides.
+            **kwargs: Forwarded to the replay run.
+        """
         from ..sim import ReplayRun
 
         kwargs["dataset"] = self
@@ -3228,6 +3496,22 @@ class LarvaDataset(BaseLarvaDataset):
         recompute=False,
         **kwargs,
     ):
+        """Run the full preprocess, process and annotate pipeline.
+
+        Args:
+            pre_kws: Keyword arguments for :meth:`preprocess`.
+            proc_keys: The processing steps to run, as accepted by
+                :meth:`process`.
+            anot_keys: The annotation steps to run, as accepted by
+                :meth:`annotate`.
+            is_last: When True, save the dataset once the pipeline completes.
+            mode: Detail level forwarded to the processing steps.
+            recompute: When True, redo steps the dataset already records.
+            **kwargs: Forwarded to the processing and annotation steps.
+
+        Returns:
+            The dataset itself, so that calls can be chained.
+        """
         warnings.filterwarnings("ignore")
         self.preprocess(**pre_kws, recompute=recompute)
         self.process(
@@ -3240,7 +3524,8 @@ class LarvaDataset(BaseLarvaDataset):
         return self
 
     @property
-    def epoch_bound_dicts(self):
+    def epoch_bound_dicts(self) -> AttrDict:
+        """The start and stop times of every annotated epoch, per agent."""
         d = AttrDict()
         for k, dic in self.epoch_dicts.items():
             try:
@@ -3250,7 +3535,29 @@ class LarvaDataset(BaseLarvaDataset):
                 pass
         return d
 
-    def get_chunk_par(self, chunk, k=None, par=None, min_dur=0, mode="distro"):
+    def get_chunk_par(
+        self,
+        chunk: str,
+        k: str | None = None,
+        par: str | None = None,
+        min_dur: float = 0,
+        mode: str = "distro",
+    ) -> Any:
+        """Extract a parameter's values within a behavioural epoch type.
+
+        Args:
+            chunk: The epoch type to restrict to.
+            k: The registry key of the parameter.
+            par: The parameter name, used when ``k`` is not given.
+            min_dur: Minimum epoch duration in seconds; shorter epochs are
+                excluded.
+            mode: ``"distro"`` returns the values inside the epochs, while
+                ``"extrema"`` returns the values at the epoch boundaries and
+                their difference.
+
+        Returns:
+            The extracted values.
+        """
         s, e, c = self.data
         epochs = self.epoch_dicts[chunk]
         if min_dur != 0:
@@ -3306,6 +3613,20 @@ class LarvaDatasetCollection:
         config: Optional[AttrDict] = None,
         **kwargs: Any,
     ) -> None:
+        """Group datasets for comparative analysis.
+
+        Args:
+            labels: Display label per dataset. Defaults to the dataset IDs.
+            colors: Display colour per dataset. Defaults to a generated
+                qualitative palette.
+            add_samples: When True, also load the reference datasets the
+                members were sampled from.
+            config: Shared configuration for the collection.
+            **kwargs: Dataset selectors, forwarded to :meth:`get_datasets`.
+
+        Raises:
+            AssertionError: If the labels do not match the datasets one-to-one.
+        """
         ds = self.get_datasets(**kwargs)
 
         for d in ds:
@@ -3332,7 +3653,16 @@ class LarvaDatasetCollection:
         self.Ngroups = len(self.group_ids)
         self.dir = self.set_dir()
 
-    def set_dir(self, dir=None):
+    def set_dir(self, dir: str | None = None) -> str | None:
+        """Resolve the directory the collection's output is written to.
+
+        Args:
+            dir: An explicit directory. When None, the collection's config or
+                the datasets' common parent directory is used instead.
+
+        Returns:
+            The resolved directory, or None if none could be determined.
+        """
         if dir is not None:
             return dir
         elif self.config and "dir" in self.config:
@@ -3352,10 +3682,21 @@ class LarvaDatasetCollection:
             # method can't resolve (e.g. Ndatasets <= 1 or Ngroups > 1).
 
     @property
-    def plot_dir(self):
+    def plot_dir(self) -> str:
+        """The directory group plots are written to."""
         return f"{self.dir}/group_plots"
 
-    def plot(self, ids=[], gIDs=[], **kwargs):
+    def plot(self, ids: list[str] = [], gIDs: list[str] = [], **kwargs: Any) -> Any:
+        """Render a group plot over the collection's datasets.
+
+        Args:
+            ids: Plot IDs to render.
+            gIDs: Group plot IDs to render.
+            **kwargs: Forwarded to the plotting backend.
+
+        Returns:
+            The rendered figures.
+        """
         kws = {
             "datasets": self.datasets,
             "save_to": self.plot_dir,
@@ -3370,7 +3711,24 @@ class LarvaDatasetCollection:
             plots[gID] = reg.graphs.run_group(gID, **kws)
         return plots
 
-    def get_datasets(self, datasets=None, refIDs=None, dirs=None, group_id=None):
+    def get_datasets(
+        self,
+        datasets: Any = None,
+        refIDs: list[str] | None = None,
+        dirs: list[str] | None = None,
+        group_id: str | None = None,
+    ) -> Any:
+        """Resolve the collection's datasets from any of the accepted sources.
+
+        Args:
+            datasets: Already-loaded datasets.
+            refIDs: Reference IDs to load from the registry.
+            dirs: Directories to load datasets from.
+            group_id: Group ID applied when loading from ``dirs``.
+
+        Returns:
+            The resolved datasets.
+        """
         if datasets:
             pass
         elif refIDs:
@@ -3414,54 +3772,73 @@ class LarvaDatasetCollection:
         return colors
 
     @property
-    def data_dict(self):
+    def data_dict(self) -> dict:
+        """The datasets, keyed by their display label."""
         return dict(zip(self.labels, self.datasets))
 
     @property
-    def data_palette(self):
+    def data_palette(self) -> Any:
+        """The label, dataset and colour of each member, zipped together."""
         return zip(self.labels, self.datasets, self.colors)
 
     @property
-    def data_palette_with_N(self):
+    def data_palette_with_N(self) -> Any:
+        """As :attr:`data_palette`, with agent counts appended to the labels."""
         return zip(self.labels_with_N, self.datasets, self.colors)
 
     @property
-    def color_palette(self):
+    def color_palette(self) -> dict:
+        """The display colour of each member, keyed by label."""
         return dict(zip(self.labels, self.colors))
 
     @property
-    def Nticks(self):
+    def Nticks(self) -> int:
+        """The largest tick count among the member datasets."""
         Nticks_list = [d.config.Nticks for d in self.datasets]
         return int(np.max(util.unique_list(Nticks_list)))
 
     @property
-    def N(self):
+    def N(self) -> int:
+        """The largest agent count among the member datasets."""
         N_list = [d.config.N for d in self.datasets]
         return int(np.max(util.unique_list(N_list)))
 
     @property
-    def labels_with_N(self):
+    def labels_with_N(self) -> list[str]:
+        """The display labels, each annotated with its agent count."""
         return [f"{l} (N={d.config.N})" for l, d in self.data_dict.items()]
 
     @property
-    def fr(self):
+    def fr(self) -> float:
+        """The highest framerate among the member datasets."""
         fr_list = [d.fr for d in self.datasets]
         return np.max(util.unique_list(fr_list))
 
     @property
-    def dt(self):
+    def dt(self) -> float:
+        """The largest timestep among the member datasets."""
         dt_list = util.unique_list([d.dt for d in self.datasets])
         return np.max(dt_list)
 
     @property
-    def duration(self):
+    def duration(self) -> int:
+        """The recording duration in seconds, from :attr:`Nticks` and :attr:`dt`."""
         return int(self.Nticks * self.dt)
 
     @property
-    def tlim(self):
+    def tlim(self) -> tuple[int, int]:
+        """The time range spanned by the datasets, in seconds."""
         return 0, self.duration
 
-    def trange(self, unit="min"):
+    def trange(self, unit: str = "min") -> np.ndarray:
+        """Build the time axis shared by the datasets.
+
+        Args:
+            unit: The time unit, ``"min"`` or ``"sec"``.
+
+        Returns:
+            One timestamp per tick, in the requested unit.
+        """
         if unit == "min":
             T = 60
         elif unit == "sec":
@@ -3471,7 +3848,8 @@ class LarvaDatasetCollection:
         return x
 
     @property
-    def arena_dims(self):
+    def arena_dims(self) -> np.ndarray:
+        """The arena dimensions, averaged when the members disagree."""
         dims = np.array([d.env_params.arena.dims for d in self.datasets])
         if self.Ndatasets > 1:
             dims = np.max(dims, axis=0)
@@ -3480,14 +3858,23 @@ class LarvaDatasetCollection:
         return tuple(dims)
 
     @property
-    def arena_geometry(self):
+    def arena_geometry(self) -> str | None:
+        """The arena geometry shared by the members, or None if they differ."""
         geos = util.unique_list([d.env_params.arena.geometry for d in self.datasets])
         if len(geos) == 1:
             return geos[0]
         else:
             return None
 
-    def concat_data(self, key):
+    def concat_data(self, key: str) -> pd.DataFrame:
+        """Concatenate one stored table across every member dataset.
+
+        Args:
+            key: The store key to read, e.g. ``"step"`` or ``"end"``.
+
+        Returns:
+            The concatenated table, labelled by dataset.
+        """
         return util.concat_datasets(dict(zip(self.labels, self.datasets)), key=key)
 
     @classmethod
