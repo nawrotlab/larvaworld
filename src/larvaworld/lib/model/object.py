@@ -93,6 +93,14 @@ class Object(NestedConf):
         id: str = "Object",
         **kwargs: Any,
     ) -> None:
+        """Build the object.
+
+        Args:
+            unique_id: The object's identifier. Falls back to ``id``.
+            model: The simulation model the object belongs to.
+            id: Deprecated alias for ``unique_id``.
+            **kwargs: Additional attributes set on the object.
+        """
         if unique_id is None and id is not None:
             unique_id = id
         # self.unique_id=unique_id
@@ -108,19 +116,43 @@ class Object(NestedConf):
         self.model = model
 
     def __repr__(self) -> str:
+        """Return the object's type and identifier."""
         return f"{self.type} (Obj {self.unique_id})"
 
     def __getattr__(self, key: str):
+        """Raise for an unknown attribute, naming the object.
+
+        Args:
+            key: The attribute looked up.
+
+        Raises:
+            AttributeError: Always.
+        """
         raise AttributeError(f"{self} has no attribute '{key}'.")
 
     def __getitem__(self, key: str):
+        """Read an attribute by key.
+
+        Args:
+            key: The attribute name.
+
+        Returns:
+            The attribute value.
+        """
         return getattr(self, key)
 
     def __setitem__(self, key: str, value: Any) -> None:
+        """Set an attribute by key.
+
+        Args:
+            key: The attribute name.
+            value: The value to assign.
+        """
         setattr(self, key, value)
 
     @property
     def vars(self) -> list[str]:
+        """The object's public attribute names."""
         return [
             k for k in self.__dict__.keys() if k[0] != "_" and k not in self._var_ignore
         ]
@@ -171,6 +203,12 @@ class Object(NestedConf):
         self.nest_record = self._nest_record
 
     def _nest_record(self, reporter_dic: dict[str, str]) -> None:
+        """Record nested attributes into the object's log.
+
+        Args:
+            reporter_dic: Mapping of log column name to the dotted attribute
+                path supplying its value.
+        """
         for name, codename in reporter_dic.items():
             # Create empty lists
             if name not in self.log:
@@ -303,6 +341,11 @@ class GroupedObject(Object):
     group = param.String(None, doc="The unique ID of the entity's group")
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the object and adopt its group as its type.
+
+        Args:
+            **kwargs: Object attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         if self.group is not None:
             self.type = self.group

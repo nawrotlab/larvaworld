@@ -56,13 +56,20 @@ class NonSpatialAgent(GroupedObject):
     odor = ClassAttr(Odor, doc="The odor of the agent")
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the agent.
+
+        Args:
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     @property
     def dt(self) -> float:
+        """The simulation timestep in seconds."""
         return self.model.dt
 
     def step(self) -> None:
+        """Advance the agent by one timestep. Does nothing by default."""
         pass
 
 
@@ -89,6 +96,11 @@ class PointAgent(RadiallyExtended, NonSpatialAgent, Viewable):
     __displayname__ = "Point agent"
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the agent and register its display colour.
+
+        Args:
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.set_default_color(self.color)
         # Lazy import to avoid circular dependency

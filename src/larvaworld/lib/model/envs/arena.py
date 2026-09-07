@@ -59,6 +59,12 @@ class Arena(ViewableBoundedArea, agentpy.Space):
     boundary_margin = param.Magnitude(0.96)
 
     def __init__(self, model: Any | None = None, **kwargs: Any) -> None:
+        """Build the arena and its boundary edges.
+
+        Args:
+            model: The simulation model the arena belongs to.
+            **kwargs: Arena attributes, forwarded to the parent class.
+        """
         ViewableBoundedArea.__init__(self, **kwargs)
         self.edges = [
             [Point(x1, y1), Point(x2, y2)]
@@ -75,13 +81,31 @@ class Arena(ViewableBoundedArea, agentpy.Space):
         self.accessible_sources_sorted = None
 
     def place_agent(self, agent: Any, pos: Any) -> None:
+        """Add an agent to the arena at a position.
+
+        Args:
+            agent: The agent to place.
+            pos: Its position in arena coordinates.
+        """
         pos = pos if isinstance(pos, np.ndarray) else np.array(pos)
         self.positions[agent] = pos  # Add pos to agent_dict
 
     def move_agent(self, agent: Any, pos: Any) -> None:
+        """Move an agent to a new position.
+
+        Args:
+            agent: The agent to move.
+            pos: Its new position in arena coordinates.
+        """
         self.move_to(agent, pos)
 
     def add_sources(self, sources: list[Any], positions: list[Any]) -> None:
+        """Add food or odor sources to the arena.
+
+        Args:
+            sources: The sources to add.
+            positions: Their positions in arena coordinates.
+        """
         for source, pos in zip(sources, positions):
             pos = pos if isinstance(pos, np.ndarray) else np.array(pos)
             if source.can_be_displaced:
@@ -92,6 +116,11 @@ class Arena(ViewableBoundedArea, agentpy.Space):
                 self.stable_sources.append(source)
 
     def source_positions_in_array(self) -> None:
+        """Refresh the cached source-position array.
+
+        Only the sources that can move are re-read, so that the lookup used
+        for contact detection stays current without rebuilding the whole array.
+        """
         if len(self.displacable_sources) > 0:
             for i, source in enumerate(self.displacable_sources):
                 self.displacable_source_positions[i] = np.array(source.get_position())
@@ -111,6 +140,15 @@ class Arena(ViewableBoundedArea, agentpy.Space):
             self.sources = np.array(self.stable_sources)
 
     def accessible_sources(self, pos: Any, radius: float) -> list[Any]:
+        """Find the sources within reach of a position.
+
+        Args:
+            pos: The position in arena coordinates.
+            radius: The reach distance.
+
+        Returns:
+            The sources inside that radius.
+        """
         return self.sources[
             np.where(util.eudi5x(self.source_positions, pos) <= radius)
         ].tolist()
@@ -118,6 +156,16 @@ class Arena(ViewableBoundedArea, agentpy.Space):
     def accessible_sources_multi(
         self, agents: Any, positive_amount: bool = True, return_closest: bool = True
     ) -> None:
+        """Find the nearest reachable source for each of several positions.
+
+        Args:
+            positions: The positions to test.
+            radius: The reach distance.
+            positive_amount: When True, ignore sources that are exhausted.
+
+        Returns:
+            The nearest source per position, None where none is in reach.
+        """
         self.source_positions_in_array()
         if positive_amount:
             idx = np.array([s.amount > 0 for s in self.sources], dtype=bool)
@@ -156,6 +204,14 @@ class Arena(ViewableBoundedArea, agentpy.Space):
         self.accessible_sources = dic
 
     def draw(self, v: Any | None = None) -> Figure:
+        """Render the arena and its sources as a matplotlib figure.
+
+        Args:
+            v: Accepted for signature compatibility; unused.
+
+        Returns:
+            The rendered figure.
+        """
         import matplotlib.pyplot as plt
         from matplotlib.figure import Figure
 

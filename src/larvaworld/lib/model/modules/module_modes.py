@@ -75,6 +75,11 @@ class BrainModule(NestedConf):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the module description and its per-mode defaults.
+
+        Args:
+            **kwargs: Module attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.excluded = [basic.Effector, "phi", "name"]
         self.default_dict = AttrDict(
@@ -87,14 +92,17 @@ class BrainModule(NestedConf):
 
     @property
     def parent_class(self):
+        """The most derived class shared by every mode of this module."""
         return util.common_ancestor_class(list(self.dict.values()))
 
     @property
     def modes(self):
+        """The names of the available implementation modes."""
         return self.dict.keylist
 
     @property
     def short_modes(self):
+        """The abbreviated mode names, as used in composite model IDs."""
         return SuperList(
             [
                 self.ModeShortNames[m] if m in self.ModeShortNames else m
@@ -103,6 +111,14 @@ class BrainModule(NestedConf):
         )
 
     def get_class(self, mode: str):
+        """Resolve a mode name to its implementing class.
+
+        Args:
+            mode: The mode name, in either its full or abbreviated form.
+
+        Returns:
+            The class implementing that mode, or None if it is unknown.
+        """
         if mode in self.short_modes:
             mode = [k for k in self.modes if self.ModeShortNames[k] == mode][0]
         if mode in self.modes:
@@ -111,6 +127,15 @@ class BrainModule(NestedConf):
             return None
 
     def build_module(self, conf: Any, **kwargs: Any):
+        """Instantiate this module from a configuration.
+
+        Args:
+            conf: The module configuration, naming its mode and parameters.
+            **kwargs: Additional constructor arguments, such as the timestep.
+
+        Returns:
+            The module instance, or None when the configuration names no mode.
+        """
         if conf is not None and "mode" in conf:
             C = self.get_class(conf.mode)
             if C is not None:
@@ -120,6 +145,16 @@ class BrainModule(NestedConf):
     def module_conf(
         self, mode: str | None = None, include_mode: bool = True, **kwargs: Any
     ):
+        """Build a configuration for one mode of this module.
+
+        Args:
+            mode: The mode to configure. Defaults to the module's own default.
+            include_mode: When True, record the mode name in the result.
+            **kwargs: Parameter values overriding the mode's defaults.
+
+        Returns:
+            The module configuration.
+        """
         if mode in self.short_modes:
             mode = [k for k in self.modes if self.ModeShortNames[k] == mode][0]
         if mode in self.default_dict:
@@ -134,6 +169,16 @@ class BrainModule(NestedConf):
     def module_objects(
         self, mode: str | None = None, excluded: list[Any] | None = None
     ):
+        """Return the parameter objects of one mode.
+
+        Args:
+            mode: The mode to inspect. Defaults to the module's own default.
+            excluded: Base classes and parameter names to omit. Defaults to
+                the module's own exclusions.
+
+        Returns:
+            The parameter objects, keyed by name.
+        """
         if excluded is None:
             excluded = self.excluded
         C = self.get_class(mode=mode)
@@ -144,9 +189,25 @@ class BrainModule(NestedConf):
             return AttrDict()
 
     def module_pars(self, **kwargs: Any):
+        """Return the parameter names of one mode.
+
+        Args:
+            **kwargs: Forwarded to :meth:`module_objects`.
+
+        Returns:
+            The parameter names.
+        """
         return self.module_objects(**kwargs).keylist
 
     def as_entry(self, d: AttrDict):
+        """Nest a value under this module's path in a model configuration.
+
+        Args:
+            d: The value to nest.
+
+        Returns:
+            The value keyed by the module's dotted configuration path.
+        """
         return AttrDict({f"brain.{self.mID}": d})
 
 
@@ -227,6 +288,11 @@ class BrainModuleDB(NestedConf):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the database and group the modules by role.
+
+        Args:
+            **kwargs: Database attributes, forwarded to the parent class.
+        """
         self.LocoModsBasic = SuperList(
             ["crawler", "turner", "interference", "intermitter"]
         )
@@ -251,6 +317,15 @@ class BrainModuleDB(NestedConf):
         super().__init__(**kwargs)
 
     def mod_modes(self, k: str, short: bool = False):
+        """Return the modes available for one module.
+
+        Args:
+            k: The module key.
+            short: When True, return the abbreviated mode names.
+
+        Returns:
+            The mode names, or None for an unknown module.
+        """
         if k not in self.BrainMods:
             return None
         else:
@@ -262,6 +337,16 @@ class BrainModuleDB(NestedConf):
     def build_module(
         self, mID: str | None = None, conf: Any | None = None, **kwargs: Any
     ):
+        """Instantiate one module by key.
+
+        Args:
+            mID: The module key.
+            conf: The module configuration.
+            **kwargs: Additional constructor arguments.
+
+        Returns:
+            The module instance, or None for an unknown key.
+        """
         return (
             self.brainDB[mID].build_module(conf=conf, **kwargs)
             if mID in self.BrainMods
@@ -269,6 +354,16 @@ class BrainModuleDB(NestedConf):
         )
 
     def build_modules(self, mIDs: list[str], conf: AttrDict, **kwargs: Any):
+        """Instantiate several modules from one model configuration.
+
+        Args:
+            mIDs: The module keys to build.
+            conf: The brain configuration holding each module's settings.
+            **kwargs: Additional constructor arguments.
+
+        Returns:
+            The module instances, keyed by module.
+        """
         return AttrDict(
             {
                 mID: self.build_module(
@@ -279,9 +374,27 @@ class BrainModuleDB(NestedConf):
         )
 
     def build_locomodules(self, conf: AttrDict, **kwargs: Any):
+        """Instantiate the locomotion modules of a model.
+
+        Args:
+            conf: The brain configuration.
+            **kwargs: Additional constructor arguments.
+
+        Returns:
+            The locomotion module instances.
+        """
         return self.build_modules(mIDs=self.LocoMods, conf=conf, **kwargs)
 
     def build_sensormodules(self, conf: AttrDict, **kwargs: Any):
+        """Instantiate the sensory modules of a model.
+
+        Args:
+            conf: The brain configuration.
+            **kwargs: Additional constructor arguments.
+
+        Returns:
+            The sensor module instances.
+        """
         return self.build_modules(mIDs=self.SensorMods, conf=conf, **kwargs)
 
     def module_conf(
@@ -291,6 +404,17 @@ class BrainModuleDB(NestedConf):
         as_entry: bool = True,
         **kwargs: Any,
     ):
+        """Build a configuration for one module by key.
+
+        Args:
+            mID: The module key.
+            mode: The mode to configure.
+            as_entry: When True, nest the result under the module's path.
+            **kwargs: Parameter values overriding the defaults.
+
+        Returns:
+            The module configuration.
+        """
         M = self.brainDB[mID]
         conf = M.module_conf(mode=mode, **kwargs) if mID in self.BrainMods else None
         return M.as_entry(conf) if as_entry else conf
@@ -302,6 +426,17 @@ class BrainModuleDB(NestedConf):
         as_entry: bool = True,
         **kwargs: Any,
     ):
+        """Return the parameter objects of one module by key.
+
+        Args:
+            mID: The module key.
+            mode: The mode to inspect.
+            as_entry: When True, nest the result under the module's path.
+            **kwargs: Forwarded to the module's parameter lookup.
+
+        Returns:
+            The parameter objects.
+        """
         M = self.brainDB[mID]
         objs = (
             M.module_objects(mode=mode, **kwargs)
@@ -313,6 +448,17 @@ class BrainModuleDB(NestedConf):
     def modules_objects(
         self, mIDs: list[str], conf: AttrDict, as_entry: bool = True, **kwargs: Any
     ):
+        """Return the parameter objects of several modules.
+
+        Args:
+            mIDs: The module keys to inspect.
+            conf: The brain configuration supplying each module's mode.
+            as_entry: When True, nest each result under its module path.
+            **kwargs: Forwarded to the per-module lookup.
+
+        Returns:
+            The parameter objects, keyed by module.
+        """
         C = AttrDict(
             {
                 mID: self.module_objects(
@@ -329,12 +475,37 @@ class BrainModuleDB(NestedConf):
         )
 
     def module_pars(self, **kwargs: Any):
+        """Return the flattened parameter names of one module.
+
+        Args:
+            **kwargs: Forwarded to :meth:`module_objects`.
+
+        Returns:
+            The parameter names.
+        """
         return self.module_objects(**kwargs).flatten().keylist
 
     def modules_pars(self, **kwargs: Any):
+        """Return the parameter names of several modules.
+
+        Args:
+            **kwargs: Forwarded to :meth:`modules_objects`.
+
+        Returns:
+            The parameter names.
+        """
         return self.modules_objects(**kwargs).keylist
 
     def brainConf(self, ms: AttrDict = AttrDict(), mkws: AttrDict = AttrDict()):
+        """Assemble a full brain configuration.
+
+        Args:
+            ms: The mode chosen per module. Modules left out are disabled.
+            mkws: Parameter overrides per module.
+
+        Returns:
+            The brain configuration.
+        """
         C = AttrDict()
         for k in self.BrainMods:
             C[k] = self.brainDB[k].module_conf(
@@ -344,9 +515,28 @@ class BrainModuleDB(NestedConf):
         return C
 
     def mcolor(self, k: str):
+        """Return a module's display colour.
+
+        Args:
+            k: The module key.
+
+        Returns:
+            The colour, or None for an unknown module.
+        """
         return self.brainDB[k].color if k in self.BrainMods else None
 
     def mod_combs(self, ks: SuperList, short: bool = False, to_return: str = "yield"):
+        """Enumerate every combination of modes across several modules.
+
+        Args:
+            ks: The module keys to combine.
+            short: When True, use the abbreviated mode names.
+            to_return: ``"yield"`` returns the raw product, anything else
+                joins each combination into a single underscore-separated ID.
+
+        Returns:
+            The mode combinations.
+        """
         ks = ks.existing(self.BrainMods)
         x = itertools.product(*[self.mod_modes(k, short=short) for k in ks])
         if to_return == "yield":
@@ -355,9 +545,26 @@ class BrainModuleDB(NestedConf):
             return list(x)
 
     def parent_class(self, k: str):
+        """Return the class shared by every mode of one module.
+
+        Args:
+            k: The module key.
+
+        Returns:
+            The common ancestor class, or None for an unknown module.
+        """
         return self.brainDB[k].parent_class if k in self.BrainMods else None
 
     def get_memory_class(self, mode: str, modality: str):
+        """Resolve a memory implementation by algorithm and modality.
+
+        Args:
+            mode: The learning algorithm.
+            modality: The sensory modality the memory adapts.
+
+        Returns:
+            The memory class, or None when the pairing is unsupported.
+        """
         try:
             return self.brainDB["memory"].dict[mode][modality]
         except:
@@ -370,6 +577,17 @@ class BrainModuleDB(NestedConf):
         as_entry: bool = True,
         **kwargs: Any,
     ):
+        """Build a configuration for one memory module.
+
+        Args:
+            mode: The learning algorithm.
+            modality: The sensory modality the memory adapts.
+            as_entry: When True, nest the result under the module's path.
+            **kwargs: Parameter values overriding the defaults.
+
+        Returns:
+            The memory configuration.
+        """
         A = self.get_memory_class(mode, modality)
         if A is not None:
             c = class_defaults(
@@ -383,6 +601,15 @@ class BrainModuleDB(NestedConf):
             return None
 
     def build_memory_module(self, conf: AttrDict, **kwargs: Any):
+        """Instantiate a memory module from a configuration.
+
+        Args:
+            conf: The memory configuration, naming its algorithm and modality.
+            **kwargs: Additional constructor arguments.
+
+        Returns:
+            The memory instance, or None when the configuration is incomplete.
+        """
         if conf is not None and "mode" in conf and "modality" in conf:
             A = self.get_memory_class(conf.mode, conf.modality)
             if A is not None:
@@ -393,6 +620,14 @@ class BrainModuleDB(NestedConf):
         return None
 
     def detect_brainconf_modes(self, m: AttrDict):
+        """Read back the mode selected for each module of a configuration.
+
+        Args:
+            m: The brain configuration.
+
+        Returns:
+            The mode per module, None where the module is absent.
+        """
         return AttrDict(
             {
                 k: m[k].mode if (k in m and "mode" in m[k]) else None
@@ -423,6 +658,11 @@ class LarvaModuleDB(BrainModuleDB):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the database and merge the brain and body module metadata.
+
+        Args:
+            **kwargs: Database attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.ModuleColorDict = AttrDict(
             **self.BrainModuleColors, **self.LarvaModuleColors
@@ -445,6 +685,14 @@ class LarvaModuleDB(BrainModuleDB):
         )
 
     def sensorimotor_kws(self, **kwargs: Any):
+        """Build the sensorimotor configuration of a robot larva.
+
+        Args:
+            **kwargs: Parameter values overriding the defaults.
+
+        Returns:
+            The configuration.
+        """
         return class_defaults(
             agents.ObstacleLarvaRobot, excluded=[agents.LarvaRobot], **kwargs
         )
@@ -452,6 +700,15 @@ class LarvaModuleDB(BrainModuleDB):
     def energetics_kws(
         self, gut_kws: AttrDict = AttrDict(), DEB_kws: AttrDict = AttrDict()
     ):
+        """Build the energetics configuration.
+
+        Args:
+            gut_kws: Parameter overrides for the gut model.
+            DEB_kws: Parameter overrides for the DEB model.
+
+        Returns:
+            The configuration, holding the DEB and gut sub-configurations.
+        """
         return AttrDict(
             {
                 "DEB": class_defaults(
@@ -462,6 +719,14 @@ class LarvaModuleDB(BrainModuleDB):
         )
 
     def body_kws(self, **kwargs: Any):
+        """Build the body configuration.
+
+        Args:
+            **kwargs: Parameter values overriding the defaults.
+
+        Returns:
+            The configuration.
+        """
         return class_defaults(
             agents.LarvaSegmented,
             excluded=[
@@ -476,9 +741,25 @@ class LarvaModuleDB(BrainModuleDB):
         )
 
     def physics_kws(self, **kwargs: Any):
+        """Build the body-physics configuration.
+
+        Args:
+            **kwargs: Parameter values overriding the defaults.
+
+        Returns:
+            The configuration.
+        """
         return class_defaults(agents.BaseController, **kwargs)
 
     def Box2D_kws(self, **kwargs: Any):
+        """Build the Box2D physics configuration.
+
+        Args:
+            **kwargs: Parameter values overriding the defaults.
+
+        Returns:
+            The configuration, including the segment joint definitions.
+        """
         d = AttrDict(
             {
                 "joint_types": {
@@ -491,6 +772,17 @@ class LarvaModuleDB(BrainModuleDB):
         return d.update_existingnestdict(kwargs)
 
     def larvaConf(self, ms: AttrDict = AttrDict(), mkws: AttrDict = AttrDict()):
+        """Assemble a full larva model configuration.
+
+        Args:
+            ms: The mode chosen per module.
+            mkws: Parameter overrides per module. Treated as read-only, since
+                an omitted argument is this method's shared default.
+
+        Returns:
+            The model configuration, combining the brain with the body,
+            physics and energetics modules.
+        """
         # `mkws` is read, never filled in. It belongs to the caller, and when
         # the argument is omitted it is the shared default of this method, so
         # writing the missing keys back into it made every later call inherit
@@ -559,6 +851,11 @@ class SpaceDict(NestedConf):
     )
 
     def __init__(self, **kwargs):
+        """Build the search space from the selected base model and modules.
+
+        Args:
+            **kwargs: Space attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.mConf0 = reg.conf.Model.getID(self.base_model)
         self.space_objs = self.build()
@@ -566,6 +863,11 @@ class SpaceDict(NestedConf):
         self.parclasses = AttrDict({p: self.parclass(p) for p in self.space_ks})
 
     def build(self):
+        """Collect the tunable parameter objects of the selected modules.
+
+        Returns:
+            The parameter objects, keyed by their dotted configuration path.
+        """
         excluded = (
             ["phi", "name"]
             if self.include_effector_params
@@ -586,6 +888,15 @@ class SpaceDict(NestedConf):
         return D
 
     def obj_attr(self, k, flat=True):
+        """Read one attribute from every parameter in the space.
+
+        Args:
+            k: The attribute name, such as ``"default"`` or ``"bounds"``.
+            flat: When True, key the result by dotted path rather than nesting.
+
+        Returns:
+            The attribute value per parameter.
+        """
         if flat:
             return AttrDict(
                 {
@@ -602,6 +913,15 @@ class SpaceDict(NestedConf):
             )
 
     def obj_min_max_value(self, p):
+        """Return one parameter's search range and its starting value.
+
+        Args:
+            p: The parameter's dotted path.
+
+        Returns:
+            The lower bound, the upper bound and the default value. Tuple-valued
+            parameters report the range of their elements.
+        """
         obj = self.space_objs[p]
         v = obj.default
         if isinstance(v, tuple):
@@ -617,9 +937,18 @@ class SpaceDict(NestedConf):
 
     @property
     def defaults(self):
+        """The default value of every parameter in the space."""
         return self.obj_attr("default")
 
     def parclass(self, p):
+        """Return one parameter's type, as a plain name.
+
+        Args:
+            p: The parameter's dotted path.
+
+        Returns:
+            The parameter class name.
+        """
         obj = self.space_objs[p]
         c = type(obj)
 
@@ -752,6 +1081,20 @@ class SpaceDict(NestedConf):
         return g
 
     def create_first_generation(self, N):
+        """Draw the initial population of a genetic-algorithm run.
+
+        Args:
+            N: The number of genomes to create.
+
+        Returns:
+            The genomes, drawn according to the configured init mode:
+            ``"default"`` repeats the space defaults, ``"model"`` repeats the
+            base model's own values, and ``"random"`` samples the space
+            uniformly within each parameter's bounds.
+
+        Raises:
+            ValueError: If the configured init mode is not one of those three.
+        """
         m = self.init_mode
         if m == "default":
             return [self.defaults] * N

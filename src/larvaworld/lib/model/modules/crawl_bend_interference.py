@@ -52,10 +52,29 @@ class Coupling(param.Parameterized):
     )
 
     def __init__(self, dt: float = 0.1, **kwargs: Any) -> None:
+        """Build the coupling with suppression initially lifted.
+
+        Args:
+            dt: The simulation timestep in seconds.
+            **kwargs: Coupling parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.cur_attenuation = 1
 
     def apply_attenuation(self, cur_att: float) -> tuple[float, float]:
+        """Split the attenuation across the turner's input and output.
+
+        Args:
+            cur_att: The attenuation factor for this timestep.
+
+        Returns:
+            The factors applied to the turner's input and to its output.
+            ``"oscillation"`` attenuates only the input, ``"amplitude"`` only
+            the output, and ``"both"`` attenuates each.
+
+        Raises:
+            RuntimeError: If the suppression mode is unrecognized.
+        """
         if self.suppression_mode == "oscillation":
             return cur_att, 1
         elif self.suppression_mode == "amplitude":
@@ -66,6 +85,14 @@ class Coupling(param.Parameterized):
             raise
 
     def check_module(self, obj: Any, module: str) -> None:
+        """Set this timestep's attenuation from a driving module.
+
+        The base coupling attenuates constantly, ignoring the module's phase.
+
+        Args:
+            obj: The driving module, typically the crawler or feeder.
+            module: Its name.
+        """
         self.cur_attenuation = self.attenuation
 
 
@@ -99,6 +126,12 @@ class SquareCoupling(Coupling):
     )
 
     def check_module(self, obj: Any, module: str) -> None:
+        """Set this timestep's attenuation, relieved over a phase interval.
+
+        Args:
+            obj: The driving module, typically the crawler or feeder.
+            module: Its name, selecting which relief interval applies.
+        """
         phi_dic = {
             "Crawler": self.crawler_phi_range,
             "Feeder": self.feeder_phi_range,
@@ -125,7 +158,17 @@ class PhasicCoupling(Coupling):
     )
 
     def get(self, x: float) -> float:
+        """Evaluate the attenuation at a given phase.
+
+        Args:
+            x: The driving module's phase in radians.
+
+        Returns:
+            The attenuation factor, clipped to the unit range.
+        """
+
         def gaussian(x, mu, sig):
+            """Evaluate an unnormalized Gaussian."""
             return np.exp(-np.power(x - mu, 2.0) / (2 * np.power(sig, 2.0)))
 
         # A = gaussian(x, self.max_attenuation_phase, 1) * self.attenuation_max + self.attenuation
@@ -141,5 +184,11 @@ class PhasicCoupling(Coupling):
         return A
 
     def check_module(self, obj: Any, module: str) -> None:
+        """Set this timestep's attenuation from the driving module's phase.
+
+        Args:
+            obj: The driving module, typically the crawler or feeder.
+            module: Its name. Unused; the phase alone decides.
+        """
         x = obj.phi if hasattr(obj, "phi") else 0
         self.cur_attenuation = self.get(x)

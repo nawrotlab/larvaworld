@@ -63,12 +63,32 @@ class Memory(Timer):
     def __init__(
         self, brain: Any | None = None, gain: dict[str, float] = {}, **kwargs: Any
     ) -> None:
+        """Build the memory module.
+
+        Args:
+            brain: The brain whose sensor gains this memory adapts.
+            gain: The initial gain per stimulus.
+            **kwargs: Memory parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.brain = brain
         self.gain = gain
         self.rewardSum = 0
 
     def step(self, reward: bool = False, **kwargs: Any) -> dict[str, float]:
+        """Advance the memory by one timestep and return the adapted gains.
+
+        Reward is accumulated with a small constant cost per timestep, so that
+        time spent without reward counts against the current gains.
+
+        Args:
+            reward: Whether the agent is rewarded this timestep.
+            **kwargs: Forwarded to the gain update, carrying the perceived
+                stimulus change.
+
+        Returns:
+            The gain to apply to each stimulus.
+        """
         if self.active:
             self.count_time()
         self.rewardSum += int(reward) - 0.01
@@ -76,6 +96,12 @@ class Memory(Timer):
         return self.gain
 
     def update_gain(self, dx: dict[str, float] | None = None, **kwargs: Any) -> None:
+        """Adapt the sensory gains. The base memory does not learn.
+
+        Args:
+            dx: The perceived change in each stimulus.
+            **kwargs: Subclass-specific arguments.
+        """
         pass
 
 
@@ -152,6 +178,15 @@ class RLmemory(Memory):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the Q-learning memory and its state-action table.
+
+        The state space discretizes the perceived stimulus change per
+        stimulus, and the action space enumerates every combination of the
+        allowed gain values, so the table covers their full product.
+
+        Args:
+            **kwargs: Memory parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         n = len(self.gain)
         self.Niters = int(self.update_dt * 60 / self.dt)
@@ -171,12 +206,30 @@ class RLmemory(Memory):
         self.lastState = 0
 
     def update_q_table(self, state: int, reward: float) -> None:
+        """Apply the Q-learning update for the action last taken.
+
+        Args:
+            state: The state reached after that action.
+            reward: The reward accumulated since it was taken.
+        """
         self.q_table[self.lastState, self.lastAction] = (1 - self.alpha) * self.q_table[
             self.lastState, self.lastAction
         ] + self.alpha * (reward + self.gamma * np.max(self.q_table[state]))
         self.lastState = state
 
     def state_collapse(self, dx: dict[str, float]) -> int:
+        """Map the perceived stimulus change onto a discrete state index.
+
+        Each stimulus is binned by how many sensitivity steps its change
+        spans, signed by its direction, and the per-stimulus bins are then
+        looked up as one joint state.
+
+        Args:
+            dx: The perceived change in each stimulus.
+
+        Returns:
+            The index of the matching state.
+        """
         k = self.state_spacePerSide
         if len(dx) > 0:
             dx = [dx]
@@ -195,6 +248,17 @@ class RLmemory(Memory):
         dx: dict[str, float] = {},
         randomize: bool = True,
     ) -> dict[str, float]:
+        """Choose the next gains, exploring or exploiting the learned table.
+
+        Args:
+            gain: The current gain per stimulus, updated in place.
+            dx: The perceived change in each stimulus.
+            randomize: When True, take a random action with probability
+                epsilon instead of the best known one.
+
+        Returns:
+            The chosen gain per stimulus.
+        """
         gain_ids = list(gain.keys())
         if randomize and random.uniform(0, 1) < self.epsilon:
             actionID = random.randrange(len(self.actions))
@@ -208,6 +272,16 @@ class RLmemory(Memory):
         return gain
 
     def update_gain(self, dx: dict[str, float] | None = None, **kwargs: Any) -> None:
+        """Adapt the sensory gains from the accumulated reward.
+
+        While learning is on, a new action is taken once per update interval
+        and the accumulated reward is consumed. Once training ends the memory
+        stops exploring and applies the best gains it found.
+
+        Args:
+            dx: The perceived change in each stimulus.
+            **kwargs: Accepted for signature compatibility; unused.
+        """
         if dx is None:
             dx = {}
         if self.learning_on:
@@ -223,19 +297,31 @@ class RLmemory(Memory):
                 self.gain = self.update_ext_gain(self.gain, dx=dx, randomize=False)
 
     def condition(self, dx: dict[str, float]) -> bool:
+        """Report whether the update interval has elapsed.
+
+        Args:
+            dx: The perceived change in each stimulus. Unused here; subclasses
+                may gate the update on the stimulus itself.
+
+        Returns:
+            True when enough timesteps have passed to act again.
+        """
         return self.iterator >= self.Niters
 
     @property
     def best_actions(self) -> tuple[float, ...]:
+        """The action with the highest value averaged over every state."""
         return self.actions[np.argmax(np.mean(self.q_table, axis=0))]
 
     @property
     def best_gain(self) -> dict[str, float]:
+        """The best learned gain per stimulus."""
         gain_ids = list(self.gain.keys())
         return dict(zip(gain_ids, self.best_actions))
 
     @property
     def learning_on(self) -> bool:
+        """Whether the memory is still within its training period."""
         return self.active and self.total_t <= self.train_dur * 60
 
 
@@ -257,14 +343,21 @@ class RLOlfMemory(RLmemory):
     modality = param.Selector(default="olfaction", readonly=True)
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the olfactory memory.
+
+        Args:
+            **kwargs: Memory parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     @property
     def first_odor_best_gain(self) -> float:
+        """The best learned gain for the first tracked odor."""
         return list(self.best_gain.values())[0]
 
     @property
     def second_odor_best_gain(self) -> float:
+        """The best learned gain for the second tracked odor."""
         return list(self.best_gain.values())[1]
 
 
