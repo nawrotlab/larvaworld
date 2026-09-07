@@ -100,10 +100,12 @@ class Grid(SpatialEntity):
 
     @property
     def X(self) -> int:
+        """The number of grid cells along the x axis."""
         return self.grid_dims[0]
 
     @property
     def Y(self) -> int:
+        """The number of grid cells along the y axis."""
         return self.grid_dims[1]
 
 
@@ -135,6 +137,12 @@ class GridOverSpace(Grid, agentpy.Grid):
     # grid_dims = PositiveIntegerRange((51, 51), softmax=500, doc='The spatial resolution of the food grid.')
 
     def __init__(self, model: Any, **kwargs: Any) -> None:
+        """Lay a grid over the simulation space.
+
+        Args:
+            model: The simulation model whose space the grid covers.
+            **kwargs: Grid parameters, forwarded to the parent classes.
+        """
         Grid.__init__(self, **kwargs)
         agentpy.Grid.__init__(self, model=model, shape=self.grid_dims, **kwargs)
         self._torus = self.space._torus
@@ -150,12 +158,26 @@ class GridOverSpace(Grid, agentpy.Grid):
 
     @property
     def space(self) -> Any:
+        """The simulation space this grid covers."""
         return self.model.space
 
     def get_grid_cell(self, p: Any) -> tuple[int, int]:
+        """Find the grid cell containing a point.
+
+        Args:
+            p: The position in space coordinates.
+
+        Returns:
+            The ``(i, j)`` index of the containing cell.
+        """
         return tuple(np.floor(self.XY * (p / self.xy + 0.5)).astype(int))
 
     def generate_grid_vertices(self) -> np.ndarray:
+        """Build the corner coordinates of every cell, for rendering.
+
+        Returns:
+            An array of shape ``(X, Y, 4, 2)`` holding each cell's corners.
+        """
         vertices = np.zeros([self.X, self.Y, 4, 2])
         for i in range(self.X):
             for j in range(self.Y):
@@ -163,6 +185,15 @@ class GridOverSpace(Grid, agentpy.Grid):
         return vertices
 
     def cell_vertices(self, i: int, j: int) -> np.ndarray:
+        """Return one cell's corner coordinates.
+
+        Args:
+            i: The cell index along x.
+            j: The cell index along y.
+
+        Returns:
+            The four corners, as an array of shape ``(4, 2)``.
+        """
         x, y = self.xy / self.XY
         X, Y = self.X / 2, self.Y / 2
         return np.array(
@@ -210,6 +241,15 @@ class ValueGrid(Grid):
         min_value: float = 0.0,
         **kwargs: Any,
     ) -> None:
+        """Build a scalar field over the simulation space.
+
+        Args:
+            sources: The objects emitting into this field.
+            max_value: Upper limit on a cell's value. When None, the limit
+                grows to admit whatever is added.
+            min_value: Lower limit on a cell's value.
+            **kwargs: Grid parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
         if sources is None:
@@ -226,6 +266,11 @@ class ValueGrid(Grid):
             self.match_space(self.model.space)
 
     def match_space(self, space: Any) -> None:
+        """Rescale the grid to cover a given space.
+
+        Args:
+            space: The simulation space whose dimensions the grid adopts.
+        """
         self.xy0 = np.array(space.dims)
         self.x, self.y = self.xy0 / self.XY0
         x0, x1, y0, y1 = space.range
@@ -236,19 +281,63 @@ class ValueGrid(Grid):
         self.grid_vertices = self.generate_grid_vertices()
 
     def update_values(self) -> None:
+        """Advance the field by one timestep.
+
+        The base grid is static; subclasses that diffuse, decay or are advected
+        override this.
+        """
         pass
 
     def add_value(self, p: Any, value: float) -> float:
+        """Add to the field at a position in space.
+
+        Args:
+            p: The position in space coordinates.
+            value: The amount to add. Negative values remove.
+
+        Returns:
+            The amount actually applied, which is smaller in magnitude than
+            requested when the cell hits its minimum or maximum.
+        """
         return self.add_cell_value(self.get_grid_cell(p), value)
 
     def get_value(self, p: Any) -> float:
+        """Read the field at a position in space.
+
+        Args:
+            p: The position in space coordinates.
+
+        Returns:
+            The value of the containing cell.
+        """
         return self.grid[self.get_grid_cell(p)]
         # return self.get_cell_value(self.get_grid_cell(p))
 
     def get_grid_cell(self, p: Any) -> tuple[int, int]:
+        """Find the grid cell containing a point.
+
+        Args:
+            p: The position in space coordinates.
+
+        Returns:
+            The ``(i, j)`` index of the containing cell.
+        """
         return tuple(np.floor(self.XY0 * (p / self.xy0 + 0.5)).astype(int))
 
     def add_cell_value(self, cell: tuple[int, int], value: float) -> float:
+        """Add to one cell, respecting the field's value limits.
+
+        When the grid has no fixed maximum, the maximum grows to admit the new
+        value instead of clipping it.
+
+        Args:
+            cell: The ``(i, j)`` cell index.
+            value: The amount to add. Negative values remove.
+
+        Returns:
+            The amount actually applied, which is smaller in magnitude than
+            requested when the cell is clipped at a limit.
+        """
         v0 = self.grid[cell]
         v1 = v0 + value
         if not self.fixed_max:
@@ -264,6 +353,11 @@ class ValueGrid(Grid):
             return value
 
     def generate_grid_vertices(self) -> np.ndarray:
+        """Build the corner coordinates of every cell, for rendering.
+
+        Returns:
+            An array of shape ``(X, Y, 4, 2)`` holding each cell's corners.
+        """
         vertices = np.zeros([self.X, self.Y, 4, 2])
         for i in range(self.X):
             for j in range(self.Y):
@@ -271,6 +365,15 @@ class ValueGrid(Grid):
         return vertices
 
     def cell_vertices(self, i: int, j: int) -> np.ndarray:
+        """Return one cell's corner coordinates.
+
+        Args:
+            i: The cell index along x.
+            j: The cell index along y.
+
+        Returns:
+            The four corners, as an array of shape ``(4, 2)``.
+        """
         x, y = self.x, self.y
         X, Y = self.X / 2, self.Y / 2
         return np.array(
@@ -283,15 +386,31 @@ class ValueGrid(Grid):
         )
 
     def cel_pos(self, i: int, j: int) -> tuple[float, float]:
+        """Return a cell's centre in space coordinates.
+
+        Args:
+            i: The cell index along x.
+            j: The cell index along y.
+
+        Returns:
+            The centre position.
+        """
         return self.x * (i - self.X / 2 + 0.5), self.y * (j - self.Y / 2 + 0.5)
 
     def reset(self) -> None:
+        """Restore every cell to the field's initial value."""
         self.grid = np.ones(self.grid_dims) * self.initial_value
 
     def empty_grid(self) -> None:
+        """Set every cell to zero."""
         self.grid = np.zeros(self.grid_dims)
 
     def draw_peak(self, v: Any) -> None:
+        """Mark the field's maximum in the viewer.
+
+        Args:
+            v: The viewer to draw into.
+        """
         idx = np.unravel_index(self.grid.argmax(), self.grid.shape)
         p = self.cel_pos(*idx)
 
@@ -306,6 +425,12 @@ class ValueGrid(Grid):
         text_box.draw(v)
 
     def draw(self, v: Any, **kwargs: Any) -> None:
+        """Render the field as a coloured grid.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Accepted for signature compatibility; unused.
+        """
         Cgrid = self.get_color_grid().reshape([self.X, self.Y, 3])
         try:
             for i in range(self.X):
@@ -319,6 +444,11 @@ class ValueGrid(Grid):
         self.draw_peak(v)
 
     def draw_isocontours(self, v: Any) -> None:
+        """Draw contour lines at evenly spaced levels of the field.
+
+        Args:
+            v: The viewer to draw into.
+        """
         N = 6
         k = 4
         g = self.grid
@@ -346,6 +476,11 @@ class ValueGrid(Grid):
                     pass
 
     def get_color_grid(self) -> np.ndarray:
+        """Map the field values onto display colours.
+
+        Returns:
+            One RGB colour per cell, flattened.
+        """
         g = self.grid.flatten()
         v0, v1 = self.min_value, self.max_value
         gg = (g - v0) / (v1 - v0)
@@ -391,14 +526,33 @@ class FoodGrid(ValueGrid):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the food grid.
+
+        Args:
+            **kwargs: Grid parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     def get_color(self, v: float) -> np.ndarray:
+        """Map one food amount onto its display colour.
+
+        Args:
+            v: The amount of food in a cell.
+
+        Returns:
+            The RGB colour.
+        """
         v0, v1 = self.min_value, self.max_value
         q = (v - v0) / (v1 - v0)
         return util.col_range(q, low=(255, 255, 255), high=self.color, mul255=True)
 
     def draw(self, v: Any, **kwargs: Any) -> None:
+        """Render the food grid as a single filled arena polygon.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Accepted for signature compatibility; unused.
+        """
         v.draw_polygon(
             self.model.space.vertices, self.get_color(v=self.initial_value), filled=True
         )
@@ -434,6 +588,13 @@ class OdorScape(ValueGrid):
     )
 
     def __init__(self, subclass_initialized: bool = False, **kwargs: Any) -> None:
+        """Build the odor landscape.
+
+        Args:
+            subclass_initialized: Set by a subclass that has already run the
+                grid initialization itself, to avoid repeating it.
+            **kwargs: Layer parameters, forwarded to the parent class.
+        """
         if subclass_initialized:
             super().__init__(**kwargs)
         else:
@@ -486,9 +647,22 @@ class AnalyticalValueLayer(OdorScape):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the analytically evaluated odor layer.
+
+        Args:
+            **kwargs: Layer parameters, forwarded to the parent class.
+        """
         super().__init__(subclass_initialized=True, **kwargs)
 
     def get_value(self, pos: tuple[float, float]) -> float:
+        """Evaluate the summed odor concentration at a position.
+
+        Args:
+            pos: The position in space coordinates.
+
+        Returns:
+            The concentration contributed by every source.
+        """
         value = 0
         for s in self.sources:
             p = s.get_position()
@@ -497,10 +671,16 @@ class AnalyticalValueLayer(OdorScape):
         return value
 
     def get_grid(self) -> np.ndarray:
+        """Sample the thermal field onto the grid, for rendering.
+
+        Returns:
+            The net warm-minus-cool stimulus at every grid cell.
+        """
         X, Y = self.meshgrid
 
         @np.vectorize
         def func(a, b):
+            """Evaluate the net thermal stimulus at one grid point."""
             v = self.get_value((a, b))
             return v
 
@@ -509,6 +689,11 @@ class AnalyticalValueLayer(OdorScape):
         return V
 
     def draw_isocontours(self, v: Any) -> None:
+        """Draw concentration rings around every odor source.
+
+        Args:
+            v: The viewer to draw into.
+        """
         for s in self.sources:
             p = s.get_position()
 
@@ -550,9 +735,22 @@ class GaussianValueLayer(AnalyticalValueLayer):
     odorscape = param.Selector(default="Gaussian")
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the Gaussian odor layer.
+
+        Args:
+            **kwargs: Layer parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     def get_value(self, pos: tuple[float, float]) -> float:
+        """Evaluate the summed Gaussian odor concentration at a position.
+
+        Args:
+            pos: The position in space coordinates.
+
+        Returns:
+            The concentration contributed by every source.
+        """
         value = 0
         for s in self.sources:
             p = s.get_position()
@@ -605,9 +803,20 @@ class DiffusionValueLayer(OdorScape):
     """
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the diffusing odor layer.
+
+        Args:
+            **kwargs: Layer parameters, forwarded to the parent class.
+        """
         super().__init__(subclass_initialized=True, **kwargs)
 
     def update_values(self) -> None:
+        """Advance the odor field by one timestep.
+
+        Wind advects the field by shifting a fraction of each cell's content
+        downwind, then the sources emit, then the field is blurred by a
+        Gaussian filter and scaled down by the evaporation constant.
+        """
         k = 1000
         if self.model.windscape is not None:
             v, a = self.model.windscape.wind_speed, self.model.windscape.wind_direction
@@ -670,6 +879,11 @@ class WindScape(SpatialEntity):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the wind field and its display lines.
+
+        Args:
+            **kwargs: Wind parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
         self.max_dim = np.max(self.model.space.dims)
@@ -684,6 +898,17 @@ class WindScape(SpatialEntity):
             self.add_puff(**puff)
 
     def get_value(self, agent: Any) -> float:
+        """Return the wind an agent feels, given its heading.
+
+        The sensed wind scales with how far the agent's orientation departs
+        from the wind direction, and is zero where a border shelters it.
+
+        Args:
+            agent: The agent sampling the wind.
+
+        Returns:
+            The perceived wind speed.
+        """
         if self.obstructed(agent.pos):
             return 0
         else:
@@ -693,6 +918,14 @@ class WindScape(SpatialEntity):
             )
 
     def obstructed(self, pos: tuple[float, float]) -> bool:
+        """Report whether a border shelters a position from the wind.
+
+        Args:
+            pos: The position in space coordinates.
+
+        Returns:
+            True if a border crosses the upwind ray from that position.
+        """
         p0 = geometry.Point(pos)
         p1 = geometry.Point(
             p0.x - self.max_dim * math.cos(self.wind_direction),
@@ -703,6 +936,12 @@ class WindScape(SpatialEntity):
         return any([l.intersects(ll) for l in self.model.border_lines])
 
     def draw(self, v: Any, **kwargs: Any) -> None:
+        """Render the wind as flow lines, clipped at the borders.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Accepted for signature compatibility; unused.
+        """
         if self.wind_speed > 0:
             for p0, p1 in self.scapelines:
                 l = geometry.LineString([p0, p1])
@@ -722,6 +961,16 @@ class WindScape(SpatialEntity):
         self.draw_phi += self.wind_speed
 
     def generate_scapelines(self, D: float, N: int, A: float) -> list[tuple[Any, Any]]:
+        """Build the flow lines used to display the wind.
+
+        Args:
+            D: The extent the lines span.
+            N: The number of lines.
+            A: The wind direction in radians.
+
+        Returns:
+            The start and end point of each line.
+        """
         ds = D / N * np.sqrt(2)
         p0s = util.rotate_points_around_point(
             [(-D, (i - N / 2) * ds) for i in range(N)], -A
@@ -732,6 +981,11 @@ class WindScape(SpatialEntity):
         return [(p0, p1) for p0, p1 in zip(p0s, p1s)]
 
     def set_wind_direction(self, A: float) -> None:
+        """Set the wind direction and rebuild the display lines.
+
+        Args:
+            A: The wind direction in radians.
+        """
         self.wind_direction = A
         self.scapelines = self.generate_scapelines(
             self.max_dim, self.N, self.wind_direction
@@ -746,6 +1000,18 @@ class WindScape(SpatialEntity):
         N: int | None = 1,
         interval: float = 10.0,
     ) -> None:
+        """Schedule one or more wind puffs.
+
+        Args:
+            duration: How long each puff lasts, in seconds.
+            speed: The wind speed during a puff.
+            direction: The wind direction in radians. Defaults to the current
+                one.
+            start_time: When the first puff begins, in seconds. Defaults to the
+                current simulation time.
+            N: The number of puffs. When None, puffs repeat for the whole run.
+            interval: The gap between successive puffs, in seconds.
+        """
         m = self.model
 
         Nticks = int(duration / m.dt)
@@ -765,6 +1031,7 @@ class WindScape(SpatialEntity):
             }
 
     def update(self) -> None:
+        """Apply any scheduled wind puffs due at the current timestep."""
         for t, args in self.events.items():
             wd = args["wind_direction"]
             if self.model.Nticks == t:
@@ -808,6 +1075,17 @@ class ThermoScape(ValueGrid):
         thermo_source_dTemps: list[float] | None = None,
         **kwargs: Any,
     ) -> None:
+        """Build the thermal landscape.
+
+        Args:
+            plate_temp: The baseline plate temperature in degrees Celsius.
+            spread: The spatial spread of each thermal source.
+            thermo_sources: The source positions, in relative arena
+                coordinates. Defaults to the four plate edge midpoints.
+            thermo_source_dTemps: The temperature deviation each source
+                imposes. Defaults to alternating warm and cool sources.
+            **kwargs: Layer parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         if thermo_source_dTemps is None:
             thermo_source_dTemps = [8, -8, 8, -8]
@@ -852,6 +1130,18 @@ class ThermoScape(ValueGrid):
         self.thermoscape_layers = rv_dict
 
     def get_value(self, pos: tuple[float, float]) -> dict[str, float]:
+        """Evaluate the thermal stimulus at a position.
+
+        Each thermal source contributes a temperature deviation, which is
+        accumulated separately for cooling and warming so that the two can
+        drive distinct sensory gains.
+
+        Args:
+            pos: The position in space coordinates.
+
+        Returns:
+            The summed ``"cool"`` and ``"warm"`` stimulus magnitudes.
+        """
         size, size2 = [1, 1]
         pos_ad = [size * pos[0], size2 * pos[1]]
         pos_temp = {}
@@ -873,10 +1163,16 @@ class ThermoScape(ValueGrid):
         return thermo_gain
 
     def get_grid(self) -> np.ndarray:
+        """Sample the thermal field onto the grid, for rendering.
+
+        Returns:
+            The thermal stimulus at every grid cell.
+        """
         X, Y = self.meshgrid
 
         @np.vectorize
         def func(a, b):
+            """Evaluate the thermal stimulus at one grid point."""
             v = self.get_value((a, b))
             return v
 
@@ -887,6 +1183,11 @@ class ThermoScape(ValueGrid):
     def draw_isocontours(
         self, v: Any
     ):  # @todo need to make a draw function for thermogrid.
+        """Draw markers at the thermal source positions.
+
+        Args:
+            v: The viewer to draw into.
+        """
         for k in self.thermo_sources:
             p = self.thermo_sources.k
             for r in np.arange(0, 0.050, 0.01):

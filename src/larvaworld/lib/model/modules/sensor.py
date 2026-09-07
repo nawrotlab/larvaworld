@@ -79,6 +79,13 @@ class Sensor(Effector):
     )
 
     def __init__(self, brain: Any | None = None, **kwargs: Any) -> None:
+        """Build the sensor.
+
+        Args:
+            brain: The brain this sensor reports to. May be None when the
+                sensor is driven directly, outside an agent.
+            **kwargs: Sensor parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.brain = brain
         self.exp_decay_coef = np.exp(-self.dt * self.decay_coef)
@@ -87,13 +94,31 @@ class Sensor(Effector):
         self.gain = self.gain_dict
 
     def compute_dif(self, input: Any) -> None:
+        """Hook for subclasses that derive their own change signal.
+
+        Args:
+            input: The raw sensory input.
+        """
         pass
 
     def update_gain_via_memory(self, mem: Any | None = None, **kwargs: Any) -> None:
+        """Let an associative memory adapt this sensor's gains.
+
+        Args:
+            mem: The memory module. Nothing happens when it is None.
+            **kwargs: Forwarded to the memory's step, typically the reward.
+        """
         if mem is not None:
             self.gain = mem.step(dx=self.get_dX(), **kwargs)
 
     def update(self) -> None:
+        """Advance the sensor by one timestep.
+
+        The output is a leaky integration of the gain-weighted stimulus change:
+        it decays exponentially and is incremented by the perceived change in
+        each stimulus. In brute-force mode the output stays zero and the sensor
+        acts on locomotion directly instead.
+        """
         if len(self.input) == 0:
             self.output = 0
         elif self.brute_force:
@@ -108,27 +133,70 @@ class Sensor(Effector):
             )
 
     def affect_locomotion(self, L: Any) -> None:
+        """Act on the locomotor directly, bypassing the output signal.
+
+        The base sensor does nothing; modality-specific subclasses override
+        this to trigger or interrupt locomotion.
+
+        Args:
+            L: The locomotor to act on.
+        """
         pass
 
     def get_dX(self) -> dict[str, float]:
+        """The perceived change in each stimulus."""
         return self.dX
 
     def get_X_values(self, t: float, N: int) -> list[float]:
+        """The current stimulus levels.
+
+        Args:
+            t: The current time. Accepted for signature compatibility.
+            N: The number of agents. Accepted for signature compatibility.
+
+        Returns:
+            The level of each stimulus.
+        """
         return list(self.X.values())
 
     def get_gain(self) -> dict[str, float]:
+        """The current gain applied to each stimulus."""
         return self.gain
 
     def set_gain(self, value: float, gain_id: str) -> None:
+        """Set the gain for one stimulus.
+
+        Args:
+            value: The new gain.
+            gain_id: The stimulus the gain applies to.
+        """
         self.gain[gain_id] = value
 
     def reset_gain(self, gain_id: str) -> None:
+        """Restore one stimulus' gain to its configured value.
+
+        Args:
+            gain_id: The stimulus to reset.
+        """
         self.gain[gain_id] = self.gain_dict[gain_id]
 
     def reset_all_gains(self) -> None:
+        """Restore every gain to its configured value."""
         self.gain = self.gain_dict
 
     def compute_single_dx(self, cur: float, prev: float) -> float:
+        """Compute the perceived change in one stimulus.
+
+        Args:
+            cur: The current stimulus level.
+            prev: The level at the previous timestep.
+
+        Returns:
+            The change under the configured perception law: ``"log"`` gives the
+            relative change, ``"linear"`` the absolute difference, and
+            ``"null"`` passes the current level through unchanged. The first
+            two return 0 while the previous level is 0.
+        """
         if self.perception == "log":
             return cur / prev - 1 if prev != 0 else 0
         elif self.perception == "linear":
@@ -137,6 +205,14 @@ class Sensor(Effector):
             return cur
 
     def compute_dX(self, input: dict[str, float]) -> None:
+        """Update the perceived change for every stimulus.
+
+        Stimuli encountered for the first time are registered with zero gain,
+        so that a newly appearing odor does not produce a spurious change.
+
+        Args:
+            input: The current level of each stimulus.
+        """
         for id, cur in input.items():
             if id not in self.X:
                 self.add_novel_gain(id, con=cur)
@@ -146,6 +222,13 @@ class Sensor(Effector):
         self.X = input
 
     def add_novel_gain(self, id: str, con: float = 0.0, gain: float = 0.0) -> None:
+        """Register a stimulus encountered for the first time.
+
+        Args:
+            id: The stimulus identifier.
+            con: Its current level.
+            gain: The gain to assign it.
+        """
         self.gain_dict[id] = gain
         self.gain[id] = gain
         self.dX[id] = 0.0
@@ -153,6 +236,7 @@ class Sensor(Effector):
 
     @property
     def gain_ids(self) -> list[str]:
+        """The identifiers of every stimulus this sensor tracks."""
         return list(self.gain_dict.keys())
 
 
@@ -175,27 +259,45 @@ class Olfactor(Sensor):
     """
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the olfactory sensor.
+
+        Args:
+            **kwargs: Sensor parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     def affect_locomotion(self, L: Any) -> None:
+        """Interrupt a run when the odor gradient turns unfavourable.
+
+        On completing a stride while the accumulated olfactory signal is
+        negative, locomotion is interrupted with a probability equal to the
+        magnitude of that signal, producing a reorientation.
+
+        Args:
+            L: The locomotor to act on.
+        """
         if self.output < 0 and L.stride_completed:
             if np.random.uniform(0, 1, 1) <= np.abs(self.output):
                 L.intermitter.interrupt_locomotion()
 
     @property
     def first_odor_concentration(self) -> float:
+        """The concentration of the first tracked odor."""
         return list(self.X.values())[0]
 
     @property
     def second_odor_concentration(self) -> float:
+        """The concentration of the second tracked odor."""
         return list(self.X.values())[1]
 
     @property
     def first_odor_concentration_change(self) -> float:
+        """The perceived change in the first tracked odor."""
         return list(self.dX.values())[0]
 
     @property
     def second_odor_concentration_change(self) -> float:
+        """The perceived change in the second tracked odor."""
         return list(self.dX.values())[1]
 
 
@@ -228,9 +330,23 @@ class Toucher(Sensor):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the touch sensor.
+
+        Args:
+            **kwargs: Sensor parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     def affect_locomotion(self, L: Any) -> None:
+        """Start or stop locomotion on contact and release.
+
+        Gaining contact triggers locomotion and losing it interrupts
+        locomotion; the first stimulus to change decides, and the rest are not
+        examined.
+
+        Args:
+            L: The locomotor to act on.
+        """
         for id in self.gain_ids:
             if self.dX[id] == 1:
                 L.intermitter.trigger_locomotion()
@@ -261,6 +377,12 @@ class Windsensor(Sensor):
     perception = param.Selector(default="null")
 
     def __init__(self, weights: Any, **kwargs: Any) -> None:
+        """Build the wind sensor.
+
+        Args:
+            weights: The sensor's weighting of the wind signal.
+            **kwargs: Sensor parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.weights = weights
 
@@ -288,30 +410,41 @@ class Thermosensor(Sensor):
     # warm_gain = PositiveNumber(0.0, label='warm sensitivity coef', doc='The gain of the warm sensor.')
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the thermosensor.
+
+        Args:
+            **kwargs: Sensor parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     @property
     def warm_sensor_input(self) -> float:
+        """The current warming stimulus level."""
         return self.X["warm"]
 
     @property
     def warm_sensor_perception(self) -> float:
+        """The perceived change in the warming stimulus."""
         return self.dX["warm"]
 
     @property
     def cool_sensor_input(self) -> float:
+        """The current cooling stimulus level."""
         return self.X["cool"]
 
     @property
     def cool_sensor_perception(self) -> float:
+        """The perceived change in the cooling stimulus."""
         return self.dX["cool"]
 
     @property
     def cool_gain(self) -> float:
+        """The gain applied to the cooling stimulus."""
         return self.gain["cool"]
 
     @property
     def warm_gain(self) -> float:
+        """The gain applied to the warming stimulus."""
         return self.gain["warm"]
 
 
@@ -379,6 +512,12 @@ class OSNOlfactor(Olfactor):
         return s
 
     def update(self) -> None:
+        """Advance the sensor using olfactory rates from a remote OSN model.
+
+        Sends the current odor concentrations to the remote Brian server and
+        reads back the olfactory sensory neuron firing rates, which replace the
+        analytically computed stimulus change.
+        """
         agent_id = (
             self.brain.agent.unique_id if self.brain is not None else self.agent_id
         )
