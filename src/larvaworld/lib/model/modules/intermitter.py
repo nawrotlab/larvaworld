@@ -131,6 +131,11 @@ class Intermitter(Timer):
     run_dist = param.Dict(default=None, doc="The temporal distribution of run epochs.")
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the intermitter and its bout-duration generators.
+
+        Args:
+            **kwargs: Intermittency parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         if self.feeder_reoccurence_rate is None:
             self.feeder_reoccurence_rate = self.EEB
@@ -193,20 +198,31 @@ class Intermitter(Timer):
 
     @property
     def pause_completed(self) -> bool:
+        """Whether the current pause has run past its sampled duration."""
         t = self.exp_Tpause
         return t is not None and self.t > t
 
     @property
     def run_completed(self) -> bool:
+        """Whether the current run has run past its sampled duration."""
         t = self.exp_Trun
         return t is not None and self.t > t
 
     @property
     def stridechain_completed(self) -> bool:
+        """Whether the current run has reached its sampled stride count."""
         n = self.exp_Nstrides
         return n is not None and self.cur_Nstrides > n
 
     def alternate_crawlNpause(self, stride_completed: bool = False) -> None:
+        """Switch between running and pausing when the current bout ends.
+
+        A run ends either after its sampled duration or after its sampled
+        number of strides, depending on which the configuration generates.
+
+        Args:
+            stride_completed: Whether a stride completed this timestep.
+        """
         if stride_completed:
             self.cur_Nstrides += 1
 
@@ -218,12 +234,23 @@ class Intermitter(Timer):
 
     @property
     def feed_repeated(self) -> bool:
+        """Draw whether another feeding motion follows the last one.
+
+        The repeat probability is the configured reoccurrence rate, or the
+        exploitation balance when the intermitter is driven by it.
+        """
         r = self.feeder_reoccurence_rate if not self.use_EEB else self.EEB
         return np.random.random() < r
 
     def alternate_exploreNexploit(
         self, feed_motion: bool = False, on_food: bool = False
     ) -> None:
+        """Switch between exploring and exploiting a food patch.
+
+        Args:
+            feed_motion: Whether a feeding motion completed this timestep.
+            on_food: Whether the agent currently sits on food.
+        """
         if feed_motion:
             assert self.cur_Nfeeds is not None
             self.Nfeeds += 1
@@ -243,6 +270,11 @@ class Intermitter(Timer):
             # self.reset()
 
     def register(self, bout: str | None = None) -> None:
+        """Record the bout that is ending into the running statistics.
+
+        Args:
+            bout: The bout type to register. Defaults to the current state.
+        """
         if bout is None:
             if self.cur_state is not None:
                 bout = self.cur_state
@@ -293,16 +325,32 @@ class Intermitter(Timer):
         return self.cur_state
 
     def step(self, **kwargs: Any) -> str | None:
+        """Advance the intermitter by one timestep.
+
+        Args:
+            **kwargs: Forwarded to the state update: whether a stride or
+                feeding motion completed, and whether the agent is on food.
+
+        Returns:
+            The behavioural state after the update.
+        """
         self.count_time()
         return self.update_state(**kwargs)
 
     def generate_stridechain(self) -> int:
+        """Sample the number of strides in the next run."""
         return self.stridechain_generator.sample()
 
     def generate_run(self) -> float:
+        """Sample the duration of the next run, in seconds."""
         return self.run_generator.sample()
 
     def interrupt_locomotion(self) -> None:
+        """End the current run and begin a pause.
+
+        Called by the sensors to cut a run short, for instance when the odor
+        gradient turns unfavourable. Does nothing unless a run is under way.
+        """
         if not self.cur_state == "exec":
             return
         self.register()
@@ -310,6 +358,11 @@ class Intermitter(Timer):
         self.cur_state = "pause"
 
     def trigger_locomotion(self, force: bool = False) -> None:
+        """End the current bout and begin a run.
+
+        Args:
+            force: When True, restart the run even if one is already under way.
+        """
         if not force and self.cur_state == "exec":
             return
         self.register()
@@ -322,9 +375,16 @@ class Intermitter(Timer):
         self.ticks = 0
 
     def generate_pause(self) -> float:
+        """Sample the duration of the next pause, in seconds."""
         return self.pause_generator.sample()
 
     def build_dict(self) -> dict[str, Any]:
+        """Summarize the bouts observed over the run.
+
+        Returns:
+            The recorded bout durations and counts, together with the fraction
+            of total time spent in each behavioural state.
+        """
         cum_t = nam.cum("t")
         d = {}
         total_t = self.total_t
@@ -350,6 +410,12 @@ class Intermitter(Timer):
     def save_dict(
         self, path: str | None = None, dic: dict[str, Any] | None = None
     ) -> None:
+        """Write the bout statistics to disk.
+
+        Args:
+            path: Destination path. Defaults to the configured output path.
+            dic: The statistics to write. Defaults to freshly built ones.
+        """
         if dic is None:
             dic = self.build_dict()
         if path is not None:
@@ -360,10 +426,18 @@ class Intermitter(Timer):
 
     @property
     def active_bouts(self) -> tuple[int | None, int | None, float | None, float | None]:
+        """The targets of the bouts currently under way.
+
+        Returns:
+            The expected stride count, the current feed count, and the expected
+            pause and run durations. Entries are None where no such bout is
+            active.
+        """
         return self.exp_Nstrides, self.cur_Nfeeds, self.exp_Tpause, self.exp_Trun
 
     @property
     def mean_feed_freq(self) -> float:
+        """The mean feeding frequency over the run, in Hz."""
         return self.Nfeeds / self.total_t if self.total_t else 0.0
 
 
@@ -380,6 +454,11 @@ class OfflineIntermitter(Intermitter):
     """
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the offline intermitter and its fixed tick intervals.
+
+        Args:
+            **kwargs: Intermittency parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.crawl_ticks = np.round(1 / (self.crawl_freq * self.dt)).astype(int)
         if self.feed_freq is None:
@@ -438,11 +517,17 @@ class BranchIntermitter(Intermitter):
     sigma = PositiveNumber(default=1.0, doc="The ISING branching coef.")
 
     def generate_stridechain(self) -> int:
+        """Sample a run length from an exponential branching process."""
         return util.exp_bout(
             beta=self.beta, tmax=self.stridechain_max, tmin=self.stridechain_min
         )
 
     def generate_pause(self) -> float:
+        """Sample a pause duration from a critical branching process.
+
+        The critical process yields the heavy-tailed pause durations observed
+        experimentally, unlike an exponential one.
+        """
         return (
             util.critical_bout(
                 c=self.c, sigma=self.sigma, N=1000, tmax=self.pau_max, tmin=self.pau_min
@@ -468,6 +553,13 @@ class FittedIntermitter(OfflineIntermitter):
     """
 
     def __init__(self, refID: str, **kwargs: Any) -> None:
+        """Build an intermitter from a reference dataset's fitted bouts.
+
+        Args:
+            refID: The reference dataset whose fitted bout distributions and
+                frequencies configure this intermitter.
+            **kwargs: Parameters overriding the stored ones.
+        """
         c = reg.conf.Ref.getRef(refID)["intermitter"]
         stored_conf = {
             "crawl_freq": c["crawl_freq"],

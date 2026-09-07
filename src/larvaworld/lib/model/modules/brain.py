@@ -119,6 +119,7 @@ class Brain(NestedConf):
                 M.mem = MD.build_memory_module(conf=m, **kws)
 
     def init_sensors(self) -> None:
+        """Mount the touch sensors on the agent's body."""
         if self.toucher is not None and self.agent is not None:
             self.agent.add_touch_sensors(self.toucher.touch_sensors)
             for s in self.agent.touch_sensorIDs:
@@ -126,6 +127,15 @@ class Brain(NestedConf):
                     self.toucher.add_novel_gain(id=s, gain=self.toucher.initial_gain)
 
     def sense_odors(self, pos: Any | None = None) -> dict[str, Any]:
+        """Sample the odor concentrations at a position.
+
+        Args:
+            pos: The position to sample. Defaults to the agent's olfactor
+                position.
+
+        Returns:
+            The concentration of each odor, empty when no odor layers exist.
+        """
         try:
             a = self.agent
             if pos is None:
@@ -135,6 +145,14 @@ class Brain(NestedConf):
             return {}
 
     def sense_food_multi(self, **kwargs: Any) -> dict[Any, int]:
+        """Sample food contact at each of the agent's touch sensors.
+
+        Args:
+            **kwargs: Forwarded to the agent's contact detection.
+
+        Returns:
+            One flag per sensor, indicating contact with food.
+        """
         try:
             a = self.agent
             kws = {
@@ -150,6 +168,14 @@ class Brain(NestedConf):
             return {}
 
     def sense_wind(self, **kwargs: Any) -> dict[str, float]:
+        """Sample the wind the agent currently feels.
+
+        Args:
+            **kwargs: Accepted for signature compatibility; unused.
+
+        Returns:
+            The perceived wind speed, empty when the environment has no wind.
+        """
         try:
             a = self.agent
             return {"windsensor": a.model.windscape.get_value(a)}
@@ -157,6 +183,16 @@ class Brain(NestedConf):
             return {"windsensor": 0.0}
 
     def sense_thermo(self, pos: Any | None = None) -> dict[str, float]:
+        """Sample the thermal stimulus at a position.
+
+        Args:
+            pos: The position to sample, in relative arena coordinates.
+                Defaults to the agent's own position.
+
+        Returns:
+            The cooling and warming stimulus magnitudes, empty when the
+            environment has no thermal field.
+        """
         try:
             a = self.agent
             if pos is None:
@@ -169,6 +205,16 @@ class Brain(NestedConf):
             return {"cool": 0, "warm": 0}
 
     def sense(self, pos: Any | None = None, reward: bool = False) -> None:
+        """Sample every configured modality and update its sensor.
+
+        Each sensor's gains are first adapted by its memory module, so that
+        learning takes effect before the stimulus is transduced.
+
+        Args:
+            pos: The position to sample from. Defaults to the agent's own.
+            reward: Whether the agent is currently rewarded, which drives the
+                associative memories.
+        """
         kws = {"pos": pos}
         for m, M in self.modalities.items():
             if M.sensor:
@@ -177,23 +223,28 @@ class Brain(NestedConf):
 
     @property
     def A_in(self) -> float:
+        """The summed activation from every sensory modality."""
         return np.sum([M.A for m, M in self.modalities.items()])
         # return self.A_olf + self.A_touch + self.A_thermo + self.A_wind
 
     @property
     def A_olf(self) -> float:
+        """The activation contributed by olfaction."""
         return self.modalities["olfaction"].A
 
     @property
     def A_touch(self) -> float:
+        """The activation contributed by touch."""
         return self.modalities["touch"].A
 
     @property
     def A_thermo(self) -> float:
+        """The activation contributed by thermosensation."""
         return self.modalities["thermosensation"].A
 
     @property
     def A_wind(self) -> float:
+        """The activation contributed by wind sensing."""
         return self.modalities["windsensation"].A
 
 
@@ -242,5 +293,19 @@ class DefaultBrain(Brain):
     def step(
         self, pos: Any, on_food: bool = False, **kwargs: Any
     ) -> tuple[float, float, bool]:
+        """Advance the brain by one timestep.
+
+        Senses the environment, then drives the locomotor with the summed
+        sensory activation.
+
+        Args:
+            pos: The agent's current position.
+            on_food: Whether the agent sits on food.
+            **kwargs: Forwarded to the locomotor step.
+
+        Returns:
+            The linear velocity, the angular velocity, and whether a feeding
+            motion completed this timestep.
+        """
         self.sense(pos=pos, reward=on_food)
         return self.locomotor.step(A_in=self.A_in, on_food=on_food, **kwargs)

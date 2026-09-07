@@ -86,16 +86,23 @@ class StrideOscillator(Crawler, StepOscillator):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the stride oscillator and draw its first stride length.
+
+        Args:
+            **kwargs: Crawler parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         # print(self.stride_dst_std,self.stride_dst_mean)
         self.step_to_length = self.new_stride
 
     @property
     def new_stride(self) -> float:
+        """Draw a stride displacement, in body lengths, for the next cycle."""
         return np.random.normal(loc=self.stride_dst_mean, scale=self.stride_dst_std)
 
     @property
     def Act(self) -> float:
+        """The scaled forward velocity produced by the current stride phase."""
         return self.freq * self.step_to_length * (1 + self.Act_coef * self.Act_Phi)
 
     # def act(self):
@@ -103,9 +110,18 @@ class StrideOscillator(Crawler, StepOscillator):
     #     self.output = self.Act
 
     def act_on_complete_iteration(self) -> None:
+        """Resample the stride displacement at the end of each stride."""
         self.step_to_length = self.new_stride
 
     def suppresion_relief(self, phi_range: tuple[float, float]) -> bool:
+        """Report whether turning suppression is lifted at the current phase.
+
+        Args:
+            phi_range: The ``(start, stop)`` relief interval in radians.
+
+        Returns:
+            True when the stride phase falls inside the interval.
+        """
         return self.phi_in_range(phi_range)
 
 
@@ -136,11 +152,17 @@ class GaussOscillator(StrideOscillator):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the oscillator and precompute its Gaussian velocity profile.
+
+        Args:
+            **kwargs: Crawler parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.gauss_w = _gaussian_window(360, std=self.std * 360, sym=False)
 
     @property
     def Act_Phi(self) -> float:
+        """The velocity profile, sampled from the precomputed Gaussian."""
         return self.gauss_w[int(np.rad2deg(self.phi))]
 
 
@@ -170,9 +192,21 @@ class SquareOscillator(StrideOscillator):
 
     @property
     def Act_Phi(self) -> float:
+        """The velocity profile: a square wave of the configured duty cycle."""
         return float(signal.square(self.phi, duty=self.duty))
 
     def suppresion_relief(self, phi_range: tuple[float, float]) -> bool:
+        """Report whether turning suppression is lifted at the current phase.
+
+        The square crawler relieves suppression over its whole active
+        half-cycle, so the caller's interval is ignored.
+
+        Args:
+            phi_range: Accepted for signature compatibility; unused.
+
+        Returns:
+            True while the phase lies within the duty portion of the cycle.
+        """
         return self.phi <= 2 * np.pi * self.duty
 
 
@@ -209,8 +243,10 @@ class PhaseOscillator(StrideOscillator):
 
     @property
     def Act_Phi(self) -> float:
+        """The velocity profile: a cosine peaking at the configured phase."""
         return np.cos(self.phi - self.max_vel_phase)
 
     @property
     def Act_coef(self) -> float:
+        """The amplitude scaling: the maximum scaled velocity."""
         return self.max_scaled_vel

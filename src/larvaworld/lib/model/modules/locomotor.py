@@ -81,29 +81,49 @@ class Locomotor(NestedConf):
     )
 
     def __init__(self, conf: Any, dt: float = 0.1, **kwargs: Any) -> None:
+        """Build the locomotor and its configured sub-modules.
+
+        Args:
+            conf: The model configuration naming the module modes to build.
+            dt: The simulation timestep in seconds.
+            **kwargs: Additional module instances overriding the built ones.
+        """
         self.dt: float = dt
         kwargs.update(MD.build_locomodules(conf=conf, dt=dt))
         super().__init__(**kwargs)
 
     def on_new_pause(self) -> None:
+        """Stop crawling and feeding on entering a pause."""
         if self.crawler:
             self.crawler.stop_effector()
         if self.feeder:
             self.feeder.stop_effector()
 
     def on_new_run(self) -> None:
+        """Start crawling and stop feeding on entering a run."""
         if self.crawler:
             self.crawler.start_effector()
         if self.feeder:
             self.feeder.stop_effector()
 
     def on_new_feed(self) -> None:
+        """Stop crawling and start feeding on entering a feeding bout."""
         if self.crawler:
             self.crawler.stop_effector()
         if self.feeder:
             self.feeder.start_effector()
 
     def step_intermitter(self, **kwargs: Any) -> None:
+        """Advance the intermitter and apply any behavioural state change.
+
+        Entering the pause, run or feeding state starts and stops the crawler
+        and feeder accordingly.
+
+        Args:
+            **kwargs: Forwarded to the intermitter's step, carrying whether a
+                stride or feeding motion completed and whether the agent is on
+                food.
+        """
         if self.intermitter:
             pre_state = self.intermitter.cur_state
             cur_state = self.intermitter.step(**kwargs)
@@ -117,6 +137,7 @@ class Locomotor(NestedConf):
 
     @property
     def stride_completed(self) -> bool:
+        """Whether the crawler completed a stride this timestep."""
         if self.crawler:
             return self.crawler.complete_iteration
         else:
@@ -124,6 +145,7 @@ class Locomotor(NestedConf):
 
     @property
     def feed_motion(self) -> bool:
+        """Whether the feeder completed a feeding motion this timestep."""
         if self.feeder:
             return self.feeder.complete_iteration
         else:
@@ -132,6 +154,23 @@ class Locomotor(NestedConf):
     def step(
         self, A_in: float = 0, length: float = 1, on_food: bool = False
     ) -> tuple[float, float, bool]:
+        """Advance the locomotor by one timestep.
+
+        Steps the feeder and crawler, letting each set the current crawl-bend
+        attenuation, then advances the intermitter, then steps the turner with
+        the attenuation applied to its input, its output, or both according to
+        the coupling's suppression mode.
+
+        Args:
+            A_in: The activation arriving from the brain's sensors.
+            length: The agent's body length, which scales the crawler's
+                displacement.
+            on_food: Whether the agent currently sits on food.
+
+        Returns:
+            The linear velocity, the angular velocity, and whether a feeding
+            motion completed this timestep.
+        """
         C, F, T, If = self.crawler, self.feeder, self.turner, self.interference
         if If:
             If.cur_attenuation = 1

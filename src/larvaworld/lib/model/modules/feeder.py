@@ -52,14 +52,31 @@ class Feeder(Oscillator):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the feeder, starting in the inactive state.
+
+        Args:
+            **kwargs: Feeder parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.stop_effector()
 
     def step(self) -> None:
+        """Advance the feeding oscillation by one timestep.
+
+        Each completed cycle counts as one attempted food intake.
+        """
         self.complete_iteration = False
         if self.active:
             self.oscillate()
         # return self.complete_iteration
 
     def suppresion_relief(self, phi_range: tuple[float, float]) -> bool:
+        """Report whether turning suppression is lifted at the current phase.
+
+        Args:
+            phi_range: The ``(start, stop)`` relief interval in radians.
+
+        Returns:
+            True when the feeding phase falls inside the interval.
+        """
         return self.phi_in_range(phi_range)
