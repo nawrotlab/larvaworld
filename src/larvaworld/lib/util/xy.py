@@ -420,6 +420,12 @@ class Collision(Exception):
     """
 
     def __init__(self, object1: Any, object2: Any) -> None:
+        """Record the pair of objects involved in the collision.
+
+        Args:
+            object1: The first colliding object.
+            object2: The second colliding object.
+        """
         self.object1 = object1
         self.object2 = object2
 
@@ -905,7 +911,19 @@ def apply_per_level(
         >>> result = apply_per_level(data, np.mean, level='AgentID')
     """
 
-    def init_A(Ndims):
+    def init_A(Ndims: int) -> np.ndarray:
+        """Allocate a NaN-filled result array matching the input index.
+
+        Args:
+            Ndims: 1 for a per-agent timeseries, 2 to add the trailing
+                dimension of ``Ai``.
+
+        Returns:
+            The allocated array.
+
+        Raises:
+            ValueError: If ``Ndims`` is neither 1 nor 2.
+        """
         ids = s.index.unique("AgentID").values
         Nids = len(ids)
         N = s.index.unique("Step").size

@@ -25,7 +25,13 @@ def _load_all() -> None:
 
     from importlib import import_module
 
-    def _export_all_from(mod):
+    def _export_all_from(mod: Any) -> None:
+        """Copy a submodule's public names into this package namespace.
+
+        Args:
+            mod: The submodule to re-export from. Its ``__all__`` is used when
+                defined, otherwise every non-underscore name.
+        """
         names = getattr(mod, "__all__", None)
         if names is None:
             names = [n for n in dir(mod) if not n.startswith("_")]
@@ -54,6 +60,17 @@ def _load_all() -> None:
 
 
 def __getattr__(name: str) -> Any:
+    """Resolve a package attribute, loading the legacy star-imports on demand.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved attribute.
+
+    Raises:
+        AttributeError: If no submodule exports that name.
+    """
     # Defer legacy star-imports until the first attribute access
     if not _LOADED:
         _load_all()

@@ -18,6 +18,16 @@ __all__: list[str] = [
 
 
 def select_filenames(filenames: list[str], suf: str = "", pref: str = "") -> list[str]:
+    """Filter filenames by prefix and suffix.
+
+    Args:
+        filenames: The filenames to filter.
+        suf: Required suffix. An empty string matches everything.
+        pref: Required prefix. An empty string matches everything.
+
+    Returns:
+        The filenames matching both constraints.
+    """
     return [f for f in filenames if (f.endswith(suf) and f.startswith(pref))]
 
 
@@ -91,6 +101,18 @@ def combine_images(
     """
 
     def get_dxy(N: int, size: tuple[int, int] = (1000, 1000)) -> tuple[int, int]:
+        """Compute the per-cell size of a grid holding N items.
+
+        The grid is 2 columns wide for up to 4 items, 3 for up to 9, and 4
+        beyond that; cell height preserves the aspect ratio of ``size``.
+
+        Args:
+            N: The number of items to lay out.
+            size: The overall ``(width, height)`` of the grid.
+
+        Returns:
+            The ``(width, height)`` of a single cell.
+        """
         x, y = size
         if N <= 4:
             dx = int(x / 2)

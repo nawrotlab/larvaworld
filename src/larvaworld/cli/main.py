@@ -1,3 +1,11 @@
+"""
+Entry point for the larvaworld command-line interface.
+
+Dispatches to either the ``rerun`` subcommand, which replays a simulation from a
+stored ``run_manifest.json``, or to the standard :class:`SimModeParser` flow that
+configures and launches one of the supported simulation modes.
+"""
+
 from __future__ import annotations
 from argparse import ArgumentParser
 import sys
@@ -7,10 +15,31 @@ from .argparser import SimModeParser
 
 
 def launch(P: SimModeParser, run: Any, args: Any) -> None:
+    """Launch a configured simulation run.
+
+    This is the default ``mainfun`` used by :func:`main`; it simply delegates to
+    :meth:`SimModeParser.launch`.
+
+    Args:
+        P: The parser that configured the run.
+        run: The configured simulation run object.
+        args: The parsed command-line arguments.
+    """
     P.launch(run, args)
 
 
 def _rerun_main(cli_args: list[str]) -> None:
+    """Handle the ``larvaworld rerun`` subcommand.
+
+    Parses the rerun-specific options and replays the simulation described by a
+    ``run_manifest.json`` file, printing the path of the resulting manifest.
+
+    Args:
+        cli_args: Command-line arguments following the ``rerun`` keyword.
+
+    Raises:
+        SystemExit: If an ``--input`` override is not in ``SOURCE=PATH`` form.
+    """
     parser = ArgumentParser(
         prog="larvaworld rerun",
         description="Rerun a simulation from run_manifest.json",
@@ -55,6 +84,14 @@ def main(
     cli_args: list[str] | None = None,
     mainfun: Callable[[SimModeParser, Any, Any], None] = launch,
 ) -> None:
+    """Run the larvaworld CLI.
+
+    Args:
+        cli_args: Arguments to parse. Defaults to ``sys.argv[1:]``.
+        mainfun: Callable invoked with the parser, the configured run, and the
+            parsed arguments. Overridable to intercept the run instead of
+            launching it (used by the test-suite).
+    """
     effective_args = list(sys.argv[1:] if cli_args is None else cli_args)
     if effective_args and effective_args[0] == "rerun":
         _rerun_main(effective_args[1:])
