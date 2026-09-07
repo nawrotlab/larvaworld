@@ -1,3 +1,7 @@
+"""
+Widgets for editing a simulation's timing and runtime options.
+"""
+
 from __future__ import annotations
 
 import panel as pn

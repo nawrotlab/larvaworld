@@ -1,3 +1,10 @@
+"""
+Generic editor for any stored configuration type.
+
+Builds a form from the conftype's own parameter definitions, so that a new
+configuration type becomes editable without a bespoke widget.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -149,6 +156,12 @@ def _widget_overrides(
 
 
 class ConftypeWidgetController:
+    """Editor state for one stored configuration type.
+
+    Builds the form from the conftype's own parameter definitions and keeps
+    the edited values in step with the stored configuration.
+    """
+
     def __init__(
         self,
         config_cls: type[param.Parameterized],

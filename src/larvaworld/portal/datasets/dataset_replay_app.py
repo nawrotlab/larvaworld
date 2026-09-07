@@ -1,3 +1,10 @@
+"""
+The dataset replay app.
+
+Plays a recorded dataset back in the browser, with the arena and the tracked
+animals rendered from the stored coordinates.
+"""
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -145,6 +152,8 @@ def _apply_widget_help(widget: pn.viewable.Viewable, help_text: str | None):
 
 
 class _DatasetReplayController:
+    """State behind the dataset replay app."""
+
     _FIX_SEGMENT_NONE = "__none__"
     _FIX_SEGMENT_FRONT = "front"
     _FIX_SEGMENT_REAR = "rear"

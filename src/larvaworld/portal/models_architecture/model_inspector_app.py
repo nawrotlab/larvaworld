@@ -1,3 +1,10 @@
+"""
+The model inspector app.
+
+Shows a larva model's modules and parameters, compares model variants, and
+previews the behaviour a configuration produces.
+"""
+
 from __future__ import annotations
 
 import copy
@@ -320,6 +327,8 @@ def _coerce_like_template(template: Any, value: Any) -> Any:
 
 
 class _ModelInspectorController:
+    """State behind the model inspector app."""
+
     def __init__(self) -> None:
         model_ids = list_model_ids()
         if not model_ids:

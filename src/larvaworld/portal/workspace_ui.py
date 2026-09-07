@@ -1,3 +1,10 @@
+"""
+Workspace selection and switching UI.
+
+Presents the known workspaces, validates a chosen directory and applies the
+switch across the running portal.
+"""
+
 from __future__ import annotations
 
 import base64
@@ -161,6 +168,8 @@ def _default_workspace_candidate() -> Path:
 
 @dataclass
 class WorkspaceUiController:
+    """State behind the workspace selection UI."""
+
     theme: Literal["light", "dark"] = "light"
     on_workspace_change: Callable[[WorkspaceState | None], None] | None = None
 

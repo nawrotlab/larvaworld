@@ -1,3 +1,10 @@
+"""
+The dataset manager app.
+
+Lists the datasets in the workspace and drives their processing, annotation
+and deletion.
+"""
+
 from __future__ import annotations
 
 from html import escape
@@ -358,6 +365,8 @@ def _records_frame(records: list[UnifiedDatasetRecord], workspace) -> pd.DataFra
 
 
 class _DatasetManagerController:
+    """State behind the dataset manager app."""
+
     def __init__(self) -> None:
         self.workspace = get_active_workspace()
         self._all_records: list[UnifiedDatasetRecord] = []

@@ -1,3 +1,7 @@
+"""
+Widgets for editing the dataset enrichment configuration.
+"""
+
 from __future__ import annotations
 
 import panel as pn

@@ -1,3 +1,10 @@
+"""
+The portal's workspace: where datasets and configurations live.
+
+Resolves, validates and switches the active workspace, and holds the global
+configuration recording the known ones.
+"""
+
 from __future__ import annotations
 
 import json
@@ -35,6 +42,8 @@ class WorkspaceError(RuntimeError):
 
 @dataclass(frozen=True)
 class WorkspaceValidation:
+    """The outcome of checking a directory as a workspace."""
+
     path: Path
     exists: bool
     is_dir: bool
@@ -46,6 +55,8 @@ class WorkspaceValidation:
 
 @dataclass(frozen=True)
 class WorkspaceState:
+    """The active workspace and the paths derived from it."""
+
     root: Path
     workspace_id: str
     name: str

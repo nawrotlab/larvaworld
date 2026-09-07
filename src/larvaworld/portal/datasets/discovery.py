@@ -1,3 +1,10 @@
+"""
+Discovery of importable raw recordings.
+
+Scans a directory for recordings a lab format can read, without importing
+them, so the import app can list candidates cheaply.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -10,6 +17,8 @@ from larvaworld.lib.process import discover_deeplabcut_source_directories
 
 @dataclass(frozen=True)
 class RawDatasetCandidate:
+    """A raw recording found on disk that could be imported."""
+
     candidate_id: str
     parent_dir: str
     display_name: str

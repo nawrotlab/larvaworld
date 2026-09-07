@@ -42,18 +42,26 @@ __displayname__ = "Client-Server remote messaging"
 
 
 class IPCError(Exception):
+    """Base class for the messaging errors."""
+
     pass
 
 
 class UnknownMessageClass(IPCError):
+    """Raised when a message names an unknown type."""
+
     pass
 
 
 class InvalidSerialization(IPCError):
+    """Raised when a payload cannot be decoded."""
+
     pass
 
 
 class ConnectionClosed(IPCError):
+    """Raised when the peer closed the connection."""
+
     pass
 
 
@@ -175,6 +183,7 @@ class Message:
         return {"class": type(self).__name__, "args": args, "kwargs": kwargs}
 
     def _get_args(self) -> tuple[list[Any], dict[str, Any]]:
+        """Return the arguments this message serializes."""
         return [], {}
 
     def __repr__(self) -> str:
@@ -201,6 +210,11 @@ class Client:
     """
 
     def __init__(self, server_address: tuple[str, int] | str | bytes) -> None:
+        """Build the client.
+
+        Args:
+            server_address: The address to connect to.
+        """
         self.addr: tuple[str, int] | str | bytes = server_address
         # print(self.addr)
         # raise
@@ -211,19 +225,31 @@ class Client:
         self.sock = socket.socket(address_family, socket.SOCK_STREAM)
 
     def connect(self) -> None:
+        """Open the connection to the server."""
         self.sock.connect(self.addr)
 
     def close(self) -> None:
+        """Close the connection."""
         self.sock.close()
 
     def __enter__(self) -> "Client":
+        """Open the connection on entering the context."""
         self.connect()
         return self
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        """Close the connection on leaving the context."""
         self.close()
 
     def send(self, objects: list[Message]) -> list[Message]:
+        """Send a message and read the reply.
+
+        Args:
+            message: The message to send.
+
+        Returns:
+            The server's response.
+        """
         _write_objects(self.sock, objects)
         return _read_objects(self.sock)
 
@@ -239,10 +265,19 @@ class Server(StreamServer):
         callback: Callable[[list[Message]], list[Message]] | None,
         bind_and_activate: bool = True,
     ) -> None:
+        """Build the server.
+
+        Args:
+            server_address: The address to listen on.
+            callback: The handler invoked per message.
+            bind_and_activate: Whether to start listening immediately.
+        """
         if not callable(callback):
             callback = lambda x: []
 
         class IPCHandler(socketserver.BaseRequestHandler):
+            """Server-side handler decoding one client message."""
+
             def handle(self) -> None:
                 while True:
                     try:

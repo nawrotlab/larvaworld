@@ -1,3 +1,9 @@
+"""
+The dataset analysis app.
+
+Lets the user pick stored datasets and render the plots that apply to them.
+"""
+
 from __future__ import annotations
 
 from html import escape
@@ -154,6 +160,8 @@ def _status_html(text: str, *, tone: str = "neutral", detail: str | None = None)
 
 
 class _AnalysisController:
+    """State behind the dataset analysis app."""
+
     def __init__(self) -> None:
         self.workspace = get_active_workspace()
         try:

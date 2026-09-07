@@ -62,6 +62,11 @@ class Viewable(NestedConf):
 
     @property
     def default_color(self) -> str:
+        """Set the colour the object reverts to.
+
+        Args:
+            new_color: The new default colour.
+        """
         return self.param.color.default
 
     @default_color.setter

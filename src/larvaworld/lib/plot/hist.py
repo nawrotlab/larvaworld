@@ -380,6 +380,14 @@ def plot_turn_amp(
     absolute: bool = True,
     **kwargs: Any,
 ) -> Any:
+    """Plot the distribution of turn amplitudes.
+
+    Args:
+        **kwargs: The datasets and binning options.
+
+    Returns:
+        The rendered figure.
+    """
     if name is None:
         nn = "turn_amp" if ref_angle is None else "rel_turn_angle"
         name = f"{nn}_VS_{k}_scatter"
@@ -659,11 +667,27 @@ def plot_endpoint_params(type: str, mode: str = "basic", **kwargs: Any) -> Any:
 
 @funcs.graph("step hist", required={"ks": []})
 def plot_step_hist(**kwargs: Any) -> Any:
+    """Plot the distribution of a timeseries parameter.
+
+    Args:
+        **kwargs: The parameter, datasets and binning options.
+
+    Returns:
+        The rendered figure.
+    """
     return plot_step_params(type="hist", **kwargs)
 
 
 @funcs.graph("step box", required={"ks": []})
 def plot_step_box(**kwargs: Any) -> Any:
+    """Plot a timeseries parameter as one box per dataset.
+
+    Args:
+        **kwargs: The parameter and datasets.
+
+    Returns:
+        The rendered figure.
+    """
     return plot_step_params(type="box", **kwargs)
 
 
@@ -672,6 +696,14 @@ def plot_step_params(
     ks: Sequence[str] = ("v", "a", "sv", "sa", "b", "bv", "ba", "fov", "foa"),
     **kwargs: Any,
 ) -> Any:
+    """Plot several timeseries parameters side by side.
+
+    Args:
+        **kwargs: The parameters and datasets.
+
+    Returns:
+        The rendered figures.
+    """
     return plot_params(key="step", type=type, ks=ks, **kwargs)
 
 
@@ -685,6 +717,14 @@ def plot_params(
     plot_kws: dict = {},
     **kwargs: Any,
 ) -> Any:
+    """Plot several endpoint parameters side by side.
+
+    Args:
+        **kwargs: The parameters and datasets.
+
+    Returns:
+        The rendered figures.
+    """
     if name is None:
         name = f"{key}_{type}_{mode}"
     if type == "hist":

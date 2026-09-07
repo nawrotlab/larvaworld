@@ -1,3 +1,10 @@
+"""
+Data layer behind the model inspector.
+
+Loads a model into an editable draft, applies module and mode changes to it,
+and validates the result before it is stored.
+"""
+
 from __future__ import annotations
 
 from numbers import Real

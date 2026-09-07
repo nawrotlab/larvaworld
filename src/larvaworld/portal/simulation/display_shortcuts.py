@@ -1,3 +1,7 @@
+"""
+Display shortcut wiring for the simulation apps.
+"""
+
 from __future__ import annotations
 
 from larvaworld.portal.runtime.display_shortcuts import (

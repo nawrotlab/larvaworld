@@ -24,6 +24,11 @@ __all__: list[str] = [
 
 @funcs.stored_conf("LabFormat")
 def LabFormat_dict() -> util.AttrDict:
+    """Build the registry of supported lab data formats.
+
+    Returns:
+        Every lab format, keyed by name.
+    """
     d = {
         "Schleyer": {
             "tracker": TrackerOps(
@@ -154,6 +159,11 @@ def LabFormat_dict() -> util.AttrDict:
 
 @funcs.stored_conf("Ref")
 def Ref_dict() -> util.AttrDict:
+    """Build the registry of stored reference datasets.
+
+    Returns:
+        Every reference dataset, keyed by its ID.
+    """
     dds = [
         [f"{DATA_DIR}/JovanicGroup/processed/AttP{g}/{c}" for g in ["2", "240"]]
         for c in ["Fed", "Deprived", "Starved"]

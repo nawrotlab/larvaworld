@@ -1,3 +1,9 @@
+"""
+Keyboard shortcut configuration for the simulation display.
+
+Lets the user inspect and rebind the keys the running simulation responds to.
+"""
+
 from __future__ import annotations
 
 import json
@@ -133,6 +139,8 @@ DISPLAY_SHORTCUTS_RAW_CSS = """
 
 @dataclass(frozen=True)
 class ShortcutFieldSpec:
+    """One rebindable key, with its action and default."""
+
     field: str
     section: str
     action: str
@@ -186,6 +194,8 @@ for _spec in _SHORTCUT_FIELDS:
 
 
 class DisplayShortcutsConfig(param.Parameterized):
+    """The current key binding for every display action."""
+
     pause = param.String(default="space", doc="Pause or resume the live display.")
     snapshot = param.String(default="i", doc="Capture a display snapshot.")
     larva_collisions = param.String(default="y", doc="Toggle larva collisions.")
@@ -207,6 +217,8 @@ class DisplayShortcutsConfig(param.Parameterized):
 
 
 class DisplayShortcutsController(param.Parameterized):
+    """State behind the shortcut configuration dialog."""
+
     config = param.ClassSelector(class_=DisplayShortcutsConfig, constant=True)
     dirty = param.Boolean(default=False)
     status = param.String(default="")
@@ -617,6 +629,8 @@ setTimeout(() => {
 
 @dataclass
 class DisplayShortcutsDialog:
+    """The dialog letting the user inspect and rebind keys."""
+
     controller: DisplayShortcutsController
     open_button: pn.widgets.Button
     close_button: pn.widgets.Button

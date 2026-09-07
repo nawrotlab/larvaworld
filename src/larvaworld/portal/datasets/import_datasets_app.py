@@ -1,3 +1,10 @@
+"""
+The dataset import app.
+
+Walks the user from a raw recording through its lab format to an imported
+dataset stored in the workspace.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -35,6 +42,8 @@ __all__ = ["_ImportDatasetsController", "import_datasets_app"]
 
 @dataclass(frozen=True)
 class _MergeTarget:
+    """A dataset several recordings are being merged into."""
+
     target_id: str
     parent_dir: str
     display_name: str
@@ -371,6 +380,8 @@ def _import_failure_status_message(exc: BaseException) -> str:
 
 
 class _ImportDatasetsController:
+    """State behind the dataset import app."""
+
     def __init__(self) -> None:
         self.workspace = get_active_workspace()
         self._candidate_by_key: dict[str, RawDatasetCandidate] = {}

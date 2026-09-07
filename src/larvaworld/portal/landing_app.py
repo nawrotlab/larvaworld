@@ -1,3 +1,10 @@
+"""
+The portal's landing page.
+
+Presents the available apps as lanes of cards, with the quick-start entry
+points for each workflow.
+"""
+
 from __future__ import annotations
 
 import base64

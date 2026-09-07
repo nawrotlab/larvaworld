@@ -272,6 +272,14 @@ def sim_multi_agents(
     p0s: Optional[list[tuple[float, float]]] = None,
     fo0s: Optional[list[float]] = None,
 ):
+    """Simulate several agents together without a full experiment.
+
+    Args:
+        **kwargs: The models, duration and output options.
+
+    Returns:
+        The resulting dataset.
+    """
     df_columns = reg.getPar(
         ["b", "fo", "ro", "fov", "I_T", "x", "y", "d", "v", "A_T", "A_CT"]
     )

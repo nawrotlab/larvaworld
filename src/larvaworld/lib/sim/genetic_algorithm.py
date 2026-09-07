@@ -46,6 +46,15 @@ __all__: list[str] = [
 
 
 def dst2source_evaluation(robot: Any, source_xy: dict) -> float:
+    """Score a genome by how closely it approaches an odor source.
+
+    Args:
+        robot: The simulated agent.
+        source_xy: The source positions.
+
+    Returns:
+        The fitness value.
+    """
     traj = np.array(robot.trajectory)
     dst = np.sqrt(np.diff(traj[:, 0]) ** 2 + np.diff(traj[:, 1]) ** 2)
     cum_dst = np.sum(dst)
@@ -57,10 +66,26 @@ def dst2source_evaluation(robot: Any, source_xy: dict) -> float:
 
 
 def cum_dst(robot: Any, **kwargs: Any) -> float:
+    """Score a genome by the distance it covered.
+
+    Args:
+        robot: The simulated agent.
+
+    Returns:
+        The cumulative distance.
+    """
     return robot.cum_dst / robot.length
 
 
 def bend_error_exclusion(robot: Any) -> bool:
+    """Reject a genome whose body bend became unrealistic.
+
+    Args:
+        robot: The simulated agent.
+
+    Returns:
+        True when the genome should be excluded.
+    """
     if robot.body_bend_errors >= 20:
         return True
     else:
@@ -123,6 +148,11 @@ class GAevaluation(Evaluation):
     )
 
     def __init__(self, **kwargs: Any):
+        """Build the evaluation scoring each generation.
+
+        Args:
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
         self.exclude_func = (
@@ -360,6 +390,7 @@ class GAlauncher(BaseRun):
         self.selector = GAselector(**self.p.ga_select_kws)
 
     def _manifest_invocation(self, seed: int) -> dict[str, Any]:
+        """Describe how the search was invoked."""
         return {
             "run_class": f"{type(self).__module__}:{type(self).__qualname__}",
             "resolved_parameters": json_ready(self.parameters),
@@ -858,10 +889,17 @@ class GA_thread(threading.Thread):
     """
 
     def __init__(self, robots: list):
+        """Build the worker evaluating one genome.
+
+        Args:
+            robots: The agents to step.
+
+        """
         threading.Thread.__init__(self)
         self.robots = robots
 
     def step(self) -> None:
+        """Advance every agent this worker owns by one timestep."""
         for robot in self.robots:
             robot.step()
 

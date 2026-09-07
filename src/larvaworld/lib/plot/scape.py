@@ -34,6 +34,14 @@ def plot_surface(
     elev: int = 15,
     **kwargs: Any,
 ) -> Any:
+    """Plot a scalar field as a three-dimensional surface.
+
+    Args:
+        **kwargs: The field and the axes styling.
+
+    Returns:
+        The rendered figure.
+    """
     P = plot.AutoBasePlot(name="3d_surface", dim3=True, azim=azim, elev=elev, **kwargs)
     P.conf_ax_3d(vars=vars, target=target, lims=lims, title=title)
     from matplotlib import cm
@@ -119,6 +127,14 @@ def odorscape_from_config(
     col_max: Tuple[int, int, int] = (0, 0, 0),
     **kwargs: Any,
 ) -> Any:
+    """Render the odor landscape a configuration defines.
+
+    Args:
+        **kwargs: The environment configuration and plot options.
+
+    Returns:
+        The rendered figure.
+    """
     env = c.env_params
     source = list(env.food_params.source_units.values())[0]
     a0, b0 = source.pos
@@ -294,6 +310,14 @@ def plot_3d(
     color: str = "black",
     **kwargs: Any,
 ) -> Any:
+    """Plot three parameters against one another in three dimensions.
+
+    Args:
+        **kwargs: The parameters and datasets.
+
+    Returns:
+        The rendered figure.
+    """
     if name is None:
         name = "3d_plot"
     from statsmodels import api as sm
@@ -381,6 +405,14 @@ def plot_3d_multi(
 def plot_heatmap(
     z: Any, heat_kws: dict = {}, ax_kws: dict = {}, cbar_kws: dict = {}, **kwargs: Any
 ) -> Any:
+    """Plot a two-dimensional field as a heatmap.
+
+    Args:
+        **kwargs: The field and the colour scaling.
+
+    Returns:
+        The rendered figure.
+    """
     base_heat_kws = {"annot": True, "cmap": cm.coolwarm, "vmin": None, "vmax": None}
     base_heat_kws.update(heat_kws)
     base_cbar_kws = {"orientation": "vertical"}

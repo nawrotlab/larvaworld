@@ -13,6 +13,8 @@ from bokeh.plotting import figure
 
 # Suppress Bokeh patch warning spam
 class _BokehPatchFilter(logging.Filter):
+    """Suppresses the Bokeh log messages emitted on every document patch."""
+
     def filter(self, record: logging.LogRecord) -> bool:
         return (
             "Dropping a patch because it contains a previously known reference"

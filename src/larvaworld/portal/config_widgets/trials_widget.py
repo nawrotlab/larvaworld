@@ -1,3 +1,7 @@
+"""
+Widget for editing the trial schedule of an experiment.
+"""
+
 from __future__ import annotations
 
 from typing import Any

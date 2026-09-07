@@ -1,3 +1,10 @@
+"""
+The notebook launcher app.
+
+Opens a Jupyter notebook against a chosen dataset or model, so that an
+analysis can continue outside the portal.
+"""
+
 from __future__ import annotations
 
 import json

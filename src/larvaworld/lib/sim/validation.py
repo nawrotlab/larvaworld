@@ -32,6 +32,8 @@ _LEGACY_REGISTRY_ENVELOPE_WARNING_EXPERIMENTS = {"tactile_detection"}
 
 @dataclass(frozen=True)
 class CompatibilityIssue:
+    """One problem found while checking an experiment against its environment."""
+
     severity: str
     path: str
     message: str
@@ -39,18 +41,26 @@ class CompatibilityIssue:
 
 @dataclass(frozen=True)
 class CompatibilityReport:
+    """The result of an experiment-environment compatibility check.
+
+    Separates the issues that block a run from those worth reporting.
+    """
+
     issues: tuple[CompatibilityIssue, ...]
 
     @property
     def errors(self) -> tuple[CompatibilityIssue, ...]:
+        """The issues that make the run invalid."""
         return tuple(issue for issue in self.issues if issue.severity == "error")
 
     @property
     def warnings(self) -> tuple[CompatibilityIssue, ...]:
+        """The issues worth reporting but not blocking."""
         return tuple(issue for issue in self.issues if issue.severity == "warning")
 
     @property
     def has_errors(self) -> bool:
+        """Whether any blocking issue was found."""
         return any(issue.severity == "error" for issue in self.issues)
 
 
@@ -60,6 +70,15 @@ def validate_experiment_environment_compatibility(
     allow_registry_legacy: bool = False,
     experiment_id: str | None = None,
 ) -> CompatibilityReport:
+    """Check that an experiment can run in a given environment.
+
+    Args:
+        exp_conf: The experiment configuration.
+        env_conf: The environment configuration.
+
+    Returns:
+        The report, listing every incompatibility found.
+    """
     issues: list[CompatibilityIssue] = []
     legacy_envelope_warning = (
         allow_registry_legacy
@@ -233,6 +252,14 @@ def validate_experiment_environment_compatibility(
 
 
 def _as_mapping(value: Any) -> Mapping[str, Any] | None:
+    """Coerce a configuration object into a plain mapping.
+
+    Args:
+        value: The configuration to coerce.
+
+    Returns:
+        The mapping, empty when the value is not one.
+    """
     if value is None:
         return None
     if isinstance(value, Mapping):
@@ -243,6 +270,16 @@ def _as_mapping(value: Any) -> Mapping[str, Any] | None:
 
 
 def _get(value: Any, key: str, default: Any = None) -> Any:
+    """Read a key from a configuration mapping.
+
+    Args:
+        mapping: The configuration.
+        key: The key to read.
+        default: The value returned when it is absent.
+
+    Returns:
+        The value.
+    """
     if value is None:
         return default
     mapping = _as_mapping(value)
@@ -255,6 +292,14 @@ def _get(value: Any, key: str, default: Any = None) -> Any:
 
 
 def _pair(value: Any) -> tuple[float, float] | None:
+    """Coerce a value into a coordinate pair.
+
+    Args:
+        value: The value to coerce.
+
+    Returns:
+        The pair, or None when it is not one.
+    """
     if value is None:
         return None
     if hasattr(value, "__array__"):
@@ -271,6 +316,14 @@ def _pair(value: Any) -> tuple[float, float] | None:
 
 
 def _number(value: Any) -> float | None:
+    """Coerce a value into a number.
+
+    Args:
+        value: The value to coerce.
+
+    Returns:
+        The number, or None when it is not one.
+    """
     if value is None:
         return None
     try:
@@ -280,6 +333,15 @@ def _number(value: Any) -> float | None:
 
 
 def _point_in_arena(arena: BoundedArea, point: tuple[float, float]) -> bool:
+    """Report whether a point lies inside the arena.
+
+    Args:
+        point: The point to test.
+        arena: The arena configuration.
+
+    Returns:
+        True when the point is contained.
+    """
     polygon = arena.polygon.buffer(_BOUNDARY_TOLERANCE)
     return polygon.covers(Point(float(point[0]), float(point[1])))
 
@@ -287,6 +349,15 @@ def _point_in_arena(arena: BoundedArea, point: tuple[float, float]) -> bool:
 def _source_radius_boundary_points(
     *, center: tuple[float, float], radius: float
 ) -> list[tuple[float, float]]:
+    """Return the extreme points of a source's footprint.
+
+    Args:
+        pos: The source position.
+        radius: Its radius.
+
+    Returns:
+        The points checked against the arena boundary.
+    """
     x0, y0 = float(center[0]), float(center[1])
     r = abs(float(radius))
     return [
@@ -305,6 +376,14 @@ def _validate_distribution(
     path: str,
     legacy_envelope_warning: bool = False,
 ) -> None:
+    """Check that a spatial distribution fits inside the arena.
+
+    Args:
+        distro: The distribution configuration.
+        arena: The arena configuration.
+        label: What the distribution places, used in the message.
+        issues: The list issues are appended to.
+    """
     if distribution is None:
         issues.append(
             CompatibilityIssue(
@@ -426,6 +505,14 @@ def _distribution_boundary_points(
     shape: str,
     mode: str,
 ) -> list[tuple[float, float]] | None:
+    """Return the extreme points a distribution can place.
+
+    Args:
+        distro: The distribution configuration.
+
+    Returns:
+        The points checked against the arena boundary.
+    """
     x0, y0 = float(loc[0]), float(loc[1])
     sx, sy = abs(float(scale[0])), abs(float(scale[1]))
 

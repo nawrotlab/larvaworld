@@ -1,3 +1,11 @@
+"""
+Merging of edited parameters into a simulation configuration.
+
+Reconciles what the builder produced with the stored configuration, coercing
+each value to the shape the configuration expects rather than overwriting
+whole branches.
+"""
+
 from __future__ import annotations
 
 import math

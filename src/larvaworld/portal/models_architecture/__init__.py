@@ -1,3 +1,7 @@
+"""
+Portal apps for inspecting and building models and environments.
+"""
+
 from __future__ import annotations
 
 from .model_inspector_app import _ModelInspectorController, model_inspector_app

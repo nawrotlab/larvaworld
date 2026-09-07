@@ -1,3 +1,10 @@
+"""
+Translation between environment configurations and canvas state.
+
+Converts a stored environment configuration into the objects the canvas draws,
+and back again, so that edits on the canvas round-trip into the configuration.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Mapping

@@ -1,3 +1,10 @@
+"""
+The environment builder app.
+
+Composes an environment interactively -- arena, sources, borders and the odor,
+wind and thermal fields -- with a live canvas preview.
+"""
+
 from __future__ import annotations
 
 import html
@@ -260,6 +267,8 @@ def _editor_family_box(
 
 @dataclass(frozen=True)
 class _ObjectRow:
+    """One editable row describing an object placed in the arena."""
+
     object_id: str
     object_type: str
     x: float | None
@@ -490,6 +499,8 @@ def _deg_to_rad(angle: float) -> float:
 
 
 class _EnvironmentBuilderController:
+    """State behind the environment builder app."""
+
     @staticmethod
     def _resolve_doc_from_class(cls: type[Any], parts: list[str]) -> str | None:
         if not hasattr(cls, "param") or not parts:
@@ -4535,6 +4546,8 @@ class _EnvironmentBuilderController:
 
 
 class _InsertSection(param.Parameterized):
+    """Form section for inserting a new object into the arena."""
+
     object_type = param.Selector(
         default="Source unit",
         objects=["Source unit", "Source group", "Border segment"],
@@ -4566,6 +4579,8 @@ class _InsertSection(param.Parameterized):
 
 
 class _OdorScapeSection(param.Parameterized):
+    """Form section for the environment's odor field."""
+
     enabled = param.Boolean(
         default=False,
         label="Enable odorscape",
@@ -4625,6 +4640,8 @@ class _OdorScapeSection(param.Parameterized):
 
 
 class _WindScapeSection(param.Parameterized):
+    """Form section for the environment's wind field."""
+
     enabled = param.Boolean(
         default=False,
         label="Enable windscape",
@@ -4649,6 +4666,8 @@ class _WindScapeSection(param.Parameterized):
 
 
 class _ThermoScapeSection(param.Parameterized):
+    """Form section for the environment's thermal field."""
+
     enabled = param.Boolean(
         default=False,
         label="Enable thermoscape",
@@ -4668,6 +4687,8 @@ class _ThermoScapeSection(param.Parameterized):
 
 
 class _PresetSection(param.Parameterized):
+    """Form section for saving and loading environment presets."""
+
     preset_name = param.String(
         default="environment_builder_config",
         label="Unique ID",
@@ -4743,6 +4764,8 @@ def _sync_param_with_widget(
 
 
 class _EnvironmentBuilderV2Controller:
+    """State behind the environment builder's canvas-driven layout."""
+
     def __init__(self) -> None:
         self.runtime = _EnvironmentBuilderController()
         self._syncing_area_dims = False

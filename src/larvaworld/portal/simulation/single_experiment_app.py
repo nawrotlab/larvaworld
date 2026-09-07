@@ -1,3 +1,10 @@
+"""
+The single experiment app.
+
+Configures one experiment -- its environment, larva groups, timing and output
+-- previews it, runs it, and hands the resulting dataset on for analysis.
+"""
+
 from __future__ import annotations
 
 import html
@@ -321,12 +328,16 @@ def _default_experiment_template() -> str | None:
 
 @dataclass(frozen=True)
 class WorkspaceExperimentTemplateRecord:
+    """An experiment template stored in the workspace."""
+
     name: str
     filename: str
     path: Path
 
 
 class _SingleExperimentSelection(param.Parameterized):
+    """The user's current choices in the experiment app."""
+
     experiment_template = param.Selector(
         default=(
             f"{_REGISTRY_EXPERIMENT_PREFIX}{_default_experiment_template()}"
@@ -725,6 +736,8 @@ class _FrameSimulationPreview(FramePlayback):
 
 
 class _SingleExperimentController:
+    """State behind the single experiment app."""
+
     @staticmethod
     def _new_preview_canvas() -> EnvironmentCanvas:
         try:

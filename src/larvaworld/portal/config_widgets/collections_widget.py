@@ -1,3 +1,7 @@
+"""
+Widget for choosing which output groups a simulation records.
+"""
+
 from __future__ import annotations
 
 import panel as pn

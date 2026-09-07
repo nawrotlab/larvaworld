@@ -1,3 +1,7 @@
+"""
+Records describing an inspected model and its modules.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -8,6 +12,8 @@ import pandas as pd
 
 @dataclass(frozen=True)
 class ModuleInspection:
+    """One module of an inspected model, with its parameters."""
+
     module_id: str
     display_name: str
     present: bool
@@ -18,6 +24,8 @@ class ModuleInspection:
 
 @dataclass(frozen=True)
 class ModelInspection:
+    """An inspected model, module by module."""
+
     model_id: str
     baseline_modules: tuple[ModuleInspection, ...]
     optional_modules: tuple[ModuleInspection, ...]
@@ -29,6 +37,8 @@ DraftValidationSeverity = Literal["warning", "error"]
 
 @dataclass(frozen=True)
 class ModelModuleSpec:
+    """The modes and parameters one model module offers."""
+
     module_id: str
     display_name: str
     group: str
@@ -47,6 +57,8 @@ class ModelModuleSpec:
 
 @dataclass(frozen=True)
 class DraftValidationIssue:
+    """One problem found while validating a model draft."""
+
     code: str
     severity: DraftValidationSeverity
     module_id: str
@@ -56,6 +68,8 @@ class DraftValidationIssue:
 
 @dataclass(frozen=True)
 class ModuleComparison:
+    """The differences between two versions of one module."""
+
     module_id: str
     primary: ModuleInspection
     comparison: ModuleInspection
@@ -65,6 +79,8 @@ class ModuleComparison:
 
 @dataclass(frozen=True)
 class ModuleComparisonMany:
+    """The differences across several models' modules."""
+
     module_id: str
     #: One inspection per compared model, in the same order as the models
     #: passed to compare_model_inspections_many (primary first).
@@ -76,6 +92,8 @@ class ModuleComparisonMany:
 
 @dataclass(frozen=True)
 class ProbeIssue:
+    """One problem encountered while probing a model's behaviour."""
+
     code: str
     message: str
     context: dict[str, Any] = field(default_factory=dict)
@@ -83,6 +101,8 @@ class ProbeIssue:
 
 @dataclass(frozen=True)
 class ProbeResult:
+    """The outcome of previewing a model's behaviour."""
+
     model_id: str
     steps: int
     dt: float
@@ -94,6 +114,8 @@ class ProbeResult:
 
 
 class ModelInspectorError(RuntimeError):
+    """Raised when a model cannot be inspected or built."""
+
     def __init__(
         self,
         code: str,

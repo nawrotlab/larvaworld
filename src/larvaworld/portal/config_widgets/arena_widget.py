@@ -1,3 +1,7 @@
+"""
+Widget for editing an arena's dimensions and geometry.
+"""
+
 from __future__ import annotations
 
 import param

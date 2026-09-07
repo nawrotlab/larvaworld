@@ -1,3 +1,10 @@
+"""
+Notebook runtime management for the portal.
+
+Ensures a notebook server is available and resolves the notebook belonging to
+a given dataset or model.
+"""
+
 from __future__ import annotations
 
 import atexit

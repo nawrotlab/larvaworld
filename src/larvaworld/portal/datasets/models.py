@@ -1,3 +1,10 @@
+"""
+Lightweight records describing workspace datasets.
+
+These carry only what a listing needs, so the catalog views never open the
+stored HDF5 files.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,6 +14,8 @@ from typing import Any, Literal
 
 @dataclass(frozen=True)
 class WorkspaceDatasetRecord:
+    """A dataset stored in the workspace, as listed."""
+
     dataset_id: str
     dataset_dir: Path
     data_dir: Path
@@ -23,6 +32,8 @@ WorkspaceReplayDatasetOrigin = Literal["imported", "simulation_run"]
 
 @dataclass(frozen=True)
 class WorkspaceReplayDatasetRecord:
+    """A workspace dataset that can be replayed."""
+
     origin: WorkspaceReplayDatasetOrigin
     dataset_id: str
     dataset_dir: Path
@@ -38,6 +49,8 @@ class WorkspaceReplayDatasetRecord:
 
 @dataclass(frozen=True)
 class ImportRequest:
+    """The parameters of one requested dataset import."""
+
     lab_id: str
     parent_dir: str
     raw_folder: Path | None = None

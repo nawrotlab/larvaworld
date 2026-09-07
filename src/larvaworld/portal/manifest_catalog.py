@@ -1,3 +1,10 @@
+"""
+The run manifest catalog.
+
+Lists the recorded runs a workspace holds and drives their validation and
+rerun from the browser.
+"""
+
 from __future__ import annotations
 
 from html import escape

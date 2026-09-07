@@ -49,6 +49,8 @@ class PreviewAnalysisResult:
 
 @dataclass(frozen=True)
 class _PlotSpec:
+    """One plot offered by an analysis recipe."""
+
     graph_id: str
     title: str
     kwargs: Mapping[str, Any] = field(default_factory=dict)
@@ -56,6 +58,8 @@ class _PlotSpec:
 
 @dataclass(frozen=True)
 class _AnalysisRecipe:
+    """A named group of plots applied together to a dataset."""
+
     proc_keys: tuple[str, ...]
     plots: tuple[_PlotSpec, _PlotSpec]
     metric_kind: str

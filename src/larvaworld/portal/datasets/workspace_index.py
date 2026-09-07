@@ -1,3 +1,10 @@
+"""
+Indexing of the datasets stored in a workspace.
+
+Lists the imported and simulated datasets a workspace holds, reading only the
+stored metadata rather than the datasets themselves.
+"""
+
 from __future__ import annotations
 
 import logging

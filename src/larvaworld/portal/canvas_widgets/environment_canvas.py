@@ -1,3 +1,10 @@
+"""
+The interactive arena canvas.
+
+Renders the arena, its sources and its borders, and turns click and drag
+gestures into edits of the underlying environment state.
+"""
+
 from __future__ import annotations
 
 import math

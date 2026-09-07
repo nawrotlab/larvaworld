@@ -163,6 +163,14 @@ def ax_conf_kws(
     ylim: Optional[Sequence[float]] = None,
     xlim: Optional[Sequence[float]] = None,
 ) -> Dict[str, Any]:
+    """Build the axis settings for a trajectory plot.
+
+    Args:
+        **kwargs: The arena dimensions and labelling options.
+
+    Returns:
+        The axis configuration.
+    """
     conf_kws = {
         "ylab": kws.ylab if ylab is None else ylab,
         "ylim": kws.ylim if ylim is None else ylim,

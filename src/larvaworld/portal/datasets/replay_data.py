@@ -1,3 +1,10 @@
+"""
+Data preparation behind the dataset replay app.
+
+Builds the catalog of replayable sources and turns a chosen one into the
+per-frame render state the browser draws.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -31,6 +38,8 @@ from larvaworld.portal.workspace import WorkspaceState
 
 @dataclass(frozen=True)
 class ReplayRenderState:
+    """Everything the browser needs to draw one replay frame."""
+
     frame: LarvaPreviewFrame
     rings: tuple[CanvasRingOverlay, ...] = ()
 

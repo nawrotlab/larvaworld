@@ -1,3 +1,7 @@
+"""
+Portal apps and helpers for working with datasets.
+"""
+
 from __future__ import annotations
 
 from importlib import import_module

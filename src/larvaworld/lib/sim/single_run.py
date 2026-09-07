@@ -37,6 +37,8 @@ __all__: list[str] = [
 
 
 class ExpRun(BaseRun):
+    """A single simulated experiment, optionally analysed once it ends."""
+
     def __init__(
         self,
         experiment: Optional[str] = None,
@@ -65,6 +67,7 @@ class ExpRun(BaseRun):
     def _manifest_invocation(
         self, execute_kwargs: dict[str, Any], *, method: str = "simulate"
     ) -> dict[str, Any]:
+        """Describe how the experiment was invoked."""
         return {
             "run_class": f"{type(self).__module__}:{type(self).__qualname__}",
             "resolved_parameters": json_ready(self.parameters),
@@ -82,6 +85,11 @@ class ExpRun(BaseRun):
         seed: Any | None = None,
         display: bool = True,
     ):
+        """Run the experiment to completion.
+
+        Returns:
+            The dataset the run produced.
+        """
         if (
             getattr(self, "_manifest_managed_by_simulate", False)
             or not self._record_manifest

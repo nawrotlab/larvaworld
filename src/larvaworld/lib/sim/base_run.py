@@ -44,6 +44,12 @@ def render_configuration_text(title: str, items: dict[str, Any]) -> str:
 
 
 class BaseRun(ABModel):
+    """Base class for every simulation mode.
+
+    Builds the environment, places the agents and drives the stepping,
+    leaving the mode-specific setup and teardown to its subclasses.
+    """
+
     def __init__(self, screen_kws: dict[str, Any] = {}, **kwargs: Any):
         """
         Basic simulation class that extends the agentpy.Model class and creates a larvaworld agent-based model (ABM).
@@ -85,6 +91,7 @@ class BaseRun(ABModel):
 
     @property
     def end_condition_met(self) -> bool:
+        """Whether the run's termination condition has been met."""
         if self.exp_condition is not None:
             return self.exp_condition.check()
         return False
@@ -119,6 +126,7 @@ class BaseRun(ABModel):
             self.running = False
 
     def step_env(self) -> None:
+        """Advance the environment's fields by one timestep."""
         for id, layer in self.odor_layers.items():
             layer.update_values()  # Currently doing something only for the DiffusionValueLayer
         if self.windscape is not None:
@@ -126,10 +134,12 @@ class BaseRun(ABModel):
 
     @property
     def Nticks(self) -> int:
+        """The number of timesteps elapsed."""
         return self.t
 
     @property
     def sensorscapes(self):
+        """The environment fields the agents can sense."""
         ls = [self.windscape, self.thermoscape, self.food_grid] + list(
             self.odor_layers.values()
         )
@@ -137,12 +147,23 @@ class BaseRun(ABModel):
         return ls
 
     def set_obj_visibility(self, objs, vis: bool = True) -> None:
+        """Show or hide a set of objects in the viewer.
+
+        Args:
+            objs: The objects to toggle.
+            vis: Whether they become visible.
+        """
         for obj in objs:
             obj.visible = vis
 
     def build_env(self, p: Any) -> None:
         # reg.vprint(f'--- Simulation {self.id} : Building environment!--- ', 1)
         # Define environment
+        """Build the environment the run takes place in.
+
+        Args:
+            p: The environment configuration.
+        """
         if self.Box2D:
             from ..model.box2d import ArenaBox2D
 
@@ -167,6 +188,15 @@ class BaseRun(ABModel):
         self.thermoscape = envs.ThermoScape(**p.thermoscape) if p.thermoscape else None
 
     def create_odor_layers(self, odorscape: str, **kwargs: Any):
+        """Build the odor fields emitted by a set of sources.
+
+        Args:
+            sources: The odor-emitting sources.
+            pars: The odor field configuration.
+
+        Returns:
+            One field per distinct odor.
+        """
         odor_layers = {}
         ids = util.unique_list(
             [s.odor.id for s in self.sources if s.odor.id is not None]
@@ -195,6 +225,7 @@ class BaseRun(ABModel):
 
     @property
     def odor_ids(self):
+        """The identifiers of every odor present in the environment."""
         if self._odor_ids is None:
             ids = []
             if hasattr(self, "agents"):
@@ -206,6 +237,11 @@ class BaseRun(ABModel):
         return self._odor_ids
 
     def place_obstacles(self, barriers: dict = {}) -> None:
+        """Add the environment's borders and obstacles.
+
+        Args:
+            barriers: The obstacle configurations.
+        """
         borderConfs = reg.gen.Border.from_entries(barriers)
         border_list = [envs.Border(model=self, **conf) for conf in borderConfs]
         # border_list = [envs.Border(model=self, **pars) for pars in barriers]
@@ -214,6 +250,11 @@ class BaseRun(ABModel):
         self.border_lines = util.SuperList(self.borders.border_lines).flatten
 
     def place_food(self, p: Any) -> None:
+        """Add the environment's food sources and grid.
+
+        Args:
+            p: The food configuration.
+        """
         self.food_grid = (
             envs.FoodGrid(**p.food_grid, model=self) if p.food_grid else None
         )
@@ -226,15 +267,22 @@ class BaseRun(ABModel):
         self.sources = agentpy.AgentList(model=self, objs=source_list)
 
     def get_all_objects(self):
+        """Every agent, source and obstacle in the run."""
         return self.sources + self.agents + self.borders
 
     def place_agents(self, confs: list[Any]) -> None:
+        """Create and place the run's agents.
+
+        Args:
+            confs: The per-agent configurations.
+        """
         agent_list = [self.agent_class(model=self, **conf) for conf in confs]
         self.space.add_agents(agent_list, positions=[a.pos for a in agent_list])
         self.agents = agentpy.AgentList(model=self, objs=agent_list)
 
     @property
     def _agent_class(self):
+        """The class the run's agents are built from."""
         if self.runtype == "Replay":
             if self.p.draw_Nsegs is None:
                 return agents.LarvaReplayContoured
@@ -256,23 +304,44 @@ class BaseRun(ABModel):
 
     @property
     def screen_class(self):
+        """The screen manager class this run renders with."""
         return screen.GA_ScreenManager if self.runtype == "Ga" else screen.ScreenManager
 
     def delete_agent(self, a: Any) -> None:
+        """Remove one agent from the run.
+
+        Args:
+            agent: The agent to remove.
+        """
         self.agents.remove(a)
         self.space.remove_agents([a])
 
     def delete_source(self, a: Any) -> None:
+        """Remove one source from the run.
+
+        Args:
+            agent: The source to remove.
+        """
         self.sources.remove(a)
         # self.space.remove_agents([a])
 
     def delete_agents(self, agent_list: Any | None = None) -> None:
+        """Remove several agents, or all of them.
+
+        Args:
+            agent_list: The agents to remove. Defaults to all.
+        """
         if agent_list is None:
             agent_list = self.agents
         for a in agent_list:
             self.delete_agent(a)
 
     def set_collectors(self, cs: Any) -> None:
+        """Configure what the run records each timestep.
+
+        Args:
+            collections: The output groups to record.
+        """
         self.collectors = reg.par.get_reporters(cs=cs, agents=self.agents)
         self.p.collectors = util.AttrDict(
             {
@@ -304,6 +373,7 @@ class BaseRun(ABModel):
 
     @property
     def configuration_text(self) -> str:
+        """The run's configuration, rendered for display."""
         return render_configuration_text(
             "Simulation configuration", self.configuration_items
         )
@@ -319,6 +389,7 @@ class BaseRun(ABModel):
         func: Any | None = None,
         **kwargs: Any,
     ) -> None:
+        """Render the environment without running the simulation."""
         if envConf is None:
             if envID and envID in reg.conf.Env.confIDs:
                 envConf = reg.conf.Env.get(envID).nestedConf

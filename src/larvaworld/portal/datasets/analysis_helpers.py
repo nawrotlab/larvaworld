@@ -1,3 +1,10 @@
+"""
+Helpers backing the dataset analysis app.
+
+Resolves which plots apply to a selection of datasets and renders them,
+keeping the plotting logic out of the UI layer.
+"""
+
 from __future__ import annotations
 
 import os

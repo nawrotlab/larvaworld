@@ -1,3 +1,7 @@
+"""
+Widget for editing an environment's thermal landscape.
+"""
+
 from __future__ import annotations
 
 from typing import Any, Callable

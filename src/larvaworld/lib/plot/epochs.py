@@ -110,6 +110,14 @@ def plot_single_bout(
 
 @funcs.graph("sample_epochs", required={"dicts": ["pooled_epochs"]})
 def plot_sample_bouts(mID: str, d: Any, **kwargs: Any) -> Any:
+    """Plot sampled bout durations against their fitted distributions.
+
+    Args:
+        **kwargs: The datasets and bout types to plot.
+
+    Returns:
+        The rendered figure.
+    """
     d2 = copy.deepcopy(d)
     d2.config.dir = None
     d2.fitted_epochs = d.generate_pooled_epochs(mID=mID)

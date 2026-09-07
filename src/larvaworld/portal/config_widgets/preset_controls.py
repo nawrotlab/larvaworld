@@ -1,3 +1,11 @@
+"""
+Preset management shared by the configuration editors.
+
+Provides the dual-store save, load, delete and reset controls that let a
+configuration be kept either in the workspace or in the registry, together
+with the catalog listing what is stored.
+"""
+
 from __future__ import annotations
 
 import copy
@@ -42,12 +50,16 @@ _PRESET_NAME_INVALID = re.compile(r"[^a-zA-Z0-9._-]+")
 
 
 class PresetSource:
+    """Where a preset is stored: the workspace or the registry."""
+
     REGISTRY = "registry"
     WORKSPACE = "workspace"
 
 
 @dataclass(frozen=True)
 class PresetRef:
+    """A reference to one stored preset, by name and source."""
+
     source: str
     name: str
     display_label: str
@@ -59,6 +71,8 @@ class PresetRef:
 
 @dataclass(frozen=True)
 class PresetCatalog:
+    """The presets available for one configuration type."""
+
     refs: tuple[PresetRef, ...]
     by_token: dict[str, PresetRef]
 
@@ -70,6 +84,12 @@ class PresetCatalog:
 
 @dataclass(frozen=True)
 class PresetActionPolicy:
+    """Which preset actions a given app allows.
+
+    Distinguishes the user-facing apps, which save only to the workspace, from
+    the advanced ones that may also write the registry.
+    """
+
     can_load_registry: bool
     can_load_workspace: bool
     can_save_registry: bool
@@ -117,12 +137,16 @@ ADVANCED_PRESET_POLICY = PresetActionPolicy(
 
 @dataclass(frozen=True)
 class WorkspacePresetRecord:
+    """One preset as stored in the workspace."""
+
     name: str
     filename: str
     path: Path
 
 
 class RegistryPresetStore:
+    """Preset storage backed by the configuration registry."""
+
     def __init__(self, conftype: str) -> None:
         if conftype not in reg.conf:
             raise ValueError(f'Unknown conftype "{conftype}".')
@@ -165,6 +189,8 @@ class RegistryPresetStore:
 
 
 class WorkspacePresetStore:
+    """Preset storage backed by the workspace directory."""
+
     def __init__(self, directory: str | Path, *, directory_key: str) -> None:
         self.directory = Path(directory).expanduser().resolve()
         self.directory_key = str(directory_key)
@@ -255,11 +281,19 @@ class WorkspacePresetStore:
 
 @dataclass
 class _PendingConfirmation:
+    """A destructive preset action awaiting confirmation."""
+
     message: str
     execute: Callable[[], bool]
 
 
 class PresetControlsController:
+    """State behind the preset save, load, delete and reset controls.
+
+    Spans both stores, so a preset can be kept in the workspace or promoted to
+    the registry according to the app's policy.
+    """
+
     def __init__(
         self,
         *,

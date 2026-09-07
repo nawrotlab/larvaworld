@@ -1,3 +1,7 @@
+"""
+Widget for editing the food sources of an environment.
+"""
+
 from __future__ import annotations
 
 import param

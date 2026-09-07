@@ -1,3 +1,10 @@
+"""
+Entry point serving the portal.
+
+Builds the Panel application, mounts every app under its route and starts the
+server.
+"""
+
 from __future__ import annotations
 
 import base64
@@ -38,6 +45,8 @@ SERVED_APP_IDS: set[str] = set(APP_ID_TO_FACTORY_PATH.keys())
 
 
 class _BootstrapState:
+    """Tracks how far the portal has progressed through startup."""
+
     def __init__(self) -> None:
         self.lock = threading.Lock()
         self.started = False
@@ -419,6 +428,8 @@ def main() -> None:
 
     # Custom logging filter to suppress WebSocket closed errors
     class _WebSocketErrorFilter(logging.Filter):
+        """Suppresses the websocket errors logged when a browser tab is closed."""
+
         def filter(self, record: logging.LogRecord) -> bool:
             if "WebSocketClosedError" in record.getMessage():
                 return False

@@ -1,3 +1,10 @@
+"""
+Helpers backing the dataset manager app.
+
+Resolves a dataset's processing status and runs the preprocessing, processing
+and annotation steps, keeping that logic out of the UI layer.
+"""
+
 from __future__ import annotations
 
 import shutil
@@ -23,6 +30,12 @@ class UnifiedDatasetRecord:
     #: default reference dataset) -- never workspace-deletable, same as
     #: "simulation_run" (see _DatasetManagerController's delete gating,
     #: keyed off `origin == "imported"`).
+    """One dataset as the manager lists it.
+
+    Covers both imported and simulated datasets, carrying only the metadata a
+    listing needs.
+    """
+
     origin: Literal["imported", "simulation_run", "bundled"]
     dataset_id: str
     dataset_dir: Path

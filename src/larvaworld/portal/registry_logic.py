@@ -1,3 +1,10 @@
+"""
+Logic behind the portal's landing registry.
+
+Validates the registered entries, resolves their targets and computes the
+badges and primary action each card shows.
+"""
+
 from __future__ import annotations
 
 import warnings

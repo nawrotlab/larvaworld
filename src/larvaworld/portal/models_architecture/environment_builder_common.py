@@ -1,3 +1,10 @@
+"""
+Shared logic behind the environment builder.
+
+Normalizes the builder's object rows against the stored environment payload,
+so the canvas, the form and the saved configuration stay consistent.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -26,6 +33,8 @@ _REGEX_PRESET_NAME = re.compile(r"[^a-zA-Z0-9._-]+")
 
 @dataclass(frozen=True)
 class EnvBuilderObjectRow:
+    """One object row shared by the builder's views."""
+
     object_id: str
     object_type: str
     x: float | None = None

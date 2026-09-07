@@ -73,11 +73,13 @@ class Exec:
         self.done = False
 
     def terminate(self) -> None:
+        """Stop the subprocess if it is still running."""
         if self.process is not None:
             self.process.terminate()
             self.process.kill()
 
     def run(self, **kwargs: Any) -> None:
+        """Launch the run in a subprocess."""
         f0, f1 = (
             f"{ROOT_DIR}/lib/sim/exec_conf.txt",
             f"{ROOT_DIR}/lib/sim/exec_run.py",
@@ -91,6 +93,11 @@ class Exec:
             self.done = True
 
     def check(self) -> bool:
+        """Poll the subprocess for completion.
+
+        Returns:
+            The run's results once it has finished, else None.
+        """
         if not self.done:
             if self.run_externally:
                 if self.process.poll() is not None:
@@ -161,6 +168,7 @@ class Exec:
             return entry, fig_dict
 
     def exec_run(self):
+        """Build and start the subprocess command."""
         if self.mode == "sim":
             # Local import to avoid importing the sim package and potential cycles
             from .single_run import ExpRun  # type: ignore

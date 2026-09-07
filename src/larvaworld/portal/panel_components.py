@@ -1,3 +1,10 @@
+"""
+Shared Panel components for the portal's chrome.
+
+Provides the header, footer, cards and lanes that give every app the same
+frame.
+"""
+
 from __future__ import annotations
 
 import base64

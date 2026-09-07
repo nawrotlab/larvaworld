@@ -1,3 +1,10 @@
+"""
+Adapter driving a dataset import into the workspace.
+
+Orchestrates the existing import backend and places the result in the
+workspace's processed-data folder.
+"""
+
 from __future__ import annotations
 
 from pathlib import Path

@@ -1,3 +1,7 @@
+"""
+Widget for editing an environment's wind field.
+"""
+
 from __future__ import annotations
 
 import param

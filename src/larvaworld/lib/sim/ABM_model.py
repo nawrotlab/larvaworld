@@ -37,6 +37,11 @@ class BasicABModel:
         **kwargs: Any,
     ) -> None:
         # Prepare parameters
+        """Build the agent-based model.
+
+        Args:
+            **kwargs: Forwarded to the parent class.
+        """
         self.p = util.AttrDict()
         if parameters:
             for k, v in parameters.items():
@@ -79,6 +84,7 @@ class BasicABModel:
         self._set_var_ignore()
 
     def __repr__(self) -> str:
+        """Return the model's identifier."""
         return self.type
 
     def _set_var_ignore(self) -> None:
@@ -127,6 +133,7 @@ class BasicABModel:
 
     @property
     def info(self):
+        """A summary of the model's configuration and progress."""
         rep = "Agent-based model {"
         items = list(self.__dict__.items())
         for k, v in items:
@@ -422,6 +429,12 @@ class BasicABModel:
 
 
 class ABModel(BasicABModel, reg.generators.SimConfigurationParams):
+    """The agent-based model a larvaworld simulation runs on.
+
+    Adds the larvaworld environment, agents and data collection to the
+    basic stepping model.
+    """
+
     def __init__(self, **kwargs: Any) -> None:
         """
         Basic simulation class that extends the agentpy.Model class and creates a larvaworld agent-based model (ABM).

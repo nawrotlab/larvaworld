@@ -1,3 +1,7 @@
+"""
+Demonstration app exercising the generic conftype editor.
+"""
+
 from __future__ import annotations
 
 from typing import Any

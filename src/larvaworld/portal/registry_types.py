@@ -1,3 +1,7 @@
+"""
+Types describing the entries on the portal's landing page.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -12,12 +16,16 @@ QuickStartModeId = Literal["user", "modeler", "experimentalist"]
 
 @dataclass(frozen=True)
 class LearnMore:
+    """A documentation link shown on a landing card."""
+
     issue_url: str | None = None
     docs_url: str | None = None
 
 
 @dataclass(frozen=True)
 class LandingItem:
+    """One app as presented on the portal's landing page."""
+
     id: str
     kind: Kind
     status: Status
@@ -43,6 +51,8 @@ class LandingItem:
 
 @dataclass(frozen=True)
 class LaneSpec:
+    """A titled row grouping related landing cards."""
+
     title: str
     lane: Lane
     item_ids: list[str]
@@ -51,6 +61,8 @@ class LaneSpec:
 
 @dataclass(frozen=True)
 class QuickStartModeSpec:
+    """One quick-start entry point offered by an app."""
+
     mode_id: QuickStartModeId
     title: str
     color: str
@@ -59,6 +71,8 @@ class QuickStartModeSpec:
 
 @dataclass(frozen=True)
 class PrimaryAction:
+    """The main button a landing card offers."""
+
     label: str
     href: str | None
     enabled: bool

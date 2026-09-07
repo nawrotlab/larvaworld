@@ -1,3 +1,7 @@
+"""
+Widget for editing a spatial distribution of agents or sources.
+"""
+
 from __future__ import annotations
 
 import param

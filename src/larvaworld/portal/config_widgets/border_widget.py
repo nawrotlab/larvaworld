@@ -1,3 +1,7 @@
+"""
+Widget for editing the borders placed in an environment.
+"""
+
 from __future__ import annotations
 
 import param

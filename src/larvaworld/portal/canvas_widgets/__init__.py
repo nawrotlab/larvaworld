@@ -1,3 +1,10 @@
+"""
+Interactive canvas widgets for the portal.
+
+Exposes the arena canvas, the objects placed on it and the state model that
+keeps the two in step.
+"""
+
 from __future__ import annotations
 
 from .environment_mapping import env_params_to_canvas_state

@@ -1,3 +1,7 @@
+"""
+Widget for editing a whole environment configuration.
+"""
+
 from __future__ import annotations
 
 import panel as pn

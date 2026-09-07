@@ -1,3 +1,11 @@
+"""
+Building blocks shared by the configuration widgets.
+
+Turns ``param`` objects into form sections -- nested class attributes,
+class dictionaries, collapsible families and documentation panes -- so that the
+individual widgets compose these rather than laying out fields by hand.
+"""
+
 from __future__ import annotations
 
 from html import escape

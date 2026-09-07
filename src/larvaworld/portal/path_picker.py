@@ -1,3 +1,10 @@
+"""
+Native directory picker for the portal.
+
+Opens the operating system's own dialog, so a path can be chosen without
+typing it, and falls back gracefully where none is available.
+"""
+
 from __future__ import annotations
 
 import os

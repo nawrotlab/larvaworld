@@ -1,3 +1,10 @@
+"""
+Rendering of simulation preview frames.
+
+Runs a short simulation and captures its frames, so a configuration can be
+previewed before the full run is launched.
+"""
+
 from __future__ import annotations
 
 from math import isfinite, nan

@@ -28,6 +28,8 @@ __all__: list[str] = [
 
 
 class ReplayRun(BaseRun):
+    """A run that replays recorded tracks instead of simulating them."""
+
     def __init__(
         self,
         parameters: Any,
@@ -87,6 +89,7 @@ class ReplayRun(BaseRun):
     def _manifest_invocation(
         self, seed: int, steps: Any | None, display: bool
     ) -> dict[str, Any]:
+        """Describe how the replay was invoked."""
         return {
             "run_class": f"{type(self).__module__}:{type(self).__qualname__}",
             "resolved_parameters": json_ready(self.p),
@@ -107,6 +110,11 @@ class ReplayRun(BaseRun):
         seed: Any | None = None,
         display: bool = True,
     ):
+        """Replay the dataset to its end.
+
+        Returns:
+            The replayed dataset.
+        """
         master_seed = prepare_master_seed(seed)
         if not self._record_manifest:
             with deterministic_random_context(master_seed):
@@ -152,16 +160,23 @@ class ReplayRun(BaseRun):
 
     @property
     def configuration_text(self) -> str:
+        """The replay's configuration, rendered for display."""
         return render_configuration_text(
             "Dataset Replay configuration", self.configuration_items
         )
 
     def setup(self) -> None:
+        """Prepare the replay's agents and viewer."""
         self.draw_Nsegs = self.p.draw_Nsegs
         self.build_env(self.p.env_params)
         self.build_agents(d=self.refDataset)
 
     def build_agents(self, d: Any) -> None:
+        """Create one replayed agent per recorded track.
+
+        Args:
+            confs: The per-agent recorded data.
+        """
         s, e, c = d.data
 
         if "length" in e.columns:
@@ -219,4 +234,5 @@ class ReplayRun(BaseRun):
         self.agents.step()
 
     def end(self) -> None:
+        """Close the replay and release the viewer."""
         self.screen_manager.finalize()

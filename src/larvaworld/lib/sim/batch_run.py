@@ -209,6 +209,7 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
         self.figs = {}
 
     def _manifest_model_kwargs(self) -> dict[str, Any]:
+        """Return the model arguments recorded in the run manifest."""
         return {
             key: copy.deepcopy(value)
             for key, value in self._model_kwargs.items()
@@ -222,6 +223,7 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
         }
 
     def _resolved_child_parameters(self, sample_index: int) -> Any:
+        """Return the parameters each child run was launched with."""
         parameters = self.exp_conf.update_existingnestdict_by_suffix(
             self.sample[sample_index]
         )
@@ -251,6 +253,7 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
         child_seeds: dict[str, int],
         method: str,
     ):
+        """Describe how the batch was invoked."""
         resolved_children = []
         for run_id in self.run_ids:
             sample_index = 0 if run_id[0] is None else run_id[0]
@@ -301,6 +304,14 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
         return m.output
 
     def default_processing(self, d: Any | None = None):
+        """Reduce one child run to its objective value.
+
+        Args:
+            d: The child run's dataset.
+
+        Returns:
+            The value the optimization is scored on.
+        """
         P = self.optimization
         p = P.fit_par
         if p in d.end_ps:
@@ -320,6 +331,7 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
         return fit
 
     def end(self) -> None:
+        """Finalize the batch and store its collected results."""
         self.par_df = self.output._combine_pars()
         self.par_names = self.par_df.columns.values.tolist()
 
@@ -341,6 +353,11 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
         )
 
     def simulate(self, seed: int | None = None, **kwargs: Any):
+        """Run the whole batch.
+
+        Returns:
+            The collected results of every child run.
+        """
         return self._execute_batch(
             seed=seed,
             execute_kwargs=kwargs,
@@ -356,6 +373,11 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
         method: str,
         postprocess: bool,
     ):
+        """Execute the child runs over the parameter space.
+
+        Returns:
+            The per-run results.
+        """
         master_seed = prepare_master_seed(seed)
         child_seeds = {
             repr(run_id): derive_seed(master_seed, run_id) for run_id in self.run_ids
@@ -404,6 +426,7 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
             raise
 
     def plot_results(self) -> None:
+        """Plot the batch's objective across the parameter space."""
         p_ns = self.par_names
         target_ns = [p for p in self.par_df.columns if p not in p_ns]
         kws = {"df": self.par_df, "save_to": self.plot_dir, "show": True}
@@ -419,6 +442,11 @@ class BatchRun(reg.generators.SimConfiguration, ap.Experiment):
                     )
 
     def PI_heatmap(self, **kwargs: Any) -> None:
+        """Plot the preference index over a two-parameter space.
+
+        Args:
+            **kwargs: Forwarded to the plotting backend.
+        """
         PIs = [self.datasets[i][0].config.PI["PI"] for i in self.par_df.index]
         Lgains = self.par_df.values[:, 0].astype(int)
         Rgains = self.par_df.values[:, 1].astype(int)

@@ -436,6 +436,14 @@ def dsp_summary(
     required={"graphIDs": ["freq powerspectrum", "epochs", "stride cycle multi"]},
 )
 def kinematic_analysis(datasets: Sequence[Any], **kwargs: Any) -> Any:
+    """Build the composite kinematic analysis figure.
+
+    Args:
+        **kwargs: The datasets and layout options.
+
+    Returns:
+        The rendered figure.
+    """
     w, h = 50, 28
     P = plot.GridPlot(
         name="kinematic_analysis",

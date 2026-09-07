@@ -1,3 +1,7 @@
+"""
+Registry of the entries shown on the portal's landing page.
+"""
+
 from __future__ import annotations
 
 from larvaworld.portal.registry_types import (

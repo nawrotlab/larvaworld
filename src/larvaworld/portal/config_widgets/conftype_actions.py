@@ -1,3 +1,10 @@
+"""
+Load, save, delete and reset actions for a stored configuration.
+
+Provides the bare registry-CRUD buttons, meant to pair with a caller-supplied
+selector rather than carrying a catalog of their own.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -56,6 +63,12 @@ def _widget_size(
 
 
 class ConftypeActionsController:
+    """Load, save, delete and reset actions for one configuration type.
+
+    Provides the registry CRUD without a catalog or selector of its own, so it
+    pairs with a caller-supplied widget.
+    """
+
     def __init__(
         self,
         config_cls: type[param.Parameterized],
