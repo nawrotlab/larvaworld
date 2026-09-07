@@ -1,3 +1,12 @@
+"""
+The gut model, tracking ingestion, digestion and absorption.
+
+Food taken in by the feeder passes through the gut before it becomes reserve.
+This module models that transit, the residence time and the absorption
+efficiency that determine how much of the ingested food reaches the DEB
+reserve.
+"""
+
 from __future__ import annotations
 
 from typing import Any, Optional

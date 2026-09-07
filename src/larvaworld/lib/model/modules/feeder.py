@@ -1,3 +1,10 @@
+"""
+The feeder module, generating rhythmic feeding motions.
+
+Feeding is modelled as an oscillation whose every cycle is one attempted
+food intake, gated by the intermitter and by contact with a food source.
+"""
+
 from __future__ import annotations
 from typing import Any
 

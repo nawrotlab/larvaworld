@@ -1,3 +1,10 @@
+"""
+Base classes shared by the behavioural effector modules.
+
+Defines the effector interface, its stepwise and oscillatory specializations,
+and the adapter that lets an effector be driven by a Nengo network.
+"""
+
 from __future__ import annotations
 from typing import Any
 

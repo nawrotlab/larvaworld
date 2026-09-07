@@ -1,3 +1,10 @@
+"""
+Larva-shaped agents for the 2D robot simulation.
+
+Adapts the robot control loop to the larva body model, so that sensor-driven
+Braitenberg behaviour can be simulated with the same body as the larva agents.
+"""
+
 from __future__ import annotations
 from typing import Any
 

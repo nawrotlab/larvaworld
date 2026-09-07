@@ -1,3 +1,10 @@
+"""
+Braitenberg-style robot agents.
+
+Implements the classic sensor-to-motor crossed and uncrossed wirings, used as a
+minimal reference controller for the 2D robot simulation.
+"""
+
 from __future__ import annotations
 from typing import Any
 import random

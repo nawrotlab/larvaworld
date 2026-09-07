@@ -1,3 +1,11 @@
+"""
+Base classes shared by every larva agent.
+
+Defines the common interface of the simulated, replayed and offline larvae:
+their body geometry, their pose, and the accessors that the analysis and
+rendering layers read.
+"""
+
 from __future__ import annotations
 from typing import Any
 

@@ -1,3 +1,12 @@
+"""
+Crawler modules generating forward peristaltic motion.
+
+Provides the crawler interface and its alternative waveform implementations,
+which differ in how the stride cycle shapes the instantaneous forward
+velocity: a constant stride, a Gaussian or square velocity profile, or an
+explicit phase-dependent one.
+"""
+
 from __future__ import annotations
 from typing import Any
 

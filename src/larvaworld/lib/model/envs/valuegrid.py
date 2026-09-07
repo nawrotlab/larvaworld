@@ -1,3 +1,11 @@
+"""
+Spatial grids holding the environment's scalar fields.
+
+Provides the grid primitives backing the odor landscape, the food distribution,
+the thermal field and the wind field, together with the diffusion and decay
+that evolve them over time.
+"""
+
 from __future__ import annotations
 from typing import Any
 import math

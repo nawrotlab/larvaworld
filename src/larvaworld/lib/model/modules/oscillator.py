@@ -1,3 +1,10 @@
+"""
+Timing and oscillation primitives underlying the rhythmic modules.
+
+Provides the timer that tracks simulated time for a module, and the phase
+oscillator that the crawler, feeder and turner build their rhythms on.
+"""
+
 from __future__ import annotations
 from typing import Any
 

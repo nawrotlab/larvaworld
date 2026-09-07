@@ -1,3 +1,11 @@
+"""
+Sensors for the 2D robot simulation.
+
+Provides the light and proximity sensors used by the Braitenberg-style robot
+agents, which sample the environment along a ray from the sensor's mounting
+point rather than at the agent's centre.
+"""
+
 from __future__ import annotations
 from typing import Any
 

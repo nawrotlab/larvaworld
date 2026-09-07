@@ -1,3 +1,11 @@
+"""
+The replayed larva, driven by recorded data.
+
+Reproduces an experimentally tracked animal by replaying its stored midline and
+contour coordinates, so that recorded behaviour can be rendered and inspected
+with the same viewer as a simulation.
+"""
+
 from __future__ import annotations
 from typing import Any
 

@@ -1,3 +1,10 @@
+"""
+Client for a brain model running in a remote Brian simulator.
+
+Exchanges sensory input and motor output with an external process over a
+socket, so that a Brian network can drive a larvaworld agent.
+"""
+
 from __future__ import annotations
 from typing import Any
 import datetime
@@ -8,6 +15,14 @@ from ...ipc import BrianInterfaceMessage, Client
 
 
 class RemoteBrianModelInterface:
+    """
+    Client for a brain model running in an external Brian simulator.
+
+    Sends each agent's sensory input to the remote process and reads back the
+    motor output, identifying every agent by a generated model ID so that one
+    server can drive several agents at once.
+    """
+
     # generates random agent id prefixed with current date + time
     # format: 2023-11-06_16-30_<randomId>
     @staticmethod

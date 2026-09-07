@@ -1,3 +1,11 @@
+"""
+The brain, coupling sensory input to locomotory output.
+
+Assembles the configured sensor, memory and locomotor modules into one
+controller, and steps them in order each timestep so that the sensed
+environment drives the agent's motion.
+"""
+
 from __future__ import annotations
 
 import numpy as np

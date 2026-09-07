@@ -1,3 +1,10 @@
+"""
+Food and odor sources placed in the arena.
+
+Provides the point and patch sources the agents feed from and navigate towards,
+together with the odor they emit into the environment's value grids.
+"""
+
 from __future__ import annotations
 from typing import Any
 

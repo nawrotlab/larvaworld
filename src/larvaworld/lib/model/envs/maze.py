@@ -1,3 +1,10 @@
+"""
+Maze generation for the 2D robot simulation.
+
+Builds a randomized maze out of wall segments, used as an obstacle course for
+the robot agents.
+"""
+
 from __future__ import annotations
 from typing import Any, List
 import random

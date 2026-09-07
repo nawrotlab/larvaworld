@@ -1,3 +1,11 @@
+"""
+The locomotor, orchestrating the motion-generating modules.
+
+Combines the crawler, turner, feeder, intermitter and their crawl-bend
+coupling into a single module that produces the agent's linear and angular
+velocity each timestep.
+"""
+
 from __future__ import annotations
 
 from ...param import ClassAttr, NestedConf

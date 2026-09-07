@@ -1,3 +1,12 @@
+"""
+Intermittency modules alternating between activity and pause.
+
+Larval behaviour is organized into bouts: stretches of crawling or feeding
+separated by pauses. These modules generate that alternation, either by
+sampling the bout durations from fitted distributions or by running a
+branching process, and gate the crawler, turner and feeder accordingly.
+"""
+
 from __future__ import annotations
 from typing import Any
 

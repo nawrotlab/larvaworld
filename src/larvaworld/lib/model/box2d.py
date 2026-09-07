@@ -576,6 +576,14 @@ class LarvaBox2D(LarvaSim):
 
 
 class ArenaBox2D(Arena, world):
+    """
+    Arena backed by the Box2D physics engine.
+
+    Replaces the kinematic arena with a Box2D world, so that the segmented
+    bodies and the boundaries interact through simulated rigid-body dynamics
+    and collisions.
+    """
+
     def __init__(self, **kwargs: Any) -> None:
         Arena.__init__(self, **kwargs)
         # --- pybox2d world setup ---

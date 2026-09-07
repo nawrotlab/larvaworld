@@ -1,3 +1,10 @@
+"""
+Rotatable surface objects for the 2D robot simulation.
+
+Provides the rotatable surface primitive, its triangular specialization used to
+draw the robots, and the light source the light sensors respond to.
+"""
+
 from __future__ import annotations
 from typing import Any, Tuple
 import math

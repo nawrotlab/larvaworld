@@ -1,3 +1,11 @@
+"""
+Turner modules generating lateral bending.
+
+Provides the turner interface and its alternative implementations, from a
+constant or sinusoidal torque to a neural oscillator whose intrinsic dynamics
+produce the alternating head casts.
+"""
+
 from __future__ import annotations
 from typing import Any
 

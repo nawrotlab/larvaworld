@@ -1,3 +1,11 @@
+"""
+Memory modules implementing associative learning.
+
+Provides reinforcement-learning memories that adapt the sensory gains of the
+olfactory and touch modules from experienced reward, plus the adapter that
+delegates learning to a remote Brian network.
+"""
+
 from __future__ import annotations
 from typing import Any
 

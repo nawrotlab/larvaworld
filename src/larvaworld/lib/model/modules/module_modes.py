@@ -1,3 +1,13 @@
+"""
+Registry of the interchangeable brain and body modules.
+
+Each behavioural module (crawler, turner, interference, intermitter, feeder,
+the sensors and the memory) exists in several alternative implementations, or
+"modes". This module holds the database mapping every module type to its
+available modes and their parameter schemas, and the search space used when a
+genetic algorithm optimizes over them.
+"""
+
 from __future__ import annotations
 from typing import Any
 import itertools
@@ -31,6 +41,13 @@ __all__: list[str] = [
 
 
 class BrainModule(NestedConf):
+    """
+    Description of one interchangeable brain module.
+
+    Holds a module's available implementation modes, the short names they are
+    abbreviated to in model IDs, and the parameter schema of each.
+    """
+
     ModeShortNames = AttrDict(
         {
             "realistic": "RE",
@@ -134,6 +151,14 @@ class BrainModule(NestedConf):
 
 
 class BrainModuleDB(NestedConf):
+    """
+    Database of the available brain modules and their modes.
+
+    Maps every behavioural module -- crawler, turner, interference,
+    intermitter, feeder, olfactor, toucher, windsensor, thermosensor and
+    memory -- to the classes implementing its alternative modes.
+    """
+
     BrainModuleModes = AttrDict(
         {
             "crawler": {
@@ -377,6 +402,14 @@ class BrainModuleDB(NestedConf):
 
 
 class LarvaModuleDB(BrainModuleDB):
+    """
+    Database of every larva module, brain and body alike.
+
+    Extends the brain modules with the body, physics and energetics modules,
+    and adds the display colours and grouping used when the model is presented
+    in the GUI and the portal.
+    """
+
     LarvaModuleColors = AttrDict(
         {
             "body": "lightskyblue",
@@ -475,6 +508,14 @@ moduleDB = LarvaModuleDB()
 
 
 class SpaceDict(NestedConf):
+    """
+    The parameter search space of a genetic-algorithm optimization.
+
+    Collects the tunable parameters of the selected modules, together with
+    their ranges, and provides the sampling and mutation operations the
+    optimizer applies to them.
+    """
+
     base_model = reg.conf.Model.confID_selector()
     space_mkeys = param.ListSelector(
         default=[],

@@ -1,3 +1,10 @@
+"""
+The simulated larva, driven by a brain and a body model.
+
+Couples the behavioural modules to the segmented body, translating the
+locomotor's linear and angular velocity into motion of the body segments.
+"""
+
 from __future__ import annotations
 from typing import Any, Tuple
 

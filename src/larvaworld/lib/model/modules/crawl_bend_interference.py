@@ -1,3 +1,11 @@
+"""
+Coupling between the crawling and turning rhythms.
+
+Crawling suppresses turning within each stride cycle. These modules define how
+strong that suppression is and how it varies with stride phase, from a constant
+attenuation to an explicitly phase-dependent one.
+"""
+
 from __future__ import annotations
 from typing import Any, Tuple
 
@@ -15,6 +23,16 @@ __all__: list[str] = [
 
 
 class Coupling(param.Parameterized):
+    """
+    Base class for the crawl-to-turn suppression.
+
+    While the agent crawls, its angular motion is attenuated. Subclasses decide
+    how the attenuation varies over the stride cycle; this class holds the
+    attenuation coefficients and applies the resulting factor according to the
+    configured suppression mode, which targets the turner's oscillation, its
+    amplitude, or both.
+    """
+
     attenuation = param.Magnitude(
         0.0,
         step=0.01,
@@ -52,10 +70,25 @@ class Coupling(param.Parameterized):
 
 
 class DefaultCoupling(Coupling):
+    """
+    Constant crawl-to-turn suppression.
+
+    Applies the base attenuation throughout the stride cycle, with no
+    phase-dependent relief.
+    """
+
     pass
 
 
 class SquareCoupling(Coupling):
+    """
+    Crawl-to-turn suppression relieved over a phase interval.
+
+    Suppression is lifted by the maximum relief coefficient whenever the driving
+    oscillator's phase falls inside the configured interval, giving a square
+    relief profile over the stride cycle.
+    """
+
     crawler_phi_range = PhaseRange(
         label="crawler suppression relief phase interval",
         doc="CRAWLER phase range for TURNER suppression lift.",
@@ -77,6 +110,14 @@ class SquareCoupling(Coupling):
 
 
 class PhasicCoupling(Coupling):
+    """
+    Crawl-to-turn suppression varying smoothly with stride phase.
+
+    Relief follows a Gaussian centred on the phase of minimum suppression, so
+    that the attenuation eases in and out over the stride cycle rather than
+    switching abruptly. The result is clipped to the unit range.
+    """
+
     max_attenuation_phase = Phase(
         3.4,
         label="max relief phase",

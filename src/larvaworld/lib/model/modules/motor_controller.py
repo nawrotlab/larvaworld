@@ -1,3 +1,10 @@
+"""
+Sensorimotor coupling for the 2D robot agents.
+
+Provides the controller mapping a sensor reading onto a motor command, and the
+actuator that smooths that command over time.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -9,6 +16,13 @@ __all__: list[str] = [
 
 
 class MotorController:
+    """
+    Maps a sensor reading onto a motor command.
+
+    Scales the sensor's value by a coefficient and adds a baseline, then drives
+    an :class:`Actuator` that smooths the result over time.
+    """
+
     def __init__(
         self,
         sensor: Any,
@@ -31,5 +45,12 @@ class MotorController:
 
 
 class Actuator:
+    """
+    Smooths a motor command over successive timesteps.
+
+    Accumulates the commanded values and decays them, so that the driven motor
+    responds gradually rather than tracking the sensor instantaneously.
+    """
+
     def __init__(self) -> None:
         self.value: float = 0.0

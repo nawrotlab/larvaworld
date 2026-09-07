@@ -1,3 +1,10 @@
+"""
+Base class for every object in a simulation.
+
+Defines the identity, grouping and lifecycle shared by agents, sources and
+environment objects, and their registration with the simulation model.
+"""
+
 from __future__ import annotations
 
 from typing import Any

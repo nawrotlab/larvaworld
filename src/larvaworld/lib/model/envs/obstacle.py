@@ -1,3 +1,10 @@
+"""
+Obstacle geometry for the 2D robot simulation.
+
+Provides the wall and box primitives that the robots' proximity sensors detect
+and that block their motion.
+"""
+
 from __future__ import annotations
 from typing import Any
 import numpy as np

@@ -1,3 +1,12 @@
+"""
+Sensory modules translating environmental input into neural activation.
+
+Provides the sensor base class and the modality-specific implementations for
+olfaction, touch, wind and temperature. Sensors report a perceived change in
+their stimulus rather than its absolute level, and feed that signal to the
+locomotory modules.
+"""
+
 from __future__ import annotations
 from typing import Any
 

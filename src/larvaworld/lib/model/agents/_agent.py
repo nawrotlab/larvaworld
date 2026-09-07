@@ -1,3 +1,10 @@
+"""
+Base classes for all simulation agents.
+
+Defines the minimal agent interface, its placement in space and its
+registration with the simulation model.
+"""
+
 from __future__ import annotations
 from typing import Any
 

@@ -1,3 +1,10 @@
+"""
+The arena and its spatial boundaries.
+
+Defines the experimental space the agents move in, its geometry and dimensions,
+and the border objects that constrain them.
+"""
+
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 import agentpy
@@ -18,6 +25,13 @@ __all__: list[str] = [
 
 
 class ViewableBoundedArea(SpatialEntity, BoundedArea):
+    """
+    A bounded area that can be drawn in the simulation viewer.
+
+    Combines the spatial extent of :class:`BoundedArea` with the rendering
+    interface of :class:`SpatialEntity`, adding no behaviour of its own.
+    """
+
     pass
 
 
