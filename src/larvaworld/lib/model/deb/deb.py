@@ -323,6 +323,13 @@ class DEB_basic(DEB_model):
         gut_params: Dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> None:
+        """Build the model, its gut and its life history.
+
+        Args:
+            species: The AmP species whose parameter set is loaded.
+            save_dict: Whether to record the state over time.
+            **kwargs: Model parameters overriding the species defaults.
+        """
         super().__init__(species=species, **kwargs)
 
         self._state = de.initial_state(self.pars)
@@ -675,6 +682,13 @@ class DEB(DEB_basic):
         intermitter: Any = None,
         **kwargs: Any,
     ) -> None:
+        """Build the model together with its behavioural coupling.
+
+        Args:
+            save_dict: Whether to record the state over time.
+            save_to: The directory the recorded trajectory is written to.
+            **kwargs: Model parameters, forwarded to the parent class.
+        """
         super().__init__(save_dict=save_dict, **kwargs)
         self.set_intermitter(base_hunger, intermitter)
         self.save_to = save_to
@@ -899,6 +913,17 @@ class DEB(DEB_basic):
         substrate: Substrate = Substrate(type="standard"),
         **kwargs: Any,
     ) -> Dict[str, Any]:
+        """Run a model over a reference dataset's conditions and record it.
+
+        Args:
+            refID: The reference dataset supplying the substrate and
+                the behavioural configuration.
+            id: Label for the recorded trajectory.
+            **kwargs: Model parameters.
+
+        Returns:
+            The recorded state over time.
+        """
         from ... import reg
         from ..modules.intermitter import OfflineIntermitter
 

@@ -50,6 +50,12 @@ class LarvaReplay(Larva):
     __displayname__ = "Replay larva"
 
     def __init__(self, data: Any, **kwargs: Any) -> None:
+        """Build the replayed larva from its recorded track.
+
+        Args:
+            data: The recorded timeseries for this animal.
+            **kwargs: Larva attributes, forwarded to the parent class.
+        """
         self.data = data
         fo0 = self.data.front_orientation[0]
         if np.isnan(fo0):

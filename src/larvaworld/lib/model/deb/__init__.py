@@ -16,6 +16,7 @@ _LOADED: bool = False
 
 
 def _load_all() -> None:
+    """Import every submodule and re-export its public names."""
     global _LOADED
     if _LOADED:
         return
@@ -34,6 +35,20 @@ def _load_all() -> None:
 
 
 def __getattr__(name: str) -> Any:
+    """Resolve a public name by importing its module on first access.
+
+    Keeps package import lightweight by deferring the submodule imports until
+    one of their exported names is actually used.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved object.
+
+    Raises:
+        AttributeError: If no submodule exports that name.
+    """
     if not _LOADED:
         _load_all()
     if name in globals():

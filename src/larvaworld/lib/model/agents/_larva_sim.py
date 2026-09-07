@@ -137,6 +137,15 @@ class LarvaSim(LarvaMotile, BaseController):
         sensorimotor: Any = None,
         **kwargs: Any,
     ) -> None:
+        """Build the simulated larva, its body and its physics.
+
+        Args:
+            physics: The body-physics configuration.
+            Box2D: The Box2D configuration, when the physics engine is used.
+            sensorimotor: The sensorimotor configuration, when the larva
+                carries proximity sensors.
+            **kwargs: Larva attributes, forwarded to the parent class.
+        """
         BaseController.__init__(self, **physics)
         LarvaMotile.__init__(self, **kwargs)
 

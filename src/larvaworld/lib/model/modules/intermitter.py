@@ -317,6 +317,19 @@ class Intermitter(Timer):
         feed_motion: bool = False,
         on_food: bool = False,
     ) -> str | None:
+        """Advance the behavioural state by one timestep.
+
+        The first call starts a run. Exploration and exploitation alternate
+        first when feeding bouts are enabled, then crawling and pausing.
+
+        Args:
+            stride_completed: Whether a stride completed this timestep.
+            feed_motion: Whether a feeding motion completed this timestep.
+            on_food: Whether the agent sits on food.
+
+        Returns:
+            The behavioural state after the update.
+        """
         if self.cur_state is None:
             self.trigger_locomotion()
         if self.feed_bouts:
@@ -472,6 +485,19 @@ class OfflineIntermitter(Intermitter):
         feed_motion: bool | None = None,
         on_food: bool = True,
     ) -> str | None:
+        """Advance the intermitter without a simulated body.
+
+        Stride and feeding completions are derived from the fixed oscillation
+        periods rather than reported by the crawler and feeder.
+
+        Args:
+            stride_completed: Overrides the derived stride completion.
+            feed_motion: Overrides the derived feeding completion.
+            **kwargs: Forwarded to the state update.
+
+        Returns:
+            The behavioural state after the update.
+        """
         self.count_time()
         if feed_motion is None:
             if self.feed_ticks is None:

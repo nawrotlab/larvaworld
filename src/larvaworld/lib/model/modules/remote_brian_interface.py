@@ -27,6 +27,12 @@ class RemoteBrianModelInterface:
     # format: 2023-11-06_16-30_<randomId>
     @staticmethod
     def getRandomModelId() -> str:
+        """Generate a model instance ID from the current time and a random suffix.
+
+        Returns:
+            The generated identifier.
+        """
+
         def numberToBase(n, b):
             if n == 0:
                 return [0]
@@ -55,6 +61,13 @@ class RemoteBrianModelInterface:
         server_port: int = 5795,
         remote_dt: int = 100,
     ) -> None:
+        """Build the client.
+
+        Args:
+            server_host: The remote server host.
+            server_port: The remote server port.
+            remote_dt: The remote simulation step in milliseconds.
+        """
         self.server_host = server_host
         self.server_port = server_port
         self.t_sim = int(remote_dt)
@@ -70,6 +83,18 @@ class RemoteBrianModelInterface:
     ):
         # t_sim: duration of remote model simulation in ms
         # warmup: duration of remote model warmup in ms
+        """Run one step of the remote model and return its response.
+
+        Args:
+            sim_id: The simulation identifier.
+            model_instance_id: The agent's model instance.
+            t_sim: The step duration in milliseconds.
+            t_warmup: The warm-up duration in milliseconds.
+            **kwargs: The sensory input sent to the model.
+
+        Returns:
+            The model response, carrying the requested output rates.
+        """
         if model_instance_id not in self.step_cache:
             self.step_cache[model_instance_id] = 0
 

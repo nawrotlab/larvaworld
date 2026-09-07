@@ -52,6 +52,14 @@ class Sensor2:
     def __init__(
         self, robot: Any, delta_direction: float, saturation_value: float, error: float
     ) -> None:
+        """Build the sensor.
+
+        Args:
+            robot: The robot carrying the sensor.
+            delta_direction: The sensor heading, relative to the robot.
+            saturation_value: The reading the sensor saturates at.
+            error: The relative measurement noise.
+        """
         self.robot = robot
         self.delta_direction = delta_direction
         self.saturation_value = saturation_value
@@ -60,10 +68,12 @@ class Sensor2:
 
     def get_value(self) -> float:
         # defined by subclasses
+        """Return the sensor reading. The base sensor always reads zero."""
         return 0.0
 
     def draw(self) -> None:
         # defined by subclasses
+        """Render the sensor. The base sensor draws nothing."""
         return None
 
 
@@ -97,9 +107,25 @@ class LightSensor(Sensor2):
         error: float,
         scene: Any,
     ):
+        """Build the light sensor.
+
+        Args:
+            robot: The robot carrying the sensor.
+            delta_direction: The sensor heading, relative to the robot.
+            saturation_value: The reading the sensor saturates at.
+            error: The relative measurement noise.
+        """
         super().__init__(robot, delta_direction, saturation_value, error)
 
     def get_value(self) -> float:
+        """Return the light reaching the sensor.
+
+        The contribution of each source falls off with distance and with the
+        angle between the sensor heading and the source.
+
+        Returns:
+            The saturated, noisy reading.
+        """
         dir_sensor = self.robot.direction + self.delta_direction
         total_value = 0
 
@@ -134,6 +160,7 @@ class LightSensor(Sensor2):
             return total_value_with_error
 
     def draw(self) -> None:
+        """Draw the sensor as a ray along its heading."""
         dir_sensor = self.robot.direction + self.delta_direction
         x_sensor_eol = self.robot.x + self.LENGTH_SENSOR_LINE * cos(dir_sensor)
         y_sensor_eol = self.robot.y + self.LENGTH_SENSOR_LINE * -sin(dir_sensor)
@@ -178,6 +205,16 @@ class ProximitySensor(Sensor2):
         max_distance: int,
         collision_distance: int = 12,
     ) -> None:
+        """Build the proximity sensor.
+
+        Args:
+            robot: The robot carrying the sensor.
+            delta_direction: The sensor heading, relative to the robot.
+            saturation_value: The reading the sensor saturates at.
+            error: The relative measurement noise.
+            max_distance: The range beyond which obstacles are not detected.
+            collision_distance: The distance counted as a collision.
+        """
         super().__init__(robot, delta_direction, saturation_value, error)
         self.max_distance = max_distance
         self.collision_distance = collision_distance
@@ -188,6 +225,15 @@ class ProximitySensor(Sensor2):
     def get_value(
         self, pos: list[float] | None = None, direction: float | None = None
     ) -> float:
+        """Return the proximity of the nearest obstacle along the ray.
+
+        Args:
+            pos: The ray origin. Defaults to the robot position.
+            direction: The robot heading. Defaults to the robot heading.
+
+        Returns:
+            The saturated, noisy reading, zero when nothing is in range.
+        """
         if pos is None:
             pos = [self.robot.x, self.robot.y]
 
@@ -221,6 +267,12 @@ class ProximitySensor(Sensor2):
     def draw(
         self, pos: list[float] | None = None, direction: float | None = None
     ) -> None:
+        """Draw the sensor as a ray along its heading.
+
+        Args:
+            pos: The ray origin. Defaults to the robot position.
+            direction: The robot heading. Defaults to the robot heading.
+        """
         if pos is None:
             pos = [self.robot.x, self.robot.y]
         if direction is None:

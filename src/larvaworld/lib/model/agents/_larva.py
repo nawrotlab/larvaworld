@@ -51,6 +51,14 @@ class Larva(MobileAgent):
     def __init__(
         self, model: Any | None = None, unique_id: str | None = None, **kwargs: Any
     ) -> None:
+        """Build the larva.
+
+        Args:
+            model: The simulation model the larva belongs to.
+            unique_id: The larva's identifier. Generated from the model when
+                omitted.
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         if unique_id is None and model:
             unique_id = model.next_id(type="Larva")
         super().__init__(unique_id=unique_id, model=model, **kwargs)
@@ -167,6 +175,11 @@ class LarvaContoured(Larva, Contour):
     __displayname__ = "Contoured larva"
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the contoured larva.
+
+        Args:
+            **kwargs: Larva attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     def draw(self, v: Any, **kwargs: Any) -> None:
@@ -221,6 +234,11 @@ class LarvaSegmented(Larva, SegmentedBodySensored):
     __displayname__ = "Segmented larva"
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the segmented larva and register its display colour.
+
+        Args:
+            **kwargs: Larva attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.set_default_color(self.default_color)
 
@@ -332,6 +350,16 @@ class LarvaMotile(LarvaSegmented):
         body: dict[str, Any],
         **kwargs: Any,
     ) -> None:
+        """Build the behaving larva and its brain and energetics.
+
+        Args:
+            brain: The brain configuration.
+            energetics: The energetics configuration, or None to run without
+                a DEB model.
+            life_history: The life history preceding the simulation.
+            body: The body configuration.
+            **kwargs: Larva attributes, forwarded to the parent class.
+        """
         super().__init__(**body, **kwargs)
         self.carried_objects = []
         self.brain = self.build_brain(brain)
@@ -457,6 +485,15 @@ class LarvaMotile(LarvaSegmented):
         # self.adjust_body_vertices()
 
     def get_feed_success(self, t: float) -> int:
+        """Report the outcome of this timestep's feeding motion.
+
+        Args:
+            t: The current time. Accepted for signature compatibility.
+
+        Returns:
+            1 for a feeding motion on food, -1 for one off food, and 0 when no
+            feeding motion occurred.
+        """
         if self.feeder_motion:
             if self.on_food:
                 return 1
@@ -467,6 +504,7 @@ class LarvaMotile(LarvaSegmented):
 
     @property
     def on_food_dur_ratio(self) -> float:
+        """The fraction of elapsed time the larva has spent on food."""
         return (
             self.cum_food_detected * self.model.dt / self.cum_dur
             if self.cum_dur != 0
@@ -475,13 +513,23 @@ class LarvaMotile(LarvaSegmented):
 
     @property
     def on_food(self) -> bool:
+        """Whether the larva currently sits on a food source."""
         return self.food_detected is not None
 
     def get_on_food(self, t: float) -> bool:
+        """Report whether the larva sits on food.
+
+        Args:
+            t: The current time. Accepted for signature compatibility.
+
+        Returns:
+            True while the larva is on a food source.
+        """
         return self.on_food
 
     @property
     def scaled_amount_eaten(self) -> float:
+        """The food eaten so far, relative to body mass."""
         return self.amount_eaten / self.mass
 
     def resolve_carrying(self, food: Any | None) -> None:
@@ -592,6 +640,7 @@ class LarvaMotile(LarvaSegmented):
         self.set_color(color)
 
     def sense(self) -> None:
+        """Sample the environment. Subclasses that sense override this."""
         pass
 
     def step(self) -> None:
@@ -646,5 +695,13 @@ class LarvaMotile(LarvaSegmented):
             pass
 
     def prepare_motion(self, lin: float, ang: float) -> None:
+        """Turn the locomotor's output into body motion.
+
+        The base larva does nothing; the body implementations override this.
+
+        Args:
+            lin: The linear velocity.
+            ang: The angular velocity.
+        """
         pass
         # Overriden by subclasses

@@ -40,6 +40,11 @@ class LarvaOffline(LarvaRobot):
     """
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the offline larva with its pose aligned to its orientation.
+
+        Args:
+            **kwargs: Larva attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.fo = self.orientation
         self.ro = self.orientation

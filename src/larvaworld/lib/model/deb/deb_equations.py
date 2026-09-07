@@ -339,12 +339,18 @@ class DEBPars:
     metadata: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        """Validate the parameters and derive the compound ones."""
         self._validate()
         self._derive()
 
     # -- validation ----------------------------------------------------------
 
     def _validate(self) -> None:
+        """Check that the parameters lie in their admissible ranges.
+
+        Raises:
+            ValueError: If any parameter is outside its valid range.
+        """
         if not 0.0 < self.kap < 1.0:
             raise ValueError(f"kap must lie in (0, 1); got {self.kap!r}")
         if not 0.0 < self.kap_V <= 1.0:
@@ -387,6 +393,11 @@ class DEBPars:
     # -- compound parameters (parscomp_st.m + addchem.m) ----------------------
 
     def _derive(self) -> None:
+        """Fill in the parameters that follow from the primary ones.
+
+        Densities default to the structural density, and the compound rates
+        and lengths are computed from the primary parameters.
+        """
         # addchem.m: the other specific densities default to that of structure.
         for name in ("d_X", "d_E", "d_P"):
             if getattr(self, name) is None:
@@ -785,12 +796,15 @@ class DEBState:
 
     @property
     def alive(self) -> bool:
+        """Whether reserve remains, so the animal has not starved."""
         return self.E > 0.0
 
     def s_M(self) -> float:
+        """The metabolic acceleration factor at the current length."""
         return acceleration(self.L, self.L_b, self.L_p)
 
     def copy(self) -> "DEBState":
+        """Return an independent copy of this state."""
         return replace(self)
 
 
@@ -893,6 +907,7 @@ class Trajectory:
             return np.where(self.V > 0, self.E / (self.V * pars.E_m), np.nan)
 
     def to_dict(self) -> dict[str, Any]:
+        """Return the state variables as a plain dictionary."""
         return {
             "t": self.t,
             "E": self.E,
@@ -905,6 +920,15 @@ class Trajectory:
 
 
 def _resolve_f(f: Any, t: float) -> float:
+    """Evaluate the functional response, which may vary over time.
+
+    Args:
+        f: A constant scaled functional response, or a callable of age.
+        t: The current age in days.
+
+    Returns:
+        The functional response at that age.
+    """
     return float(f(t)) if callable(f) else float(f)
 
 
@@ -957,6 +981,17 @@ def _stop_reached(
     until_stage: Optional[str],
     until_maturity: Optional[float],
 ) -> bool:
+    """Report whether an integration stop condition has been met.
+
+    Args:
+        state: The current model state.
+        until_age: Stop once this age in days is reached.
+        until_stage: Stop once this life stage is entered.
+        until_mass: Stop once this wet weight is reached.
+
+    Returns:
+        True when any of the given conditions holds.
+    """
     if until_age is not None and state.age >= until_age:
         return True
     if until_stage is not None and state.stage == until_stage:
@@ -1138,10 +1173,12 @@ class LifeHistory:
 
     @property
     def age_at_pupation(self) -> Optional[float]:
+        """Age at pupation in days, or None if it was not reached."""
         return self.events.get(Stage.PUPA)
 
     @property
     def age_at_emergence(self) -> Optional[float]:
+        """Age at adult emergence in days, or None if it was not reached."""
         return self.events.get(Stage.IMAGO)
 
     @property
@@ -1374,6 +1411,14 @@ def format_life_history(lh: LifeHistory) -> str:
 
 
 def _new_recorder(state: DEBState) -> dict[str, list]:
+    """Open a trajectory recorder seeded with the initial state.
+
+    Args:
+        state: The state to record as the first sample.
+
+    Returns:
+        The recorder, keyed by state variable.
+    """
     return {
         "t": [state.age],
         "E": [state.E],
@@ -1385,6 +1430,15 @@ def _new_recorder(state: DEBState) -> dict[str, list]:
 
 
 def _finish(rec: dict[str, list], events: dict[str, float]) -> Trajectory:
+    """Close a recorder into an immutable trajectory.
+
+    Args:
+        rec: The recorded state variables.
+        events: The age at which each life stage was entered.
+
+    Returns:
+        The finished trajectory.
+    """
     return Trajectory(
         t=np.asarray(rec["t"], dtype=float),
         E=np.asarray(rec["E"], dtype=float),
@@ -1408,6 +1462,21 @@ def _run_stepped(
     max_steps: int,
     record_every: int,
 ) -> tuple[DEBState, Trajectory]:
+    """Integrate the model with a fixed-step explicit scheme.
+
+    Args:
+        pars: The parameter set.
+        state: The initial state, advanced in place.
+        dt: The integration step in days.
+        f: The scaled functional response, constant or a callable of age.
+        T: The ambient temperature in Kelvin, if it differs from the reference.
+        until_age: Stop once this age is reached.
+        until_stage: Stop once this life stage is entered.
+        until_mass: Stop once this wet weight is reached.
+
+    Returns:
+        The recorded trajectory.
+    """
     rec = _new_recorder(state)
     events: dict[str, float] = {state.stage: state.age}
 
@@ -1450,6 +1519,24 @@ def _run_closed(
     until_stage: Optional[str],
     until_maturity: Optional[float],
 ) -> tuple[DEBState, Trajectory]:
+    """Integrate the model with an adaptive ODE solver.
+
+    Stage transitions are located as solver events, so they are resolved to
+    solver tolerance rather than to the step size, unlike the stepped engine.
+
+    Args:
+        pars: The parameter set.
+        state: The initial state, advanced in place.
+        dt: The output sampling interval in days.
+        f: The scaled functional response, constant or a callable of age.
+        T: The ambient temperature in Kelvin, if it differs from the reference.
+        until_age: Stop once this age is reached.
+        until_stage: Stop once this life stage is entered.
+        until_mass: Stop once this wet weight is reached.
+
+    Returns:
+        The recorded trajectory.
+    """
     from scipy.integrate import solve_ivp  # lazy: keeps module import cheap
 
     TC = temperature_correction(pars, T)

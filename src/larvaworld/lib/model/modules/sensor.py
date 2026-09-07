@@ -491,6 +491,15 @@ class OSNOlfactor(Olfactor):
         remote_warmup: int = 500,
         **kwargs: Any,
     ) -> None:
+        """Build the olfactory sensor backed by a remote OSN model.
+
+        Args:
+            response_key: The remote model output read as the sensory
+                response.
+            server_host: The remote server host.
+            server_port: The remote server port.
+            **kwargs: Sensor parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.brianInterface = RemoteBrianModelInterface(
             server_host, server_port, remote_dt

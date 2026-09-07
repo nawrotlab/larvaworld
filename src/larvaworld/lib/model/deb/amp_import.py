@@ -56,6 +56,12 @@ class ParameterTableParser(HTMLParser):
     """Collect the rows of one HTML table, selected by ``id`` (default ``"par"``)."""
 
     def __init__(self, table_id: Optional[str] = "par") -> None:
+        """Build the parser.
+
+        Args:
+            table_id: The HTML id of the table to extract. When None,
+                the first table encountered is used.
+        """
         super().__init__()
         self.table_id = table_id
         self._in_table = False
@@ -66,6 +72,12 @@ class ParameterTableParser(HTMLParser):
         self.rows: list[list[str]] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, Optional[str]]]) -> None:
+        """Track entry into the target table, its rows and its cells.
+
+        Args:
+            tag: The element name.
+            attrs: Its attributes.
+        """
         tag = tag.lower()
         if tag == "table":
             attr = {k.lower(): (v or "") for k, v in attrs}
@@ -79,10 +91,20 @@ class ParameterTableParser(HTMLParser):
             self._cell_chunks = []
 
     def handle_data(self, data: str) -> None:
+        """Accumulate text while inside a table cell.
+
+        Args:
+            data: The text encountered.
+        """
         if self._in_cell:
             self._cell_chunks.append(data)
 
     def handle_endtag(self, tag: str) -> None:
+        """Close the current cell, row or table.
+
+        Args:
+            tag: The element name.
+        """
         tag = tag.lower()
         if self._in_table and self._in_tr and tag in ("td", "th"):
             self._in_cell = False
@@ -101,6 +123,7 @@ class MetadataParser(HTMLParser):
     """Extract the species from ``<title>`` and the model type from the ``<h2>``."""
 
     def __init__(self) -> None:
+        """Build the parser with empty metadata."""
         super().__init__()
         self._in_title = False
         self._in_h2 = False
@@ -110,18 +133,34 @@ class MetadataParser(HTMLParser):
         self.typified_model: Optional[str] = None
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, Optional[str]]]) -> None:
+        """Track entry into the title and heading elements.
+
+        Args:
+            tag: The element name.
+            attrs: Its attributes.
+        """
         if tag.lower() == "title":
             self._in_title, self._title_chunks = True, []
         elif tag.lower() == "h2":
             self._in_h2, self._h2_chunks = True, []
 
     def handle_data(self, data: str) -> None:
+        """Accumulate the title and heading text.
+
+        Args:
+            data: The text encountered.
+        """
         if self._in_title:
             self._title_chunks.append(data)
         elif self._in_h2:
             self._h2_chunks.append(data)
 
     def handle_endtag(self, tag: str) -> None:
+        """Store the completed title or heading.
+
+        Args:
+            tag: The element name.
+        """
         if tag.lower() == "title":
             self._in_title = False
             title = "".join(self._title_chunks).strip()
@@ -162,6 +201,14 @@ def _coerce_free(text: str) -> Optional[int]:
 
 
 def _rows_to_params(rows: list[list[str]]) -> list[dict[str, Any]]:
+    """Convert scraped table rows into parameter records.
+
+    Args:
+        rows: The raw table rows, header included.
+
+    Returns:
+        One record per parameter row, skipping the header.
+    """
     params: list[dict[str, Any]] = []
     for row in rows:
         if not row or row[0].strip().lower() == "symbol" or len(row) < 5:
@@ -179,6 +226,14 @@ def _rows_to_params(rows: list[list[str]]) -> list[dict[str, Any]]:
 
 
 def _rows_to_data_predictions(rows: list[list[str]]) -> list[dict[str, Any]]:
+    """Convert scraped table rows into data-prediction records.
+
+    Args:
+        rows: The raw table rows, header included.
+
+    Returns:
+        One record per prediction row, skipping the header.
+    """
     items: list[dict[str, Any]] = []
     for row in rows:
         if not row or row[0].strip().lower() == "data" or len(row) < 4:

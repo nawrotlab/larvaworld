@@ -71,6 +71,14 @@ class Brain(NestedConf):
         dt: float | None = None,
         **kwargs: Any,
     ) -> None:
+        """Build the brain and its sensory modalities.
+
+        Args:
+            conf: The brain configuration.
+            agent: The agent this brain drives.
+            dt: The simulation timestep in seconds.
+            **kwargs: Brain attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.agent = agent
         if dt is None:
@@ -284,6 +292,13 @@ class DefaultBrain(Brain):
         dt: float | None = None,
         **kwargs: Any,
     ) -> None:
+        """Build the brain, its locomotor and its sensors.
+
+        Args:
+            conf: The brain configuration.
+            agent: The agent this brain drives.
+            **kwargs: Brain attributes, forwarded to the parent class.
+        """
         if dt is None:
             dt = agent.model.dt
         kws = {"dt": dt, "brain": self}

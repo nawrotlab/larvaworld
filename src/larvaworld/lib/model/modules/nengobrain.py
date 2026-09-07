@@ -36,6 +36,14 @@ class NengoBrain(Network, Brain):
         dt: float | None = None,
         **kwargs: Any,
     ) -> None:
+        """Build the Nengo network and its probes.
+
+        Args:
+            conf: The brain configuration.
+            agent: The agent this brain drives.
+            dt: The simulation timestep in seconds.
+            **kwargs: Forwarded to the Nengo network.
+        """
         super().__init__(**kwargs)
         Brain.__init__(self, conf=conf, agent=agent, dt=dt)
         self.food_feedback = False
@@ -45,6 +53,7 @@ class NengoBrain(Network, Brain):
         self.Nsteps = int(self.dt / self.sim.dt)
 
     def build(self) -> None:
+        """Wire the behavioural modules into Nengo ensembles and connections."""
         o = self.olfactor
         ws = self.windsensor
         cra = self.locomotor.crawler
@@ -342,12 +351,28 @@ class NengoBrain(Network, Brain):
                 self.dict = None
 
     def update_dict(self, data: Any) -> None:
+        """Append this step's probe means to the recorded trajectory.
+
+        Args:
+            data: The Nengo simulation data holding the probe values.
+        """
         for k, p in self.probes.items():
             self.dict[k].append(np.mean(data[p][-self.Nsteps :], axis=0))
 
     def step(
         self, pos: Any, length: float, on_food: bool = False
     ) -> tuple[float, float, bool]:
+        """Advance the network and translate its output into motion.
+
+        Args:
+            pos: The agent position.
+            length: The agent body length.
+            on_food: Whether the agent sits on food.
+
+        Returns:
+            The linear velocity, the angular velocity, and whether a feeding
+            motion completed this timestep.
+        """
         L = self.locomotor
         N = self.Nsteps
         MS = self.modalities
@@ -385,5 +410,10 @@ class NengoBrain(Network, Brain):
         return lin, ang, feed_motion
 
     def save_dicts(self, path: str) -> None:
+        """Write the recorded probe trajectory to disk.
+
+        Args:
+            path: The destination directory.
+        """
         if self.dict is not None:
             util.save_dict(self.dict, f"{path}/{self.agent.unique_id}.txt")

@@ -379,9 +379,25 @@ class RLTouchMemory(RLmemory):
     modality = param.Selector(default="touch", readonly=True)
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the touch memory.
+
+        Args:
+            **kwargs: Memory parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     def condition(self, dx: dict[str, int]) -> bool:
+        """Act on contact changes rather than on a fixed interval.
+
+        Gaining contact is rewarded and losing it is penalized, each scaled by
+        how long the current action has been in force.
+
+        Args:
+            dx: The perceived change at each touch sensor.
+
+        Returns:
+            True when contact was gained or lost this timestep.
+        """
         if 1 in dx.values() or -1 in dx.values():
             if 1 in dx.values():
                 self.rewardSum = 1 / self.iterator
@@ -434,6 +450,11 @@ class RemoteBrianModelMemory(Memory):
         server_port: int = 5795,
         **kwargs: Any,
     ) -> None:
+        """Build the memory and its connection to the remote Brian server.
+
+        Args:
+            **kwargs: Memory parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.server_host = server_host
         self.server_port = server_port
@@ -453,6 +474,15 @@ class RemoteBrianModelMemory(Memory):
     ) -> float:
         # T: duration of remote model simulation in ms
         # warmup: duration of remote model warmup in ms
+        """Run one step of the remote learning model.
+
+        Args:
+            dx: The perceived change in each stimulus.
+            reward: Whether the agent is rewarded this timestep.
+
+        Returns:
+            The gains returned by the remote model.
+        """
         msg = BrianInterfaceMessage(
             self.sim_id,
             model_instance_id,
@@ -490,6 +520,15 @@ class RemoteBrianModelMemory(Memory):
         t_warmup: int = 0,
     ):
         # Default message arguments
+        """Advance the memory using the remote model's output.
+
+        Args:
+            reward: Whether the agent is rewarded this timestep.
+            **kwargs: Carries the perceived stimulus change.
+
+        Returns:
+            The gain to apply to each stimulus.
+        """
         if dx is None:
             dx = {}
         msg_kws0 = {

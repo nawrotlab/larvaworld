@@ -1108,6 +1108,11 @@ class SpaceDict(NestedConf):
 
 @funcs.stored_conf("Model")
 def Model_dict():
+    """Build the registry of predefined larva model configurations.
+
+    Returns:
+        Every stored model configuration, keyed by model ID.
+    """
     MD = moduleDB
     LMs = MD.LocoModsBasic
 

@@ -170,6 +170,11 @@ class OrientedAgent(OrientedPoint, PointAgent):
     __displayname__ = "Oriented agent"
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the agent with an orientation.
+
+        Args:
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
 
@@ -193,6 +198,11 @@ class MobilePointAgent(MobilePoint, PointAgent):
     __displayname__ = "Mobile point agent"
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the movable point agent.
+
+        Args:
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
 
@@ -221,6 +231,11 @@ class MobileAgent(MobileVector, PointAgent):
     __displayname__ = "Mobile agent"
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the movable oriented agent.
+
+        Args:
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     @property

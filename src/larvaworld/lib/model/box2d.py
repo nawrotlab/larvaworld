@@ -77,6 +77,13 @@ class SegmentBox2D(ShapeMobile):
     def __init__(
         self, space: world, physics_pars: dict[str, Any], **kwargs: Any
     ) -> None:
+        """Build the body segment as a Box2D dynamic body.
+
+        Args:
+            space: The Box2D world the segment lives in.
+            physics_pars: The physical properties of the segment.
+            **kwargs: Segment attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self._body: dynamicBody = space.CreateDynamicBody(
             position=self.pos,
@@ -264,6 +271,13 @@ class LarvaBox2D(LarvaSim):
     segs = param.List(item_type=SegmentBox2D, doc="The body segments.")
 
     def __init__(self, Box2D: dict[str, Any], **kwargs: Any) -> None:
+        """Build the Box2D-backed larva.
+
+        Args:
+            Box2D: The Box2D configuration, including the joint types
+                linking the body segments.
+            **kwargs: Larva attributes, forwarded to the parent class.
+        """
         self.Box2D_params = Box2D
         super().__init__(**kwargs)
 
@@ -585,6 +599,11 @@ class ArenaBox2D(Arena, world):
     """
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the arena together with its Box2D world and ground body.
+
+        Args:
+            **kwargs: Arena attributes, forwarded to the parent class.
+        """
         Arena.__init__(self, **kwargs)
         # --- pybox2d world setup ---
         # Create the world
