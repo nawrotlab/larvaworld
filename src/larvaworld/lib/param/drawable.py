@@ -1,3 +1,11 @@
+"""
+Mixins that make an object renderable in the simulation viewer.
+
+Provides the base viewable, its toggleable and line-shaped variants, and the
+contour primitive, each carrying the colour and visibility state the renderer
+reads.
+"""
+
 from __future__ import annotations
 from typing import Any
 

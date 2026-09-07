@@ -1,3 +1,11 @@
+"""
+Reusable groups of related configuration parameters.
+
+Each class bundles the parameters that belong together -- framerate, spatial
+resolution, simulation timing, runtime paths and output options -- so that the
+datasets, simulations and portal apps share one definition of them.
+"""
+
 from __future__ import annotations
 from typing import Any, Optional, Sequence, Tuple
 

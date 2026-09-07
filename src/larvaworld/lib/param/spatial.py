@@ -1,3 +1,11 @@
+"""
+Spatial parameter types: positions, orientations and extents.
+
+Defines the point, oriented point, vector and area parameters that place
+objects in the arena, together with the mobility mixins that let them move and
+rotate.
+"""
+
 from __future__ import annotations
 from typing import Any, Optional, Sequence, Tuple
 

@@ -48,6 +48,13 @@ class UnitParam(param.Parameter):
         return units.Unit(str(value))
 
     def __init__(self, default=None, doc: Optional[str] = None, **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            doc: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         default = self._normalize_unit(default)
         if doc is None:
             doc = "Pint unit parameter"
@@ -116,6 +123,13 @@ class UnitParam(param.Parameter):
 
 class TimeUnitParam(UnitParam):
     def __init__(self, default=units.s, doc: Optional[str] = None, **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            doc: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if doc is None:
             doc = "Time unit parameter"
         if not UnitParam.is_time(default):
@@ -125,6 +139,13 @@ class TimeUnitParam(UnitParam):
 
 class DistanceUnitParam(UnitParam):
     def __init__(self, default=units.m, doc: Optional[str] = None, **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            doc: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if doc is None:
             doc = "Distance unit parameter"
         if not UnitParam.is_distance(default):
@@ -134,6 +155,13 @@ class DistanceUnitParam(UnitParam):
 
 class AngleUnitParam(UnitParam):
     def __init__(self, default=units.rad, doc: Optional[str] = None, **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            doc: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if doc is None:
             doc = "Angle unit parameter"
         if not UnitParam.is_angle(default):
@@ -143,6 +171,13 @@ class AngleUnitParam(UnitParam):
 
 class TranslationalVelocityUnitParam(UnitParam):
     def __init__(self, default=units.m / units.s, doc: Optional[str] = None, **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            doc: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if doc is None:
             doc = "Translational velocity unit parameter"
         if not UnitParam.is_translational_velocity(default):
@@ -154,6 +189,13 @@ class TranslationalAccelerationUnitParam(UnitParam):
     def __init__(
         self, default=units.m / units.s**2, doc: Optional[str] = None, **kwargs
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            doc: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if doc is None:
             doc = "Translational acceleration unit parameter"
         if not UnitParam.is_translational_acceleration(default):
@@ -167,6 +209,13 @@ class AngularVelocityUnitParam(UnitParam):
     def __init__(
         self, default=units.rad / units.s, doc: Optional[str] = None, **kwargs
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            doc: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if doc is None:
             doc = "Angular velocity unit parameter"
         if not UnitParam.is_angular_velocity(default):
@@ -178,6 +227,13 @@ class AngularAccelerationUnitParam(UnitParam):
     def __init__(
         self, default=units.rad / units.s**2, doc: Optional[str] = None, **kwargs
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            doc: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if doc is None:
             doc = "Angular acceleration unit parameter"
         if not UnitParam.is_angular_acceleration(default):
@@ -189,6 +245,12 @@ class TypeParam(param.Parameter):
     """Parameter storing a Python type object."""
 
     def __init__(self, default=type(None), **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if default is None:
             default = type(None)
         if not isinstance(default, type):
@@ -196,6 +258,14 @@ class TypeParam(param.Parameter):
         super().__init__(default=default, **kwargs)
 
     def _validate(self, val):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         if val is None:
             return type(None)
         if not isinstance(val, type):

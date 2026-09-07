@@ -1,3 +1,12 @@
+"""
+Custom ``param`` types used throughout the package.
+
+Provides the constrained numeric, phase, range and selector parameters that
+express the domain's own semantics -- positive quantities, angular phases,
+dataframes and unit-carrying values -- so that validation and serialization
+live with the type rather than at each use site.
+"""
+
 from __future__ import annotations
 import typing
 from typing import Any, Optional, Sequence, Tuple, TypedDict
@@ -115,6 +124,12 @@ class Unit(param.Parameter):
     """
 
     def __init__(self, default=None, **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if default is not None:
             from .. import reg
 
@@ -154,6 +169,12 @@ class StringRobust(param.String):
     """
 
     def __init__(self, default="", **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if default is not None and not isinstance(default, str):
             default = str(default)
         super().__init__(default=default, **kwargs)
@@ -192,6 +213,18 @@ class PositiveNumber(param.Number):
         step=0.1,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            bounds: See the class attributes.
+            step: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if bounds is None:
             bounds = (hardmin, hardmax)
         super().__init__(
@@ -234,6 +267,17 @@ class PositiveInteger(param.Integer):
         step=1,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            step: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softbounds=(softmin, softmax),
@@ -274,6 +318,17 @@ class Phase(param.Number):
         step=0.1,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            step: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softbounds=(softmin, softmax),
@@ -314,6 +369,17 @@ class SignedPhase(Phase):
         step=0.1,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            step: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softmin=softmin,
@@ -343,11 +409,27 @@ class RangeRobust(param.Range):
     """
 
     def __init__(self, default=(0.0, 0.0), step=0.1, **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            step: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if default is not None and not isinstance(default, tuple):
             default = tuple(default)
         super().__init__(default=default, step=step, **kwargs)
 
     def _validate_value(self, val, allow_None):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            allow_None: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         if val is not None and not isinstance(val, tuple):
             val = tuple(val)
         super(RangeRobust, self)._validate_value(val, allow_None)
@@ -366,6 +448,15 @@ class RangeInf(RangeRobust):
     """
 
     def _validate_value(self, val, allow_None):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            allow_None: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         super(param.NumericTuple, self)._validate_value(val, allow_None)
         if allow_None and val is None:
             return
@@ -378,6 +469,17 @@ class RangeInf(RangeRobust):
             )
 
     def _validate_bounds(self, val, bounds, inclusive_bounds, kind):
+        """Validate the declared bounds against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            bounds: The constraint being checked.
+            inclusive_bounds: The constraint being checked.
+            kind: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         if bounds is not None:
             for pos, v in zip(["lower", "upper"], bounds):
                 if v is None:
@@ -444,6 +546,16 @@ class PositiveRange(RangeRobust):
         hardmax=None,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softbounds=(softmin, softmax),
@@ -480,6 +592,16 @@ class PhaseRange(RangeRobust):
         hardmax=2 * np.pi,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softbounds=(softmin, softmax),
@@ -518,6 +640,17 @@ class OptionalPositiveNumber(param.Number):
         step=0.1,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            step: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softbounds=(softmin, softmax),
@@ -558,6 +691,17 @@ class OptionalPositiveInteger(param.Integer):
         step=1,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            step: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softbounds=(softmin, softmax),
@@ -585,11 +729,26 @@ class RandomizedPhase(Phase):
     """
 
     def __init__(self, default=None, **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if _is_null_value(default):
             default = np.random.uniform(0, 2 * np.pi)
         super().__init__(default=default, allow_None=True, **kwargs)
 
     def _validate_value(self, val, allow_None):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            allow_None: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         if _is_null_value(val):
             val = np.random.uniform(0, 2 * np.pi)
         super(RandomizedPhase, self)._validate_value(val, allow_None)
@@ -613,11 +772,26 @@ class RandomizedSignedPhase(SignedPhase):
     """
 
     def __init__(self, default=None, **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if _is_null_value(default):
             default = np.random.uniform(-np.pi, np.pi)
         super().__init__(default=default, allow_None=True, **kwargs)
 
     def _validate_value(self, val, allow_None):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            allow_None: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         if _is_null_value(val):
             val = np.random.uniform(-np.pi, np.pi)
         super(RandomizedSignedPhase, self)._validate_value(val, allow_None)
@@ -649,6 +823,15 @@ class RandomizedColor(param.Color):
         per_instance=True,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            instantiate: See the class attributes.
+            allow_None: See the class attributes.
+            per_instance: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if _is_null_value(default):
             default = random.choice(super()._named_colors)
         super().__init__(
@@ -660,6 +843,15 @@ class RandomizedColor(param.Color):
         )
 
     def _validate_value(self, val, allow_None):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            allow_None: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         if _is_null_value(val):
             val = random.choice(super()._named_colors)
         super(RandomizedColor, self)._validate_value(val, allow_None)
@@ -693,6 +885,16 @@ class OptionalPositiveRange(RangeInf):
         hardmax=None,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softbounds=(softmin, softmax),
@@ -730,6 +932,16 @@ class OptionalPhaseRange(RangeRobust):
         hardmax=2 * np.pi,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softbounds=(softmin, softmax),
@@ -755,6 +967,13 @@ class OptionalSelector(param.Selector):
     """
 
     def __init__(self, objects, default=None, **kwargs):
+        """Build the parameter.
+
+        Args:
+            objects: See the class attributes.
+            default: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         kws = {
             "default": default,
             "objects": objects,
@@ -779,6 +998,15 @@ class IntegerTuple(param.NumericTuple):
     """
 
     def _validate_value(self, val, allow_None):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            allow_None: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         super(param.NumericTuple, self)._validate_value(val, allow_None)
         for n in val:
             if isinstance(n, int):
@@ -806,9 +1034,25 @@ class IntegerRange(RangeRobust):
     """
 
     def __init__(self, default=(0, 0), step=1, **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            step: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(default=default, step=step, **kwargs)
 
     def _validate_value(self, val, allow_None):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            allow_None: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         super(RangeRobust, self)._validate_value(val, allow_None)
         for n in val:
             if isinstance(n, int):
@@ -849,6 +1093,16 @@ class PositiveIntegerTuple(IntegerTuple):
         hardmax=None,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         self.softmin = softmin
         self.softmax = softmax
         self.hardmin = hardmin
@@ -856,6 +1110,15 @@ class PositiveIntegerTuple(IntegerTuple):
         super().__init__(default=default, **kwargs)
 
     def _validate_value(self, val, allow_None):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            allow_None: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         super()._validate_value(val, allow_None)
         for n in val:
             if self.hardmin is not None and n < self.hardmin:
@@ -883,6 +1146,15 @@ class IntegerRangeOrdered(IntegerRange):
     """
 
     def _validate_value(self, val, allow_None):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            allow_None: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         super(IntegerRange, self)._validate_value(val, allow_None)
         v1, v2 = val
         assert v1 <= v2
@@ -912,6 +1184,16 @@ class PositiveIntegerRange(IntegerRange):
     def __init__(
         self, default=(0, 0), softmin=0, softmax=None, hardmin=0, hardmax=None, **kwargs
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softbounds=(softmin, softmax),
@@ -942,6 +1224,16 @@ class PositiveIntegerRangeOrdered(IntegerRangeOrdered):
     def __init__(
         self, default=(0, 1), softmin=0, softmax=None, hardmin=0, hardmax=None, **kwargs
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softbounds=(softmin, softmax),
@@ -978,6 +1270,16 @@ class NegativeIntegerRangeOrdered(IntegerRangeOrdered):
         hardmax=0,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softbounds=(softmin, softmax),
@@ -1002,6 +1304,16 @@ class OptionalPositiveIntegerRangeOrdered(PositiveIntegerRangeOrdered):
         hardmax=None,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softmin=softmin,
@@ -1013,6 +1325,15 @@ class OptionalPositiveIntegerRangeOrdered(PositiveIntegerRangeOrdered):
         )
 
     def _validate_value(self, val, allow_None):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            allow_None: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         if val is None and allow_None:
             return
         super()._validate_value(val, allow_None)
@@ -1034,6 +1355,16 @@ class OptionalNegativeIntegerRangeOrdered(NegativeIntegerRangeOrdered):
         hardmax=0,
         **kwargs,
     ):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            softmin: See the class attributes.
+            softmax: See the class attributes.
+            hardmin: See the class attributes.
+            hardmax: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default,
             softmin=softmin,
@@ -1045,6 +1376,15 @@ class OptionalNegativeIntegerRangeOrdered(NegativeIntegerRangeOrdered):
         )
 
     def _validate_value(self, val, allow_None):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            allow_None: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         if val is None and allow_None:
             return
         super()._validate_value(val, allow_None)
@@ -1067,6 +1407,12 @@ class NumericTuple2DRobust(param.NumericTuple):
     """
 
     def __init__(self, default=(0.0, 0.0), **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if not isinstance(default, tuple):
             default = tuple(default)
 
@@ -1090,6 +1436,12 @@ class IntegerTuple2DRobust(IntegerTuple):
     """
 
     def __init__(self, default=(0, 0), **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if not isinstance(default, tuple):
             default = tuple(default)
         super().__init__(default=default, length=2, **kwargs)
@@ -1108,6 +1460,13 @@ class List(param.List):
     """
 
     def __init__(self, default=None, length=None, **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            length: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default if default is not None else [], bounds=length, **kwargs
         )
@@ -1131,6 +1490,14 @@ class ListXYcoordinates(List):
     """
 
     def __init__(self, default=[], minlen=0, maxlen=None, **kwargs):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            minlen: See the class attributes.
+            maxlen: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(
             default=default, item_type=tuple, length=(minlen, maxlen), **kwargs
         )
@@ -1152,6 +1519,12 @@ class XYLine(ListXYcoordinates):
     """
 
     def __init__(self, minlen=0, **kwargs):
+        """Build the parameter.
+
+        Args:
+            minlen: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(minlen=minlen, **kwargs)
 
 
@@ -1181,6 +1554,13 @@ class ItemListParam(List):
     __slots__ = ["bounds", "item_type", "class_", "size"]
 
     def __init__(self, default=util.ItemList(), size=(0, None), **params):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            size: See the class attributes.
+            **params: Forwarded to the parent class.
+        """
         self.size = size
         if isinstance(default, list):
             default = util.ItemList(default)
@@ -1212,14 +1592,38 @@ class ClassDict(param.ClassSelector):
     __slots__ = ["class_", "is_instance", "item_type"]
 
     def __init__(self, default=util.AttrDict(), item_type=None, **params):
+        """Build the parameter.
+
+        Args:
+            default: See the class attributes.
+            item_type: See the class attributes.
+            **params: Forwarded to the parent class.
+        """
         self.item_type = item_type
         param.ClassSelector.__init__(self, util.AttrDict, default=default, **params)
 
     def _validate(self, val):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         super(param.ClassSelector, self)._validate(val)
         self._validate_item_type(val, self.item_type)
 
     def _validate_item_type(self, val, item_type):
+        """Validate the item type against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            item_type: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         if item_type is None or (self.allow_None and val is None):
             return
         for k, v in val.items():
@@ -1248,6 +1652,12 @@ class ClassAttr(param.ClassSelector):
     """
 
     def __init__(self, class_, **kwargs):
+        """Build the parameter.
+
+        Args:
+            class_: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         if not isinstance(class_, tuple):
             cc = class_
         else:
@@ -1288,6 +1698,14 @@ class ModeSelector(ClassAttr):
     __slots__ = ["classDict", "classID"]
 
     def __init__(self, classDict=util.AttrDict(), classID=None, class_=None, **kwargs):
+        """Build the parameter.
+
+        Args:
+            classDict: See the class attributes.
+            classID: See the class attributes.
+            class_: See the class attributes.
+            **kwargs: Forwarded to the parent class.
+        """
         self.classDict = classDict
         self.classID = classID
         # if classID is None and len(classDict.keylist)>0:
@@ -1324,14 +1742,37 @@ class DataFrameIndexed(param.DataFrame):
     __slots__ = ["rows", "columns", "ordered", "levels"]
 
     def __init__(self, levels=None, **params):
+        """Build the parameter.
+
+        Args:
+            levels: See the class attributes.
+            **params: Forwarded to the parent class.
+        """
         self.levels = levels
         param.DataFrame.__init__(self, **params)
 
     def _validate(self, val):
+        """Validate a value against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         super(param.DataFrame, self)._validate(val)
         self._validate_levels(val, self.levels)
 
     def _validate_levels(self, val, levels):
+        """Validate the index levels against this parameter's constraints.
+
+        Args:
+            val: The value under validation.
+            levels: The constraint being checked.
+
+        Raises:
+            ValueError: If the constraint is violated.
+        """
         if levels is None or (self.allow_None and val is None):
             return
         val_levels = list(val.index.names)
@@ -1360,6 +1801,11 @@ class StepDataFrame(DataFrameIndexed):
     """
 
     def __init__(self, **params):
+        """Build the parameter.
+
+        Args:
+            **params: Forwarded to the parent class.
+        """
         DataFrameIndexed.__init__(self, levels=["Step", "AgentID"], **params)
 
 
@@ -1381,6 +1827,11 @@ class EndpointDataFrame(DataFrameIndexed):
     """
 
     def __init__(self, **params):
+        """Build the parameter.
+
+        Args:
+            **params: Forwarded to the parent class.
+        """
         DataFrameIndexed.__init__(self, levels=["AgentID"], **params)
 
 

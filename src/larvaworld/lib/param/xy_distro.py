@@ -1,3 +1,10 @@
+"""
+Spatial distributions for placing agents and sources.
+
+Generates the initial coordinates of a group of agents or sources, either
+along a circle or rectangle, uniformly within a disc, or on a regular grid.
+"""
+
 from __future__ import annotations
 from typing import Any, List, Optional, Sequence, Tuple
 
@@ -64,11 +71,17 @@ class Spatial_Distro(NestedConf):
     # scale = param.Range(default=(0.0, 0.0), softbounds=(-0.1, 0.1),step=0.001, doc='The spread in x,y')
 
     def __call__(self) -> List[Tuple[float, float]]:
+        """Draw the configured number of positions.
+
+        Returns:
+            The generated coordinates.
+        """
         return generate_xy_distro(
             mode=self.mode, shape=self.shape, N=self.N, loc=self.loc, scale=self.scale
         )
 
     def draw(self) -> None:
+        """Plot the generated positions for inspection."""
         import matplotlib.pyplot as plt
 
         ps = generate_xy_distro(
@@ -106,12 +119,27 @@ class Larva_Distro(Spatial_Distro):
     )
 
     def __call__(self) -> Tuple[List[Tuple[float, float]], List[float]]:
+        """Draw positions and orientations for the configured agents.
+
+        Returns:
+            The generated coordinates and headings.
+        """
         return generate_xyNor_distro(self)
 
 
 def single_parametric_interpolate(
     obj_x_loc: Sequence[float], obj_y_loc: Sequence[float], numPts: int = 50
 ) -> List[Tuple[float, float]]:
+    """Resample a closed polygon at evenly spaced points along its perimeter.
+
+    Args:
+        obj_x_loc: The polygon vertices' x coordinates.
+        obj_y_loc: The polygon vertices' y coordinates.
+        numPts: The number of points to generate.
+
+    Returns:
+        The resampled points, in order around the perimeter.
+    """
     n = len(obj_x_loc)
     vi = [
         [obj_x_loc[(i + 1) % n] - obj_x_loc[i], obj_y_loc[(i + 1) % n] - obj_y_loc[i]]

@@ -1,3 +1,10 @@
+"""
+Chemical composition of food, odors and the experimental timeline.
+
+Defines the compounds and substrates the larvae feed on, the odors sources
+emit, and the life history and air-puff events that structure an experiment.
+"""
+
 from __future__ import annotations
 import numpy as np
 import param

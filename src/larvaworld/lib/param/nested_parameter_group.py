@@ -1,3 +1,11 @@
+"""
+Base classes for nested, composable configurations.
+
+Provides the nested configuration container that lets ``param`` classes hold
+other ``param`` classes as attributes, together with the helpers that generate
+such classes, read their defaults and expand shorthand keyword forms.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -19,6 +27,18 @@ __all__: list[str] = [
 
 
 def _coerce_classdict_value(parameter: ClassDict, value: Any) -> Any:
+    """Coerce a mapping into the parameter's declared item type.
+
+    Nested plain mappings are constructed into the item type, so a
+    configuration read from disk yields typed objects rather than dicts.
+
+    Args:
+        parameter: The class-dictionary parameter being assigned.
+        value: The value assigned to it.
+
+    Returns:
+        The coerced value, unchanged when no item type is declared.
+    """
     if parameter.item_type is None or value is None or not isinstance(value, Mapping):
         return value
 
@@ -34,6 +54,15 @@ def _coerce_classdict_value(parameter: ClassDict, value: Any) -> Any:
 
 
 def _has_dict_model(kwargs: Dict[str, Any], cls: type[param.Parameterized]) -> bool:
+    """Report whether a plain mapping was passed for a ``model`` parameter.
+
+    Args:
+        kwargs: The keyword arguments under construction.
+        cls: The class being constructed.
+
+    Returns:
+        True when the class declares ``model`` and a mapping was given.
+    """
     return "model" in cls.param.objects() and isinstance(kwargs.get("model"), Mapping)
 
 
@@ -54,6 +83,12 @@ class Conf(param.Parameterized):
     """
 
     def __init__(self, **kwargs: Any):
+        """Build the configuration, filling in the declared defaults.
+
+        Args:
+            **kwargs: Parameter values. Any the class declares a default
+                for, and that are omitted here, are filled in.
+        """
         super().__init__(**self.resolve_kwargs(kwargs))
 
     @classmethod
@@ -87,6 +122,14 @@ class Conf(param.Parameterized):
 
     @classmethod
     def resolve_kwargs(cls, kwargs: Dict[str, Any]) -> util.AttrDict:
+        """Resolve the constructor arguments to their final values.
+
+        Args:
+            kwargs: The supplied keyword arguments.
+
+        Returns:
+            The arguments completed with the declared defaults.
+        """
         return cls.complete_kwargs(kwargs)
 
     @classmethod

@@ -1,3 +1,11 @@
+"""
+Configuration of the dataset enrichment pipeline.
+
+Groups the preprocessing, processing and annotation settings that
+:meth:`LarvaDataset.enrich` applies, so that a whole pipeline can be stored
+and replayed as one configuration.
+"""
+
 from __future__ import annotations
 from typing import Any, Optional, Sequence
 
@@ -133,34 +141,95 @@ class EnrichConf(ProcessConf):
 
     @classmethod
     def no_tor_dsp(cls, **kwargs):
+        """Build a configuration that skips tortuosity and dispersal.
+
+        Args:
+            **kwargs: Further enrichment settings.
+
+        Returns:
+            The configuration.
+        """
         return cls(tor_durs=[], dsp_starts=[], dsp_stops=[], **kwargs)
 
     @classmethod
     def single_proc(cls, k, **kwargs):
+        """Build a configuration running one processing step and no annotation.
+
+        Args:
+            k: The processing step to run.
+            **kwargs: Further enrichment settings.
+
+        Returns:
+            The configuration.
+        """
         return cls.no_tor_dsp(proc_keys=[k], anot_keys=[], **kwargs)
 
     @classmethod
     def PI_proc(cls, **kwargs):
+        """Build a configuration computing only the preference index.
+
+        Args:
+            **kwargs: Further enrichment settings.
+
+        Returns:
+            The configuration.
+        """
         return cls.single_proc(k="PI", **kwargs)
 
     @classmethod
     def spatial_proc(cls, **kwargs):
+        """Build a configuration computing only the spatial metrics.
+
+        Args:
+            **kwargs: Further enrichment settings.
+
+        Returns:
+            The configuration.
+        """
         return cls.single_proc(k="spatial", **kwargs)
 
     @classmethod
     def source_proc(cls, anot_keys=[], **kwargs):
+        """Build a configuration for experiments with an odor source.
+
+        Args:
+            anot_keys: The annotation steps to run.
+            **kwargs: Further enrichment settings.
+
+        Returns:
+            The configuration, processing spatial, angular and source
+            metrics.
+        """
         return cls.no_tor_dsp(
             proc_keys=["spatial", "angular", "source"], anot_keys=anot_keys, **kwargs
         )
 
     @classmethod
     def wind_proc(cls, anot_keys=[], **kwargs):
+        """Build a configuration for experiments with wind.
+
+        Args:
+            anot_keys: The annotation steps to run.
+            **kwargs: Further enrichment settings.
+
+        Returns:
+            The configuration, processing spatial, angular and wind
+            metrics.
+        """
         return cls.no_tor_dsp(
             proc_keys=["spatial", "angular", "wind"], anot_keys=anot_keys, **kwargs
         )
 
     @classmethod
     def sourcewind_proc(cls, anot_keys=[], **kwargs):
+        """Build a configuration for experiments with both an odor source and wind.
+
+        Args:
+            **kwargs: Further enrichment settings.
+
+        Returns:
+            The configuration.
+        """
         return cls.no_tor_dsp(
             proc_keys=["spatial", "angular", "source", "wind"],
             anot_keys=anot_keys,
@@ -169,6 +238,15 @@ class EnrichConf(ProcessConf):
 
     @classmethod
     def patch_proc(cls, **kwargs):
+        """Build a configuration for experiments with a food patch.
+
+        Args:
+            **kwargs: Further enrichment settings.
+
+        Returns:
+            The configuration, adding patch-residency annotation to the
+            spatial, angular and source metrics.
+        """
         return cls.no_tor_dsp(
             proc_keys=["spatial", "angular", "source"],
             anot_keys=[

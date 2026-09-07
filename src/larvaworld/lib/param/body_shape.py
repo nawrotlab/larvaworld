@@ -1,3 +1,11 @@
+"""
+Body geometry of the simulated larva.
+
+Defines the stored body plans, the contour they generate, and the segmented
+body whose joints the locomotor drives. Also provides the sensor mounting
+points used by the touch modality.
+"""
+
 from __future__ import annotations
 from typing import Any, Optional, Sequence
 
