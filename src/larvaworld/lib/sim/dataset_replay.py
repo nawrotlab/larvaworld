@@ -1,3 +1,10 @@
+"""
+Replay of a recorded dataset in the simulation viewer.
+
+Drives agents from stored coordinates rather than from a brain, so that
+experimental and simulated behaviour can be inspected with the same renderer.
+"""
+
 from __future__ import annotations
 from typing import Any
 

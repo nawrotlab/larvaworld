@@ -1,3 +1,10 @@
+"""
+Evaluation of simulated models against reference data.
+
+Runs one or more models under a reference dataset's conditions and scores the
+resulting behaviour against the recorded distributions and cycle curves.
+"""
+
 from __future__ import annotations
 
 from typing import Any

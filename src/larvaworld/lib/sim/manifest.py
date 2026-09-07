@@ -59,6 +59,11 @@ class RunManifestResolutionError(RunManifestError):
 
 @dataclass(frozen=True)
 class ManifestValidationReport:
+    """The outcome of validating a run manifest.
+
+    Carries the errors that block a rerun and the warnings that do not.
+    """
+
     manifest_path: Path
     manifest: dict[str, Any]
     reproducibility: str
@@ -68,12 +73,23 @@ class ManifestValidationReport:
     resolved_inputs: tuple[dict[str, Any], ...]
 
     def raise_for_errors(self) -> None:
+        """Raise if the report contains any blocking error.
+
+        Raises:
+            ValueError: If validation found an error.
+        """
         if not self.valid:
             raise RunManifestValidationError("; ".join(self.errors))
 
 
 @dataclass(frozen=True)
 class ManifestCatalogRecord:
+    """A manifest as listed in the workspace catalog.
+
+    Holds the identity and summary shown when browsing past runs, without
+    loading the manifest itself.
+    """
+
     workspace_id: str | None
     workspace_name: str
     workspace_path: Path
@@ -93,6 +109,12 @@ class ManifestCatalogRecord:
 
 @dataclass(frozen=True)
 class RerunResult:
+    """The outcome of re-executing a run from its manifest.
+
+    Carries the new manifest's path and whether the scientific
+    fingerprints matched the original run's.
+    """
+
     manifest_path: Path
     run: Any
     result: Any
@@ -100,6 +122,7 @@ class RerunResult:
 
 
 def _utc_now_iso() -> str:
+    """Return the current UTC time as an ISO-8601 string."""
     return datetime.now(timezone.utc).isoformat()
 
 
@@ -156,6 +179,14 @@ def json_ready(value: Any) -> Any:
 
 
 def _restore_json_value(value: Any) -> Any:
+    """Restore a value read back from JSON to its original form.
+
+    Args:
+        value: The decoded JSON value.
+
+    Returns:
+        The value with tuples and sets restored from their encoded form.
+    """
     if isinstance(value, list):
         return [_restore_json_value(item) for item in value]
     if not isinstance(value, dict):
@@ -174,16 +205,44 @@ def _restore_json_value(value: Any) -> Any:
 
 
 def _canonical_bytes(value: Any) -> bytes:
+    """Serialize a value to bytes that are stable across runs.
+
+    Keys are sorted and formatting is fixed, so that the same content
+    always yields the same bytes and therefore the same checksum.
+
+    Args:
+        value: The value to serialize.
+
+    Returns:
+        The canonical encoding.
+    """
     return json.dumps(
         json_ready(value), sort_keys=True, separators=(",", ":"), ensure_ascii=False
     ).encode("utf-8")
 
 
 def canonical_sha256(value: Any) -> str:
+    """Return a content hash that is stable across runs.
+
+    Args:
+        value: The value to hash.
+
+    Returns:
+        The hex digest of its canonical encoding.
+    """
     return hashlib.sha256(_canonical_bytes(value)).hexdigest()
 
 
 def _atomic_write_json(path: Path, payload: Mapping[str, Any]) -> None:
+    """Write JSON to a path atomically.
+
+    The payload is written to a temporary file and then moved into place,
+    so a crash cannot leave a half-written manifest behind.
+
+    Args:
+        path: The destination path.
+        payload: The content to write.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
     try:
@@ -198,6 +257,14 @@ def _atomic_write_json(path: Path, payload: Mapping[str, Any]) -> None:
 
 
 def _validate_schema(payload: Any, path: Path) -> dict[str, Any]:
+    """Check that a manifest carries the fields this version expects.
+
+    Args:
+        payload: The decoded manifest.
+
+    Raises:
+        ValueError: If a required field is missing or malformed.
+    """
     if not isinstance(payload, dict):
         raise RunManifestError(f"Manifest must contain a JSON object: {path}")
     if payload.get("schema_version") != MANIFEST_SCHEMA_VERSION:
@@ -229,6 +296,18 @@ def _validate_schema(payload: Any, path: Path) -> dict[str, Any]:
 
 
 def load_run_manifest(path: str | Path) -> dict[str, Any]:
+    """Read a run manifest from disk.
+
+    Args:
+        path: The manifest path.
+
+    Returns:
+        The decoded manifest.
+
+    Raises:
+        FileNotFoundError: If the manifest does not exist.
+        ValueError: If it does not match the expected schema.
+    """
     manifest_path = Path(path).expanduser().resolve()
     if manifest_path.is_dir():
         manifest_path = manifest_path / MANIFEST_FILENAME
@@ -244,6 +323,15 @@ def load_run_manifest(path: str | Path) -> dict[str, Any]:
 
 
 def _cached_load_manifest(path: Path) -> tuple[dict[str, Any] | None, str | None]:
+    """Read a manifest, reusing the previously decoded copy.
+
+    Args:
+        path: The manifest path.
+        mtime: The file's modification time, which invalidates the cache.
+
+    Returns:
+        The decoded manifest.
+    """
     try:
         stat = path.stat()
     except OSError as exc:
@@ -263,6 +351,14 @@ def _cached_load_manifest(path: Path) -> tuple[dict[str, Any] | None, str | None
 
 
 def sha256_file(path: str | Path) -> str:
+    """Return a file's SHA-256 digest.
+
+    Args:
+        path: The file to hash.
+
+    Returns:
+        The hex digest.
+    """
     digest = hashlib.sha256()
     with Path(path).open("rb") as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
@@ -271,6 +367,15 @@ def sha256_file(path: str | Path) -> str:
 
 
 def _path_files(path: Path) -> list[Path]:
+    """List the files under a path, in a stable order.
+
+    Args:
+        root: The file or directory to scan.
+
+    Returns:
+        The contained files, sorted so that the order does not vary
+        between filesystems.
+    """
     if path.is_file():
         return [path]
     if not path.is_dir():
@@ -279,6 +384,15 @@ def _path_files(path: Path) -> list[Path]:
 
 
 def path_checksum(path: str | Path) -> tuple[str, list[dict[str, Any]]]:
+    """Checksum a file or a whole directory tree.
+
+    Args:
+        path: The file or directory to checksum.
+
+    Returns:
+        The aggregate digest and one entry per file, each carrying
+        its own digest and size.
+    """
     root = Path(path).expanduser().resolve()
     files = _path_files(root)
     entries: list[dict[str, Any]] = []
@@ -298,6 +412,11 @@ def path_checksum(path: str | Path) -> tuple[str, list[dict[str, Any]]]:
 
 
 def software_versions() -> dict[str, str]:
+    """Record the versions of larvaworld and its scientific dependencies.
+
+    Returns:
+        The version of each package the run's results depend on.
+    """
     from larvaworld import __version__
 
     versions = {
@@ -365,10 +484,30 @@ def registry_snapshot_context(snapshot: Mapping[str, Any]) -> Iterator[None]:
 
 
 def prepare_master_seed(seed: int | None = None) -> int:
+    """Return the master seed for a run, generating one if needed.
+
+    Args:
+        seed: An explicit seed, or None to draw a fresh one.
+
+    Returns:
+        The master seed.
+    """
     return int(seed) if seed is not None else secrets.randbits(128)
 
 
 def derive_seed(master_seed: int, label: Any) -> int:
+    """Derive a reproducible child seed from the master seed.
+
+    Deriving by hash means every agent and sub-run gets an independent
+    stream that is nonetheless fully determined by the master seed.
+
+    Args:
+        master_seed: The run's master seed.
+        label: What the child seed is for.
+
+    Returns:
+        The derived seed.
+    """
     digest = hashlib.sha256(f"{master_seed}:{label!r}".encode("utf-8")).digest()
     return int.from_bytes(digest[:16], byteorder="big", signed=False)
 
@@ -390,6 +529,11 @@ def deterministic_random_context(seed: int) -> Iterator[None]:
 
 
 def _workspace_identity(run_dir: Path) -> tuple[str, Path | None]:
+    """Describe the workspace a run was executed in.
+
+    Returns:
+        The workspace root and its identifying metadata.
+    """
     for parent in (run_dir, *run_dir.parents):
         metadata_path = parent / "metadata" / "workspace.json"
         if not metadata_path.is_file():
@@ -409,6 +553,15 @@ def _workspace_identity(run_dir: Path) -> tuple[str, Path | None]:
 
 
 def _dataset_input(dataset: Any, role: str) -> dict[str, Any] | None:
+    """Describe one input dataset for the manifest.
+
+    Args:
+        dataset: The dataset used as input.
+        role: The part it played in the run.
+
+    Returns:
+        Its identity, path and checksum.
+    """
     config = getattr(dataset, "config", None)
     raw_dir = getattr(config, "dir", None)
     if not isinstance(raw_dir, str) or not raw_dir:
@@ -426,6 +579,15 @@ def _dataset_input(dataset: Any, role: str) -> dict[str, Any] | None:
 
 
 def collect_run_inputs(run: Any) -> list[dict[str, Any]]:
+    """Describe every input a run consumed.
+
+    Args:
+        datasets: The input datasets.
+        extra_paths: Further files the run read.
+
+    Returns:
+        One record per input, each with its checksum.
+    """
     candidates: list[tuple[str, Any]] = []
     for role, attribute in (
         ("replay_source", "refDataset"),
@@ -453,6 +615,11 @@ def collect_run_inputs(run: Any) -> list[dict[str, Any]]:
 def _generic_invocation(
     run: Any, execute_kwargs: Mapping[str, Any] | None
 ) -> dict[str, Any]:
+    """Describe how the run was invoked.
+
+    Returns:
+        The command line and the entry point that started the run.
+    """
     parameters = getattr(run, "parameters", None)
     if parameters is None:
         parameters = getattr(run, "p", {})
@@ -472,6 +639,15 @@ def _generic_invocation(
 def manifest_reference(
     manifest_path: str | Path, dataset_dir: str | Path
 ) -> dict[str, str]:
+    """Build the reference by which other records point at a manifest.
+
+    Args:
+        manifest_path: The manifest's path.
+        payload: The manifest content.
+
+    Returns:
+        The reference, carrying the manifest's id, path and digest.
+    """
     path = Path(manifest_path).expanduser().resolve()
     manifest = load_run_manifest(path)
     dataset_root = Path(dataset_dir).expanduser().resolve()
@@ -488,6 +664,12 @@ def attach_manifest_to_datasets(
     datasets: Iterable[Any] | None,
     manifest: "RunManifestSession | str | Path | Mapping[str, Any]",
 ) -> None:
+    """Record the producing manifest on each output dataset.
+
+    Args:
+        datasets: The datasets the run produced.
+        reference: The manifest reference to attach.
+    """
     if datasets is None:
         return
     for dataset in datasets:
@@ -525,6 +707,14 @@ def attach_manifest_to_datasets(
 
 
 def _dataframe_fingerprint(frame: Any) -> str | None:
+    """Fingerprint a dataframe's numeric content.
+
+    Args:
+        df: The dataframe to fingerprint.
+
+    Returns:
+        Its shape, columns and content digest.
+    """
     if frame is None:
         return None
     try:
@@ -544,6 +734,14 @@ def _dataframe_fingerprint(frame: Any) -> str | None:
 
 
 def _series_fingerprint(series: Any) -> str | None:
+    """Fingerprint a series' numeric content.
+
+    Args:
+        series: The series to fingerprint.
+
+    Returns:
+        Its length and content digest.
+    """
     if series is None:
         return None
     try:
@@ -579,6 +777,14 @@ _VOLATILE_SCIENTIFIC_KEYS = {
 
 
 def _scientific_value(value: Any) -> Any:
+    """Reduce a result value to something that can be fingerprinted.
+
+    Args:
+        value: The value to reduce.
+
+    Returns:
+        Its fingerprint, or the value itself when it is a scalar.
+    """
     frame_hash = _dataframe_fingerprint(value)
     if frame_hash is not None:
         return {"__dataframe_sha256__": frame_hash}
@@ -617,6 +823,18 @@ def _scientific_value(value: Any) -> Any:
 def scientific_fingerprints(
     datasets: Iterable[Any] | None = None, scientific_result: Any = None
 ) -> dict[str, Any]:
+    """Fingerprint a run's scientific output.
+
+    These digests are what a rerun is compared against, so that a change
+    in results is detected even when the run completes normally.
+
+    Args:
+        datasets: The datasets the run produced.
+        scientific_result: Any further result object to fingerprint.
+
+    Returns:
+        The fingerprint of each output.
+    """
     fingerprints: dict[str, Any] = {}
     if datasets is not None:
         for index, dataset in enumerate(datasets):
@@ -643,6 +861,14 @@ def scientific_fingerprints(
 
 
 def _scan_outputs(run_dir: Path) -> list[dict[str, Any]]:
+    """List the files a run wrote, with their checksums.
+
+    Args:
+        root: The run's output directory.
+
+    Returns:
+        One record per output file.
+    """
     outputs: list[dict[str, Any]] = []
     for path in sorted(
         candidate for candidate in run_dir.rglob("*") if candidate.is_file()
@@ -675,6 +901,11 @@ class RunManifestSession:
         inputs: Sequence[Mapping[str, Any]] | None = None,
         media_requested: bool | None = None,
     ) -> None:
+        """Open a manifest session for one run.
+
+        Args:
+            **kwargs: The run's identity, parameters and inputs.
+        """
         raw_dir = getattr(run, "dir", None)
         if not isinstance(raw_dir, str) or not raw_dir:
             raise RunManifestError("A simulation run requires a storage directory.")
@@ -785,6 +1016,7 @@ class RunManifestSession:
         setattr(run, "_manifest_session", self)
 
     def write(self) -> None:
+        """Write the manifest in its current state to disk."""
         _atomic_write_json(self.manifest_path, self.manifest)
         try:
             self.manifest_path.stat()
@@ -794,6 +1026,7 @@ class RunManifestSession:
 
     @property
     def reference(self) -> dict[str, str]:
+        """The reference by which other records point at this manifest."""
         run = self.manifest["run"]
         return {
             "manifest_id": run["manifest_id"],
@@ -802,6 +1035,11 @@ class RunManifestSession:
         }
 
     def dataset_reference(self, dataset_dir: str | Path) -> dict[str, str]:
+        """Return the reference to record on a produced dataset.
+
+        Returns:
+            The manifest reference.
+        """
         reference = self.reference
         return {
             "manifest_id": reference["manifest_id"],
@@ -815,10 +1053,20 @@ class RunManifestSession:
         }
 
     def set_child_seeds(self, child_seeds: Mapping[str, int]) -> None:
+        """Record the seeds derived for the run's sub-components.
+
+        Args:
+            seeds: The derived seed per label.
+        """
         self.manifest["randomness"]["child_seeds"] = json_ready(child_seeds)
         self.write()
 
     def _cleanup_manifest_only_outputs(self) -> None:
+        """Remove an output directory that holds nothing but the manifest.
+
+        A run that failed before writing results would otherwise leave an
+        empty directory behind.
+        """
         current_paths = sorted(
             (path for path in self.run_dir.rglob("*") if path != self.manifest_path),
             key=lambda path: len(path.parts),
@@ -845,6 +1093,13 @@ class RunManifestSession:
         scientific_result: Any = None,
         status: str = "completed",
     ) -> Path:
+        """Close the session for a run that completed.
+
+        Records the outputs, their checksums and the scientific fingerprints.
+
+        Args:
+            **kwargs: The run's outputs and results.
+        """
         if not bool(getattr(self.run, "store_data", True)):
             self._cleanup_manifest_only_outputs()
         fingerprints = scientific_fingerprints(datasets, scientific_result)
@@ -872,6 +1127,11 @@ class RunManifestSession:
         return self.manifest_path
 
     def fail(self, exc: BaseException) -> Path:
+        """Close the session for a run that raised.
+
+        Args:
+            error: The exception that ended the run.
+        """
         if not bool(getattr(self.run, "store_data", True)):
             self._cleanup_manifest_only_outputs()
         self.manifest["run"]["status"] = "failed"
@@ -886,6 +1146,7 @@ class RunManifestSession:
         return self.manifest_path
 
     def abort(self, message: str = "Simulation aborted") -> Path:
+        """Close the session for a run that was interrupted."""
         if not bool(getattr(self.run, "store_data", True)):
             self._cleanup_manifest_only_outputs()
         self.manifest["run"]["status"] = "aborted"
@@ -897,6 +1158,11 @@ class RunManifestSession:
 
 
 def _workspace_specs(workspaces: Any = None) -> list[dict[str, Any]]:
+    """Return the directories a manifest search should cover.
+
+    Returns:
+        The workspace roots to scan.
+    """
     if workspaces is None:
         try:
             from larvaworld.portal.workspace import get_known_workspaces
@@ -934,6 +1200,11 @@ def discover_run_manifests(
     modes: Iterable[str] | None = None,
     statuses: Iterable[str] | None = None,
 ) -> list[ManifestCatalogRecord]:
+    """Find the run manifests stored in the workspace.
+
+    Returns:
+        One catalog record per manifest found.
+    """
     mode_filter = {str(mode).casefold() for mode in modes} if modes else None
     status_filter = (
         {str(status).casefold() for status in statuses} if statuses else None
@@ -1018,6 +1289,17 @@ def discover_run_manifests(
 
 
 def resolve_manifest_id(manifest_id: str, *, workspaces: Any = None) -> Path:
+    """Resolve a manifest id, or a path, to a manifest file.
+
+    Args:
+        identifier: The manifest id or its path.
+
+    Returns:
+        The resolved manifest path.
+
+    Raises:
+        FileNotFoundError: If no manifest matches.
+    """
     matches = [
         record.manifest_path
         for record in discover_run_manifests(workspaces=workspaces)
@@ -1039,6 +1321,18 @@ def resolve_manifest_id(manifest_id: str, *, workspaces: Any = None) -> Path:
 def _override_for_input(
     entry: Mapping[str, Any], input_overrides: Mapping[str, Any] | None
 ) -> Path:
+    """Find the override supplied for one manifest input.
+
+    Inputs can be addressed by their original path, dataset id, reference
+    id or role, so a rerun can substitute a relocated dataset.
+
+    Args:
+        entry: The recorded input.
+        overrides: The overrides supplied by the caller.
+
+    Returns:
+        The replacement path, or None when the input is unchanged.
+    """
     original = str(entry.get("path", ""))
     replacement: Any = None
     if input_overrides:
@@ -1057,6 +1351,14 @@ def _override_for_input(
 def _child_seeds_match_derivation(
     mode: str, master_seed: int, child_seeds: Mapping[str, int]
 ) -> bool:
+    """Check that the recorded child seeds follow from the master seed.
+
+    Args:
+        payload: The manifest content.
+
+    Returns:
+        True when every child seed re-derives to its recorded value.
+    """
     try:
         if mode == "Batch":
             return all(
@@ -1088,6 +1390,23 @@ def validate_run_manifest(
     allow_version_mismatch: bool = False,
     input_overrides: Mapping[str, Any] | None = None,
 ) -> ManifestValidationReport:
+    """Check that a manifest can still be reproduced.
+
+    Verifies the schema, the software versions, the input checksums and
+    the seed derivation, so that a rerun starts from the same state the
+    original run did.
+
+    Args:
+        path: The manifest path.
+        reproducibility: ``"strict"`` requires the inputs and versions to
+            match exactly; ``"parameters"`` checks only the parameters.
+        allow_version_mismatch: When True, report a version difference as
+            a warning rather than an error.
+        input_overrides: Replacement paths for relocated inputs.
+
+    Returns:
+        The validation report, listing any issues found.
+    """
     if reproducibility not in {"strict", "parameters"}:
         raise ValueError("reproducibility must be 'strict' or 'parameters'")
     manifest_path = Path(path).expanduser().resolve()
@@ -1175,6 +1494,14 @@ def validate_run_manifest(
 
 
 def _next_rerun_dir(source_dir: Path) -> Path:
+    """Return an unused directory for a rerun's output.
+
+    Args:
+        base: The directory reruns are written under.
+
+    Returns:
+        The next free rerun directory.
+    """
     base = source_dir.with_name(f"{source_dir.name}_rerun")
     if not base.exists():
         return base
@@ -1187,6 +1514,14 @@ def _next_rerun_dir(source_dir: Path) -> Path:
 def _screen_options(
     invocation: Mapping[str, Any], with_media: bool, destination: Path
 ) -> dict[str, Any]:
+    """Build the screen options for a rerun.
+
+    Args:
+        with_media: Whether the rerun should record video and images.
+
+    Returns:
+        The screen configuration.
+    """
     runtime = invocation.get("runtime_options", {})
     screen = (
         copy.deepcopy(runtime.get("screen_kws", {}))
@@ -1219,6 +1554,16 @@ def _screen_options(
 def _input_dataset_for_role(
     report: ManifestValidationReport, roles: set[str]
 ) -> Any | None:
+    """Find the input dataset a manifest recorded under one role.
+
+    Args:
+        payload: The manifest content.
+        role: The role to look up.
+        overrides: Replacement paths for relocated inputs.
+
+    Returns:
+        The dataset, or None when the role is absent.
+    """
     from larvaworld.lib.process import LarvaDataset
 
     for entry in report.resolved_inputs:
@@ -1235,6 +1580,25 @@ def rerun_from_manifest(
     input_overrides: Mapping[str, Any] | None = None,
     with_media: bool = False,
 ) -> RerunResult:
+    """Re-execute the run a manifest describes.
+
+    The manifest is validated first, then the run is repeated with the
+    recorded parameters and seeds, and its scientific fingerprints are
+    compared against the originals.
+
+    Args:
+        path: The manifest path.
+        reproducibility: The strictness of the pre-run validation.
+        output_dir: Where the rerun writes. Defaults to a fresh directory.
+        allow_version_mismatch: Whether to proceed despite differing
+            package versions.
+        input_overrides: Replacement paths for relocated inputs.
+        with_media: Whether the rerun records video and images.
+
+    Returns:
+        The rerun result, carrying its manifest path and whether the
+        fingerprints matched.
+    """
     report = validate_run_manifest(
         path,
         reproducibility=reproducibility,
@@ -1369,6 +1733,14 @@ def rerun_from_manifest(
 
 
 def resolve_dataset_manifest_path(dataset: Any, *, workspaces: Any = None) -> Path:
+    """Return the manifest that produced a dataset.
+
+    Args:
+        dataset: The dataset to trace.
+
+    Returns:
+        The manifest path, or None when the dataset records none.
+    """
     config = getattr(dataset, "config", None)
     provenance = getattr(config, "provenance", None)
     if not isinstance(provenance, Mapping):
@@ -1410,6 +1782,12 @@ def append_dataset_lineage(
     operation: str,
     parameters: Mapping[str, Any] | None = None,
 ) -> None:
+    """Record a processing step in a dataset's lineage.
+
+    Args:
+        dataset: The dataset to annotate.
+        entry: The lineage entry to append.
+    """
     parent_config = getattr(parent, "config", None)
     derived_config = getattr(derived, "config", None)
     if parent_config is None or derived_config is None:

@@ -1,3 +1,10 @@
+"""
+Stored configurations for simulations and their environments.
+
+Defines the experiment, environment, trial, batch and evolutionary-search
+configurations shipped with larvaworld.
+"""
+
 import numpy as np
 
 from ... import reg, util, funcs

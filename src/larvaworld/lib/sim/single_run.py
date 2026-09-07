@@ -1,3 +1,10 @@
+"""
+A single simulated experiment.
+
+Runs one experiment configuration to completion, then optionally enriches and
+analyses the dataset it produced.
+"""
+
 from __future__ import annotations
 from typing import Any, Optional
 import os

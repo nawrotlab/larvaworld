@@ -1,3 +1,10 @@
+"""
+Evolutionary optimization of model parameters.
+
+Runs a genetic algorithm over the model search space, scoring each generation
+against a reference dataset and breeding the best genomes into the next.
+"""
+
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, List, Optional
 

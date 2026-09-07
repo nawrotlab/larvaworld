@@ -1,3 +1,10 @@
+"""
+Stored configurations for lab data formats and reference datasets.
+
+Defines the tracker formats larvaworld can import from, and registers the
+reference datasets that models are sampled from and evaluated against.
+"""
+
 from __future__ import annotations
 
 import json

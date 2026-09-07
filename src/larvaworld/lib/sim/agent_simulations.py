@@ -1,3 +1,10 @@
+"""
+Simulation of individual agents without a full experiment.
+
+Runs one or several larva models in isolation, which is used to inspect a
+model's behaviour and to fit its parameters.
+"""
+
 from __future__ import annotations
 
 import random

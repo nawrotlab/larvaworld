@@ -36,6 +36,11 @@ __all__: list[str] = [
 
 
 class ScreenTextFont(NestedConf):
+    """A block of text rendered onto the simulation display.
+
+    Handles wrapping, font sizing and the surfaces the renderer blits.
+    """
+
     text_color = param.Color("black", doc="The color of the text")
     text = param.String("", doc="The text to draw")
     font_size = PositiveInteger(20, doc="The font size")
@@ -51,6 +56,11 @@ class ScreenTextFont(NestedConf):
     )
 
     def __init__(self, end_time: int = 0, start_time: int = 0, **kwargs: Any):
+        """Build the text element.
+
+        Args:
+            **kwargs: Text attributes, forwarded to the parent class.
+        """
         self.font = None
         self.text_font = None
         self.text_font_r = None
@@ -62,6 +72,7 @@ class ScreenTextFont(NestedConf):
 
     @param.depends("text", "text_color", "text_centre", "max_text_width", watch=True)
     def render_text(self) -> None:
+        """Rasterize the current text into surfaces, one per line."""
         if not self.font:
             self.update_font()
         if self.N_text_lines == 1:
@@ -88,6 +99,15 @@ class ScreenTextFont(NestedConf):
         # A single space-free token (e.g. an underscore-joined refID) can
         # still exceed max_text_width on its own; word-wrapping alone can't
         # break it, so fall back to character-level chunking.
+        """Break a word too long to fit one line.
+
+        Args:
+            word: The word to split.
+            max_width: The available width.
+
+        Returns:
+            The word's fragments.
+        """
         chunks: list[str] = []
         cur = ""
         for ch in word:
@@ -102,6 +122,15 @@ class ScreenTextFont(NestedConf):
         return chunks
 
     def _wrap_line(self, line: str) -> list[str]:
+        """Wrap one line of text to the available width.
+
+        Args:
+            line: The text to wrap.
+            max_width: The available width.
+
+        Returns:
+            The wrapped lines.
+        """
         if not line or not self.max_text_width or not self.font:
             return [line]
         words = line.split(" ")
@@ -123,6 +152,7 @@ class ScreenTextFont(NestedConf):
 
     @property
     def text_lines(self) -> list[str]:
+        """The text, wrapped to the available width."""
         raw = self.text.splitlines()
         if not self.max_text_width or not self.font:
             return raw
@@ -133,16 +163,24 @@ class ScreenTextFont(NestedConf):
 
     @property
     def N_text_lines(self) -> int:
+        """The number of wrapped lines."""
         return len(self.text_lines)
 
     @param.depends("font_size", watch=True)
     def update_font(self) -> None:
+        """Rebuild the font after its size or family changed."""
         import pygame
 
         pygame.init()
         self.font = pygame.font.SysFont(self.font_type, self.font_size)
 
     def draw(self, v: Any, **kwargs: Any) -> None:
+        """Render the text.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Drawing options.
+        """
         if self.text_font is None or self.text_font_r is None:
             self.render_text()
         if self.N_text_lines == 1:
@@ -152,9 +190,20 @@ class ScreenTextFont(NestedConf):
                 v.draw_text_box(self.text_font[i], self.text_font_r[i])
 
     def set_text(self, text: str) -> None:
+        """Replace the displayed text.
+
+        Args:
+            text: The new text.
+        """
         self.text = text
 
     def flash_text(self, text: str, t: int = 2) -> None:
+        """Show a message briefly.
+
+        Args:
+            text: The message.
+            t: How many timesteps it stays visible.
+        """
         import pygame
 
         self.set_text(text)
@@ -163,6 +212,11 @@ class ScreenTextFont(NestedConf):
 
 
 class ScreenTextFontRel(ScreenTextFont):
+    """Text positioned and sized relative to a reference area.
+
+    Follows that area as the view is panned, zoomed or resized.
+    """
+
     text_centre_scale = param.NumericTuple(
         (0.9, 0.9),
         # text_centre_scale = PositiveRange((0.9, 0.9), softmax=10.0, step=0.01,
@@ -176,17 +230,24 @@ class ScreenTextFontRel(ScreenTextFont):
     )
 
     def __init__(self, **kwargs: Any):
+        """Build the text element positioned relative to an area.
+
+        Args:
+            **kwargs: Text attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.update_font_size(self.reference_object)
         self.update_font_centre_pos(self.reference_object)
 
     @param.depends("reference_object.pos", "text_centre_scale", watch=True)
     def update_font_centre_pos(self, obj: Any) -> None:
+        """Re-place the text after the reference area moved."""
         dx, dy = self.text_centre_scale
         self.text_centre = (obj.x * dx, obj.y * dy)
 
     # @param.depends('reference_object', watch=True)
     def update_font_size(self, obj: Any) -> None:
+        """Rescale the font to the reference area's size."""
         self.font_size = int(obj.reference_area.w * self.font_size_scale)
 
 
@@ -214,12 +275,23 @@ class ScreenTextBoxRect(ScreenTextFont, Viewable):
     show_frame = param.Boolean(True, doc="Draw the rectangular frame around the text")
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the boxed text element.
+
+        Args:
+            **kwargs: Text attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.text_centre = self.frame_rect.center
         if self.max_text_width is None and self.frame_rect is not None:
             self.max_text_width = int(self.frame_rect.width * 0.92)
 
     def draw(self, v: Any, **kwargs: Any) -> None:
+        """Render the box and its text.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Drawing options.
+        """
         if self.show_frame and self.frame_rect is not None:
             import pygame
 
@@ -257,13 +329,25 @@ class ScreenTextBox(ScreenTextFont, ViewableToggleable, Area2DPixel):
     show_frame = param.Boolean(True, doc="Draw the rectangular frame around the text")
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the text box.
+
+        Args:
+            **kwargs: Text attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.frame_rect = None
 
     def set_frame_rect(self, pos: Any | None = None, **kwargs: Any):
+        """Recompute the frame around the text."""
         return self.get_rect_at_pos(pos, **kwargs)
 
     def draw(self, v: Any, **kwargs: Any) -> None:
+        """Render the frame and its text.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Drawing options.
+        """
         if self.show_frame:
             if self.frame_rect is not None:
                 # v.draw_polygon(self.shape, color=self.color, filled=False, width=self.linewidth)
@@ -298,27 +382,46 @@ class IDBox(ScreenTextFont, ViewableToggleable):
     agent = param.ClassSelector(class_=Pos2D, doc="The agent owning the ID")
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the agent ID label.
+
+        Args:
+            **kwargs: Text attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.update_font()
         self.update_agent()
 
     def update_agent(self) -> None:
+        """Point the label at an agent.
+
+        Args:
+            agent: The agent to label.
+        """
         self.text_color = self.agent.color
         self.set_text(self.agent.unique_id)
 
     # @param.depends('agent.pos', watch=True)
     def update_font_centre_pos(self, v: Any) -> None:
+        """Re-place the label to follow its agent."""
         pos = self.agent.get_position()
         x, y = v.space2screen_pos(pos)
         self.text_centre = x + 50, y + 12
 
     def draw(self, v: Any, **kwargs: Any) -> None:
+        """Render the agent's ID beside it.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Drawing options.
+        """
         self.update_font_centre_pos(v)
         self.update_agent()
         ScreenTextFont.draw(self, v=v, **kwargs)
 
 
 class PosPixelRel2AreaViewable(PosPixelRel2Area, Viewable):
+    """A viewable element placed relative to a reference area."""
+
     pass
 
 
@@ -348,16 +451,32 @@ class ScreenMsgText(ScreenTextFontRel, Viewable):
     font_type = param.Parameter(default="SansitaOne.tff")
 
     def __init__(self, reference_area: Any, **kwargs: Any) -> None:
+        """Build the transient message line.
+
+        Args:
+            **kwargs: Text attributes, forwarded to the parent class.
+        """
         reference_object = PosPixelRel2Area(
             reference_area=reference_area, pos_scale=(0.95, 0.1)
         )
         super().__init__(reference_object=reference_object, **kwargs)
 
     def draw(self, v: Any, **kwargs: Any) -> None:
+        """Render the current message, if any.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Drawing options.
+        """
         ScreenTextFont.draw(self, v=v, **kwargs)
         # self.text_font.draw(v, **kwargs)
 
     def set_default_color(self, color: Any) -> None:
+        """Set the message colour.
+
+        Args:
+            color: The new colour.
+        """
         super().set_default_color(color)
         self.text_color = self.color
 
@@ -384,6 +503,12 @@ class SimulationClock(PosPixelRel2AreaViewable):
     pos_scale = param.NumericTuple((0.94, 0.04))
 
     def __init__(self, sim_step_in_sec: float, **kwargs: Any) -> None:
+        """Build the simulation clock.
+
+        Args:
+            sim_step_in_sec: The simulated seconds per timestep.
+            **kwargs: Text attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         # Time Info
         self.sim_step_in_dms = int(sim_step_in_sec * 100)
@@ -415,6 +540,7 @@ class SimulationClock(PosPixelRel2AreaViewable):
 
     def tick_clock(self) -> None:
         # self.counter += 1
+        """Advance the displayed time by one timestep."""
         self.dmsecond += self.sim_step_in_dms
         if self.dmsecond >= 100:
             self.second += 1
@@ -437,6 +563,12 @@ class SimulationClock(PosPixelRel2AreaViewable):
     def draw(self, v: Any, **kwargs: Any) -> None:
         # Re-anchor every frame to the clock's fixed position. This prevents
         # cumulative y-drift from repeated rect-center adjustments.
+        """Render the elapsed simulated time.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Drawing options.
+        """
         for k, f in self.text_fonts.items():
             f.update_font_centre_pos(self)
             t = getattr(self, k)
@@ -457,6 +589,11 @@ class SimulationClock(PosPixelRel2AreaViewable):
             f.draw(v, **kwargs)
 
     def set_default_color(self, color: Any) -> None:
+        """Set the clock colour.
+
+        Args:
+            color: The new colour.
+        """
         super().set_default_color(color)
         for k, v in self.text_fonts.items():
             v.text_color = self.color
@@ -482,6 +619,11 @@ class SimulationScale(PosPixelRel2AreaViewable):
     pos_scale = param.NumericTuple((0.1, 0.04))
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the scale bar.
+
+        Args:
+            **kwargs: Text attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         kws = {
             "reference_object": self,
@@ -512,6 +654,12 @@ class SimulationScale(PosPixelRel2AreaViewable):
     #             [(x - scale / 2, y * 0.75), (x - scale / 2, y * 1.25)]]
 
     def draw(self, v: Any, **kwargs: Any) -> None:
+        """Render the scale bar and its label.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Drawing options.
+        """
         for line in self.lines:
             import pygame
 
@@ -520,6 +668,11 @@ class SimulationScale(PosPixelRel2AreaViewable):
         self.text_font.draw(v, **kwargs)
 
     def set_default_color(self, color: Any) -> None:
+        """Set the scale bar colour.
+
+        Args:
+            color: The new colour.
+        """
         super().set_default_color(color)
         # Use the color parameter directly to ensure text_font is updated correctly
         self.text_font.text_color = color
@@ -546,6 +699,11 @@ class SimulationState(PosPixelRel2AreaViewable):
     pos_scale = param.NumericTuple((0.85, 0.94))
 
     def __init__(self, model: Any, **kwargs: Any) -> None:
+        """Build the state indicator.
+
+        Args:
+            **kwargs: Text attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.model = model
         kws = {
@@ -557,12 +715,28 @@ class SimulationState(PosPixelRel2AreaViewable):
         )
 
     def set_text(self, text: str) -> None:
+        """Replace the displayed state.
+
+        Args:
+            text: The new state text.
+        """
         self.text_font.set_text(text)
 
     def draw(self, v: Any, **kwargs: Any) -> None:
+        """Render the simulation state.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Drawing options.
+        """
         self.text_font.draw(v, **kwargs)
 
     def set_default_color(self, color: Any) -> None:
+        """Set the indicator colour.
+
+        Args:
+            color: The new colour.
+        """
         super().set_default_color(color)
         # Use the color parameter directly to ensure text_font is updated correctly
         self.text_font.text_color = color

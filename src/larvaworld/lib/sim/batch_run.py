@@ -1,3 +1,10 @@
+"""
+Batch simulation runs over a parameter space.
+
+Sweeps a set of parameters across many single runs, optionally optimizing
+towards a target value, and collects the results into one batch dataset.
+"""
+
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 

@@ -1,3 +1,11 @@
+"""
+Experiment-specific termination and progression conditions.
+
+Each condition watches the running simulation and ends it, or advances its
+phase, when the experiment's own criterion is met -- a larva reaching a
+source, a preference being established, or a life stage completing.
+"""
+
 from __future__ import annotations
 
 import random

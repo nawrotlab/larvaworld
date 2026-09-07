@@ -1,3 +1,10 @@
+"""
+Socket-based messaging between larvaworld and an external process.
+
+Provides the message envelope and the client and server endpoints used to
+drive a remotely simulated brain model.
+"""
+
 #   Copyright 2017 Dan Krause
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");

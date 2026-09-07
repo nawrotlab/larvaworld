@@ -1,3 +1,11 @@
+"""
+Stored configurations for multi-experiment essays.
+
+An essay groups several related experiments into one study -- rover versus
+sitter, the double-patch assay, chemotaxis -- together with the analysis that
+compares their results.
+"""
+
 from __future__ import annotations
 from typing import Any, Optional
 

@@ -1,3 +1,10 @@
+"""
+Execution of simulation runs in a separate process.
+
+Launches a run as a subprocess so that long simulations do not block the
+caller, and reports back when the run completes.
+"""
+
 from __future__ import annotations
 from typing import Any
 import argparse

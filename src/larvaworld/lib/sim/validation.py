@@ -1,3 +1,11 @@
+"""
+Compatibility checks between an experiment and its environment.
+
+Reports the mismatches that would make a run meaningless -- an experiment
+requiring an odor source in an environment that defines none, and similar --
+before the simulation starts rather than after.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

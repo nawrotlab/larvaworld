@@ -1,3 +1,11 @@
+"""
+Base class shared by every simulation mode.
+
+Holds the setup common to experiments, batch runs, evolutionary searches,
+evaluations and replays: the output directory, the agent-based model, the
+screen manager and the dataset the run produces.
+"""
+
 from __future__ import annotations
 from typing import Any
 import agentpy
