@@ -45,6 +45,11 @@ class GraphRegistry:
         # build_graphgroups when nothing had triggered that import yet).
         # Force-import every submodule first so the registry is complete
         # regardless of import order.
+        """Build the registry of available plots.
+
+        Args:
+            **kwargs: Registry attributes, forwarded to the parent class.
+        """
         for _name in plot._SUBMODULES:
             getattr(plot, _name)
         self.dict = funcs.graphs

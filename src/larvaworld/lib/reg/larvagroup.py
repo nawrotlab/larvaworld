@@ -87,6 +87,11 @@ class LarvaGroupMutator(NestedConf):
     N = PositiveInteger(5, label="# agents/group", doc="Number of agents per model ID")
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the group mutator.
+
+        Args:
+            **kwargs: Mutation settings, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
 
@@ -198,6 +203,12 @@ class LarvaGroup(NestedConf):
         group_id: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
+        """Build the larva group.
+
+        Args:
+            group_id: The group's identifier.
+            **kwargs: Group settings, forwarded to the parent class.
+        """
         if group_id is None:
             group_id = model if isinstance(model, str) else "LarvaGroup"
 
@@ -212,6 +223,15 @@ class LarvaGroup(NestedConf):
             super().__init__(model=model, group_id=group_id, **kwargs)
 
     def entry(self, expand: bool = False, as_entry: bool = True) -> AttrDict:
+        """Return the group as a registry entry.
+
+        Args:
+            expand: Whether to expand the model configuration.
+            as_entry: Whether to key the result by the group ID.
+
+        Returns:
+            The group configuration.
+        """
         C = self.nestedConf
         if expand:
             C.model = self.expanded_model
@@ -222,6 +242,7 @@ class LarvaGroup(NestedConf):
 
     @property
     def expanded_model(self) -> dict:
+        """The group's model configuration, fully expanded."""
         m = self.model
         assert m is not None
         if isinstance(m, dict):
@@ -234,6 +255,15 @@ class LarvaGroup(NestedConf):
     def generate_agent_attrs(
         self, parameter_dict: dict[str, Any] = {}
     ) -> tuple[list[str], list, list, list]:
+        """Draw the per-agent parameters for the group.
+
+        Args:
+            parameter_dict: Explicit parameter values per agent.
+
+        Returns:
+            The attributes of each agent, sampled or imitated from the
+            reference dataset as the group's mode requires.
+        """
         m = self.expanded_model
         Nids = self.distribution.N
         if self.sample is not None:
@@ -272,12 +302,28 @@ class LarvaGroup(NestedConf):
         return ids, ps, ors, all_pars
 
     def __call__(self, parameter_dict: dict[str, Any] = {}) -> list[dict]:
+        """Build the group's agents.
+
+        Args:
+            parameter_dict: Explicit parameter values per agent.
+
+        Returns:
+            The constructed agents.
+        """
         ids, ps, ors, all_pars = self.generate_agent_attrs(parameter_dict)
         return self.generate_agent_confs(ids, ps, ors, all_pars)
 
     def generate_agent_confs(
         self, ids: list[str], ps: list, ors: list, all_pars: list[dict[str, Any]]
     ) -> list[dict]:
+        """Build the configuration of each agent in the group.
+
+        Args:
+            parameter_dict: Explicit parameter values per agent.
+
+        Returns:
+            One configuration per agent.
+        """
         confs = []
         for id, p, o, pars in zip(ids, ps, ors, all_pars):
             conf = {
@@ -301,6 +347,14 @@ class LarvaGroup(NestedConf):
         color: Optional[str] = None,
         **kwargs: Any,
     ) -> "LarvaGroup":
+        """Build one larva group from keyword settings.
+
+        Args:
+            **kwargs: The group's settings.
+
+        Returns:
+            The group entry.
+        """
         kws = self.nestedConf
         if N is not None:
             kws.distribution.N = N
@@ -318,6 +372,14 @@ class LarvaGroup(NestedConf):
     def new_groups(
         self, as_dict: bool = False, **kwargs: Any
     ) -> util.ItemList | AttrDict:
+        """Build several larva groups at once.
+
+        Args:
+            **kwargs: The groups' settings.
+
+        Returns:
+            The group entries.
+        """
         confs = prepare_larvagroup_args(**kwargs)
         lg_list = util.ItemList([self.new_group(**conf) for conf in confs])
         if not as_dict:

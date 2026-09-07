@@ -25,20 +25,56 @@ __all__: list[str] = [
 
 
 def powerlaw_cdf(x, xmin, alpha):
+    """Evaluate the cumulative distribution of a power law.
+
+    Args:
+        x: The points to evaluate at.
+        *args: The distribution's shape parameters; see the caller.
+
+    Returns:
+        The cumulative distribution at each point.
+    """
     return 1 - (x / xmin) ** (1 - alpha)
 
 
 def powerlaw_pdf(x, xmin, alpha):
+    """Evaluate the probability density of a power law.
+
+    Args:
+        x: The points to evaluate at.
+        *args: The distribution's shape parameters; see the caller.
+
+    Returns:
+        The probability density at each point.
+    """
     return (alpha - 1) / xmin * (x / xmin) ** (-alpha)
 
 
 def levy_pdf(x, mu, sigma):
+    """Evaluate the probability density of a Levy distribution.
+
+    Args:
+        x: The points to evaluate at.
+        *args: The distribution's shape parameters; see the caller.
+
+    Returns:
+        The probability density at each point.
+    """
     return (
         np.sqrt(sigma / (2 * np.pi)) * np.exp(-sigma / (2 * (x - mu))) / (x - mu) ** 1.5
     )
 
 
 def levy_cdf(x, mu, sigma):
+    """Evaluate the cumulative distribution of a Levy distribution.
+
+    Args:
+        x: The points to evaluate at.
+        *args: The distribution's shape parameters; see the caller.
+
+    Returns:
+        The cumulative distribution at each point.
+    """
     res = 1 - scipy.special.erf(np.sqrt(sigma / (2 * (x - mu))))
     if np.isnan(res[0]):
         res[0] = 0
@@ -46,10 +82,28 @@ def levy_cdf(x, mu, sigma):
 
 
 def norm_pdf(x, mu, sigma):
+    """Evaluate the probability density of a normal distribution.
+
+    Args:
+        x: The points to evaluate at.
+        *args: The distribution's shape parameters; see the caller.
+
+    Returns:
+        The probability density at each point.
+    """
     return 1 / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
 
 
 def norm_cdf(x, mu, sigma):
+    """Evaluate the cumulative distribution of a normal distribution.
+
+    Args:
+        x: The points to evaluate at.
+        *args: The distribution's shape parameters; see the caller.
+
+    Returns:
+        The cumulative distribution at each point.
+    """
     res = 0.5 * (1 + scipy.special.erf((x - mu) / (sigma * np.sqrt(2))))
     if np.isnan(res[0]):
         res[0] = 0
@@ -57,26 +111,80 @@ def norm_cdf(x, mu, sigma):
 
 
 def uniform_pdf(x, xmin, xmax):
+    """Evaluate the probability density of a uniform distribution.
+
+    Args:
+        x: The points to evaluate at.
+        *args: The distribution's shape parameters; see the caller.
+
+    Returns:
+        The probability density at each point.
+    """
     return scipy.stats.uniform.pdf(x, xmin, xmin + xmax)
 
 
 def uniform_cdf(x, xmin, xmax):
+    """Evaluate the cumulative distribution of a uniform distribution.
+
+    Args:
+        x: The points to evaluate at.
+        *args: The distribution's shape parameters; see the caller.
+
+    Returns:
+        The cumulative distribution at each point.
+    """
     return scipy.stats.uniform.cdf(x, xmin, xmin + xmax)
 
 
 def exponential_cdf(x, xmin, beta):
+    """Evaluate the cumulative distribution of an exponential distribution.
+
+    Args:
+        x: The points to evaluate at.
+        *args: The distribution's shape parameters; see the caller.
+
+    Returns:
+        The cumulative distribution at each point.
+    """
     return 1 - np.exp(-beta * (x - xmin))
 
 
 def exponential_pdf(x, xmin, beta):
+    """Evaluate the probability density of an exponential distribution.
+
+    Args:
+        x: The points to evaluate at.
+        *args: The distribution's shape parameters; see the caller.
+
+    Returns:
+        The probability density at each point.
+    """
     return beta * np.exp(-beta * (x - xmin))
 
 
 def lognorm_cdf(x, mu, sigma):
+    """Evaluate the cumulative distribution of a lognormal distribution.
+
+    Args:
+        x: The points to evaluate at.
+        *args: The distribution's shape parameters; see the caller.
+
+    Returns:
+        The cumulative distribution at each point.
+    """
     return 0.5 + 0.5 * scipy.special.erf((np.log(x) - mu) / np.sqrt(2) / sigma)
 
 
 def lognormal_pdf(x, mu, sigma):
+    """Evaluate the probability density of a lognormal distribution.
+
+    Args:
+        x: The points to evaluate at.
+        *args: The distribution's shape parameters; see the caller.
+
+    Returns:
+        The probability density at each point.
+    """
     return (
         1
         / (x * sigma * np.sqrt(2 * np.pi))
@@ -85,18 +193,58 @@ def lognormal_pdf(x, mu, sigma):
 
 
 def logNpow_pdf(x, mu, sigma, alpha, switch, ratio):
+    """Evaluate the probability density of a lognormal-power-law mixture.
+
+    Bout durations are lognormal below a switch point and follow a power
+    law above it; the two pieces are weighted by their share of the data.
+
+    Args:
+        x: The points to evaluate at.
+        mu: The lognormal mean of the log values.
+        sigma: Its standard deviation.
+        alpha: The power-law exponent.
+        switch: The value the two regimes meet at.
+        ratio: The share of the data below the switch.
+
+    Returns:
+        The density at each point.
+    """
     log_pdf = lognormal_pdf(x[x < switch], mu, sigma) * ratio
     pow_pdf = powerlaw_pdf(x[x >= switch], switch, alpha) * (1 - ratio)
     return np.hstack([log_pdf, pow_pdf])
 
 
 def logNpow_cdf(x, mu, sigma, alpha, switch, ratio):
+    """Evaluate the cumulative distribution of the lognormal-power mixture.
+
+    Args:
+        x: The points to evaluate at.
+        mu: The lognormal mean of the log values.
+        sigma: Its standard deviation.
+        alpha: The power-law exponent.
+        switch: The value the two regimes meet at.
+        ratio: The share of the data below the switch.
+
+    Returns:
+        The cumulative probability at each point.
+    """
     log_cdf = 1 - lognorm_cdf(x[x < switch], mu, sigma)
     pow_cdf = (1 - powerlaw_cdf(x[x >= switch], switch, alpha)) * (1 - ratio)
     return 1 - np.hstack([log_cdf, pow_cdf])
 
 
 def get_powerlaw_alpha2(x, xmin=None, xmax=None, discrete=False):
+    """Fit a power-law exponent to observed values.
+
+    Args:
+        x: The observations.
+        xmin: The lower fitting bound. Defaults to the smallest value.
+        xmax: The upper bound. Defaults to the largest value.
+        discrete: Whether the observations are discrete.
+
+    Returns:
+        The fitted bounds and exponent.
+    """
     if xmin is None:
         xmin = np.min(x)
     if xmax is None:
@@ -107,6 +255,15 @@ def get_powerlaw_alpha2(x, xmin=None, xmax=None, discrete=False):
 
 
 def get_exp_beta2(x, xmin=None):
+    """Fit an exponential rate to observed values.
+
+    Args:
+        x: The observations.
+        xmin: The lower bound. Defaults to the smallest value.
+
+    Returns:
+        The bound and the fitted rate.
+    """
     if xmin is None:
         xmin = np.min(x)
     b = len(x) / np.sum(x - xmin)
@@ -114,16 +271,42 @@ def get_exp_beta2(x, xmin=None):
 
 
 def fit_levy(x):
+    """Fit a Levy distribution to observed values.
+
+    Args:
+        x: The observations.
+
+    Returns:
+        The fitted location and scale.
+    """
     m, s = scipy.stats.levy.fit(x)
     return {"mu": m, "sigma": s}
 
 
 def fit_norm(x):
+    """Fit a normal distribution to observed values.
+
+    Args:
+        x: The observations.
+
+    Returns:
+        The fitted mean and standard deviation.
+    """
     m, s = scipy.stats.norm.fit(x)
     return {"mu": m, "sigma": s}
 
 
 def fit_uni(x, xmin=None, xmax=None):
+    """Fit a uniform distribution to observed values.
+
+    Args:
+        x: The observations.
+        xmin: The lower bound. Defaults to the smallest value.
+        xmax: The upper bound. Defaults to the largest value.
+
+    Returns:
+        The fitted bounds.
+    """
     if xmin is None:
         xmin = np.min(x)
     if xmax is None:
@@ -132,6 +315,18 @@ def fit_uni(x, xmin=None, xmax=None):
 
 
 def get_logNpow2(x, xmax, xmid, overlap=0, discrete=False):
+    """Fit a lognormal-power-law mixture to observed values.
+
+    Args:
+        x: The observations.
+        xmax: The largest value considered.
+        xmid: The value the two regimes switch at.
+        overlap: How far past the switch the lognormal fit may reach.
+        discrete: Whether the observations are discrete.
+
+    Returns:
+        The fitted mixture parameters.
+    """
     dic = util.AttrDict()
     dic.ratio = len(x[x < xmid]) / len(x)
     xx = np.log(x[x < xmid + overlap * (xmax - xmid)])
@@ -729,6 +924,11 @@ class BoutGenerator:
     def __init__(
         self, name: str, range: tuple[float, float], dt: float, **kwargs: Any
     ) -> None:
+        """Build the generator for one bout-duration distribution.
+
+        Args:
+            **kwargs: The distribution name and its parameters.
+        """
         self.name = name
         self.dt = dt
         self.range = range
@@ -739,10 +939,26 @@ class BoutGenerator:
         self.dist = self.build(**self.args)
 
     def sample(self, size: int = 1):
+        """Draw bout durations from the distribution.
+
+        Args:
+            size: How many to draw.
+
+        Returns:
+            The sampled durations.
+        """
         vs = self.dist.rvs(size=size) * self.dt
         return vs[0] if size == 1 else vs
 
     def build(self, **kwargs: Any):
+        """Build the underlying distribution from its parameters.
+
+        Args:
+            **kwargs: The distribution parameters.
+
+        Returns:
+            The distribution object and its support.
+        """
         x0, x1 = int(self.xmin / self.dt), int(self.xmax / self.dt)
         xx = np.arange(x0, x1 + 1)
         pmf = distroDB[self.name]["pdf"](xx * self.dt, **kwargs)
@@ -753,5 +969,14 @@ class BoutGenerator:
         return rv_discrete(values=(xx, pmf))
 
     def get(self, x: np.ndarray, mode: str):
+        """Evaluate the distribution's density or cumulative function.
+
+        Args:
+            x: The points to evaluate at.
+            mode: ``"pdf"`` for the density, ``"cdf"`` for the cumulative.
+
+        Returns:
+            The evaluated values.
+        """
         func = distroDB[self.name][mode]
         return func(x=x, **self.args)

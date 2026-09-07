@@ -82,6 +82,7 @@ class LarvaworldParamName(Conf):
     )
 
     def _disp_property(self):
+        """The parameter's display name."""
         return self.disp
 
     #: `s`/`parameter` are aliases -- both just the display name.
@@ -89,10 +90,12 @@ class LarvaworldParamName(Conf):
 
     @property
     def short(self):
+        """The parameter's short registry key."""
         return self.k
 
     @property
     def symbol(self):
+        """The parameter's display symbol."""
         return self.sym
 
     @classmethod
@@ -166,21 +169,26 @@ class LarvaworldParam(LarvaworldParamName):
 
     @property
     def l(self):
+        """The parameter's label with its unit appended."""
         return self.disp + "  " + self.ulabel
 
     @property
     def symunit(self):
+        """The parameter's symbol with its unit appended."""
         return self.sym + "  " + self.ulabel
 
     @property
     def ulabel(self):
+        """The parameter's unit, rendered for display."""
         return Unit.label(self.u)
 
     @property
     def unit(self):
+        """The parameter's unit."""
         return Unit.symbol(self.u)
 
     def _v_default_property(self):
+        """The parameter's default value."""
         return self.param.v.default
 
     #: `v0`/`initial_value` are aliases -- both just "v"'s declared default.
@@ -188,13 +196,16 @@ class LarvaworldParam(LarvaworldParamName):
 
     @property
     def value(self):
+        """The parameter's current value."""
         return self.v
 
     @property
     def label(self):
+        """The parameter's display label."""
         return self.param.v.label
 
     def _v_doc_property(self):
+        """The parameter's documentation text."""
         return self.param.v.doc
 
     #: `tooltip`/`description`/`help` are aliases -- all just "v"'s doc string.
@@ -202,24 +213,29 @@ class LarvaworldParam(LarvaworldParamName):
 
     @property
     def parclass(self):
+        """The parameter's type, as a plain name."""
         return type(self.param.v)
 
     @property
     def lim(self):
+        """The parameter's admissible range."""
         return getattr(self.param.v, "bounds", None)
 
     @property
     def min(self):
+        """The parameter's lower limit."""
         lim = self.lim
         return lim[0] if lim else None
 
     @property
     def max(self):
+        """The parameter's upper limit."""
         lim = self.lim
         return lim[1] if lim else None
 
     @property
     def step(self):
+        """The increment used when adjusting the parameter."""
         p = self.parclass
         if _is_parclass(p, param.Number) or _is_parclass(p, param.Range):
             if self.param.v.step is not None:
@@ -232,6 +248,7 @@ class LarvaworldParam(LarvaworldParamName):
 
     @property
     def Ndec(self):
+        """The number of decimals the parameter is displayed to."""
         if self.step is not None:
             return str(self.step)[::-1].find(".")
         else:
@@ -474,6 +491,8 @@ def get_LarvaworldParam(
     """
 
     class _LarvaworldParam(LarvaworldParam):
+        """Internal parameter wrapper backing the registry's parameter records."""
+
         v = v_param
         u = Unit(
             default=reg.units.dimensionless,

@@ -35,6 +35,14 @@ _SUPPORTED_SPECIAL_KEYS = {
 
 
 def get_pygame_key(key: str) -> str:
+    """Translate a key name into its pygame constant.
+
+    Args:
+        key: The key name.
+
+    Returns:
+        The pygame key identifier.
+    """
     pygame_keys = util.AttrDict(
         {
             "BackSpace": "BACKSPACE",
@@ -67,6 +75,11 @@ def get_pygame_key(key: str) -> str:
 
 
 def init_shortcuts() -> util.AttrDict:
+    """Build the default keyboard shortcuts.
+
+    Returns:
+        The shortcut per action, grouped by category.
+    """
     d = util.AttrDict(
         {
             "draw": {
@@ -124,6 +137,11 @@ def init_shortcuts() -> util.AttrDict:
 
 
 def init_controls() -> util.AttrDict:
+    """Build the default control configuration.
+
+    Returns:
+        The keyboard and mouse bindings.
+    """
     k = init_shortcuts()
     d = util.AttrDict(
         {
@@ -259,17 +277,24 @@ class ControlRegistry:
     """
 
     def __init__(self) -> None:
+        """Build the registry of keyboard shortcuts.
+
+        Args:
+            **kwargs: Registry attributes, forwarded to the parent class.
+        """
         self.path = f"{CONF_DIR}/controls.txt"
         self.conf = init_controls()
         self.save(self.conf)
 
     def save(self, conf: util.AttrDict | None = None) -> None:
+        """Write the current key bindings to disk."""
         if conf is None:
             conf = self.conf
         with open(self.path, "w") as fp:
             json.dump(conf, fp)
 
     def load(self) -> util.AttrDict:
+        """Read the stored key bindings back."""
         with open(self.path) as tfp:
             c = json.load(tfp)
         return util.AttrDict(c)
