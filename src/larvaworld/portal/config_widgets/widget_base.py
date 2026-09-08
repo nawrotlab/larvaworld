@@ -42,6 +42,15 @@ def family_box(
     title_css_classes: list[str] | None = None,
     header_right: object | None = None,
 ) -> pn.Column:
+    """Build a titled box grouping related fields.
+
+    Args:
+        title: The group's heading.
+        *objects: The widgets it contains.
+
+    Returns:
+        The box component.
+    """
     title_pane = pn.pane.Markdown(
         f"**{title}**",
         css_classes=title_css_classes or [],
@@ -74,6 +83,16 @@ def collapsible_family_box(
     css_classes: list[str] | None = None,
     collapsed: bool = False,
 ) -> pn.Card:
+    """Build a collapsible titled box grouping related fields.
+
+    Args:
+        title: The group's heading.
+        *objects: The widgets it contains.
+        collapsed: Whether it starts closed.
+
+    Returns:
+        The box component.
+    """
     return pn.Card(
         *children,
         title=title,
@@ -86,11 +105,27 @@ def collapsible_family_box(
 
 
 def _widget_has_native_help(widget: object) -> bool:
+    """Report whether a widget already shows its own help text.
+
+    Args:
+        widget: The widget to test.
+
+    Returns:
+        True when no separate documentation pane is needed.
+    """
     description = getattr(widget, "description", None)
     return isinstance(description, str) and description.strip() != ""
 
 
 def doc_pane(doc: str | None) -> pn.pane.HTML | None:
+    """Build the pane showing a parameter's documentation.
+
+    Args:
+        doc: The documentation text.
+
+    Returns:
+        The pane, or None when there is nothing to show.
+    """
     if not doc:
         return None
     return pn.pane.HTML(
@@ -100,6 +135,14 @@ def doc_pane(doc: str | None) -> pn.pane.HTML | None:
 
 
 def widget_block(widget: object, *, doc: str | None = None) -> pn.Column:
+    """Pair a widget with its documentation pane.
+
+    Args:
+        widget: The widget to wrap.
+
+    Returns:
+        The combined component.
+    """
     children = [widget]
     pane = None if _widget_has_native_help(widget) else doc_pane(doc)
     if pane is not None:
@@ -108,6 +151,14 @@ def widget_block(widget: object, *, doc: str | None = None) -> pn.Column:
 
 
 def _single_widget_override(parameter: param.Parameter) -> dict[str, object]:
+    """Choose the widget type one parameter should render as.
+
+    Args:
+        parameter: The parameter to render.
+
+    Returns:
+        The widget override, or None to use the default.
+    """
     default = getattr(parameter, "default", None)
     if isinstance(parameter, param.ListSelector):
         return {"type": pn.widgets.MultiChoice}
@@ -129,6 +180,18 @@ def _single_widget_override(parameter: param.Parameter) -> dict[str, object]:
 def safe_widget_overrides(
     instance: param.Parameterized, parameter_names: list[str]
 ) -> dict[str, dict[str, object]]:
+    """Build the widget overrides for a set of parameters.
+
+    Overrides that would raise are dropped, so one unrenderable parameter
+    cannot break the whole form.
+
+    Args:
+        instance: The object being edited.
+        parameter_names: The parameters to render.
+
+    Returns:
+        The overrides, keyed by parameter name.
+    """
     widgets: dict[str, dict[str, object]] = {}
     for name in parameter_names:
         parameter = instance.param.objects(instance=False)[name]
@@ -143,6 +206,14 @@ def editable_parameter_names(
     *,
     exclude: set[str] | None = None,
 ) -> list[str]:
+    """List the parameters of an object that should be editable.
+
+    Args:
+        instance: The object being edited.
+
+    Returns:
+        The parameter names, excluding the readonly and internal ones.
+    """
     excluded = {"name"}
     if exclude is not None:
         excluded.update(exclude)
@@ -159,6 +230,15 @@ def param_control(
     parameter_name: str,
     widget_overrides: dict[str, dict[str, object]] | None = None,
 ) -> pn.Column:
+    """Build the control editing one parameter.
+
+    Args:
+        obj: The object being edited.
+        name: The parameter name.
+
+    Returns:
+        The control component.
+    """
     param_pane = pn.Param(
         obj,
         parameters=[parameter_name],
@@ -185,6 +265,15 @@ def param_controls(
     parameters: list[str],
     widget_overrides: dict[str, dict[str, object]] | None = None,
 ) -> pn.Column:
+    """Build the controls editing several parameters.
+
+    Args:
+        obj: The object being edited.
+        names: The parameters to edit.
+
+    Returns:
+        The control components.
+    """
     controls = [
         param_control(
             obj,
@@ -197,6 +286,14 @@ def param_controls(
 
 
 def _normalize_two_tuple(value: Any) -> tuple[Any, Any]:
+    """Coerce a value into a two-element tuple.
+
+    Args:
+        value: The value to coerce.
+
+    Returns:
+        The pair, or None when it is not one.
+    """
     if value is None:
         return (None, None)
     if isinstance(value, tuple):
@@ -216,6 +313,15 @@ def numeric_tuple_param_control(
     doc: str | None = None,
     step: float | int | None = None,
 ) -> pn.Column:
+    """Build the paired controls editing a numeric tuple parameter.
+
+    Args:
+        obj: The object being edited.
+        name: The parameter name.
+
+    Returns:
+        The control component.
+    """
     input_type = pn.widgets.FloatInput if numeric_type is float else pn.widgets.IntInput
     raw_value = _normalize_two_tuple(getattr(obj, parameter_name))
     state = {"syncing": False}
@@ -273,6 +379,14 @@ def numeric_tuple_param_control(
 
 
 def _class_choices(parameter: ClassAttr) -> list[type[Any]]:
+    """List the classes a class-valued parameter accepts.
+
+    Args:
+        parameter: The parameter to inspect.
+
+    Returns:
+        The admissible classes.
+    """
     class_ = parameter.class_
     if isinstance(class_, tuple):
         return list(class_)
@@ -280,6 +394,14 @@ def _class_choices(parameter: ClassAttr) -> list[type[Any]]:
 
 
 def _class_label(cls: type[Any]) -> str:
+    """Render a class as a choice label.
+
+    Args:
+        cls: The class to label.
+
+    Returns:
+        The label.
+    """
     agent_class = getattr(cls, "agent_class", None)
     if callable(agent_class):
         try:
@@ -297,6 +419,15 @@ def instantiate_classattr(
     target_class: type[Any] | None = None,
     source_instance: param.Parameterized | None = None,
 ) -> param.Parameterized:
+    """Instantiate the class a class-valued parameter selects.
+
+    Args:
+        parameter: The parameter holding the class.
+        cls: The class to instantiate.
+
+    Returns:
+        The new instance.
+    """
     nested_cls = target_class or _class_choices(parameter)[0]
     new_instance = nested_cls()
     if source_instance is None or not isinstance(new_instance, param.Parameterized):
@@ -320,6 +451,15 @@ def instantiate_classattr(
 
 
 def _ensure_attrdict(owner: param.Parameterized, parameter_name: str) -> util.AttrDict:
+    """Ensure a parameter holds an AttrDict rather than a plain dict.
+
+    Args:
+        owner: The object being edited.
+        parameter_name: The parameter to normalize.
+
+    Returns:
+        The AttrDict.
+    """
     current = getattr(owner, parameter_name)
     if isinstance(current, util.AttrDict):
         return current
@@ -336,6 +476,14 @@ def parameterized_editor(
     custom_builders: dict[str, Callable[[param.Parameterized, str, Any], object]]
     | None = None,
 ) -> pn.Column:
+    """Build the form editing every parameter of an object.
+
+    Args:
+        instance: The object being edited.
+
+    Returns:
+        The form component.
+    """
     custom = custom_builders or {}
     params = instance.param.objects(instance=False)
     ordered_names = parameter_order or editable_parameter_names(
@@ -392,6 +540,15 @@ def classattr_section(
     title_css_classes: list[str] | None = None,
     enable_control: str = "checkbox",
 ) -> pn.Column:
+    """Build the section editing a nested class-valued parameter.
+
+    Args:
+        owner: The object being edited.
+        name: The parameter holding the nested object.
+
+    Returns:
+        The section component.
+    """
     section_title = title or name.replace("_", " ").title()
     choices = _class_choices(parameter)
     current_value = getattr(owner, name)
@@ -547,6 +704,15 @@ def classdict_editor(
     title_css_classes: list[str] | None = None,
     wrap: bool = True,
 ) -> pn.Column:
+    """Build the editor for a parameter holding a dictionary of objects.
+
+    Args:
+        owner: The object being edited.
+        name: The parameter holding the dictionary.
+
+    Returns:
+        The editor component.
+    """
     section_title = title or name.replace("_", " ").title()
     label = item_label or section_title.rstrip("s")
     empty_label = f"No {label.lower()}s yet"

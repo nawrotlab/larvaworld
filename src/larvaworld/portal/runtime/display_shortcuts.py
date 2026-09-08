@@ -226,6 +226,11 @@ class DisplayShortcutsController(param.Parameterized):
     capturing_field = param.String(default="")
 
     def __init__(self, **params: Any) -> None:
+        """Build the controller and load the stored shortcuts.
+
+        Args:
+            **kwargs: Controller settings, forwarded to the parent class.
+        """
         super().__init__(config=DisplayShortcutsConfig(), **params)
         self._defaults = keymap.default_controls()
         self._defaults_subset = self._extract_curated_keys(
@@ -256,6 +261,14 @@ class DisplayShortcutsController(param.Parameterized):
 
     @staticmethod
     def _extract_curated_keys(raw_keys: Any) -> util.AttrDict:
+        """Select the rebindable shortcuts from the full key map.
+
+        Args:
+            raw_keys: The stored key bindings.
+
+        Returns:
+            The bindings this dialog exposes.
+        """
         result: dict[str, dict[str, str]] = {}
         for spec in _SHORTCUT_FIELDS:
             section_values = (
@@ -272,6 +285,7 @@ class DisplayShortcutsController(param.Parameterized):
         return util.AttrDict(result)
 
     def _current_keys(self) -> util.AttrDict:
+        """The key currently bound to each editable action."""
         result: dict[str, dict[str, str]] = {}
         for spec in _SHORTCUT_FIELDS:
             value = str(getattr(self.config, spec.field)).strip()
@@ -279,6 +293,11 @@ class DisplayShortcutsController(param.Parameterized):
         return util.AttrDict(result)
 
     def _apply_keys(self, keys: dict[str, dict[str, str]]) -> None:
+        """Apply a set of bindings to the controller's fields.
+
+        Args:
+            keys: The binding per action.
+        """
         for spec in _SHORTCUT_FIELDS:
             section_values = (
                 keys.get(spec.section, {}) if isinstance(keys, dict) else {}
@@ -296,13 +315,16 @@ class DisplayShortcutsController(param.Parameterized):
         self._update_controls_state()
 
     def _shortcuts_file(self) -> Path:
+        """The workspace file the shortcuts are stored in."""
         metadata_dir = get_workspace_dir("metadata")
         return metadata_dir / "display_shortcuts.json"
 
     def _workspace_available(self) -> bool:
+        """Whether a workspace is available to store the shortcuts in."""
         return get_active_workspace() is not None
 
     def _update_controls_state(self) -> None:
+        """Enable or disable the buttons to match the current state."""
         workspace_ok = self._workspace_available()
         self._save_btn.disabled = (not self.dirty) or (not workspace_ok)
         self._reset_btn.disabled = not workspace_ok
@@ -312,6 +334,11 @@ class DisplayShortcutsController(param.Parameterized):
         self._refresh_key_buttons()
 
     def _on_config_change(self, *_: Any) -> None:
+        """Handle a change to one of the bindings.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         self.dirty = True
         self.status = ""
         self._status_pane.object = ""
@@ -319,6 +346,14 @@ class DisplayShortcutsController(param.Parameterized):
 
     @staticmethod
     def _normalize_browser_key(raw_key: str) -> str | None:
+        """Normalize a key as the browser reports it.
+
+        Args:
+            raw_key: The key from the browser event.
+
+        Returns:
+            The normalized key name, or None when unusable.
+        """
         key_raw = str(raw_key)
         if key_raw in {" ", "Space", "Spacebar"}:
             return "space"
@@ -346,6 +381,14 @@ class DisplayShortcutsController(param.Parameterized):
 
     @staticmethod
     def _format_key_label(key: str) -> str:
+        """Render a key binding for display.
+
+        Args:
+            key: The bound key.
+
+        Returns:
+            The label.
+        """
         value = str(key)
         if value == "":
             return ""
@@ -360,6 +403,15 @@ class DisplayShortcutsController(param.Parameterized):
     def _find_duplicate_assignment(
         self, key: str, excluding_field: str
     ) -> ShortcutFieldSpec | None:
+        """Find another action already bound to a key.
+
+        Args:
+            key: The key being assigned.
+            excluding_field: The action being edited, which is not a conflict.
+
+        Returns:
+            The conflicting action, or None when the key is free.
+        """
         for spec in _SHORTCUT_FIELDS:
             if spec.field == excluding_field:
                 continue
@@ -369,6 +421,7 @@ class DisplayShortcutsController(param.Parameterized):
         return None
 
     def _refresh_key_buttons(self) -> None:
+        """Relabel the key buttons to match the current bindings."""
         for field, button in self._key_buttons.items():
             spec = _FIELD_TO_SPEC[field]
             if self.capturing_field == field:
@@ -382,6 +435,7 @@ class DisplayShortcutsController(param.Parameterized):
             button.tooltip = spec.label
 
     def _cancel_capture(self, *, clear_status: bool = False) -> None:
+        """Stop waiting for a key press."""
         self.capturing_field = ""
         self._refresh_key_buttons()
         if clear_status:
@@ -389,6 +443,7 @@ class DisplayShortcutsController(param.Parameterized):
             self._status_pane.object = ""
 
     def _toggle_editing(self, *_: Any) -> None:
+        """Enter or leave the binding-edit mode."""
         if self.editing:
             self._cancel_capture(clear_status=True)
             self.editing = False
@@ -399,6 +454,11 @@ class DisplayShortcutsController(param.Parameterized):
         self._update_controls_state()
 
     def _start_capture(self, field: str) -> None:
+        """Begin waiting for a key press to bind.
+
+        Args:
+            field: The action being rebound.
+        """
         if not self.editing:
             return
         spec = _FIELD_TO_SPEC.get(field)
@@ -410,6 +470,11 @@ class DisplayShortcutsController(param.Parameterized):
         self._refresh_key_buttons()
 
     def _on_capture_payload(self, event: param.parameterized.Event) -> None:
+        """Handle a captured key press from the browser.
+
+        Args:
+            event: The widget event carrying the pressed key.
+        """
         payload = str(event.new).strip()
         if not payload:
             return
@@ -425,6 +490,12 @@ class DisplayShortcutsController(param.Parameterized):
         self._apply_captured_key(field, key)
 
     def _apply_captured_key(self, field: str, raw_key: str) -> None:
+        """Bind a captured key to an action, rejecting duplicates.
+
+        Args:
+            field: The action being rebound.
+            raw_key: The key as the browser reported it.
+        """
         if field != self.capturing_field or field not in _FIELD_TO_SPEC:
             return
         normalized = self._normalize_browser_key(raw_key)
@@ -462,6 +533,7 @@ class DisplayShortcutsController(param.Parameterized):
         self._cancel_capture()
 
     def load_from_workspace(self) -> None:
+        """Load the shortcuts stored in the workspace."""
         keys = self._defaults_subset
         try:
             path = self._shortcuts_file()
@@ -483,9 +555,15 @@ class DisplayShortcutsController(param.Parameterized):
         self._apply_keys(keys)
 
     def validate(self) -> list[str]:
+        """Check the current bindings for conflicts and gaps.
+
+        Returns:
+            The problems found, empty when the bindings are usable.
+        """
         return keymap.validate_shortcut_conf(self._current_keys())
 
     def runtime_pygame_keys(self) -> dict[str, str]:
+        """The current bindings, as the running simulation expects them."""
         merged = keymap.merge_controls(
             self._defaults,
             {"keys": self._current_keys()},
@@ -493,6 +571,11 @@ class DisplayShortcutsController(param.Parameterized):
         return dict(merged.get("pygame_keys", {}))
 
     def _on_save(self, *_: Any) -> None:
+        """Handle the save button, storing the bindings in the workspace.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         errors = self.validate()
         if errors:
             msg = "Cannot save shortcuts:\n" + "\n".join(f"- {err}" for err in errors)
@@ -524,6 +607,11 @@ class DisplayShortcutsController(param.Parameterized):
         self._update_controls_state()
 
     def _on_reset(self, *_: Any) -> None:
+        """Handle the reset button, restoring the default bindings.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         self._apply_keys(self._defaults_subset)
         self.dirty = True
         self.status = "Defaults restored in memory. Save shortcuts to persist."
@@ -531,6 +619,11 @@ class DisplayShortcutsController(param.Parameterized):
         self._update_controls_state()
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the shortcut configuration view.
+
+        Returns:
+            The view component.
+        """
         if self._view_obj is not None:
             return self._view_obj
         groups: list[pn.viewable.Viewable] = []
@@ -637,12 +730,19 @@ class DisplayShortcutsDialog:
     dialog: pn.Column
 
     def open(self, *_: object) -> None:
+        """Show the dialog."""
         self.dialog.visible = True
 
     def close(self, *_: object) -> None:
+        """Hide the dialog."""
         self.dialog.visible = False
 
     def set_disabled(self, disabled: bool) -> None:
+        """Enable or disable the dialog's trigger.
+
+        Args:
+            disabled: Whether the trigger is disabled.
+        """
         self.open_button.disabled = bool(disabled)
         self.close_button.disabled = bool(disabled)
         if disabled:
@@ -650,6 +750,14 @@ class DisplayShortcutsDialog:
 
 
 def build_display_shortcuts_dialog(*, note: str) -> DisplayShortcutsDialog:
+    """Build the keyboard shortcut configuration dialog.
+
+    Args:
+        **kwargs: Controller settings.
+
+    Returns:
+        The dialog.
+    """
     controller = DisplayShortcutsController()
     open_button = pn.widgets.Button(
         name="Display Shortcuts",
