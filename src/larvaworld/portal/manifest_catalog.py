@@ -25,6 +25,7 @@ class ManifestCatalogController:
     """Small reusable manifest browser for simulation Portal apps."""
 
     def __init__(self, *, modes: Iterable[str], title: str = "Run Manifests") -> None:
+        """Build the catalog controller and load the stored manifests."""
         self.modes = tuple(modes)
         self.title = title
         self.records: list[ManifestCatalogRecord] = []
@@ -50,6 +51,7 @@ class ManifestCatalogController:
         self.refresh()
 
     def refresh(self) -> None:
+        """Reload the manifests from the workspace."""
         self.records = discover_run_manifests(modes=self.modes)
         valid = [
             record
@@ -86,9 +88,19 @@ class ManifestCatalogController:
         self._inspect()
 
     def _refresh(self, *_events: object) -> None:
+        """Handle the refresh button.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         self.refresh()
 
     def _inspect(self, *_events: object) -> None:
+        """Handle the inspect button, showing one manifest's detail.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         raw_path = self.manifest_select.value
         if not raw_path:
             self.inspector.object = {}
@@ -101,6 +113,11 @@ class ManifestCatalogController:
             )
 
     def _rerun(self, *_events: object) -> None:
+        """Handle the rerun button, re-executing the selected manifest.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         raw_path = self.manifest_select.value
         if not raw_path:
             return
@@ -124,6 +141,11 @@ class ManifestCatalogController:
             self.rerun_button.disabled = not bool(self._record_by_path)
 
     def view(self) -> pn.Card:
+        """Build the catalog view.
+
+        Returns:
+            The view component.
+        """
         actions = pn.Row(
             self.refresh_button,
             self.inspect_button,

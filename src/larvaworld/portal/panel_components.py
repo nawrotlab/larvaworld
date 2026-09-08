@@ -1440,6 +1440,15 @@ button.lw-portal-qs-top-tab--active,
 
 
 def _load_icon_data_uri(filename: str, mime_type: str) -> str:
+    """Read a bundled icon and encode it for inline use.
+
+    Args:
+        filename: The icon file's name.
+        mime_type: Its MIME type.
+
+    Returns:
+        The data URI, or an empty string when the icon is missing.
+    """
     icon_path = Path(__file__).parent / "media" / "icons" / filename
     try:
         encoded = base64.b64encode(icon_path.read_bytes()).decode("ascii")
@@ -1449,6 +1458,7 @@ def _load_icon_data_uri(filename: str, mime_type: str) -> str:
 
 
 def _resolve_portal_version() -> str:
+    """The larvaworld version shown in the portal footer."""
     try:
         return im.version("larvaworld")
     except Exception:
@@ -1466,6 +1476,7 @@ _PORTAL_VERSION = _resolve_portal_version()
 
 
 def _about_button_icon_html() -> str:
+    """The markup for the about button's icon."""
     if not _ABOUT_ICON_DATA_URI:
         return '<div style="font-size:20px;" title="About">ℹ️</div>'
     return (
@@ -1475,6 +1486,7 @@ def _about_button_icon_html() -> str:
 
 
 def _parameter_db_button_icon_html() -> str:
+    """The markup for the parameter database button's icon."""
     if not _PARAMETER_DB_ICON_DATA_URI:
         return '<div style="font-size:20px;" title="Parameter database">📊</div>'
     return (
@@ -1484,6 +1496,7 @@ def _parameter_db_button_icon_html() -> str:
 
 
 def _portal_logo_html(*, version: str) -> str:
+    """The markup for the portal logo."""
     logo_img = ""
     if _LOGO_DATA_URI:
         logo_img = f'<img class="lw-portal-logo-img" src="{_LOGO_DATA_URI}" alt="Larvaworld logo"/>'
@@ -1502,6 +1515,7 @@ def _portal_logo_html(*, version: str) -> str:
 
 
 def _header_links_html() -> str:
+    """The markup for the header's external links."""
     docs_icon = ""
     if _RTD_ICON_DATA_URI:
         docs_icon = (
@@ -1554,6 +1568,14 @@ def _header_links_html() -> str:
 
 
 def _badge_html(badge: str) -> str:
+    """Render one badge as markup.
+
+    Args:
+        badge: The badge to render.
+
+    Returns:
+        The markup.
+    """
     cls = "lw-portal-badge"
     if badge.strip().lower() in {"under construction", "planned"}:
         cls += " lw-portal-badge--under-construction"
@@ -1568,6 +1590,16 @@ def _button_html(
     extra_classes: tuple[str, ...] = (),
     tooltip: str | None = None,
 ) -> str:
+    """Render a card's primary action as markup.
+
+    Args:
+        label: The button text.
+        href: Where it leads.
+        enabled: Whether it is clickable.
+
+    Returns:
+        The markup.
+    """
     normalized_label = label.strip().lower()
     button_classes = ["lw-portal-btn"]
     if normalized_label in {"learn more", "notebook"}:
@@ -1591,6 +1623,14 @@ def _button_html(
 
 
 def _subtitle_html(text: str) -> str:
+    """Render a card subtitle as markup.
+
+    Args:
+        text: The subtitle text.
+
+    Returns:
+        The markup.
+    """
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     if not lines:
         lines = [""]
@@ -1598,6 +1638,11 @@ def _subtitle_html(text: str) -> str:
 
 
 def build_footer() -> pn.viewable.Viewable:
+    """Build the footer shown on every portal page.
+
+    Returns:
+        The footer component.
+    """
     html = (
         '<div class="lw-portal-footer-shell"><div class="lw-portal-footer-bar">'
         "<span>&copy; Larvaworld</span>"
@@ -1621,6 +1666,11 @@ def _build_about_dropdown() -> pn.viewable.Viewable:
     # WorkspaceUiController: a visible HTML icon pane plus an invisible
     # Button stacked on top for the click handling, wrapped in a small
     # shell (see .lw-portal-workspace-trigger-shell / -led / -button).
+    """Build the header's about menu.
+
+    Returns:
+        The menu component.
+    """
     about_led = pn.pane.HTML(_about_button_icon_html(), margin=0)
     about_button = pn.widgets.Button(
         name="",
@@ -1660,6 +1710,14 @@ def _build_about_dropdown() -> pn.viewable.Viewable:
 def _build_workspace_dropdown(
     workspace_ui: WorkspaceUiController,
 ) -> pn.viewable.Viewable:
+    """Build the header's workspace menu.
+
+    Args:
+        workspace_ui: The workspace controller the menu drives.
+
+    Returns:
+        The menu component.
+    """
     workspace_controls = workspace_ui.build_controls()
     workspace_body = pn.Column(
         workspace_controls,
@@ -1705,6 +1763,11 @@ def _build_header_controls_panel(
 
 
 def build_template_header() -> pn.viewable.Viewable:
+    """Build the header used by the landing page.
+
+    Returns:
+        The header component.
+    """
     workspace_ui = WorkspaceUiController()
 
     # Logo and about button
@@ -1754,6 +1817,11 @@ def build_template_header() -> pn.viewable.Viewable:
 def build_app_header(
     *, title: str, back_href: str = "/landing"
 ) -> pn.viewable.Viewable:
+    """Build the header used by the individual apps.
+
+    Returns:
+        The header component.
+    """
     workspace_ui = WorkspaceUiController()
     back_button = pn.pane.HTML(
         (
@@ -1788,6 +1856,14 @@ def render_card(
     notebook_enabled: bool = True,
     notebook_disabled_reason: str | None = None,
 ) -> pn.viewable.Viewable:
+    """Render one landing entry as a card.
+
+    Args:
+        item: The landing entry.
+
+    Returns:
+        The card component.
+    """
     action = compute_primary_action(item)
     badges = compute_badges(item)
     card_href = resolve_target(item) or f"/{item.id}"
@@ -1914,6 +1990,14 @@ def render_lane(
     notebook_enabled: bool = True,
     notebook_disabled_reason: str | None = None,
 ) -> pn.viewable.Viewable:
+    """Render one lane of landing cards.
+
+    Args:
+        lane: The lane specification.
+
+    Returns:
+        The lane component.
+    """
     title = pn.pane.HTML(
         f'<div class="lw-portal-section-title">{escape(lane.title)}</div>', margin=0
     )

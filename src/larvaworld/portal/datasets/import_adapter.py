@@ -21,6 +21,18 @@ from larvaworld.portal.workspace import (
 
 
 def _validated_text(value: str, *, field_name: str) -> str:
+    """Check that a required text field is non-empty.
+
+    Args:
+        value: The value to check.
+        field_name: The field's name, used in the error.
+
+    Returns:
+        The stripped value.
+
+    Raises:
+        RuntimeError: If the value is empty.
+    """
     normalized = value.strip()
     if not normalized:
         raise ValueError(f"Import request requires a non-empty {field_name}.")
@@ -30,6 +42,17 @@ def _validated_text(value: str, *, field_name: str) -> str:
 def _validate_workspace(
     workspace: WorkspaceState | None,
 ) -> WorkspaceState:
+    """Resolve the workspace an import writes into.
+
+    Args:
+        workspace: The workspace, or None for the active one.
+
+    Returns:
+        The workspace state.
+
+    Raises:
+        RuntimeError: If no valid workspace is available.
+    """
     resolved = workspace or get_active_workspace()
     if resolved is None:
         raise RuntimeError("Import failed: no valid active workspace is configured")
@@ -37,6 +60,21 @@ def _validate_workspace(
 
 
 def _validate_proc_root(proc_root: Path, datasets_root: Path) -> Path:
+    """Check that an import target stays inside the workspace.
+
+    Guards against a lab ID that escapes the datasets directory through path
+    traversal.
+
+    Args:
+        proc_root: The resolved import target.
+        datasets_root: The workspace datasets directory.
+
+    Returns:
+        The validated target.
+
+    Raises:
+        RuntimeError: If the target lies outside the workspace.
+    """
     try:
         proc_root.relative_to(datasets_root)
     except ValueError as exc:
@@ -47,6 +85,15 @@ def _validate_proc_root(proc_root: Path, datasets_root: Path) -> Path:
 
 
 def build_workspace_proc_folder(workspace: WorkspaceState, lab_id: str) -> Path:
+    """Build the folder a lab format's imports are written to.
+
+    Args:
+        workspace: The target workspace.
+        lab_id: The lab format.
+
+    Returns:
+        The import directory, validated to lie inside the workspace.
+    """
     normalized_lab_id = _validated_text(lab_id, field_name="lab_id")
     datasets_root = get_workspace_dir("datasets", workspace=workspace).resolve()
     proc_root = (datasets_root / "imported" / normalized_lab_id).resolve()
@@ -56,6 +103,15 @@ def build_workspace_proc_folder(workspace: WorkspaceState, lab_id: str) -> Path:
 def import_into_workspace(
     request: ImportRequest, workspace: WorkspaceState | None = None
 ) -> WorkspaceDatasetRecord:
+    """Import one recording into the workspace.
+
+    Args:
+        request: What to import and how.
+        workspace: The target workspace. Defaults to the active one.
+
+    Returns:
+        The imported dataset.
+    """
     active_workspace = _validate_workspace(workspace)
     lab_id = _validated_text(request.lab_id, field_name="lab_id")
     parent_dir = _validated_text(request.parent_dir, field_name="parent_dir")

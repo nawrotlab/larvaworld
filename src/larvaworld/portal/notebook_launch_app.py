@@ -16,6 +16,7 @@ from larvaworld.portal.notebook_workspace import launch_notebook_for_item
 
 
 def _card_html(*, title: str, body: str, footer: str = "") -> str:
+    """The markup framing the launcher's status card."""
     footer_html = f'<p style="margin:12px 0 0 0;">{footer}</p>' if footer else ""
     return (
         '<div style="max-width:720px;margin:36px auto;padding:16px 18px;'
@@ -29,6 +30,14 @@ def _card_html(*, title: str, body: str, footer: str = "") -> str:
 
 
 def _query_param(name: str) -> str | None:
+    """Read one query parameter from the current request.
+
+    Args:
+        name: The parameter name.
+
+    Returns:
+        Its value, or None when absent.
+    """
     values = pn.state.session_args.get(name, [])
     if not values:
         return None
@@ -39,11 +48,27 @@ def _query_param(name: str) -> str | None:
 
 
 def _error_view(message: str) -> pn.viewable.Viewable:
+    """Build the view shown when a notebook cannot be opened.
+
+    Args:
+        message: What went wrong.
+
+    Returns:
+        The view component.
+    """
     html = _error_html(message)
     return pn.Column(pn.pane.HTML(html, margin=0), sizing_mode="stretch_width")
 
 
 def _error_html(message: str) -> str:
+    """Render an error message as markup.
+
+    Args:
+        message: What went wrong.
+
+    Returns:
+        The markup.
+    """
     return _card_html(
         title="Notebook launch unavailable",
         body=f'<p style="margin:0;">{escape(message)}</p>',
@@ -52,6 +77,7 @@ def _error_html(message: str) -> str:
 
 
 def _initializing_html() -> str:
+    """The markup shown while the notebook server starts."""
     return _card_html(
         title="Initializing notebooks",
         body=(
@@ -67,6 +93,14 @@ def _initializing_html() -> str:
 
 
 def _redirect_html(notebook_url: str) -> str:
+    """Render the redirect that opens a notebook.
+
+    Args:
+        notebook_url: The notebook to open.
+
+    Returns:
+        The markup.
+    """
     js_url = json.dumps(notebook_url)
     return _card_html(
         title="Opening notebook",
@@ -79,6 +113,11 @@ def _redirect_html(notebook_url: str) -> str:
 
 
 def notebook_launch_app() -> pn.viewable.Viewable:
+    """Build the notebook launcher page.
+
+    Returns:
+        The page component.
+    """
     pn.extension()
 
     item_id = (_query_param("id") or "").strip()

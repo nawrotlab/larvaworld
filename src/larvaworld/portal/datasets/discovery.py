@@ -27,6 +27,14 @@ class RawDatasetCandidate:
 
 
 def _normalized_root(raw_root: Path) -> Path | None:
+    """Resolve the raw-data root a scan starts from.
+
+    Args:
+        raw_root: The configured root.
+
+    Returns:
+        The resolved directory.
+    """
     candidate = Path(raw_root).expanduser()
     if not candidate.exists() or not candidate.is_dir():
         return None
@@ -34,11 +42,29 @@ def _normalized_root(raw_root: Path) -> Path | None:
 
 
 def _relative_parent_dir(raw_root: Path, source_path: Path) -> str:
+    """Express a recording's directory relative to the scan root.
+
+    Args:
+        raw_root: The scan root.
+        source_path: The recording path.
+
+    Returns:
+        The relative parent directory.
+    """
     rel = source_path.resolve().relative_to(raw_root.resolve())
     return "." if str(rel) == "." else rel.as_posix()
 
 
 def _matching_files(source_path: Path, filesystem: object) -> list[Path]:
+    """List the files in a directory the lab format can read.
+
+    Args:
+        source_path: The directory to scan.
+        filesystem: The format's file-matching configuration.
+
+    Returns:
+        The matching files.
+    """
     suffixes = [
         suffix
         for suffix in [
@@ -62,6 +88,15 @@ def _matching_files(source_path: Path, filesystem: object) -> list[Path]:
 
 
 def _candidate_warnings(source_path: Path, filesystem: object) -> list[str]:
+    """Report what would make a candidate fail to import.
+
+    Args:
+        source_path: The recording path.
+        filesystem: The format's file-matching configuration.
+
+    Returns:
+        The warnings to show beside the candidate.
+    """
     if (
         filesystem.file_pref
         or filesystem.file_suf
@@ -76,6 +111,16 @@ def _candidate_warnings(source_path: Path, filesystem: object) -> list[str]:
 def _candidate_display_name(
     parent_dir: str, candidate_id: str, source_path: Path
 ) -> str:
+    """Build the name a candidate is listed under.
+
+    Args:
+        parent_dir: Its directory, relative to the scan root.
+        candidate_id: Its identifier.
+        source_path: Its path.
+
+    Returns:
+        The display name.
+    """
     if parent_dir == ".":
         return candidate_id
     if candidate_id == source_path.name:
@@ -84,6 +129,15 @@ def _candidate_display_name(
 
 
 def _folder_candidates(lab: object, raw_root: Path) -> list[RawDatasetCandidate]:
+    """Find the recordings a format stores as one folder each.
+
+    Args:
+        lab: The lab format.
+        raw_root: The scan root.
+
+    Returns:
+        The candidates found.
+    """
     candidates: list[RawDatasetCandidate] = []
     filesystem = lab.filesystem
     for source_path in sorted(path for path in raw_root.rglob("*") if path.is_dir()):
@@ -109,6 +163,18 @@ def _folder_candidates(lab: object, raw_root: Path) -> list[RawDatasetCandidate]
 
 
 def _group_files_by_token(files: list[Path], file_sep: str) -> dict[str, list[Path]]:
+    """Group a format's files into recordings by their leading token.
+
+    Formats that store several recordings in one folder distinguish them by a
+    prefix in the file name, up to the format's separator.
+
+    Args:
+        files: The files to group.
+        file_sep: The separator ending the recording token.
+
+    Returns:
+        The files of each recording, keyed by token.
+    """
     groups: dict[str, list[Path]] = {}
     for file in files:
         token = file.name.split(file_sep, 1)[0].strip()
@@ -119,6 +185,15 @@ def _group_files_by_token(files: list[Path], file_sep: str) -> dict[str, list[Pa
 
 
 def _file_candidates(lab: object, raw_root: Path) -> list[RawDatasetCandidate]:
+    """Find the recordings a format stores as loose files.
+
+    Args:
+        lab: The lab format.
+        raw_root: The scan root.
+
+    Returns:
+        The candidates found.
+    """
     candidates: list[RawDatasetCandidate] = []
     filesystem = lab.filesystem
     import_params = inspect.signature(lab.import_func).parameters
@@ -163,6 +238,14 @@ def _file_candidates(lab: object, raw_root: Path) -> list[RawDatasetCandidate]:
 def _dedupe_candidates(
     candidates: list[RawDatasetCandidate],
 ) -> list[RawDatasetCandidate]:
+    """Drop candidates that describe the same recording twice.
+
+    Args:
+        candidates: The candidates found by every strategy.
+
+    Returns:
+        The unique candidates, in discovery order.
+    """
     deduped: dict[tuple[str, str, str], RawDatasetCandidate] = {}
     for candidate in candidates:
         key = (
@@ -182,6 +265,17 @@ def _dedupe_candidates(
 
 
 def discover_raw_datasets(lab_id: str, raw_root: Path) -> list[RawDatasetCandidate]:
+    """Find the recordings under a root that a lab format can import.
+
+    Scans without importing, so the import app can list candidates cheaply.
+
+    Args:
+        lab_id: The lab format to scan for.
+        raw_root: The directory to scan. Defaults to the format's own.
+
+    Returns:
+        The candidates found.
+    """
     raw_path = Path(raw_root).expanduser()
     lab_id_str = str(lab_id).strip()
     if not lab_id_str:
@@ -242,6 +336,16 @@ def discover_raw_datasets(lab_id: str, raw_root: Path) -> list[RawDatasetCandida
 def _candidate_import_overrides(
     lab_id: str, raw_root: Path, candidate: RawDatasetCandidate
 ) -> dict[str, object]:
+    """Build the import arguments one candidate needs.
+
+    Args:
+        lab_id: The lab format.
+        raw_root: The scan root.
+        candidate: The candidate to import.
+
+    Returns:
+        The overrides passed to the import backend.
+    """
     normalized_root = _normalized_root(raw_root)
     if normalized_root is None:
         return {}

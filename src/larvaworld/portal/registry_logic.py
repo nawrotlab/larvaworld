@@ -20,6 +20,12 @@ from larvaworld.portal.registry_types import LandingItem, PrimaryAction
 
 
 def validate_registry(*, strict: bool = True) -> None:
+    """Check the landing registry for malformed or unresolvable entries.
+
+    Returns:
+        The problems found, empty when the registry is consistent.
+    """
+
     def _err(msg: str) -> None:
         raise ValueError(f"[larvaworld.portal] {msg}")
 
@@ -108,6 +114,14 @@ def validate_registry(*, strict: bool = True) -> None:
 
 
 def resolve_target(item: LandingItem) -> str | None:
+    """Resolve where a landing entry's primary action leads.
+
+    Args:
+        item: The landing entry.
+
+    Returns:
+        The target route, or None when the entry has no target.
+    """
     if item.kind == "panel_app":
         return f"/{item.panel_app_id}"
     if item.kind == "external_link":
@@ -116,6 +130,14 @@ def resolve_target(item: LandingItem) -> str | None:
 
 
 def compute_badges(item: LandingItem) -> list[str]:
+    """Build the badges shown on a landing card.
+
+    Args:
+        item: The landing entry.
+
+    Returns:
+        The badges to display.
+    """
     badges: list[str] = []
 
     # "core" is the overwhelming majority, so badging it carries no information
@@ -136,6 +158,14 @@ def compute_badges(item: LandingItem) -> list[str]:
 
 
 def compute_primary_action(item: LandingItem) -> PrimaryAction:
+    """Build the main button a landing card offers.
+
+    Args:
+        item: The landing entry.
+
+    Returns:
+        The action, or None when the entry offers none.
+    """
     if item.status == "hidden":
         return PrimaryAction(label="Hidden", href=None, enabled=False)
 

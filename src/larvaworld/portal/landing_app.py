@@ -36,6 +36,14 @@ from larvaworld.portal.workspace import get_active_workspace
 
 
 def _load_banner_gif_data_uri(filename: str) -> str:
+    """Read a banner animation and encode it for inline use.
+
+    Args:
+        filename: The animation file's name.
+
+    Returns:
+        The data URI, empty when the file is missing.
+    """
     gif_path = Path(__file__).parent / "media" / "gifs" / filename
     try:
         encoded = base64.b64encode(gif_path.read_bytes()).decode("ascii")
@@ -45,6 +53,7 @@ def _load_banner_gif_data_uri(filename: str) -> str:
 
 
 def _banner_slides() -> list[dict[str, str]]:
+    """The slides shown in the landing page banner."""
     slide_configs = [
         {
             "filename": "Bisegmental_simplification_of_the_larva_body.gif",
@@ -119,6 +128,14 @@ def _banner_slides() -> list[dict[str, str]]:
 
 
 def _banner_media_html(slide: dict[str, str], *, play_token: int) -> str:
+    """Render one banner slide's animation.
+
+    Args:
+        slide: The slide to render.
+
+    Returns:
+        The markup.
+    """
     return (
         '<img class="lw-portal-banner-gif" '
         f'src="{slide["data_uri"]}#play-{play_token}" alt="{escape(slide["title"])}" />'
@@ -126,6 +143,14 @@ def _banner_media_html(slide: dict[str, str], *, play_token: int) -> str:
 
 
 def _banner_text_html(slide: dict[str, str]) -> str:
+    """Render one banner slide's caption.
+
+    Args:
+        slide: The slide to render.
+
+    Returns:
+        The markup.
+    """
     return (
         '<div class="lw-portal-banner-title">'
         f'{escape(slide["title"])}'
@@ -139,6 +164,11 @@ def _banner_text_html(slide: dict[str, str]) -> str:
 
 
 def landing_app() -> pn.viewable.Viewable:
+    """Build the portal's landing page.
+
+    Returns:
+        The page component.
+    """
     pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS])
     if get_active_workspace() is None:
         return pn.Column(

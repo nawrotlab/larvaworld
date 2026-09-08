@@ -21,6 +21,15 @@ def resolve_picker_initial_directory(
     initial_dir: Path | None = None,
     fallback_dir: Path | None = None,
 ) -> Path:
+    """Choose the directory a picker dialog should open at.
+
+    Args:
+        initial_dir: The preferred starting directory.
+        fallback_dir: Used when the preferred one does not exist.
+
+    Returns:
+        The directory to open at, or None when neither is usable.
+    """
     candidate = (initial_dir or fallback_dir or Path.home()).expanduser()
     if candidate.is_dir():
         return candidate
@@ -138,6 +147,14 @@ def _pick_directory_via_osascript(
     fallback_dir: Path | None = None,
     title: str,
 ) -> Path | None:
+    """Open the macOS directory chooser.
+
+    Args:
+        initial_dir: The directory to open at.
+
+    Returns:
+        The chosen directory, or None when cancelled or unavailable.
+    """
     if shutil.which("osascript") is None:
         return None
 
@@ -245,6 +262,14 @@ def _pick_directory_via_tk(
     fallback_dir: Path | None = None,
     title: str,
 ) -> Path | None:
+    """Open the Tk directory chooser.
+
+    Args:
+        initial_dir: The directory to open at.
+
+    Returns:
+        The chosen directory, or None when cancelled or unavailable.
+    """
     try:
         import tkinter as tk
         from tkinter import filedialog
@@ -276,6 +301,17 @@ def pick_directory(
     title: str = "Select folder",
 ) -> tuple[Path | None, str | None]:
     # 1) WSL2 → Windows native picker
+    """Open the platform's native directory chooser.
+
+    Tries the macOS dialog first, then Tk, so the portal degrades gracefully
+    where neither is available.
+
+    Args:
+        initial_dir: The directory to open at.
+
+    Returns:
+        The chosen directory, or None when cancelled or unavailable.
+    """
     if (
         os.getenv("WSL_DISTRO_NAME")
         and shutil.which("powershell.exe") is not None

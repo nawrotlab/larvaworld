@@ -23,6 +23,14 @@ logger = logging.getLogger(__name__)
 
 
 def _normalize_group_id(value: Any) -> str | None:
+    """Normalize a dataset's group identifier.
+
+    Args:
+        value: The stored group ID.
+
+    Returns:
+        The normalized ID, or None when unset.
+    """
     if not isinstance(value, str):
         return None
     normalized = value.strip().strip("/")
@@ -32,6 +40,14 @@ def _normalize_group_id(value: Any) -> str | None:
 def _path_parts_after_workspace_experiments(
     dataset_dir: Path,
 ) -> tuple[str, ...] | None:
+    """Split a dataset path relative to the workspace experiments folder.
+
+    Args:
+        dataset_dir: The dataset directory.
+
+    Returns:
+        The path segments below the experiments folder.
+    """
     parts = dataset_dir.resolve().parts
     for marker in ("experiments", "datasets"):
         try:
@@ -47,6 +63,14 @@ def _path_parts_after_workspace_experiments(
 
 
 def _record_from_dataset_dir(dataset_dir: Path) -> WorkspaceDatasetRecord | None:
+    """Build a listing record from an imported dataset's directory.
+
+    Args:
+        dataset_dir: The dataset directory.
+
+    Returns:
+        The record, or None when the directory holds no dataset.
+    """
     dataset_dir = dataset_dir.expanduser().resolve()
     data_dir = dataset_dir / "data"
     conf_path = data_dir / "conf.txt"
@@ -116,6 +140,14 @@ def _record_from_dataset_dir(dataset_dir: Path) -> WorkspaceDatasetRecord | None
 def _simulation_record_from_conf_path(
     conf_path: Path, *, experiments_dir: Path
 ) -> WorkspaceReplayDatasetRecord | None:
+    """Build a listing record from a simulated dataset's configuration.
+
+    Args:
+        conf_path: The stored configuration file.
+
+    Returns:
+        The record, or None when the configuration is unreadable.
+    """
     conf_path = conf_path.expanduser().resolve()
     if conf_path.name != "conf.txt" or conf_path.parent.name != "data":
         return None
@@ -191,10 +223,26 @@ def _simulation_record_from_conf_path(
 
 
 def get_workspace_dataset(dataset_dir: Path) -> WorkspaceDatasetRecord | None:
+    """Load one dataset from the workspace.
+
+    Args:
+        dataset_dir: The dataset directory.
+
+    Returns:
+        The dataset, or None when the directory holds none.
+    """
     return _record_from_dataset_dir(dataset_dir)
 
 
 def _lab_id_from_data_dir_group_folder(folder_name: str) -> str:
+    """Derive the lab format from a bundled data folder's name.
+
+    Args:
+        folder_name: The folder name.
+
+    Returns:
+        The lab ID, or None when it cannot be derived.
+    """
     return (
         folder_name[: -len("Group")] if folder_name.endswith("Group") else folder_name
     )
@@ -203,6 +251,15 @@ def _lab_id_from_data_dir_group_folder(folder_name: str) -> str:
 def _record_from_data_dir_dataset_dir(
     dataset_dir: Path, data_root: Path
 ) -> WorkspaceDatasetRecord | None:
+    """Build a listing record for a dataset bundled with the package.
+
+    Args:
+        dataset_dir: The dataset directory.
+        data_root: The bundled data root.
+
+    Returns:
+        The record, or None when the directory holds no dataset.
+    """
     dataset_dir = dataset_dir.expanduser().resolve()
     data_dir = dataset_dir / "data"
     conf_path = data_dir / "conf.txt"
@@ -299,6 +356,14 @@ def list_data_dir_datasets() -> list[WorkspaceDatasetRecord]:
 def list_workspace_datasets(
     workspace: WorkspaceState | None = None,
 ) -> list[WorkspaceDatasetRecord]:
+    """List the imported datasets a workspace holds.
+
+    Args:
+        workspace: The workspace to scan. Defaults to the active one.
+
+    Returns:
+        One lightweight record per dataset.
+    """
     datasets_dir = get_workspace_dir("datasets", workspace=workspace)
     candidates: set[Path] = set()
     for conf_path in datasets_dir.rglob("conf.txt"):
@@ -317,6 +382,14 @@ def list_workspace_datasets(
 def list_workspace_simulation_datasets(
     workspace: WorkspaceState | None = None,
 ) -> list[WorkspaceReplayDatasetRecord]:
+    """List the simulated datasets a workspace holds.
+
+    Args:
+        workspace: The workspace to scan. Defaults to the active one.
+
+    Returns:
+        One lightweight record per dataset.
+    """
     experiments_dir = get_workspace_dir("experiments", workspace=workspace)
     records: list[WorkspaceReplayDatasetRecord] = []
     for conf_path in sorted(experiments_dir.rglob("conf.txt")):
@@ -333,6 +406,14 @@ def list_workspace_simulation_datasets(
 def list_all_workspace_datasets(
     workspace: WorkspaceState | None = None,
 ) -> tuple[list[WorkspaceDatasetRecord], list[WorkspaceReplayDatasetRecord]]:
+    """List every dataset a workspace holds, imported and simulated.
+
+    Args:
+        workspace: The workspace to scan. Defaults to the active one.
+
+    Returns:
+        One lightweight record per dataset.
+    """
     imported = list_workspace_datasets(workspace=workspace)
     simulated = list_workspace_simulation_datasets(workspace=workspace)
     return imported, simulated

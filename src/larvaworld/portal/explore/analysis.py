@@ -67,6 +67,7 @@ class _AnalysisRecipe:
 
 
 def _plots(*plots: _PlotSpec) -> tuple[_PlotSpec, _PlotSpec]:
+    """The plots every analysis recipe can offer."""
     if len(plots) != 2:
         raise ValueError("Every Explore analysis recipe must define exactly two plots.")
     return plots[0], plots[1]
@@ -192,6 +193,15 @@ def preview_enrichment(scenario_id: str) -> dict[str, Any]:
 
 
 def _numeric_values(frame: Any, column: str) -> np.ndarray:
+    """Read one column as finite numbers.
+
+    Args:
+        frame: The dataframe to read.
+        column: The column name.
+
+    Returns:
+        The finite values, empty when the column is absent.
+    """
     try:
         values = np.asarray(frame[column], dtype=float)
     except (KeyError, TypeError, ValueError):
@@ -200,6 +210,15 @@ def _numeric_values(frame: Any, column: str) -> np.ndarray:
 
 
 def _last_per_agent(frame: Any, column: str) -> np.ndarray:
+    """Read each agent's final value of one column.
+
+    Args:
+        frame: The timeseries data.
+        column: The column name.
+
+    Returns:
+        One value per agent.
+    """
     try:
         values = frame[column].groupby(level="AgentID").last()
     except (KeyError, TypeError, ValueError, AttributeError):
@@ -209,6 +228,15 @@ def _last_per_agent(frame: Any, column: str) -> np.ndarray:
 
 
 def _endpoint_values(datasets: Sequence[Any], *columns: str) -> np.ndarray:
+    """Collect one endpoint parameter across datasets.
+
+    Args:
+        datasets: The datasets to read.
+        par: The parameter name.
+
+    Returns:
+        The pooled values.
+    """
     for column in columns:
         values = [
             _numeric_values(dataset.e, column)
@@ -222,6 +250,15 @@ def _endpoint_values(datasets: Sequence[Any], *columns: str) -> np.ndarray:
 
 
 def _step_last_values(datasets: Sequence[Any], *columns: str) -> np.ndarray:
+    """Collect each agent's final timeseries value across datasets.
+
+    Args:
+        datasets: The datasets to read.
+        par: The parameter name.
+
+    Returns:
+        The pooled values.
+    """
     for column in columns:
         values = [
             _last_per_agent(dataset.s, column)
@@ -235,6 +272,14 @@ def _step_last_values(datasets: Sequence[Any], *columns: str) -> np.ndarray:
 
 
 def _xy_start_end(dataset: Any) -> tuple[np.ndarray, np.ndarray] | None:
+    """Return each agent's first and last position.
+
+    Args:
+        dataset: The dataset to read.
+
+    Returns:
+        The start and end coordinates per agent.
+    """
     for x_col, y_col in (("x", "y"), ("centroid_x", "centroid_y")):
         if x_col not in dataset.s or y_col not in dataset.s:
             continue
@@ -250,6 +295,14 @@ def _xy_start_end(dataset: Any) -> tuple[np.ndarray, np.ndarray] | None:
 
 
 def _displacements(datasets: Sequence[Any]) -> np.ndarray:
+    """Compute each agent's net displacement.
+
+    Args:
+        datasets: The datasets to read.
+
+    Returns:
+        The pooled displacements.
+    """
     values = []
     for dataset in datasets:
         xy = _xy_start_end(dataset)
@@ -259,6 +312,14 @@ def _displacements(datasets: Sequence[Any]) -> np.ndarray:
 
 
 def _source_distances(datasets: Sequence[Any]) -> np.ndarray:
+    """Compute each agent's final distance to the nearest source.
+
+    Args:
+        datasets: The datasets to read.
+
+    Returns:
+        The pooled distances.
+    """
     values = []
     for dataset in datasets:
         source_xy = getattr(dataset.config, "source_xy", {}) or {}
@@ -280,6 +341,14 @@ def _add_metric(
     unit: str = "",
     reducer: Any = np.mean,
 ) -> None:
+    """Record one summary metric on the result.
+
+    Args:
+        result: The result being assembled.
+        label: The metric's display name.
+        values: Its values, summarized to a mean and a spread.
+        unit: The unit shown beside it.
+    """
     if values.size:
         result.metrics.append(PreviewMetric(label, float(reducer(values)), unit))
     else:
@@ -287,6 +356,12 @@ def _add_metric(
 
 
 def _locomotion_metrics(datasets: Sequence[Any], result: PreviewAnalysisResult) -> None:
+    """Add the locomotion summary metrics.
+
+    Args:
+        datasets: The datasets to summarize.
+        result: The result being assembled.
+    """
     _add_metric(
         result, "Mean path length", _endpoint_values(datasets, "cum_d"), unit="m"
     )
@@ -296,6 +371,15 @@ def _locomotion_metrics(datasets: Sequence[Any], result: PreviewAnalysisResult) 
 
 
 def _numeric_values_all(datasets: Sequence[Any], *columns: str) -> np.ndarray:
+    """Collect one parameter from either the endpoint or step data.
+
+    Args:
+        datasets: The datasets to read.
+        par: The parameter name.
+
+    Returns:
+        The pooled values.
+    """
     for column in columns:
         values = [
             _numeric_values(dataset.s, column)
@@ -309,6 +393,12 @@ def _numeric_values_all(datasets: Sequence[Any], *columns: str) -> np.ndarray:
 
 
 def _foraging_metrics(datasets: Sequence[Any], result: PreviewAnalysisResult) -> None:
+    """Add the foraging summary metrics.
+
+    Args:
+        datasets: The datasets to summarize.
+        result: The result being assembled.
+    """
     _add_metric(
         result,
         "Mean food intake",
@@ -324,6 +414,12 @@ def _foraging_metrics(datasets: Sequence[Any], result: PreviewAnalysisResult) ->
 
 
 def _preference_metrics(datasets: Sequence[Any], result: PreviewAnalysisResult) -> None:
+    """Add the odor-preference summary metrics.
+
+    Args:
+        datasets: The datasets to summarize.
+        result: The result being assembled.
+    """
     pis = []
     left, right = [], []
     for dataset in datasets:
@@ -356,6 +452,12 @@ def _preference_metrics(datasets: Sequence[Any], result: PreviewAnalysisResult) 
 
 
 def _wind_metrics(datasets: Sequence[Any], result: PreviewAnalysisResult) -> None:
+    """Add the anemotaxis summary metrics.
+
+    Args:
+        datasets: The datasets to summarize.
+        result: The result being assembled.
+    """
     _add_metric(
         result, "Final anemotaxis", _endpoint_values(datasets, "anemotaxis"), unit="m"
     )
@@ -364,6 +466,12 @@ def _wind_metrics(datasets: Sequence[Any], result: PreviewAnalysisResult) -> Non
 
 
 def _phenotype_metrics(datasets: Sequence[Any], result: PreviewAnalysisResult) -> None:
+    """Add the rover-sitter phenotype summary metrics.
+
+    Args:
+        datasets: The datasets to summarize.
+        result: The result being assembled.
+    """
     for dataset in datasets:
         label = str(getattr(dataset.config, "id", "Group"))
         _add_metric(
@@ -385,6 +493,13 @@ def _build_metrics(
     datasets: Sequence[Any],
     result: PreviewAnalysisResult,
 ) -> None:
+    """Build the summary metrics for one analysis scenario.
+
+    Args:
+        scenario_id: Which scenario's metrics to build.
+        datasets: The datasets to summarize.
+        result: The result being assembled.
+    """
     kind = SCENARIO_ANALYSIS_RECIPES[scenario_id].metric_kind
     if kind == "locomotion":
         _locomotion_metrics(datasets, result)
@@ -440,6 +555,15 @@ def _preference_index_figure(datasets: Sequence[Any]) -> Any:
 
 
 def _build_figure(spec: _PlotSpec, datasets: Sequence[Any]) -> Any:
+    """Render one plot of an analysis recipe.
+
+    Args:
+        spec: The plot to render.
+        datasets: The datasets to plot.
+
+    Returns:
+        The figure, or None when the plot does not apply.
+    """
     if spec.graph_id == "preference_index":
         figure = _preference_index_figure(datasets)
     else:

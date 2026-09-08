@@ -51,6 +51,14 @@ class UnifiedDatasetRecord:
 
     @staticmethod
     def from_imported(record: WorkspaceDatasetRecord) -> UnifiedDatasetRecord:
+        """Build a record from an imported dataset.
+
+        Args:
+            record: The imported dataset's listing record.
+
+        Returns:
+            The unified record.
+        """
         return UnifiedDatasetRecord(
             origin="imported",
             dataset_id=record.dataset_id,
@@ -66,6 +74,14 @@ class UnifiedDatasetRecord:
 
     @staticmethod
     def from_simulated(record: WorkspaceReplayDatasetRecord) -> UnifiedDatasetRecord:
+        """Build a record from a simulated dataset.
+
+        Args:
+            record: The simulated dataset's listing record.
+
+        Returns:
+            The unified record.
+        """
         return UnifiedDatasetRecord(
             origin="simulation_run",
             dataset_id=record.dataset_id,
@@ -83,6 +99,14 @@ class UnifiedDatasetRecord:
 
     @staticmethod
     def from_bundled(record: WorkspaceDatasetRecord) -> UnifiedDatasetRecord:
+        """Build a record from a dataset bundled with the package.
+
+        Args:
+            record: The bundled dataset's listing record.
+
+        Returns:
+            The unified record.
+        """
         return UnifiedDatasetRecord(
             origin="bundled",
             dataset_id=record.dataset_id,
@@ -100,6 +124,14 @@ class UnifiedDatasetRecord:
 def list_all_unified_datasets(
     workspace: WorkspaceState | None = None,
 ) -> list[UnifiedDatasetRecord]:
+    """List every dataset the manager can act on.
+
+    Args:
+        workspace: The workspace to scan. Defaults to the active one.
+
+    Returns:
+        One record per dataset, imported, simulated or bundled.
+    """
     imported, simulated = list_all_workspace_datasets(workspace=workspace)
     records = [UnifiedDatasetRecord.from_imported(r) for r in imported]
     records.extend([UnifiedDatasetRecord.from_simulated(r) for r in simulated])
@@ -242,12 +274,29 @@ def timeslice_dataset(
 
 
 def imported_workspace_root(workspace: WorkspaceState) -> Path:
+    """The directory imported datasets are stored under.
+
+    Args:
+        workspace: The workspace. Defaults to the active one.
+
+    Returns:
+        The directory.
+    """
     return (get_workspace_dir("datasets", workspace=workspace) / "imported").resolve()
 
 
 def format_relative_imported_location(
     record: WorkspaceDatasetRecord, workspace: WorkspaceState
 ) -> str:
+    """Render an imported dataset's location for display.
+
+    Args:
+        record: The dataset record.
+        workspace: The workspace.
+
+    Returns:
+        The path, relative to the imported-datasets root.
+    """
     dataset_dir = record.dataset_dir.expanduser().resolve()
     datasets_root = get_workspace_dir("datasets", workspace=workspace).resolve()
     try:
@@ -259,6 +308,15 @@ def format_relative_imported_location(
 def delete_imported_workspace_dataset(
     record: WorkspaceDatasetRecord, workspace: WorkspaceState
 ) -> None:
+    """Delete one imported dataset from the workspace.
+
+    Args:
+        record: The dataset to delete.
+        workspace: The workspace.
+
+    Returns:
+        Whether the dataset was removed, and a message on failure.
+    """
     dataset_dir = record.dataset_dir.expanduser().resolve()
     imported_root = imported_workspace_root(workspace)
     try:

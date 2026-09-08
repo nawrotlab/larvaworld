@@ -48,6 +48,7 @@ class _BootstrapState:
     """Tracks how far the portal has progressed through startup."""
 
     def __init__(self) -> None:
+        """Build the startup progress tracker."""
         self.lock = threading.Lock()
         self.started = False
         self.ready = False
@@ -58,6 +59,11 @@ class _BootstrapState:
         self.total_steps = 1
 
     def snapshot(self) -> dict[str, Any]:
+        """Return the current progress.
+
+        Returns:
+            The step reached, the total, and any error.
+        """
         with self.lock:
             elapsed = max(time.monotonic() - self.started_at, 0.0)
             percent = (
@@ -81,6 +87,11 @@ class _BootstrapState:
             }
 
     def begin(self, total_steps: int) -> None:
+        """Record that startup has begun.
+
+        Args:
+            total_steps: How many steps startup will run.
+        """
         with self.lock:
             self.started = True
             self.ready = False
@@ -91,19 +102,31 @@ class _BootstrapState:
             self.total_steps = max(total_steps, 1)
 
     def set_step(self, step: str) -> None:
+        """Record which step is running.
+
+        Args:
+            step: The step's description.
+        """
         with self.lock:
             self.current_step = step
 
     def complete_step(self) -> None:
+        """Record that the current step finished."""
         with self.lock:
             self.completed_steps = min(self.completed_steps + 1, self.total_steps)
 
     def fail(self, error: str) -> None:
+        """Record that startup failed.
+
+        Args:
+            error: What went wrong.
+        """
         with self.lock:
             self.error = error
             self.current_step = "Initialization failed"
 
     def finish(self) -> None:
+        """Record that startup completed."""
         with self.lock:
             self.ready = True
             self.current_step = "Ready"
@@ -115,6 +138,7 @@ _BOOTSTRAP_THREAD: threading.Thread | None = None
 
 
 def _loading_gif_data_uris() -> list[str]:
+    """The animations shown on the loading screen."""
     gifs_dir = Path(__file__).parent / "media" / "gifs"
     if not gifs_dir.exists():
         return []
@@ -132,6 +156,14 @@ _LOADING_GIF_URIS = _loading_gif_data_uris()
 
 
 def _import_attr(path: str) -> object:
+    """Import an attribute named by a dotted path.
+
+    Args:
+        path: The dotted path to the attribute.
+
+    Returns:
+        The imported object.
+    """
     module_name, attr_name = path.split(":", 1)
     module = import_module(module_name)
     return getattr(module, attr_name)
@@ -139,10 +171,30 @@ def _import_attr(path: str) -> object:
 
 @lru_cache(maxsize=None)
 def _resolve_target(path: str) -> Any:
+    """Resolve an app factory from its dotted path.
+
+    Args:
+        path: The dotted path to the factory.
+
+    Returns:
+        The factory.
+    """
     return _import_attr(path)
 
 
 def _lazy_factory(path: str) -> Callable[..., Any]:
+    """Wrap an app factory so its module imports on first request.
+
+    Keeps startup light: an app's dependencies are only imported when someone
+    actually opens it.
+
+    Args:
+        path: The dotted path to the factory.
+
+    Returns:
+        The wrapping factory.
+    """
+
     def _factory(*args: Any, **kwargs: Any) -> Any:
         target = _resolve_target(path)
         if callable(target):
@@ -153,6 +205,7 @@ def _lazy_factory(path: str) -> Callable[..., Any]:
 
 
 def _warmup_steps() -> list[tuple[str, str]]:
+    """The startup steps the loading screen reports progress for."""
     skipped = {"/", "loading"}
     seen_paths: set[str] = set()
     steps: list[tuple[str, str]] = []
@@ -170,6 +223,7 @@ def _warmup_steps() -> list[tuple[str, str]]:
 
 
 def _run_bootstrap() -> None:
+    """Run the startup steps, recording progress as each completes."""
     steps = _warmup_steps()
     _BOOTSTRAP_STATE.begin(total_steps=2 + len(steps))
     try:
@@ -195,6 +249,7 @@ def _run_bootstrap() -> None:
 
 
 def _start_bootstrap_once() -> None:
+    """Start the background startup, at most once per process."""
     global _BOOTSTRAP_THREAD
     if _BOOTSTRAP_THREAD is not None and _BOOTSTRAP_THREAD.is_alive():
         return
@@ -207,6 +262,11 @@ def _start_bootstrap_once() -> None:
 
 
 def loading_app() -> Any:
+    """Build the page shown while the portal starts up.
+
+    Returns:
+        The page component.
+    """
     import panel as pn
     from larvaworld.portal.panel_components import PORTAL_RAW_CSS
     from larvaworld.portal.workspace import get_active_workspace
@@ -376,6 +436,15 @@ def loading_app() -> Any:
 
 
 def _env_flag(name: str, default: bool) -> bool:
+    """Read a boolean setting from the environment.
+
+    Args:
+        name: The variable name.
+        default: The value used when it is unset.
+
+    Returns:
+        The setting.
+    """
     raw = os.getenv(name)
     if raw is None:
         return default
@@ -383,12 +452,18 @@ def _env_flag(name: str, default: bool) -> bool:
 
 
 def _default_open_browser() -> bool:
+    """Whether to open a browser on startup, by platform.
+
+    Returns:
+        True on the desktop platforms.
+    """
     if sys.platform.startswith("win") or sys.platform == "darwin":
         return True
     return bool(os.getenv("DISPLAY") or os.getenv("WAYLAND_DISPLAY"))
 
 
 def main() -> None:
+    """Start the portal server and serve every app."""
     import asyncio
     import logging
     import warnings

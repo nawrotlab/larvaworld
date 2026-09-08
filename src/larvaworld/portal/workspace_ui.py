@@ -31,6 +31,7 @@ from larvaworld.portal.workspace import (
 
 
 def _load_folder_icon_data_uri() -> str:
+    """The folder icon shown on the workspace chip."""
     icon_path = Path(__file__).parent / "media" / "icons" / "folder_icon.svg"
     try:
         encoded = base64.b64encode(icon_path.read_bytes()).decode("ascii")
@@ -40,6 +41,14 @@ def _load_folder_icon_data_uri() -> str:
 
 
 def _short_path(path: Path, *, keep_parts: int = 3) -> str:
+    """Abbreviate a path for display.
+
+    Args:
+        path: The path to abbreviate.
+
+    Returns:
+        The shortened path.
+    """
     parts = path.parts
     if len(parts) <= keep_parts:
         return str(path)
@@ -47,6 +56,14 @@ def _short_path(path: Path, *, keep_parts: int = 3) -> str:
 
 
 def _workspace_chip_html(workspace: WorkspaceState | None) -> str:
+    """Render the active workspace as a header chip.
+
+    Args:
+        workspace: The active workspace, or None.
+
+    Returns:
+        The markup.
+    """
     if workspace is None:
         return (
             '<div class="lw-portal-workspace-chip lw-portal-workspace-chip--missing">'
@@ -66,6 +83,7 @@ def _workspace_chip_html(workspace: WorkspaceState | None) -> str:
 
 
 def _workspace_button_icon_html() -> str:
+    """The markup for the workspace button's icon."""
     folder_icon_uri = _load_folder_icon_data_uri()
     if not folder_icon_uri:
         return '<div style="font-size:24px;" title="workspace">🗂️</div>'
@@ -82,6 +100,7 @@ def _status_html(
     detail: str | None = None,
     theme: Literal["light", "dark"] = "light",
 ) -> str:
+    """The markup describing the active workspace's status."""
     style_map = {
         "light": {
             "neutral": (
@@ -174,6 +193,7 @@ class WorkspaceUiController:
     on_workspace_change: Callable[[WorkspaceState | None], None] | None = None
 
     def __post_init__(self) -> None:
+        """Build the controller's widgets and load the active workspace."""
         self.trigger_button = pn.widgets.Button(
             name="",
             button_type="light",
@@ -255,6 +275,11 @@ class WorkspaceUiController:
         self._refresh()
 
     def _emit(self, workspace: WorkspaceState | None) -> None:
+        """Notify the subscribed apps that the workspace changed.
+
+        Args:
+            workspace: The newly active workspace.
+        """
         if self.on_workspace_change is not None:
             self.on_workspace_change(workspace)
 
@@ -265,6 +290,12 @@ class WorkspaceUiController:
         *,
         preserve_input: bool = False,
     ) -> None:
+        """Refresh the workspace chip and its status message.
+
+        Args:
+            message: The status message to show.
+            tone: How to style it.
+        """
         workspace = get_active_workspace()
         self.chip_pane.object = _workspace_chip_html(workspace)
         self.trigger_led.object = _workspace_button_icon_html()
@@ -308,6 +339,7 @@ class WorkspaceUiController:
             )
 
     def _candidate_path(self) -> Path | None:
+        """The path currently entered as a candidate workspace."""
         raw = self.path_input.value.strip()
         if not raw:
             self._refresh("Enter a workspace folder path first.", tone="warning")
@@ -315,6 +347,11 @@ class WorkspaceUiController:
         return Path(raw).expanduser()
 
     def _on_initialize(self, _: object) -> None:
+        """Handle the initialize button, adopting the entered directory.
+
+        Args:
+            _: The widget event that triggered this.
+        """
         candidate = self._candidate_path()
         if candidate is None:
             return
@@ -330,6 +367,11 @@ class WorkspaceUiController:
         self._emit(workspace)
 
     def _on_browse(self, _: object) -> None:
+        """Handle the browse button, opening the directory chooser.
+
+        Args:
+            _: The widget event that triggered this.
+        """
         current = self.path_input.value.strip()
         initial_dir = (
             Path(current).expanduser() if current else _default_workspace_candidate()
@@ -370,12 +412,22 @@ class WorkspaceUiController:
             self._refresh(error, tone="warning")
 
     def _on_clear(self, _: object) -> None:
+        """Handle the clear button, forgetting the active workspace.
+
+        Args:
+            _: The widget event that triggered this.
+        """
         clear_active_workspace_path()
         self.path_input.value = str(_default_workspace_candidate())
         self._refresh("Active workspace cleared.", tone="warning", preserve_input=True)
         self._emit(None)
 
     def _on_open_explorer(self, _: object) -> None:
+        """Handle the reveal button, opening the workspace in the file manager.
+
+        Args:
+            _: The widget event that triggered this.
+        """
         workspace = get_active_workspace()
         if workspace is None:
             self.status_pane.object = _status_html(
@@ -405,6 +457,11 @@ class WorkspaceUiController:
             )
 
     def _on_copy_path(self, _: object) -> None:
+        """Handle the copy button, putting the workspace path on the clipboard.
+
+        Args:
+            _: The widget event that triggered this.
+        """
         workspace = get_active_workspace()
         if workspace is None:
             self.status_pane.object = _status_html(
@@ -443,6 +500,11 @@ class WorkspaceUiController:
             )
 
     def build_controls(self) -> pn.viewable.Viewable:
+        """Build the workspace selection controls.
+
+        Returns:
+            The controls component.
+        """
         classes = ["lw-portal-workspace-controls"]
         if self.theme == "dark":
             classes.append("lw-portal-workspace-controls--dark")
