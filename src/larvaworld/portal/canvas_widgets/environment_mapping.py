@@ -71,6 +71,15 @@ def env_params_to_canvas_state(
 
 
 def _source_unit_to_canvas_object(object_id: str, source: Any) -> CanvasObject | None:
+    """Build the canvas object for one food source.
+
+    Args:
+        object_id: The source's identifier.
+        source: The stored source.
+
+    Returns:
+        The canvas object.
+    """
     pos = _pair(_get(source, "pos", None), default=(None, None))
     x, y = pos
     if x is None or y is None:
@@ -93,6 +102,15 @@ def _source_unit_to_canvas_object(object_id: str, source: Any) -> CanvasObject |
 def _source_group_to_canvas_object(
     object_id: str, group: Any, *, show_shape: bool
 ) -> CanvasObject | None:
+    """Build the canvas object for one source group.
+
+    Args:
+        object_id: The group's identifier.
+        group: The stored group.
+
+    Returns:
+        The canvas object.
+    """
     distribution = _get(group, "distribution", {}) or {}
     pos = _pair(
         _get(distribution, "loc", _get(group, "pos", None)), default=(None, None)
@@ -125,6 +143,15 @@ def _source_group_to_canvas_object(
 
 
 def _border_to_canvas_objects(object_id: str, border: Any) -> list[CanvasObject]:
+    """Build the canvas objects for one border.
+
+    Args:
+        object_id: The border's identifier.
+        border: The stored border.
+
+    Returns:
+        One canvas object per border segment.
+    """
     vertices = _get(border, "vertices", None)
     segments: list[tuple[tuple[float, float], tuple[float, float]]] = []
     if vertices is not None:
@@ -156,6 +183,15 @@ def _border_to_canvas_objects(object_id: str, border: Any) -> list[CanvasObject]
 def _larva_group_to_canvas_object(
     object_id: str, group: Any, *, show_shape: bool
 ) -> CanvasObject | None:
+    """Build the canvas object for one larva group.
+
+    Args:
+        object_id: The group's identifier.
+        group: The stored group.
+
+    Returns:
+        The canvas object.
+    """
     distribution = _get(group, "distribution", {}) or {}
     pos = _pair(_get(distribution, "loc", None), default=(None, None))
     x, y = pos
@@ -178,6 +214,14 @@ def _larva_group_to_canvas_object(
 
 
 def _optional_mapping(value: Any) -> dict[str, Any] | None:
+    """Return a value as a mapping, or None.
+
+    Args:
+        value: The value to coerce.
+
+    Returns:
+        The mapping, or None when it is not one.
+    """
     if value in (None, {}, "empty_dict"):
         return None
     if not _is_mapping(value):
@@ -187,6 +231,14 @@ def _optional_mapping(value: Any) -> dict[str, Any] | None:
 
 
 def _to_plain(value: Any) -> Any:
+    """Convert a nested config object into plain dicts and lists.
+
+    Args:
+        value: The value to convert.
+
+    Returns:
+        The plain equivalent.
+    """
     if _is_mapping(value):
         return {str(key): _to_plain(item) for key, item in value.items()}
     if isinstance(value, tuple):
@@ -204,10 +256,28 @@ def _to_plain(value: Any) -> Any:
 
 
 def _is_mapping(value: Any) -> bool:
+    """Report whether a value behaves as a mapping.
+
+    Args:
+        value: The value to test.
+
+    Returns:
+        True when it can be read by key.
+    """
     return isinstance(value, Mapping) or hasattr(value, "items")
 
 
 def _get(value: Any, key: str, default: Any = None) -> Any:
+    """Read a key from a value that may not be a mapping.
+
+    Args:
+        value: The value to read.
+        key: The key to look up.
+        default: Returned when the key or the mapping is absent.
+
+    Returns:
+        The value found, or the default.
+    """
     if value is None:
         return default
     if _is_mapping(value):
@@ -219,6 +289,14 @@ def _get(value: Any, key: str, default: Any = None) -> Any:
 
 
 def _pair(value: Any, *, default: tuple[Any, Any]) -> tuple[Any, Any]:
+    """Coerce a value into a coordinate pair.
+
+    Args:
+        value: The value to coerce.
+
+    Returns:
+        The pair, or None when it is not one.
+    """
     try:
         if value is None:
             return default
@@ -236,6 +314,14 @@ def _pair(value: Any, *, default: tuple[Any, Any]) -> tuple[Any, Any]:
 def _paired_segments(
     value: Any,
 ) -> list[tuple[tuple[float, float], tuple[float, float]]]:
+    """Split a flat vertex list into consecutive segments.
+
+    Args:
+        value: The vertices.
+
+    Returns:
+        The vertex pairs.
+    """
     try:
         points = list(value)
     except Exception:
@@ -253,6 +339,15 @@ def _paired_segments(
 
 
 def _float_or_none(value: Any) -> float | None:
+    """Coerce a value into a float.
+
+    Args:
+        value: The value to coerce.
+        default: Returned when it cannot be coerced.
+
+    Returns:
+        The float, or the default.
+    """
     try:
         if value is None:
             return None
@@ -262,6 +357,15 @@ def _float_or_none(value: Any) -> float | None:
 
 
 def _int_or_none(value: Any) -> int | None:
+    """Coerce a value into an integer.
+
+    Args:
+        value: The value to coerce.
+        default: Returned when it cannot be coerced.
+
+    Returns:
+        The integer, or the default.
+    """
     try:
         if value is None:
             return None
@@ -271,6 +375,14 @@ def _int_or_none(value: Any) -> int | None:
 
 
 def _str_or_none(value: Any) -> str | None:
+    """Coerce a value into a non-empty string.
+
+    Args:
+        value: The value to coerce.
+
+    Returns:
+        The string, or None when it is empty or absent.
+    """
     if value is None:
         return None
     text = str(value)

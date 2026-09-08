@@ -62,6 +62,14 @@ class EnvBuilderObjectRow:
 
 
 def normalize_group_shape(shape: str | None) -> str:
+    """Normalize a source group's distribution shape.
+
+    Args:
+        shape: The stored shape name.
+
+    Returns:
+        The canonical shape name.
+    """
     normalized = str(shape or "circle").strip().lower()
     if normalized in {"circle", "circular"}:
         return "circle"
@@ -75,6 +83,14 @@ def normalize_group_shape(shape: str | None) -> str:
 def normalize_preset_filename(
     name: str, *, default: str = "environment_builder_config"
 ) -> str:
+    """Normalize a preset name into a safe file name.
+
+    Args:
+        name: The preset name as entered.
+
+    Returns:
+        The file name.
+    """
     cleaned = _REGEX_PRESET_NAME.sub("_", str(name).strip()).strip("._-")
     if not cleaned:
         cleaned = default
@@ -84,6 +100,14 @@ def normalize_preset_filename(
 
 
 def translate_environment_payload(payload: Any) -> util.AttrDict:
+    """Convert a stored environment into the builder's payload form.
+
+    Args:
+        payload: The stored environment configuration.
+
+    Returns:
+        The builder payload.
+    """
     plain = _to_plain(payload)
     if not isinstance(plain, dict):
         plain = {}
@@ -119,6 +143,14 @@ def translate_environment_payload(payload: Any) -> util.AttrDict:
 
 
 def object_rows_from_payload(payload: Any) -> tuple[EnvBuilderObjectRow, ...]:
+    """Build the editable object rows from a payload.
+
+    Args:
+        payload: The builder payload.
+
+    Returns:
+        One row per placed object.
+    """
     data = translate_environment_payload(payload)
     rows: list[EnvBuilderObjectRow] = []
 
@@ -144,6 +176,15 @@ def object_rows_from_payload(payload: Any) -> tuple[EnvBuilderObjectRow, ...]:
 def payload_with_object_rows(
     base_payload: Any, rows: list[EnvBuilderObjectRow] | tuple[EnvBuilderObjectRow, ...]
 ) -> dict[str, Any]:
+    """Write a set of object rows back into a payload.
+
+    Args:
+        base_payload: The payload to update.
+        rows: The edited object rows.
+
+    Returns:
+        The updated payload.
+    """
     payload = _to_plain(translate_environment_payload(base_payload))
     rows_by_type: dict[str, list[EnvBuilderObjectRow]] = {
         SOURCE_UNIT: [],
@@ -167,34 +208,97 @@ def payload_with_object_rows(
 
 
 def add_source_unit(base_payload: Any, row: EnvBuilderObjectRow) -> dict[str, Any]:
+    """Add one food source to the payload.
+
+    Args:
+        base_payload: The payload to update.
+        row: The source to add.
+
+    Returns:
+        The updated payload.
+    """
     rows = list(object_rows_from_payload(base_payload))
     rows.append(row)
     return payload_with_object_rows(base_payload, rows)
 
 
 def update_source_unit(base_payload: Any, row: EnvBuilderObjectRow) -> dict[str, Any]:
+    """Update one food source in the payload.
+
+    Args:
+        base_payload: The payload to update.
+        row: The edited source.
+
+    Returns:
+        The updated payload.
+    """
     return _replace_row(base_payload, row, SOURCE_UNIT)
 
 
 def delete_source_unit(base_payload: Any, object_id: str) -> dict[str, Any]:
+    """Remove one food source from the payload.
+
+    Args:
+        base_payload: The payload to update.
+        object_id: The source to remove.
+
+    Returns:
+        The updated payload.
+    """
     return _delete_row(base_payload, object_id, SOURCE_UNIT)
 
 
 def add_source_group(base_payload: Any, row: EnvBuilderObjectRow) -> dict[str, Any]:
+    """Add one source group to the payload.
+
+    Args:
+        base_payload: The payload to update.
+        row: The group to add.
+
+    Returns:
+        The updated payload.
+    """
     rows = list(object_rows_from_payload(base_payload))
     rows.append(row)
     return payload_with_object_rows(base_payload, rows)
 
 
 def update_source_group(base_payload: Any, row: EnvBuilderObjectRow) -> dict[str, Any]:
+    """Update one source group in the payload.
+
+    Args:
+        base_payload: The payload to update.
+        row: The edited group.
+
+    Returns:
+        The updated payload.
+    """
     return _replace_row(base_payload, row, SOURCE_GROUP)
 
 
 def delete_source_group(base_payload: Any, object_id: str) -> dict[str, Any]:
+    """Remove one source group from the payload.
+
+    Args:
+        base_payload: The payload to update.
+        object_id: The group to remove.
+
+    Returns:
+        The updated payload.
+    """
     return _delete_row(base_payload, object_id, SOURCE_GROUP)
 
 
 def add_border_segment(base_payload: Any, row: EnvBuilderObjectRow) -> dict[str, Any]:
+    """Add one border to the payload.
+
+    Args:
+        base_payload: The payload to update.
+        row: The border to add.
+
+    Returns:
+        The updated payload.
+    """
     rows = list(object_rows_from_payload(base_payload))
     rows.append(row)
     return payload_with_object_rows(base_payload, rows)
@@ -203,20 +307,56 @@ def add_border_segment(base_payload: Any, row: EnvBuilderObjectRow) -> dict[str,
 def update_border_segment(
     base_payload: Any, row: EnvBuilderObjectRow
 ) -> dict[str, Any]:
+    """Update one border in the payload.
+
+    Args:
+        base_payload: The payload to update.
+        row: The edited border.
+
+    Returns:
+        The updated payload.
+    """
     return _replace_row(base_payload, row, BORDER_SEGMENT)
 
 
 def delete_border_segment(base_payload: Any, object_id: str) -> dict[str, Any]:
+    """Remove one border from the payload.
+
+    Args:
+        base_payload: The payload to update.
+        object_id: The border to remove.
+
+    Returns:
+        The updated payload.
+    """
     return _delete_row(base_payload, object_id, BORDER_SEGMENT)
 
 
 def build_canvas_state(payload: Any) -> EnvironmentCanvasState:
+    """Build the canvas state a payload describes.
+
+    Args:
+        payload: The builder payload.
+
+    Returns:
+        The state the canvas renders.
+    """
     return env_params_to_canvas_state(translate_environment_payload(payload))
 
 
 def _replace_row(
     base_payload: Any, row: EnvBuilderObjectRow, object_type: str
 ) -> dict[str, Any]:
+    """Replace one object row of a given type in the payload.
+
+    Args:
+        base_payload: The payload to update.
+        row: The replacement row.
+        object_type: The row's object type.
+
+    Returns:
+        The updated payload.
+    """
     rows = [
         item
         for item in object_rows_from_payload(base_payload)
@@ -227,6 +367,16 @@ def _replace_row(
 
 
 def _delete_row(base_payload: Any, object_id: str, object_type: str) -> dict[str, Any]:
+    """Remove one object row of a given type from the payload.
+
+    Args:
+        base_payload: The payload to update.
+        object_id: The row to remove.
+        object_type: The row's object type.
+
+    Returns:
+        The updated payload.
+    """
     rows = [
         item
         for item in object_rows_from_payload(base_payload)
@@ -236,6 +386,15 @@ def _delete_row(base_payload: Any, object_id: str, object_type: str) -> dict[str
 
 
 def _source_unit_row(object_id: str, source: Any) -> EnvBuilderObjectRow:
+    """Build the editable row for one food source.
+
+    Args:
+        object_id: The source's identifier.
+        source: The stored source.
+
+    Returns:
+        The row.
+    """
     pos = _pair(_get(source, "pos"), default=(None, None))
     odor = _get(source, "odor") or {}
     substrate = _get(source, "substrate") or {}
@@ -259,6 +418,15 @@ def _source_unit_row(object_id: str, source: Any) -> EnvBuilderObjectRow:
 
 
 def _source_group_row(object_id: str, group: Any) -> EnvBuilderObjectRow:
+    """Build the editable row for one source group.
+
+    Args:
+        object_id: The group's identifier.
+        group: The stored group.
+
+    Returns:
+        The row.
+    """
     distribution = _get(group, "distribution") or {}
     pos = _pair(_get(distribution, "loc", _get(group, "pos")), default=(None, None))
     odor = _get(group, "odor") or {}
@@ -294,6 +462,15 @@ def _source_group_row(object_id: str, group: Any) -> EnvBuilderObjectRow:
 
 
 def _border_rows(object_id: str, border: Any) -> list[EnvBuilderObjectRow]:
+    """Build the editable rows for one border.
+
+    Args:
+        object_id: The border's identifier.
+        border: The stored border.
+
+    Returns:
+        One row per border segment.
+    """
     vertices = _get(border, "vertices")
     segments: list[tuple[tuple[float, float], tuple[float, float]]] = []
     if isinstance(vertices, (list, tuple)):
@@ -327,6 +504,14 @@ def _border_rows(object_id: str, border: Any) -> list[EnvBuilderObjectRow]:
 
 
 def _row_to_source_unit_payload(row: EnvBuilderObjectRow) -> dict[str, Any]:
+    """Convert an edited row back into a source.
+
+    Args:
+        row: The edited row.
+
+    Returns:
+        The source configuration.
+    """
     return {
         "pos": [row.x, row.y],
         "radius": row.radius if row.radius is not None else DEFAULT_SOURCE_UNIT_RADIUS,
@@ -356,6 +541,14 @@ def _row_to_source_unit_payload(row: EnvBuilderObjectRow) -> dict[str, Any]:
 
 
 def _row_to_source_group_payload(row: EnvBuilderObjectRow) -> dict[str, Any]:
+    """Convert an edited row back into a source group.
+
+    Args:
+        row: The edited row.
+
+    Returns:
+        The group configuration.
+    """
     shape = normalize_group_shape(row.distribution_shape)
     scale_x = (
         row.distribution_scale_x
@@ -409,6 +602,14 @@ def _row_to_source_group_payload(row: EnvBuilderObjectRow) -> dict[str, Any]:
 
 
 def _border_rows_to_payload(rows: list[EnvBuilderObjectRow]) -> dict[str, Any]:
+    """Convert edited rows back into border configurations.
+
+    Args:
+        rows: The edited rows.
+
+    Returns:
+        The border configurations.
+    """
     grouped: dict[str, dict[str, Any]] = {}
     for row in rows:
         base_id = row.object_id.split(":", 1)[0]
@@ -429,12 +630,29 @@ def _border_rows_to_payload(rows: list[EnvBuilderObjectRow]) -> dict[str, Any]:
 
 
 def _ensure_mapping(value: Any, default: dict[str, Any]) -> dict[str, Any]:
+    """Return a value as a mapping, substituting a default.
+
+    Args:
+        value: The value to coerce.
+        default: Returned when it is not a mapping.
+
+    Returns:
+        The mapping.
+    """
     if not isinstance(value, dict):
         return copy.deepcopy(default)
     return copy.deepcopy(value)
 
 
 def _to_plain(value: Any) -> Any:
+    """Convert a nested config object into plain dicts and lists.
+
+    Args:
+        value: The value to convert.
+
+    Returns:
+        The plain equivalent.
+    """
     if isinstance(value, util.AttrDict):
         return {str(key): _to_plain(item) for key, item in value.items()}
     if isinstance(value, dict):
@@ -452,10 +670,28 @@ def _to_plain(value: Any) -> Any:
 
 
 def _is_mapping(value: Any) -> bool:
+    """Report whether a value behaves as a mapping.
+
+    Args:
+        value: The value to test.
+
+    Returns:
+        True when it can be read by key.
+    """
     return isinstance(value, (dict, util.AttrDict)) or hasattr(value, "items")
 
 
 def _get(value: Any, key: str, default: Any = None) -> Any:
+    """Read a key from a value that may not be a mapping.
+
+    Args:
+        value: The value to read.
+        key: The key to look up.
+        default: Returned when the key or the mapping is absent.
+
+    Returns:
+        The value found, or the default.
+    """
     if value is None:
         return default
     if _is_mapping(value):
@@ -467,6 +703,14 @@ def _get(value: Any, key: str, default: Any = None) -> Any:
 
 
 def _pair(value: Any, *, default: tuple[Any, Any]) -> tuple[Any, Any]:
+    """Coerce a value into a coordinate pair.
+
+    Args:
+        value: The value to coerce.
+
+    Returns:
+        The pair, or None when it is not one.
+    """
     if value is None:
         return default
     if isinstance(value, (list, tuple)) and len(value) >= 2:
@@ -475,6 +719,15 @@ def _pair(value: Any, *, default: tuple[Any, Any]) -> tuple[Any, Any]:
 
 
 def _float_or_none(value: Any, default: float | None = None) -> float | None:
+    """Coerce a value into a float.
+
+    Args:
+        value: The value to coerce.
+        default: Returned when it cannot be coerced.
+
+    Returns:
+        The float, or the default.
+    """
     try:
         if value is None:
             return default
@@ -484,6 +737,15 @@ def _float_or_none(value: Any, default: float | None = None) -> float | None:
 
 
 def _int_or_none(value: Any, default: int | None = None) -> int | None:
+    """Coerce a value into an integer.
+
+    Args:
+        value: The value to coerce.
+        default: Returned when it cannot be coerced.
+
+    Returns:
+        The integer, or the default.
+    """
     try:
         if value is None:
             return default
@@ -493,12 +755,29 @@ def _int_or_none(value: Any, default: int | None = None) -> int | None:
 
 
 def _bool_or_none(value: Any, default: bool | None = None) -> bool | None:
+    """Coerce a value into a boolean.
+
+    Args:
+        value: The value to coerce.
+        default: Returned when it cannot be coerced.
+
+    Returns:
+        The boolean, or the default.
+    """
     if value is None:
         return default
     return bool(value)
 
 
 def _str_or_none(value: Any) -> str | None:
+    """Coerce a value into a non-empty string.
+
+    Args:
+        value: The value to coerce.
+
+    Returns:
+        The string, or None when it is empty or absent.
+    """
     if value is None:
         return None
     text = str(value).strip()
