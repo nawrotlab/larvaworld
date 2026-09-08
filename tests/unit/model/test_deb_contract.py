@@ -239,6 +239,23 @@ def test_reporter_codenames_resolve(attr: str, deb: DEB) -> None:
     assert np.isfinite(value)
 
 
+def test_ingested_body_area_ratio_uses_surface_area_scaling(deb: DEB) -> None:
+    """The ratio is per unit surface area, which scales as ``V^(2/3)`` in DEB.
+
+    Pinning the exponent guards against silently reverting to ``V^(1/2)``,
+    which would report a quantity that is not an area ratio.
+    """
+    deb.gut.mol_ingested = deb.substrate.X * deb.V * 0.5
+    expected = (deb.gut.ingested_volume / deb.V) ** (2 / 3) * 100
+    assert deb.ingested_body_area_ratio == pytest.approx(expected)
+
+    # A pure volume ratio (exponent 1) and the previous V^(1/2) both differ
+    # from the surface-area scaling at this fill level.
+    volume_ratio = deb.gut.ingested_volume / deb.V
+    assert deb.ingested_body_area_ratio != pytest.approx(volume_ratio * 100)
+    assert deb.ingested_body_area_ratio != pytest.approx(volume_ratio ** (1 / 2) * 100)
+
+
 @pytest.mark.parametrize("attr", GUT_READBACK)
 def test_gut_readback_attributes_exist(attr: str, deb: DEB) -> None:
     value = getattr(deb, attr)

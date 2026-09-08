@@ -622,13 +622,10 @@ class DEB_basic(DEB_model):
     def ingested_body_area_ratio(self) -> float:
         """Food ingested so far, as a percentage of body surface area.
 
-        Notes:
-            The volume ratio is raised to the power 1/2, whereas DEB surface
-            area scales as ``V^(2/3)`` elsewhere in this package. Kept as-is
-            because it is covered by the DEB contract test; flagged here rather
-            than changed.
+        Surface area scales as ``V^(2/3)`` in DEB, so the ingested-to-structural
+        volume ratio is raised to that power to express it per unit area.
         """
-        return (self.gut.ingested_volume / self.V) ** (1 / 2) * 100
+        return (self.gut.ingested_volume / self.V) ** (2 / 3) * 100
 
     @property
     def amount_absorbed(self) -> float:
