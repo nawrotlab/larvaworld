@@ -305,21 +305,43 @@ _EXPERIMENT_TEMPLATE_PRESET_POLICY = PresetActionPolicy(
 
 
 def _safe_slug(value: str) -> str:
+    """Turn a value into a safe file-name fragment.
+
+    Args:
+        value: The value to slugify.
+
+    Returns:
+        The slug.
+    """
     cleaned = re.sub(r"[^a-zA-Z0-9._-]+", "_", value.strip()).strip("._-")
     return cleaned or "single_experiment"
 
 
 def _safe_preset_slug(value: str) -> str:
+    """Turn a preset name into a safe file name.
+
+    Args:
+        value: The name as entered.
+
+    Returns:
+        The slug.
+    """
     cleaned = re.sub(r"[^a-zA-Z0-9._-]+", "_", value.strip()).strip("._-")
     return cleaned
 
 
 def _default_run_name(experiment_id: str) -> str:
+    """Build the default name for a new run.
+
+    Returns:
+        The run name.
+    """
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     return f"{_safe_slug(experiment_id)}_{stamp}"
 
 
 def _default_experiment_template() -> str | None:
+    """The experiment template selected by default."""
     experiment_ids = list(reg.conf.Exp.confIDs)
     if not experiment_ids:
         return None
@@ -363,6 +385,11 @@ class _SingleExperimentSelection(param.Parameterized):
         default_experiment: str,
         environment_options: dict[str, str] | None = None,
     ) -> None:
+        """Build the selection state.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(
             experiment_template=f"{_REGISTRY_EXPERIMENT_PREFIX}{default_experiment}"
         )
@@ -373,11 +400,21 @@ class _SingleExperimentSelection(param.Parameterized):
             self.set_environment_options(environment_options)
 
     def set_environment_options(self, options: dict[str, str]) -> None:
+        """Set the environments offered in the selector.
+
+        Args:
+            options: The available environments.
+        """
         self.param["environment_preset"].objects = options
         if self.environment_preset not in options.values():
             self.environment_preset = "__template__"
 
     def set_experiment_options(self, options: dict[str, str]) -> None:
+        """Set the experiment templates offered in the selector.
+
+        Args:
+            options: The available templates.
+        """
         self.param["experiment_template"].objects = options
         if self.experiment_template not in options.values():
             registry_values = [
@@ -391,20 +428,52 @@ class _SingleExperimentSelection(param.Parameterized):
 
 
 def _editor_group_title(key: str) -> str:
+    """The heading a parameter group is shown under.
+
+    Args:
+        path: The group's parameter path.
+
+    Returns:
+        The title.
+    """
     if key == "sim_ops":
         return "Simulation Settings"
     return key.replace("_", " ").title()
 
 
 def _editor_field_title(path: str) -> str:
+    """The label one parameter field is shown under.
+
+    Args:
+        path: The parameter path.
+
+    Returns:
+        The label.
+    """
     return path.replace("_", " ").replace(".", " / ").title()
 
 
 def _title_case_name(value: str) -> str:
+    """Render an identifier as a display title.
+
+    Args:
+        name: The identifier.
+
+    Returns:
+        The title.
+    """
     return value.replace("_", " ").title()
 
 
 def _family_spec_for_path(path: str) -> tuple[str, str, str]:
+    """The family a parameter path belongs to.
+
+    Args:
+        path: The parameter path.
+
+    Returns:
+        The family spec, or None when the path has none.
+    """
     if path.startswith("env_params.arena."):
         return "env_arena", "Arena", "arena"
     if path == "env_params.food_params.source_units":
@@ -482,6 +551,14 @@ def _family_spec_for_path(path: str) -> tuple[str, str, str]:
 
 
 def _display_label_for_path(path: str) -> str:
+    """The label one parameter path is shown under.
+
+    Args:
+        path: The parameter path.
+
+    Returns:
+        The label.
+    """
     if path == "env_params.food_params.source_groups":
         return "Source Groups"
     if path == "env_params.food_params.source_units":
@@ -576,6 +653,15 @@ def _display_label_for_path(path: str) -> str:
 def _sequence_component_labels(
     path: str, value: list[Any] | tuple[Any, ...]
 ) -> list[str]:
+    """The per-component labels of a sequence field.
+
+    Args:
+        path: The parameter path.
+        length: How many components.
+
+    Returns:
+        One label per component.
+    """
     length = len(value)
     if path.endswith((".dims", ".loc", ".scale")) and length == 2:
         return ["x", "y"]
@@ -591,6 +677,14 @@ def _sequence_component_labels(
 
 
 def _attach_scroll_restore(button: pn.widgets.Button) -> None:
+    """Preserve a panel's scroll position across a rebuild.
+
+    Args:
+        component: The panel to annotate.
+
+    Returns:
+        The annotated panel.
+    """
     button._lw_scroll_restore_callback = button.jscallback(
         clicks="""
         const scrollY = window.scrollY || window.pageYOffset || 0;
@@ -604,6 +698,14 @@ def _attach_scroll_restore(button: pn.widgets.Button) -> None:
 
 
 def _is_absent_optional_value(value: Any, absent_value: Any) -> bool:
+    """Report whether an optional field is currently unset.
+
+    Args:
+        value: The field's value.
+
+    Returns:
+        True when the field is absent.
+    """
     if absent_value == "empty_dict":
         return value == "empty_dict"
     if isinstance(absent_value, list):
@@ -612,10 +714,26 @@ def _is_absent_optional_value(value: Any, absent_value: Any) -> bool:
 
 
 def _summary_label(text: str) -> str:
+    """The label one summary row is shown under.
+
+    Args:
+        key: The summary key.
+
+    Returns:
+        The label.
+    """
     return f'<div class="lw-single-exp-param-summary">{text}</div>'
 
 
 def _preview_canvas_row(canvas_view: pn.viewable.Viewable) -> pn.Row:
+    """Build the row holding the preview canvas.
+
+    Args:
+        *objects: The row's contents.
+
+    Returns:
+        The row component.
+    """
     return pn.Row(
         canvas_view,
         css_classes=["lw-single-exp-preview-canvas-row"],
@@ -625,6 +743,15 @@ def _preview_canvas_row(canvas_view: pn.viewable.Viewable) -> pn.Row:
 
 
 def _field_label_html(label: str) -> str:
+    """Render a field label with its help text.
+
+    Args:
+        label: The field label.
+        help_text: Its help text.
+
+    Returns:
+        The markup.
+    """
     escaped_label = html.escape(label)
     return f'<div class="lw-single-exp-param-family-title">{escaped_label}</div>'
 
@@ -632,6 +759,12 @@ def _field_label_html(label: str) -> str:
 def _apply_widget_help(
     widget: pn.viewable.Viewable, label: str, help_text: str | None
 ) -> pn.viewable.Viewable:
+    """Attach help text to a widget.
+
+    Args:
+        widget: The widget to annotate.
+        help_text: The text to show.
+    """
     if hasattr(widget, "name"):
         widget.name = label
     if help_text and hasattr(widget, "description"):
@@ -642,6 +775,14 @@ def _apply_widget_help(
 def _optional_family_control(
     path: str, enabled: bool, help_text: str | None
 ) -> pn.viewable.Viewable:
+    """Build the toggle enabling an optional family.
+
+    Args:
+        spec: The family spec.
+
+    Returns:
+        The toggle widget.
+    """
     widget = pn.widgets.Switch(
         name="",
         value=enabled,
@@ -656,6 +797,15 @@ def _optional_family_control(
 def _family_title_row(
     title: str, toggle: pn.viewable.Viewable | None
 ) -> pn.viewable.Viewable:
+    """Build a family heading, with its toggle when optional.
+
+    Args:
+        title: The heading.
+        control: The toggle, if any.
+
+    Returns:
+        The row component.
+    """
     if toggle is None:
         return pn.pane.HTML(
             _field_label_html(title),
@@ -673,6 +823,14 @@ def _family_title_row(
 
 
 def _json_ready(value: Any) -> Any:
+    """Convert a value into JSON-serializable form.
+
+    Args:
+        value: The value to convert.
+
+    Returns:
+        The JSON-ready value.
+    """
     nested_conf = getattr(type(value), "nestedConf", None)
     if nested_conf is not None:
         return _json_ready(value.nestedConf)
@@ -691,6 +849,15 @@ def _json_ready(value: Any) -> Any:
 
 
 def _deep_merge_attrdict(base: Any, override: Any) -> Any:
+    """Merge one nested mapping into another.
+
+    Args:
+        base: The mapping merged into.
+        overrides: The values merged in.
+
+    Returns:
+        The merged mapping.
+    """
     if isinstance(base, dict) and isinstance(override, dict):
         merged = util.AttrDict(base).get_copy()
         for key, value in override.items():
@@ -703,6 +870,14 @@ def _deep_merge_attrdict(base: Any, override: Any) -> Any:
 
 
 def _join_help_parts(*parts: str | None) -> str | None:
+    """Join the fragments of a field's help text.
+
+    Args:
+        *parts: The fragments, empty ones ignored.
+
+    Returns:
+        The combined text.
+    """
     cleaned = []
     seen = set()
     for part in parts:
@@ -727,6 +902,11 @@ class _FrameSimulationPreview(FramePlayback):
     """
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the preview view.
+
+        Returns:
+            The view component.
+        """
         return pn.Column(
             _preview_canvas_row(self.canvas.view()),
             pn.Row(pn.Column("Frame", self.frame_player), sizing_mode="stretch_width"),
@@ -740,6 +920,11 @@ class _SingleExperimentController:
 
     @staticmethod
     def _new_preview_canvas() -> EnvironmentCanvas:
+        """Build a fresh canvas for the simulation preview.
+
+        Returns:
+            The canvas.
+        """
         try:
             return EnvironmentCanvas(
                 editable=False,
@@ -752,6 +937,7 @@ class _SingleExperimentController:
 
     @staticmethod
     def _initial_preview_content() -> list[pn.viewable.Viewable]:
+        """The placeholder shown before a preview runs."""
         canvas = _SingleExperimentController._new_preview_canvas()
         clear = getattr(canvas, "clear", None)
         if callable(clear):
@@ -770,6 +956,7 @@ class _SingleExperimentController:
         ]
 
     def __init__(self) -> None:
+        """Build the controller and its experiment-configuration widgets."""
         self.manifest_catalog = ManifestCatalogController(
             modes=("Exp",), title="Single Experiment Manifests"
         )
@@ -1114,12 +1301,22 @@ class _SingleExperimentController:
         self.status.object = "Select a template and prepare a single-run preview."
 
     def _environment_dir(self) -> Path:
+        """The workspace folder environment presets are stored in."""
         return get_workspace_dir("environments")
 
     def _experiment_dir(self) -> Path:
+        """The workspace folder experiment templates are stored in."""
         return get_workspace_dir("experiments")
 
     def _registry_experiment_from_token(self, selected: str) -> str | None:
+        """Resolve a selector token to a registry experiment.
+
+        Args:
+            token: The selector token.
+
+        Returns:
+            The experiment name, or None when the token is not one.
+        """
         if selected.startswith(_REGISTRY_EXPERIMENT_PREFIX):
             return selected[len(_REGISTRY_EXPERIMENT_PREFIX) :]
         ref = self.experiment_template_preset_controls.catalog.resolve(selected)
@@ -1132,6 +1329,14 @@ class _SingleExperimentController:
         return None
 
     def _workspace_experiment_filename_from_token(self, selected: str) -> str | None:
+        """Resolve a selector token to a workspace template file.
+
+        Args:
+            token: The selector token.
+
+        Returns:
+            The file name, or None when the token is not one.
+        """
         if selected.startswith(_WORKSPACE_EXPERIMENT_PREFIX):
             return selected[len(_WORKSPACE_EXPERIMENT_PREFIX) :]
         ref = self.experiment_template_preset_controls.catalog.resolve(selected)
@@ -1146,6 +1351,7 @@ class _SingleExperimentController:
     def _list_workspace_experiment_templates(
         self,
     ) -> list[WorkspaceExperimentTemplateRecord]:
+        """The experiment templates stored in the workspace."""
         records: list[WorkspaceExperimentTemplateRecord] = []
         for (
             record
@@ -1161,12 +1367,14 @@ class _SingleExperimentController:
         return records
 
     def _experiment_template_options(self) -> dict[str, str]:
+        """The experiment templates offered in the selector."""
         options: dict[str, str] = {}
         for ref in self.experiment_template_preset_controls.catalog.refs:
             options[ref.display_label] = ref.token
         return options
 
     def _refresh_experiment_template_options(self) -> None:
+        """Reload the experiment templates offered in the selector."""
         selected = str(self.selection.experiment_template)
         selected_registry = self._registry_experiment_from_token(selected)
         selected_workspace = self._workspace_experiment_filename_from_token(selected)
@@ -1235,6 +1443,7 @@ class _SingleExperimentController:
             self.status.object = f"Workspace templates unavailable: {workspace_error}"
 
     def _selected_experiment(self) -> str:
+        """The experiment template currently selected."""
         selected = str(self.selection.experiment_template)
         registry_experiment = self._registry_experiment_from_token(selected)
         if registry_experiment is not None:
@@ -1258,6 +1467,11 @@ class _SingleExperimentController:
         return selected
 
     def _parameters_from_selected_template(self) -> util.AttrDict:
+        """Read the parameters of the selected template.
+
+        Returns:
+            The template's parameters.
+        """
         base_parameters = resolve_base_experiment_parameters(
             self._selected_experiment(),
             self._load_selected_environment(),
@@ -1265,12 +1479,14 @@ class _SingleExperimentController:
         return util.AttrDict(base_parameters.get_copy())
 
     def _environment_options(self) -> dict[str, str]:
+        """The environments offered in the selector."""
         options = {"Template default environment": "__template__"}
         for ref in self.environment_preset_controls.catalog.refs:
             options[ref.display_label] = ref.token
         return options
 
     def _sync_environment_selection_options(self) -> None:
+        """Reload the environments offered in the selector."""
         self.selection.param.environment_preset.objects = self._environment_options()
 
     def _sync_environment_preset_select(self) -> None:
@@ -1280,6 +1496,7 @@ class _SingleExperimentController:
         # panel's auto-load watcher (build_preset_select_only_panel), which
         # would otherwise reload whatever this resolves to and stomp
         # environment_save_name/other in-progress state on every refresh.
+        """Keep the environment preset selector in step with the selection."""
         options = self._environment_options()
         selected = self.selection.environment_preset
         # Both assignments must be inside discard_events: Select widgets
@@ -1295,6 +1512,7 @@ class _SingleExperimentController:
             )
 
     def _load_selected_environment(self) -> util.AttrDict | None:
+        """Load the selected environment into the editor."""
         selected = self.selection.environment_preset
         if selected in {None, "", "__template__"}:
             return None
@@ -1332,6 +1550,7 @@ class _SingleExperimentController:
         return util.AttrDict(payload)
 
     def _selected_environment_label(self) -> str:
+        """The label of the selected environment."""
         selected = self.selection.environment_preset
         if selected == "__template__":
             return "template default"
@@ -1360,6 +1579,11 @@ class _SingleExperimentController:
         return selected_text
 
     def _environment_payload_from_owner(self) -> util.AttrDict:
+        """Read the edited environment out of its editor.
+
+        Returns:
+            The environment payload.
+        """
         if self._typed_experiment_for_env_params is not None:
             nested = util.AttrDict(self._typed_experiment_for_env_params.nestedConf)
             env_payload = nested.get("env_params")
@@ -1370,11 +1594,23 @@ class _SingleExperimentController:
 
     @staticmethod
     def _canonical_env_signature(env_payload: util.AttrDict) -> str:
+        """Build a comparable signature of an environment payload.
+
+        Sorting the keys makes the signature stable, so it can detect whether the
+        edited environment still matches the stored one.
+
+        Args:
+            env_payload: The environment to summarize.
+
+        Returns:
+            The signature.
+        """
         return json.dumps(
             _json_ready(env_payload), sort_keys=True, separators=(",", ":")
         )
 
     def _clear_environment_watchers(self) -> None:
+        """Stop watching the previous environment editor's parameters."""
         while self._environment_watcher_handles:
             watcher = self._environment_watcher_handles.pop()
             owner = getattr(watcher, "inst", None)
@@ -1386,13 +1622,16 @@ class _SingleExperimentController:
                 continue
 
     def _clear_pending_environment_overwrite(self) -> None:
+        """Dismiss the environment overwrite confirmation."""
         if self.environment_preset_controls._pending_confirmation is not None:
             self.environment_preset_controls.cancel_pending_action()
 
     def _default_environment_preset_name(self) -> str:
+        """The name an environment preset is saved under by default."""
         return "my_environment"
 
     def _refresh_environment_save_state(self, *, reset_baseline: bool = False) -> None:
+        """Enable the environment save button only when there is a change to save."""
         current_payload = self._environment_payload_from_owner()
         current_signature = self._canonical_env_signature(current_payload)
         if reset_baseline or self._environment_baseline_signature is None:
@@ -1409,6 +1648,7 @@ class _SingleExperimentController:
         )
 
     def _bind_environment_watchers(self) -> None:
+        """Watch the environment editor so edits mark it unsaved."""
         self._clear_environment_watchers()
         env_view = self._env_params_group_view
         if env_view is None:
@@ -1428,34 +1668,70 @@ class _SingleExperimentController:
             self._environment_watcher_handles.append(watcher)
 
     def _save_environment_payload_to_workspace(self, safe_name: str) -> Path:
+        """Write the edited environment to the workspace.
+
+        Args:
+            name: The preset name.
+
+        Returns:
+            Whether it was saved.
+        """
         payload = _json_ready(self._environment_payload_from_owner())
         return self.environment_preset_controls.workspace_store.save(safe_name, payload)
 
     def _on_environment_parameter_widget_change(self, *_: object) -> None:
+        """Handle an edit to one of the environment's parameters."""
         if not (self.environment_save_name.value or "").strip():
             self.environment_save_name.value = self._default_environment_preset_name()
         self._refresh_environment_save_state(reset_baseline=False)
         self._refresh_summary()
 
     def _on_environment_save_name_change(self, *_: object) -> None:
+        """Handle a change of the environment preset name."""
         self._refresh_environment_save_state(reset_baseline=False)
 
     def _on_save_environment_preset(self, *_: object) -> None:
+        """Handle the environment save button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.environment_preset_controls.save_current()
 
     def _on_confirm_overwrite_environment(self, *_: object) -> None:
+        """Handle the confirm button, overwriting the environment preset.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.environment_preset_controls.confirm_pending_action()
 
     def _on_cancel_overwrite_environment(self, *_: object) -> None:
+        """Handle the cancel button, abandoning the overwrite.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.environment_preset_controls.cancel_pending_action()
 
     def _on_environment_preset_status(
         self, message: str, *, tone: str = "neutral"
     ) -> None:
+        """Relay a status message from the environment preset controls.
+
+        Args:
+            message: The status text.
+        """
         if hasattr(self, "status") and tone in {"warning", "danger"}:
             self.status.object = message
 
     def _on_environment_preset_loaded(self, ref: PresetRef, payload: Any) -> None:
+        """Adopt an environment preset that was just loaded.
+
+        Args:
+            ref: The loaded preset.
+            payload: Its contents.
+        """
         self._active_environment_preset_ref = ref
         self._active_environment_preset_payload = util.AttrDict(payload).get_copy()
         self._sync_environment_selection_options()
@@ -1467,6 +1743,12 @@ class _SingleExperimentController:
         self._refresh_summary()
 
     def _on_environment_preset_saved(self, ref: PresetRef, payload: Any) -> None:
+        """Refresh the app after an environment preset was saved.
+
+        Args:
+            ref: The saved preset.
+            payload: What was stored.
+        """
         self._active_environment_preset_ref = ref
         self._active_environment_preset_payload = util.AttrDict(payload).get_copy()
         self._sync_environment_selection_options()
@@ -1478,6 +1760,11 @@ class _SingleExperimentController:
         self._refresh_summary()
 
     def _on_use_template_default_environment(self, *_: object) -> None:
+        """Handle the button restoring the template's own environment.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._active_environment_preset_ref = None
         self._active_environment_preset_payload = None
         self.selection.environment_preset = "__template__"
@@ -1487,12 +1774,21 @@ class _SingleExperimentController:
         self._refresh_summary()
 
     def _workspace_experiment_templates_dir(self) -> Path:
+        """The workspace folder experiment templates are stored in."""
         metadata_dir = get_workspace_dir("metadata")
         return metadata_dir / "experiment_templates"
 
     def _load_workspace_experiment_template_payload(
         self, filename: str
     ) -> util.AttrDict:
+        """Read one stored experiment template.
+
+        Args:
+            filename: The template file.
+
+        Returns:
+            Its payload.
+        """
         path = self._workspace_experiment_templates_dir() / filename
         if not path.is_file():
             raise ValueError("Workspace template file not found.")
@@ -1506,6 +1802,11 @@ class _SingleExperimentController:
     def _apply_workspace_template_overrides(
         base_parameters: util.AttrDict, payload: util.AttrDict
     ) -> util.AttrDict:
+        """Apply a stored template's overrides onto the base experiment.
+
+        Args:
+            payload: The stored template.
+        """
         merged = util.AttrDict(base_parameters.get_copy())
         for key in _EXPERIMENT_TEMPLATE_SAVE_KEYS:
             if key in payload:
@@ -1521,6 +1822,14 @@ class _SingleExperimentController:
 
     @staticmethod
     def _workspace_template_seed_overrides(payload: util.AttrDict) -> util.AttrDict:
+        """The parameter overrides a stored template seeds the editor with.
+
+        Args:
+            payload: The stored template.
+
+        Returns:
+            The overrides, keyed by parameter path.
+        """
         flat = util.AttrDict()
         for key in _EXPERIMENT_TEMPLATE_SAVE_KEYS:
             if key not in payload:
@@ -1546,6 +1855,15 @@ class _SingleExperimentController:
 
     @staticmethod
     def _workspace_override_value(existing: Any, value: Any) -> Any:
+        """Coerce one stored override to the shape the parameter expects.
+
+        Args:
+            existing: The parameter's current value.
+            incoming: The stored override.
+
+        Returns:
+            The coerced value.
+        """
         normalized = _normalize_scalar(value)
         if normalized == "empty_dict":
             if isinstance(existing, dict):
@@ -1572,6 +1890,18 @@ class _SingleExperimentController:
 
     @staticmethod
     def _preserve_tuple_override(existing: tuple[Any, ...], incoming: Any) -> bool:
+        """Report whether an override should stay a tuple rather than a list.
+
+        Only same-length numeric sequences are kept as tuples, so coordinate
+        fields survive a round-trip while selector lists stay lists.
+
+        Args:
+            existing: The parameter's current tuple.
+            incoming: The stored override.
+
+        Returns:
+            True when the tuple form is preserved.
+        """
         if not isinstance(incoming, (list, tuple)):
             return False
         if len(existing) != len(incoming):
@@ -1590,6 +1920,15 @@ class _SingleExperimentController:
 
     @staticmethod
     def _preserve_tuple_list_override(existing: list[Any], incoming: Any) -> bool:
+        """Report whether a list of tuples should keep its tuple elements.
+
+        Args:
+            existing: The parameter's current value.
+            incoming: The stored override.
+
+        Returns:
+            True when the tuple elements are preserved.
+        """
         if not isinstance(incoming, (list, tuple)):
             return False
         if not existing or not all(isinstance(item, tuple) for item in existing):
@@ -1613,6 +1952,13 @@ class _SingleExperimentController:
 
     @staticmethod
     def _set_nested_value(target: Any, path: list[str], value: Any) -> None:
+        """Write a value at a nested parameter path.
+
+        Args:
+            target: The mapping to write into.
+            path: The dotted parameter path.
+            value: The value to write.
+        """
         current = target
         for part in path[:-1]:
             if isinstance(current, dict):
@@ -1644,6 +1990,15 @@ class _SingleExperimentController:
         item_key: str,
         item_payload: Any,
     ) -> Any:
+        """Build one typed entry of a class-dictionary parameter.
+
+        Args:
+            item_type: The entry's class.
+            payload: Its stored values.
+
+        Returns:
+            The constructed entry.
+        """
         item_type = parameter.item_type
         if item_type is None:
             return (
@@ -1693,6 +2048,12 @@ class _SingleExperimentController:
         parameter: ClassDict,
         section_payload: dict[str, Any],
     ) -> None:
+        """Apply stored overrides to a class-dictionary parameter.
+
+        Args:
+            owner: The object holding the parameter.
+            payload: The stored overrides.
+        """
         section_target = getattr(exp_owner, section, None)
         if section_target is None:
             return
@@ -1726,6 +2087,12 @@ class _SingleExperimentController:
         target: Any,
         payload: dict[str, Any],
     ) -> None:
+        """Instantiate the nested entries a stored override describes.
+
+        Args:
+            owner: The object holding the parameter.
+            payload: The stored overrides.
+        """
         if not isinstance(target, param.Parameterized):
             return
         parameters = target.param.objects(instance=False)
@@ -1755,6 +2122,12 @@ class _SingleExperimentController:
         exp_owner: Any,
         section: str,
     ) -> None:
+        """Apply stored overrides onto a typed configuration object.
+
+        Args:
+            owner: The object to update.
+            payload: The stored overrides.
+        """
         payload = self._active_workspace_template_payload
         if payload is None or section not in payload:
             return
@@ -1787,6 +2160,12 @@ class _SingleExperimentController:
             )
 
     def _apply_workspace_sim_settings_to_typed_owner(self, exp_owner: Any) -> None:
+        """Apply a template's simulation settings onto the typed owner.
+
+        Args:
+            owner: The object to update.
+            payload: The stored settings.
+        """
         payload = self._active_workspace_template_payload
         if payload is None:
             return
@@ -1796,6 +2175,11 @@ class _SingleExperimentController:
 
     @staticmethod
     def _compatibility_summary(issues: tuple[CompatibilityIssue, ...]) -> str:
+        """Summarize how well the experiment and environment fit together.
+
+        Returns:
+            The compatibility report.
+        """
         if not issues:
             return ""
         rendered: list[str] = []
@@ -1809,6 +2193,7 @@ class _SingleExperimentController:
         return "; ".join(rendered)
 
     def _compatibility_warning_suffix(self, report: CompatibilityReport) -> str:
+        """The warning appended to a status message when the fit is imperfect."""
         if not report.warnings:
             return ""
         return (
@@ -1823,6 +2208,14 @@ class _SingleExperimentController:
         action_label: str,
         show_preview_failure: bool,
     ) -> tuple[bool, str]:
+        """Check the resolved parameters before running or saving.
+
+        Args:
+            action: What the parameters are being validated for.
+
+        Returns:
+            Whether the action may proceed.
+        """
         selected_token = str(self.selection.experiment_template)
         is_registry_selection = (
             self._registry_experiment_from_token(selected_token) is not None
@@ -1857,6 +2250,11 @@ class _SingleExperimentController:
         _target_name: str,
         target_source: str,
     ) -> None:
+        """Validate the template before it is saved.
+
+        Returns:
+            Whether the save may proceed.
+        """
         self._pending_template_save_warning_note = ""
         if target_source != PresetSource.WORKSPACE:
             return
@@ -1880,6 +2278,11 @@ class _SingleExperimentController:
         )
 
     def _experiment_template_payload(self) -> dict[str, Any]:
+        """Assemble the experiment template for storage.
+
+        Returns:
+            The payload.
+        """
         parameters = self._resolve_experiment_parameters()
         payload: dict[str, Any] = {"experiment": self._selected_experiment()}
         for key in _EXPERIMENT_TEMPLATE_SAVE_KEYS:
@@ -1891,14 +2294,25 @@ class _SingleExperimentController:
         return payload
 
     def _experiment_template_download_filename(self) -> str:
+        """The file name an exported template is downloaded under."""
         safe_name = _safe_preset_slug(self._selected_experiment()) or "experiment"
         return f"{safe_name}_template.json"
 
     def _export_experiment_template_json(self) -> io.StringIO:
+        """Build the JSON file the export button downloads.
+
+        Returns:
+            The file contents.
+        """
         payload = self._experiment_template_payload()
         return io.StringIO(json.dumps(payload, indent=2))
 
     def _on_import_experiment_template_file(self, _: param.parameterized.Event) -> None:
+        """Handle an uploaded experiment template.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         raw_value = self.experiment_template_import_input.value
         if raw_value in (None, b"", ""):
             return
@@ -1938,13 +2352,23 @@ class _SingleExperimentController:
 
     @staticmethod
     def _canonical_experiment_template_signature(payload: dict[str, Any]) -> str:
+        """Build a comparable signature of an experiment template.
+
+        Args:
+            payload: The template to summarize.
+
+        Returns:
+            The signature.
+        """
         return json.dumps(payload, sort_keys=True, separators=(",", ":"))
 
     @staticmethod
     def _experiment_template_relative_path(filename: str) -> str:
+        """The stored template's path, relative to the workspace."""
         return f"metadata/experiment_templates/{filename}"
 
     def _clear_pending_experiment_template_overwrite(self) -> None:
+        """Dismiss the template overwrite confirmation."""
         if self.experiment_template_preset_controls._pending_confirmation is not None:
             self.experiment_template_preset_controls.cancel_pending_action()
         self.experiment_template_save_inline.object = ""
@@ -1952,6 +2376,7 @@ class _SingleExperimentController:
     def _refresh_experiment_template_save_state(
         self, *, reset_baseline: bool = False
     ) -> None:
+        """Enable the template save button only when there is a change to save."""
         try:
             current_payload = self._experiment_template_payload()
         except (WorkspaceError, OSError, json.JSONDecodeError) as exc:
@@ -2002,6 +2427,7 @@ class _SingleExperimentController:
         )
 
     def _clear_experiment_template_watchers(self) -> None:
+        """Stop watching the previous template's parameters."""
         while self._experiment_template_watcher_handles:
             watcher = self._experiment_template_watcher_handles.pop()
             owner = getattr(watcher, "inst", None)
@@ -2013,6 +2439,7 @@ class _SingleExperimentController:
                 continue
 
     def _clear_larva_groups_state_watchers(self) -> None:
+        """Stop watching the previous larva group editors."""
         while self._larva_groups_state_watcher_handles:
             watcher = self._larva_groups_state_watcher_handles.pop()
             owner = getattr(watcher, "inst", None)
@@ -2030,6 +2457,12 @@ class _SingleExperimentController:
         callback: Any,
         seen: set[int],
     ) -> None:
+        """Watch a configuration object and everything nested inside it.
+
+        Args:
+            owner: The object to watch.
+            callback: What to run when any of it changes.
+        """
         if not isinstance(obj, param.Parameterized):
             return
         obj_id = id(obj)
@@ -2069,6 +2502,7 @@ class _SingleExperimentController:
                         )
 
     def _bind_larva_groups_state_watchers(self) -> None:
+        """Watch the larva group editors so edits mark the template unsaved."""
         self._clear_larva_groups_state_watchers()
         owner = self._typed_experiment_for_larva_groups
         if owner is None:
@@ -2085,6 +2519,7 @@ class _SingleExperimentController:
             )
 
     def _bind_experiment_template_watchers(self) -> None:
+        """Watch the template editors so edits mark the template unsaved."""
         self._clear_experiment_template_watchers()
         for root in (self.environment_parameters_editor, self.parameters_editor):
             widgets = root.select(pn.widgets.Widget)
@@ -2100,12 +2535,21 @@ class _SingleExperimentController:
                 self._experiment_template_watcher_handles.append(watcher)
 
     def _save_experiment_template_payload_to_workspace(self, safe_name: str) -> Path:
+        """Write the edited template to the workspace.
+
+        Args:
+            name: The template name.
+
+        Returns:
+            Whether it was saved.
+        """
         payload = self._experiment_template_payload()
         return self.experiment_template_preset_controls.workspace_store.save(
             safe_name, payload
         )
 
     def _on_experiment_template_parameter_widget_change(self, *_: object) -> None:
+        """Handle an edit to one of the template's parameters."""
         if self._loading_experiment_template_preset:
             return
         if self._typed_experiment_for_larva_groups is not None:
@@ -2114,11 +2558,13 @@ class _SingleExperimentController:
         self._refresh_summary()
 
     def _on_experiment_template_save_name_change(self, *_: object) -> None:
+        """Handle a change of the template name."""
         if self._loading_experiment_template_preset:
             return
         self._refresh_experiment_template_save_state(reset_baseline=False)
 
     def _on_experiment_template_preset_select_change(self, *_: object) -> None:
+        """Handle a change of the selected template preset."""
         if self._loading_experiment_template_preset:
             return
         ref = self.experiment_template_preset_controls.catalog.resolve(
@@ -2130,23 +2576,51 @@ class _SingleExperimentController:
         self._refresh_experiment_template_save_state(reset_baseline=False)
 
     def _on_save_experiment_template(self, *_: object) -> None:
+        """Handle the template save button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.experiment_template_preset_controls.save_current()
 
     def _on_confirm_overwrite_experiment_template(self, *_: object) -> None:
+        """Handle the confirm button, overwriting the template.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.experiment_template_preset_controls.confirm_pending_action()
 
     def _on_cancel_overwrite_experiment_template(self, *_: object) -> None:
+        """Handle the cancel button, abandoning the overwrite.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.experiment_template_preset_controls.cancel_pending_action()
         self._refresh_experiment_template_save_state(reset_baseline=False)
 
     def _on_experiment_template_preset_status(
         self, message: str, *, tone: str = "neutral"
     ) -> None:
+        """Relay a status message from the template preset controls.
+
+        Args:
+            message: The status text.
+        """
         if hasattr(self, "status") and tone in {"warning", "danger"}:
             self.status.object = message
 
     @staticmethod
     def _normalize_workspace_experiment_template_payload(payload: Any) -> util.AttrDict:
+        """Normalize a stored template to the current schema.
+
+        Args:
+            payload: The stored template.
+
+        Returns:
+            The normalized payload.
+        """
         normalized = util.AttrDict(payload)
         experiment = normalized.get("experiment")
         if not isinstance(experiment, str) or not experiment.strip():
@@ -2164,6 +2638,12 @@ class _SingleExperimentController:
     def _on_experiment_template_preset_loaded(
         self, ref: PresetRef, payload: Any
     ) -> None:
+        """Adopt a template preset that was just loaded.
+
+        Args:
+            ref: The loaded preset.
+            payload: Its contents.
+        """
         self._loading_experiment_template_preset = True
         self.experiment_template_save_name.disabled = True
         self.experiment_template_save_btn.disabled = True
@@ -2212,6 +2692,12 @@ class _SingleExperimentController:
     def _on_experiment_template_preset_saved(
         self, ref: PresetRef, payload: Any
     ) -> None:
+        """Refresh the app after a template preset was saved.
+
+        Args:
+            ref: The saved preset.
+            payload: What was stored.
+        """
         self.selection.set_experiment_options(self._experiment_template_options())
         self.selection.experiment_template = ref.token
         self.experiment_template_save_name.value = ref.name
@@ -2227,9 +2713,22 @@ class _SingleExperimentController:
         env_params: util.AttrDict,
         environment_payload: util.AttrDict,
     ) -> util.AttrDict:
+        """Apply an environment onto the resolved parameters.
+
+        Args:
+            parameters: The parameters to update.
+
+        Returns:
+            The updated parameters.
+        """
         return apply_environment_payload(env_params, environment_payload)
 
     def _build_parameters(self) -> util.AttrDict:
+        """Assemble the parameters a run starts from.
+
+        Returns:
+            The parameters.
+        """
         parameters = self._parameters_from_selected_template()
         flat = self._merge_seed_overrides(parameters.flatten())
         for path, (kind, widget) in self._parameter_widgets.items():
@@ -2279,9 +2778,15 @@ class _SingleExperimentController:
         return util.AttrDict(_coerce_xy_sequences(resolved))
 
     def _resolve_experiment_parameters(self) -> util.AttrDict:
+        """Resolve the experiment's parameters, applying every override.
+
+        Returns:
+            The resolved parameters.
+        """
         return self._build_parameters()
 
     def _refresh_environment_options(self) -> None:
+        """Reload the environments offered in the selector."""
         try:
             self.environment_preset_controls.workspace_store = WorkspacePresetStore(
                 self._environment_dir(),
@@ -2312,6 +2817,7 @@ class _SingleExperimentController:
         self._sync_environment_preset_select()
 
     def _refresh_summary(self) -> None:
+        """Redraw the summary of the configured run."""
         experiment = self._selected_experiment()
         parameters = self._resolve_experiment_parameters()
         larva_groups = list(parameters.get("larva_groups", {}).keys())
@@ -2350,6 +2856,7 @@ class _SingleExperimentController:
         )
 
     def _editable_flat_parameters(self) -> util.AttrDict:
+        """The parameters the editor exposes, keyed by dotted path."""
         parameters = self._parameters_from_selected_template()
         flat = parameters.flatten()
         flat = self._merge_seed_overrides(flat)
@@ -2362,6 +2869,17 @@ class _SingleExperimentController:
         return filtered
 
     def _merge_seed_overrides(self, flat: util.AttrDict) -> util.AttrDict:
+        """Merge the seeded overrides into the flattened parameters.
+
+        A seed set on a nested path implies its parents are present, so those are
+        materialized before the value is written.
+
+        Args:
+            flat: The flattened parameters.
+
+        Returns:
+            The merged parameters.
+        """
         merged = util.AttrDict(flat)
         seed_keys = list(self._parameter_seed_overrides.keys())
         for seed_key in seed_keys:
@@ -2375,6 +2893,7 @@ class _SingleExperimentController:
     def _optional_family_specs(
         self, flat: util.AttrDict | None = None
     ) -> dict[str, dict[str, Any]]:
+        """The parameter families that can be switched off."""
         from larvaworld.lib.reg.generators import gen
 
         specs = {
@@ -2438,6 +2957,14 @@ class _SingleExperimentController:
         return specs
 
     def _augment_optional_family_entries(self, flat: util.AttrDict) -> util.AttrDict:
+        """Add the toggle entries for the optional families.
+
+        Args:
+            flat: The flattened parameters to augment.
+
+        Returns:
+            The augmented parameters.
+        """
         augmented = util.AttrDict(flat)
         self._optional_family_meta = {}
         for root, spec in self._optional_family_specs(augmented).items():
@@ -2465,6 +2992,14 @@ class _SingleExperimentController:
         return augmented
 
     def _optional_root_for_path(self, path: str) -> str | None:
+        """The optional family a parameter path belongs to.
+
+        Args:
+            path: The parameter path.
+
+        Returns:
+            The family root, or None when the path is not optional.
+        """
         for root in sorted(self._optional_family_meta.keys(), key=len, reverse=True):
             if path == root:
                 return root
@@ -2474,6 +3009,12 @@ class _SingleExperimentController:
 
     @staticmethod
     def _set_control_disabled(kind: str, control: Any, disabled: bool) -> None:
+        """Enable or disable one editor control.
+
+        Args:
+            control: The control.
+            disabled: Whether it is disabled.
+        """
         if kind in {"readonly", "factory", "toggle_factory"}:
             return
         if kind == "sequence":
@@ -2489,15 +3030,30 @@ class _SingleExperimentController:
 
     @staticmethod
     def _optional_toggle_enabled_value(widget: Any) -> bool:
+        """Whether an optional family's toggle reads as enabled.
+
+        Args:
+            root: The family root.
+
+        Returns:
+            True when the family is on.
+        """
         return bool(getattr(widget, "value", None))
 
     def _apply_optional_family_disabled_state(self, root: str, enabled: bool) -> None:
+        """Disable the fields of a switched-off optional family.
+
+        Args:
+            root: The family root.
+            enabled: Whether the family is on.
+        """
         for path, (kind, control) in self._parameter_widgets.items():
             if path == root or not path.startswith(f"{root}."):
                 continue
             self._set_control_disabled(kind, control, not enabled)
 
     def _wire_optional_family_toggles(self) -> None:
+        """Connect the optional family toggles to their fields."""
         for root in self._optional_family_meta:
             kind, control = self._parameter_widgets.get(root, (None, None))
             if kind != "toggle_factory":
@@ -2513,6 +3069,7 @@ class _SingleExperimentController:
             enabled_widget.param.watch(_sync, "value")
 
     def _apply_optional_family_states(self, flat: util.AttrDict) -> util.AttrDict:
+        """Apply every optional family's on/off state to its fields."""
         updated = util.AttrDict(flat)
         for root, meta in self._optional_family_meta.items():
             kind, control = self._parameter_widgets.get(root, (None, None))
@@ -2537,6 +3094,14 @@ class _SingleExperimentController:
 
     @staticmethod
     def _runtime_note_for_path(path: str) -> str | None:
+        """The app's own note for one parameter.
+
+        Args:
+            path: The parameter path.
+
+        Returns:
+            The note, or None when there is none.
+        """
         if path == "duration":
             return "Runtime: total simulated duration in minutes."
         if path == "dt":
@@ -2557,6 +3122,15 @@ class _SingleExperimentController:
 
     @staticmethod
     def _resolve_doc_from_class(cls: type[Any], parts: list[str]) -> str | None:
+        """Read a parameter's documentation off its declaring class.
+
+        Args:
+            cls: The class to search.
+            parts: The parameter's path within it.
+
+        Returns:
+            The documentation, or None when not found.
+        """
         if not hasattr(cls, "param") or not parts:
             return None
         objects = cls.param.objects(instance=False)
@@ -2595,6 +3169,14 @@ class _SingleExperimentController:
 
     @staticmethod
     def _param_doc_for_path(path: str) -> str | None:
+        """The documentation of one parameter.
+
+        Args:
+            path: The parameter path.
+
+        Returns:
+            Its documentation, or None when it has none.
+        """
         from larvaworld.lib.param.enrichment import EnrichConf
         from larvaworld.lib.reg.generators import EnvConf, ExpConf
         from larvaworld.lib.reg.larvagroup import LarvaGroup
@@ -2617,6 +3199,14 @@ class _SingleExperimentController:
 
     @staticmethod
     def _help_text_for_path(path: str) -> str | None:
+        """The help text shown for one field, combining its sources.
+
+        Args:
+            path: The parameter path.
+
+        Returns:
+            The help text.
+        """
         return _join_help_parts(
             _SingleExperimentController._param_doc_for_path(path),
             _SingleExperimentController._runtime_note_for_path(path),
@@ -2624,6 +3214,14 @@ class _SingleExperimentController:
 
     @staticmethod
     def _factory_spec_for_path(path: str, value: Any) -> tuple[str, Any] | None:
+        """The factory that can populate an absent parameter.
+
+        Args:
+            path: The parameter path.
+
+        Returns:
+            The factory spec, or None when there is none.
+        """
         from larvaworld.lib.reg.generators import gen
 
         if path == "env_params.odorscape" and value is None:
@@ -2651,6 +3249,15 @@ class _SingleExperimentController:
 
     @staticmethod
     def _flatten_seed_payload(path: str, payload: Any) -> util.AttrDict:
+        """Flatten a factory's payload into seeded overrides.
+
+        Args:
+            path: The parameter path it populates.
+            payload: The factory's output.
+
+        Returns:
+            The overrides, keyed by dotted path.
+        """
         payload = _normalize_scalar(payload)
         if isinstance(payload, dict) and payload:
             items = util.AttrDict()
@@ -2663,6 +3270,16 @@ class _SingleExperimentController:
         return util.AttrDict({path: payload})
 
     def _activate_factory_value(self, path: str, payload: Any, message: str) -> None:
+        """Populate an absent parameter from its factory.
+
+        Any overrides already seeded under that path are discarded first, so the
+        factory's values are not merged with stale ones.
+
+        Args:
+            path: The parameter path.
+            payload: The factory's output.
+            message: The status to show.
+        """
         keys_to_remove = [
             key
             for key in self._parameter_seed_overrides
@@ -2675,6 +3292,14 @@ class _SingleExperimentController:
         self.status.object = message
 
     def _options_for_path(self, path: str, value: Any) -> tuple[str, list[Any]] | None:
+        """The values one parameter admits.
+
+        Args:
+            path: The parameter path.
+
+        Returns:
+            The admissible values, or None when unconstrained.
+        """
         if path == "collections":
             return "multi", list(reg.parDB.output_keys)
         if path == "enrichment.proc_keys":
@@ -2705,6 +3330,15 @@ class _SingleExperimentController:
 
     @staticmethod
     def _optional_scalar_kind(path: str, value: Any) -> str | None:
+        """The scalar type an optional field accepts, when it has one.
+
+        Args:
+            path: The parameter path.
+            value: Its current value.
+
+        Returns:
+            The type name, or None when the field is not such a scalar.
+        """
         if path.endswith((".odor.intensity", ".odor.spread")) and (
             value is None or isinstance(value, (int, float))
         ):
@@ -2713,6 +3347,14 @@ class _SingleExperimentController:
 
     @staticmethod
     def _summarize_value(path: str, value: Any) -> str:
+        """Render a parameter value for the summary.
+
+        Args:
+            value: The value to summarize.
+
+        Returns:
+            The summary text.
+        """
         if value == "empty_dict":
             return "Empty collection. This family should be edited via a dedicated structured editor, not free text."
         if value is None:
@@ -2730,6 +3372,15 @@ class _SingleExperimentController:
     def _widget_for_value(
         self, path: str, value: Any
     ) -> tuple[str, Any, pn.viewable.Viewable]:
+        """Build the control editing one parameter.
+
+        Args:
+            path: The parameter path.
+            value: Its current value.
+
+        Returns:
+            The control component.
+        """
         label = _display_label_for_path(path)
         help_text = self._help_text_for_path(path)
         optional_meta = self._optional_family_meta.get(path)
@@ -2968,6 +3619,15 @@ class _SingleExperimentController:
 
     @staticmethod
     def _parse_widget_value(kind: str, control: Any) -> Any:
+        """Read a value back out of its control.
+
+        Args:
+            path: The parameter path.
+            raw: The control's value.
+
+        Returns:
+            The parsed value.
+        """
         if kind == "toggle_factory":
             return bool(control["enabled"].value)
         if kind == "factory":
@@ -3003,6 +3663,14 @@ class _SingleExperimentController:
     def _render_single_parameter_group(
         self, group_key: str
     ) -> pn.viewable.Viewable | None:
+        """Build the card editing one parameter group.
+
+        Args:
+            path: The group's path.
+
+        Returns:
+            The card component.
+        """
         if group_key == "sim_ops":
             return self._sim_ops_group_view
         if group_key == "collections":
@@ -3065,6 +3733,11 @@ class _SingleExperimentController:
 
     @staticmethod
     def _apply_parameter_group_card_style(view: pn.viewable.Viewable) -> None:
+        """Apply the shared styling to a parameter group card.
+
+        Args:
+            card: The card to style.
+        """
         for child in getattr(view, "objects", []):
             if not isinstance(child, pn.Card):
                 continue
@@ -3072,6 +3745,7 @@ class _SingleExperimentController:
                 child.css_classes.append("lw-single-exp-param-group-card")
 
     def _render_all_parameter_groups(self) -> None:
+        """Rebuild every parameter group card."""
         self._parameter_group_views = {}
         environment_column = pn.Column(sizing_mode="stretch_width", margin=0)
         experiment_columns = [
@@ -3147,9 +3821,18 @@ class _SingleExperimentController:
         ]
 
     def _get_parameter_group_view(self, group_key: str) -> pn.viewable.Viewable | None:
+        """Return one parameter group's card.
+
+        Args:
+            path: The group's path.
+
+        Returns:
+            The card component.
+        """
         return self._parameter_group_views.get(group_key)
 
     def _refresh_parameter_editor(self) -> None:
+        """Rebuild the parameter editor."""
         flat = self._editable_flat_parameters()
         self._refresh_typed_larva_groups_owner()
         self._refresh_typed_enrichment_owner()
@@ -3208,6 +3891,7 @@ class _SingleExperimentController:
         self._refresh_experiment_template_save_state(reset_baseline=True)
 
     def _refresh_typed_larva_groups_owner(self) -> None:
+        """Rebuild the typed editor for the larva groups."""
         self._typed_experiment_for_larva_groups = (
             self._build_typed_experiment_from_selected_template()
         )
@@ -3221,6 +3905,11 @@ class _SingleExperimentController:
         )
 
     def _build_typed_experiment_from_selected_template(self) -> Any:
+        """Build the typed experiment object the editors bind to.
+
+        Returns:
+            The experiment configuration.
+        """
         from larvaworld.lib.reg.generators import ExpConf
 
         parameters = util.AttrDict(self._parameters_from_selected_template().get_copy())
@@ -3254,6 +3943,7 @@ class _SingleExperimentController:
         return ExpConf(**dict(parameters))
 
     def _refresh_typed_enrichment_owner(self) -> None:
+        """Rebuild the typed editor for the enrichment settings."""
         self._typed_experiment_for_enrichment = (
             self._build_typed_experiment_from_selected_template()
         )
@@ -3267,6 +3957,7 @@ class _SingleExperimentController:
         )
 
     def _refresh_typed_env_params_owner(self) -> None:
+        """Rebuild the typed editor for the environment parameters."""
         self._typed_experiment_for_env_params = (
             self._build_typed_experiment_from_selected_template()
         )
@@ -3280,6 +3971,7 @@ class _SingleExperimentController:
         )
 
     def _refresh_typed_sim_ops_owner(self) -> None:
+        """Rebuild the typed editor for the simulation options."""
         self._typed_experiment_for_sim_ops = (
             self._build_typed_experiment_from_selected_template()
         )
@@ -3292,6 +3984,7 @@ class _SingleExperimentController:
         )
 
     def _refresh_typed_collections_owner(self) -> None:
+        """Rebuild the typed editor for the recorded output groups."""
         self._typed_experiment_for_collections = (
             self._build_typed_experiment_from_selected_template()
         )
@@ -3305,6 +3998,7 @@ class _SingleExperimentController:
         )
 
     def _refresh_typed_trials_owner(self) -> None:
+        """Rebuild the typed editor for the trial schedule."""
         self._typed_experiment_for_trials = (
             self._build_typed_experiment_from_selected_template()
         )
@@ -3318,6 +4012,7 @@ class _SingleExperimentController:
         )
 
     def _on_experiment_change(self, *_: object) -> None:
+        """Handle a change of the selected experiment."""
         if self._suspend_experiment_change:
             return
         selected_value = str(self.selection.experiment_template)
@@ -3366,6 +4061,7 @@ class _SingleExperimentController:
         self.status.object = f'Template "{experiment}" loaded.'
 
     def _on_run_name_change(self, *_: object) -> None:
+        """Handle a change of the run name."""
         current = (self.video_filename.value or "").strip()
         if not current or current == _safe_slug(current):
             self.video_filename.value = _safe_slug(
@@ -3373,25 +4069,38 @@ class _SingleExperimentController:
             )
 
     def _on_save_video_change(self, *_: object) -> None:
+        """Handle a change of the video-recording toggle."""
         enabled = bool(self.save_video.value)
         self.video_filename.disabled = not enabled
         self.video_fps.disabled = not enabled
 
     def _on_show_display_change(self, *_: object) -> None:
+        """Handle a change of the live-display toggle."""
         self.display_every_n_steps.disabled = not bool(self.show_display.value)
 
     def _on_parameter_override_change(self, *_: object) -> None:
+        """Handle an edit to one of the parameter overrides."""
         self._parameter_seed_overrides = util.AttrDict()
         self._refresh_parameter_editor()
         self._refresh_summary()
 
     def _on_refresh_environments(self, *_: object) -> None:
+        """Handle the button reloading the environment list.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._refresh_environment_options()
         self._refresh_parameter_editor()
         self._refresh_summary()
         self.status.object = "Refreshed environment presets."
 
     def _build_run_directory(self) -> Path:
+        """Build the directory a run writes its output to.
+
+        Returns:
+            The directory.
+        """
         run_id = _safe_slug(self.run_name.value or self._selected_experiment())
         base_dir = self._experiment_dir()
         candidate = base_dir / run_id
@@ -3403,6 +4112,11 @@ class _SingleExperimentController:
         return base_dir / f"{run_id}_{suffix}"
 
     def _runtime_screen_kws(self, run_dir: Path) -> dict[str, Any]:
+        """The screen options the run is launched with.
+
+        Returns:
+            The screen configuration.
+        """
         kws: dict[str, Any] = {
             "show_display": bool(self.show_display.value),
             "display_every_n_steps": int(self.display_every_n_steps.value),
@@ -3426,6 +4140,11 @@ class _SingleExperimentController:
         return kws
 
     def _set_run_controls_disabled(self, disabled: bool) -> None:
+        """Enable or disable the run controls.
+
+        Args:
+            disabled: Whether they are disabled.
+        """
         self._run_controls_locked = bool(disabled)
         self.prepare_btn.disabled = disabled
         self.simulation_preview_btn.disabled = disabled
@@ -3460,6 +4179,7 @@ class _SingleExperimentController:
         run_dir: Path,
         selected_env: str,
     ) -> None:
+        """Run the configured experiment and report the outcome."""
         launcher = None
         warning_note = self._pending_run_warning_note
         self._pending_run_warning_note = ""
@@ -3504,6 +4224,11 @@ class _SingleExperimentController:
 
     @staticmethod
     def _preview_metadata_html(parameters: util.AttrDict, selected_env: str) -> str:
+        """Render the preview's metadata for display.
+
+        Returns:
+            The markup.
+        """
         env = util.AttrDict(parameters.env_params)
         larva_groups = util.AttrDict(parameters.get("larva_groups", {}))
         counts = []
@@ -3533,6 +4258,11 @@ class _SingleExperimentController:
 
     @staticmethod
     def _preview_runtime_parameters(parameters: util.AttrDict) -> util.AttrDict:
+        """The parameters the preview simulation runs with.
+
+        Returns:
+            The parameters.
+        """
         preview_parameters = util.AttrDict(_coerce_xy_sequences(parameters.get_copy()))
         preview_parameters["collections"] = []
         preview_parameters["enrichment"] = None
@@ -3544,6 +4274,11 @@ class _SingleExperimentController:
         parameters: util.AttrDict,
         run_dir: Path,
     ) -> tuple[sim.ExpRun, str | None]:
+        """Build the simulation the preview will step.
+
+        Returns:
+            The launcher, or None when it could not be built.
+        """
         preview_parameters = _SingleExperimentController._preview_runtime_parameters(
             parameters
         )
@@ -3575,6 +4310,11 @@ class _SingleExperimentController:
             return launcher, fallback_note
 
     def _on_prepare_preview(self, *_: object) -> None:
+        """Handle the prepare-preview button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         try:
             parameters = self._resolve_experiment_parameters()
         except (WorkspaceError, OSError, json.JSONDecodeError, ValueError) as exc:
@@ -3629,6 +4369,11 @@ class _SingleExperimentController:
         self._set_run_controls_disabled(False)
 
     def _on_generate_simulation_preview(self, *_: object) -> None:
+        """Handle the button generating the preview frames.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         try:
             parameters = self._resolve_experiment_parameters()
         except (WorkspaceError, OSError, json.JSONDecodeError, ValueError) as exc:
@@ -3727,6 +4472,11 @@ class _SingleExperimentController:
         self._set_run_controls_disabled(False)
 
     def _on_run_experiment(self, *_: object) -> None:
+        """Handle the run button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._pending_run_warning_note = ""
         shortcut_errors = self.display_shortcuts.validate()
         if shortcut_errors:
@@ -3793,12 +4543,27 @@ class _SingleExperimentController:
         )
 
     def _on_open_display_shortcuts(self, *_: object) -> None:
+        """Handle the button opening the shortcut dialog.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.display_shortcuts_dialog_controller.open()
 
     def _on_close_display_shortcuts(self, *_: object) -> None:
+        """Handle the button closing the shortcut dialog.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.display_shortcuts_dialog_controller.close()
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the experiment app's view.
+
+        Returns:
+            The view component.
+        """
         intro = pn.pane.Markdown(
             (
                 "### Single Experiment\n"
@@ -3896,6 +4661,11 @@ class _SingleExperimentController:
 
 
 def single_experiment_app() -> pn.viewable.Viewable:
+    """Build the single experiment app.
+
+    Returns:
+        The app component.
+    """
     pn.extension(
         "tabulator",
         raw_css=[PORTAL_RAW_CSS, SINGLE_EXPERIMENT_RAW_CSS, DISPLAY_SHORTCUTS_RAW_CSS],
