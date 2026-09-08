@@ -234,6 +234,14 @@ MODEL_INSPECTOR_RAW_CSS = """
 
 
 def _status_html(text: str) -> str:
+    """Render a status line as markup.
+
+    Args:
+        text: The status text.
+
+    Returns:
+        The markup.
+    """
     return f'<div class="lw-model-inspector-status">{escape(text)}</div>'
 
 
@@ -250,6 +258,14 @@ _REPORTER_SIGNAL_LABELS = {
 
 
 def _reporter_label_parts(key: str) -> tuple[str | None, str | None]:
+    """Split a reporter key into its display parts.
+
+    Args:
+        key: The reporter key.
+
+    Returns:
+        The module and parameter names.
+    """
     signal, _, module = key.partition("_")
     module_label = _REPORTER_MODULE_LABELS.get(module)
     signal_label = _REPORTER_SIGNAL_LABELS.get(signal)
@@ -257,6 +273,14 @@ def _reporter_label_parts(key: str) -> tuple[str | None, str | None]:
 
 
 def _reporter_plot_label(key: str) -> str:
+    """The label a reporter is plotted under.
+
+    Args:
+        key: The reporter key.
+
+    Returns:
+        The label.
+    """
     module_label, signal_label = _reporter_label_parts(key)
     if module_label and signal_label:
         return f"{module_label} {signal_label} ({key})"
@@ -277,16 +301,40 @@ def _reporter_key_columns() -> tuple[tuple[str, ...], tuple[str, ...], tuple[str
 
 
 def _reporter_selector_options_for_keys(keys: tuple[str, ...]) -> dict[str, str]:
+    """Build the selector options for a set of reporters.
+
+    Args:
+        keys: The reporter keys.
+
+    Returns:
+        The options, keyed by label.
+    """
     return {_reporter_plot_label(k): k for k in keys}
 
 
 def _ordered_selected_reporter_keys(selected: set[str]) -> tuple[str, ...]:
+    """Order the selected reporters canonically.
+
+    Args:
+        selected: The selected reporter keys.
+
+    Returns:
+        The keys, in display order.
+    """
     if not selected:
         return tuple(DEFAULT_LIVE_PREVIEW_REPORTER_KEYS)
     return tuple(k for k in LIVE_PREVIEW_REPORTER_KEYS if k in selected)
 
 
 def _json_ready(value: Any) -> Any:
+    """Convert a value into JSON-serializable form.
+
+    Args:
+        value: The value to convert.
+
+    Returns:
+        The JSON-ready value.
+    """
     nested_conf = getattr(type(value), "nestedConf", None)
     if nested_conf is not None:
         return _json_ready(value.nestedConf)
@@ -305,6 +353,15 @@ def _json_ready(value: Any) -> Any:
 
 
 def _coerce_like_template(template: Any, value: Any) -> Any:
+    """Coerce an edited value to the shape of the stored one.
+
+    Args:
+        template: The stored value whose shape is preserved.
+        value: The edited value.
+
+    Returns:
+        The coerced value.
+    """
     if isinstance(template, dict) and isinstance(value, dict):
         coerced: dict[Any, Any] = {}
         for key, item in value.items():
@@ -330,6 +387,7 @@ class _ModelInspectorController:
     """State behind the model inspector app."""
 
     def __init__(self) -> None:
+        """Build the controller, its draft and its inspection widgets."""
         model_ids = list_model_ids()
         if not model_ids:
             raise ModelInspectorError("no_models", "No model presets are available.")
@@ -568,34 +626,66 @@ class _ModelInspectorController:
         return self._draft_model_id
 
     def _set_status(self, message: str) -> None:
+        """Show a status message.
+
+        Args:
+            message: The status text.
+        """
         self._status_message = message
         self.status_pane.object = _status_html(message)
 
     def _set_running(self, value: bool) -> None:
+        """Mark the live preview as running or stopped.
+
+        Args:
+            value: Whether it is running.
+        """
         self._is_running = value
         self._refresh_preview_controls()
 
     def _model_preset_workspace_dir(self) -> Path:
+        """The workspace folder model presets are stored in."""
         return get_workspace_dir("metadata") / "model_presets"
 
     def _fallback_model_preset_workspace_dir(self) -> Path:
+        """The folder used when no workspace is configured."""
         return Path.cwd() / ".larvaworld_model_presets_unavailable"
 
     def _draft_payload_for_storage(self, _name: str | None = None) -> dict[str, Any]:
+        """Assemble the current draft for storage.
+
+        Args:
+            _name: The name it will be stored under.
+
+        Returns:
+            The payload.
+        """
         return _json_ready(self._require_draft_model())
 
     def _draft_json_text(self) -> str:
+        """The current draft, rendered as JSON."""
         return json.dumps(self._draft_payload_for_storage(), indent=2) + "\n"
 
     def _export_draft_json(self) -> io.StringIO:
+        """Build the JSON file the export button downloads.
+
+        Returns:
+            The file contents.
+        """
         return io.StringIO(self._draft_json_text())
 
     def _draft_download_filename(self) -> str:
+        """The file name an exported draft is downloaded under."""
         base = str(self._get_primary_model_id()).strip() or "model"
         safe = WorkspacePresetStore.normalize_name(base)
         return f"{safe}_draft.json"
 
     def _build_model_preset_controls(self) -> PresetControlsController:
+        """Build the preset controls for saving and loading models.
+
+        Returns:
+            The controls component.
+        """
         workspace_dir = self._fallback_model_preset_workspace_dir()
         try:
             workspace_dir = self._model_preset_workspace_dir()
@@ -619,6 +709,7 @@ class _ModelInspectorController:
         )
 
     def _refresh_model_preset_controls(self) -> None:
+        """Reload the model presets offered in the selector."""
         try:
             workspace_store = WorkspacePresetStore(
                 self._model_preset_workspace_dir(),
@@ -646,14 +737,31 @@ class _ModelInspectorController:
             )
 
     def _on_model_preset_status(self, message: str, *, tone: str = "neutral") -> None:
+        """Relay a status message from the preset controls.
+
+        Args:
+            message: The status text.
+        """
         if tone in {"warning", "danger"}:
             self._set_status(self._with_validation_status(message))
 
     def _on_model_preset_saved(self, ref: PresetRef, payload: Any) -> None:
+        """Refresh the app after a model preset was saved.
+
+        Args:
+            ref: The saved preset.
+            payload: What was stored.
+        """
         del payload
         self._set_status(self._with_validation_status(f"Saved {ref.display_label}."))
 
     def _on_model_preset_loaded(self, ref: PresetRef, payload: Any) -> None:
+        """Adopt a model preset that was just loaded.
+
+        Args:
+            ref: The loaded preset.
+            payload: Its contents.
+        """
         if ref.source == PresetSource.REGISTRY:
             self._pause_callback()
             self._draft_model = load_model_draft(ref.name)
@@ -674,6 +782,12 @@ class _ModelInspectorController:
         self._replace_draft_from_loaded_preset(ref, payload)
 
     def _replace_draft_from_loaded_preset(self, ref: PresetRef, payload: Any) -> None:
+        """Replace the working draft with a loaded preset.
+
+        Args:
+            ref: The loaded preset.
+            payload: Its contents.
+        """
         copied = util.AttrDict(payload).get_copy()
         brain_payload = copied.get("brain") if isinstance(copied, Mapping) else None
         if not isinstance(copied, Mapping) or not isinstance(brain_payload, Mapping):
@@ -702,15 +816,22 @@ class _ModelInspectorController:
         )
 
     def _sync_compare_selection_primary(self) -> None:
+        """Keep the comparison's primary model in step with the selection."""
         primary = self._draft_model_id
         current = list(self.compare_models_select.value or [])
         if primary not in current:
             self.compare_models_select.value = [primary, *current]
 
     def _clear_compare_results(self) -> None:
+        """Discard the current comparison results."""
         self.compare_figure_pane.object = ""
 
     def _on_import_model_file(self, _event: param.parameterized.Event) -> None:
+        """Handle an uploaded model file, loading it as the draft.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         raw_value = self.import_model_input.value
         if raw_value in (None, b"", ""):
             return
@@ -791,6 +912,11 @@ class _ModelInspectorController:
         self._render_compare_figure(fig)
 
     def _render_compare_figure(self, fig: Any) -> None:
+        """Show a rendered comparison figure.
+
+        Args:
+            fig: The figure to show.
+        """
         try:
             import base64
             from io import BytesIO
@@ -808,6 +934,11 @@ class _ModelInspectorController:
             self._set_status(f"Could not render the comparison figure: {exc}")
 
     def _on_run(self, _event=None) -> None:
+        """Handle the run button, starting the live preview.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._is_running:
             return
         self._refresh_draft_validation()
@@ -836,10 +967,20 @@ class _ModelInspectorController:
             )
 
     def _on_pause(self, _event=None) -> None:
+        """Handle the pause button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._pause_callback()
         self._set_status(f"Live preview paused at step {self._step}.")
 
     def _on_clear_trace(self, _event=None) -> None:
+        """Handle the clear button, discarding the recorded trace.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._clear_trace_data()
         self._update_probe_meta()
         self._set_status(
@@ -849,6 +990,11 @@ class _ModelInspectorController:
         )
 
     def _on_reset_to_preset(self, _event=None) -> None:
+        """Handle the reset button, restoring the stored model.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._pause_callback()
         self._reset_draft_to_selected_model()
         self._has_local_edits = False
@@ -860,6 +1006,7 @@ class _ModelInspectorController:
         )
 
     def _start_callback(self) -> None:
+        """Start the periodic callback driving the live preview."""
         self._pause_callback()
         self._set_running(True)
         self._callback = pn.state.add_periodic_callback(
@@ -867,6 +1014,7 @@ class _ModelInspectorController:
         )
 
     def _pause_callback(self) -> None:
+        """Stop the periodic callback driving the live preview."""
         callback = self._callback
         self._callback = None
         if callback is not None:
@@ -874,6 +1022,7 @@ class _ModelInspectorController:
         self._set_running(False)
 
     def _ensure_brain_for_selected_model(self) -> None:
+        """Build the brain the preview runs, if it is not yet built."""
         self._active_dt = self._dt()
         draft = self._require_draft_model()
         self._brain = build_inspection_brain_from_config(
@@ -884,6 +1033,7 @@ class _ModelInspectorController:
         self._prepare_reporters()
 
     def _reset_draft_to_selected_model(self) -> None:
+        """Discard the draft's edits and reload the stored model."""
         model_id = self._get_primary_model_id()
         self._draft_model = load_model_draft(model_id)
         self._draft_model_id = model_id
@@ -891,6 +1041,11 @@ class _ModelInspectorController:
         self._has_local_edits = False
 
     def _require_draft_model(self) -> Any:
+        """Return the working draft, insisting one is loaded.
+
+        Returns:
+            The draft.
+        """
         if self._draft_model is None:
             raise ModelInspectorError(
                 "draft_not_initialized", "Model draft is not initialized."
@@ -898,6 +1053,7 @@ class _ModelInspectorController:
         return self._draft_model
 
     def _refresh_draft_validation(self) -> tuple[DraftValidationIssue, ...]:
+        """Re-validate the draft after an edit."""
         draft = self._require_draft_model()
         self._draft_validation_issues = validate_draft_module_config(draft)
         self._refresh_validation_pane()
@@ -905,9 +1061,11 @@ class _ModelInspectorController:
         return self._draft_validation_issues
 
     def _has_validation_errors(self) -> bool:
+        """Whether the draft has errors that block building it."""
         return any(issue.severity == "error" for issue in self._draft_validation_issues)
 
     def _validation_counts(self) -> tuple[int, int]:
+        """How many errors and warnings the draft has."""
         errors = sum(
             1 for issue in self._draft_validation_issues if issue.severity == "error"
         )
@@ -917,12 +1075,14 @@ class _ModelInspectorController:
         return errors, warnings
 
     def _validation_summary_text(self) -> str:
+        """A one-line summary of the draft's validation state."""
         errors, warnings = self._validation_counts()
         if errors == 0 and warnings == 0:
             return ""
         return f"Validation: {errors} error(s), {warnings} warning(s)."
 
     def _validation_detail_text(self) -> str:
+        """The full list of the draft's validation issues."""
         if not self._draft_validation_issues:
             return ""
         return " ".join(
@@ -931,11 +1091,20 @@ class _ModelInspectorController:
         )
 
     def _with_validation_status(self, message: str) -> str:
+        """Append the validation summary to a status message.
+
+        Args:
+            message: The status text.
+
+        Returns:
+            The combined message.
+        """
         summary = self._validation_summary_text()
         details = self._validation_detail_text()
         return " ".join(bit for bit in (message, summary, details) if bit).strip()
 
     def _refresh_validation_pane(self) -> None:
+        """Redraw the validation pane."""
         if not self._draft_validation_issues:
             self.validation_pane.objects = []
             return
@@ -958,6 +1127,7 @@ class _ModelInspectorController:
         self.validation_pane.objects = panes
 
     def _refresh_preview_controls(self) -> None:
+        """Enable or disable the preview controls to match the draft's state."""
         has_errors = self._has_validation_errors()
         self.run_button.disabled = self._is_running or has_errors
         self.pause_button.disabled = not self._is_running
@@ -978,6 +1148,7 @@ class _ModelInspectorController:
         ui_scope: UIRefreshScope = "full",
         module_id: str | None = None,
     ) -> None:
+        """Rebuild the preview after the draft changed."""
         if ui_scope not in {"parameter", "mode", "enabled", "full"}:
             raise ValueError(f"Unsupported UI refresh scope: {ui_scope!r}")
         previous_issues = self._draft_validation_issues
@@ -1022,6 +1193,12 @@ class _ModelInspectorController:
             self._set_status(f"{message} Preview rebuilt from current draft.")
 
     def _set_module_enabled(self, module_id: str, enabled: bool) -> None:
+        """Enable or disable one module of the draft.
+
+        Args:
+            module_id: The module to toggle.
+            enabled: Whether it is active.
+        """
         draft = self._require_draft_model()
         set_draft_module_enabled(draft, module_id, enabled)
         action = "enabled" if enabled else "disabled"
@@ -1034,6 +1211,12 @@ class _ModelInspectorController:
         )
 
     def _set_brain_module_mode(self, module_id: str, mode: str) -> None:
+        """Switch one brain module of the draft to another mode.
+
+        Args:
+            module_id: The module to switch.
+            mode: The new mode.
+        """
         draft = self._require_draft_model()
         set_draft_brain_module_mode(draft, module_id, mode)
         self._sync_preview_after_draft_change(
@@ -1045,6 +1228,11 @@ class _ModelInspectorController:
         )
 
     def _set_memory_mode(self, mode: str) -> None:
+        """Set the draft's memory algorithm.
+
+        Args:
+            mode: The learning algorithm.
+        """
         draft = self._require_draft_model()
         set_draft_memory_config(draft, enabled=True, mode=mode, modality=None)
         self._sync_preview_after_draft_change(
@@ -1056,6 +1244,11 @@ class _ModelInspectorController:
         )
 
     def _set_memory_modality(self, modality: str) -> None:
+        """Set the draft's memory modality.
+
+        Args:
+            modality: The sensory modality.
+        """
         draft = self._require_draft_model()
         current_memory = draft.brain["memory"]
         current_mode = current_memory["mode"] if current_memory is not None else None
@@ -1076,6 +1269,13 @@ class _ModelInspectorController:
         parameter_path: tuple[str, ...],
         value: Any,
     ) -> None:
+        """Set one parameter of a draft module.
+
+        Args:
+            module_id: The module holding it.
+            parameter_path: The parameter's path within the module.
+            value: The new value.
+        """
         draft = self._require_draft_model()
         set_draft_module_parameter(draft, module_id, parameter_path, value)
         path_label = ".".join(parameter_path)
@@ -1088,6 +1288,7 @@ class _ModelInspectorController:
         )
 
     def _merged_reporter_selection(self) -> set[str]:
+        """The reporters plotted, merging the defaults with the user's picks."""
         return (
             set(self.plot_reporters_checkbox_activity.value or ())
             | set(self.plot_reporters_checkbox_input.value or ())
@@ -1095,6 +1296,11 @@ class _ModelInspectorController:
         )
 
     def _set_reporter_checkboxes(self, keys: list[str]) -> None:
+        """Tick the reporter checkboxes matching a selection.
+
+        Args:
+            keys: The reporters to select.
+        """
         key_set = set(keys)
         activity_keys, input_keys, phase_keys = _reporter_key_columns()
         self.plot_reporters_checkbox_activity.value = [
@@ -1108,9 +1314,15 @@ class _ModelInspectorController:
         ]
 
     def _selected_plot_reporter_keys(self) -> tuple[str, ...]:
+        """The reporters currently selected for plotting."""
         return _ordered_selected_reporter_keys(self._merged_reporter_selection())
 
     def _on_plot_reporters_change(self, event) -> None:
+        """Handle a change of the plotted reporters.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         if not self._merged_reporter_selection():
             if event.old:
                 self._set_reporter_checkboxes(list(DEFAULT_LIVE_PREVIEW_REPORTER_KEYS))
@@ -1139,6 +1351,7 @@ class _ModelInspectorController:
         self._update_probe_meta()
 
     def _prepare_reporters(self) -> None:
+        """Set up the reporters the live preview records."""
         assert self._runtime is not None
         available = reg.par.output_reporters(
             ks=list(self._selected_plot_reporter_keys()), agents=[self._runtime]
@@ -1157,6 +1370,7 @@ class _ModelInspectorController:
         self._reporter_available = reporter_available
 
     def _tick_live_preview(self) -> None:
+        """Advance the live preview by one batch of timesteps."""
         if self._brain is None or self._runtime is None:
             self._pause_callback()
             return
@@ -1217,6 +1431,7 @@ class _ModelInspectorController:
         self._update_probe_meta()
 
     def _clear_trace_data(self) -> None:
+        """Discard the recorded preview trace."""
         self._step = 0
         for key in LIVE_PREVIEW_REPORTER_KEYS:
             self._sources[key].data = {"time": [], key: []}
@@ -1240,6 +1455,7 @@ class _ModelInspectorController:
         self._refresh_probe_table()
 
     def _refresh_probe_table(self) -> None:
+        """Redraw the table summarizing the preview's output."""
         rename = {
             k: _reporter_plot_label(k)
             for k in self._selected_plot_reporter_keys()
@@ -1248,18 +1464,23 @@ class _ModelInspectorController:
         self.probe_table.object = self._probe_df.rename(columns=rename)
 
     def _max_steps(self) -> int:
+        """How many timesteps the preview runs for."""
         return max(1, int(self.max_steps_input.value))
 
     def _a_in(self) -> float:
+        """The activation the preview drives the model with."""
         return float(self.a_in_input.value)
 
     def _trace_window(self) -> int:
+        """How many timesteps the plotted trace keeps."""
         return max(1, int(self.trace_window_input.value))
 
     def _dt(self) -> float:
+        """The timestep the preview runs at."""
         return max(0.001, float(self.dt_input.value))
 
     def _trim_trace_data(self) -> None:
+        """Drop the trace samples that have scrolled out of the window."""
         trace_window = self._trace_window()
         for key in self._selected_plot_reporter_keys():
             source_data = self._sources[key].data
@@ -1271,6 +1492,11 @@ class _ModelInspectorController:
         self._refresh_probe_table()
 
     def _on_live_preview_setting_change(self, _event=None) -> None:
+        """Handle a change to one of the preview settings.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._trim_trace_data()
         self._update_probe_meta()
         if self._is_running and self._step >= self._max_steps():
@@ -1278,6 +1504,11 @@ class _ModelInspectorController:
             self._set_status(f"Live preview auto-stopped at step {self._max_steps()}.")
 
     def _on_dt_change(self, _event=None) -> None:
+        """Handle a change of the preview timestep.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._is_running:
             return
         self._sync_preview_after_draft_change(
@@ -1288,6 +1519,7 @@ class _ModelInspectorController:
         )
 
     def _update_probe_meta(self) -> None:
+        """Refresh the metadata shown beside the preview."""
         if self._brain is None or self._runtime is None:
             runtime_state = "unavailable"
         elif self._has_validation_errors():
@@ -1321,12 +1553,14 @@ class _ModelInspectorController:
         )
 
     def _refresh_inspection(self) -> None:
+        """Re-inspect the draft and redraw the module views."""
         self._refresh_draft_validation()
         module_specs = self._refresh_inspection_tables()
         if module_specs is not None:
             self._refresh_all_module_cards(module_specs)
 
     def _refresh_inspection_tables(self) -> tuple[ModelModuleSpec, ...] | None:
+        """Redraw the tables listing the draft's modules and parameters."""
         primary_id = self._get_primary_model_id()
         try:
             draft = self._require_draft_model()
@@ -1353,6 +1587,11 @@ class _ModelInspectorController:
         self,
         module_specs: tuple[ModelModuleSpec, ...],
     ) -> None:
+        """Rebuild every module card.
+
+        Args:
+            module_specs: The modules to draw cards for.
+        """
         self._module_card_slots.clear()
         self._module_specs_by_id = {spec.module_id: spec for spec in module_specs}
         self.module_sections_box.objects = _build_module_sections(
@@ -1370,6 +1609,7 @@ class _ModelInspectorController:
         ui_scope: UIRefreshScope,
         previous_issues: tuple[DraftValidationIssue, ...],
     ) -> None:
+        """Rebuild only the module cards whose contents changed."""
         self._module_specs_by_id = {spec.module_id: spec for spec in module_specs}
         if ui_scope == "full":
             self._refresh_all_module_cards(module_specs)
@@ -1410,6 +1650,14 @@ class _ModelInspectorController:
             slot.objects = [new_card]
 
     def _build_settings_cards(self, inspection) -> list[pn.viewable.Viewable]:
+        """Build the cards showing each module's settings.
+
+        Args:
+            inspection: The inspected model.
+
+        Returns:
+            The card components.
+        """
         if self._brain is None:
             return [
                 pn.Card(
@@ -1441,6 +1689,7 @@ class _ModelInspectorController:
 
     def _on_local_parameter_edit(self, *_args: Any, **_kwargs: Any) -> None:
         # Legacy compatibility path for old runtime-object editor; visible UI uses draft helpers.
+        """Handle an edit made in one of the module cards."""
         self._has_local_edits = True
         self._refresh_inspection()
         if self._is_running:
@@ -1451,6 +1700,7 @@ class _ModelInspectorController:
             self._set_status("Local parameters changed. Press Run to preview.")
 
     def _init_live_plots(self) -> None:
+        """Build the plots showing the live preview's output."""
         plots: list[pn.viewable.Viewable] = []
         for reporter in self._selected_plot_reporter_keys():
             reporter_label = _reporter_plot_label(reporter)
@@ -1469,6 +1719,11 @@ class _ModelInspectorController:
         self.live_plot_view.objects = plots
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the inspector's view.
+
+        Returns:
+            The view component.
+        """
         intro_text = pn.pane.HTML(
             (
                 "<p>Inspect canonical larva model presets, edit baseline modules locally, "
@@ -1610,6 +1865,15 @@ def _module_settings_card(
     on_edit,
     watched_tokens: set[tuple[int, str]],
 ) -> pn.Card:
+    """Build the card showing one module's settings.
+
+    Args:
+        spec: The module specification.
+        **kwargs: Card settings.
+
+    Returns:
+        The card component.
+    """
     if not inspection.present:
         body = pn.pane.Markdown("Not configured in this model.", margin=0)
         title = f"{inspection.display_name} | absent"
@@ -1662,6 +1926,14 @@ def _module_settings_card(
 
 
 def _module_spec_title(spec: ModelModuleSpec) -> str:
+    """The heading one module is shown under.
+
+    Args:
+        spec: The module specification.
+
+    Returns:
+        The title.
+    """
     if not spec.present:
         return f"{spec.module_id} | absent"
     if spec.module_id == "memory":
@@ -1681,6 +1953,15 @@ _PROTECTED_PARAMETER_ROOTS = {"mode", "modality", "name"}
 
 
 def _module_draft_config(spec: ModelModuleSpec) -> Any:
+    """Read one module's configuration from the draft.
+
+    Args:
+        spec: The module specification.
+        model_conf: The draft.
+
+    Returns:
+        The module configuration.
+    """
     if spec.module_kind == "brain":
         return spec.parameters if spec.present else None
     if spec.module_kind == "memory":
@@ -1693,6 +1974,15 @@ def _module_draft_config(spec: ModelModuleSpec) -> Any:
 def _clone_parameter_object(
     parameter: param.Parameter, default: Any
 ) -> param.Parameter:
+    """Copy a parameter object so the editor cannot mutate the original.
+
+    Args:
+        parameter: The parameter to copy.
+        default: The value the copy starts at.
+
+    Returns:
+        The copied parameter.
+    """
     clone = copy.copy(parameter)
     try:
         clone.default = default
@@ -1704,6 +1994,14 @@ def _clone_parameter_object(
 def _is_supported_parameter_for_editor(parameter: param.Parameter) -> bool:
     # Dict-valued parameters (e.g. intermitter distribution blobs) need
     # dedicated editors; rendering them as scalar controls raises Param errors.
+    """Report whether a parameter can be rendered as a control.
+
+    Args:
+        parameter: The parameter to test.
+
+    Returns:
+        True when the editor can render it.
+    """
     return not isinstance(parameter, param.Dict)
 
 
@@ -1714,6 +2012,20 @@ def _make_parameter_proxy(
     parameter_objects: dict[str, param.Parameter],
     values: dict[str, Any],
 ) -> param.Parameterized:
+    """Build a throwaway object exposing one parameter to the editor.
+
+    Editing a module parameter must write back through the draft rather than
+    onto the module itself, so the control is bound to a proxy that forwards
+    the change.
+
+    Args:
+        parameter: The parameter to expose.
+        value: Its current value.
+        on_change: The callback applying the edit.
+
+    Returns:
+        The proxy object.
+    """
     attrs: dict[str, param.Parameter] = {}
     for name, pobj in parameter_objects.items():
         if name.split(".", 1)[0] in _PROTECTED_PARAMETER_ROOTS:
@@ -1742,6 +2054,15 @@ def _parameter_editor_group(
     values: dict[str, Any],
     path_prefix: tuple[str, ...] = (),
 ) -> pn.viewable.Viewable:
+    """The group a parameter is shown under.
+
+    Args:
+        name: The parameter name.
+        parameter: The parameter object.
+
+    Returns:
+        The group name.
+    """
     names = [
         name
         for name in parameter_objects
@@ -1800,6 +2121,14 @@ def _canonical_editor_groups_for_spec(
     controller: _ModelInspectorController,
     spec: ModelModuleSpec,
 ) -> list[pn.viewable.Viewable]:
+    """The parameter groups one module's editor shows, in order.
+
+    Args:
+        spec: The module specification.
+
+    Returns:
+        The group names.
+    """
     if not spec.present:
         return []
 
@@ -1953,12 +2282,31 @@ def _issues_for_card(
     validation_issues: tuple[DraftValidationIssue, ...],
     module_id: str,
 ) -> tuple[DraftValidationIssue, ...]:
+    """Select the validation issues belonging to one module.
+
+    Args:
+        validation_issues: Every issue found.
+        module_id: The module to filter for.
+
+    Returns:
+        Its issues.
+    """
     return tuple(issue for issue in validation_issues if issue.module_id == module_id)
 
 
 def _validation_issue_signature(
     issues: tuple[DraftValidationIssue, ...],
 ) -> dict[str, tuple[tuple[str, str, tuple[str, ...], str], ...]]:
+    """Build a comparable signature of a set of validation issues.
+
+    Used to skip redrawing a card whose issues have not changed.
+
+    Args:
+        issues: The issues to summarize.
+
+    Returns:
+        The signature.
+    """
     by_module: dict[str, list[tuple[str, str, tuple[str, ...], str]]] = {}
     for issue in issues:
         by_module.setdefault(issue.module_id, []).append(
@@ -1978,6 +2326,15 @@ def _module_editor_card(
     spec: ModelModuleSpec,
     validation_issues: tuple[DraftValidationIssue, ...],
 ) -> pn.Card:
+    """Build the card editing one module.
+
+    Args:
+        spec: The module specification.
+        **kwargs: Card settings.
+
+    Returns:
+        The card component.
+    """
     controls: list[pn.viewable.Viewable] = []
 
     is_optional = not spec.is_core
@@ -2117,6 +2474,14 @@ def _build_module_sections(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None = None,
 ) -> list[pn.viewable.Viewable]:
+    """Build the sections grouping the model's modules.
+
+    Args:
+        **kwargs: Section settings.
+
+    Returns:
+        The section components.
+    """
     specs_by_id = {spec.module_id: spec for spec in specs}
     sections: list[pn.viewable.Viewable] = []
 
@@ -2147,6 +2512,14 @@ def _build_nervous_system_section(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.viewable.Viewable | None:
+    """Build the section holding the brain modules.
+
+    Args:
+        **kwargs: Section settings.
+
+    Returns:
+        The section component.
+    """
     locomotion = _build_locomotion_subsection(
         controller=controller,
         specs_by_id=specs_by_id,
@@ -2213,6 +2586,14 @@ def _build_larva_modules_section(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.viewable.Viewable | None:
+    """Build the section holding the body modules.
+
+    Args:
+        **kwargs: Section settings.
+
+    Returns:
+        The section component.
+    """
     core = _build_larva_core_subsection(
         controller=controller,
         specs_by_id=specs_by_id,
@@ -2261,6 +2642,14 @@ def _build_locomotion_subsection(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.viewable.Viewable | None:
+    """Build the locomotion module subsection.
+
+    Args:
+        **kwargs: Section settings.
+
+    Returns:
+        The subsection component.
+    """
     first_column = _build_module_slot_column(
         module_ids=("crawler", "turner"),
         controller=controller,
@@ -2297,6 +2686,14 @@ def _build_larva_core_subsection(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.viewable.Viewable | None:
+    """Build the body and energetics subsection.
+
+    Args:
+        **kwargs: Section settings.
+
+    Returns:
+        The subsection component.
+    """
     first_column = _build_module_slot_column(
         module_ids=("body",),
         controller=controller,
@@ -2336,6 +2733,14 @@ def _build_vertical_subsection(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.viewable.Viewable | None:
+    """Build a vertically stacked module subsection.
+
+    Args:
+        **kwargs: Section settings.
+
+    Returns:
+        The subsection component.
+    """
     column = _build_module_slot_column(
         module_ids=module_ids,
         controller=controller,
@@ -2365,6 +2770,14 @@ def _build_module_slot_column(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.viewable.Viewable | None:
+    """Build a column of module card slots.
+
+    Args:
+        **kwargs: Column settings.
+
+    Returns:
+        The column component.
+    """
     slots = [
         _build_module_card_slot(
             controller=controller,
@@ -2391,6 +2804,14 @@ def _build_module_card_slot(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.Column:
+    """Build the slot one module card occupies.
+
+    Args:
+        **kwargs: Slot settings.
+
+    Returns:
+        The slot component.
+    """
     card = _module_editor_card(
         controller=controller,
         spec=spec,
@@ -2403,6 +2824,11 @@ def _build_module_card_slot(
 
 
 def model_inspector_app() -> pn.viewable.Viewable:
+    """Build the model inspector app.
+
+    Returns:
+        The app component.
+    """
     pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS, MODEL_INSPECTOR_RAW_CSS])
     controller = _ModelInspectorController()
     template = pn.template.MaterialTemplate(
