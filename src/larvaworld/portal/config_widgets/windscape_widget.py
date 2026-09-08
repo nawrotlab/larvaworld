@@ -12,10 +12,26 @@ __all__ = ["build_windscape_widget"]
 
 
 def _ordered_names(instance: param.Parameterized, preferred: list[str]) -> list[str]:
+    """Order a configuration's fields for display.
+
+    Args:
+        obj: The object being edited.
+
+    Returns:
+        The field names, in display order.
+    """
     return [name for name in preferred if name in instance.param and name != "name"]
 
 
 def _build_windscape_editor(windscape: param.Parameterized) -> object:
+    """Build the editor for the wind field.
+
+    Args:
+        windscape: The field being edited.
+
+    Returns:
+        The editor component.
+    """
     return parameterized_editor(
         windscape,
         parameter_order=_ordered_names(
@@ -26,6 +42,14 @@ def _build_windscape_editor(windscape: param.Parameterized) -> object:
 
 
 def build_windscape_widget(env_conf: param.Parameterized) -> object:
+    """Build the widget editing the environment's wind field.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     return classattr_section(
         env_conf,
         name="windscape",

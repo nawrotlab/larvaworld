@@ -16,6 +16,14 @@ __all__ = ["build_area_widget"]
 
 
 def build_area_widget(area: param.Parameterized) -> object:
+    """Build the widget editing an arena.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     return collapsible_family_box(
         "Arena",
         numeric_tuple_param_control(

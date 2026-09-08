@@ -123,6 +123,11 @@ class ModelInspectorError(RuntimeError):
         *,
         context: dict[str, Any] | None = None,
     ) -> None:
+        """Build the error.
+
+        Args:
+            *args: Forwarded to the base exception.
+        """
         super().__init__(message)
         self.code = code
         self.context = context or {}

@@ -242,6 +242,14 @@ MAX_AGENTS = 20
 
 
 def _estimated_seconds(scenario: Scenario, dt: float) -> float:
+    """Estimate how long a preview will take.
+
+    Args:
+        scenario: The scenario to preview.
+
+    Returns:
+        The estimate in seconds.
+    """
     return scenario.step_cap * dt
 
 
@@ -292,6 +300,7 @@ class _ExploreController:
     """Drives the gallery -> running -> result flow."""
 
     def __init__(self) -> None:
+        """Build the controller and its scenario gallery."""
         self.body = pn.Column(sizing_mode="stretch_width", margin=0)
         self._temp_dir: Any | None = None
         self._analysis_figures: list[Any] = []
@@ -315,6 +324,14 @@ class _ExploreController:
     # ---- gallery -------------------------------------------------------
 
     def _scenario_card(self, scenario: Scenario) -> pn.viewable.Viewable:
+        """Build the card offering one scenario.
+
+        Args:
+            scenario: The scenario.
+
+        Returns:
+            The card component.
+        """
         watch = run_button(name="Watch", width=110)
         watch.on_click(lambda _event, s=scenario: self.start_scenario(s))
         seconds = _estimated_seconds(scenario, dt=0.1)
@@ -336,6 +353,7 @@ class _ExploreController:
         )
 
     def show_gallery(self) -> None:
+        """Return to the scenario gallery."""
         self._release_preview_resources()
         self._scenario_controls = None
         self._generate_preview_button = None
@@ -757,6 +775,11 @@ class _ExploreController:
         analysis: Any | None = None,
         datasets: list[Any] | None = None,
     ) -> None:
+        """Show a finished scenario's results.
+
+        Args:
+            result: The scenario's output.
+        """
         from larvaworld.portal.simulation.run_playback import FramePlayback
 
         self._scenario_controls = None
@@ -906,6 +929,11 @@ class _ExploreController:
     # ---- errors and teardown -------------------------------------------
 
     def _show_error(self, scenario: Scenario, exc: Exception) -> None:
+        """Show an error message.
+
+        Args:
+            message: What went wrong.
+        """
         self._scenario_controls = None
         self._generate_preview_button = None
         self._active_scenario_id = None
@@ -927,6 +955,7 @@ class _ExploreController:
         ]
 
     def _stop_preview_poll(self) -> None:
+        """Stop polling the running preview for progress."""
         if self._preview_poll_callback is not None:
             try:
                 self._preview_document.remove_periodic_callback(
@@ -938,6 +967,7 @@ class _ExploreController:
         self._preview_document = None
 
     def _clear_active_preview(self) -> None:
+        """Forget the preview currently tracked."""
         self._stop_preview_poll()
         self._preview_job = None
         self._preview_future = None
@@ -954,6 +984,7 @@ class _ExploreController:
         payload.release()
 
     def _cancel_active_preview(self) -> None:
+        """Cancel the preview currently running."""
         job = self._preview_job
         future = self._preview_future
         self._preview_request_id += 1
@@ -965,6 +996,7 @@ class _ExploreController:
             future.add_done_callback(self._release_discarded_preview)
 
     def _release_preview_resources(self) -> None:
+        """Release the resources a finished preview held."""
         self._cancel_active_preview()
         if self._analysis_figures:
             from larvaworld.portal.explore.analysis import (
@@ -992,6 +1024,11 @@ class _ExploreController:
         self._preview_executor.shutdown(wait=False, cancel_futures=True)
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the explore app's view.
+
+        Returns:
+            The view component.
+        """
         return pn.Column(
             self.body,
             css_classes=["lw-explore-root"],
@@ -1000,6 +1037,11 @@ class _ExploreController:
 
 
 def explore_app() -> pn.viewable.Viewable:
+    """Build the guided exploration app.
+
+    Returns:
+        The app component.
+    """
     pn.extension(
         "tabulator",
         raw_css=[PORTAL_RAW_CSS, EXPLORE_RAW_CSS],

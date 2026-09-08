@@ -51,6 +51,11 @@ _DTYPE_BASE_OPTIONS: list[type] = [float, int, str, bool, list, dict]
 
 
 def _dtype_select_options(current: Any) -> dict[str, Any]:
+    """The types a parameter may be given.
+
+    Returns:
+        The type names.
+    """
     options = list(_DTYPE_BASE_OPTIONS)
     if current not in options:
         options.append(current)
@@ -203,6 +208,14 @@ def _build_detail_grid(
 
 
 def _field_widget_value(attr: str, widget: pn.viewable.Viewable) -> Any:
+    """Read a value back out of a field widget.
+
+    Args:
+        widget: The widget to read.
+
+    Returns:
+        Its value.
+    """
     if attr == "required_ks":
         return list(widget.value)
     return widget.value

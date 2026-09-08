@@ -23,6 +23,14 @@ def build_env_params_widget(
     *,
     wrap: bool = True,
 ) -> object:
+    """Build the widget editing a whole environment.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     children = [
         build_area_widget(env_conf.arena),
         build_food_conf_widget(env_conf.food_params),

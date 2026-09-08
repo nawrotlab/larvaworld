@@ -287,12 +287,22 @@ class _DraggableResizablePopup(pn.reactive.ReactiveHTML):
     }
 
     def _close_btn_click(self, event: object) -> None:
+        """Handle the popup's close button.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         self.visible = False
 
 
 def _build_remove_confirm_popup(
     k: str, table: pn.widgets.Tabulator, hide: Callable[[], None]
 ) -> pn.viewable.Viewable:
+    """Build the popup confirming a parameter removal.
+
+    Returns:
+        The popup component.
+    """
     disp = get_param_instance(k).disp
     status_pane = pn.pane.Markdown("", margin=(8, 0, 0, 0))
     confirm_btn = confirm_button(name="Delete", margin=(0, 8, 0, 0), sizing_mode=None)
@@ -734,6 +744,11 @@ def _build_parameter_db_dropdown() -> pn.viewable.Viewable:
     # helpers stay in panel_components (they share its media/icon-loading
     # infrastructure), so they're imported lazily here to avoid a circular
     # import at module load time.
+    """Build the parameter database menu.
+
+    Returns:
+        The menu component.
+    """
     from larvaworld.portal.panel_components import _parameter_db_button_icon_html
 
     parameter_db_led = pn.pane.HTML(_parameter_db_button_icon_html(), margin=0)

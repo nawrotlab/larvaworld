@@ -15,6 +15,14 @@ from larvaworld.portal.config_widgets.conftype_widget import build_conftype_widg
 
 
 def _unsupported_message(conftype: str, reason: str) -> pn.Column:
+    """Render the notice shown for an uneditable conftype.
+
+    Args:
+        name: The conftype's name.
+
+    Returns:
+        The notice component.
+    """
     return pn.Column(
         pn.pane.Markdown(f"### {conftype}", margin=(0, 0, 8, 0)),
         pn.pane.HTML(
@@ -30,6 +38,11 @@ def _unsupported_message(conftype: str, reason: str) -> pn.Column:
 
 
 def conftypes_demo_app() -> pn.Column:
+    """Build the conftype editor demonstration app.
+
+    Returns:
+        The app component.
+    """
     tabs: list[tuple[str, Any]] = []
 
     for conftype in CONFTYPES:

@@ -13,10 +13,26 @@ __all__ = ["build_enrichment_widget", "build_preprocess_conf_widget"]
 
 
 def _ordered_names(instance: param.Parameterized, preferred: list[str]) -> list[str]:
+    """Order a configuration's fields for display.
+
+    Args:
+        obj: The object being edited.
+
+    Returns:
+        The field names, in display order.
+    """
     return [name for name in preferred if name in instance.param and name != "name"]
 
 
 def build_preprocess_conf_widget(preprocess_conf: param.Parameterized) -> object:
+    """Build the widget editing the preprocessing settings.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     return parameterized_editor(
         preprocess_conf,
         parameter_order=_ordered_names(
@@ -37,6 +53,14 @@ def build_enrichment_widget(
     *,
     wrap: bool = True,
 ) -> object:
+    """Build the widget editing the enrichment configuration.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     children = [
         collapsible_family_box(
             "Preprocessing",

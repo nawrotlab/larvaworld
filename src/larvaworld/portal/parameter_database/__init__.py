@@ -15,6 +15,17 @@ __all__: list[str] = [
 
 
 def __getattr__(name: str) -> Any:
+    """Resolve a public name by importing its module on first access.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved object.
+
+    Raises:
+        AttributeError: If no submodule exports that name.
+    """
     if name in __all__:
         module = import_module("larvaworld.portal.parameter_database.parameter_db_app")
         return getattr(module, name)

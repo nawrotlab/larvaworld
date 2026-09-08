@@ -59,6 +59,11 @@ class ExplorePreviewJob:
     """Create one Explore preview without touching Panel or Bokeh objects."""
 
     def __init__(self, *, scenario: Any, parameters: Any) -> None:
+        """Build the preview job.
+
+        Args:
+            **kwargs: Job settings, forwarded to the parent class.
+        """
         self.scenario = scenario
         self.parameters = parameters
         self.progress_queue: SimpleQueue[PreviewProgress] = SimpleQueue()
@@ -69,6 +74,11 @@ class ExplorePreviewJob:
         self._cancel_event.set()
 
     def _check_cancelled(self) -> None:
+        """Stop the job if it has been cancelled.
+
+        Raises:
+            Exception: To unwind the worker once cancellation is seen.
+        """
         if self._cancel_event.is_set():
             raise _PreviewCancelled()
 
@@ -78,9 +88,20 @@ class ExplorePreviewJob:
         completed: int | None = None,
         total: int | None = None,
     ) -> None:
+        """Publish the job's progress to the app.
+
+        Args:
+            **kwargs: The progress to report.
+        """
         self.progress_queue.put(PreviewProgress(phase, completed, total))
 
     def _on_frame_progress(self, completed: int, total: int) -> None:
+        """Handle one captured preview frame.
+
+        Args:
+            index: The frame's index.
+            total: How many are expected.
+        """
         self._check_cancelled()
         self._publish("frames", completed, total)
 

@@ -18,6 +18,14 @@ __all__ = ["build_trials_widget"]
 
 
 def _coerce_epoch_like(value: Any) -> param.Parameterized:
+    """Coerce a stored value into a life-history epoch.
+
+    Args:
+        value: The stored epoch.
+
+    Returns:
+        The typed epoch.
+    """
     if isinstance(value, param.Parameterized):
         return value
     if isinstance(value, dict):
@@ -26,6 +34,14 @@ def _coerce_epoch_like(value: Any) -> param.Parameterized:
 
 
 def _coerce_epochs_container(raw_epochs: Any) -> list[param.Parameterized]:
+    """Coerce a stored value into a set of epochs.
+
+    Args:
+        value: The stored epochs.
+
+    Returns:
+        The typed epochs.
+    """
     if raw_epochs is None:
         return []
     if isinstance(raw_epochs, dict):
@@ -36,6 +52,14 @@ def _coerce_epochs_container(raw_epochs: Any) -> list[param.Parameterized]:
 
 
 def _serialize_epochs(raw_epochs: Any, epochs: list[param.Parameterized]) -> Any:
+    """Convert typed epochs back into stored form.
+
+    Args:
+        epochs: The epochs to serialize.
+
+    Returns:
+        The stored representation.
+    """
     serialized = [util.AttrDict(epoch.nestedConf) for epoch in epochs]
     if isinstance(raw_epochs, util.ItemList):
         return util.ItemList(serialized)
@@ -45,10 +69,26 @@ def _serialize_epochs(raw_epochs: Any, epochs: list[param.Parameterized]) -> Any
 
 
 def _epoch_label(index: int) -> str:
+    """The label one epoch is listed under.
+
+    Args:
+        epoch: The epoch.
+
+    Returns:
+        The label.
+    """
     return f"Epoch {index + 1}"
 
 
 def _editable_epoch_names(epoch: param.Parameterized) -> list[str]:
+    """The epoch fields the editor exposes.
+
+    Args:
+        epoch: The epoch being edited.
+
+    Returns:
+        The field names.
+    """
     return [name for name in ("age_range", "substrate") if name in epoch.param]
 
 
@@ -57,6 +97,14 @@ def build_trials_widget(
     *,
     wrap: bool = True,
 ) -> object:
+    """Build the widget editing the trial schedule.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     state = {"syncing": False}
     current_trials = util.AttrDict(getattr(owner, "trials", {}) or {})
     raw_epochs = current_trials.get("epochs")

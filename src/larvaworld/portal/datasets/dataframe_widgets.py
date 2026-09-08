@@ -145,6 +145,11 @@ class _FloatingTablePopup(pn.Column):
         position_class: str,
         visible: bool = False,
     ) -> None:
+        """Build the floating table popup.
+
+        Args:
+            **kwargs: Popup settings, forwarded to the parent class.
+        """
         drag_handle = pn.pane.HTML(
             _popup_drag_handle_html(title),
             margin=0,
@@ -218,6 +223,7 @@ class _FloatingTablePopup(pn.Column):
 
     @body.setter
     def body(self, value: pn.viewable.Viewable) -> None:
+        """The popup's table body."""
         self._body_slot.objects = [value]
 
     @property
@@ -227,6 +233,7 @@ class _FloatingTablePopup(pn.Column):
 
     @title.setter
     def title(self, value: str) -> None:
+        """The popup's heading."""
         self._title = value
         self._drag_handle.object = _popup_drag_handle_html(value)
 
@@ -249,6 +256,11 @@ class _DataFrameTable:
     label: ClassVar[str]
 
     def __init__(self, dataframe: pd.DataFrame | None = None, *, page_size: int = 50):
+        """Build the dataframe table.
+
+        Args:
+            **kwargs: Table settings, forwarded to the parent class.
+        """
         if page_size < 1:
             raise ValueError("page_size must be greater than zero.")
         self.page_size = int(page_size)
@@ -361,6 +373,11 @@ class LarvaDatasetTablesWidget:
         *,
         page_size: int = 50,
     ) -> None:
+        """Build the widget offering a dataset's tables.
+
+        Args:
+            **kwargs: Widget settings, forwarded to the parent class.
+        """
         self._dataset: LarvaDataset | None = None
         self.step_table = StepDataFrameTable(page_size=page_size)
         self.endpoint_table = EndpointDataFrameTable(page_size=page_size)
@@ -443,6 +460,14 @@ class LarvaDatasetTablesWidget:
         return self._view
 
     def _popup_title(self, title: str) -> str:
+        """The heading one opened table is shown under.
+
+        Args:
+            kind: Which table was opened.
+
+        Returns:
+            The heading.
+        """
         if self._dataset is None:
             return title
         dataset_id = getattr(getattr(self._dataset, "config", None), "id", None)
@@ -450,11 +475,17 @@ class LarvaDatasetTablesWidget:
 
     @staticmethod
     def _clear_error(error_pane: pn.pane.HTML) -> None:
+        """Dismiss the error message."""
         error_pane.object = ""
         error_pane.visible = False
 
     @staticmethod
     def _show_error(error_pane: pn.pane.HTML, exc: Exception) -> None:
+        """Show an error message.
+
+        Args:
+            message: What went wrong.
+        """
         error_pane.object = (
             '<div style="color:#9b1c1c;line-height:1.45;">'
             "<strong>Table unavailable.</strong><br/>"
@@ -464,6 +495,7 @@ class LarvaDatasetTablesWidget:
         error_pane.visible = True
 
     def _open_step(self, _event: object | None = None) -> None:
+        """Open the dataset's timeseries table."""
         self._open_table(
             table=self.step_table,
             popup=self.step_popup,
@@ -472,6 +504,7 @@ class LarvaDatasetTablesWidget:
         )
 
     def _open_endpoint(self, _event: object | None = None) -> None:
+        """Open the dataset's endpoint table."""
         self._open_table(
             table=self.endpoint_table,
             popup=self.endpoint_popup,
@@ -499,6 +532,11 @@ class LarvaDatasetTablesWidget:
         error_pane: pn.pane.HTML,
         attribute: str,
     ) -> None:
+        """Open one of the dataset's tables.
+
+        Args:
+            kind: Which table to open.
+        """
         self._clear_error(error_pane)
         if self._dataset is None:
             table.clear(message="Select a dataset before opening this table.")

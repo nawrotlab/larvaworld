@@ -170,6 +170,11 @@ class ChunkedFrameRunner:
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         trail_length: int = 30,
     ) -> None:
+        """Build the runner stepping a simulation in chunks.
+
+        Args:
+            **kwargs: Runner settings, forwarded to the parent class.
+        """
         self.launcher = launcher
         self.total_steps = max(1, int(total_steps))
         self.on_frame = on_frame
@@ -188,6 +193,7 @@ class ChunkedFrameRunner:
 
     @property
     def finished(self) -> bool:
+        """Whether the run has reached its end."""
         return self._finished
 
     def start(
@@ -217,6 +223,7 @@ class ChunkedFrameRunner:
         )
 
     def stop(self) -> None:
+        """Stop the run before it completes."""
         if self._callback is not None:
             try:
                 self._document.remove_periodic_callback(self._callback)
@@ -236,11 +243,13 @@ class ChunkedFrameRunner:
         return self.frames
 
     def _capture(self) -> None:
+        """Capture the current frame."""
         frame = capture_larva_frame(self.launcher, trail_length=self.trail_length)
         self.frames.append(frame)
         self.on_frame(frame)
 
     def _finish(self) -> None:
+        """Close the run and release its resources."""
         if self._finished:
             return
         self._finished = True
@@ -249,6 +258,7 @@ class ChunkedFrameRunner:
             self.on_complete(self.frames)
 
     def _advance_synchronously(self) -> None:
+        """Step the simulation until the next chunk boundary."""
         if self._finished:
             return
         try:
@@ -322,6 +332,11 @@ class FramePlayback:
         frames: list[LarvaPreviewFrame],
         dt: float,
     ) -> None:
+        """Build the frame player.
+
+        Args:
+            **kwargs: Player settings, forwarded to the parent class.
+        """
         if not frames:
             raise ValueError("frames must not be empty")
         self.canvas = canvas
@@ -343,6 +358,11 @@ class FramePlayback:
         self._show_frame(0)
 
     def _set_metadata(self, index: int) -> None:
+        """Show the played run's metadata.
+
+        Args:
+            metadata: The metadata to show.
+        """
         frame = self.frames[index]
         end_index = len(self.frames) - 1
         timestamp = frame.tick * self.dt
@@ -357,6 +377,11 @@ class FramePlayback:
         )
 
     def _show_frame(self, index: int) -> None:
+        """Draw one frame.
+
+        Args:
+            index: The frame to draw.
+        """
         clamped = max(0, min(index, len(self.frames) - 1))
         if int(self.frame_player.value) != clamped:
             self.frame_player.value = clamped
@@ -365,9 +390,19 @@ class FramePlayback:
         self._set_metadata(clamped)
 
     def _on_player_change(self, event: Any) -> None:
+        """Handle a change of the player's position.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         self._show_frame(int(event.new))
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the player's view.
+
+        Returns:
+            The view component.
+        """
         return pn.Column(
             self.canvas.view(),
             pn.Row(pn.Column("Frame", self.frame_player), sizing_mode="stretch_width"),

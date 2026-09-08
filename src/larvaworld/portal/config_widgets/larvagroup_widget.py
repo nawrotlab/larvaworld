@@ -18,12 +18,28 @@ __all__ = ["build_larva_group_widget", "build_larva_groups_widget"]
 
 
 def _ordered_names(instance: param.Parameterized, preferred: list[str]) -> list[str]:
+    """Order a configuration's fields for display.
+
+    Args:
+        obj: The object being edited.
+
+    Returns:
+        The field names, in display order.
+    """
     return [name for name in preferred if name in instance.param and name != "name"]
 
 
 def _coerce_group_like(
     value: Any, *, group_cls: type[param.Parameterized]
 ) -> param.Parameterized:
+    """Coerce a stored value into a larva group.
+
+    Args:
+        value: The stored group.
+
+    Returns:
+        The typed group.
+    """
     if isinstance(value, param.Parameterized):
         return value
     if isinstance(value, dict):
@@ -37,6 +53,14 @@ def _coerce_classdict_items(
     parameter_name: str,
     group_cls: type[param.Parameterized],
 ) -> None:
+    """Coerce a stored mapping into typed group entries.
+
+    Args:
+        value: The stored mapping.
+
+    Returns:
+        The typed entries.
+    """
     raw_items = getattr(owner, parameter_name)
     if isinstance(raw_items, util.AttrDict):
         source_items = raw_items
@@ -52,6 +76,14 @@ def _coerce_classdict_items(
 
 
 def _build_life_history_widget(life_history: param.Parameterized) -> object:
+    """Build the editor for a group's life history.
+
+    Args:
+        life: The life history being edited.
+
+    Returns:
+        The editor component.
+    """
     return parameterized_editor(
         life_history,
         parameter_order=_ordered_names(
@@ -66,6 +98,14 @@ def build_larva_group_widget(
     *,
     wrap: bool = True,
 ) -> object:
+    """Build the widget editing one larva group.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     if isinstance(group_conf, param.Parameterized):
         group_obj = group_conf
     else:
@@ -106,6 +146,14 @@ def build_larva_group_widget(
 
 
 def _build_larva_group_item(group: param.Parameterized, key: str) -> object:
+    """Build the editor for one larva group entry.
+
+    Args:
+        group: The group being edited.
+
+    Returns:
+        The editor component.
+    """
     return family_box(key, build_larva_group_widget(group, wrap=False))
 
 
@@ -115,6 +163,14 @@ def build_larva_groups_widget(
     parameter_name: str = "larva_groups",
     wrap: bool = True,
 ) -> object:
+    """Build the widget editing the experiment's larva groups.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     parameter = owner.param.objects(instance=False).get(parameter_name)
     if not isinstance(parameter, ClassDict):
         raise TypeError(

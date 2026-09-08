@@ -137,6 +137,20 @@ _LAZY_GEN_REGISTRATIONS = {
 
 
 def __getattr__(name: str) -> Any:
+    """Resolve a generator by importing the module that registers it.
+
+    Generator classes register themselves on import, so an unknown name is
+    resolved by importing its owning module and looking again.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved object.
+
+    Raises:
+        AttributeError: If no module registers that name.
+    """
     module_path = _LAZY_GEN_REGISTRATIONS.get(name)
     if module_path is not None:
         from importlib import import_module

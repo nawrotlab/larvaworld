@@ -16,6 +16,14 @@ def build_distribution_widget(
     *,
     title: str = "Distribution",
 ) -> object:
+    """Build the widget editing a spatial distribution.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     children = [
         param_control(distribution, parameter_name="shape"),
         param_control(distribution, parameter_name="mode"),

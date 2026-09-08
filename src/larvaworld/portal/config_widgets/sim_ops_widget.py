@@ -20,6 +20,14 @@ _PHYSICS_FIELDS = ("Box2D", "larva_collisions")
 def _present_fields(
     owner: param.Parameterized, candidate_fields: tuple[str, ...]
 ) -> list[str]:
+    """The simulation option fields a configuration exposes.
+
+    Args:
+        obj: The configuration being edited.
+
+    Returns:
+        The field names.
+    """
     return [field for field in candidate_fields if field in owner.param]
 
 
@@ -28,6 +36,14 @@ def build_sim_ops_widget(
     *,
     wrap: bool = True,
 ) -> object:
+    """Build the widget editing the simulation options.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     sections: list[pn.viewable.Viewable] = []
 
     timing_fields = _present_fields(owner, _TIMING_FIELDS)

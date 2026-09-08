@@ -41,6 +41,17 @@ __all__ = [
 
 
 def __getattr__(name: str):
+    """Resolve a public name by importing its module on first access.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved object.
+
+    Raises:
+        AttributeError: If no submodule exports that name.
+    """
     if name == "EnvironmentCanvas":
         from .environment_canvas import EnvironmentCanvas
 

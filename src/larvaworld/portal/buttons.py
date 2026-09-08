@@ -139,6 +139,11 @@ _DEFAULT_BUTTON_SIZING: dict[str, str] = {"sizing_mode": "stretch_width"}
 
 
 def _apply_default_sizing(kwargs: dict[str, Any]) -> None:
+    """Apply the default sizing to a button unless the caller set one.
+
+    Args:
+        kwargs: The button's keyword arguments, updated in place.
+    """
     if not ({"width", "height", "sizing_mode"} & kwargs.keys()):
         kwargs.update(_DEFAULT_BUTTON_SIZING)
 

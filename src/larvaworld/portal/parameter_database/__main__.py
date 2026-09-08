@@ -14,6 +14,15 @@ import sys
 
 
 def _env_flag(name: str, default: bool) -> bool:
+    """Read a boolean setting from the environment.
+
+    Args:
+        name: The variable name.
+        default: The value used when it is unset.
+
+    Returns:
+        The setting.
+    """
     raw = os.getenv(name)
     if raw is None:
         return default
@@ -21,12 +30,14 @@ def _env_flag(name: str, default: bool) -> bool:
 
 
 def _default_open_browser() -> bool:
+    """Whether to open a browser on startup, by platform."""
     if sys.platform.startswith("win") or sys.platform == "darwin":
         return True
     return bool(os.getenv("DISPLAY") or os.getenv("WAYLAND_DISPLAY"))
 
 
 def main() -> None:
+    """Serve the parameter database app on its own."""
     import panel as pn
 
     from larvaworld.portal.parameter_database.parameter_db_app import (

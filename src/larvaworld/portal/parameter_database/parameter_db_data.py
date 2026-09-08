@@ -55,12 +55,28 @@ _DEFAULT_VALUE_PRECEDENCE = 8
 
 
 def _attr_label(attr: str) -> str:
+    """The label one parameter attribute is shown under.
+
+    Args:
+        name: The attribute name.
+
+    Returns:
+        The label.
+    """
     if attr in _SPECIAL_COLUMN_LABELS:
         return _SPECIAL_COLUMN_LABELS[attr]
     return LarvaworldParam.param[attr].label
 
 
 def _attr_precedence(attr: str) -> Optional[float]:
+    """The display order of one parameter attribute.
+
+    Args:
+        name: The attribute name.
+
+    Returns:
+        Its sort key.
+    """
     if attr == "unit":
         return _UNIT_PRECEDENCE
     if attr == "v0":
@@ -107,6 +123,14 @@ DEFAULT_HIDDEN_COLUMNS: list[str] = [
 
 
 def _dtype_name(dtype: Any) -> str:
+    """The display name of a parameter's type.
+
+    Args:
+        dtype: The type.
+
+    Returns:
+        The name.
+    """
     return getattr(dtype, "__name__", str(dtype))
 
 
