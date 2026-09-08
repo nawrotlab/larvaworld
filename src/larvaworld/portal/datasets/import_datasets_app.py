@@ -247,6 +247,14 @@ IMPORT_DATASETS_RAW_CSS = """
 
 
 def _status_html(text: str, *, tone: str = "neutral", detail: str | None = None) -> str:
+    """Render a status line as markup.
+
+    Args:
+        text: The status text.
+
+    Returns:
+        The markup.
+    """
     detail_html = ""
     if detail:
         detail_html = (
@@ -266,6 +274,14 @@ def _status_html(text: str, *, tone: str = "neutral", detail: str | None = None)
 
 
 def _candidate_summary_html(candidate: RawDatasetCandidate | None) -> str:
+    """Render a discovered recording's summary.
+
+    Args:
+        candidate: The recording to summarize.
+
+    Returns:
+        The markup.
+    """
     if candidate is None:
         return (
             '<div class="lw-import-datasets-summary">'
@@ -290,6 +306,14 @@ def _candidate_summary_html(candidate: RawDatasetCandidate | None) -> str:
 
 
 def _merge_target_summary_html(target: _MergeTarget | None) -> str:
+    """Render a merge target's summary.
+
+    Args:
+        target: The merge target to summarize.
+
+    Returns:
+        The markup.
+    """
     if target is None:
         return (
             '<div class="lw-import-datasets-summary">'
@@ -308,11 +332,29 @@ def _merge_target_summary_html(target: _MergeTarget | None) -> str:
 
 
 def _relative_source_dir(raw_root: Path, source_path: Path) -> str:
+    """Express a recording's directory relative to the scan root.
+
+    Args:
+        raw_root: The scan root.
+        source_path: The recording path.
+
+    Returns:
+        The relative directory.
+    """
     rel = source_path.resolve().relative_to(raw_root.resolve())
     return "." if str(rel) == "." else rel.as_posix()
 
 
 def _merge_target_dataset_id(target: _MergeTarget, raw_root: Path) -> str:
+    """Derive the dataset ID a merged import writes to.
+
+    Args:
+        target: The merge target.
+        raw_root: The scan root.
+
+    Returns:
+        The dataset ID.
+    """
     if target.parent_dir == ".":
         return raw_root.name
     return Path(target.parent_dir).name
@@ -321,12 +363,30 @@ def _merge_target_dataset_id(target: _MergeTarget, raw_root: Path) -> str:
 def _merge_target_display_name(
     parent_dir: str, raw_root: Path, children: tuple[RawDatasetCandidate, ...]
 ) -> str:
+    """Build the name a merge target is listed under.
+
+    Args:
+        parent_dir: Its directory.
+        raw_root: The scan root.
+        children: The recordings it merges.
+
+    Returns:
+        The display name.
+    """
     name = raw_root.name if parent_dir == "." else parent_dir
     unit = "dataset" if len(children) == 1 else "datasets"
     return f"{name} ({len(children)} {unit})"
 
 
 def _lab_supports_merged_import(lab_id: str | None) -> bool:
+    """Report whether a lab format can merge several recordings.
+
+    Args:
+        lab_id: The lab format.
+
+    Returns:
+        True when merged import is supported.
+    """
     if not lab_id:
         return False
     lab = reg.conf.LabFormat.get(str(lab_id).strip())
@@ -345,6 +405,15 @@ def _lab_supports_merged_import(lab_id: str | None) -> bool:
 
 
 def _flow_section(title: str, *children: object) -> pn.Column:
+    """Build a titled step of the import flow.
+
+    Args:
+        title: The step's heading.
+        *objects: Its contents.
+
+    Returns:
+        The section component.
+    """
     return pn.Column(
         pn.pane.Markdown(
             f"**{title}**",
@@ -359,6 +428,15 @@ def _flow_section(title: str, *children: object) -> pn.Column:
 
 
 def _config_family_box(title: str, *children: object) -> pn.Column:
+    """Build a titled box grouping configuration fields.
+
+    Args:
+        title: The group's heading.
+        *objects: Its contents.
+
+    Returns:
+        The box component.
+    """
     return pn.Column(
         pn.pane.Markdown(
             f"**{title}**",
@@ -373,6 +451,14 @@ def _config_family_box(title: str, *children: object) -> pn.Column:
 
 
 def _import_failure_status_message(exc: BaseException) -> str:
+    """Render an import failure for display.
+
+    Args:
+        exc: The exception that ended the import.
+
+    Returns:
+        The message shown to the user.
+    """
     message = str(exc)
     if message.startswith("Import failed:"):
         return message
@@ -383,6 +469,7 @@ class _ImportDatasetsController:
     """State behind the dataset import app."""
 
     def __init__(self) -> None:
+        """Build the controller and its import-flow widgets."""
         self.workspace = get_active_workspace()
         self._candidate_by_key: dict[str, RawDatasetCandidate] = {}
         self._selected_record_path: Path | None = None
@@ -506,9 +593,11 @@ class _ImportDatasetsController:
 
     @staticmethod
     def _lab_options() -> dict[str, str]:
+        """The lab formats offered for import."""
         return {lab_id: lab_id for lab_id in sorted(reg.conf.LabFormat.confIDs)}
 
     def _default_lab_value(self) -> str | None:
+        """The lab format selected when the app opens."""
         options = self._lab_options()
         if not options:
             return None
@@ -517,9 +606,15 @@ class _ImportDatasetsController:
     def _set_lab_status(
         self, text: str, *, tone: str = "neutral", detail: str | None = None
     ) -> None:
+        """Show a status message beside the lab format editor.
+
+        Args:
+            text: The status text.
+        """
         self.lab_status.object = _status_html(text, tone=tone, detail=detail)
 
     def _refresh_lab_options(self, *, select_id: str | None = None) -> None:
+        """Reload the lab formats offered in the selector."""
         options = self._lab_options()
         current = select_id or self.lab_select.value
         self.lab_select.options = options
@@ -532,11 +627,27 @@ class _ImportDatasetsController:
 
     @staticmethod
     def _widget_has_native_help(widget: object) -> bool:
+        """Report whether a widget shows its own help text.
+
+        Args:
+            widget: The widget to test.
+
+        Returns:
+            True when no separate documentation pane is needed.
+        """
         description = getattr(widget, "description", None)
         return isinstance(description, str) and description.strip() != ""
 
     @staticmethod
     def _doc_pane(doc: str | None) -> pn.pane.HTML | None:
+        """Build the pane showing a parameter's documentation.
+
+        Args:
+            doc: The documentation text.
+
+        Returns:
+            The pane, or None when there is nothing to show.
+        """
         if not doc:
             return None
         return pn.pane.HTML(
@@ -546,6 +657,14 @@ class _ImportDatasetsController:
 
     @classmethod
     def _widget_block(cls, widget: object, *, doc: str | None = None) -> pn.Column:
+        """Pair a widget with its documentation pane.
+
+        Args:
+            widget: The widget to wrap.
+
+        Returns:
+            The combined component.
+        """
         children = [widget]
         doc_pane = None if cls._widget_has_native_help(widget) else cls._doc_pane(doc)
         if doc_pane is not None:
@@ -560,6 +679,14 @@ class _ImportDatasetsController:
         parameters: list[str],
         widget_overrides: dict[str, dict[str, object]] | None = None,
     ) -> pn.Column:
+        """Build the controls editing an object's parameters.
+
+        Args:
+            obj: The object being edited.
+
+        Returns:
+            The control components.
+        """
         param_pane = pn.Param(
             obj,
             parameters=parameters,
@@ -589,6 +716,15 @@ class _ImportDatasetsController:
         parameters: list[str] | None = None,
         widget_overrides: dict[str, dict[str, object]] | None = None,
     ) -> pn.Column:
+        """Build a titled section editing an object's parameters.
+
+        Args:
+            title: The section heading.
+            obj: The object being edited.
+
+        Returns:
+            The section component.
+        """
         if parameters is None:
             parameters = [name for name in obj.param if name != "name"]
         return _config_family_box(
@@ -601,6 +737,7 @@ class _ImportDatasetsController:
         )
 
     def _sync_tracker_vector_widgets(self, *_events) -> None:
+        """Re-range the body vector widgets after the point count changed."""
         if self._working_lab is None or not hasattr(
             self, "_tracker_front_vector_slider"
         ):
@@ -641,6 +778,11 @@ class _ImportDatasetsController:
             self._tracker_widget_syncing = False
 
     def _handle_tracker_front_vector_change(self, event) -> None:
+        """Handle a change to the tracker's front body vector.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         if self._tracker_widget_syncing or self._working_lab is None:
             return
         tracker = self._working_lab.tracker
@@ -649,6 +791,11 @@ class _ImportDatasetsController:
         tracker.front_vector = tuple(event.new)
 
     def _handle_tracker_rear_vector_change(self, event) -> None:
+        """Handle a change to the tracker's rear body vector.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         if self._tracker_widget_syncing or self._working_lab is None:
             return
         tracker = self._working_lab.tracker
@@ -657,6 +804,11 @@ class _ImportDatasetsController:
         tracker.rear_vector = tuple(event.new)
 
     def _build_tracker_metric_section(self) -> pn.Column:
+        """Build the section editing the tracker's body metrics.
+
+        Returns:
+            The section component.
+        """
         tracker = self._working_lab.tracker
         tracker_top_controls = self._param_controls(
             tracker,
@@ -706,6 +858,11 @@ class _ImportDatasetsController:
         )
 
     def _build_tracker_framerate_section(self) -> pn.Column:
+        """Build the section editing the tracker's framerate.
+
+        Returns:
+            The section component.
+        """
         tracker = self._working_lab.tracker
         return _config_family_box(
             "Tracker Framerate",
@@ -720,6 +877,11 @@ class _ImportDatasetsController:
         )
 
     def _build_environment_section(self) -> pn.Column:
+        """Build the section editing the recording's environment.
+
+        Returns:
+            The section component.
+        """
         env_content = build_env_params_widget(self._working_lab.env_params, wrap=False)
         env_children = list(getattr(env_content, "objects", []) or [])
         if len(env_children) >= 4:
@@ -755,6 +917,7 @@ class _ImportDatasetsController:
         return _config_family_box("Environment", body)
 
     def _rebuild_lab_editor(self) -> None:
+        """Rebuild the lab format editor for the current selection."""
         if self._working_lab is None:
             self.lab_editor_sections.objects = [
                 _config_family_box(
@@ -799,6 +962,11 @@ class _ImportDatasetsController:
         ]
 
     def _load_working_lab(self, lab_id: str | None) -> None:
+        """Load one lab format into the editor.
+
+        Args:
+            lab_id: The lab format to load.
+        """
         if not lab_id:
             self._working_lab_id = None
             self._working_lab = None
@@ -812,12 +980,26 @@ class _ImportDatasetsController:
         )
 
     def _apply_loaded_lab_config(self, lab_id: str, lab_config: object) -> None:
+        """Apply a loaded lab format to the editor.
+
+        Args:
+            lab_id: The format's name.
+            lab_config: Its configuration.
+        """
         self._working_lab_id = lab_id
         self._working_lab = lab_config
         self.lab_config_name_input.value = lab_id
         self._rebuild_lab_editor()
 
     def _build_working_lab_conf(self, config_id: str | None = None):
+        """Assemble the edited lab format for storage.
+
+        Args:
+            config_id: The name it is stored under.
+
+        Returns:
+            The configuration.
+        """
         if self._working_lab_id is None:
             raise RuntimeError("No LabFormat configuration is loaded.")
         rebuilt = self._working_lab.nestedConf.get_copy()
@@ -841,12 +1023,23 @@ class _ImportDatasetsController:
         return rebuilt
 
     def _after_lab_save(self, config_id: str, _payload: object) -> None:
+        """Refresh the editor after a lab format was saved.
+
+        Args:
+            config_id: The name it was saved under.
+            _payload: The stored payload.
+        """
         self._refresh_lab_options(select_id=config_id)
         self._load_working_lab(config_id)
         self._refresh_workspace_summary()
         self._sync_controls()
 
     def _after_lab_delete(self, _config_id: str) -> None:
+        """Refresh the editor after a lab format was deleted.
+
+        Args:
+            _config_id: The deleted format's name.
+        """
         self._refresh_lab_options()
         self._load_working_lab(self.lab_select.value)
         self._clear_candidates()
@@ -854,6 +1047,11 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def _after_lab_reset(self, selected_lab_id: str | None) -> None:
+        """Refresh the editor after the lab formats were reset.
+
+        Args:
+            selected_lab_id: The format to select afterwards.
+        """
         self._refresh_lab_options(select_id=selected_lab_id)
         self._load_working_lab(self.lab_select.value)
         self._clear_candidates()
@@ -861,46 +1059,65 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def _active_workspace_ready(self) -> bool:
+        """Whether a workspace is available to import into."""
         return self.workspace is not None
 
     def _raw_root_text(self) -> str:
+        """The raw-data directory as entered."""
         return self.raw_root_input.value.strip()
 
     def _raw_root_path(self) -> Path | None:
+        """The raw-data directory, resolved to a path."""
         raw_text = self._raw_root_text()
         if not raw_text:
             return None
         return Path(raw_text).expanduser()
 
     def _selected_candidate(self) -> RawDatasetCandidate | None:
+        """The recording currently selected for import."""
         return self._candidate_by_key.get(self.candidate_select.value)
 
     def _selected_merge_target(self) -> _MergeTarget | None:
+        """The merge target currently selected."""
         return self._merge_target_by_key.get(self.candidate_select.value)
 
     def _merged_mode(self) -> bool:
+        """Whether several recordings are being merged into one dataset."""
         return bool(self.merged_checkbox.value)
 
     def _merged_import_supported(self) -> bool:
+        """Whether the selected lab format supports merged import."""
         return _lab_supports_merged_import(self.lab_select.value)
 
     def _set_status(
         self, text: str, *, tone: str = "neutral", detail: str | None = None
     ) -> None:
+        """Show a status message beside the import controls.
+
+        Args:
+            text: The status text.
+        """
         self.status.object = _status_html(text, tone=tone, detail=detail)
 
     def _begin_action_status(
         self, text: str, *, detail: str | None = None, tone: str = "neutral"
     ) -> None:
+        """Show an in-progress message and disable the controls.
+
+        Args:
+            text: The status text.
+        """
         self._action_running = True
         self._set_status(text, tone=tone, detail=detail)
         self._sync_controls()
 
     def _finish_action_status(self) -> None:
+        """Re-enable the controls once an action has finished."""
         self._action_running = False
         self._sync_controls()
 
     def _refresh_workspace_summary(self) -> None:
+        """Refresh the summary of where imports will be written."""
         if self.workspace is None:
             self.workspace_summary.object = (
                 '<div class="lw-import-datasets-summary">'
@@ -929,14 +1146,31 @@ class _ImportDatasetsController:
         )
 
     def _candidate_option_key(self, candidate: RawDatasetCandidate) -> str:
+        """Build the selector key for one discovered recording.
+
+        Args:
+            candidate: The recording.
+
+        Returns:
+            The key.
+        """
         return (
             f"{candidate.parent_dir}::{candidate.candidate_id}::{candidate.source_path}"
         )
 
     def _merge_target_option_key(self, target: _MergeTarget) -> str:
+        """Build the selector key for one merge target.
+
+        Args:
+            target: The merge target.
+
+        Returns:
+            The key.
+        """
         return f"{target.parent_dir}::{target.source_path}"
 
     def _clear_candidates(self) -> None:
+        """Discard the discovered recordings."""
         self._discovered_candidates = ()
         self._candidate_by_key.clear()
         self._merge_target_by_key.clear()
@@ -953,6 +1187,7 @@ class _ImportDatasetsController:
         self._selected_record_path = None
 
     def _clear_selection(self) -> None:
+        """Clear the current recording selection."""
         placeholder = (
             "Select a merge target" if self._merged_mode() else "Select a candidate"
         )
@@ -969,6 +1204,15 @@ class _ImportDatasetsController:
     def _build_merge_targets(
         self, raw_root: Path, candidates: tuple[RawDatasetCandidate, ...]
     ) -> tuple[_MergeTarget, ...]:
+        """Group discovered recordings into merge targets.
+
+        Args:
+            raw_root: The scan root.
+            candidates: The discovered recordings.
+
+        Returns:
+            One target per group of recordings that share a parent.
+        """
         if not candidates:
             return ()
         lab = reg.conf.LabFormat.get(str(self.lab_select.value).strip())
@@ -1016,6 +1260,7 @@ class _ImportDatasetsController:
         return tuple(targets)
 
     def _refresh_candidate_options(self) -> None:
+        """Reload the recordings offered in the selector."""
         previous_value = self.candidate_select.value
         if self._merged_mode():
             options: dict[str, str] = {"Select a merge target": ""}
@@ -1040,12 +1285,14 @@ class _ImportDatasetsController:
             self.candidate_select.value = ""
 
     def _merge_targets(self) -> tuple[_MergeTarget, ...]:
+        """The merge targets currently available."""
         raw_root = self._raw_root_path()
         if raw_root is None:
             return ()
         return self._build_merge_targets(raw_root, self._discovered_candidates)
 
     def _sync_controls(self) -> None:
+        """Enable or disable the controls to match the current state."""
         workspace_ready = self._active_workspace_ready()
         source_ready = bool(
             workspace_ready and self.lab_select.value and self._raw_root_text()
@@ -1090,6 +1337,7 @@ class _ImportDatasetsController:
         self.lab_reset_button.disabled = busy
 
     def _on_lab_select_change(self, *_events) -> None:
+        """Handle a change of the selected lab format."""
         self._load_working_lab(self.lab_select.value)
         if self._merged_mode() and not self._merged_import_supported():
             self.merged_checkbox.value = False
@@ -1102,6 +1350,7 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def _on_raw_root_change(self, *_events) -> None:
+        """Handle a change of the raw-data directory."""
         self._clear_candidates()
         self._refresh_workspace_summary()
         if self.workspace is not None:
@@ -1111,6 +1360,7 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def _on_candidate_change(self, *_events) -> None:
+        """Handle a change of the selected recording."""
         if self._merged_mode():
             target = self._selected_merge_target()
             if target is None:
@@ -1142,6 +1392,7 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def _on_merged_change(self, *_events) -> None:
+        """Handle a change of the merged-import toggle."""
         if self._merged_mode() and not self._merged_import_supported():
             self.merged_checkbox.value = False
             self._refresh_candidate_options()
@@ -1167,19 +1418,44 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def _handle_lab_load(self, _event=None) -> None:
+        """Handle the lab format load button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.lab_actions.load_selected()
         self._sync_controls()
 
     def _handle_lab_save(self, _event=None) -> None:
+        """Handle the lab format save button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.lab_actions.save_current()
 
     def _handle_lab_delete(self, _event=None) -> None:
+        """Handle the lab format delete button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.lab_actions.delete_selected()
 
     def _handle_lab_reset(self, _event=None) -> None:
+        """Handle the lab format reset button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.lab_actions.reset_store()
 
     def _handle_reset(self, _event=None) -> None:
+        """Handle the reset button, clearing the import flow.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.raw_root_input.value = ""
         self.group_id_input.value = ""
         self.color_input.value = "#000000"
@@ -1192,6 +1468,11 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def _handle_browse_raw_root(self, _event=None) -> None:
+        """Handle the browse button, choosing the raw-data directory.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self.workspace is None:
             self._set_status(
                 "Configure an active workspace before importing datasets.",
@@ -1221,6 +1502,11 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def _handle_discover(self, _event=None) -> None:
+        """Handle the discover button, scanning for recordings.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         raw_root = self._raw_root_path()
         if self.workspace is None:
             self._set_status(
@@ -1268,6 +1554,11 @@ class _ImportDatasetsController:
         self._sync_controls()
 
     def _build_import_request(self) -> ImportRequest:
+        """Assemble the import request from the current selection.
+
+        Returns:
+            The request, or None when the selection is incomplete.
+        """
         raw_root = self._raw_root_path()
         if raw_root is None:
             raise RuntimeError(
@@ -1324,6 +1615,11 @@ class _ImportDatasetsController:
         )
 
     def _handle_import(self, _event=None) -> None:
+        """Handle the import button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self.workspace is None:
             self._set_status(
                 "Configure an active workspace before importing datasets.",
@@ -1358,6 +1654,11 @@ class _ImportDatasetsController:
             _run()
 
     def _execute_import(self, request: ImportRequest) -> None:
+        """Run one import and report its outcome.
+
+        Args:
+            request: What to import.
+        """
         try:
             record = import_into_workspace(request, workspace=self.workspace)
         except Exception as exc:
@@ -1373,6 +1674,11 @@ class _ImportDatasetsController:
             self._finish_action_status()
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the import app's view.
+
+        Returns:
+            The view component.
+        """
         raw_root_row = pn.Row(
             self.raw_root_input,
             css_classes=["lw-import-datasets-source-row"],
@@ -1484,6 +1790,11 @@ class _ImportDatasetsController:
 
 
 def import_datasets_app() -> pn.viewable.Viewable:
+    """Build the dataset import app.
+
+    Returns:
+        The app component.
+    """
     pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS, IMPORT_DATASETS_RAW_CSS])
     controller = _ImportDatasetsController()
 

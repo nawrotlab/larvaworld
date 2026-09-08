@@ -200,6 +200,14 @@ TABLE_COLUMNS = [
 
 
 def _status_html(text: str, *, tone: str = "neutral", detail: str | None = None) -> str:
+    """Render a status line as markup.
+
+    Args:
+        text: The status text.
+
+    Returns:
+        The markup.
+    """
     detail_html = ""
     if detail:
         detail_html = (
@@ -221,6 +229,15 @@ def _status_html(text: str, *, tone: str = "neutral", detail: str | None = None)
 def _details_html(
     record: UnifiedDatasetRecord | None, proc_status: dict | None = None
 ) -> str:
+    """Render a dataset's detail panel.
+
+    Args:
+        record: The dataset.
+        proc_status: Which processing steps it has been through.
+
+    Returns:
+        The markup.
+    """
     if record is None:
         return (
             '<div class="lw-dataset-manager-status">'
@@ -290,6 +307,15 @@ def _details_html(
 
 
 def _empty_state_html(title: str, copy: str, *, cta_href: str | None = None) -> str:
+    """Render the placeholder shown when nothing is listed.
+
+    Args:
+        title: The placeholder heading.
+        copy: The explanatory text.
+
+    Returns:
+        The markup.
+    """
     cta_html = ""
     if cta_href:
         cta_html = (
@@ -307,6 +333,15 @@ def _empty_state_html(title: str, copy: str, *, cta_href: str | None = None) -> 
 
 
 def _records_frame(records: list[UnifiedDatasetRecord], workspace) -> pd.DataFrame:
+    """Build the table of listed datasets.
+
+    Args:
+        records: The datasets to list.
+        workspace: The workspace they belong to.
+
+    Returns:
+        The table data.
+    """
     rows = []
     for record in records:
         source_label = {
@@ -368,6 +403,7 @@ class _DatasetManagerController:
     """State behind the dataset manager app."""
 
     def __init__(self) -> None:
+        """Build the controller and load the datasets."""
         self.workspace = get_active_workspace()
         self._all_records: list[UnifiedDatasetRecord] = []
         self._filtered_records: list[UnifiedDatasetRecord] = []
@@ -552,14 +588,25 @@ class _DatasetManagerController:
         self._load_records()
 
     def _blocked_workspace(self) -> bool:
+        """Report why the manager cannot act, if no workspace is usable.
+
+        Returns:
+            The reason, or None when a workspace is available.
+        """
         return self.workspace is None
 
     def _set_action_status(
         self, text: str, *, tone: str = "neutral", detail: str | None = None
     ) -> None:
+        """Show a status message beside the action buttons.
+
+        Args:
+            text: The status text.
+        """
         self.action_status.object = _status_html(text, tone=tone, detail=detail)
 
     def _clear_selection(self) -> None:
+        """Clear the table selection."""
         self._selected_record = None
         self._pending_delete_record = None
         self.table.selection = []
@@ -574,6 +621,7 @@ class _DatasetManagerController:
         self.delete_button.disabled = True
 
     def _load_records(self) -> None:
+        """Load the datasets the workspace holds."""
         if self.workspace is None:
             self._all_records = []
             self._filtered_records = []
@@ -613,6 +661,7 @@ class _DatasetManagerController:
         self._refresh_body()
 
     def _apply_filters(self) -> None:
+        """Restrict the listed datasets to those matching the filters."""
         query = self.search_input.value.strip().lower()
         lab_filter = self.lab_filter.value.strip()
 
@@ -649,6 +698,7 @@ class _DatasetManagerController:
         self._refresh_body()
 
     def _refresh_body(self) -> None:
+        """Redraw the table and detail panel."""
         if self.workspace is None:
             self.empty_state.object = _empty_state_html(
                 "Dataset Manager requires an active workspace",
@@ -750,9 +800,11 @@ class _DatasetManagerController:
         self.main_content.objects = [controls, main_row]
 
     def _on_filters_change(self, *_events) -> None:
+        """Handle a change to the listing filters."""
         self._apply_filters()
 
     def _on_table_selection_change(self, *_events) -> None:
+        """Handle a change of the selected dataset."""
         selection = list(self.table.selection or [])
         if not selection:
             self._clear_selection()
@@ -788,6 +840,11 @@ class _DatasetManagerController:
         self.timeslice_button.disabled = False
 
     def _handle_inspect_manifest(self, _event=None) -> None:
+        """Handle the button showing a dataset's run manifest.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._selected_record is None:
             return
         try:
@@ -809,9 +866,19 @@ class _DatasetManagerController:
             )
 
     def _handle_refresh(self, _event=None) -> None:
+        """Handle the refresh button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._load_records()
 
     def _apply_copy_feedback(self, payload: str) -> None:
+        """Show whether a path was copied to the clipboard.
+
+        Args:
+            payload: The result reported by the browser.
+        """
         if not payload:
             return
         kind, _sep, rest = payload.partition("|")
@@ -840,9 +907,19 @@ class _DatasetManagerController:
             )
 
     def _on_copy_result(self, event) -> None:
+        """Handle the clipboard result reported by the browser.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         self._apply_copy_feedback(str(event.new or ""))
 
     def _handle_request_delete(self, _event=None) -> None:
+        """Handle the delete button, asking for confirmation.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._selected_record is None:
             return
         self._pending_delete_record = self._selected_record
@@ -860,6 +937,11 @@ class _DatasetManagerController:
         )
 
     def _handle_cancel_delete(self, _event=None) -> None:
+        """Handle the cancel button, abandoning the deletion.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._pending_delete_record is None:
             return
         self._pending_delete_record = None
@@ -868,6 +950,11 @@ class _DatasetManagerController:
         self._set_action_status("Delete dataset cancelled.")
 
     def _handle_confirm_delete(self, _event=None) -> None:
+        """Handle the confirm button, deleting the dataset.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self.workspace is None or self._pending_delete_record is None:
             return
         record = self._pending_delete_record
@@ -885,12 +972,25 @@ class _DatasetManagerController:
         )
 
     def _load_processing_status(self, record: UnifiedDatasetRecord) -> None:
+        """Determine which processing steps a dataset has been through.
+
+        Args:
+            record: The dataset.
+
+        Returns:
+            Its processing status.
+        """
         try:
             self._processing_status = get_processing_status(record)
         except Exception:
             self._processing_status = {}
 
     def _handle_preprocess(self, _event=None) -> None:
+        """Handle the preprocess button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._selected_record is None:
             return
         self._set_action_status("Running preprocessing…", tone="neutral")
@@ -901,6 +1001,11 @@ class _DatasetManagerController:
             self._load_records()
 
     def _handle_process(self, _event=None) -> None:
+        """Handle the process button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._selected_record is None:
             return
         self._set_action_status("Running processing…", tone="neutral")
@@ -911,6 +1016,11 @@ class _DatasetManagerController:
             self._load_records()
 
     def _handle_annotate(self, _event=None) -> None:
+        """Handle the annotate button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._selected_record is None:
             return
         self._set_action_status("Running annotation…", tone="neutral")
@@ -921,6 +1031,11 @@ class _DatasetManagerController:
             self._load_records()
 
     def _handle_update_refid(self, _event=None) -> None:
+        """Handle the button registering a dataset as a reference.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._selected_record is None:
             return
         new_ref_id = self.refid_input.value.strip()
@@ -935,6 +1050,11 @@ class _DatasetManagerController:
             self._load_records()
 
     def _handle_subsample(self, _event=None) -> None:
+        """Handle the subsample button, thinning a dataset.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._selected_record is None or self.workspace is None:
             return
         n_agents = int(self.subsample_n.value)
@@ -952,6 +1072,11 @@ class _DatasetManagerController:
             self._load_records()
 
     def _handle_timeslice(self, _event=None) -> None:
+        """Handle the time-slice button, cropping a dataset.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._selected_record is None or self.workspace is None:
             return
         start = float(self.timeslice_start.value)
@@ -975,6 +1100,11 @@ class _DatasetManagerController:
             self._load_records()
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the app's view.
+
+        Returns:
+            The view component.
+        """
         intro_text = pn.pane.HTML(
             (
                 "<p>Browse and inspect both imported and simulated datasets in the active workspace. "
@@ -1018,6 +1148,11 @@ class _DatasetManagerController:
 
 
 def dataset_manager_app() -> pn.viewable.Viewable:
+    """Build the dataset manager app.
+
+    Returns:
+        The app component.
+    """
     pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS, DATASET_MANAGER_RAW_CSS])
     controller = _DatasetManagerController()
     template = pn.template.MaterialTemplate(

@@ -141,6 +141,14 @@ ANALYSIS_RAW_CSS = """
 
 
 def _status_html(text: str, *, tone: str = "neutral", detail: str | None = None) -> str:
+    """Render a status line as markup.
+
+    Args:
+        text: The status text.
+
+    Returns:
+        The markup.
+    """
     detail_html = ""
     if detail:
         detail_html = (
@@ -163,6 +171,7 @@ class _AnalysisController:
     """State behind the dataset analysis app."""
 
     def __init__(self) -> None:
+        """Build the controller and load the datasets."""
         self.workspace = get_active_workspace()
         try:
             self.graph_registry = GraphRegistry()
@@ -225,6 +234,7 @@ class _AnalysisController:
         self._load_records()
 
     def _init_plot_catalog(self) -> None:
+        """Build the catalog of plots the app can render."""
         self._all_plots_by_group = self._all_plot_functions_by_group()
         group_ids = list(self._all_plots_by_group.keys())
         self.plot_category_filter.options = group_ids
@@ -232,6 +242,7 @@ class _AnalysisController:
         self._refresh_plot_function_list()
 
     def _all_plot_functions_by_group(self) -> dict[str, list[str]]:
+        """The available plots, grouped for display."""
         if self.graph_registry is None:
             return {}
         catalog: dict[str, list[str]] = {}
@@ -253,6 +264,7 @@ class _AnalysisController:
         return catalog
 
     def _refresh_plot_function_list(self, *_events) -> None:
+        """Reload the plots offered for the current dataset selection."""
         selected_groups = self.plot_category_filter.value or []
         seen: set[str] = set()
         fids: list[str] = []
@@ -272,6 +284,7 @@ class _AnalysisController:
             self.plot_function_list.value = None
 
     def _load_records(self) -> None:
+        """Load the datasets the workspace holds."""
         if self.workspace is None:
             self._all_records = []
             self._set_status(
@@ -295,9 +308,15 @@ class _AnalysisController:
     def _set_status(
         self, text: str, *, tone: str = "neutral", detail: str | None = None
     ) -> None:
+        """Show a status message.
+
+        Args:
+            text: The status text.
+        """
         self.status_pane.object = _status_html(text, tone=tone, detail=detail)
 
     def _update_dataset_table(self) -> None:
+        """Redraw the dataset table."""
         rows = []
         for i, record in enumerate(self._all_records):
             source_label = (
@@ -321,11 +340,17 @@ class _AnalysisController:
         self.dataset_table.value = df
 
     def _on_dataset_selection_change(self, *_events) -> None:
+        """Handle a change of the selected datasets."""
         selection = list(self.dataset_table.selection or [])
         self._selected_datasets = [self._all_records[i] for i in selection]
         self.refresh_plots_button.disabled = len(self._selected_datasets) == 0
 
     def _load_selected_datasets(self) -> bool:
+        """Load the selected datasets in full, ready for plotting.
+
+        Returns:
+            The loaded datasets.
+        """
         self._loaded_datasets.clear()
         for record in self._selected_datasets:
             try:
@@ -344,6 +369,11 @@ class _AnalysisController:
         return True
 
     def _handle_refresh_plots(self, _event=None) -> None:
+        """Handle the refresh button, reloading the plot catalog.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if not self._selected_datasets:
             self._set_status("Select at least one dataset first.", tone="warning")
             return
@@ -411,6 +441,11 @@ class _AnalysisController:
         }
 
     def _handle_run_plot(self, _event=None) -> None:
+        """Handle the run button, rendering the chosen plot.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if not self._selected_datasets or not self._loaded_datasets:
             self._set_status(
                 "Select and refresh dataset availability first.", tone="warning"
@@ -466,6 +501,11 @@ class _AnalysisController:
         # reproduce that path correctly -- re-running it is also what
         # already happens implicitly on Generate, this just re-triggers
         # it as an explicit, visible action.
+        """Handle the export button, saving the rendered plot.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._current_plot_id is None or not self._loaded_datasets:
             self._set_status("Generate a plot first.", tone="warning")
             return
@@ -507,6 +547,11 @@ class _AnalysisController:
             )
 
     def _render_figure(self, fig: Any) -> None:
+        """Show a rendered figure in the app.
+
+        Args:
+            fig: The figure to show.
+        """
         try:
             html_repr = fig._repr_html_() if hasattr(fig, "_repr_html_") else None
             if html_repr:
@@ -547,6 +592,7 @@ class _AnalysisController:
             )
 
     def _refresh_body(self) -> None:
+        """Redraw the app body."""
         if self.workspace is None:
             empty = pn.pane.HTML(
                 '<div class="lw-analysis-empty">'
@@ -626,6 +672,11 @@ class _AnalysisController:
         self.main_content.objects = [main_col]
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the app's view.
+
+        Returns:
+            The view component.
+        """
         intro = pn.pane.Markdown(
             (
                 "### Analysis\n"
@@ -651,6 +702,11 @@ class _AnalysisController:
 
 
 def analysis_app() -> pn.viewable.Viewable:
+    """Build the dataset analysis app.
+
+    Returns:
+        The app component.
+    """
     pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS, ANALYSIS_RAW_CSS])
     controller = _AnalysisController()
     template = pn.template.MaterialTemplate(

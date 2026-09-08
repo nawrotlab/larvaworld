@@ -16,6 +16,14 @@ class _BokehPatchFilter(logging.Filter):
     """Suppresses the Bokeh log messages emitted on every document patch."""
 
     def filter(self, record: logging.LogRecord) -> bool:
+        """Drop the Bokeh log records emitted on every document patch.
+
+        Args:
+            record: The log record.
+
+        Returns:
+            False for the suppressed records, True otherwise.
+        """
         return (
             "Dropping a patch because it contains a previously known reference"
             not in record.getMessage()
@@ -110,6 +118,14 @@ _KIND_NOTES: dict[str, str] = {
 
 
 def _status_html(text: str) -> str:
+    """Render a status line as markup.
+
+    Args:
+        text: The status text.
+
+    Returns:
+        The markup.
+    """
     return f'<div class="lw-model-inspector-status">{escape(text)}</div>'
 
 
@@ -131,6 +147,7 @@ class _ModuleInspectorController:
     """Panel controller: kind-aware module/mode selection, params, trace recompute."""
 
     def __init__(self) -> None:
+        """Build the controller and its inspection widgets."""
         self._module_id = "crawler"
         self._mode = str(data.module_modes(self._module_id)[0])
         self._editor: Any = None
@@ -264,15 +281,18 @@ class _ModuleInspectorController:
         self._recompute()
 
     def _kind(self) -> str:
+        """The kind of module being inspected."""
         return data.module_kind(self._module_id)
 
     def _mode_option_labels(self) -> dict[str, str]:
+        """The display labels of the selected module's modes."""
         return {
             data.mode_label(self._module_id, m): m
             for m in data.module_modes(self._module_id)
         }
 
     def _apply_kind_visibility(self) -> None:
+        """Show only the controls that apply to the selected module kind."""
         kind = self._kind()
         self.a_in_slider.visible = kind == "effector"
         is_sensor = kind == "sensor"
@@ -281,6 +301,7 @@ class _ModuleInspectorController:
         self.notes_pane.object = _KIND_NOTES[kind]
 
     def _clear_editor_watchers(self) -> None:
+        """Stop watching the previous editor's parameters."""
         editor = self._editor
         if editor is None:
             self._editor_watchers.clear()
@@ -293,6 +314,8 @@ class _ModuleInspectorController:
         self._editor_watchers.clear()
 
     def _watch_editor_params(self) -> None:
+        """Recompute whenever the current editor's parameters change."""
+
         def _on_param_change(_event) -> None:
             self._recompute()
 
@@ -304,6 +327,7 @@ class _ModuleInspectorController:
                 continue
 
     def _rebuild_editor(self) -> None:
+        """Rebuild the parameter editor for the selected module and mode."""
         self._clear_editor_watchers()
         kind = self._kind()
         raw_names = list(MD.brainDB[self._module_id].module_pars(mode=self._mode))
@@ -337,6 +361,11 @@ class _ModuleInspectorController:
         self._apply_kind_visibility()
 
     def _conf_from_editor(self) -> util.AttrDict:
+        """Read the module configuration out of the editor.
+
+        Returns:
+            The configuration.
+        """
         conf = util.AttrDict(
             {name: getattr(self._editor, name) for name in self._editable_params}
         )
@@ -344,15 +373,19 @@ class _ModuleInspectorController:
         return conf
 
     def _dt(self) -> float:
+        """The timestep the inspection runs at."""
         return max(0.001, float(self.dt_input.value))
 
     def _steps(self) -> int:
+        """How many timesteps to simulate."""
         return max(1, int(self.steps_input.value))
 
     def _a_in(self) -> float:
+        """The activation fed into the module."""
         return float(self.a_in_slider.value)
 
     def _stimulus_spec(self) -> StimulusSpec:
+        """The stimulus the module is driven with."""
         return StimulusSpec(
             waveform=str(self.waveform_select.value),
             baseline=float(self.baseline_input.value),
@@ -362,6 +395,11 @@ class _ModuleInspectorController:
         )
 
     def _on_module_change(self, event) -> None:
+        """Handle a change of the selected module.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         self._module_id = str(event.new)
         self.equations_pane.object = get_module_equations_html(
             self._module_id, self._mode
@@ -378,6 +416,11 @@ class _ModuleInspectorController:
             self._recompute()
 
     def _on_mode_change(self, event) -> None:
+        """Handle a change of the selected mode.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         self._mode = str(event.new)
         self.equations_pane.object = get_module_equations_html(
             self._module_id, self._mode
@@ -386,16 +429,32 @@ class _ModuleInspectorController:
         self._recompute()
 
     def _on_setting_change(self, _event=None) -> None:
+        """Handle a change to one of the module's parameters.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._recompute()
 
     def _on_dt_change(self, _event=None) -> None:
+        """Handle a change of the timestep.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._rebuild_editor()
         self._recompute()
 
     def _on_signals_change(self, _event=None) -> None:
+        """Handle a change of the plotted signals.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._recompute()
 
     def _recompute(self) -> None:
+        """Re-run the module and refresh the plots."""
         kind = self._kind()
         stimulus = self._stimulus_spec() if kind == "sensor" else None
         try:
@@ -416,6 +475,14 @@ class _ModuleInspectorController:
         self.status_pane.object = _status_html(self._status_text(result))
 
     def _status_text(self, result: ModuleTraceResult) -> str:
+        """Summarize an inspection run for display.
+
+        Args:
+            result: The run's output.
+
+        Returns:
+            The status text.
+        """
         base = (
             f"{result.module_id} / {result.mode} [{result.kind}]: "
             f"{result.steps} steps, dt={result.dt}"
@@ -432,6 +499,11 @@ class _ModuleInspectorController:
         return f"{base}."
 
     def _update_sources(self, result: ModuleTraceResult) -> None:
+        """Push a run's output into the plot data sources.
+
+        Args:
+            result: The run's output.
+        """
         df = result.dataframe
         for sig in data.ALL_SIGNALS:
             if sig in df.columns:
@@ -443,6 +515,11 @@ class _ModuleInspectorController:
                 self._sources[sig].data = {"time": [], sig: []}
 
     def _rebuild_plots(self, result: ModuleTraceResult) -> None:
+        """Rebuild the plots for the signals currently selected.
+
+        Args:
+            result: The run's output.
+        """
         selected = tuple(self.signal_checkbox.value or ())
         plots: list[pn.viewable.Viewable] = []
         for sig in selected:
@@ -462,6 +539,11 @@ class _ModuleInspectorController:
         self.plot_view.objects = plots
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the app's view.
+
+        Returns:
+            The view component.
+        """
         intro_text = pn.pane.HTML(
             (
                 "<p>Inspect standalone <strong>locomotor effectors</strong> "
@@ -558,6 +640,11 @@ class _ModuleInspectorController:
 
 
 def module_inspector_app() -> pn.viewable.Viewable:
+    """Build the module inspector app.
+
+    Returns:
+        The app component.
+    """
     pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS, MODULE_INSPECTOR_RAW_CSS])
     controller = _ModuleInspectorController()
     template = pn.template.MaterialTemplate(
