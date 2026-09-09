@@ -274,7 +274,9 @@ jobs:
         run: |
           # These packages come from Ubuntu; an unrelated Chrome repository can
           # temporarily serve inconsistent metadata and block apt entirely.
-          sudo rm -f /etc/apt/sources.list.d/google-chrome.list
+          sudo rm -f \
+            /etc/apt/sources.list.d/google-chrome.list \
+            /etc/apt/sources.list.d/google-chrome.sources
           sudo apt-get update
           sudo apt-get install -y liblzo2-dev libblosc-dev libhdf5-dev
 
