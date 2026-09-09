@@ -1,3 +1,10 @@
+"""
+Base classes for all simulation agents.
+
+Defines the minimal agent interface, its placement in space and its
+registration with the simulation model.
+"""
+
 from __future__ import annotations
 from typing import Any
 
@@ -49,13 +56,20 @@ class NonSpatialAgent(GroupedObject):
     odor = ClassAttr(Odor, doc="The odor of the agent")
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the agent.
+
+        Args:
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     @property
     def dt(self) -> float:
+        """The simulation timestep in seconds."""
         return self.model.dt
 
     def step(self) -> None:
+        """Advance the agent by one timestep. Does nothing by default."""
         pass
 
 
@@ -82,6 +96,11 @@ class PointAgent(RadiallyExtended, NonSpatialAgent, Viewable):
     __displayname__ = "Point agent"
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the agent and register its display colour.
+
+        Args:
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.set_default_color(self.color)
         # Lazy import to avoid circular dependency
@@ -151,6 +170,11 @@ class OrientedAgent(OrientedPoint, PointAgent):
     __displayname__ = "Oriented agent"
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the agent with an orientation.
+
+        Args:
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
 
@@ -174,6 +198,11 @@ class MobilePointAgent(MobilePoint, PointAgent):
     __displayname__ = "Mobile point agent"
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the movable point agent.
+
+        Args:
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
 
@@ -202,6 +231,11 @@ class MobileAgent(MobileVector, PointAgent):
     __displayname__ = "Mobile agent"
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the movable oriented agent.
+
+        Args:
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     @property

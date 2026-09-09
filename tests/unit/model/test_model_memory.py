@@ -8,9 +8,11 @@ real Brian2 server connection.
 Philosophy: Test the LOGIC, not the physics.
 """
 
+import random
+from types import SimpleNamespace
+
 import pytest
 import numpy as np
-from types import SimpleNamespace
 
 from larvaworld.lib.model.modules.memory import (
     Memory,
@@ -212,7 +214,7 @@ def test_rl_memory_epsilon_greedy_exploration(rl_memory_single):
 
     # With epsilon=0.2, we should get ~20% random actions
     # Run multiple times to check randomness
-    np.random.seed(42)
+    random.seed(42)
     actions = []
     for _ in range(50):
         gain = mem.update_ext_gain({"odor1": 0.0}, dx={"odor1": 0.0}, randomize=True)
@@ -287,14 +289,18 @@ def test_rl_memory_update_gain_learning_mode(rl_memory_single):
     mem.active = True
     mem.total_ticks = 0  # learning_on = True
     mem.iterator = mem.Niters  # Condition will be True
+    mem.rewardSum = 2.0
+    mem.epsilon = 0.0
 
-    initial_gain = mem.gain.copy()
+    state = mem.state_collapse({"odor1": 0.1})
+    mem.q_table[state, :] = [0.0, 0.0, 10.0]
 
     # Update gain (should trigger update_ext_gain)
     mem.update_gain(dx={"odor1": 0.1})
 
-    # Gain should have changed
-    assert mem.gain != initial_gain
+    # Learning update should pick the deterministic best action for this state.
+    assert mem.gain == {"odor1": 100.0}
+    assert mem.lastAction == 2
 
     # Iterator should reset
     assert mem.iterator == 0

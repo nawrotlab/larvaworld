@@ -116,6 +116,20 @@ _SUBPACKAGES: dict[str, str] = {
 
 
 def __getattr__(name: str) -> Any:
+    """Resolve a public name by importing its module on first access.
+
+    Keeps package import lightweight by deferring the submodule imports until
+    one of their exported names is actually used.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved object.
+
+    Raises:
+        AttributeError: If no submodule exports that name.
+    """
     from importlib import import_module
 
     # Check if it's a subpackage
@@ -137,4 +151,5 @@ def __getattr__(name: str) -> Any:
 
 
 def __dir__() -> list[str]:
+    """Return the public names, including the not-yet-imported ones."""
     return sorted(list(globals().keys()) + __all__)

@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import copy
 import json
+import os
+import shutil
 from pathlib import Path
 
 import panel as pn
 import pytest
 
+import larvaworld
 from larvaworld.lib import reg, util
+from larvaworld.lib.reg import config as reg_config
 from larvaworld.lib.reg.larvagroup import LarvaGroup
 from larvaworld.lib.sim.validation import CompatibilityIssue, CompatibilityReport
 from larvaworld.portal.canvas_widgets.environment_models import (
@@ -43,6 +47,64 @@ SINGLE_EXPERIMENT_APP_INCOMPLETE_REASON = (
 def workspace_config_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LARVAWORLD_PORTAL_CONFIG_DIR", str(tmp_path / "config"))
     clear_active_workspace_path()
+
+
+@pytest.fixture(scope="session")
+def _conf_dir_snapshot(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """Serialize every conftype once per session.
+
+    Snapshotting is identical for every test, but deep-copying and pickling all
+    8 conftypes (Model alone holds 612 entries) costs ~0.18s. Doing it per test
+    burned ~20s across this module, so it is done once and copied thereafter.
+    """
+    import larvaworld as _lw
+
+    snapshot_dir = tmp_path_factory.mktemp("conf_snapshot")
+    for conftype in _lw.CONFTYPES:
+        util.save_dict(
+            util.AttrDict(reg.conf[conftype].dict).get_copy(),
+            f"{snapshot_dir}/{conftype}.txt",
+        )
+    return snapshot_dir
+
+
+@pytest.fixture(autouse=True)
+def isolated_exp_conf_dir(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    _conf_dir_snapshot: Path,
+) -> Path:
+    # experiment_template_preset_controls saves/deletes dual-write to
+    # reg.conf.Exp (registry + workspace, as one linked unit) -- any test
+    # that saves/deletes an experiment template now writes to the Exp
+    # registry, not just the workspace. Autouse isolation redirects those
+    # registry reads/writes to a throwaway directory seeded with a
+    # snapshot of the real in-memory registry, so real confDicts/Exp.txt
+    # is never touched and parallel xdist workers can't race on it.
+    #
+    # CONF_DIR is shared by every conftype (Env, Model, Exp, ...) -- any
+    # RegistryPresetStore.list_ids()/load() call (e.g. from
+    # environment_preset_controls, unrelated to this dual-write feature)
+    # re-reads its own conftype's file from this same directory. Seeding
+    # only Exp.txt would silently wipe every other conftype's in-memory
+    # dict to empty on its next .load() (missing file -> empty AttrDict),
+    # so every conftype gets seeded and restored here, not just Exp.
+    #
+    # The seed files come from a session-scoped snapshot and are copied
+    # rather than regenerated, which keeps per-test cost to a file copy.
+    original_conf_dir = reg_config.CONF_DIR
+    original_dicts = {
+        conftype: reg.conf[conftype].dict for conftype in larvaworld.CONFTYPES
+    }
+    tmp_conf_dir = tmp_path / "confDicts"
+    shutil.copytree(_conf_dir_snapshot, tmp_conf_dir)
+    monkeypatch.setattr(reg_config, "CONF_DIR", str(tmp_conf_dir))
+    try:
+        yield tmp_conf_dir
+    finally:
+        monkeypatch.setattr(reg_config, "CONF_DIR", original_conf_dir)
+        for conftype, conf_dict in original_dicts.items():
+            reg.conf[conftype].dict = conf_dict
 
 
 def _find_widget(
@@ -573,7 +635,7 @@ def test_single_experiment_preview_metadata_summarizes_applied_settings(
     assert "larvae = 5" in html
 
 
-def test_single_experiment_resolved_plan_payload_serializes_parameters(
+def test_single_experiment_manifest_catalog_targets_exp_runs(
     tmp_path: Path,
 ) -> None:
     workspace_root = tmp_path / "workspace"
@@ -581,19 +643,8 @@ def test_single_experiment_resolved_plan_payload_serializes_parameters(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    parameters = controller._build_parameters()
 
-    payload = controller._resolved_plan_payload(
-        experiment="dish",
-        run_name="dish_demo",
-        selected_env="template default",
-        parameters=parameters,
-    )
-
-    assert payload["experiment"] == "dish"
-    assert payload["run_name"] == "dish_demo"
-    assert payload["selected_environment"] == "template default"
-    assert payload["parameters"]["env_params"]["arena"]["geometry"] == "circular"
+    assert controller.manifest_catalog.modes == ("Exp",)
 
 
 def test_single_experiment_preview_runtime_parameters_strip_preview_only_overhead(
@@ -611,7 +662,7 @@ def test_single_experiment_preview_runtime_parameters_strip_preview_only_overhea
     assert preview_parameters.enrichment is None
 
 
-def test_single_experiment_run_experiment_writes_plan_and_reports_storage(
+def test_single_experiment_run_experiment_uses_run_manifest_and_reports_storage(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -626,6 +677,9 @@ def test_single_experiment_run_experiment_writes_plan_and_reports_storage(
             simulated.update(kwargs)
 
         def simulate(self):
+            run_dir = Path(simulated["dir"])
+            run_dir.mkdir(parents=True)
+            (run_dir / "run_manifest.json").write_text("{}", encoding="utf-8")
             return ["dataset_a", "dataset_b"]
 
     monkeypatch.setattr(
@@ -638,14 +692,15 @@ def test_single_experiment_run_experiment_writes_plan_and_reports_storage(
     controller._on_run_experiment()
 
     run_dir = workspace_root / "simulations" / "dish_demo"
-    plan_path = run_dir / "resolved_experiment.json"
+    manifest_path = run_dir / "run_manifest.json"
 
     assert simulated["store_data"] is True
     assert simulated["id"] == "dish_demo"
     assert simulated["dir"] == str(run_dir)
-    assert plan_path.exists()
+    assert manifest_path.exists()
+    assert not (run_dir / "resolved_experiment.json").exists()
     assert "Stored outputs in" in controller.status.object
-    assert "resolved_experiment.json" in controller.status.object
+    assert "run_manifest.json" in controller.status.object
 
 
 @pytest.mark.skip(reason=SINGLE_EXPERIMENT_APP_INCOMPLETE_REASON)
@@ -1588,7 +1643,15 @@ def test_single_experiment_environment_preset_box_is_first_in_environment_parame
     assert controller.environment_template_default_btn in preset_box.select(
         pn.widgets.Button
     )
-    assert controller.refresh_environments_btn in preset_box.select(pn.widgets.Button)
+    # This panel is the minimal dropdown-only selector (build_preset_select_
+    # only_panel): no visible Refresh/Save/Load/Delete/Reset buttons, just
+    # the select -- picking an entry loads it immediately.
+    assert controller.environment_preset_controls.preset_select in preset_box.select(
+        pn.widgets.Select
+    )
+    assert controller.refresh_environments_btn not in preset_box.select(
+        pn.widgets.Button
+    )
     assert controller.environment_preset_controls.reset_button is None
 
 
@@ -1732,10 +1795,22 @@ def test_single_experiment_template_save_box_in_configuration_and_disabled_initi
     config_column = config_card.objects[0]
 
     assert controller.experiment_template_save_box in config_column.objects
-    assert controller.experiment_template_preset_controls.view in (
-        controller.experiment_template_save_box.objects
+    preset_card = next(
+        obj
+        for obj in controller.experiment_template_save_box.objects
+        if isinstance(obj, pn.Card)
     )
-    assert controller.experiment_template_preset_controls.reset_button is None
+    assert preset_card.title == "Stored Configurations"
+    assert controller.experiment_template_preset_controls.preset_select in (
+        preset_card.select(pn.widgets.Select)
+    )
+    assert controller.experiment_template_preset_controls.reset_button is not None
+    assert controller.experiment_template_preset_controls.reset_button.name == (
+        "Reset Presets"
+    )
+    assert controller.experiment_template_preset_controls.reset_button in (
+        preset_card.select(pn.widgets.Button)
+    )
     assert controller.experiment_template_save_name.disabled is True
     assert controller.experiment_template_save_btn.disabled is True
 
@@ -1917,7 +1992,7 @@ def test_single_experiment_template_helper_select_does_not_mutate_state(
     assert controller._selected_experiment() == "dish"
 
 
-def test_single_experiment_template_helper_hides_registry_reset_action(
+def test_single_experiment_template_helper_allows_registry_reset_action(
     tmp_path: Path,
 ) -> None:
     workspace_root = tmp_path / "workspace"
@@ -1925,35 +2000,141 @@ def test_single_experiment_template_helper_hides_registry_reset_action(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    assert controller.experiment_template_preset_controls.reset_button is None
+    assert controller.experiment_template_preset_controls.reset_button is not None
 
 
-def test_single_experiment_template_helper_registry_actions_are_read_only(
+def test_single_experiment_template_helper_allows_dual_write_registry_actions(
     tmp_path: Path,
 ) -> None:
+    # Save/delete are dual-write (workspace + registry, linked as one unit,
+    # matching Environment Builder); registry reset is also allowed, for
+    # full parity with the Environment Builder and Model Inspector's own
+    # Stored Configurations panels -- see _EXPERIMENT_TEMPLATE_PRESET_POLICY
+    # in single_experiment_app.py.
     workspace_root = tmp_path / "workspace"
     initialize_workspace(workspace_root)
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
     assert (
-        controller.experiment_template_preset_controls.policy.can_save_registry is False
+        controller.experiment_template_preset_controls.policy.can_save_registry is True
     )
     assert (
         controller.experiment_template_preset_controls.policy.can_delete_registry
-        is False
+        is True
     )
     assert (
-        controller.experiment_template_preset_controls.policy.can_reset_registry
-        is False
+        controller.experiment_template_preset_controls.policy.can_reset_registry is True
     )
+    assert controller.experiment_template_preset_controls.dual_write is True
+    assert controller.experiment_template_preset_controls.reset_button is not None
+
+
+def test_single_experiment_template_export_json_matches_current_payload(
+    tmp_path: Path,
+    isolated_exp_conf_dir: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    exported = json.loads(controller._export_experiment_template_json().getvalue())
+
+    assert exported == controller._experiment_template_payload()
+    assert exported["experiment"] == controller._selected_experiment()
+
+
+def test_single_experiment_template_import_json_file_loads_it(
+    tmp_path: Path,
+    isolated_exp_conf_dir: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    payload = controller._experiment_template_payload()
+
+    controller.experiment_template_import_input.filename = "my_imported_template.json"
+    controller.experiment_template_import_input.value = (
+        json.dumps(payload) + "\n"
+    ).encode("utf-8")
+    controller._on_import_experiment_template_file(None)  # type: ignore[arg-type]
+
+    preset_path = (
+        workspace_root
+        / "metadata"
+        / "experiment_templates"
+        / "my_imported_template.json"
+    )
+    assert preset_path.is_file()
+    assert json.loads(preset_path.read_text(encoding="utf-8")) == payload
+    assert controller.experiment_template_save_name.value == "my_imported_template"
+    assert controller._active_workspace_template_payload is not None
+    assert (
+        controller._active_workspace_template_payload["experiment"]
+        == payload["experiment"]
+    )
+
+
+def test_single_experiment_template_import_rejects_unknown_experiment(
+    tmp_path: Path,
+    isolated_exp_conf_dir: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    bad_payload = {"experiment": "not_a_real_registered_experiment"}
+
+    controller.experiment_template_import_input.filename = "bad_template.json"
+    controller.experiment_template_import_input.value = (
+        json.dumps(bad_payload) + "\n"
+    ).encode("utf-8")
+    controller._on_import_experiment_template_file(None)  # type: ignore[arg-type]
+
+    preset_path = (
+        workspace_root / "metadata" / "experiment_templates" / "bad_template.json"
+    )
+    assert not preset_path.is_file()
+    assert "Failed to load file" in controller.status.object
+
+
+def test_single_experiment_template_dual_write_save_and_delete_round_trip(
+    tmp_path: Path,
+    isolated_exp_conf_dir: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    controller.experiment_template_save_name.value = "portal_test_dual_write_template"
+    controller._on_save_experiment_template()
+
+    preset_path = (
+        workspace_root
+        / "metadata"
+        / "experiment_templates"
+        / "portal_test_dual_write_template.json"
+    )
+    assert preset_path.is_file()
+    assert "portal_test_dual_write_template" in reg.conf.Exp.dict
+
     controller.experiment_template_select.value = (
-        controller.experiment_template_select.options["Registry / dish"]
+        controller.experiment_template_select.options[
+            "Workspace / portal_test_dual_write_template"
+        ]
     )
     assert controller.experiment_template_preset_controls.delete_selected() is False
-    assert "read-only" in str(
-        controller.experiment_template_preset_controls.status.object
+    assert (
+        controller.experiment_template_preset_controls.confirm_pending_action() is True
     )
+
+    assert not preset_path.exists()
+    assert "portal_test_dual_write_template" not in reg.conf.Exp.dict
 
 
 def test_single_experiment_template_same_name_registry_and_workspace_coexist(
@@ -3240,6 +3421,38 @@ def test_single_experiment_uses_typed_widgets_for_model_and_optional_odor_fields
     assert parameters.flatten()[odor_spread_path] == pytest.approx(0.03)
 
 
+#: Experiments chosen to cover every distinct configuration family the
+#: parameter editor can render: bare arena, odorscape, food grid, discrete
+#: sources, windscape, thermoscape, borders, multi-phase trials, multiple
+#: larva groups and Box2D bodies. Rebuilding the editor costs ~1.5s per
+#: experiment, so the default run samples these rather than sweeping all 58
+#: (see the exhaustive variant below).
+_TEXT_FALLBACK_REPRESENTATIVE_EXPERIMENTS = (
+    "dish",
+    "chemotaxis",
+    "food_grid",
+    "patchy_food",
+    "anemotaxis",
+    "thermotaxis",
+    "maze",
+    "PItrain_mini",
+    "RvsS",
+    "realistic_imitation",
+)
+
+
+def _text_fallback_kinds(
+    controller: _SingleExperimentController, exp_token: object
+) -> set[str]:
+    controller.experiment.value = exp_token
+    controller._on_experiment_change()
+    return {
+        kind
+        for kind, _control in controller._parameter_widgets.values()
+        if kind in {"str", "json", "optional_str"}
+    }
+
+
 def test_single_experiment_parameter_editor_has_no_text_fallback_widgets(
     tmp_path: Path,
 ) -> None:
@@ -3248,15 +3461,40 @@ def test_single_experiment_parameter_editor_has_no_text_fallback_widgets(
     set_active_workspace_path(workspace_root)
 
     controller = _SingleExperimentController()
-    raw_kinds = set()
+    options = controller.experiment.options
+    tokens = {
+        name: options[f"Registry / {name}"]
+        for name in _TEXT_FALLBACK_REPRESENTATIVE_EXPERIMENTS
+        if f"Registry / {name}" in options
+    }
+    assert tokens, "no representative experiments resolved from the registry"
+
+    raw_kinds: set[str] = set()
+    for exp_token in tokens.values():
+        raw_kinds |= _text_fallback_kinds(controller, exp_token)
+
+    assert raw_kinds == set()
+
+
+@pytest.mark.heavy
+@pytest.mark.skipif(
+    os.getenv("LARVAWORLD_EXHAUSTIVE_TESTS") != "1",
+    reason=(
+        "Sweeps all registry experiments (~90s). "
+        "Enable with LARVAWORLD_EXHAUSTIVE_TESTS=1; CI runs it on every build."
+    ),
+)
+def test_single_experiment_parameter_editor_has_no_text_fallback_widgets_exhaustive(
+    tmp_path: Path,
+) -> None:
+    workspace_root = tmp_path / "workspace"
+    initialize_workspace(workspace_root)
+    set_active_workspace_path(workspace_root)
+
+    controller = _SingleExperimentController()
+    raw_kinds: set[str] = set()
     for exp_token in controller.experiment.options.values():
-        controller.experiment.value = exp_token
-        controller._on_experiment_change()
-        raw_kinds.update(
-            kind
-            for kind, _control in controller._parameter_widgets.values()
-            if kind in {"str", "json", "optional_str"}
-        )
+        raw_kinds |= _text_fallback_kinds(controller, exp_token)
 
     assert raw_kinds == set()
 

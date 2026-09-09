@@ -263,13 +263,22 @@ LOCK_FILE = Path(".pytest_datasets_build.lock")  # Build synchronization
 
 def processed_datasets_exist() -> bool:
     """
-    Check if minimal processed artifacts exist.
-
-    Stable predicates: checks representative files (data.h5, conf.txt).
-    Keep this cheap & deterministic.
+    Check if minimal processed artifacts exist -- the default reference
+    dataset (30controls) *and* every dataset tests/init_datasets.py is
+    responsible for (SCHLEYER_DATASETS, e.g. dish01/dish02), not just
+    30controls, which reg.default_refID can bootstrap on its own via a
+    separate lazy auto-import path.
     """
     target = DATA_ROOT / "exploration" / "30controls" / "data"
-    return (target / "data.h5").exists() and (target / "conf.txt").exists()
+    if not ((target / "data.h5").exists() and (target / "conf.txt").exists()):
+        return False
+
+    tests_dir = Path(__file__).parent
+    if str(tests_dir) not in sys.path:
+        sys.path.insert(0, str(tests_dir))
+    from init_datasets import SCHLEYER_DATASETS
+
+    return all(spec.exists() for spec in SCHLEYER_DATASETS)
 
 
 def build_processed_datasets():
@@ -397,8 +406,9 @@ def _bootstrap_datasets_once() -> None:
         return
 
     ready = processed_datasets_exist()
-    if READY_FLAG.exists():
-        ready = True
+    if not ready and READY_FLAG.exists():
+        # A stale flag must not mask genuinely missing data.
+        READY_FLAG.unlink(missing_ok=True)
 
     if ready and not READY_FLAG.exists():
         READY_FLAG.write_text("ok")
@@ -438,7 +448,12 @@ def _wait_for_datasets(timeout: float = 600.0) -> None:
 
     deadline = time.time() + timeout
     while time.time() < deadline:
-        if READY_FLAG.exists() or processed_datasets_exist():
+        # Re-verify via the real check rather than trusting READY_FLAG's
+        # mere presence: the master process may still be rebuilding after
+        # unlinking a stale flag (see _bootstrap_datasets_once), and a
+        # worker trusting a flag it raced to see before that unlink would
+        # proceed with an incomplete dataset set.
+        if processed_datasets_exist():
             _patch_dataset_io_lock()
             return
         time.sleep(0.5)

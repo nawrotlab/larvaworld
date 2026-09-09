@@ -1,3 +1,10 @@
+"""
+Data layer behind the model inspector.
+
+Loads a model into an editable draft, applies module and mode changes to it,
+and validates the result before it is stored.
+"""
+
 from __future__ import annotations
 
 from numbers import Real
@@ -16,6 +23,7 @@ from larvaworld.portal.models_architecture.model_inspector_models import (
     ModelInspectorError,
     ModuleInspection,
     ModuleComparison,
+    ModuleComparisonMany,
     ProbeIssue,
     ProbeResult,
 )
@@ -91,11 +99,28 @@ _WINDSENSOR_DEFAULT_WEIGHTS: dict[str, float] = WINDSENSOR_DEFAULT_WEIGHTS
 
 
 def load_model_draft(model_id: str) -> Any:
+    """Load a stored model into an editable draft.
+
+    Args:
+        model_id: The model to load.
+
+    Returns:
+        An independent copy that can be edited freely.
+    """
     model = _get_model_conf(model_id)
     return _copy_config_value(model)
 
 
 def default_brain_module_config(module_id: str, mode: str) -> Any:
+    """Build one brain module's default configuration.
+
+    Args:
+        module_id: The module to configure.
+        mode: The implementation mode. Defaults to the module's own default.
+
+    Returns:
+        The configuration.
+    """
     if module_id == "memory":
         raise ModelInspectorError(
             "invalid_brain_module",
@@ -130,6 +155,15 @@ def default_brain_module_config(module_id: str, mode: str) -> Any:
 
 
 def default_memory_config(mode: str, modality: str) -> Any:
+    """Build the memory module's default configuration.
+
+    Args:
+        mode: The learning algorithm.
+        modality: The sensory modality it adapts.
+
+    Returns:
+        The configuration.
+    """
     conf = MD.memory_kws(mode=mode, modality=modality, as_entry=False)
     if conf is None:
         raise ModelInspectorError(
@@ -144,6 +178,14 @@ def default_memory_config(mode: str, modality: str) -> Any:
 
 
 def default_larva_module_config(module_id: str) -> Any:
+    """Build one body module's default configuration.
+
+    Args:
+        module_id: The module to configure.
+
+    Returns:
+        The configuration.
+    """
     if module_id not in MD.LarvaMods:
         raise ModelInspectorError(
             "invalid_larva_module",
@@ -161,6 +203,13 @@ def default_larva_module_config(module_id: str) -> Any:
 
 
 def set_draft_module_enabled(model_conf: Any, module_id: str, enabled: bool) -> None:
+    """Enable or disable one module of a draft.
+
+    Args:
+        model_conf: The draft being edited.
+        module_id: The module to toggle.
+        enabled: Whether it is active.
+    """
     brain_conf = _get_brain_conf("<draft>", model_conf)
     if module_id in LOCOMOTION_MODULES:
         if not enabled:
@@ -227,6 +276,13 @@ def set_draft_module_enabled(model_conf: Any, module_id: str, enabled: bool) -> 
 
 
 def set_draft_brain_module_mode(model_conf: Any, module_id: str, mode: str) -> None:
+    """Switch one brain module to another mode.
+
+    Args:
+        model_conf: The draft being edited.
+        module_id: The module to switch.
+        mode: The mode to switch to.
+    """
     if module_id == "memory":
         raise ModelInspectorError(
             "invalid_brain_module",
@@ -251,6 +307,13 @@ def set_draft_memory_config(
     mode: str | None = None,
     modality: str | None = None,
 ) -> None:
+    """Set the memory module's algorithm and modality.
+
+    Args:
+        model_conf: The draft being edited.
+        mode: The learning algorithm.
+        modality: The sensory modality it adapts.
+    """
     brain_conf = _get_brain_conf("<draft>", model_conf)
     if not enabled:
         brain_conf["memory"] = None
@@ -272,6 +335,14 @@ def set_draft_module_parameter(
     parameter_path: tuple[str, ...],
     value: Any,
 ) -> None:
+    """Set one parameter of a draft's module.
+
+    Args:
+        model_conf: The draft being edited.
+        module_id: The module holding the parameter.
+        parameter_path: The parameter's path within the module.
+        value: The new value.
+    """
     if not parameter_path:
         raise ModelInspectorError(
             "invalid_parameter_path",
@@ -314,6 +385,14 @@ def set_draft_module_parameter(
 
 
 def validate_draft_module_config(model_conf: Any) -> tuple[DraftValidationIssue, ...]:
+    """Check a draft for configurations that would fail to build.
+
+    Args:
+        model_conf: The draft to check.
+
+    Returns:
+        The issues found, empty when the draft is buildable.
+    """
     issues: list[DraftValidationIssue] = []
     brain_conf = _get_brain_conf("<draft>", model_conf)
     memory_conf = _module_conf(brain_conf, "memory")
@@ -408,6 +487,14 @@ def validate_draft_module_config(model_conf: Any) -> tuple[DraftValidationIssue,
 
 
 def _is_positive_real(value: Any) -> bool:
+    """Report whether a value is a positive finite number.
+
+    Args:
+        value: The value to test.
+
+    Returns:
+        True when it is positive and finite.
+    """
     return isinstance(value, Real) and not isinstance(value, bool) and value > 0
 
 
@@ -415,6 +502,15 @@ def inspect_model_modules_from_config(
     model_id: str,
     model_conf: Any,
 ) -> tuple[ModelModuleSpec, ...]:
+    """Inspect the modules of a model configuration.
+
+    Args:
+        model_id: The model's name, used in the result.
+        model_conf: The configuration to inspect.
+
+    Returns:
+        One inspection per module.
+    """
     brain_conf = _get_brain_conf(model_id, model_conf)
 
     specs: list[ModelModuleSpec] = []
@@ -430,14 +526,32 @@ def inspect_model_modules_from_config(
 
 
 def inspect_model_modules(model_id: str) -> tuple[ModelModuleSpec, ...]:
+    """Inspect the modules of a stored model.
+
+    Args:
+        model_id: The model to inspect.
+
+    Returns:
+        One inspection per module.
+    """
     return inspect_model_modules_from_config(model_id, load_model_draft(model_id))
 
 
 def list_model_ids() -> list[str]:
+    """The stored models available for inspection."""
     return list(reg.conf.Model.confIDs)
 
 
 def inspect_model_from_config(model_id: str, model_conf: Any) -> ModelInspection:
+    """Inspect a model configuration in full.
+
+    Args:
+        model_id: The model's name, used in the result.
+        model_conf: The configuration to inspect.
+
+    Returns:
+        The inspection.
+    """
     brain_conf = _get_brain_conf(model_id, model_conf)
 
     baseline: list[ModuleInspection] = []
@@ -471,17 +585,42 @@ def inspect_model_from_config(model_id: str, model_conf: Any) -> ModelInspection
 
 
 def inspect_model(model_id: str) -> ModelInspection:
+    """Inspect a stored model in full.
+
+    Args:
+        model_id: The model to inspect.
+
+    Returns:
+        The inspection.
+    """
     return inspect_model_from_config(model_id, load_model_draft(model_id))
 
 
 def build_inspection_brain_from_config(
     model_id: str, model_conf: Any, *, dt: float = 0.1
 ) -> DefaultBrain:
+    """Build a brain from a configuration, for inspection.
+
+    Args:
+        model_id: The model's name, used in error messages.
+        model_conf: The configuration to build.
+
+    Returns:
+        The constructed brain.
+    """
     brain_conf = _get_brain_conf(model_id, model_conf)
     return DefaultBrain(conf=brain_conf, agent=_inspection_agent(model_id, dt), dt=dt)
 
 
 def build_inspection_brain(model_id: str, *, dt: float = 0.1) -> DefaultBrain:
+    """Build a stored model's brain, for inspection.
+
+    Args:
+        model_id: The model to build.
+
+    Returns:
+        The constructed brain.
+    """
     return build_inspection_brain_from_config(
         model_id, load_model_draft(model_id), dt=dt
     )
@@ -491,6 +630,15 @@ def compare_model_inspections(
     primary: ModelInspection,
     comparison: ModelInspection,
 ) -> list[ModuleComparison]:
+    """Compare two inspected models module by module.
+
+    Args:
+        primary: The model compared against.
+        comparison: The model compared to it.
+
+    Returns:
+        One comparison row per module.
+    """
     module_ids = _ordered_module_ids(primary, comparison)
     primary_map = _module_map(primary)
     comparison_map = _module_map(comparison)
@@ -518,6 +666,36 @@ def compare_model_inspections(
     return diffs
 
 
+def compare_model_inspections_many(
+    inspections: list[ModelInspection],
+) -> list[ModuleComparisonMany]:
+    """N-way generalization of compare_model_inspections: one row per
+    module, one ModuleInspection per model (primary first, i.e.
+    inspections[0]), with `changed` true if any non-primary model differs
+    from the primary in presence, mode, or parameters."""
+    module_ids = _ordered_module_ids(*inspections)
+    maps = [_module_map(inspection) for inspection in inspections]
+
+    rows: list[ModuleComparisonMany] = []
+    for module_id in module_ids:
+        members = tuple(
+            module_map.get(module_id) or _missing_module_inspection(module_id)
+            for module_map in maps
+        )
+        baseline = members[0]
+        changed = any(
+            (member.present, member.mode, member.parameters)
+            != (baseline.present, baseline.mode, baseline.parameters)
+            for member in members[1:]
+        )
+        rows.append(
+            ModuleComparisonMany(
+                module_id=module_id, inspections=members, changed=changed
+            )
+        )
+    return rows
+
+
 def run_model_probe(
     model_id: str,
     *,
@@ -526,6 +704,15 @@ def run_model_probe(
     a_in: float = 0.0,
     reporter_keys: tuple[str, ...] | None = None,
 ) -> ProbeResult:
+    """Run a model briefly and report the behaviour it produces.
+
+    Args:
+        model_id: The model to probe.
+        steps: How many timesteps to simulate.
+
+    Returns:
+        The recorded output, with any problems encountered.
+    """
     if steps <= 0:
         raise ModelInspectorError(
             "invalid_probe_steps",
@@ -627,6 +814,14 @@ def run_model_probe(
 
 
 def _get_model_conf(model_id: str) -> Any:
+    """Read a stored model's configuration.
+
+    Args:
+        model_id: The model to read.
+
+    Returns:
+        Its configuration.
+    """
     if model_id not in reg.conf.Model.confIDs:
         raise ModelInspectorError(
             "model_not_found",
@@ -637,6 +832,15 @@ def _get_model_conf(model_id: str) -> Any:
 
 
 def _get_brain_conf(model_id: str, model_conf: Any) -> Any:
+    """Read the brain section of a model configuration.
+
+    Args:
+        model_id: The model's name, used in error messages.
+        model_conf: The configuration to read.
+
+    Returns:
+        The brain configuration.
+    """
     try:
         brain_conf = model_conf.brain
     except Exception as exc:
@@ -649,10 +853,27 @@ def _get_brain_conf(model_id: str, model_conf: Any) -> Any:
 
 
 def _copy_config_value(value: Any) -> Any:
+    """Copy a configuration value so edits stay local.
+
+    Args:
+        value: The value to copy.
+
+    Returns:
+        An independent copy.
+    """
     return copy_config_value(value)
 
 
 def _has_module_config(model_conf: Any, module_id: str) -> bool:
+    """Report whether a draft configures one module.
+
+    Args:
+        model_conf: The draft.
+        module_id: The module.
+
+    Returns:
+        True when the module is present.
+    """
     try:
         return module_id in model_conf and model_conf[module_id] is not None
     except Exception:
@@ -660,6 +881,17 @@ def _has_module_config(model_conf: Any, module_id: str) -> bool:
 
 
 def _first_mode_or_raise(module_id: str) -> str:
+    """Return a module's first available mode.
+
+    Args:
+        module_id: The module.
+
+    Returns:
+        The mode name.
+
+    Raises:
+        ModelInspectorError: If the module offers no modes.
+    """
     modes = tuple(MD.mod_modes(module_id) or ())
     if not modes:
         raise ModelInspectorError(
@@ -671,6 +903,15 @@ def _first_mode_or_raise(module_id: str) -> str:
 
 
 def _conf_get(conf: Any, key: str) -> Any:
+    """Read a key from a configuration that may not be a mapping.
+
+    Args:
+        conf: The configuration.
+        key: The key to read.
+
+    Returns:
+        The value, or None when absent.
+    """
     if conf is None:
         return None
     if hasattr(conf, "get"):
@@ -682,6 +923,14 @@ def _conf_get(conf: Any, key: str) -> Any:
 
 
 def _memory_modalities_for_mode(mode: str) -> tuple[str, ...]:
+    """The modalities one learning algorithm supports.
+
+    Args:
+        mode: The learning algorithm.
+
+    Returns:
+        The supported modalities.
+    """
     modal_map = MD.BrainModuleModes["memory"].get(mode)
     if modal_map is None:
         raise ModelInspectorError(
@@ -693,6 +942,14 @@ def _memory_modalities_for_mode(mode: str) -> tuple[str, ...]:
 
 
 def _is_valid_memory_conf(conf: Any) -> bool:
+    """Report whether a memory configuration can be built.
+
+    Args:
+        conf: The memory configuration.
+
+    Returns:
+        True when its algorithm and modality pair is supported.
+    """
     if conf is None:
         return False
     mode = _conf_get(conf, "mode")
@@ -707,6 +964,15 @@ def _is_valid_memory_conf(conf: Any) -> bool:
 
 
 def _resolve_memory_mode(requested_mode: str | None, current_memory: Any) -> str:
+    """Choose the memory algorithm to apply.
+
+    Args:
+        requested_mode: The mode asked for, if any.
+        current_memory: The draft's current memory configuration.
+
+    Returns:
+        The resolved mode.
+    """
     if requested_mode is not None:
         if requested_mode not in MD.BrainModuleModes["memory"]:
             raise ModelInspectorError(
@@ -727,6 +993,20 @@ def _resolve_memory_modality(
     mode: str,
     supported_modalities: tuple[str, ...],
 ) -> str:
+    """Choose the memory modality to apply.
+
+    The requested modality is kept when the algorithm supports it; otherwise
+    the current one is kept, and failing that the algorithm's first.
+
+    Args:
+        requested_modality: The modality asked for, if any.
+        current_memory: The draft's current memory configuration.
+        mode: The resolved learning algorithm.
+        supported_modalities: What that algorithm supports.
+
+    Returns:
+        The resolved modality.
+    """
     if requested_modality is not None:
         if requested_modality not in supported_modalities:
             raise ModelInspectorError(
@@ -746,6 +1026,15 @@ def _resolve_memory_modality(
 
 
 def _draft_module_conf(model_conf: Any, module_id: str) -> Any:
+    """Read one module's configuration from a draft.
+
+    Args:
+        model_conf: The draft.
+        module_id: The module.
+
+    Returns:
+        The module configuration, or None when absent.
+    """
     if module_id in MD.BrainMods:
         brain_conf = _get_brain_conf("<draft>", model_conf)
         module_conf = _module_conf(brain_conf, module_id)
@@ -773,6 +1062,15 @@ def _draft_module_conf(model_conf: Any, module_id: str) -> Any:
 
 
 def _inspection_agent(model_id: str, dt: float) -> SimpleNamespace:
+    """Build a throwaway agent for inspecting a model.
+
+    Args:
+        model_id: The model to build.
+        dt: The timestep.
+
+    Returns:
+        The agent.
+    """
     model_stub = SimpleNamespace(id=model_id, dt=dt)
     return SimpleNamespace(
         model=model_stub,
@@ -786,6 +1084,15 @@ def _inspection_agent(model_id: str, dt: float) -> SimpleNamespace:
 
 
 def _module_conf(brain_conf: Any, module_id: str) -> Any | None:
+    """Read one module's configuration from a brain configuration.
+
+    Args:
+        brain_conf: The brain configuration.
+        module_id: The module.
+
+    Returns:
+        The module configuration, or None when absent.
+    """
     try:
         if module_id not in brain_conf:
             return None
@@ -795,6 +1102,14 @@ def _module_conf(brain_conf: Any, module_id: str) -> Any | None:
 
 
 def _mode_labels(mode_options: tuple[str, ...]) -> dict[str, str]:
+    """Render mode names for display.
+
+    Args:
+        mode_options: The available modes.
+
+    Returns:
+        The display label per mode.
+    """
     labels: dict[str, str] = {}
     for mode in mode_options:
         acronym = _MODE_SHORT_NAMES.get(mode)
@@ -803,6 +1118,14 @@ def _mode_labels(mode_options: tuple[str, ...]) -> dict[str, str]:
 
 
 def _spec_parameters(module_conf: Any, *, excluded: set[str]) -> dict[str, Any]:
+    """Read the editable parameters of a module configuration.
+
+    Args:
+        module_conf: The module configuration.
+
+    Returns:
+        The parameters and their values.
+    """
     if module_conf is None or not hasattr(module_conf, "keys"):
         return {}
     return {
@@ -811,6 +1134,14 @@ def _spec_parameters(module_conf: Any, *, excluded: set[str]) -> dict[str, Any]:
 
 
 def _module_group(module_id: str) -> tuple[str, str, bool]:
+    """The group a module is displayed under.
+
+    Args:
+        module_id: The module.
+
+    Returns:
+        The group name.
+    """
     if module_id == "feeder":
         return ("Nervous System", "Locomotion", False)
     if module_id in LOCOMOTION_MODULES:
@@ -825,6 +1156,14 @@ def _module_group(module_id: str) -> tuple[str, str, bool]:
 
 
 def _brain_module_spec(*, brain_conf: Any, module_id: str) -> ModelModuleSpec:
+    """Build the spec describing one brain module.
+
+    Args:
+        module_id: The module to describe.
+
+    Returns:
+        The spec, listing its modes and parameters.
+    """
     module_conf = _module_conf(brain_conf, module_id)
     present = module_conf is not None
     group, subgroup, is_core = _module_group(module_id)
@@ -851,6 +1190,11 @@ def _brain_module_spec(*, brain_conf: Any, module_id: str) -> ModelModuleSpec:
 
 
 def _memory_module_spec(*, brain_conf: Any) -> ModelModuleSpec:
+    """Build the spec describing the memory module.
+
+    Returns:
+        The spec, listing its algorithms and modalities.
+    """
     module_conf = _module_conf(brain_conf, "memory")
     present = module_conf is not None
     memory_modes = tuple(MD.BrainModuleModes["memory"].keys())
@@ -893,6 +1237,14 @@ def _memory_module_spec(*, brain_conf: Any) -> ModelModuleSpec:
 
 
 def _larva_module_spec(*, model_conf: Any, module_id: str) -> ModelModuleSpec:
+    """Build the spec describing one body module.
+
+    Args:
+        module_id: The module to describe.
+
+    Returns:
+        The spec.
+    """
     module_conf = None
     try:
         if module_id in model_conf:
@@ -922,6 +1274,15 @@ def _larva_module_spec(*, model_conf: Any, module_id: str) -> ModelModuleSpec:
 def _build_module_inspection(
     *, brain_conf: Any, module_id: str, is_baseline: bool
 ) -> ModuleInspection:
+    """Build the inspection record for one module.
+
+    Args:
+        module_id: The module.
+        module_conf: Its configuration.
+
+    Returns:
+        The inspection.
+    """
     module_conf = _module_conf(brain_conf, module_id)
     if module_conf is None:
         return _missing_module_inspection(module_id, is_baseline=is_baseline)
@@ -947,6 +1308,14 @@ def _build_module_inspection(
 def _missing_module_inspection(
     module_id: str, *, is_baseline: bool = False
 ) -> ModuleInspection:
+    """Build the inspection record for a module a model omits.
+
+    Args:
+        module_id: The absent module.
+
+    Returns:
+        The inspection, marked as not present.
+    """
     return ModuleInspection(
         module_id=module_id,
         display_name=module_id.replace("_", " ").title(),
@@ -958,16 +1327,30 @@ def _missing_module_inspection(
 
 
 def _module_map(inspection: ModelInspection) -> dict[str, ModuleInspection]:
+    """Index an inspection's modules by their identifier.
+
+    Args:
+        inspection: The model inspection.
+
+    Returns:
+        The modules, keyed by ID.
+    """
     modules = inspection.baseline_modules + inspection.optional_modules
     return {module.module_id: module for module in modules}
 
 
-def _ordered_module_ids(
-    primary: ModelInspection, comparison: ModelInspection
-) -> list[str]:
+def _ordered_module_ids(*inspections: ModelInspection) -> list[str]:
+    """Order the modules of several inspections for display.
+
+    Args:
+        *inspections: The inspections to cover.
+
+    Returns:
+        The module IDs, in the canonical display order.
+    """
     ids: list[str] = list(BASELINE_MODULES)
     seen = set(ids)
-    for inspection in (primary, comparison):
+    for inspection in inspections:
         for module in inspection.optional_modules:
             if module.module_id in seen:
                 continue

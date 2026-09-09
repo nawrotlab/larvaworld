@@ -1,3 +1,10 @@
+"""
+Food and odor sources placed in the arena.
+
+Provides the point and patch sources the agents feed from and navigate towards,
+together with the odor they emit into the environment's value grids.
+"""
+
 from __future__ import annotations
 from typing import Any
 
@@ -56,6 +63,11 @@ class Source(PointAgent):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the source.
+
+        Args:
+            **kwargs: Source attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.is_carried_by = None
 
@@ -63,6 +75,11 @@ class Source(PointAgent):
         # self._fixtures[0].filterData.groupIndex = -1
 
     def step(self) -> None:
+        """Advance the source by one timestep.
+
+        A displaceable source is carried by the wind when the environment
+        defines one.
+        """
         if self.can_be_displaced:
             w = self.model.windscape
             if w is not None:
@@ -108,6 +125,11 @@ class Food(Source):
     substrate = ClassAttr(Substrate, doc="The substrate where the agent feeds")
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the food source and record its starting amount.
+
+        Args:
+            **kwargs: Source attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.initial_amount = self.amount
 

@@ -36,6 +36,7 @@ _MPL_CONFIGURED = False
 
 
 def _ensure_matplotlib_config():
+    """Apply the package's matplotlib defaults once per session."""
     global _MPL_CONFIGURED
     if not _MPL_CONFIGURED:
         from matplotlib import pyplot as plt  # local import
@@ -93,6 +94,11 @@ class BasePlot:
         build_kws: Dict[str, Any] = {},
         **kwargs: Any,
     ) -> None:
+        """Build the plot and its figure.
+
+        Args:
+            **kwargs: Forwarded to the parent class.
+        """
         if save_as is None:
             if pref:
                 name = f"{pref}_{name}"
@@ -110,6 +116,11 @@ class BasePlot:
 
         self.return_fig = return_fig
         self.show = show
+        # A copy: `build_kws` is the caller's dict, and when the argument is
+        # omitted it is the shared default of this constructor, so both the
+        # subplot settings and the resolved Ndatasets/Nks below would persist
+        # into every later plot built without an explicit `build_kws`.
+        build_kws = dict(build_kws)
         build_kws["subplot_kw"] = subplot_kw
         self.build_kws = build_kws
         for k, v in self.build_kws.items():
@@ -162,14 +173,17 @@ class BasePlot:
 
     @property
     def Naxs(self) -> int:
+        """The number of axes in the figure."""
         return len(self.axs)
 
     @property
     def Ncols(self) -> int:
+        """The figure's column count."""
         return self.axs[0].get_gridspec().ncols
 
     @property
     def Nrows(self) -> int:
+        """The figure's row count."""
         return self.axs[0].get_gridspec().nrows
 
     def conf_ax(
@@ -215,6 +229,7 @@ class BasePlot:
         ytickMath: Optional[Tuple[int, int]] = None,
         xMaxFix: bool = False,
         leg_loc: Optional[str] = None,
+        leg_bbox_to_anchor: Optional[Tuple[float, float]] = None,
         leg_handles: Optional[Sequence[Any]] = None,
         leg_labels: Optional[Sequence[str]] = None,
         legfontsize: Optional[int] = None,
@@ -324,6 +339,8 @@ class BasePlot:
                 "loc": leg_loc,
                 "fontsize": legfontsize,
             }
+            if leg_bbox_to_anchor is not None:
+                kws["bbox_to_anchor"] = leg_bbox_to_anchor
             if leg_handles is not None:
                 kws["handles"] = leg_handles
             if leg_labels is not None:
@@ -341,6 +358,11 @@ class BasePlot:
         tickpad: int = 5,
         idx: int = 0,
     ) -> None:
+        """Configure a three-dimensional axis.
+
+        Args:
+            **kwargs: Axis settings such as labels and limits.
+        """
         if lims is None:
             xlim, ylim, zlim = None, None, None
         else:
@@ -372,6 +394,14 @@ class BasePlot:
         W: Optional[float] = None,
         H: Optional[float] = None,
     ) -> None:
+        """Adjust the figure's margins and spacing.
+
+        Args:
+            LR: The left and right margins.
+            BT: The bottom and top margins.
+            W: The width spacing between axes.
+            H: The height spacing.
+        """
         kws = {}
         if LR is not None:
             kws["left"] = LR[0]
@@ -386,9 +416,19 @@ class BasePlot:
         self.fig.subplots_adjust(**kws)
 
     def set(self, fig: "Figure") -> None:
+        """Attach a figure to this plot.
+
+        Args:
+            fig: The figure to attach.
+        """
         self.fig = fig
 
     def get(self) -> Any:
+        """Finalize the plot and return its figure.
+
+        Returns:
+            The rendered figure.
+        """
         if self.fit_df is not None and self.save_to is not None:
             self.fit_df.to_csv(
                 os.path.join(self.save_to, self.fit_filename), index=True, header=True
@@ -404,6 +444,11 @@ class BasePlot:
         title: Optional[str] = None,
         title_kws: Dict[str, Any] = {},
     ) -> None:
+        """Apply figure-level settings.
+
+        Args:
+            **kwargs: Figure settings such as the title and legend.
+        """
         if title is not None:
             pairs = {
                 # 't':'t',
@@ -451,6 +496,11 @@ class AutoBasePlot(BasePlot):
         elev: int = 15,
         **kwargs: Any,
     ) -> None:
+        """Build the plot with an auto-generated layout.
+
+        Args:
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
         self.build(fig=fig, axs=axs, dim3=dim3, azim=azim, elev=elev)
@@ -495,6 +545,11 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
         space_unit: str = "mm",
         **kwargs: Any,
     ) -> None:
+        """Build the dataset-aware plot.
+
+        Args:
+            **kwargs: Forwarded to the parent class.
+        """
         LarvaDatasetCollection.__init__(
             self,
             datasets=datasets,
@@ -555,6 +610,11 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
         AutoBasePlot.__init__(self, **kwargs)
 
     def comp_all_pvalues(self) -> None:
+        """Compute the pairwise significance between datasets.
+
+        Args:
+            **kwargs: The values compared and the test used.
+        """
         if self.Ndatasets < 2:
             return
         columns = pd.MultiIndex.from_product(
@@ -580,6 +640,7 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
                 self.fit_df.loc[ind, k] = [t, st, np.round(pv, 11)]
 
     def plot_all_half_circles(self) -> None:
+        """Mark every significant dataset pair on the axis."""
         if self.fit_df is None:
             return
         for i, k in enumerate(self.ks):
@@ -608,6 +669,11 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
         pv: float,
         coef: int = 0,
     ) -> bool:
+        """Mark one significant dataset pair on the axis.
+
+        Args:
+            **kwargs: The pair and its significance level.
+        """
         res = True
         if v == 1:
             c1, c2 = col1, col2
@@ -657,6 +723,11 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
         Nagents_in_label: bool = True,
         **kwargs: Any,
     ) -> Any:
+        """Add the legend identifying each dataset.
+
+        Args:
+            **kwargs: Legend placement and styling.
+        """
         if labels is None:
             if not Nagents_in_label:
                 labels = self.labels
@@ -696,6 +767,7 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
         ylab: Optional[str] = None,
         unit: str = "sec",
         leg_loc: str = "upper left",
+        leg_bbox_to_anchor: Optional[Tuple[float, float]] = None,
         coeff: float = 1,
         absolute: bool = False,
         individuals: bool = False,
@@ -703,6 +775,11 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
         Nagents_in_label: bool = True,
         **kwargs: Any,
     ) -> None:
+        """Plot a parameter's median and its inter-quantile band.
+
+        Args:
+            **kwargs: The parameter and the quantiles shown.
+        """
         x = self.trange(unit)
         if ax is None:
             ax = self.axs[idx]
@@ -767,6 +844,7 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
             xMaxN=5,
             yMaxN=5,
             leg_loc=leg_loc,
+            leg_bbox_to_anchor=leg_bbox_to_anchor,
             **kwargs,
         )
 
@@ -781,6 +859,11 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
         Nagents_in_label: bool = True,
         **kwargs: Any,
     ) -> None:
+        """Plot a parameter's distribution.
+
+        Args:
+            **kwargs: The parameter and the binning used.
+        """
         loc = "upper left" if half_circles else "upper right"
         for i, k in enumerate(self.ks):
             p = self.pdict[k]
@@ -838,6 +921,11 @@ class AutoPlot(AutoBasePlot, LarvaDatasetCollection):
         ylims: Optional[Sequence[Sequence[float]]] = None,
         **kwargs: Any,
     ) -> None:
+        """Plot a parameter as one box per dataset.
+
+        Args:
+            **kwargs: The parameter and the box styling.
+        """
         if not grouped:
             hue = None
             palette = dict(zip(self.labels, self.colors))
@@ -906,6 +994,11 @@ class GridPlot(BasePlot):
         scale: Tuple[int, int] = (1, 1),
         **kwargs: Any,
     ) -> None:
+        """Build the composite grid figure.
+
+        Args:
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(name, **kwargs)
         ws, hs = scale
         self.width, self.height = width, height
@@ -939,6 +1032,11 @@ class GridPlot(BasePlot):
         cols_first: bool = False,
         annotate_all: bool = False,
     ) -> "Axes | list[Axes]":
+        """Place a sub-plot in the grid.
+
+        Args:
+            **kwargs: The sub-plot and the cells it occupies.
+        """
         if w0 is None:
             w0 = self.cur_w
         if h0 is None:
@@ -1014,6 +1112,12 @@ class GridPlot(BasePlot):
     def add_letter(
         self, ax: "Axes", letter: bool = True, x0: bool = False, y0: bool = False
     ) -> None:
+        """Label a sub-plot with its panel letter.
+
+        Args:
+            ax: The axis to label.
+            letter: Whether to draw the label.
+        """
         if letter:
             self.letter_dict[ax] = self.letters[self.cur_idx]
             self.cur_idx += 1
@@ -1025,6 +1129,7 @@ class GridPlot(BasePlot):
     def annotate(
         self, dx: float = -0.05, dy: float = 0.005, full_dict: bool = False
     ) -> None:
+        """Label every sub-plot with its panel letter."""
         text_x0, text_y0 = 0.05, 0.98
 
         if full_dict:
@@ -1042,6 +1147,11 @@ class GridPlot(BasePlot):
         axs: Optional[Sequence["Axes"]] = None,
         **kwargs: Any,
     ) -> Any:
+        """Render the sub-plots into the grid.
+
+        Args:
+            **kwargs: Forwarded to the individual plots.
+        """
         if axs is None:
             axs = self.add(**kwargs)
         _ = reg.graphs.run(ID=func, fig=self.fig, axs=axs, **kws)

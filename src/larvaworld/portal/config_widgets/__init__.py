@@ -1,3 +1,10 @@
+"""
+Reusable widgets for editing stored configurations.
+
+Exposes the per-conftype editors, the preset managers and the field-level
+widgets the portal apps build their forms from.
+"""
+
 from .arena_widget import build_area_widget
 from .border_widget import build_border_widget
 from .conftype_actions import ConftypeActionsController, build_conftype_actions

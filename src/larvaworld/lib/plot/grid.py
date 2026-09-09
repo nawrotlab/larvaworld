@@ -88,7 +88,7 @@ def calibration_plot(
         ax.axis("off")
         ax.imshow(im, cmap=None, aspect=None)
     filepath = os.path.join(save_to, filename)
-    fig.savefig(filepath, dpi=300, facecolor=None)
+    fig.savefig(filepath, dpi=300, facecolor=None, bbox_inches="tight", pad_inches=0.1)
 
     return fig
 
@@ -282,7 +282,7 @@ def velocity_definition(
     fig.subplots_adjust(
         hspace=0.1, wspace=0.5, bottom=0.1, top=0.9, left=0.07, right=0.95
     )
-    fig.savefig(f"{save_to}/{save_as}", dpi=300)
+    fig.savefig(f"{save_to}/{save_as}", dpi=300, bbox_inches="tight", pad_inches=0.1)
 
 
 @funcs.graph(
@@ -408,7 +408,7 @@ def dsp_summary(
     )
     P.plot(
         func="dispersal",
-        kws={"range": range, **kws},
+        kws={"range": range, "leg_bbox_to_anchor": (1.02, 1.0), **kws},
         N=1,
         w=16,
         h0=14,
@@ -436,6 +436,14 @@ def dsp_summary(
     required={"graphIDs": ["freq powerspectrum", "epochs", "stride cycle multi"]},
 )
 def kinematic_analysis(datasets: Sequence[Any], **kwargs: Any) -> Any:
+    """Build the composite kinematic analysis figure.
+
+    Args:
+        **kwargs: The datasets and layout options.
+
+    Returns:
+        The rendered figure.
+    """
     w, h = 50, 28
     P = plot.GridPlot(
         name="kinematic_analysis",

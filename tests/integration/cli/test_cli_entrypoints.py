@@ -1,4 +1,6 @@
 import subprocess
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
@@ -24,6 +26,39 @@ def test_cli_entrypoint():
     result = subprocess.run("larvaworld --help", capture_output=True, shell=True)
     assert result.returncode == 0
     assert b"usage: larvaworld [-h]" in result.stdout
+
+
+def test_cli_rerun_manifest(monkeypatch, capsys, tmp_path: Path):
+    from larvaworld.lib.sim import manifest as manifest_module
+
+    target = tmp_path / "rerun" / "run_manifest.json"
+    rerun = Mock(return_value=SimpleNamespace(manifest_path=target))
+    monkeypatch.setattr(manifest_module, "rerun_from_manifest", rerun)
+
+    main(
+        cli_args=[
+            "rerun",
+            "source/run_manifest.json",
+            "--reproducibility",
+            "parameters",
+            "--output-dir",
+            str(tmp_path / "rerun"),
+            "--allow-version-mismatch",
+            "--with-media",
+            "--input",
+            "replay_source=/new/input",
+        ]
+    )
+
+    rerun.assert_called_once_with(
+        "source/run_manifest.json",
+        reproducibility="parameters",
+        output_dir=str(tmp_path / "rerun"),
+        allow_version_mismatch=True,
+        input_overrides={"replay_source": "/new/input"},
+        with_media=True,
+    )
+    assert str(target) in capsys.readouterr().out
 
 
 def test_cli_experiment_args():

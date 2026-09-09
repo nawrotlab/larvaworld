@@ -16,6 +16,20 @@ _NAME_TO_MODULE: dict[str, str] = {"Arena": "larvaworld.lib.model.envs.arena"}
 
 
 def __getattr__(name: str) -> Any:
+    """Resolve a public name by importing its module on first access.
+
+    Keeps package import lightweight by deferring the submodule imports until
+    one of their exported names is actually used.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved object.
+
+    Raises:
+        AttributeError: If no submodule exports that name.
+    """
     module_path = _NAME_TO_MODULE.get(name)
     if module_path is None:
         # Defer legacy star-imports on first unknown attribute access
@@ -44,4 +58,5 @@ def __getattr__(name: str) -> Any:
 
 
 def __dir__() -> list[str]:
+    """Return the public names, including the not-yet-imported ones."""
     return sorted(list(globals().keys()) + __all__)

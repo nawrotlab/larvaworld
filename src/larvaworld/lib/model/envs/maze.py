@@ -1,3 +1,10 @@
+"""
+Maze generation for the 2D robot simulation.
+
+Builds a randomized maze out of wall segments, used as an obstacle course for
+the robot agents.
+"""
+
 from __future__ import annotations
 from typing import Any, List
 import random
@@ -183,6 +190,11 @@ class Maze:
 
     def make_maze(self) -> None:
         # Total number of cells.
+        """Carve the maze by randomized depth-first search.
+
+        Walls are removed between neighbouring cells as the search advances,
+        and the search backtracks whenever it reaches a dead end.
+        """
         n = self.nx * self.ny
         cell_stack = []
         current_cell = self.cell_at(self.ix, self.iy)
@@ -205,6 +217,11 @@ class Maze:
             nv += 1
 
     def maze_lines(self) -> list[LineString]:
+        """Return the maze walls as line geometries.
+
+        Returns:
+            One line per remaining wall, in image coordinates.
+        """
         lines = []
         # Scaling factors mapping maze coordinates to image coordinates
         scy, scx = self.height / self.ny, self.height / self.ny

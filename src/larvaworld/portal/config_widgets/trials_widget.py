@@ -1,3 +1,7 @@
+"""
+Widget for editing the trial schedule of an experiment.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -6,6 +10,7 @@ import panel as pn
 import param
 
 from larvaworld.lib import reg, util
+from larvaworld.portal.buttons import add_button, remove_button
 
 from .widget_base import collapsible_family_box, family_box, parameterized_editor
 
@@ -13,6 +18,14 @@ __all__ = ["build_trials_widget"]
 
 
 def _coerce_epoch_like(value: Any) -> param.Parameterized:
+    """Coerce a stored value into a life-history epoch.
+
+    Args:
+        value: The stored epoch.
+
+    Returns:
+        The typed epoch.
+    """
     if isinstance(value, param.Parameterized):
         return value
     if isinstance(value, dict):
@@ -21,6 +34,14 @@ def _coerce_epoch_like(value: Any) -> param.Parameterized:
 
 
 def _coerce_epochs_container(raw_epochs: Any) -> list[param.Parameterized]:
+    """Coerce a stored value into a set of epochs.
+
+    Args:
+        value: The stored epochs.
+
+    Returns:
+        The typed epochs.
+    """
     if raw_epochs is None:
         return []
     if isinstance(raw_epochs, dict):
@@ -31,6 +52,14 @@ def _coerce_epochs_container(raw_epochs: Any) -> list[param.Parameterized]:
 
 
 def _serialize_epochs(raw_epochs: Any, epochs: list[param.Parameterized]) -> Any:
+    """Convert typed epochs back into stored form.
+
+    Args:
+        epochs: The epochs to serialize.
+
+    Returns:
+        The stored representation.
+    """
     serialized = [util.AttrDict(epoch.nestedConf) for epoch in epochs]
     if isinstance(raw_epochs, util.ItemList):
         return util.ItemList(serialized)
@@ -40,10 +69,26 @@ def _serialize_epochs(raw_epochs: Any, epochs: list[param.Parameterized]) -> Any
 
 
 def _epoch_label(index: int) -> str:
+    """The label one epoch is listed under.
+
+    Args:
+        epoch: The epoch.
+
+    Returns:
+        The label.
+    """
     return f"Epoch {index + 1}"
 
 
 def _editable_epoch_names(epoch: param.Parameterized) -> list[str]:
+    """The epoch fields the editor exposes.
+
+    Args:
+        epoch: The epoch being edited.
+
+    Returns:
+        The field names.
+    """
     return [name for name in ("age_range", "substrate") if name in epoch.param]
 
 
@@ -52,6 +97,14 @@ def build_trials_widget(
     *,
     wrap: bool = True,
 ) -> object:
+    """Build the widget editing the trial schedule.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     state = {"syncing": False}
     current_trials = util.AttrDict(getattr(owner, "trials", {}) or {})
     raw_epochs = current_trials.get("epochs")
@@ -63,10 +116,8 @@ def build_trials_widget(
         value="",
         sizing_mode="stretch_width",
     )
-    add_button = pn.widgets.Button(name="Add epoch", button_type="primary", width=130)
-    delete_button = pn.widgets.Button(
-        name="Delete epoch", button_type="warning", width=130
-    )
+    add_btn = add_button(name="Add epoch", width=130)
+    delete_btn = remove_button(name="Delete epoch", width=130)
     editor_host = pn.Column(sizing_mode="stretch_width", margin=0)
 
     watchers: list[tuple[param.Parameterized, param.parameterized.Watcher]] = []
@@ -102,7 +153,7 @@ def build_trials_widget(
             if select.value not in options.values():
                 select.value = "0"
             select.disabled = False
-            delete_button.disabled = False
+            delete_btn.disabled = False
             current_epoch = epochs[int(select.value)]
             _watch_epoch(current_epoch)
             editor_host.objects = [
@@ -122,7 +173,7 @@ def build_trials_widget(
             select.options = {"No epochs yet": ""}
             select.value = ""
             select.disabled = True
-            delete_button.disabled = True
+            delete_btn.disabled = True
             editor_host.objects = [
                 pn.pane.HTML(
                     '<div class="lw-import-datasets-config-help">No epochs configured.</div>',
@@ -156,16 +207,16 @@ def build_trials_widget(
         _refresh()
 
     select.param.watch(lambda *_: _refresh(), "value")
-    add_button.on_click(_handle_add)
-    delete_button.on_click(_handle_delete)
+    add_btn.on_click(_handle_add)
+    delete_btn.on_click(_handle_delete)
     owner.param.watch(_handle_owner_trials_change, "trials")
     _refresh()
 
     content = pn.Column(
         select,
         pn.Row(
-            add_button,
-            delete_button,
+            add_btn,
+            delete_btn,
             align="end",
             css_classes=["lw-import-datasets-inline-action-row"],
             sizing_mode="stretch_width",

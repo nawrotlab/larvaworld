@@ -1,3 +1,11 @@
+"""
+Stored configurations for multi-experiment essays.
+
+An essay groups several related experiments into one study -- rover versus
+sitter, the double-patch assay, chemotaxis -- together with the analysis that
+compares their results.
+"""
+
 from __future__ import annotations
 from typing import Any, Optional
 
@@ -5,7 +13,7 @@ import shutil
 
 from .... import SIM_DIR
 from ... import reg, util, funcs
-from ...param import Larva_Distro
+from ...param import Larva_Distro, Life
 
 # LarvaGroup import - deep import required due to circular dependency
 from ...reg.larvagroup import LarvaGroup
@@ -20,6 +28,12 @@ __all__: list[str] = [
 
 
 class Essay:
+    """Base class for a multi-experiment study.
+
+    An essay runs a set of related experiments, then analyses their
+    datasets both individually and together.
+    """
+
     def __init__(
         self,
         type: str,
@@ -31,6 +45,16 @@ class Essay:
         show: bool = False,
         **kwargs: Any,
     ) -> None:
+        """Build the essay and resolve its output directory.
+
+        Args:
+            type: The essay's name.
+            enrichment: The enrichment applied to each experiment's dataset.
+            collections: The output groups recorded.
+            video: Whether to record video.
+            N: The number of larvae per group.
+            **kwargs: Further essay settings.
+        """
         if enrichment is None:
             enrichment = reg.gen.EnrichConf().nestedConf
         self.screen_kws = screen_kws
@@ -51,29 +75,73 @@ class Essay:
         self.results = {}
 
     def conf(self, exp: str, id: str, dur: float, lgs: Any, env: Any, **kwargs: Any):
-        return reg.gen.Exp(
+        """Build one experiment configuration for this essay.
+
+        Args:
+            exp: The experiment name.
+            id: The run identifier.
+            dur: The run duration in minutes.
+            lgs: The larva groups to place.
+            env: The environment configuration.
+            **kwargs: Further experiment settings.
+
+        Returns:
+            The experiment configuration.
+        """
+        c = reg.gen.Exp(
             duration=dur,
             env_params=env,
             larva_groups=lgs,
-            experiment=exp,
+            experiment=None,
             enrichment=self.enrichment,
             collections=self.collections,
             **kwargs,
         ).nestedConf
+        c["essay_run_label"] = id
+        return c
 
     def run(self):
+        """Run every experiment in the essay.
+
+        Returns:
+            The datasets produced, grouped by experiment.
+        """
         from ...sim import ExpRun
 
         print(f'Running essay "{self.essay_id}"')
         for exp, cs in self.exp_dict.items():
             print(f"Running {len(cs)} versions of experiment {exp}")
             self.datasets[exp] = [
-                ExpRun(parameters=c, screen_kws=self.screen_kws).simulate() for c in cs
+                ExpRun(
+                    id=self._generate_run_id(c.pop("essay_run_label", None)),
+                    parameters=c,
+                    screen_kws=self.screen_kws,
+                ).simulate()
+                for c in cs
             ]
 
         return self.datasets
 
+    def _generate_run_id(self, label: Optional[str]) -> Optional[str]:
+        """Generate a run identifier for one of the essay's experiments.
+
+        Args:
+            exp: The experiment name.
+
+        Returns:
+            The run identifier.
+        """
+        if label is None:
+            return None
+        idx = reg.config.next_idx(label, conftype="Exp")
+        return f"{label}_{idx}"
+
     def anal(self):
+        """Analyse the essay's results and render its figures.
+
+        Returns:
+            The rendered figures.
+        """
         self.global_anal()
         # raise
         for exp, ds0 in self.datasets.items():
@@ -88,15 +156,41 @@ class Essay:
         return self.figs, self.results
 
     def analyze(self, exp, ds0):
+        """Analyse one experiment's datasets.
+
+        Args:
+            exp: The experiment name.
+            ds0: The datasets it produced.
+
+        Returns:
+            The figures and any derived results.
+        """
         pass
         # return {}, None
 
     def global_anal(self):
+        """Analyse the essay's experiments together.
+
+        Returns:
+            The cross-experiment figures.
+        """
         pass
 
 
 class RvsS_Essay(Essay):
+    """The rover-versus-sitter feeding essay.
+
+    Compares the two foraging strategies across path length, food intake,
+    starvation, substrate quality and refeeding.
+    """
+
     def __init__(self, all_figs=False, N=1, **kwargs):
+        """Build the rover-versus-sitter essay.
+
+        Args:
+            all_figs: Whether to render the full figure set.
+            **kwargs: Further essay settings.
+        """
         super().__init__(
             type="RvsS",
             N=N,
@@ -128,6 +222,14 @@ class RvsS_Essay(Essay):
         self.mdiff_df, row_colors = diff_df(mIDs=["rover", "sitter"])
 
     def RvsS_env(self, on_food=True):
+        """Build the essay's environment.
+
+        Args:
+            on_food: Whether food is present.
+
+        Returns:
+            The environment configuration.
+        """
         grid = reg.gen.FoodGrid() if on_food else None
         return reg.gen.Env(
             arena=reg.gen.Arena(geometry="rectangular", dims=(0.02, 0.02)),
@@ -135,9 +237,25 @@ class RvsS_Essay(Essay):
         ).nestedConf
 
     def GTRvsS(self, **kwargs):
+        """Build the rover and sitter larva groups.
+
+        Args:
+            **kwargs: Group settings.
+
+        Returns:
+            The group entries.
+        """
         return reg.larvagroup.GTRvsS(expand=True, N=self.N, **kwargs)
 
     def pathlength_exp(self):
+        """Build the path-length experiment.
+
+        Args:
+            **kwargs: Experiment settings overriding the defaults.
+
+        Returns:
+            The experiment entry, comparing distance covered on and off food.
+        """
         dur = self.dur_pathlength
         exp = "PATHLENGTH"
         confs = []
@@ -153,6 +271,14 @@ class RvsS_Essay(Essay):
         return {exp: confs}
 
     def intake_exp(self):
+        """Build the food-intake experiment.
+
+        Args:
+            **kwargs: Experiment settings overriding the defaults.
+
+        Returns:
+            The experiment entry, comparing cumulative intake.
+        """
         exp = "AD LIBITUM INTAKE"
         confs = []
         for dur in self.durs:
@@ -167,6 +293,14 @@ class RvsS_Essay(Essay):
         return {exp: confs}
 
     def starvation_exp(self):
+        """Build the starvation experiment.
+
+        Args:
+            **kwargs: Experiment settings overriding the defaults.
+
+        Returns:
+            The experiment entry, comparing intake after increasing starvation.
+        """
         exp = "POST-STARVATION INTAKE"
         confs = []
         for h in self.hs:
@@ -181,6 +315,14 @@ class RvsS_Essay(Essay):
         return {exp: confs}
 
     def quality_exp(self):
+        """Build the substrate-quality experiment.
+
+        Args:
+            **kwargs: Experiment settings overriding the defaults.
+
+        Returns:
+            The experiment entry, comparing intake across substrate qualities.
+        """
         exp = "REARING-DEPENDENT INTAKE"
         confs = []
         for q in self.qs:
@@ -195,6 +337,14 @@ class RvsS_Essay(Essay):
         return {exp: confs}
 
     def refeeding_exp(self):
+        """Build the refeeding experiment.
+
+        Args:
+            **kwargs: Experiment settings overriding the defaults.
+
+        Returns:
+            The experiment entry, comparing intake when food is restored.
+        """
         exp = "REFEEDING AFTER 3h STARVED"
         h = self.h_refeeding
         dur = self.dur_refeeding
@@ -208,6 +358,18 @@ class RvsS_Essay(Essay):
         return {exp: [self.conf(**kws)]}
 
     def get_entrylist(self, datasets, substrates, durs, qs, hs, G):
+        """Build the experiment entries for one condition sweep.
+
+        Args:
+            durs: The run durations.
+            qs: The substrate qualities.
+            hs: The starvation durations.
+            N: The number of larvae per group.
+            age: The larvae's age.
+
+        Returns:
+            The experiment entries.
+        """
         entrylist = []
         pathlength_ls = util.flatten_list(
             [[rf'{s} $for^{"R"}$', rf'{s} $for^{"S"}$'] for s in substrates]
@@ -271,6 +433,11 @@ class RvsS_Essay(Essay):
         return entrylist
 
     def global_anal(self):
+        """Render the essay's cross-experiment figures.
+
+        Returns:
+            The rendered figures.
+        """
         self.entrylist = self.get_entrylist(
             datasets=self.datasets,
             substrates=self.substrates,
@@ -293,6 +460,15 @@ class RvsS_Essay(Essay):
             self.figs[e["key"]] = reg.graphs.run(ID=e["plotID"], **e["args"], **kwargs)
 
     def analyze(self, exp, ds0):
+        """Analyse one experiment of the essay.
+
+        Args:
+            exp: The experiment name.
+            ds0: The datasets it produced.
+
+        Returns:
+            The figures and any derived results.
+        """
         if self.all_figs:
             entry = [e for e in self.entrylist if e["name"] == exp][0]
             kws = entry["args"]
@@ -387,6 +563,12 @@ class RvsS_Essay(Essay):
 
 
 class DoublePatch_Essay(Essay):
+    """The double-patch foraging essay.
+
+    Places larvae between two food patches and compares how long each
+    group spends on each, across substrate qualities.
+    """
+
     def __init__(
         self,
         substrates=["sucrose", "standard", "cornmeal"],
@@ -399,6 +581,17 @@ class DoublePatch_Essay(Essay):
         patch_radius=0.025,
         **kwargs,
     ):
+        """Build the double-patch essay.
+
+        Args:
+            substrates: The substrate qualities compared.
+            N: The number of larvae per group.
+            dur: The run duration in minutes.
+            olfactor: Whether the larvae can smell.
+            feeder: Whether the larvae can feed.
+            variable_habit: Whether feeding habit varies between groups.
+            **kwargs: Further essay settings.
+        """
         super().__init__(
             N=N,
             type="DoublePatch",
@@ -435,28 +628,42 @@ class DoublePatch_Essay(Essay):
         self.mdiff_df, row_colors = diff_df(mIDs=self.mID0s, ms=self.ms)
 
     def get_larvagroups(self, age=120.0):
-        def lg(id=None, **kwargs):
-            l = reg.gen.LarvaGroup(**kwargs)
-            if id is None:
-                id = l.model
-            return l.entry(id)
+        """Build the essay's larva groups.
 
-        kws0 = {
-            "N": self.N,
-            "s": (0.005, 0.005),
-            "sample": reg.default_refID,
-            "age": age,
-            "epochs": {"0": reg.gen.Epoch(age_range=(0.0, age)).nestedConf},
-        }
+        Args:
+            age: The larvae's age.
+
+        Returns:
+            The group entries.
+        """
+
+        def lg(id, c, mID):
+            l = reg.gen.LarvaGroup(
+                group_id=id,
+                model=mID,
+                color=c,
+                distribution={"N": self.N, "scale": (0.005, 0.005)},
+                life_history=Life(age=age),
+                sample=reg.default_refID,
+            )
+            return l.entry()
 
         return util.AttrDict.merge_dicts(
             [
-                lg(id=id, c=c, mID=mID, **kws0)
+                lg(id=id, c=c, mID=mID)
                 for mID, c, id in zip(self.mIDs, ["blue", "red"], ["rover", "sitter"])
             ]
         )
 
     def get_sources(self, type="standard", q=1.0, Cpeak=2.0, Cscale=0.0002):
+        """Build the two food patches.
+
+        Args:
+            type: The substrate they hold.
+
+        Returns:
+            The source entries.
+        """
         kws0 = {
             "r": self.patch_radius,
             "c": "green",
@@ -474,6 +681,14 @@ class DoublePatch_Essay(Essay):
         )
 
     def patch_env(self, type="standard", q=1.0, o="G"):
+        """Build the two-patch environment.
+
+        Args:
+            type: The substrate the patches hold.
+
+        Returns:
+            The environment configuration.
+        """
         if o == "G":
             odorscape = reg.gen.GaussianValueLayer()
             Cpeak, Cscale = 2.0, 0.0002
@@ -494,6 +709,11 @@ class DoublePatch_Essay(Essay):
 
     def time_ratio_exp(self):
         # exp = 'double_patch'
+        """Build the patch-residency experiments, one per substrate.
+
+        Returns:
+            The experiment entries.
+        """
         confs = {}
         for n in self.substrates:
             kws = {
@@ -510,6 +730,11 @@ class DoublePatch_Essay(Essay):
         return util.AttrDict(confs)
 
     def global_anal(self):
+        """Render the essay's cross-experiment figures.
+
+        Returns:
+            The rendered figures.
+        """
         kwargs = {
             "datasets": self.datasets,
             "save_to": self.plot_dir,
@@ -529,11 +754,31 @@ class DoublePatch_Essay(Essay):
         )
 
     def analyze(self, exp, ds0):
+        """Analyse one experiment of the essay.
+
+        Args:
+            exp: The experiment name.
+            ds0: The datasets it produced.
+
+        Returns:
+            The figures and any derived results.
+        """
         pass
 
 
 class Chemotaxis_Essay(Essay):
+    """The chemotaxis essay.
+
+    Compares how model variants navigate an odor gradient.
+    """
+
     def __init__(self, dur=5.0, gain=300.0, mode=1, **kwargs):
+        """Build the chemotaxis essay.
+
+        Args:
+            dur: The run duration in minutes.
+            **kwargs: Further essay settings.
+        """
         super().__init__(
             type="Chemotaxis", enrichment=reg.gen.EnrichConf.source_proc(), **kwargs
         )
@@ -557,6 +802,14 @@ class Chemotaxis_Essay(Essay):
         self.exp_dict = self.chemo_exps(self.models)
 
     def get_models1(self, gain):
+        """Build the model set comparing olfactory gain.
+
+        Args:
+            **kwargs: Group settings.
+
+        Returns:
+            The larva groups.
+        """
         m = reg.conf.Model.getID("navigator")
         o = "brain.olfactor"
 
@@ -594,6 +847,14 @@ class Chemotaxis_Essay(Essay):
         return util.AttrDict(models)
 
     def get_models2(self, gain):
+        """Build the model set comparing turner modes.
+
+        Args:
+            **kwargs: Group settings.
+
+        Returns:
+            The larva groups.
+        """
         cols = util.N_colors(6)
         i = 0
         models = {}
@@ -615,6 +876,14 @@ class Chemotaxis_Essay(Essay):
         return util.AttrDict(models)
 
     def get_models3(self, gain):
+        """Build the model set comparing crawl-bend coupling.
+
+        Args:
+            **kwargs: Group settings.
+
+        Returns:
+            The larva groups.
+        """
         cols = util.N_colors(6)
         i = 0
         models = {}
@@ -638,6 +907,14 @@ class Chemotaxis_Essay(Essay):
         return util.AttrDict(models)
 
     def get_models4(self, gain):
+        """Build the model set comparing the calibrated variants.
+
+        Args:
+            **kwargs: Group settings.
+
+        Returns:
+            The larva groups.
+        """
         cols = util.N_colors(4)
         i = 0
         models = {}
@@ -659,16 +936,29 @@ class Chemotaxis_Essay(Essay):
         return util.AttrDict(models)
 
     def chemo_exps(self, models):
+        """Build the chemotaxis experiments for one model set.
+
+        Args:
+            lgs: The larva groups to place.
+
+        Returns:
+            The experiment entries, one per chemotactic assay.
+        """
         exp1 = "Orbiting behavior"
         dst1 = Larva_Distro(N=self.N, mode="uniform")
         kws1 = {
             "env": reg.conf.Env.get("mid_odor_gaussian"),
-            "lgs": {
-                mID: LarvaGroup(
-                    distribution=dst1, color=d["color"], model=d["model"]
-                ).nestedConf
-                for mID, d in models.items()
-            },
+            "lgs": util.AttrDict.merge_dicts(
+                [
+                    LarvaGroup(
+                        group_id=mID,
+                        distribution=dst1,
+                        color=d["color"],
+                        model=d["model"],
+                    ).entry()
+                    for mID, d in models.items()
+                ]
+            ),
             "id": f"{exp1}_exp",
             "dur": self.dur,
             "exp": exp1,
@@ -684,10 +974,17 @@ class Chemotaxis_Essay(Essay):
         )
         kws2 = {
             "env": reg.conf.Env.get("odor_gradient"),
-            "lgs": {
-                mID: LarvaGroup(distribution=dst2, color=d["color"], model=d["model"])
-                for mID, d in models.items()
-            },
+            "lgs": util.AttrDict.merge_dicts(
+                [
+                    LarvaGroup(
+                        group_id=mID,
+                        distribution=dst2,
+                        color=d["color"],
+                        model=d["model"],
+                    ).entry()
+                    for mID, d in models.items()
+                ]
+            ),
             "id": f"{exp2}_exp",
             "dur": self.dur,
             "exp": exp2,
@@ -696,9 +993,23 @@ class Chemotaxis_Essay(Essay):
         return {exp1: [self.conf(**kws1)], exp2: [self.conf(**kws2)]}
 
     def analyze(self, exp, ds0):
+        """Analyse one experiment of the essay.
+
+        Args:
+            exp: The experiment name.
+            ds0: The datasets it produced.
+
+        Returns:
+            The figures and any derived results.
+        """
         pass
 
     def global_anal(self):
+        """Render the essay's cross-experiment figures.
+
+        Returns:
+            The rendered figures.
+        """
         kwargs = {
             "datasets": self.datasets,
             "save_to": self.plot_dir,
@@ -712,6 +1023,11 @@ class Chemotaxis_Essay(Essay):
 
 @funcs.stored_conf("Essay")
 def Essay_dict():
+    """Build the registry of stored essays.
+
+    Returns:
+        Every essay configuration, keyed by name.
+    """
     d = {
         # 'roversVSsitters': rover_sitter_essay,
         # 'RvsS_essay': {}
@@ -724,6 +1040,14 @@ def Essay_dict():
 
 
 def RvsSx4():
+    """Build the four rover-versus-sitter model groups.
+
+    Args:
+        **kwargs: Group settings.
+
+    Returns:
+        The larva groups.
+    """
     sufs = ["foragers", "navigators", "feeders", "locomotors"]
     i = 0
     for o in [True, False]:

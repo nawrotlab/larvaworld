@@ -266,7 +266,7 @@ class LarvaGroup:
 ## Related Content
 
 - **Figure 7** (paper): Visual representation of LarvaGroup parameters panel
-- **Tutorial**: `library_interface.ipynb` - Creating custom larva groups
+- **Tutorial**: `1_getting_started/python_api_basics.ipynb` - Creating custom larva groups
 - **Experiments**: All experiments use these parameters for initial setup
 
 ---

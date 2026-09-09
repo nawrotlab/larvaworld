@@ -35,6 +35,23 @@ class GraphRegistry:
     """
 
     def __init__(self) -> None:
+        # `lib.plot` only lazily imports its submodules on first attribute
+        # access (see its own __getattr__, kept lightweight on purpose).
+        # Any @funcs.graph(...)-decorated function in a submodule nothing
+        # else has imported yet would otherwise be silently missing from
+        # funcs.graphs here -- purely depending on what else happened to
+        # import first elsewhere in the program (e.g. "epochs", from
+        # lib.plot.epochs, failing self.entry("epochs", ...) below in
+        # build_graphgroups when nothing had triggered that import yet).
+        # Force-import every submodule first so the registry is complete
+        # regardless of import order.
+        """Build the registry of available plots.
+
+        Args:
+            **kwargs: Registry attributes, forwarded to the parent class.
+        """
+        for _name in plot._SUBMODULES:
+            getattr(plot, _name)
         self.dict = funcs.graphs
         self.required_data_dict = funcs.graph_required_data
         self.graphgroups = self.build_graphgroups()
@@ -287,7 +304,9 @@ class GraphRegistry:
         ID = source_ID
         gID = f"locomotion_relative_to_source_{ID}"
         d0 = [
-            # FIXME Currently the bearing related plots are buggy
+            # The 'bearing/turn' entries below are disabled: they raise on the
+            # datasets this group is built for. What remains are the timeplots
+            # of bearing and distance to the source, which do run.
             # self.entry('bearing/turn', name=f'bearing to {ID}', min_angle=5.0, ref_angle=None, source_ID=ID, **kwargs),
             # self.entry('bearing/turn', name='bearing to 270deg', min_angle=5.0, ref_angle=270, source_ID=ID, **kwargs),
             *[
@@ -299,7 +318,7 @@ class GraphRegistry:
                 ]
             ],
         ]
-        # FIXME Currently the bearing related plots are buggy
+        # Also disabled, for the same reason:
         # for chunk in ['stride', 'pause', 'Lturn', 'Rturn']:
         #     for dur in [0.0, 0.5, 1.0]:
         #         d0.append(self.entry('bearing to source/epoch', name=f'{chunk}_bearing2_{ID}_min_{dur}_sec',
@@ -338,13 +357,21 @@ class GraphRegistry:
                 "chemo": ["chemo"],
                 "RL": ["RL"],
                 # 'dispersion': ['comparative_analysis'],
-                "dispersion": ["endpoint", "distro", "dsp"],
+                # Feeding on a food grid: how much was eaten, and how the time
+                # was split between locomotion and feeding.
+                "food_grid": ["intake"],
+                # The free exploration assays. Their enrichment computes the
+                # kinematics, bout annotation and stride-cycle interference that
+                # these groups draw, so all of them apply. `dsp` is left out of
+                # `dish`, whose 10 cm arena is too small for dispersal to mean
+                # anything past the first seconds.
+                "dish": ["endpoint", "distro", "stride", "track"],
+                "dispersion": ["endpoint", "distro", "dsp", "stride", "track"],
             }
             for k, v in dic.items():
                 if k in exp:
                     groups += v
 
-        # FIXME Currently the source related plots don't work as expected. Timeplot takes forever and bearing related plots are buggy
         groups += [
             self.source_graphgroup(id, pos=pos, **kwargs) for id, pos in sources.items()
         ]
@@ -360,7 +387,7 @@ class GraphRegistry:
             {
                 "general": [
                     # self.entry('ethogram', add_samples=False),
-                    self.entry("pathlength", scaled=False),
+                    # self.entry("pathlength", scaled=False),
                     # self.entry('navigation index'),
                     self.entry("epochs", stridechain_duration=True),
                 ],
@@ -405,7 +432,8 @@ class GraphRegistry:
                         ks=["c_odor1", "dc_odor1", "A_olf", "A_T", "I_T"],
                         individuals=False,
                     ),
-                    self.entry("trajectories"),
+                    # 'trajectories' is not repeated here: the 'traj' group is
+                    # part of every analysis, so it would be drawn twice.
                     # self.entry('turn amplitude'),
                     # self.entry('angular pars', Npars=5),
                 ],
@@ -507,23 +535,11 @@ class GraphRegistry:
                     ),
                     self.entry("navigation index"),
                     self.entry("turn amplitude"),
-                    self.entry("turn duration"),
-                    self.entry(
-                        "turn amplitude VS Y pos",
-                        "turn angle VS Y pos (scatter)",
-                        mode="scatter",
-                    ),
-                    self.entry(
-                        "turn amplitude VS Y pos",
-                        "turn angle VS Y pos (hist)",
-                        mode="hist",
-                    ),
-                    self.entry(
-                        "turn amplitude VS Y pos",
-                        "bearing correction VS Y pos",
-                        mode="hist",
-                        ref_angle=270,
-                    ),
+                    # 'turn duration' and the three 'turn amplitude VS Y pos'
+                    # entries are left out: they ask `get_par` for per-turn
+                    # quantities, which it cannot serve because those live in
+                    # the epoch dictionaries rather than in the step or endpoint
+                    # data. Restoring them needs that data path, not a plot fix.
                 ],
                 "survival": [
                     # 'foraging_list',

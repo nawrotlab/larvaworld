@@ -1,3 +1,10 @@
+"""
+Notebook runtime management for the portal.
+
+Ensures a notebook server is available and resolves the notebook belonging to
+a given dataset or model.
+"""
+
 from __future__ import annotations
 
 import atexit
@@ -37,6 +44,7 @@ _TRUTHY = {"1", "true", "yes", "on"}
 
 
 def _workspace_dir() -> Path:
+    """The directory notebooks are served from."""
     raw = os.getenv("LARVAWORLD_PORTAL_NOTEBOOK_WORKSPACE")
     if raw:
         return Path(raw).expanduser().resolve()
@@ -44,11 +52,20 @@ def _workspace_dir() -> Path:
 
 
 def _kernel_name() -> str:
+    """The Jupyter kernel notebooks are opened against."""
     kernel = os.getenv("LARVAWORLD_PORTAL_NOTEBOOK_KERNEL", "python3").strip()
     return kernel or "python3"
 
 
 def _normalize_base_url(raw_base: str) -> str:
+    """Normalize a configured Jupyter base URL.
+
+    Args:
+        raw_base: The configured value.
+
+    Returns:
+        The URL with a single trailing slash.
+    """
     base = raw_base.strip()
     base = base.rstrip("/") or "http://127.0.0.1:8888"
     parsed = urlparse(base)
@@ -67,11 +84,13 @@ def _normalize_base_url(raw_base: str) -> str:
 
 
 def _has_explicit_jupyter_base_url() -> bool:
+    """Whether a Jupyter base URL was configured explicitly."""
     raw = os.getenv("LARVAWORLD_JUPYTER_BASE_URL")
     return bool(raw and raw.strip())
 
 
 def _jupyter_base_url() -> str:
+    """The base URL the Jupyter server is reached at."""
     if _RUNTIME_JUPYTER_BASE_URL:
         return _RUNTIME_JUPYTER_BASE_URL
     raw = os.getenv("LARVAWORLD_JUPYTER_BASE_URL", "http://127.0.0.1:8888")
@@ -79,6 +98,7 @@ def _jupyter_base_url() -> str:
 
 
 def _jupyter_root_dir() -> Path:
+    """The root directory the Jupyter server serves."""
     raw = os.getenv("LARVAWORLD_JUPYTER_ROOT_DIR")
     if raw:
         return Path(raw).expanduser().resolve()
@@ -92,6 +112,7 @@ def _jupyter_root_dir() -> Path:
 
 
 def _jupyter_state_dirs() -> dict[str, Path]:
+    """The directories the Jupyter server keeps its state in."""
     base = _workspace_dir() / ".jupyter_state"
     runtime_base = Path(tempfile.gettempdir()) / "larvaworld_jupyter_runtime"
     try:
@@ -106,15 +127,18 @@ def _jupyter_state_dirs() -> dict[str, Path]:
 
 
 def _jupyter_log_path() -> Path:
+    """The file the launched Jupyter server logs to."""
     return _workspace_dir() / ".jupyter_state" / "jupyter.log"
 
 
 def _notebook_autostart_enabled() -> bool:
+    """Whether the portal may start a Jupyter server itself."""
     value = os.getenv("LARVAWORLD_PORTAL_NOTEBOOK_AUTOSTART", "1").strip().lower()
     return value in _TRUTHY
 
 
 def _jupyter_host_port() -> tuple[str, int]:
+    """The host and port the Jupyter server is expected on."""
     parsed = urlparse(_jupyter_base_url())
     host = parsed.hostname or "127.0.0.1"
     if parsed.port:
@@ -125,6 +149,11 @@ def _jupyter_host_port() -> tuple[str, int]:
 
 
 def _jupyter_reachable(*, timeout: float = 1.0) -> bool:
+    """Whether a Jupyter server is already answering.
+
+    Returns:
+        True when the configured base URL responds.
+    """
     base = _jupyter_base_url()
     request = Request(f"{base}/api", headers={"Accept": "application/json"})
     try:
@@ -137,6 +166,7 @@ def _jupyter_reachable(*, timeout: float = 1.0) -> bool:
 
 
 def _startup_timeout_seconds() -> float:
+    """How long to wait for a launched Jupyter server."""
     raw = os.getenv("LARVAWORLD_JUPYTER_STARTUP_TIMEOUT_SEC", "75").strip()
     try:
         timeout = float(raw)
@@ -146,16 +176,44 @@ def _startup_timeout_seconds() -> float:
 
 
 def _is_port_in_use(host: str, port: int) -> bool:
+    """Report whether a port is already bound.
+
+    Args:
+        host: The host to test.
+        port: The port to test.
+
+    Returns:
+        True when something is listening.
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.settimeout(0.3)
         return sock.connect_ex((host, port)) == 0
 
 
 def _build_base_url_with_port(host: str, port: int) -> str:
+    """Build a Jupyter base URL for a host and port.
+
+    Args:
+        host: The server host.
+        port: The server port.
+
+    Returns:
+        The base URL.
+    """
     return f"http://{host}:{port}"
 
 
 def _find_free_port(host: str, start_port: int, max_tries: int = 20) -> int | None:
+    """Find a port the Jupyter server can bind.
+
+    Args:
+        host: The host to bind on.
+        start_port: The first port tried.
+        max_tries: How many consecutive ports to try.
+
+    Returns:
+        The free port, or None when none was found.
+    """
     port = start_port
     for _ in range(max_tries):
         if not _is_port_in_use(host, port):
@@ -165,6 +223,7 @@ def _find_free_port(host: str, start_port: int, max_tries: int = 20) -> int | No
 
 
 def _available_notebook_item_ids() -> list[str]:
+    """The landing entries that have a notebook."""
     available: list[str] = []
     for item_id, notebook_name in NOTEBOOK_TUTORIAL_BY_ITEM_ID.items():
         if (_TUTORIALS_DIR / notebook_name).exists():
@@ -173,6 +232,7 @@ def _available_notebook_item_ids() -> list[str]:
 
 
 def _terminate_jupyter_process() -> None:
+    """Stop the Jupyter server the portal launched."""
     global _JUPYTER_PROCESS
     global _JUPYTER_LOG_HANDLE
     if _JUPYTER_PROCESS is None:
@@ -195,6 +255,14 @@ def _terminate_jupyter_process() -> None:
 
 
 def _tail_jupyter_log(max_lines: int = 16) -> str:
+    """Read the end of the launched server's log.
+
+    Args:
+        max_lines: How many lines to return.
+
+    Returns:
+        The log tail, used to report a failed startup.
+    """
     log_path = _jupyter_log_path()
     try:
         content = log_path.read_text(encoding="utf-8", errors="ignore").splitlines()
@@ -206,6 +274,11 @@ def _tail_jupyter_log(max_lines: int = 16) -> str:
 
 
 def _start_jupyter_process() -> bool:
+    """Launch a Jupyter server for the portal.
+
+    Returns:
+        True once the server answers, False if it failed to start.
+    """
     global _JUPYTER_PROCESS
     global _LAST_RUNTIME_ERROR
     global _RUNTIME_JUPYTER_BASE_URL
@@ -324,6 +397,12 @@ def _start_jupyter_process() -> bool:
 
 
 def ensure_notebook_runtime() -> bool:
+    """Make a Jupyter server available, starting one if permitted.
+
+    Returns:
+        Whether a server is reachable, and a message describing why
+        not when it is not.
+    """
     global _LAST_RUNTIME_ERROR
     if _jupyter_reachable():
         _LAST_RUNTIME_ERROR = None
@@ -335,6 +414,11 @@ def ensure_notebook_runtime() -> bool:
 
 
 def _normalize_notebook_kernel(notebook_path: Path, *, kernel_name: str) -> None:
+    """Rewrite a notebook to use the portal's kernel.
+
+    Args:
+        notebook_path: The notebook to rewrite.
+    """
     try:
         notebook = json.loads(notebook_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -357,6 +441,14 @@ def _normalize_notebook_kernel(notebook_path: Path, *, kernel_name: str) -> None
 
 
 def _build_jupyter_url(notebook_path: Path) -> str:
+    """Build the URL that opens one notebook.
+
+    Args:
+        notebook_path: The notebook to open.
+
+    Returns:
+        The URL.
+    """
     jupyter_root = _jupyter_root_dir()
     try:
         relative = notebook_path.resolve().relative_to(jupyter_root)
@@ -367,6 +459,11 @@ def _build_jupyter_url(notebook_path: Path) -> str:
 
 
 def _prepare_notebook_urls() -> dict[str, str]:
+    """Copy the bundled notebooks into the workspace and resolve their URLs.
+
+    Returns:
+        The URL of each notebook, keyed by landing entry.
+    """
     workspace_dir = _workspace_dir()
     workspace_dir.mkdir(parents=True, exist_ok=True)
     kernel = _kernel_name()
@@ -389,6 +486,7 @@ def _prepare_notebook_urls() -> dict[str, str]:
 
 
 def notebook_urls_by_item() -> dict[str, str]:
+    """The notebook URL for each landing entry that has one."""
     global _NOTEBOOK_BUTTON_URLS_CACHE
     if _NOTEBOOK_BUTTON_URLS_CACHE is None:
         _NOTEBOOK_BUTTON_URLS_CACHE = {
@@ -399,6 +497,7 @@ def notebook_urls_by_item() -> dict[str, str]:
 
 
 def notebook_names_by_item() -> dict[str, str]:
+    """The notebook file name for each landing entry that has one."""
     names: dict[str, str] = {}
     for item_id, notebook_name in NOTEBOOK_TUTORIAL_BY_ITEM_ID.items():
         if (_TUTORIALS_DIR / notebook_name).exists():
@@ -407,6 +506,14 @@ def notebook_names_by_item() -> dict[str, str]:
 
 
 def launch_notebook_for_item(item_id: str) -> tuple[str | None, str | None]:
+    """Open the notebook belonging to a landing entry.
+
+    Args:
+        item_id: The landing entry.
+
+    Returns:
+        Whether the notebook was opened, and a message on failure.
+    """
     notebook_name = NOTEBOOK_TUTORIAL_BY_ITEM_ID.get(item_id)
     if not notebook_name:
         return None, f'Unknown notebook id "{item_id}".'

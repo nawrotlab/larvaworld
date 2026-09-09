@@ -1,3 +1,10 @@
+"""
+Base classes shared by the behavioural effector modules.
+
+Defines the effector interface, its stepwise and oscillatory specializations,
+and the adapter that lets an effector be driven by a Nengo network.
+"""
+
 from __future__ import annotations
 from typing import Any
 
@@ -61,19 +68,50 @@ class Effector(Timer):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the effector with zeroed input and output.
+
+        Args:
+            **kwargs: Effector parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.input = 0
         self.output = 0
 
     def update_output(self, output: Any) -> Any:
+        """Apply the configured output noise and range.
+
+        Args:
+            output: The computed output.
+
+        Returns:
+            The noisy, range-limited output.
+        """
         return self.apply_noise(output, self.output_noise, self.output_range)
 
     def update_input(self, input: Any) -> Any:
+        """Apply the configured input noise and range.
+
+        Args:
+            input: The incoming signal.
+
+        Returns:
+            The noisy, range-limited input.
+        """
         return self.apply_noise(input, self.input_noise, self.input_range)
 
     def apply_noise(
         self, value: Any, noise: float = 0, range: Any | None = None
     ) -> Any:
+        """Add multiplicative Gaussian noise and clip to a range.
+
+        Args:
+            value: The value to perturb. Scalars and arrays are both accepted.
+            noise: The relative noise magnitude. Zero leaves the value intact.
+            range: The ``(min, max)`` limits to clip to, if any.
+
+        Returns:
+            The perturbed value.
+        """
         if type(value) in [int, float]:
             value *= 1 + np.random.normal(scale=noise)
             if range is not None and len(range) == 2:
@@ -90,18 +128,49 @@ class Effector(Timer):
         return value
 
     def get_output(self, t: float) -> float:
+        """Return the current output.
+
+        Args:
+            t: The current time. Accepted for signature compatibility.
+
+        Returns:
+            The effector's output.
+        """
         return self.output
 
     def update(self) -> None:
+        """Hook run each timestep before acting. Does nothing by default."""
         pass
 
     def act(self, **kwargs: Any) -> None:
+        """Produce the output while the effector is active.
+
+        Args:
+            **kwargs: Subclass-specific arguments.
+        """
         pass
 
     def inact(self, **kwargs: Any) -> None:
+        """Produce the output while the effector is inactive.
+
+        Args:
+            **kwargs: Subclass-specific arguments.
+        """
         pass
 
     def step(self, A_in: float = 0, **kwargs: Any) -> Any:
+        """Advance the effector by one timestep.
+
+        Applies input noise, runs the per-step update, then acts or idles
+        according to whether the effector is active, and applies output noise.
+
+        Args:
+            A_in: The incoming activation.
+            **kwargs: Forwarded to :meth:`act` or :meth:`inact`.
+
+        Returns:
+            The effector's output for this timestep.
+        """
         self.input = self.update_input(A_in)
         self.update()
         if self.active:
@@ -138,30 +207,53 @@ class StepEffector(Effector):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the step effector.
+
+        Args:
+            **kwargs: Effector parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     @property
     def Act_coef(self) -> float:
+        """The amplitude scaling of the activation."""
         return self.amp
 
     @property
     def Act_Phi(self) -> float:
+        """The phase-dependent factor. Constant for a non-oscillating step."""
         return 1
 
     @property
     def Act(self) -> float:
+        """The activation: the amplitude scaled by the phase factor."""
         return self.Act_coef * self.Act_Phi
 
     def set_amp(self, v: float) -> None:
+        """Set the activation amplitude.
+
+        Args:
+            v: The new amplitude.
+        """
         self.amp = v
 
     def get_amp(self, t: float) -> float:
+        """Return the activation amplitude.
+
+        Args:
+            t: The current time. Accepted for signature compatibility.
+
+        Returns:
+            The amplitude.
+        """
         return self.amp
 
     def act(self) -> None:
+        """Emit the activation."""
         self.output = self.Act
 
     def inact(self) -> None:
+        """Emit nothing while inactive."""
         self.output = 0
 
 
@@ -178,6 +270,7 @@ class StepOscillator(Oscillator, StepEffector):
     """
 
     def act(self) -> None:
+        """Advance the phase, then emit the activation."""
         self.oscillate()
         self.output = self.Act
 
@@ -196,6 +289,7 @@ class SinOscillator(StepOscillator):
 
     @property
     def Act_Phi(self) -> float:
+        """The phase-dependent factor: a sinusoid of the phase."""
         return np.sin(self.phi)
 
 
@@ -213,9 +307,11 @@ class NengoEffector(StepOscillator):
     """
 
     def start_effector(self) -> None:
+        """Activate the effector and restore its resting frequency."""
         super().start_effector()
         self.set_freq(self.initial_freq)
 
     def stop_effector(self) -> None:
+        """Deactivate the effector by driving its frequency to zero."""
         super().stop_effector()
         self.set_freq(0)

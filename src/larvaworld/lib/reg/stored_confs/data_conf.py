@@ -1,3 +1,10 @@
+"""
+Stored configurations for lab data formats and reference datasets.
+
+Defines the tracker formats larvaworld can import from, and registers the
+reference datasets that models are sampled from and evaluated against.
+"""
+
 from __future__ import annotations
 
 import json
@@ -17,6 +24,11 @@ __all__: list[str] = [
 
 @funcs.stored_conf("LabFormat")
 def LabFormat_dict() -> util.AttrDict:
+    """Build the registry of supported lab data formats.
+
+    Returns:
+        Every lab format, keyed by name.
+    """
     d = {
         "Schleyer": {
             "tracker": TrackerOps(
@@ -119,6 +131,25 @@ def LabFormat_dict() -> util.AttrDict:
             ),
             "preprocess": PreprocessConf(filter_f=0.1, transposition="arena"),
         },
+        "DeepLabCut": {
+            "tracker": TrackerOps(
+                XY_unit="mm",
+                fr=30.0,
+                Npoints=5,
+                Ncontour=0,
+                front_vector=(1, 3),
+                rear_vector=(-3, -1),
+                point_idx=-1,
+            ),
+            "filesystem": Filesystem(
+                structure="per_larva",
+                file_sufs=[".h5", ".hdf5", ".csv"],
+            ),
+            "env_params": reg.gen.Env(
+                arena=reg.gen.Arena(dims=(0.15, 0.15), geometry="circular")
+            ),
+            "preprocess": PreprocessConf(rescale_by=0.001),
+        },
     }
 
     return util.AttrDict(
@@ -128,6 +159,11 @@ def LabFormat_dict() -> util.AttrDict:
 
 @funcs.stored_conf("Ref")
 def Ref_dict() -> util.AttrDict:
+    """Build the registry of stored reference datasets.
+
+    Returns:
+        Every reference dataset, keyed by its ID.
+    """
     dds = [
         [f"{DATA_DIR}/JovanicGroup/processed/AttP{g}/{c}" for g in ["2", "240"]]
         for c in ["Fed", "Deprived", "Starved"]

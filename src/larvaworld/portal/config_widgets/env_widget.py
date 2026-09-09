@@ -1,3 +1,7 @@
+"""
+Widget for editing a whole environment configuration.
+"""
+
 from __future__ import annotations
 
 import panel as pn
@@ -19,12 +23,20 @@ def build_env_params_widget(
     *,
     wrap: bool = True,
 ) -> object:
+    """Build the widget editing a whole environment.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     children = [
         build_area_widget(env_conf.arena),
         build_food_conf_widget(env_conf.food_params),
         build_border_widget(env_conf),
         collapsible_family_box(
-            "Environment scapes",
+            "Sensory landscapes",
             build_odorscape_widget(env_conf),
             build_windscape_widget(env_conf),
             build_thermoscape_widget(env_conf),

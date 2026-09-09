@@ -25,6 +25,7 @@ from larvaworld.lib.util.xy import (
     rearrange_contour,
     comp_PI,
     Collision,
+    fixate_larva,
 )
 
 
@@ -558,3 +559,116 @@ class TestCollision:
         """Test that Collision is an Exception."""
         collision = Collision(1, 2)
         assert isinstance(collision, Exception)
+
+
+@pytest.mark.fast
+class TestFixateLarva:
+    """
+    Test fixate_larva's P1='centroid' fallback to bare x/y columns.
+
+    Live-simulation ("pose" collection) datasets store their single
+    tracked reference point under bare x/y rather than a point-prefixed
+    pair like centroid_x/centroid_y -- fixate_larva used to raise
+    unconditionally when the point-prefixed pair was missing, even though
+    the physically-equivalent bare x/y pair was right there.
+    """
+
+    def _config(self):
+        from larvaworld.lib.process.dataset import DatasetConfig
+
+        return DatasetConfig(Npoints=0, Ncontour=0)
+
+    def _index(self):
+        return pd.MultiIndex.from_product(
+            [[0, 1, 2], ["a0"]], names=["Step", "AgentID"]
+        )
+
+    def test_fixate_larva_uses_point_prefixed_columns_when_present(self):
+        s = pd.DataFrame(
+            {
+                "centroid_x": [0.0, 1.0, 2.0],
+                "centroid_y": [0.0, 1.0, 2.0],
+            },
+            index=self._index(),
+        )
+        c = self._config()
+
+        s_fixed, bg = fixate_larva(s, c, arena_dims=(1.0, 1.0), P1="centroid")
+
+        # Centroid is fixed to (0, 0) at every step.
+        np.testing.assert_allclose(s_fixed["centroid_x"].to_numpy(), 0.0)
+        np.testing.assert_allclose(s_fixed["centroid_y"].to_numpy(), 0.0)
+
+    def test_fixate_larva_falls_back_to_bare_xy_for_simulated_datasets(self):
+        s = pd.DataFrame(
+            {"x": [0.0, 1.0, 2.0], "y": [0.0, 1.0, 2.0]}, index=self._index()
+        )
+        c = self._config()
+
+        s_fixed, bg = fixate_larva(s, c, arena_dims=(1.0, 1.0), P1="centroid")
+
+        np.testing.assert_allclose(s_fixed["x"].to_numpy(), 0.0)
+        np.testing.assert_allclose(s_fixed["y"].to_numpy(), 0.0)
+
+    def test_fixate_larva_still_raises_when_neither_column_exists(self):
+        s = pd.DataFrame({"other": [0.0, 1.0, 2.0]}, index=self._index())
+        c = self._config()
+
+        with pytest.raises(ValueError, match="not part of the dataset"):
+            fixate_larva(s, c, arena_dims=(1.0, 1.0), P1="centroid")
+
+
+def _fake_dataset(agent_ids, group_id, value):
+    """A stand-in exposing only what concat_datasets reads from a dataset."""
+    from types import SimpleNamespace
+
+    return SimpleNamespace(
+        endpoint_data=pd.DataFrame(
+            {"metric": [value] * len(agent_ids)},
+            index=pd.Index(agent_ids, name="AgentID"),
+        ),
+        group_id=group_id,
+    )
+
+
+@pytest.mark.fast
+def test_concat_datasets_keeps_the_index_usable_when_agent_ids_repeat():
+    """
+    Agent IDs are only unique within a dataset, so two datasets numbering their agents the
+    same way used to pool into a frame with a duplicated index, which seaborn cannot align
+    against and which made every comparative plot of such a pair raise
+    "cannot reindex on an axis with duplicate labels". The IDs move to a column instead.
+    """
+    ddic = {
+        "a": _fake_dataset(["Larva_0", "Larva_1"], "g", 1.0),
+        "b": _fake_dataset(["Larva_0", "Larva_2"], "g", 2.0),
+    }
+
+    from larvaworld.lib.util.xy import concat_datasets
+
+    df = concat_datasets(ddic, key="end")
+
+    assert df.index.is_unique
+    assert list(df["AgentID"]) == ["Larva_0", "Larva_1", "Larva_0", "Larva_2"]
+    assert list(df["DatasetID"]) == ["a", "a", "b", "b"]
+    assert len(df) == 4
+
+
+@pytest.mark.fast
+def test_concat_datasets_leaves_a_unique_index_alone():
+    """
+    Verify the repair only applies when the pooled index is actually unusable, so datasets
+    with distinct agent IDs keep indexing by AgentID as before.
+    """
+    ddic = {
+        "a": _fake_dataset(["Larva_0", "Larva_1"], "g", 1.0),
+        "b": _fake_dataset(["Larva_2", "Larva_3"], "g", 2.0),
+    }
+
+    from larvaworld.lib.util.xy import concat_datasets
+
+    df = concat_datasets(ddic, key="end")
+
+    assert df.index.name == "AgentID"
+    assert "AgentID" not in df.columns
+    assert list(df.index) == ["Larva_0", "Larva_1", "Larva_2", "Larva_3"]

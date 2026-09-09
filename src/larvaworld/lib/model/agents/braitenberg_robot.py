@@ -1,3 +1,10 @@
+"""
+Braitenberg-style robot agents.
+
+Implements the classic sensor-to-motor crossed and uncrossed wirings, used as a
+minimal reference controller for the 2D robot simulation.
+"""
+
 from __future__ import annotations
 from typing import Any
 import random
@@ -53,6 +60,16 @@ class DifferentialDriveRobot(RotTriangle):
         length: float,
         wheel_radius: float,
     ) -> None:
+        """Build the robot with a random initial heading.
+
+        Args:
+            unique_id: The robot identifier.
+            model: The simulation model.
+            x: The initial x coordinate.
+            y: The initial y coordinate.
+            length: The wheelbase length.
+            wheel_radius: The drive wheel radius.
+        """
         direction = random.uniform(-np.pi, np.pi)
         super().__init__(
             x,
@@ -89,6 +106,7 @@ class DifferentialDriveRobot(RotTriangle):
         print("direction = " + str(self.direction))
 
     def delta_x(self) -> None:
+        """Update the x displacement from the two wheel speeds."""
         self.deltax = (
             self._delta
             * (self.wheel_radius * 0.5)
@@ -98,6 +116,7 @@ class DifferentialDriveRobot(RotTriangle):
         self.x += self.deltax
 
     def delta_y(self) -> None:
+        """Update the y displacement from the two wheel speeds."""
         self.deltay = (
             self._delta
             * (self.wheel_radius * 0.5)
@@ -107,6 +126,7 @@ class DifferentialDriveRobot(RotTriangle):
         self.y += self.deltay
 
     def delta_direction(self) -> None:
+        """Update the heading from the difference in wheel speeds."""
         self.direction += (
             self._delta
             * (self.wheel_radius / self.length)
@@ -147,6 +167,11 @@ class SensorDrivenRobot(DifferentialDriveRobot):
     """
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the robot without motor controllers attached.
+
+        Args:
+            **kwargs: Robot attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.collision_with_object = False
         self.left_motor_controller = None
@@ -154,6 +179,7 @@ class SensorDrivenRobot(DifferentialDriveRobot):
         self.label = None
 
     def step(self) -> None:
+        """Sense, drive the wheels and move, unless already collided."""
         if not self.collision_with_object:
             try:
                 self.left_motor_controller.sense_and_act()
@@ -173,15 +199,30 @@ class SensorDrivenRobot(DifferentialDriveRobot):
             self.speed_right_wheel = 0
 
     def set_left_motor_controller(self, left_motor_controller: Any) -> None:
+        """Attach the controller driving the left wheel.
+
+        Args:
+            left_motor_controller: The controller to attach.
+        """
         self.left_motor_controller = left_motor_controller
 
     def set_right_motor_controller(self, right_motor_controller: Any) -> None:
+        """Attach the controller driving the right wheel.
+
+        Args:
+            right_motor_controller: The controller to attach.
+        """
         self.right_motor_controller = right_motor_controller
 
     def draw(self, scene: Any) -> None:
         # draw the sensor lines
 
         # in scene_loader a robot doesn't have sensors
+        """Render the robot and its sensors.
+
+        Args:
+            scene: The scene to draw into.
+        """
         if self.left_motor_controller is not None:
             self.left_motor_controller.sensor.draw()
             self.right_motor_controller.sensor.draw()

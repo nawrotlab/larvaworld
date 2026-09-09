@@ -119,12 +119,18 @@ class _ProcSpinner:
     """
 
     def __init__(self, message: str = ""):
+        """Build the progress spinner.
+
+        Args:
+            message: The text shown beside the spinner.
+        """
         self._message = message
         self._sentinel_dir = None
         self._sentinel_path = None
         self._proc = None
 
     def start(self) -> None:
+        """Start animating the spinner."""
         import os
         import sys
         import tempfile
@@ -168,6 +174,7 @@ class _ProcSpinner:
         )
 
     def stop(self) -> None:
+        """Stop the spinner and clear its line."""
         import os
         import time
         import shutil
@@ -296,6 +303,17 @@ _CACHED_DEFAULT_REFID = None
 
 
 def __getattr__(name):
+    """Resolve a public name by importing its module on first access.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved object.
+
+    Raises:
+        AttributeError: If no submodule exports that name.
+    """
     global _CACHED_DEFAULT_REFID
     global _GRAPHS
     if name == "default_refID":
@@ -368,6 +386,11 @@ def __getattr__(name):
 
 
 def default_ref() -> Any:
+    """Return the default reference dataset.
+
+    Returns:
+        The dataset, or None when none is registered.
+    """
     return loadRef(__getattr__("default_refID"), load=True)
 
 
@@ -375,6 +398,11 @@ default_modelID: str = "explorer"
 
 
 def default_model() -> Any:
+    """Return the default larva model configuration.
+
+    Returns:
+        The model configuration.
+    """
     return conf.Model.getID(default_modelID)
 
 
@@ -386,6 +414,19 @@ try:
     import_module("larvaworld.lib.model.modules.module_modes")
 except Exception:
     pass
+
+if "DeepLabCut" not in conf.LabFormat.confIDs:
+    config.resetConfs(conftypes=["LabFormat"])
+
+_legacy_scale_confirmation_entries = [
+    entry
+    for entry in conf.LabFormat.dict.values()
+    if "confirm_suspect_scale" in entry.get("filesystem", {})
+]
+if _legacy_scale_confirmation_entries:
+    for entry in _legacy_scale_confirmation_entries:
+        entry["filesystem"].pop("confirm_suspect_scale")
+    conf.LabFormat.save()
 
 config.resetConfs(init=True)
 

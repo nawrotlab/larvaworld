@@ -1,3 +1,11 @@
+"""
+Reusable groups of related configuration parameters.
+
+Each class bundles the parameters that belong together -- framerate, spatial
+resolution, simulation timing, runtime paths and output options -- so that the
+datasets, simulations and portal apps share one definition of them.
+"""
+
 from __future__ import annotations
 from typing import Any, Optional, Sequence, Tuple
 
@@ -71,6 +79,11 @@ class FramerateOps(NestedConf):
     )
 
     def __init__(self, **kwargs: Any):
+        """Build the group, reconciling framerate and timestep.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
         if "dt" in kwargs:
@@ -79,6 +92,7 @@ class FramerateOps(NestedConf):
             self.update_timestep()
 
     def _safe_framerate_value(self) -> float:
+        """Return the framerate, or the one implied by the timestep."""
         if self.fr > 0:
             return float(self.fr)
         if self.dt > 0:
@@ -86,6 +100,7 @@ class FramerateOps(NestedConf):
         return float(self.param.fr.default)
 
     def _safe_timestep_value(self) -> float:
+        """Return the timestep, or the one implied by the framerate."""
         if self.dt > 0:
             return float(self.dt)
         if self.fr > 0:
@@ -94,6 +109,7 @@ class FramerateOps(NestedConf):
 
     @param.depends("dt", watch=True)
     def update_framerate(self) -> None:
+        """Recompute the framerate after the timestep changed."""
         safe_dt = self._safe_timestep_value()
         if safe_dt != self.dt:
             self.dt = safe_dt
@@ -102,6 +118,7 @@ class FramerateOps(NestedConf):
 
     @param.depends("fr", watch=True)
     def update_timestep(self) -> None:
+        """Recompute the timestep after the framerate changed."""
         safe_fr = self._safe_framerate_value()
         if safe_fr != self.fr:
             self.fr = safe_fr
@@ -150,70 +167,108 @@ class XYops(NestedConf):
 
     @property
     def Nangles(self) -> int:
+        """The number of body angles, two fewer than the midline points."""
         return np.clip(self.Npoints - 2, a_min=0, a_max=None)
 
     @property
     def Nsegs(self) -> int:
+        """The number of body segments, one fewer than the midline points."""
         return np.clip(self.Npoints - 1, a_min=0, a_max=None)
 
     @property
     def angles(self) -> util.SuperList:
+        """The body angle names."""
         return util.SuperList([f"angle{i}" for i in range(self.Nangles)])
 
     @property
     def midline_points(self) -> util.SuperList:
+        """The midline point names."""
         return util.nam.midline(self.Npoints, type="point")
 
     @property
     def midline_segs(self) -> util.SuperList:
+        """The midline segment names."""
         return util.nam.midline(self.Nsegs, type="seg")
 
     @property
     def midline_seg_xy(self, flat: bool = True) -> util.SuperList:
+        """The midline segment coordinate column names."""
         return util.nam.xy(self.midline_segs, flat=flat)
 
     @property
     def seg_orientations(self) -> util.SuperList:
+        """The midline segment orientation column names."""
         return util.nam.orient(self.midline_segs)
 
     @property
     def midline_xy(self, flat: bool = True) -> util.SuperList:
+        """The midline point coordinate column names."""
         return util.nam.xy(self.midline_points, flat=flat)
 
     @property
     def contour_points(self) -> util.SuperList:
+        """The contour point names."""
         return util.nam.contour(self.Ncontour)
 
     @property
     def contour_xy(self, flat: bool = True) -> util.SuperList:
+        """The contour coordinate column names."""
         return util.nam.xy(self.contour_points, flat=flat)
 
     @property
     def centroid_xy(self) -> util.SuperList:
+        """The centroid coordinate column names."""
         return util.nam.xy("centroid")
 
     @property
     def traj_xy(self) -> util.SuperList:
+        """The trajectory coordinate column names."""
         return util.nam.xy("")
 
     @property
     def all_xy(self, flat: bool = True) -> util.SuperList:
+        """Every tracked coordinate column name."""
         return util.nam.xy(
             self.midline_points + self.contour_points + ["centroid", ""], flat=flat
         )
 
     def get_track_point(self, idx: int) -> str:
+        """Resolve a point index to its name.
+
+        Args:
+            idx: The midline index, 1-based. Non-positive values, and any
+                index when no midline is tracked, select the centroid.
+
+        Returns:
+            The point name.
+        """
         if idx <= 0 or self.Npoints <= 0:
             return "centroid"
         idx = min(idx, self.Npoints)
         return self.midline_points[idx - 1]
 
     def get_midline_xy_data(self, s: Any) -> np.ndarray:
+        """Extract the midline coordinates from timeseries data.
+
+        Args:
+            s: The timeseries data.
+
+        Returns:
+            The coordinates, shaped ``(rows, points, 2)``.
+        """
         xy = self.midline_xy
         assert xy.exist_in(s)
         return s[xy].values.reshape([-1, self.Npoints, 2])
 
     def get_contour_xy_data(self, s: Any) -> np.ndarray:
+        """Extract the contour coordinates from timeseries data.
+
+        Args:
+            s: The timeseries data.
+
+        Returns:
+            The coordinates, shaped ``(rows, points, 2)``.
+        """
         xy = self.contour_xy
         assert xy.exist_in(s)
         return s[xy].values.reshape([-1, self.Ncontour, 2])
@@ -245,11 +300,17 @@ class SimTimeOps(FramerateOps):
     )
 
     def __init__(self, **kwargs: Any):
+        """Build the group, reconciling duration and step count.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.update_Nsteps()
 
     @param.depends("duration", "dt", watch=True)
     def update_Nsteps(self) -> None:
+        """Recompute the step count from the duration."""
         if self.duration is not None:
             self.Nsteps = int(self.duration * 60 / self.dt)
         else:
@@ -257,6 +318,7 @@ class SimTimeOps(FramerateOps):
 
     @param.depends("Nsteps", watch=True)
     def update_duration(self) -> None:
+        """Recompute the duration from the step count."""
         if self.Nsteps is not None:
             self.duration = self.Nsteps * self.dt / 60
         else:
@@ -286,6 +348,11 @@ class SimSpatialOps(NestedConf):
 
     @property
     def scaling_factor(self) -> float:
+        """The factor converting model units to simulation units.
+
+        Box2D runs in millimetres while the model works in metres, so the
+        factor is 1000 with the physics engine enabled and 1 otherwise.
+        """
         return 1000.0 if self.Box2D else 1.0
 
 
@@ -359,6 +426,7 @@ class RuntimeDataOps(NestedConf):
 
     @property
     def data_dir(self) -> Optional[str]:
+        """The directory the dataset's data is stored in."""
         if self.dir is not None:
             f = f"{self.dir}/data"
             os.makedirs(f, exist_ok=True)
@@ -366,6 +434,7 @@ class RuntimeDataOps(NestedConf):
 
     @property
     def plot_dir(self) -> Optional[str]:
+        """The directory the dataset's plots are written to."""
         if self.dir is not None:
             f = f"{self.dir}/plots"
             os.makedirs(f, exist_ok=True)
@@ -426,17 +495,39 @@ class Filesystem(NestedConf):
     folder_suff = param.String(doc="A suffix for detecting a raw-data folder.")
     file_pref = param.String(default="", doc="A prefix for detecting a raw-data file.")
     file_suf = param.String(default="", doc="A suffix for detecting a raw-data file.")
+    file_sufs = param.List(
+        default=[],
+        item_type=str,
+        doc="Additional suffixes for detecting raw-data files.",
+    )
     file_sep = param.String(doc="A separator for detecting a raw-data file.")
+    pixel_to_mm = OptionalPositiveNumber(
+        default=None,
+        softmax=10.0,
+        doc="Optional conversion factor from source pixels to millimetres.",
+    )
     structure = param.Selector(
         objects=["per_larva", "per_parameter"],
         doc="Whether each raw file corresponds to all parameters of a single larva or to a single parameter over all larvae.",
     )
 
     def valid_files_in_folder(self, dir) -> list[str]:
+        """List the files in a folder matching the configured suffixes.
+
+        Args:
+            folder: The directory to scan.
+
+        Returns:
+            The matching file paths.
+        """
+        suffixes = [suffix for suffix in [self.file_suf, *self.file_sufs] if suffix]
         return [
             os.path.join(dir, n)
             for n in os.listdir(dir)
-            if (n.endswith(self.file_suf) and n.startswith(self.file_pref))
+            if (
+                (not suffixes or any(n.endswith(suffix) for suffix in suffixes))
+                and n.startswith(self.file_pref)
+            )
         ]
 
 
@@ -467,10 +558,16 @@ class TrackedPointIdx(XYops):
     )
 
     def __init__(self, **kwargs):
+        """Build the group and resolve the tracked point.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.update_tracked_point()
 
     def _normalize_point_idx(self, point_idx: int) -> int:
+        """Clamp the tracked point index to the available midline points."""
         if self.Npoints <= 0:
             return -1
         if point_idx <= 0:
@@ -479,6 +576,7 @@ class TrackedPointIdx(XYops):
 
     @param.depends("Npoints", "point_idx", watch=True)
     def update_tracked_point(self) -> None:
+        """Re-resolve the tracked point after the midline changed."""
         self.param.point_idx.bounds = (-1, self.Npoints)
         normalized_idx = self._normalize_point_idx(self.point_idx)
         if normalized_idx != self.point_idx:
@@ -488,6 +586,7 @@ class TrackedPointIdx(XYops):
 
     @property
     def point_xy(self) -> util.SuperList:
+        """The tracked point's coordinate column names."""
         return util.nam.xy(self.point)
 
 
@@ -543,6 +642,15 @@ class SimMetricOps(TrackedPointIdx):
     def _normalize_legacy_rear_vector(
         rear_vector: tuple[int, int] | None, Npoints: int
     ) -> tuple[int, int] | None:
+        """Convert a legacy rear-vector setting to the current form.
+
+        Args:
+            rear_vector: The stored value.
+            Npoints: The number of midline points.
+
+        Returns:
+            The normalized value, or None when no midline is tracked.
+        """
         if rear_vector is None or Npoints <= 0:
             return None if Npoints <= 0 else rear_vector
         r1, r2 = rear_vector
@@ -551,6 +659,11 @@ class SimMetricOps(TrackedPointIdx):
         return SimMetricOps._clamp_ordered_range(rear_vector, lower=-Npoints, upper=-1)
 
     def __init__(self, **kwargs):
+        """Build the group and resolve its body vectors.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         Npoints = kwargs.get("Npoints")
         if Npoints is not None:
             if Npoints <= 0:
@@ -567,6 +680,16 @@ class SimMetricOps(TrackedPointIdx):
     def _clamp_ordered_range(
         value: tuple[int, int] | None, lower: int, upper: int
     ) -> tuple[int, int] | None:
+        """Clamp an ordered index range to the available points.
+
+        Args:
+            value: The range to clamp.
+            lower: The lowest admissible index.
+            upper: The highest admissible index.
+
+        Returns:
+            The clamped range, or None when the bounds are degenerate.
+        """
         if value is None or lower > upper:
             return None
         low, high = value
@@ -578,6 +701,7 @@ class SimMetricOps(TrackedPointIdx):
 
     @param.depends("Npoints", watch=True)
     def update_vectors(self) -> None:
+        """Re-resolve the front and rear body vectors after the midline changed."""
         N = self.Npoints
         front_param = self.param["front_vector"]
         rear_param = self.param["rear_vector"]
@@ -608,10 +732,12 @@ class SimMetricOps(TrackedPointIdx):
 
     @property
     def Nbend_angles(self) -> int:
+        """The number of body angles counted towards the bend."""
         return int(np.round(self.front_body_ratio * self.Nangles))
 
     @property
     def vector_dict(self) -> util.AttrDict:
+        """The midline index pairs defining each named body vector."""
         vectors = {
             "head": (1, 0),
             "tail": (-1, -2),

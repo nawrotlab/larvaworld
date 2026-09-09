@@ -1,6 +1,14 @@
+"""
+Evaluation of simulated models against reference data.
+
+Runs one or more models under a reference dataset's conditions and scores the
+resulting behaviour against the recorded distributions and cycle curves.
+"""
+
 from __future__ import annotations
 
 from typing import Any
+import copy
 import os
 import warnings
 
@@ -17,6 +25,14 @@ from .. import reg, util
 from ..reg import SimConfiguration
 from ..reg import LarvaGroupMutator
 from ..util import AttrDict
+from .manifest import (
+    RunManifestSession,
+    attach_manifest_to_datasets,
+    derive_seed,
+    deterministic_random_context,
+    json_ready,
+    prepare_master_seed,
+)
 
 __all__: list[str] = [
     "EvalRun",
@@ -26,7 +42,14 @@ __all__: list[str] = [
 
 
 class EvalConf(LarvaGroupMutator, DataEvaluation):
+    """Configuration of a model evaluation run."""
+
     def __init__(self, dataset=None, **kwargs):
+        """Build the evaluation configuration.
+
+        Args:
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(dataset=dataset, **kwargs)
         self.target.id = "experiment"
         self.target.config.id = "experiment"
@@ -38,8 +61,20 @@ class EvalConf(LarvaGroupMutator, DataEvaluation):
 # This should be adjusted in order to remove also the need for the LarvaGroupMutator parent class of EvalConf
 # (note that the args N,modelIDS, groupIDs are common in LarvaGroupMutator and SimConfigurationParams)
 class EvalRun(EvalConf, SimConfiguration):
+    """A run that scores simulated models against reference data.
+
+    Simulates each model under the reference dataset's conditions and
+    compares the resulting behaviour with the recorded one.
+    """
+
     def __init__(
-        self, enrichment: bool = True, screen_kws: dict[str, Any] = {}, **kwargs: Any
+        self,
+        enrichment: bool = True,
+        screen_kws: dict[str, Any] = {},
+        dataset: Any = None,
+        _record_manifest: bool = True,
+        _source_manifest: str | None = None,
+        **kwargs: Any,
     ) -> None:
         """Model evaluation mode. This mode is used to evaluate a number of larva models
         for similarity with a preexisting reference dataset, most often one retained
@@ -51,7 +86,9 @@ class EvalRun(EvalConf, SimConfiguration):
             screen_kws (dict, optional): The screen visualization parameters. Defaults to {}.
         """
 
-        EvalConf.__init__(self, runtype="Eval", **kwargs)
+        self._record_manifest = _record_manifest
+        self._source_manifest = _source_manifest
+        EvalConf.__init__(self, dataset=dataset, runtype="Eval", **kwargs)
         kwargs["dt"] = self.target.config.dt
         if "duration" not in kwargs:
             kwargs["duration"] = self.target.config.Nticks * kwargs["dt"] / 60
@@ -76,7 +113,102 @@ class EvalRun(EvalConf, SimConfiguration):
         )
         self.error_plot_dir = f"{self.plot_dir}/errors"
 
-    def simulate(self) -> Any:
+    def _manifest_invocation(self, seed: int) -> dict[str, Any]:
+        """Describe how the evaluation was invoked."""
+        eval_kwargs = self.nestedConf
+        for key in ("dir", "id", "runtype"):
+            eval_kwargs.pop(key, None)
+        return {
+            "run_class": f"{type(self).__module__}:{type(self).__qualname__}",
+            "resolved_parameters": json_ready(eval_kwargs),
+            "constructor": {
+                "eval_kwargs": json_ready(eval_kwargs),
+                "resolved_children": [
+                    {
+                        "child_id": "evaluation_exp",
+                        "seed": derive_seed(seed, "evaluation_exp"),
+                        "parameters": json_ready(self._resolved_child_parameters()),
+                    }
+                ],
+            },
+            "runtime_options": {
+                "store_data": bool(self.store_data),
+                "screen_kws": json_ready(self.screen_kws),
+            },
+            "execute": {"method": "simulate", "kwargs": {"seed": seed}},
+        }
+
+    def _resolved_child_parameters(self) -> Any:
+        """Return the parameters each simulated model was run with."""
+        if self.experiment in reg.conf.Exp.confIDs:
+            parameters = reg.conf.Exp.getID(self.experiment).get_copy()
+            parameters.env_params = copy.deepcopy(
+                self.target.config.env_params.nestedConf
+            )
+            return parameters
+        return {
+            "modelIDs": self.modelIDs,
+            "groupIDs": self.groupIDs,
+            "N": self.N,
+            "dt": self.dt,
+            "duration": self.duration,
+            "environment": self.target.config.env_params.nestedConf,
+        }
+
+    def simulate(self, seed: int | None = None) -> Any:
+        """Simulate every evaluated model.
+
+        Returns:
+            The simulated datasets.
+        """
+        master_seed = prepare_master_seed(seed)
+        child_seed = derive_seed(master_seed, "evaluation_exp")
+        session = None
+        if self._record_manifest:
+            session = RunManifestSession(
+                run=self,
+                invocation=self._manifest_invocation(master_seed),
+                seed=master_seed,
+                child_seeds={"evaluation_exp": child_seed},
+                source_manifest=self._source_manifest,
+            )
+        try:
+            with deterministic_random_context(child_seed):
+                datasets = self._simulate_datasets(
+                    child_seed=child_seed,
+                    parent_manifest=session.reference if session is not None else None,
+                )
+            self.datasets = datasets
+            if session is not None:
+                attach_manifest_to_datasets(self.datasets, session)
+                if self.store_data:
+                    for dataset in self.datasets:
+                        dataset.save_config()
+            self.analyze()
+            if self.store_data:
+                self.store()
+            if session is not None:
+                session.finish(
+                    datasets=self.datasets, scientific_result=self.error_dicts
+                )
+            return self.datasets
+        except KeyboardInterrupt as exc:
+            if session is not None:
+                session.abort(str(exc) or "Evaluation interrupted")
+            raise
+        except BaseException as exc:
+            if session is not None:
+                session.fail(exc)
+            raise
+
+    def _simulate_datasets(
+        self, *, child_seed: int, parent_manifest: dict[str, str] | None
+    ) -> Any:
+        """Run the models under the reference dataset's conditions.
+
+        Returns:
+            The simulated datasets.
+        """
         kws = {
             "dt": self.dt,
             "duration": self.duration,
@@ -131,30 +263,47 @@ class EvalRun(EvalConf, SimConfiguration):
             vprint(
                 f"Simulating {Nm} models : {self.groupIDs} with {self.N} larvae each", 2
             )
+            c = self.target.config
+            # ExpRun/SimConfigurationParams has no bare env_params kwarg --
+            # it must be set on the loaded experiment's own `parameters`.
+            # Without this override, the live path used the "self.
+            # experiment" experiment's own default arena instead of the
+            # reference dataset's actual (e.g. circular dish) arena,
+            # mirroring ExpConf.imitation_exp's own pattern.
+            parameters = reg.conf.Exp.getID(self.experiment).get_copy()
+            parameters.env_params = copy.deepcopy(c.env_params.nestedConf)
             kws0 = AttrDict(
                 {
                     "dir": self.dir,
                     "store_data": self.store_data,
                     "experiment": self.experiment,
+                    "parameters": parameters,
                     "id": self.id,
                     "offline": self.offline,
                     "modelIDs": self.modelIDs,
                     "groupIDs": self.groupIDs,
                     "N": self.N,
                     "sample": self.refID,
-                    # 'parameters': conf,
                     "screen_kws": self.screen_kws,
                     **kws,
                 }
             )
             run = ExpRun(**kws0)
-            self.datasets = run.simulate()
-        self.analyze()
-        if self.store_data:
-            self.store()
+            run._record_manifest = False
+            run._parent_manifest = parent_manifest
+            self.datasets = run.simulate(seed=child_seed)
         return self.datasets
 
     def get_error_plots(self, error_dict: Any, mode: str = "pooled") -> AttrDict:
+        """Build the plots comparing simulated and reference behaviour.
+
+        Args:
+            error_dict: The computed errors.
+            mode: The error normalization to display.
+
+        Returns:
+            The plots, keyed by name.
+        """
         GD = reg.graphs.dict
         label_dic = {
             "1:1": {"end": "RSS error", "step": r"median 1:1 distribution KS$_{D}$"},
@@ -193,6 +342,7 @@ class EvalRun(EvalConf, SimConfiguration):
         return AttrDict(dic)
 
     def analyze(self, **kwargs: Any) -> None:
+        """Score the simulated datasets against the reference."""
         vprint("Evaluating all models", 1)
         os.makedirs(self.plot_dir, exist_ok=True)
 
@@ -201,11 +351,13 @@ class EvalRun(EvalConf, SimConfiguration):
             self.figs.errors[m] = self.get_error_plots(self.error_dicts[m], m)
 
     def store(self) -> None:
+        """Write the evaluation's errors and datasets to disk."""
         if self.data_dir is not None:
             util.save_dict(self.error_dicts, f"{self.data_dir}/error_dicts.txt")
             vprint(f"Simulation {self.id} stored in directory {self.dir}", 2)
 
     def plot_models(self, **kwargs: Any) -> None:
+        """Plot the evaluated models' configurations."""
         GD = reg.graphs.dict
         save_to = self.plot_dir
         for mID in self.modelIDs:
@@ -218,6 +370,7 @@ class EvalRun(EvalConf, SimConfiguration):
 
     @property
     def existing_dispersion_ranges(self) -> Any:
+        """The dispersal windows already computed on the reference dataset."""
         ds = [self.target] + self.datasets
         return util.SuperList([d.existing_dispersion_ranges for d in ds]).flatten.unique
 
@@ -233,6 +386,7 @@ class EvalRun(EvalConf, SimConfiguration):
         ],
         **kwargs: Any,
     ) -> None:
+        """Plot the evaluation's behavioural comparisons."""
         GD = reg.graphs.dict
 
         self.target.load(h5_ks=["epochs", "angular", "dspNtor"])
@@ -297,6 +451,14 @@ reg.gen.Eval = class_generator(EvalConf)
 
 
 def evalNplot(show: bool = True, **kwargs: Any) -> EvalRun:
+    """Evaluate a set of models and plot the comparison.
+
+    Args:
+        **kwargs: The models, reference dataset and plot options.
+
+    Returns:
+        The evaluation run.
+    """
     E = EvalRun(**kwargs)
     E.simulate()
     E.plot_models(show=show)
@@ -305,6 +467,14 @@ def evalNplot(show: bool = True, **kwargs: Any) -> EvalRun:
 
 
 def adapt_mID(d, mID0, mID, ks):
+    """Fit a model's parameters to a reference dataset.
+
+    Args:
+        **kwargs: The model, reference dataset and fitting options.
+
+    Returns:
+        The adapted model configuration.
+    """
     from ..model import moduleDB
 
     vprint(f"Adapting {mID0} on {d.refID} as {mID}, fitting {ks} modules", 1)
@@ -324,6 +494,11 @@ def adapt_mID(d, mID0, mID, ks):
 
 
 def modelConf_analysis(d: Any) -> None:
+    """Adapt and evaluate a family of model configurations.
+
+    Args:
+        **kwargs: The models and the reference dataset.
+    """
     from collections import ChainMap
 
     from ..model.modules.module_modes import moduleDB as MD

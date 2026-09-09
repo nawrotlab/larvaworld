@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from html import unescape
 from pathlib import Path
+from types import SimpleNamespace
 
+from bokeh.document import Document
 import panel as pn
 import pytest
 
+from larvaworld import DATA_DIR
 from larvaworld.portal.datasets import import_datasets_app
 from larvaworld.portal.datasets.discovery import RawDatasetCandidate
 from larvaworld.portal.datasets.models import WorkspaceDatasetRecord
@@ -171,17 +174,40 @@ def test_import_datasets_view_uses_three_column_layout_with_environment_below() 
         if controller.dataset_id_input in (getattr(section, "objects", []) or [])
     )
     assert not _contains_widget(dataset_id_row, "Group ID override")
-    col_one_html = [
-        pane
-        for pane in col_one.select(pn.pane.HTML)
-        if pane
-        in {
-            controller.candidate_summary,
-            controller.status,
-            controller.lab_status,
-        }
-    ]
-    assert col_one_html == []
+    html_panes = list(col_one.select(pn.pane.HTML))
+    assert controller.status in html_panes
+    assert controller.candidate_summary not in html_panes
+    assert controller.lab_status not in html_panes
+    import_section = col_one.objects[1]
+    import_section_objects = list(getattr(import_section, "objects", ()))
+    assert controller.status in import_section_objects
+    assert controller.workspace_summary in import_section_objects
+    assert import_section_objects.index(
+        controller.status
+    ) < import_section_objects.index(controller.workspace_summary)
+
+    lab_source_section = col_one.objects[0]
+    lab_source_objects = list(getattr(lab_source_section, "objects", ()))
+    lab_config_controls = next(
+        section
+        for section in lab_source_objects
+        if _contains_widget(section, "Lab format")
+        and _contains_widget(section, "Configuration ID")
+    )
+    lab_actions_row = next(
+        section
+        for section in lab_source_objects
+        if _contains_widget(section, "Load")
+        and _contains_widget(section, "Save")
+        and _contains_widget(section, "Delete")
+        and _contains_widget(section, "Reset configurations")
+    )
+    assert lab_source_objects.index(lab_config_controls) < lab_source_objects.index(
+        lab_actions_row
+    )
+    assert lab_source_objects.index(lab_actions_row) < lab_source_objects.index(
+        raw_root_row
+    )
 
     lab_actions_widgets = controller.lab_actions.view.select(pn.widgets.Button)
     lab_actions_names = {widget.name for widget in lab_actions_widgets}
@@ -213,7 +239,7 @@ def test_import_datasets_view_uses_three_column_layout_with_environment_below() 
     assert not _contains_widget(env_middle_col, "New border ID")
     assert _contains_widget(env_right_col, "New border ID")
     assert "Border list" in _card_titles(env_right_col)
-    assert "Environment scapes" in _card_titles(env_right_col)
+    assert "Sensory landscapes" in _card_titles(env_right_col)
     assert len(_scape_switches(env_right_col)) >= 1
 
 
@@ -268,6 +294,18 @@ def test_import_datasets_tracker_panel_uses_safe_numeric_widgets() -> None:
     assert "timestep" in float_inputs
     assert "# midline 2D points" in int_inputs
     assert "# contour 2D points" in int_inputs
+
+
+def test_import_datasets_optional_pixel_scale_is_serializable() -> None:
+    controller = import_datasets_app._ImportDatasetsController()
+    pixel_scale = _find_widget(controller, "Pixel to mm")
+
+    assert isinstance(pixel_scale, pn.widgets.FloatInput)
+    assert pixel_scale.value is None
+
+    document = Document()
+    import_datasets_app.import_datasets_app().server_doc(document)
+    document.to_json()
 
 
 def test_import_datasets_tracker_vector_sliders_follow_points_and_bend() -> None:
@@ -367,43 +405,174 @@ def test_import_datasets_tracker_framerate_panel_is_separate() -> None:
     ]
 
 
-def test_import_datasets_merged_checkbox_disables_candidate_dropdown_and_sets_request_flag(
+def test_import_datasets_merged_checkbox_builds_schleyer_merge_target_request(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     workspace = initialize_workspace(tmp_path / "workspace")
     set_active_workspace_path(workspace.root)
+    raw_root = tmp_path / "raw"
 
     controller = import_datasets_app._ImportDatasetsController()
-    controller.raw_root_input.value = str(tmp_path / "raw")
+    controller.lab_select.value = "Schleyer"
+    controller.raw_root_input.value = str(raw_root)
 
-    candidate = RawDatasetCandidate(
-        candidate_id="dish01",
-        parent_dir="exploration",
-        display_name="exploration / dish01",
-        source_path=tmp_path / "raw" / "exploration" / "dish01",
-        warnings=[],
+    candidates = [
+        RawDatasetCandidate(
+            candidate_id="box01",
+            parent_dir="exploration/box01",
+            display_name="exploration/box01",
+            source_path=raw_root / "exploration" / "box01",
+            warnings=[],
+        ),
+        RawDatasetCandidate(
+            candidate_id="box02",
+            parent_dir="exploration/box02",
+            display_name="exploration/box02",
+            source_path=raw_root / "exploration" / "box02",
+            warnings=[],
+        ),
+    ]
+    monkeypatch.setattr(
+        import_datasets_app,
+        "discover_raw_datasets",
+        lambda _lab_id, _raw_root: candidates,
     )
-    candidate_key = controller._candidate_option_key(candidate)
-    controller._candidate_by_key = {candidate_key: candidate}
-    controller.candidate_select.options = {
-        "Select a candidate": "",
-        candidate.display_name: candidate_key,
-    }
-    controller.candidate_select.value = candidate_key
-    controller.merged_checkbox.value = True
-    controller._sync_controls()
-
     monkeypatch.setattr(
         import_datasets_app,
         "_candidate_import_overrides",
-        lambda _lab_id, _raw_root, _candidate: {},
+        lambda _lab_id, _raw_root, _candidate: (_ for _ in ()).throw(
+            AssertionError("merged imports must not use candidate overrides")
+        ),
     )
+
+    controller._handle_discover()
+    controller.merged_checkbox.value = True
+    merge_key = next(
+        value
+        for label, value in controller.candidate_select.options.items()
+        if label == "exploration (2 datasets)"
+    )
+    controller.candidate_select.value = merge_key
 
     request = controller._build_import_request()
 
-    assert controller.candidate_select.disabled is True
+    assert controller.candidate_select.disabled is False
+    assert controller.candidate_select.name == "Merge target"
+    assert request.parent_dir == "exploration"
+    assert request.dataset_id == "exploration"
     assert request.merged is True
+    assert request.extra_kwargs == {}
+    assert (
+        "Child candidates</strong>: 2 datasets" in controller.candidate_summary.object
+    )
+
+
+def test_import_datasets_merged_checkbox_rejects_jovanic_source_id_import(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    raw_root = tmp_path / "raw"
+    day1 = raw_root / "day1"
+
+    candidates = [
+        RawDatasetCandidate(
+            candidate_id="dishA",
+            parent_dir="day1",
+            display_name="day1 / dishA",
+            source_path=day1,
+            warnings=[],
+        ),
+        RawDatasetCandidate(
+            candidate_id="dishB",
+            parent_dir="day1",
+            display_name="day1 / dishB",
+            source_path=day1,
+            warnings=[],
+        ),
+    ]
+    monkeypatch.setattr(
+        import_datasets_app,
+        "discover_raw_datasets",
+        lambda _lab_id, _raw_root: candidates,
+    )
+
+    controller = import_datasets_app._ImportDatasetsController()
+    controller.lab_select.value = "Jovanic"
+    controller.raw_root_input.value = str(raw_root)
+    controller._handle_discover()
+
+    assert controller.merged_checkbox.disabled is True
+    assert controller.candidate_select.name == "Candidate"
+    assert "day1 / dishA" in controller.candidate_select.options
+    assert "day1 (2 datasets)" not in controller.candidate_select.options
+
+    controller.merged_checkbox.value = True
+
+    assert controller.merged_checkbox.value is False
+    assert "Merged import is not supported" in controller.status.object
+    assert controller.candidate_select.name == "Candidate"
+
+
+def test_import_datasets_merged_toggle_rebuilds_selector_options(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    raw_root = tmp_path / "raw"
+    candidates = [
+        RawDatasetCandidate(
+            candidate_id="box01",
+            parent_dir="exploration/box01",
+            display_name="exploration/box01",
+            source_path=raw_root / "exploration" / "box01",
+            warnings=[],
+        ),
+        RawDatasetCandidate(
+            candidate_id="box02",
+            parent_dir="exploration/box02",
+            display_name="exploration/box02",
+            source_path=raw_root / "exploration" / "box02",
+            warnings=[],
+        ),
+    ]
+    monkeypatch.setattr(
+        import_datasets_app,
+        "discover_raw_datasets",
+        lambda _lab_id, _raw_root: candidates,
+    )
+
+    controller = import_datasets_app._ImportDatasetsController()
+    controller.lab_select.value = "Schleyer"
+    controller.raw_root_input.value = str(raw_root)
+    controller._handle_discover()
+    candidate_key = next(
+        value
+        for label, value in controller.candidate_select.options.items()
+        if label == "exploration/box01"
+    )
+    controller.candidate_select.value = candidate_key
+
+    assert controller.candidate_select.name == "Candidate"
+    assert controller.dataset_id_input.value == "box01"
+
+    controller.merged_checkbox.value = True
+
+    assert controller.candidate_select.value == ""
+    assert controller.dataset_id_input.value == ""
+    assert controller.candidate_select.name == "Merge target"
+    assert "exploration (2 datasets)" in controller.candidate_select.options
+    assert "exploration/box01" not in controller.candidate_select.options
+
+    controller.merged_checkbox.value = False
+
+    assert controller.candidate_select.value == ""
+    assert controller.dataset_id_input.value == ""
+    assert controller.candidate_select.name == "Candidate"
+    assert "exploration/box01" in controller.candidate_select.options
+    assert "exploration/box02" in controller.candidate_select.options
 
 
 def test_import_datasets_lab_config_save_and_delete_use_registry_contract(
@@ -510,6 +679,128 @@ def test_import_datasets_controller_discovers_candidates_and_enables_import(
     assert "exploration/dish01" in controller.candidate_summary.object
 
 
+def test_import_datasets_controller_discovers_real_data_dir_raw_folder(
+    tmp_path: Path,
+) -> None:
+    # End-to-end against the package's own bundled raw data (no mocking of
+    # discover_raw_datasets) -- confirms the controller's raw-root ->
+    # discovery -> candidate-list wiring works against a real Schleyer raw
+    # folder shipped in DATA_DIR, not just synthetic tmp_path fixtures.
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    raw_root = Path(DATA_DIR) / "SchleyerGroup" / "raw"
+    assert raw_root.is_dir(), f"Expected bundled raw data at {raw_root}"
+
+    controller = import_datasets_app._ImportDatasetsController()
+    controller.lab_select.value = "Schleyer"
+    controller.raw_root_input.value = str(raw_root)
+    assert controller.discover_button.disabled is False
+
+    controller._handle_discover()
+
+    assert "Discovered" in controller.status.object
+    assert controller.candidate_select.disabled is False
+    discovered_ids = {c.candidate_id for c in controller._discovered_candidates}
+    assert {"dish01", "dish02"}.issubset(discovered_ids)
+
+
+def test_import_datasets_discover_failure_sets_danger_status(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    raw_root = tmp_path / "raw"
+    raw_root.mkdir()
+
+    monkeypatch.setattr(
+        import_datasets_app,
+        "discover_raw_datasets",
+        lambda _lab_id, _raw_root: (_ for _ in ()).throw(RuntimeError("scan failed")),
+    )
+
+    controller = import_datasets_app._ImportDatasetsController()
+    controller.raw_root_input.value = str(raw_root)
+    controller._handle_discover()
+
+    assert "Discovery failed: scan failed" in controller.status.object
+    assert controller.discover_button.disabled is False
+
+
+def test_import_datasets_import_shows_running_state_before_deferred_execution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from unittest.mock import PropertyMock
+
+    workspace = initialize_workspace(tmp_path / "workspace")
+    set_active_workspace_path(workspace.root)
+    raw_root = tmp_path / "raw"
+    candidate = RawDatasetCandidate(
+        candidate_id="dish01",
+        parent_dir="exploration/dish01",
+        display_name="exploration/dish01",
+        source_path=raw_root / "exploration" / "dish01",
+        warnings=[],
+    )
+    seen_requests: list[tuple[object, object]] = []
+    record = _record(
+        workspace.datasets_dir / "imported" / "Schleyer" / "exploration" / "dish01"
+    )
+
+    monkeypatch.setattr(
+        import_datasets_app,
+        "discover_raw_datasets",
+        lambda _lab_id, _raw_root: [candidate],
+    )
+    monkeypatch.setattr(
+        import_datasets_app,
+        "_candidate_import_overrides",
+        lambda _lab_id, _raw_root, _candidate: {},
+    )
+    monkeypatch.setattr(
+        import_datasets_app,
+        "import_into_workspace",
+        lambda request, workspace=None: seen_requests.append((request, workspace))
+        or record,
+    )
+
+    class _DummyCurdoc:
+        def __init__(self) -> None:
+            self.pending: list[object] = []
+            self.session_context = SimpleNamespace(
+                request=SimpleNamespace(arguments={})
+            )
+
+        def add_next_tick_callback(self, callback: object) -> None:
+            self.pending.append(callback)
+
+    dummy = _DummyCurdoc()
+    state_obj = import_datasets_app.pn.state
+    monkeypatch.setattr(
+        type(state_obj),
+        "curdoc",
+        PropertyMock(return_value=dummy),
+    )
+
+    controller = import_datasets_app._ImportDatasetsController()
+    controller.raw_root_input.value = str(raw_root)
+    controller._handle_discover()
+    candidate_key = next(
+        value for value in controller.candidate_select.options.values() if value
+    )
+    controller.candidate_select.value = candidate_key
+
+    controller._handle_import()
+
+    assert seen_requests == []
+    assert "Importing dataset into the active workspace" in controller.status.object
+    assert controller.import_button.disabled is True
+    assert len(dummy.pending) == 1
+    dummy.pending[0]()
+    assert len(seen_requests) == 1
+    assert "imported into the active workspace" in controller.status.object
+    assert controller.import_button.disabled is False
+
+
 def test_import_datasets_browse_raw_root_clears_existing_candidates(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -554,12 +845,13 @@ def test_import_datasets_browse_raw_root_clears_existing_candidates(
     assert "Source changed." in controller.status.object
 
 
-def test_import_datasets_browse_raw_root_cancel_is_silent(
+def test_import_datasets_browse_raw_root_cancel_reports_cancel(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     workspace = initialize_workspace(tmp_path / "workspace")
     set_active_workspace_path(workspace.root)
     raw_root = tmp_path / "raw"
+    raw_root.mkdir()
     monkeypatch.setattr(
         import_datasets_app,
         "pick_directory",
@@ -568,12 +860,11 @@ def test_import_datasets_browse_raw_root_cancel_is_silent(
 
     controller = import_datasets_app._ImportDatasetsController()
     controller.raw_root_input.value = str(raw_root)
-    initial_status = controller.status.object
 
     controller._handle_browse_raw_root()
 
     assert controller.raw_root_input.value == str(raw_root)
-    assert controller.status.object == initial_status
+    assert "Browse cancelled" in controller.status.object
 
 
 def test_import_datasets_browse_raw_root_surfaces_picker_errors(

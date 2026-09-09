@@ -82,22 +82,56 @@ class FunctionDict:
     """
 
     def __init__(self):
+        """Build the registry of decorator-registered functions."""
         self.graphs = AttrDict()
         self.graph_required_data = AttrDict()
         self.stored_confs = AttrDict()
         self.param_computing = AttrDict()
 
     def param(self, name):
+        """Register a parameter-computing function.
+
+        Args:
+            name: The parameter key it computes.
+
+        Returns:
+            The registering decorator.
+        """
         return self.register_func(name, "param_computing")
 
     def graph(self, name, required={}):
+        """Register a plotting function.
+
+        Args:
+            name: The plot's name.
+
+        Returns:
+            The registering decorator.
+        """
         self.graph_required_data[name] = AttrDict(required)
         return self.register_func(name, "graphs")
 
     def stored_conf(self, name):
+        """Register a stored-configuration builder.
+
+        Args:
+            name: The configuration type it builds.
+
+        Returns:
+            The registering decorator.
+        """
         return self.register_func(name, "stored_confs")
 
     def register_func(self, name, group):
+        """Register a function under one of the registry's groups.
+
+        Args:
+            name: The name to register under.
+            group: The registry group.
+
+        Returns:
+            The registering decorator.
+        """
         if not hasattr(self, group):
             raise
         d = getattr(self, group)

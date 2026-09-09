@@ -1,8 +1,16 @@
+"""
+The model inspector app.
+
+Shows a larva model's modules and parameters, compares model variants, and
+previews the behaviour a configuration produces.
+"""
+
 from __future__ import annotations
 
 import copy
 import io
 import json
+import time
 from collections.abc import Mapping
 from html import escape
 from pathlib import Path
@@ -16,16 +24,26 @@ from bokeh.models import ColumnDataSource
 from bokeh.plotting import figure
 
 from larvaworld.lib import reg, util
+from larvaworld.lib.reg.graph import GraphRegistry
 from larvaworld.lib.model import Effector
 from larvaworld.lib.model import agents, deb
 from larvaworld.lib.model import moduleDB as MD
 from larvaworld.lib.param import class_objs
+from larvaworld.portal.buttons import (
+    draw_button,
+    export_button,
+    import_button,
+    pause_button,
+    reset_button,
+    run_button,
+)
 from larvaworld.portal.config_widgets.preset_controls import (
     ADVANCED_PRESET_POLICY,
-    USER_PRESET_POLICY,
     PresetControlsController,
     PresetRef,
+    PresetSource,
     WorkspacePresetStore,
+    build_preset_controls_panel,
 )
 from larvaworld.portal.config_widgets.widget_base import param_controls
 from larvaworld.portal.models_architecture.model_inspector_data import (
@@ -34,9 +52,6 @@ from larvaworld.portal.models_architecture.model_inspector_data import (
     DEFAULT_LIVE_PREVIEW_REPORTER_KEYS,
     LIVE_PREVIEW_REPORTER_KEYS,
     build_inspection_brain_from_config,
-    compare_model_inspections,
-    inspect_model,
-    inspect_model_from_config,
     inspect_model_modules_from_config,
     load_model_draft,
     list_model_ids,
@@ -54,6 +69,10 @@ from larvaworld.portal.models_architecture.model_inspector_models import (
 )
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
 from larvaworld.portal.workspace import WorkspaceError, get_workspace_dir
+from larvaworld.portal.models_architecture.model_export import (
+    export_model_config_to_json,
+    format_export_filename,
+)
 
 __all__ = ["_ModelInspectorController", "model_inspector_app"]
 
@@ -200,10 +219,29 @@ MODEL_INSPECTOR_RAW_CSS = """
   border-radius: 8px;
   font-size: 12px;
 }
+
+.lw-model-inspector-table .tabulator {
+  border-radius: 10px;
+  border: 1px solid rgba(90, 71, 96, 0.12);
+  overflow: hidden;
+}
+
+.lw-model-inspector-table .tabulator .tabulator-col,
+.lw-model-inspector-table .tabulator .tabulator-cell {
+  font-size: 12px;
+}
 """.strip()
 
 
 def _status_html(text: str) -> str:
+    """Render a status line as markup.
+
+    Args:
+        text: The status text.
+
+    Returns:
+        The markup.
+    """
     return f'<div class="lw-model-inspector-status">{escape(text)}</div>'
 
 
@@ -220,6 +258,14 @@ _REPORTER_SIGNAL_LABELS = {
 
 
 def _reporter_label_parts(key: str) -> tuple[str | None, str | None]:
+    """Split a reporter key into its display parts.
+
+    Args:
+        key: The reporter key.
+
+    Returns:
+        The module and parameter names.
+    """
     signal, _, module = key.partition("_")
     module_label = _REPORTER_MODULE_LABELS.get(module)
     signal_label = _REPORTER_SIGNAL_LABELS.get(signal)
@@ -227,6 +273,14 @@ def _reporter_label_parts(key: str) -> tuple[str | None, str | None]:
 
 
 def _reporter_plot_label(key: str) -> str:
+    """The label a reporter is plotted under.
+
+    Args:
+        key: The reporter key.
+
+    Returns:
+        The label.
+    """
     module_label, signal_label = _reporter_label_parts(key)
     if module_label and signal_label:
         return f"{module_label} {signal_label} ({key})"
@@ -247,16 +301,40 @@ def _reporter_key_columns() -> tuple[tuple[str, ...], tuple[str, ...], tuple[str
 
 
 def _reporter_selector_options_for_keys(keys: tuple[str, ...]) -> dict[str, str]:
+    """Build the selector options for a set of reporters.
+
+    Args:
+        keys: The reporter keys.
+
+    Returns:
+        The options, keyed by label.
+    """
     return {_reporter_plot_label(k): k for k in keys}
 
 
 def _ordered_selected_reporter_keys(selected: set[str]) -> tuple[str, ...]:
+    """Order the selected reporters canonically.
+
+    Args:
+        selected: The selected reporter keys.
+
+    Returns:
+        The keys, in display order.
+    """
     if not selected:
         return tuple(DEFAULT_LIVE_PREVIEW_REPORTER_KEYS)
     return tuple(k for k in LIVE_PREVIEW_REPORTER_KEYS if k in selected)
 
 
 def _json_ready(value: Any) -> Any:
+    """Convert a value into JSON-serializable form.
+
+    Args:
+        value: The value to convert.
+
+    Returns:
+        The JSON-ready value.
+    """
     nested_conf = getattr(type(value), "nestedConf", None)
     if nested_conf is not None:
         return _json_ready(value.nestedConf)
@@ -275,6 +353,15 @@ def _json_ready(value: Any) -> Any:
 
 
 def _coerce_like_template(template: Any, value: Any) -> Any:
+    """Coerce an edited value to the shape of the stored one.
+
+    Args:
+        template: The stored value whose shape is preserved.
+        value: The edited value.
+
+    Returns:
+        The coerced value.
+    """
     if isinstance(template, dict) and isinstance(value, dict):
         coerced: dict[Any, Any] = {}
         for key, item in value.items():
@@ -297,18 +384,25 @@ def _coerce_like_template(template: Any, value: Any) -> Any:
 
 
 class _ModelInspectorController:
-    def __init__(self, *, advanced_preset_controls: bool = False) -> None:
+    """State behind the model inspector app."""
+
+    def __init__(self) -> None:
+        """Build the controller, its draft and its inspection widgets."""
         model_ids = list_model_ids()
         if not model_ids:
             raise ModelInspectorError("no_models", "No model presets are available.")
         self._model_ids = model_ids
-        self._advanced_preset_controls = bool(advanced_preset_controls)
+        try:
+            self.graph_registry = GraphRegistry()
+        except Exception:
+            self.graph_registry = None
         self._model_preset_workspace_available = False
         self._brain = None
         self._runtime = None
         self._callback = None
-        self._draft_model_id: str | None = None
-        self._draft_model: Any | None = None
+        default_model = "explorer" if "explorer" in model_ids else model_ids[0]
+        self._draft_model_id: str | None = default_model
+        self._draft_model: Any | None = load_model_draft(default_model)
         self._draft_validation_issues: tuple[DraftValidationIssue, ...] = ()
         self._is_running = False
         self._has_local_edits = False
@@ -390,31 +484,30 @@ class _ModelInspectorController:
             ]
         )
 
-        self.primary_select = pn.widgets.Select(
-            name="Primary model",
-            options={model_id: model_id for model_id in model_ids},
-            value="explorer" if "explorer" in model_ids else model_ids[0],
+        # Multi-model comparison lives in its own bottom section (not the
+        # top preset panel, which is single-model-only): a MultiChoice
+        # doubles as both "pick a model to add" (its own search dropdown)
+        # and "the space of already-added models, removable by pressing
+        # them" (its tag pills) -- always seeded with the current primary.
+        self.compare_models_select = pn.widgets.MultiChoice(
+            name="Compare against",
+            options=list(self._model_ids),
+            value=[self._draft_model_id],
+            sizing_mode="stretch_width",
         )
-        compare_options = {"(None)": ""} | {
-            model_id: model_id
-            for model_id in model_ids
-            if model_id != self.primary_select.value
-        }
-        self.compare_select = pn.widgets.Select(
-            name="Compare with",
-            options=compare_options,
-            value="",
-        )
-        self.run_button = pn.widgets.Button(name="Run", button_type="success")
-        self.pause_button = pn.widgets.Button(name="Pause", button_type="primary")
+        self.compare_run_button = draw_button(name="Draw")
+        self.run_button = run_button(name="Run", sizing_mode=None)
+        self.pause_button = pause_button(name="Pause", sizing_mode=None)
         self.clear_trace_button = pn.widgets.Button(
             name="Clear trace", button_type="primary"
         )
-        self.reset_preset_button = pn.widgets.Button(
-            name="Reset to model preset",
-            button_type="warning",
+        self.reset_preset_button = reset_button(name="Reset to model preset")
+        self.export_button = pn.widgets.Button(
+            name="📥 Export JSON",
+            button_type="light",
             sizing_mode="stretch_width",
         )
+        self.export_status = pn.pane.HTML("", margin=(6, 0, 0, 0))
         self.max_steps_input = pn.widgets.IntInput(
             name="Max steps",
             value=LIVE_MAX_STEPS,
@@ -437,19 +530,11 @@ class _ModelInspectorController:
             step=0.01,
         )
 
-        self.primary_table = pn.pane.DataFrame(
-            pd.DataFrame(),
-            sizing_mode="stretch_width",
-        )
         self.module_sections_box = pn.Column(sizing_mode="stretch_width")
         self._module_card_slots: dict[str, pn.Column] = {}
         self._module_specs_by_id: dict[str, ModelModuleSpec] = {}
-        self.compare_table = pn.pane.DataFrame(
-            pd.DataFrame(),
-            sizing_mode="stretch_width",
-        )
-        self.compare_title = pn.pane.Markdown("", margin=(0, 0, 6, 0))
-        self.summary_sections_box = pn.Column(
+        self.compare_figure_pane = pn.pane.HTML(
+            "",
             sizing_mode="stretch_width",
             css_classes=["lw-model-inspector-section-box"],
         )
@@ -465,18 +550,43 @@ class _ModelInspectorController:
             sizing_mode="stretch_width", margin=(6, 0, 0, 0)
         )
         self.model_preset_controls = self._build_model_preset_controls()
-        self.download_json_button = pn.widgets.FileDownload(
-            name="Download JSON",
-            button_type="default",
+        # PresetControlsController.refresh_list() defaults preset_select to
+        # whichever catalog entry happens to sort first, with no awareness
+        # of the "explorer" default this controller's own draft already
+        # loaded above -- point the visible dropdown at the same entry so
+        # it doesn't silently disagree with what's actually loaded.
+        default_registry_ref = next(
+            (
+                ref
+                for ref in self.model_preset_controls.catalog.refs
+                if ref.source == PresetSource.REGISTRY
+                and ref.name == self._draft_model_id
+            ),
+            None,
+        )
+        if default_registry_ref is not None:
+            self.model_preset_controls.preset_select.value = default_registry_ref.token
+        self.import_model_btn, self.import_model_input = import_button(
+            "Import", accept=".json,application/json"
+        )
+        self.export_model_download_btn, self.export_model_btn = export_button(
+            "Export",
             callback=self._export_draft_json,
             filename=self._draft_download_filename(),
-            sizing_mode="stretch_width",
         )
 
         self._sources = {
             key: ColumnDataSource(data={"time": [], key: []})
             for key in LIVE_PREVIEW_REPORTER_KEYS
         }
+        self._performance_stats: dict[str, Any] = {
+            "total_steps": 0,
+            "total_time": 0.0,
+            "avg_step_time": 0.0,
+            "min_step_time": float("inf"),
+            "max_step_time": 0.0,
+        }
+        self._step_times: list[float] = []
 
         self.plot_reporters_checkbox_activity.param.watch(
             self._on_plot_reporters_change, "value"
@@ -487,8 +597,8 @@ class _ModelInspectorController:
         self.plot_reporters_checkbox_phase.param.watch(
             self._on_plot_reporters_change, "value"
         )
-        self.primary_select.param.watch(self._on_primary_change, "value")
-        self.compare_select.param.watch(self._on_compare_change, "value")
+        self.compare_run_button.on_click(self._on_compare_draw)
+        self.import_model_input.param.watch(self._on_import_model_file, "value")
         self.run_button.on_click(self._on_run)
         self.pause_button.on_click(self._on_pause)
         self.clear_trace_button.on_click(self._on_clear_trace)
@@ -509,68 +619,97 @@ class _ModelInspectorController:
         self._refresh_inspection()
         self._init_live_plots()
         self._update_probe_meta()
-        self._update_summary_sections()
+
+    def _get_primary_model_id(self) -> str:
+        """Get the primary model ID -- the model currently loaded via the
+        top Stored Configurations panel."""
+        return self._draft_model_id
 
     def _set_status(self, message: str) -> None:
+        """Show a status message.
+
+        Args:
+            message: The status text.
+        """
         self._status_message = message
         self.status_pane.object = _status_html(message)
 
     def _set_running(self, value: bool) -> None:
+        """Mark the live preview as running or stopped.
+
+        Args:
+            value: Whether it is running.
+        """
         self._is_running = value
         self._refresh_preview_controls()
 
     def _model_preset_workspace_dir(self) -> Path:
+        """The workspace folder model presets are stored in."""
         return get_workspace_dir("metadata") / "model_presets"
 
     def _fallback_model_preset_workspace_dir(self) -> Path:
+        """The folder used when no workspace is configured."""
         return Path.cwd() / ".larvaworld_model_presets_unavailable"
 
     def _draft_payload_for_storage(self, _name: str | None = None) -> dict[str, Any]:
+        """Assemble the current draft for storage.
+
+        Args:
+            _name: The name it will be stored under.
+
+        Returns:
+            The payload.
+        """
         return _json_ready(self._require_draft_model())
 
     def _draft_json_text(self) -> str:
+        """The current draft, rendered as JSON."""
         return json.dumps(self._draft_payload_for_storage(), indent=2) + "\n"
 
     def _export_draft_json(self) -> io.StringIO:
+        """Build the JSON file the export button downloads.
+
+        Returns:
+            The file contents.
+        """
         return io.StringIO(self._draft_json_text())
 
     def _draft_download_filename(self) -> str:
-        base = str(self.primary_select.value or "model").strip() or "model"
+        """The file name an exported draft is downloaded under."""
+        base = str(self._get_primary_model_id()).strip() or "model"
         safe = WorkspacePresetStore.normalize_name(base)
         return f"{safe}_draft.json"
 
     def _build_model_preset_controls(self) -> PresetControlsController:
-        policy = (
-            ADVANCED_PRESET_POLICY
-            if self._advanced_preset_controls
-            else USER_PRESET_POLICY
-        )
+        """Build the preset controls for saving and loading models.
+
+        Returns:
+            The controls component.
+        """
         workspace_dir = self._fallback_model_preset_workspace_dir()
         try:
             workspace_dir = self._model_preset_workspace_dir()
             self._model_preset_workspace_available = True
         except WorkspaceError:
             self._model_preset_workspace_available = False
-        kwargs: dict[str, Any] = {}
-        if self._advanced_preset_controls:
-            kwargs["build_registry_payload"] = self._draft_payload_for_storage
         return PresetControlsController(
             conftype="Model",
             workspace_store=WorkspacePresetStore(
                 workspace_dir,
                 directory_key="model-inspector-models",
             ),
-            policy=policy,
+            policy=ADVANCED_PRESET_POLICY,
             build_workspace_payload=self._draft_payload_for_storage,
+            build_registry_payload=self._draft_payload_for_storage,
             on_load=self._on_model_preset_loaded,
             on_save=self._on_model_preset_saved,
             on_status=self._on_model_preset_status,
-            title="Model Presets",
+            title="Stored Configurations",
             preset_name_after_refresh=True,
-            **kwargs,
         )
 
     def _refresh_model_preset_controls(self) -> None:
+        """Reload the model presets offered in the selector."""
         try:
             workspace_store = WorkspacePresetStore(
                 self._model_preset_workspace_dir(),
@@ -598,17 +737,57 @@ class _ModelInspectorController:
             )
 
     def _on_model_preset_status(self, message: str, *, tone: str = "neutral") -> None:
+        """Relay a status message from the preset controls.
+
+        Args:
+            message: The status text.
+        """
         if tone in {"warning", "danger"}:
             self._set_status(self._with_validation_status(message))
 
     def _on_model_preset_saved(self, ref: PresetRef, payload: Any) -> None:
+        """Refresh the app after a model preset was saved.
+
+        Args:
+            ref: The saved preset.
+            payload: What was stored.
+        """
         del payload
         self._set_status(self._with_validation_status(f"Saved {ref.display_label}."))
 
     def _on_model_preset_loaded(self, ref: PresetRef, payload: Any) -> None:
+        """Adopt a model preset that was just loaded.
+
+        Args:
+            ref: The loaded preset.
+            payload: Its contents.
+        """
+        if ref.source == PresetSource.REGISTRY:
+            self._pause_callback()
+            self._draft_model = load_model_draft(ref.name)
+            self._draft_model_id = ref.name
+            self._draft_validation_issues = ()
+            self._has_local_edits = False
+            if hasattr(self.model_preset_controls, "preset_name"):
+                self.model_preset_controls.preset_name.value = ref.name
+            self._sync_compare_selection_primary()
+            self._clear_compare_results()
+            self._sync_preview_after_draft_change(
+                message=f"Loaded {ref.display_label}.",
+                clear_trace=True,
+                mark_dirty=False,
+                ui_scope="full",
+            )
+            return
         self._replace_draft_from_loaded_preset(ref, payload)
 
     def _replace_draft_from_loaded_preset(self, ref: PresetRef, payload: Any) -> None:
+        """Replace the working draft with a loaded preset.
+
+        Args:
+            ref: The loaded preset.
+            payload: Its contents.
+        """
         copied = util.AttrDict(payload).get_copy()
         brain_payload = copied.get("brain") if isinstance(copied, Mapping) else None
         if not isinstance(copied, Mapping) or not isinstance(brain_payload, Mapping):
@@ -616,13 +795,19 @@ class _ModelInspectorController:
                 "invalid_model_preset",
                 f'Loaded preset "{ref.display_label}" is missing a valid "brain" payload.',
             )
-        template = load_model_draft(str(self.primary_select.value))
+        # Workspace/file-sourced presets are draft-config snapshots, not
+        # themselves tied to a registry model id -- coerce against the
+        # last-known primary's template, keeping that primary id.
+        primary = self._get_primary_model_id()
+        template = load_model_draft(str(primary))
         self._draft_model = util.AttrDict(
             _coerce_like_template(template, copied)
         ).get_copy()
-        self._draft_model_id = str(self.primary_select.value)
+        self._draft_model_id = str(primary)
         if hasattr(self.model_preset_controls, "preset_name"):
             self.model_preset_controls.preset_name.value = ref.name
+        self._sync_compare_selection_primary()
+        self._clear_compare_results()
         self._sync_preview_after_draft_change(
             message=f"Loaded {ref.display_label}.",
             clear_trace=True,
@@ -630,32 +815,130 @@ class _ModelInspectorController:
             ui_scope="full",
         )
 
-    def _on_primary_change(self, _event=None) -> None:
-        self._pause_callback()
-        self._reset_draft_to_selected_model()
-        self._refresh_model_preset_controls()
-        self.download_json_button.filename = self._draft_download_filename()
-        compare_options = {"(None)": ""} | {
-            model_id: model_id
-            for model_id in self._model_ids
-            if model_id != self.primary_select.value
-        }
-        previous = self.compare_select.value
-        self.compare_select.options = compare_options
-        self.compare_select.value = (
-            previous if previous in compare_options.values() else ""
-        )
-        self._sync_preview_after_draft_change(
-            message=f'Model changed to "{self.primary_select.value}".',
-            clear_trace=True,
-            mark_dirty=False,
-            ui_scope="full",
-        )
+    def _sync_compare_selection_primary(self) -> None:
+        """Keep the comparison's primary model in step with the selection."""
+        primary = self._draft_model_id
+        current = list(self.compare_models_select.value or [])
+        if primary not in current:
+            self.compare_models_select.value = [primary, *current]
 
-    def _on_compare_change(self, _event=None) -> None:
-        self._refresh_inspection_tables()
+    def _clear_compare_results(self) -> None:
+        """Discard the current comparison results."""
+        self.compare_figure_pane.object = ""
+
+    def _on_import_model_file(self, _event: param.parameterized.Event) -> None:
+        """Handle an uploaded model file, loading it as the draft.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
+        raw_value = self.import_model_input.value
+        if raw_value in (None, b"", ""):
+            return
+        filename = str(getattr(self.import_model_input, "filename", "") or "").strip()
+        loaded_name = Path(filename).stem if filename else "imported_model"
+        try:
+            if isinstance(raw_value, (bytes, bytearray)):
+                text = raw_value.decode("utf-8")
+            elif isinstance(raw_value, str):
+                text = raw_value
+            else:
+                raise ValueError("Unsupported uploaded file payload type.")
+            payload = json.loads(text)
+        except Exception as exc:
+            self._set_status(f"Failed to load file: {exc}")
+            return
+        if not isinstance(payload, dict):
+            self._set_status("Model file is not a valid model configuration.")
+            return
+        file_ref = PresetRef(
+            source=PresetSource.WORKSPACE,
+            name=loaded_name,
+            display_label=f"file / {loaded_name}",
+            token="",
+            conftype="Model",
+        )
+        try:
+            self._replace_draft_from_loaded_preset(file_ref, payload)
+        except ModelInspectorError as exc:
+            self._set_status(f"Failed to load file: {exc}")
+
+    def _on_compare_draw(self, _event=None) -> None:
+        """Render the primary's own "model table" plot alone, or a "model
+        diff" plot against every other model currently in
+        compare_models_select -- both real graph-registry plot functions
+        (lib/plot/table.py), not a hand-rolled DataFrame. Explicit action,
+        not auto-refreshed on selection change."""
+        if self._has_local_edits:
+            self._set_status(
+                self._with_validation_status(
+                    "Comparison hidden during local edits. Reset or save first."
+                )
+            )
+            self.compare_figure_pane.object = ""
+            return
+
+        if self.graph_registry is None:
+            self._set_status(
+                "Plot registry is not available. Please check your larvaworld installation."
+            )
+            return
+
+        primary = self._draft_model_id
+        others = [
+            model_id
+            for model_id in (self.compare_models_select.value or [])
+            if model_id != primary
+        ]
+        try:
+            if not others:
+                fig = self.graph_registry.run(
+                    "model table",
+                    mID=primary,
+                    m=self._require_draft_model(),
+                    return_fig=True,
+                )
+            else:
+                model_ids = [primary, *others]
+                fig = self.graph_registry.run(
+                    "model diff", mIDs=model_ids, dIDs=model_ids, return_fig=True
+                )
+        except ModelInspectorError as exc:
+            self._set_status(f"Comparison failed ({exc.code}): {exc}")
+            return
+        except Exception as exc:
+            self._set_status(f"Comparison failed: {exc}")
+            return
+        self._render_compare_figure(fig)
+
+    def _render_compare_figure(self, fig: Any) -> None:
+        """Show a rendered comparison figure.
+
+        Args:
+            fig: The figure to show.
+        """
+        try:
+            import base64
+            from io import BytesIO
+
+            buf = BytesIO()
+            fig.savefig(buf, format="png", dpi=150, bbox_inches="tight")
+            buf.seek(0)
+            b64 = base64.b64encode(buf.read()).decode("ascii")
+            self.compare_figure_pane.object = (
+                '<div style="border: 1px solid #ccc; border-radius: 8px; padding: 12px; overflow-x: auto;">'
+                f'<img src="data:image/png;base64,{b64}" style="max-width:100%;" />'
+                "</div>"
+            )
+        except Exception as exc:
+            self._set_status(f"Could not render the comparison figure: {exc}")
 
     def _on_run(self, _event=None) -> None:
+        """Handle the run button, starting the live preview.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._is_running:
             return
         self._refresh_draft_validation()
@@ -680,14 +963,24 @@ class _ModelInspectorController:
             )
         else:
             self._set_status(
-                f'Live preview running for model "{self.primary_select.value}".'
+                f'Live preview running for model "{self._get_primary_model_id()}".'
             )
 
     def _on_pause(self, _event=None) -> None:
+        """Handle the pause button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._pause_callback()
         self._set_status(f"Live preview paused at step {self._step}.")
 
     def _on_clear_trace(self, _event=None) -> None:
+        """Handle the clear button, discarding the recorded trace.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._clear_trace_data()
         self._update_probe_meta()
         self._set_status(
@@ -697,17 +990,23 @@ class _ModelInspectorController:
         )
 
     def _on_reset_to_preset(self, _event=None) -> None:
+        """Handle the reset button, restoring the stored model.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._pause_callback()
         self._reset_draft_to_selected_model()
         self._has_local_edits = False
         self._sync_preview_after_draft_change(
-            message=f'Reset local state to model preset "{self.primary_select.value}".',
+            message=f'Reset local state to model preset "{self._get_primary_model_id()}".',
             clear_trace=True,
             mark_dirty=False,
             ui_scope="full",
         )
 
     def _start_callback(self) -> None:
+        """Start the periodic callback driving the live preview."""
         self._pause_callback()
         self._set_running(True)
         self._callback = pn.state.add_periodic_callback(
@@ -715,6 +1014,7 @@ class _ModelInspectorController:
         )
 
     def _pause_callback(self) -> None:
+        """Stop the periodic callback driving the live preview."""
         callback = self._callback
         self._callback = None
         if callback is not None:
@@ -722,23 +1022,30 @@ class _ModelInspectorController:
         self._set_running(False)
 
     def _ensure_brain_for_selected_model(self) -> None:
+        """Build the brain the preview runs, if it is not yet built."""
         self._active_dt = self._dt()
         draft = self._require_draft_model()
         self._brain = build_inspection_brain_from_config(
-            str(self.primary_select.value), draft, dt=self._active_dt
+            self._get_primary_model_id(), draft, dt=self._active_dt
         )
         self._runtime = SimpleNamespace(brain=self._brain)
         self._watched_param_tokens.clear()
         self._prepare_reporters()
 
     def _reset_draft_to_selected_model(self) -> None:
-        model_id = str(self.primary_select.value)
+        """Discard the draft's edits and reload the stored model."""
+        model_id = self._get_primary_model_id()
         self._draft_model = load_model_draft(model_id)
         self._draft_model_id = model_id
         self._draft_validation_issues = ()
         self._has_local_edits = False
 
     def _require_draft_model(self) -> Any:
+        """Return the working draft, insisting one is loaded.
+
+        Returns:
+            The draft.
+        """
         if self._draft_model is None:
             raise ModelInspectorError(
                 "draft_not_initialized", "Model draft is not initialized."
@@ -746,6 +1053,7 @@ class _ModelInspectorController:
         return self._draft_model
 
     def _refresh_draft_validation(self) -> tuple[DraftValidationIssue, ...]:
+        """Re-validate the draft after an edit."""
         draft = self._require_draft_model()
         self._draft_validation_issues = validate_draft_module_config(draft)
         self._refresh_validation_pane()
@@ -753,9 +1061,11 @@ class _ModelInspectorController:
         return self._draft_validation_issues
 
     def _has_validation_errors(self) -> bool:
+        """Whether the draft has errors that block building it."""
         return any(issue.severity == "error" for issue in self._draft_validation_issues)
 
     def _validation_counts(self) -> tuple[int, int]:
+        """How many errors and warnings the draft has."""
         errors = sum(
             1 for issue in self._draft_validation_issues if issue.severity == "error"
         )
@@ -765,12 +1075,14 @@ class _ModelInspectorController:
         return errors, warnings
 
     def _validation_summary_text(self) -> str:
+        """A one-line summary of the draft's validation state."""
         errors, warnings = self._validation_counts()
         if errors == 0 and warnings == 0:
             return ""
         return f"Validation: {errors} error(s), {warnings} warning(s)."
 
     def _validation_detail_text(self) -> str:
+        """The full list of the draft's validation issues."""
         if not self._draft_validation_issues:
             return ""
         return " ".join(
@@ -779,11 +1091,20 @@ class _ModelInspectorController:
         )
 
     def _with_validation_status(self, message: str) -> str:
+        """Append the validation summary to a status message.
+
+        Args:
+            message: The status text.
+
+        Returns:
+            The combined message.
+        """
         summary = self._validation_summary_text()
         details = self._validation_detail_text()
         return " ".join(bit for bit in (message, summary, details) if bit).strip()
 
     def _refresh_validation_pane(self) -> None:
+        """Redraw the validation pane."""
         if not self._draft_validation_issues:
             self.validation_pane.objects = []
             return
@@ -806,6 +1127,7 @@ class _ModelInspectorController:
         self.validation_pane.objects = panes
 
     def _refresh_preview_controls(self) -> None:
+        """Enable or disable the preview controls to match the draft's state."""
         has_errors = self._has_validation_errors()
         self.run_button.disabled = self._is_running or has_errors
         self.pause_button.disabled = not self._is_running
@@ -826,6 +1148,7 @@ class _ModelInspectorController:
         ui_scope: UIRefreshScope = "full",
         module_id: str | None = None,
     ) -> None:
+        """Rebuild the preview after the draft changed."""
         if ui_scope not in {"parameter", "mode", "enabled", "full"}:
             raise ValueError(f"Unsupported UI refresh scope: {ui_scope!r}")
         previous_issues = self._draft_validation_issues
@@ -870,6 +1193,12 @@ class _ModelInspectorController:
             self._set_status(f"{message} Preview rebuilt from current draft.")
 
     def _set_module_enabled(self, module_id: str, enabled: bool) -> None:
+        """Enable or disable one module of the draft.
+
+        Args:
+            module_id: The module to toggle.
+            enabled: Whether it is active.
+        """
         draft = self._require_draft_model()
         set_draft_module_enabled(draft, module_id, enabled)
         action = "enabled" if enabled else "disabled"
@@ -882,6 +1211,12 @@ class _ModelInspectorController:
         )
 
     def _set_brain_module_mode(self, module_id: str, mode: str) -> None:
+        """Switch one brain module of the draft to another mode.
+
+        Args:
+            module_id: The module to switch.
+            mode: The new mode.
+        """
         draft = self._require_draft_model()
         set_draft_brain_module_mode(draft, module_id, mode)
         self._sync_preview_after_draft_change(
@@ -893,6 +1228,11 @@ class _ModelInspectorController:
         )
 
     def _set_memory_mode(self, mode: str) -> None:
+        """Set the draft's memory algorithm.
+
+        Args:
+            mode: The learning algorithm.
+        """
         draft = self._require_draft_model()
         set_draft_memory_config(draft, enabled=True, mode=mode, modality=None)
         self._sync_preview_after_draft_change(
@@ -904,6 +1244,11 @@ class _ModelInspectorController:
         )
 
     def _set_memory_modality(self, modality: str) -> None:
+        """Set the draft's memory modality.
+
+        Args:
+            modality: The sensory modality.
+        """
         draft = self._require_draft_model()
         current_memory = draft.brain["memory"]
         current_mode = current_memory["mode"] if current_memory is not None else None
@@ -924,6 +1269,13 @@ class _ModelInspectorController:
         parameter_path: tuple[str, ...],
         value: Any,
     ) -> None:
+        """Set one parameter of a draft module.
+
+        Args:
+            module_id: The module holding it.
+            parameter_path: The parameter's path within the module.
+            value: The new value.
+        """
         draft = self._require_draft_model()
         set_draft_module_parameter(draft, module_id, parameter_path, value)
         path_label = ".".join(parameter_path)
@@ -936,6 +1288,7 @@ class _ModelInspectorController:
         )
 
     def _merged_reporter_selection(self) -> set[str]:
+        """The reporters plotted, merging the defaults with the user's picks."""
         return (
             set(self.plot_reporters_checkbox_activity.value or ())
             | set(self.plot_reporters_checkbox_input.value or ())
@@ -943,6 +1296,11 @@ class _ModelInspectorController:
         )
 
     def _set_reporter_checkboxes(self, keys: list[str]) -> None:
+        """Tick the reporter checkboxes matching a selection.
+
+        Args:
+            keys: The reporters to select.
+        """
         key_set = set(keys)
         activity_keys, input_keys, phase_keys = _reporter_key_columns()
         self.plot_reporters_checkbox_activity.value = [
@@ -956,9 +1314,15 @@ class _ModelInspectorController:
         ]
 
     def _selected_plot_reporter_keys(self) -> tuple[str, ...]:
+        """The reporters currently selected for plotting."""
         return _ordered_selected_reporter_keys(self._merged_reporter_selection())
 
     def _on_plot_reporters_change(self, event) -> None:
+        """Handle a change of the plotted reporters.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         if not self._merged_reporter_selection():
             if event.old:
                 self._set_reporter_checkboxes(list(DEFAULT_LIVE_PREVIEW_REPORTER_KEYS))
@@ -987,6 +1351,7 @@ class _ModelInspectorController:
         self._update_probe_meta()
 
     def _prepare_reporters(self) -> None:
+        """Set up the reporters the live preview records."""
         assert self._runtime is not None
         available = reg.par.output_reporters(
             ks=list(self._selected_plot_reporter_keys()), agents=[self._runtime]
@@ -1005,6 +1370,7 @@ class _ModelInspectorController:
         self._reporter_available = reporter_available
 
     def _tick_live_preview(self) -> None:
+        """Advance the live preview by one batch of timesteps."""
         if self._brain is None or self._runtime is None:
             self._pause_callback()
             return
@@ -1013,7 +1379,9 @@ class _ModelInspectorController:
             self._set_status(f"Live preview auto-stopped at step {self._max_steps()}.")
             return
 
+        step_start = time.perf_counter()
         lin, ang, feed_motion = self._brain.locomotor.step(A_in=self._a_in())
+        step_time = (time.perf_counter() - step_start) * 1000
         time_now = self._step * self._active_dt
         row: dict[str, Any] = {
             "time": time_now,
@@ -1047,13 +1415,34 @@ class _ModelInspectorController:
             drop=True
         )
         self._refresh_probe_table()
+        self._step_times.append(step_time)
+        self._performance_stats["total_steps"] = len(self._step_times)
+        self._performance_stats["total_time"] = sum(self._step_times) / 1000
+        self._performance_stats["avg_step_time"] = (
+            sum(self._step_times) / len(self._step_times) if self._step_times else 0
+        )
+        self._performance_stats["min_step_time"] = (
+            min(self._step_times) if self._step_times else 0
+        )
+        self._performance_stats["max_step_time"] = (
+            max(self._step_times) if self._step_times else 0
+        )
         self._step += 1
         self._update_probe_meta()
 
     def _clear_trace_data(self) -> None:
+        """Discard the recorded preview trace."""
         self._step = 0
         for key in LIVE_PREVIEW_REPORTER_KEYS:
             self._sources[key].data = {"time": [], key: []}
+        self._step_times.clear()
+        self._performance_stats = {
+            "total_steps": 0,
+            "total_time": 0.0,
+            "avg_step_time": 0.0,
+            "min_step_time": float("inf"),
+            "max_step_time": 0.0,
+        }
         self._probe_df = pd.DataFrame(
             columns=[
                 "time",
@@ -1066,6 +1455,7 @@ class _ModelInspectorController:
         self._refresh_probe_table()
 
     def _refresh_probe_table(self) -> None:
+        """Redraw the table summarizing the preview's output."""
         rename = {
             k: _reporter_plot_label(k)
             for k in self._selected_plot_reporter_keys()
@@ -1074,18 +1464,23 @@ class _ModelInspectorController:
         self.probe_table.object = self._probe_df.rename(columns=rename)
 
     def _max_steps(self) -> int:
+        """How many timesteps the preview runs for."""
         return max(1, int(self.max_steps_input.value))
 
     def _a_in(self) -> float:
+        """The activation the preview drives the model with."""
         return float(self.a_in_input.value)
 
     def _trace_window(self) -> int:
+        """How many timesteps the plotted trace keeps."""
         return max(1, int(self.trace_window_input.value))
 
     def _dt(self) -> float:
+        """The timestep the preview runs at."""
         return max(0.001, float(self.dt_input.value))
 
     def _trim_trace_data(self) -> None:
+        """Drop the trace samples that have scrolled out of the window."""
         trace_window = self._trace_window()
         for key in self._selected_plot_reporter_keys():
             source_data = self._sources[key].data
@@ -1097,6 +1492,11 @@ class _ModelInspectorController:
         self._refresh_probe_table()
 
     def _on_live_preview_setting_change(self, _event=None) -> None:
+        """Handle a change to one of the preview settings.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._trim_trace_data()
         self._update_probe_meta()
         if self._is_running and self._step >= self._max_steps():
@@ -1104,6 +1504,11 @@ class _ModelInspectorController:
             self._set_status(f"Live preview auto-stopped at step {self._max_steps()}.")
 
     def _on_dt_change(self, _event=None) -> None:
+        """Handle a change of the preview timestep.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._is_running:
             return
         self._sync_preview_after_draft_change(
@@ -1114,6 +1519,7 @@ class _ModelInspectorController:
         )
 
     def _update_probe_meta(self) -> None:
+        """Refresh the metadata shown beside the preview."""
         if self._brain is None or self._runtime is None:
             runtime_state = "unavailable"
         elif self._has_validation_errors():
@@ -1128,106 +1534,64 @@ class _ModelInspectorController:
             f'{_reporter_plot_label(k)}={"yes" if self._reporter_available.get(k, False) else "no"}'
             for k in self._selected_plot_reporter_keys()
         ]
+        perf_line = ""
+        if self._performance_stats["total_steps"] > 0:
+            perf_line = (
+                f"<strong>Performance:</strong> "
+                f"{self._performance_stats['avg_step_time']:.2f}ms/step "
+                f"(min: {self._performance_stats['min_step_time']:.2f}ms, "
+                f"max: {self._performance_stats['max_step_time']:.2f}ms)<br>"
+            )
         self.probe_meta.object = (
             '<div class="lw-model-inspector-status">'
             f"<strong>Preview runtime:</strong> {runtime_state}<br>"
             f"<strong>Preview settings:</strong> dt={self._active_dt}, a_in={self._a_in()}, rollover={self._trace_window()}, max_steps={self._max_steps()}<br>"
             f"<strong>Current step:</strong> {self._step}<br>"
+            f"{perf_line}"
             f"<strong>Reporter availability:</strong> {'; '.join(reporter_bits)}"
             "</div>"
         )
 
-    def _update_summary_sections(self) -> None:
-        children: list[pn.viewable.Viewable] = [
-            pn.pane.Markdown("#### Configured modules (summary)", margin=(0, 0, 6, 0)),
-            self.primary_table,
-        ]
-        if self.compare_title.object:
-            children.append(pn.Spacer(height=8))
-            children.append(self.compare_title)
-        if not self.compare_table.object.empty:
-            children.append(self.compare_table)
-        self.summary_sections_box.objects = children
-
     def _refresh_inspection(self) -> None:
+        """Re-inspect the draft and redraw the module views."""
         self._refresh_draft_validation()
         module_specs = self._refresh_inspection_tables()
         if module_specs is not None:
             self._refresh_all_module_cards(module_specs)
 
     def _refresh_inspection_tables(self) -> tuple[ModelModuleSpec, ...] | None:
-        primary_id = str(self.primary_select.value)
+        """Redraw the tables listing the draft's modules and parameters."""
+        primary_id = self._get_primary_model_id()
         try:
             draft = self._require_draft_model()
-            primary = inspect_model_from_config(primary_id, draft)
             module_specs = inspect_model_modules_from_config(primary_id, draft)
         except ModelInspectorError as exc:
             self._set_status(f"Inspection failed ({exc.code}): {exc}")
-            self.primary_table.object = pd.DataFrame()
-            self.compare_table.object = pd.DataFrame()
-            self.compare_title.object = ""
             self.module_sections_box.objects = [
                 pn.pane.Markdown("Module inspection unavailable.", margin=0)
             ]
             self._module_card_slots.clear()
             self._module_specs_by_id.clear()
-            self._update_summary_sections()
             return None
 
-        self.primary_table.object = _modules_to_dataframe(
-            primary.baseline_modules, primary.optional_modules
-        )
         self._module_specs_by_id = {spec.module_id: spec for spec in module_specs}
 
-        if self._has_local_edits:
-            self.compare_select.disabled = True
-            self.compare_title.object = "#### Comparison hidden during local edits"
-            self.compare_table.object = pd.DataFrame()
-            self._update_summary_sections()
-            return module_specs
-        self.compare_select.disabled = False
-
-        compare_id = str(self.compare_select.value or "")
-        if not compare_id:
-            self.compare_title.object = ""
-            self.compare_table.object = pd.DataFrame()
-            self._update_summary_sections()
-            return module_specs
-
-        try:
-            comparison = inspect_model(compare_id)
-            diffs = compare_model_inspections(primary, comparison)
-        except ModelInspectorError as exc:
-            self._set_status(f"Comparison failed ({exc.code}): {exc}")
-            self.compare_title.object = ""
-            self.compare_table.object = pd.DataFrame()
-            self._update_summary_sections()
-            return module_specs
-
-        self.compare_title.object = f"#### Comparison: `{primary_id}` vs `{compare_id}`"
-        self.compare_table.object = pd.DataFrame(
-            [
-                {
-                    "Module": item.module_id,
-                    "Primary present": item.primary.present,
-                    "Comparison present": item.comparison.present,
-                    "Primary mode": item.primary.mode or "—",
-                    "Comparison mode": item.comparison.mode or "—",
-                    "Changed fields": ", ".join(item.changed_fields)
-                    if item.changed_fields
-                    else "none",
-                    "Equal": item.equal,
-                }
-                for item in diffs
-            ]
-        )
-        self._update_summary_sections()
+        # Comparison is a separate, explicit "Draw" action (see
+        # _on_compare_draw) -- only disable the button here while local
+        # edits make a comparison potentially misleading; don't
+        # recompute the figure on every inspection refresh.
+        self.compare_run_button.disabled = self._has_local_edits
         return module_specs
 
     def _refresh_all_module_cards(
         self,
         module_specs: tuple[ModelModuleSpec, ...],
     ) -> None:
+        """Rebuild every module card.
+
+        Args:
+            module_specs: The modules to draw cards for.
+        """
         self._module_card_slots.clear()
         self._module_specs_by_id = {spec.module_id: spec for spec in module_specs}
         self.module_sections_box.objects = _build_module_sections(
@@ -1245,6 +1609,7 @@ class _ModelInspectorController:
         ui_scope: UIRefreshScope,
         previous_issues: tuple[DraftValidationIssue, ...],
     ) -> None:
+        """Rebuild only the module cards whose contents changed."""
         self._module_specs_by_id = {spec.module_id: spec for spec in module_specs}
         if ui_scope == "full":
             self._refresh_all_module_cards(module_specs)
@@ -1285,6 +1650,14 @@ class _ModelInspectorController:
             slot.objects = [new_card]
 
     def _build_settings_cards(self, inspection) -> list[pn.viewable.Viewable]:
+        """Build the cards showing each module's settings.
+
+        Args:
+            inspection: The inspected model.
+
+        Returns:
+            The card components.
+        """
         if self._brain is None:
             return [
                 pn.Card(
@@ -1316,6 +1689,7 @@ class _ModelInspectorController:
 
     def _on_local_parameter_edit(self, *_args: Any, **_kwargs: Any) -> None:
         # Legacy compatibility path for old runtime-object editor; visible UI uses draft helpers.
+        """Handle an edit made in one of the module cards."""
         self._has_local_edits = True
         self._refresh_inspection()
         if self._is_running:
@@ -1326,6 +1700,7 @@ class _ModelInspectorController:
             self._set_status("Local parameters changed. Press Run to preview.")
 
     def _init_live_plots(self) -> None:
+        """Build the plots showing the live preview's output."""
         plots: list[pn.viewable.Viewable] = []
         for reporter in self._selected_plot_reporter_keys():
             reporter_label = _reporter_plot_label(reporter)
@@ -1344,13 +1719,28 @@ class _ModelInspectorController:
         self.live_plot_view.objects = plots
 
     def view(self) -> pn.viewable.Viewable:
-        intro = pn.pane.HTML(
+        """Build the inspector's view.
+
+        Returns:
+            The view component.
+        """
+        intro_text = pn.pane.HTML(
             (
-                '<div class="lw-model-inspector-intro">'
-                "Inspect canonical larva model presets, edit baseline modules locally, and run live reporter preview."
-                "</div>"
+                "<p>Inspect canonical larva model presets, edit baseline modules locally, "
+                "and run live reporter preview.</p>"
+                "<p>Edit configuration, run simulations, and compare model behavior. "
+                "Use the left panel for controls and settings.</p>"
             ),
             margin=0,
+        )
+        info_panel = pn.Card(
+            intro_text,
+            title="ℹ️ About Model Inspector",
+            collapsed=True,
+            collapsible=True,
+            css_classes=["lw-portal-app-info"],
+            sizing_mode="stretch_width",
+            margin=(0, 0, 12, 0),
         )
         action_buttons = pn.Column(
             pn.Row(
@@ -1362,9 +1752,31 @@ class _ModelInspectorController:
             self.reset_preset_button,
             sizing_mode="stretch_width",
         )
+        self.model_preset_controls.reset_button.name = "Reset Presets"
+        self.model_preset_controls.reset_button.param.update(
+            width=160, sizing_mode="fixed"
+        )
+        model_preset_panel = build_preset_controls_panel(
+            self.model_preset_controls,
+            reset_slot=self.model_preset_controls.reset_button,
+            save_target_slot=self.model_preset_controls.save_target,
+            extra_sections=[
+                pn.Column(
+                    self.import_model_input,
+                    self.export_model_btn,
+                    pn.Row(
+                        self.import_model_btn,
+                        self.export_model_download_btn,
+                        sizing_mode="stretch_width",
+                        margin=(4, 0, 0, 0),
+                    ),
+                    sizing_mode="stretch_width",
+                    margin=0,
+                )
+            ],
+        )
         primary_controls = pn.Column(
-            self.primary_select,
-            self.compare_select,
+            model_preset_panel,
             self.status_pane,
             self.validation_pane,
             pn.pane.Markdown("#### Preview settings", margin=(8, 0, 2, 0)),
@@ -1376,16 +1788,8 @@ class _ModelInspectorController:
             sizing_mode="stretch_width",
             css_classes=["lw-model-inspector-controls-box"],
         )
-        preset_controls = pn.Column(
-            pn.pane.Markdown("#### Draft presets", margin=(0, 0, 2, 0)),
-            self.model_preset_controls.view,
-            self.download_json_button,
-            sizing_mode="stretch_width",
-            css_classes=["lw-model-inspector-controls-box"],
-        )
         controls_box = pn.Column(
             primary_controls,
-            preset_controls,
             width=CONTROLS_COLUMN_WIDTH,
             styles={
                 "flex": f"0 0 {CONTROLS_COLUMN_WIDTH}px",
@@ -1429,32 +1833,27 @@ class _ModelInspectorController:
             sizing_mode="stretch_width",
             styles={"align-items": "flex-start"},
         )
+        compare_controls = pn.Column(
+            pn.pane.Markdown("#### Compare models", margin=(0, 0, 2, 0)),
+            self.compare_models_select,
+            self.compare_run_button,
+            width=CONTROLS_COLUMN_WIDTH,
+            styles={"flex": f"0 0 {CONTROLS_COLUMN_WIDTH}px"},
+        )
+        compare_row = pn.Row(
+            compare_controls,
+            self.compare_figure_pane,
+            sizing_mode="stretch_width",
+            styles={"align-items": "flex-start", "margin-top": "12px"},
+        )
         return pn.Column(
-            intro,
+            info_panel,
             top_row,
             self.module_sections_box,
-            self.summary_sections_box,
+            compare_row,
             css_classes=["lw-model-inspector-root"],
             sizing_mode="stretch_width",
         )
-
-
-def _modules_to_dataframe(
-    baseline_modules: tuple[ModuleInspection, ...],
-    optional_modules: tuple[ModuleInspection, ...],
-) -> pd.DataFrame:
-    return pd.DataFrame(
-        [
-            {
-                "Category": "Baseline" if module.is_baseline else "Optional",
-                "Module": module.module_id,
-                "Present": module.present,
-                "Mode": module.mode or "—",
-                "Parameters": repr(module.parameters),
-            }
-            for module in (*baseline_modules, *optional_modules)
-        ]
-    )
 
 
 def _module_settings_card(
@@ -1466,6 +1865,15 @@ def _module_settings_card(
     on_edit,
     watched_tokens: set[tuple[int, str]],
 ) -> pn.Card:
+    """Build the card showing one module's settings.
+
+    Args:
+        spec: The module specification.
+        **kwargs: Card settings.
+
+    Returns:
+        The card component.
+    """
     if not inspection.present:
         body = pn.pane.Markdown("Not configured in this model.", margin=0)
         title = f"{inspection.display_name} | absent"
@@ -1518,6 +1926,14 @@ def _module_settings_card(
 
 
 def _module_spec_title(spec: ModelModuleSpec) -> str:
+    """The heading one module is shown under.
+
+    Args:
+        spec: The module specification.
+
+    Returns:
+        The title.
+    """
     if not spec.present:
         return f"{spec.module_id} | absent"
     if spec.module_id == "memory":
@@ -1537,6 +1953,15 @@ _PROTECTED_PARAMETER_ROOTS = {"mode", "modality", "name"}
 
 
 def _module_draft_config(spec: ModelModuleSpec) -> Any:
+    """Read one module's configuration from the draft.
+
+    Args:
+        spec: The module specification.
+        model_conf: The draft.
+
+    Returns:
+        The module configuration.
+    """
     if spec.module_kind == "brain":
         return spec.parameters if spec.present else None
     if spec.module_kind == "memory":
@@ -1549,6 +1974,15 @@ def _module_draft_config(spec: ModelModuleSpec) -> Any:
 def _clone_parameter_object(
     parameter: param.Parameter, default: Any
 ) -> param.Parameter:
+    """Copy a parameter object so the editor cannot mutate the original.
+
+    Args:
+        parameter: The parameter to copy.
+        default: The value the copy starts at.
+
+    Returns:
+        The copied parameter.
+    """
     clone = copy.copy(parameter)
     try:
         clone.default = default
@@ -1560,6 +1994,14 @@ def _clone_parameter_object(
 def _is_supported_parameter_for_editor(parameter: param.Parameter) -> bool:
     # Dict-valued parameters (e.g. intermitter distribution blobs) need
     # dedicated editors; rendering them as scalar controls raises Param errors.
+    """Report whether a parameter can be rendered as a control.
+
+    Args:
+        parameter: The parameter to test.
+
+    Returns:
+        True when the editor can render it.
+    """
     return not isinstance(parameter, param.Dict)
 
 
@@ -1570,6 +2012,20 @@ def _make_parameter_proxy(
     parameter_objects: dict[str, param.Parameter],
     values: dict[str, Any],
 ) -> param.Parameterized:
+    """Build a throwaway object exposing one parameter to the editor.
+
+    Editing a module parameter must write back through the draft rather than
+    onto the module itself, so the control is bound to a proxy that forwards
+    the change.
+
+    Args:
+        parameter: The parameter to expose.
+        value: Its current value.
+        on_change: The callback applying the edit.
+
+    Returns:
+        The proxy object.
+    """
     attrs: dict[str, param.Parameter] = {}
     for name, pobj in parameter_objects.items():
         if name.split(".", 1)[0] in _PROTECTED_PARAMETER_ROOTS:
@@ -1598,6 +2054,15 @@ def _parameter_editor_group(
     values: dict[str, Any],
     path_prefix: tuple[str, ...] = (),
 ) -> pn.viewable.Viewable:
+    """The group a parameter is shown under.
+
+    Args:
+        name: The parameter name.
+        parameter: The parameter object.
+
+    Returns:
+        The group name.
+    """
     names = [
         name
         for name in parameter_objects
@@ -1656,6 +2121,14 @@ def _canonical_editor_groups_for_spec(
     controller: _ModelInspectorController,
     spec: ModelModuleSpec,
 ) -> list[pn.viewable.Viewable]:
+    """The parameter groups one module's editor shows, in order.
+
+    Args:
+        spec: The module specification.
+
+    Returns:
+        The group names.
+    """
     if not spec.present:
         return []
 
@@ -1809,12 +2282,31 @@ def _issues_for_card(
     validation_issues: tuple[DraftValidationIssue, ...],
     module_id: str,
 ) -> tuple[DraftValidationIssue, ...]:
+    """Select the validation issues belonging to one module.
+
+    Args:
+        validation_issues: Every issue found.
+        module_id: The module to filter for.
+
+    Returns:
+        Its issues.
+    """
     return tuple(issue for issue in validation_issues if issue.module_id == module_id)
 
 
 def _validation_issue_signature(
     issues: tuple[DraftValidationIssue, ...],
 ) -> dict[str, tuple[tuple[str, str, tuple[str, ...], str], ...]]:
+    """Build a comparable signature of a set of validation issues.
+
+    Used to skip redrawing a card whose issues have not changed.
+
+    Args:
+        issues: The issues to summarize.
+
+    Returns:
+        The signature.
+    """
     by_module: dict[str, list[tuple[str, str, tuple[str, ...], str]]] = {}
     for issue in issues:
         by_module.setdefault(issue.module_id, []).append(
@@ -1834,6 +2326,15 @@ def _module_editor_card(
     spec: ModelModuleSpec,
     validation_issues: tuple[DraftValidationIssue, ...],
 ) -> pn.Card:
+    """Build the card editing one module.
+
+    Args:
+        spec: The module specification.
+        **kwargs: Card settings.
+
+    Returns:
+        The card component.
+    """
     controls: list[pn.viewable.Viewable] = []
 
     is_optional = not spec.is_core
@@ -1973,6 +2474,14 @@ def _build_module_sections(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None = None,
 ) -> list[pn.viewable.Viewable]:
+    """Build the sections grouping the model's modules.
+
+    Args:
+        **kwargs: Section settings.
+
+    Returns:
+        The section components.
+    """
     specs_by_id = {spec.module_id: spec for spec in specs}
     sections: list[pn.viewable.Viewable] = []
 
@@ -2003,6 +2512,14 @@ def _build_nervous_system_section(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.viewable.Viewable | None:
+    """Build the section holding the brain modules.
+
+    Args:
+        **kwargs: Section settings.
+
+    Returns:
+        The section component.
+    """
     locomotion = _build_locomotion_subsection(
         controller=controller,
         specs_by_id=specs_by_id,
@@ -2069,6 +2586,14 @@ def _build_larva_modules_section(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.viewable.Viewable | None:
+    """Build the section holding the body modules.
+
+    Args:
+        **kwargs: Section settings.
+
+    Returns:
+        The section component.
+    """
     core = _build_larva_core_subsection(
         controller=controller,
         specs_by_id=specs_by_id,
@@ -2117,6 +2642,14 @@ def _build_locomotion_subsection(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.viewable.Viewable | None:
+    """Build the locomotion module subsection.
+
+    Args:
+        **kwargs: Section settings.
+
+    Returns:
+        The subsection component.
+    """
     first_column = _build_module_slot_column(
         module_ids=("crawler", "turner"),
         controller=controller,
@@ -2153,6 +2686,14 @@ def _build_larva_core_subsection(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.viewable.Viewable | None:
+    """Build the body and energetics subsection.
+
+    Args:
+        **kwargs: Section settings.
+
+    Returns:
+        The subsection component.
+    """
     first_column = _build_module_slot_column(
         module_ids=("body",),
         controller=controller,
@@ -2192,6 +2733,14 @@ def _build_vertical_subsection(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.viewable.Viewable | None:
+    """Build a vertically stacked module subsection.
+
+    Args:
+        **kwargs: Section settings.
+
+    Returns:
+        The subsection component.
+    """
     column = _build_module_slot_column(
         module_ids=module_ids,
         controller=controller,
@@ -2221,6 +2770,14 @@ def _build_module_slot_column(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.viewable.Viewable | None:
+    """Build a column of module card slots.
+
+    Args:
+        **kwargs: Column settings.
+
+    Returns:
+        The column component.
+    """
     slots = [
         _build_module_card_slot(
             controller=controller,
@@ -2247,6 +2804,14 @@ def _build_module_card_slot(
     validation_issues: tuple[DraftValidationIssue, ...],
     card_slots: dict[str, pn.Column] | None,
 ) -> pn.Column:
+    """Build the slot one module card occupies.
+
+    Args:
+        **kwargs: Slot settings.
+
+    Returns:
+        The slot component.
+    """
     card = _module_editor_card(
         controller=controller,
         spec=spec,
@@ -2259,7 +2824,12 @@ def _build_module_card_slot(
 
 
 def model_inspector_app() -> pn.viewable.Viewable:
-    pn.extension(raw_css=[PORTAL_RAW_CSS, MODEL_INSPECTOR_RAW_CSS])
+    """Build the model inspector app.
+
+    Returns:
+        The app component.
+    """
+    pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS, MODEL_INSPECTOR_RAW_CSS])
     controller = _ModelInspectorController()
     template = pn.template.MaterialTemplate(
         title="",

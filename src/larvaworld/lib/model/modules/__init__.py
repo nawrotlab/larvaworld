@@ -67,4 +67,5 @@ def __getattr__(name: str) -> Any:
 
 
 def __dir__() -> list[str]:  # help tooling: list public symbols
+    """Return the public names, including the not-yet-imported ones."""
     return sorted(list(globals().keys()) + __all__)

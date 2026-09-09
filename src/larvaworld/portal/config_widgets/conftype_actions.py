@@ -1,3 +1,10 @@
+"""
+Load, save, delete and reset actions for a stored configuration.
+
+Provides the bare registry-CRUD buttons, meant to pair with a caller-supplied
+selector rather than carrying a catalog of their own.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -7,17 +14,42 @@ import panel as pn
 import param
 
 from larvaworld.lib import reg
+from larvaworld.portal.buttons import (
+    cancel_button,
+    confirm_button,
+    delete_button,
+    load_button,
+    reset_button,
+    save_button,
+)
 
 __all__ = ["ConftypeActionsController", "build_conftype_actions"]
 
 
 def _is_parameterized_class(config_cls: type[Any]) -> bool:
+    """Report whether a class is a param-backed configuration.
+
+    Args:
+        config_cls: The class to test.
+
+    Returns:
+        True when it can back a conftype editor.
+    """
     return isinstance(config_cls, type) and issubclass(config_cls, param.Parameterized)
 
 
 def _matches_registered_class(
     config_cls: type[param.Parameterized], candidate_cls: type[Any]
 ) -> bool:
+    """Report whether a class is the one registered for a conftype.
+
+    Args:
+        config_cls: The class being edited.
+        candidate_cls: The registered class.
+
+    Returns:
+        True when they match.
+    """
     if not _is_parameterized_class(candidate_cls):
         return False
     if candidate_cls is config_cls:
@@ -42,12 +74,19 @@ def _widget_size(
     width: int | None,
     sizing_mode: str,
 ) -> dict[str, Any]:
+    """The standard size the action buttons are built at."""
     if width is not None:
         return {"width": width}
     return {"sizing_mode": sizing_mode}
 
 
 class ConftypeActionsController:
+    """Load, save, delete and reset actions for one configuration type.
+
+    Provides the registry CRUD without a catalog or selector of its own, so it
+    pairs with a caller-supplied widget.
+    """
+
     def __init__(
         self,
         config_cls: type[param.Parameterized],
@@ -67,13 +106,19 @@ class ConftypeActionsController:
         save_button_name: str = "Save",
         delete_button_name: str = "Delete",
         reset_button_name: str = "Reset configurations",
-        load_button_type: str = "primary",
-        save_button_type: str = "primary",
-        delete_button_type: str = "warning",
+        load_button_type: str = "warning",
+        save_button_type: str = "success",
+        delete_button_type: str = "danger",
         reset_button_type: str = "danger",
         button_width: int | None = None,
         sizing_mode: str = "stretch_width",
     ) -> None:
+        """Build the controller for one configuration class.
+
+        Args:
+            config_cls: The configuration class being edited.
+            **kwargs: Further controller settings.
+        """
         if not _is_parameterized_class(config_cls):
             raise TypeError("config_cls must be a param.Parameterized subclass.")
         if conftype not in reg.conf:
@@ -97,22 +142,22 @@ class ConftypeActionsController:
         self.on_status = on_status
         self.confirm_reset = confirm_reset
 
-        self.load_button = pn.widgets.Button(
+        self.load_button = load_button(
             name=load_button_name,
             button_type=load_button_type,
             **_widget_size(width=button_width, sizing_mode=sizing_mode),
         )
-        self.save_button = pn.widgets.Button(
+        self.save_button = save_button(
             name=save_button_name,
             button_type=save_button_type,
             **_widget_size(width=button_width, sizing_mode=sizing_mode),
         )
-        self.delete_button = pn.widgets.Button(
+        self.delete_button = delete_button(
             name=delete_button_name,
             button_type=delete_button_type,
             **_widget_size(width=button_width, sizing_mode=sizing_mode),
         )
-        self.reset_button = pn.widgets.Button(
+        self.reset_button = reset_button(
             name=reset_button_name,
             button_type=reset_button_type,
             visible=allow_reset,
@@ -142,21 +187,31 @@ class ConftypeActionsController:
         )
 
     def _selected_id(self) -> str | None:
+        """The configuration currently selected for loading."""
         value = self.get_selected_id()
         return str(value) if value else None
 
     def _save_id(self) -> str | None:
+        """The name the current configuration would be saved under."""
         value = self.get_save_id()
         return str(value) if value else None
 
     def _set_status(self, message: str, *, tone: str = "neutral") -> None:
+        """Show a status message beside the buttons.
+
+        Args:
+            message: The message text.
+            tone: How to style it.
+        """
         if self.on_status is not None:
             self.on_status(message, tone=tone)
 
     def refresh_registry(self) -> None:
+        """Reload the stored configurations of this conftype."""
         self.conf_type.load()
 
     def load_selected(self) -> bool:
+        """Load the selected configuration into the editor."""
         config_id = self._selected_id()
         if not config_id:
             self._set_status("Select a stored configuration to load.", tone="warning")
@@ -176,6 +231,7 @@ class ConftypeActionsController:
         return True
 
     def save_current(self) -> bool:
+        """Save the edited configuration under the entered name."""
         config_id = self._save_id()
         if not config_id:
             self._set_status("Enter a configuration ID before saving.", tone="warning")
@@ -196,6 +252,7 @@ class ConftypeActionsController:
         return True
 
     def delete_selected(self) -> bool:
+        """Delete the selected stored configuration."""
         config_id = self._selected_id()
         if not config_id:
             self._set_status("Select a stored configuration to delete.", tone="warning")
@@ -215,6 +272,7 @@ class ConftypeActionsController:
         return True
 
     def reset_store(self) -> bool:
+        """Restore this conftype's stored configurations to their defaults."""
         try:
             self.conf_type.reset(recreate=True)
         except Exception as exc:
@@ -230,19 +288,12 @@ class ConftypeActionsController:
         return True
 
     def request_reset(self) -> None:
+        """Ask the user to confirm resetting the stored configurations."""
         if not self.confirm_reset:
             self.reset_store()
             return
-        confirm = pn.widgets.Button(
-            name="Yes, recreate store",
-            button_type="danger",
-            sizing_mode="stretch_width",
-        )
-        cancel = pn.widgets.Button(
-            name="No, cancel",
-            button_type="default",
-            sizing_mode="stretch_width",
-        )
+        confirm = confirm_button(name="Yes, recreate store")
+        cancel = cancel_button(name="No, cancel")
         message = pn.pane.HTML(
             (
                 '<div style="font-size:12px;color:#9a3412;">'
@@ -281,6 +332,15 @@ def build_conftype_actions(
     get_selected_id: Callable[[], str | None],
     **kwargs: Any,
 ) -> pn.Column:
+    """Build the load, save, delete and reset buttons for a conftype.
+
+    Args:
+        config_cls: The configuration class being edited.
+        **kwargs: Further controller settings.
+
+    Returns:
+        The controller and its button row.
+    """
     controller = ConftypeActionsController(
         config_cls,
         conftype=conftype,

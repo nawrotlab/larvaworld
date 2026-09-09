@@ -1,3 +1,10 @@
+"""
+Stored configurations for simulations and their environments.
+
+Defines the experiment, environment, trial, batch and evolutionary-search
+configurations shipped with larvaworld.
+"""
+
 import numpy as np
 
 from ... import reg, util, funcs
@@ -16,6 +23,12 @@ __all__ = [
 
 @funcs.stored_conf("Trial")
 def Trial_dict():
+    """Build the registry of stored trial configurations.
+
+    Returns:
+        Every trial configuration, keyed by name.
+    """
+
     def trial_conf(durs=[], qs=[]):
         cumdurs = np.cumsum([0] + durs)
         return util.ItemList(
@@ -38,6 +51,11 @@ def Trial_dict():
 
 @funcs.stored_conf("Env")
 def Env_dict():
+    """Build the registry of stored environments.
+
+    Returns:
+        Every environment configuration, keyed by name.
+    """
     from ...reg import gen
 
     E = reg.gen.Env
@@ -171,6 +189,12 @@ def Env_dict():
 
 @funcs.stored_conf("Exp")
 def Exp_dict():
+    """Build the registry of stored experiments.
+
+    Returns:
+        Every experiment configuration, keyed by name.
+    """
+
     def d():
         from ...param import Odor
         from ...reg import gen
@@ -214,7 +238,16 @@ def Exp_dict():
                 **kwargs,
             ).nestedConf
 
-        def fE(id, dur=10.0, en=ENR.source_proc(), env="patch_grid", **kwargs):
+        # The food and patch assays. Their analyses draw turn amplitudes, turn
+        # durations and ethograms, all of which are built from annotated bouts,
+        # so the annotation is requested by default.
+        def fE(
+            id,
+            dur=10.0,
+            en=ENR.source_proc(anot_keys=["bout_detection", "bout_distribution"]),
+            env="patch_grid",
+            **kwargs,
+        ):
             return exp(id, dur=dur, en=en, env=env, **kwargs)
 
         def tE(id, dur=600.0, en=ENR.source_proc(), env="single_patch", **kwargs):
@@ -560,6 +593,12 @@ def Exp_dict():
 
 @funcs.stored_conf("Ga")
 def Ga_dict():
+    """Build the registry of stored evolutionary searches.
+
+    Returns:
+        Every search configuration, keyed by name.
+    """
+
     def _ga_conf(
         name,
         env="arena_200mm",
@@ -639,6 +678,11 @@ def Ga_dict():
 @funcs.stored_conf("Batch")
 def Batch_dict():
     # Lazy import to avoid reg<->sim cycles
+    """Build the registry of stored batch runs.
+
+    Returns:
+        Every batch configuration, keyed by name.
+    """
     OptimizationOps = getattr(
         import_module("larvaworld.lib.sim.batch_run"), "OptimizationOps"
     )

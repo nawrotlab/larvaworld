@@ -1,3 +1,10 @@
+"""
+The environment builder app.
+
+Composes an environment interactively -- arena, sources, borders and the odor,
+wind and thermal fields -- with a live canvas preview.
+"""
+
 from __future__ import annotations
 
 import html
@@ -25,6 +32,28 @@ from larvaworld.lib.param.custom import ClassAttr, ClassDict
 from larvaworld.lib.param.composition import Substrate, substrate_dict
 from larvaworld.lib.param.spatial import Area
 from larvaworld.lib.param.xy_distro import Spatial_Distro
+from larvaworld.portal.buttons import (
+    add_button,
+    cancel_button,
+    confirm_button,
+    delete_button,
+    export_button,
+    import_button,
+    remove_button,
+)
+from larvaworld.portal.canvas_widgets.placement_controller import (
+    HitCandidate,
+    SelectionSync,
+    TapDispatcher,
+    pick_nearest,
+)
+from larvaworld.portal.config_widgets.preset_controls import (
+    ADVANCED_PRESET_POLICY,
+    PresetControlsController,
+    PresetRef,
+    WorkspacePresetStore,
+    build_preset_controls_panel,
+)
 from larvaworld.portal.landing_registry import DOCS_ARENAS_SUBSTRATES
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
 from larvaworld.portal.workspace import WorkspaceError, get_workspace_dir
@@ -170,6 +199,14 @@ ENV_BUILDER_RAW_CSS = """
 
 
 def _join_help_parts(*parts: str | None) -> str | None:
+    """Join the fragments of a field's help text.
+
+    Args:
+        *parts: The fragments, empty ones ignored.
+
+    Returns:
+        The combined text.
+    """
     cleaned = []
     seen = set()
     for part in parts:
@@ -186,6 +223,15 @@ def _join_help_parts(*parts: str | None) -> str | None:
 
 
 def _field_header_html(label: str, help_text: str | None) -> str:
+    """Render a field label with its help text.
+
+    Args:
+        label: The field label.
+        help_text: Its help text.
+
+    Returns:
+        The markup.
+    """
     escaped_label = html.escape(label)
     if not help_text:
         return (
@@ -205,6 +251,15 @@ def _field_header_html(label: str, help_text: str | None) -> str:
 def _title_with_help_html(
     label: str, help_text: str | None, *, title_class: str
 ) -> str:
+    """Render a section heading with its help text.
+
+    Args:
+        title: The heading.
+        help_text: Its help text.
+
+    Returns:
+        The markup.
+    """
     escaped_label = html.escape(label)
     help_html = ""
     if help_text:
@@ -223,6 +278,15 @@ def _title_with_help_html(
 def _editor_family_box(
     title: str, *children: object, help_text: str | None = None
 ) -> pn.Column:
+    """Build a titled box grouping editor fields.
+
+    Args:
+        title: The group heading.
+        *objects: Its contents.
+
+    Returns:
+        The box component.
+    """
     return pn.Column(
         pn.pane.Markdown(
             f"**{title}**",
@@ -238,6 +302,8 @@ def _editor_family_box(
 
 @dataclass(frozen=True)
 class _ObjectRow:
+    """One editable row describing an object placed in the arena."""
+
     object_id: str
     object_type: str
     x: float | None
@@ -282,10 +348,15 @@ _THERMO_SOURCE_COLUMNS = [
 ]
 
 
-_REGISTRY_PRESET_PREFIX = "__registry__:"
-
-
 def _coerce_xy_sequences(value: object) -> object:
+    """Coerce nested coordinate lists into tuples.
+
+    Args:
+        value: The coordinates to coerce.
+
+    Returns:
+        The coerced coordinates.
+    """
     if isinstance(value, dict):
         return util.AttrDict(
             {str(key): _coerce_xy_sequences(item) for key, item in value.items()}
@@ -309,12 +380,28 @@ def _coerce_xy_sequences(value: object) -> object:
 def _translate_builder_environment_payload(
     environment_payload: dict[str, object],
 ) -> util.AttrDict:
+    """Convert the builder's payload into environment parameters.
+
+    Args:
+        environment_payload: The builder payload.
+
+    Returns:
+        The environment parameters.
+    """
     return util.AttrDict(
         _coerce_xy_sequences(util.AttrDict(environment_payload).get_copy())
     )
 
 
 def _normalize_group_shape(shape: str | None) -> str:
+    """Normalize a group's distribution shape name.
+
+    Args:
+        value: The stored shape.
+
+    Returns:
+        The canonical shape name.
+    """
     normalized = str(shape or "circle").strip().lower()
     if normalized in {"circle", "circular"}:
         return "circle"
@@ -330,6 +417,15 @@ def _source_visual_state(
     amount: float | None,
     color: str | None,
 ) -> tuple[str, str, float, float, float]:
+    """The colours and opacities a source is drawn with.
+
+    Args:
+        obj: The object row.
+        selected: Whether it is selected.
+
+    Returns:
+        Its visual state.
+    """
     base_color = str(color or "#4caf50")
     has_food = amount is not None and float(amount) > 0
     fill_color = _mix_hex_colors(base_color, "#ffffff", 0.0 if has_food else 0.68)
@@ -344,6 +440,16 @@ def _source_visual_state(
 
 
 def _mix_hex_colors(color_a: str, color_b: str, ratio: float) -> str:
+    """Blend two colours.
+
+    Args:
+        color_a: The first colour.
+        color_b: The second colour.
+        ratio: How far to blend towards the second.
+
+    Returns:
+        The blended colour.
+    """
     ratio = max(0.0, min(1.0, float(ratio)))
 
     def _parse(color: str) -> tuple[int, int, int]:
@@ -365,6 +471,17 @@ def _mix_hex_colors(color_a: str, color_b: str, ratio: float) -> str:
 
 
 def _stable_preview_seed(*parts: object) -> int:
+    """Derive a deterministic seed from identifying values.
+
+    The scattered group preview is seeded from the object's identity so it
+    does not jitter each time the canvas is redrawn.
+
+    Args:
+        *parts: The identifying values.
+
+    Returns:
+        The seed.
+    """
     seed = 2166136261
     for part in parts:
         for char in str(part):
@@ -384,6 +501,14 @@ def _build_odor_layers(
     color: str | None,
     source_id: str | None,
 ) -> list[dict[str, object]]:
+    """Build the concentration rings drawn around sources.
+
+    Args:
+        rows: The source rows.
+
+    Returns:
+        The ring column data.
+    """
     if x is None or y is None or not odor_id:
         return []
     if odor_intensity is None or odor_spread is None:
@@ -424,6 +549,14 @@ def _build_odor_peak(
     color: str | None,
     source_id: str | None,
 ) -> dict[str, object] | None:
+    """Build the markers showing each odor's peak.
+
+    Args:
+        rows: The source rows.
+
+    Returns:
+        The marker column data.
+    """
     if x is None or y is None or not odor_id:
         return None
     if odor_intensity is None or odor_spread is None:
@@ -447,6 +580,14 @@ def _build_odor_peak(
 
 
 def _table_dataframe(rows: list[dict[str, Any]], columns: list[str]) -> pd.DataFrame:
+    """Build the table listing the placed objects.
+
+    Args:
+        rows: The object rows.
+
+    Returns:
+        The table data.
+    """
     if not rows:
         return pd.DataFrame(columns=columns)
     frame = pd.DataFrame(rows)
@@ -457,22 +598,59 @@ def _table_dataframe(rows: list[dict[str, Any]], columns: list[str]) -> pd.DataF
 
 
 def _rotate_point(x: float, y: float, angle: float) -> tuple[float, float]:
+    """Rotate a point about the origin.
+
+    Args:
+        x: The x coordinate.
+        y: The y coordinate.
+        angle: The rotation in radians.
+
+    Returns:
+        The rotated coordinates.
+    """
     cos_a = math.cos(angle)
     sin_a = math.sin(angle)
     return (x * cos_a - y * sin_a, x * sin_a + y * cos_a)
 
 
 def _rad_to_deg(angle: float) -> float:
+    """Convert radians to degrees.
+
+    Args:
+        angle: The angle in radians.
+
+    Returns:
+        The angle in degrees.
+    """
     return round(math.degrees(float(angle)), 4)
 
 
 def _deg_to_rad(angle: float) -> float:
+    """Convert degrees to radians.
+
+    Args:
+        angle: The angle in degrees.
+
+    Returns:
+        The angle in radians.
+    """
     return float(math.radians(float(angle)))
 
 
 class _EnvironmentBuilderController:
+    """State behind the environment builder app."""
+
     @staticmethod
     def _resolve_doc_from_class(cls: type[Any], parts: list[str]) -> str | None:
+        """Read a parameter's documentation off its declaring class.
+
+        Args:
+            cls: The class to search.
+            parts: The parameter's path within it.
+
+        Returns:
+            The documentation, or None when not found.
+        """
         if not hasattr(cls, "param") or not parts:
             return None
         objects = cls.param.objects(instance=False)
@@ -504,6 +682,14 @@ class _EnvironmentBuilderController:
 
     @staticmethod
     def _class_doc_summary(cls: type[Any]) -> str | None:
+        """The first line of a class's own docstring.
+
+        Args:
+            cls: The class to summarize.
+
+        Returns:
+            The summary, or None when it has no docstring.
+        """
         raw_doc = getattr(cls, "__doc__", None)
         if not raw_doc:
             return None
@@ -519,6 +705,14 @@ class _EnvironmentBuilderController:
 
     @staticmethod
     def _param_doc_for_key(key: str) -> str | None:
+        """The documentation of one builder field.
+
+        Args:
+            key: The field key.
+
+        Returns:
+            Its documentation, or None when it has none.
+        """
         from larvaworld.lib.model.agents._source import Food, Source
         from larvaworld.lib.model.envs.valuegrid import (
             DiffusionValueLayer,
@@ -687,6 +881,14 @@ class _EnvironmentBuilderController:
 
     @staticmethod
     def _builder_note_for_key(key: str) -> str | None:
+        """The builder's own note for one field.
+
+        Args:
+            key: The field key.
+
+        Returns:
+            The note, or None when there is none.
+        """
         notes = {
             "select_mode": "Toggle selection mode to click existing objects on the canvas instead of inserting new ones.",
             "object_type": "Choose which canonical EnvConf object family to place on the canvas: source unit, source group, or border segment.",
@@ -735,6 +937,14 @@ class _EnvironmentBuilderController:
 
     @staticmethod
     def _help_text_for_key(key: str) -> str | None:
+        """The help text shown for one field, combining its sources.
+
+        Args:
+            key: The field key.
+
+        Returns:
+            The help text.
+        """
         return _join_help_parts(
             _EnvironmentBuilderController._param_doc_for_key(key),
             _EnvironmentBuilderController._builder_note_for_key(key),
@@ -747,23 +957,49 @@ class _EnvironmentBuilderController:
         *,
         label: str | None = None,
     ) -> None:
+        """Register one field so it can be shown or hidden.
+
+        Args:
+            key: The field key.
+            widget: The field's widget.
+        """
         help_text = self._help_text_for_key(key)
         if not hasattr(widget, "param") or "description" not in widget.param:
             return None
         widget.description = help_text
 
     def _field_view(self, widget: pn.viewable.Viewable) -> pn.viewable.Viewable:
+        """Build the view for one registered field.
+
+        Args:
+            key: The field key.
+
+        Returns:
+            The field component.
+        """
         return widget
 
     def _set_field_visible(self, widget: pn.viewable.Viewable, visible: bool) -> None:
+        """Show or hide one registered field.
+
+        Args:
+            key: The field key.
+            visible: Whether it is shown.
+        """
         if hasattr(widget, "visible"):
             widget.visible = visible
 
     def __init__(self) -> None:
+        """Build the controller, its canvas and its editor widgets."""
         self._objects: list[_ObjectRow] = []
         self._border_start: tuple[float, float] | None = None
         self._selected_object_id: str | None = None
-        self._syncing_selection = False
+        self._selection = SelectionSync(on_change=self._apply_selected_object)
+        self._tap_dispatcher = TapDispatcher(
+            select_mode=lambda: self.select_mode.value,
+            on_select=self._on_tap_select,
+            on_insert=self._on_tap_insert,
+        )
         self._counter = 1
         self._loaded_config = util.AttrDict()
         self._field_wrappers: dict[int, pn.viewable.Viewable] = {}
@@ -846,7 +1082,7 @@ class _EnvironmentBuilderController:
         self.select_mode = pn.widgets.Toggle(
             name="Select on canvas",
             value=False,
-            button_type="primary",
+            button_type="warning",
         )
         self.selected_object = pn.widgets.Select(
             name="Inspect object",
@@ -1050,13 +1286,9 @@ class _EnvironmentBuilderController:
             height=180,
             sizing_mode="stretch_width",
         )
-        self.add_wind_puff_btn = pn.widgets.Button(
-            name="Add air puff",
-            button_type="default",
-        )
-        self.remove_wind_puff_btn = pn.widgets.Button(
-            name="Remove selected air puff",
-            button_type="warning",
+        self.add_wind_puff_btn = add_button(name="Add air puff", sizing_mode=None)
+        self.remove_wind_puff_btn = remove_button(
+            name="Remove selected air puff", sizing_mode=None
         )
         self.thermoscape_enabled = pn.widgets.Checkbox(
             name="Enable thermoscape", value=False
@@ -1084,21 +1316,18 @@ class _EnvironmentBuilderController:
             height=180,
             sizing_mode="stretch_width",
         )
-        self.add_thermo_source_btn = pn.widgets.Button(
-            name="Add thermal source",
-            button_type="default",
+        self.add_thermo_source_btn = add_button(
+            name="Add thermal source", sizing_mode=None
         )
-        self.remove_thermo_source_btn = pn.widgets.Button(
-            name="Remove selected thermal source",
-            button_type="warning",
+        self.remove_thermo_source_btn = remove_button(
+            name="Remove selected thermal source", sizing_mode=None
         )
         self.apply_selected_btn = pn.widgets.Button(
             name="Apply changes",
-            button_type="primary",
+            button_type="success",
         )
-        self.delete_selected_btn = pn.widgets.Button(
-            name="Delete selected",
-            button_type="warning",
+        self.delete_selected_btn = delete_button(
+            name="Delete selected", sizing_mode=None
         )
         for key, widget in (
             ("select_mode", self.select_mode),
@@ -1263,45 +1492,42 @@ class _EnvironmentBuilderController:
             *self._thermoscape_family.css_classes,
             "lw-env-builder-scape-family",
         ]
-        self.preset_name = pn.widgets.TextInput(
-            name="Preset name",
-            value="environment_builder_config",
-            placeholder="environment_builder_config",
+        # Preset save/load/delete/refresh is the shared PresetControlsController
+        # (config_widgets/preset_controls.py), in dual_write mode: this
+        # builder treats a workspace preset and its same-named registry
+        # entry as one linked unit (Save writes both, Delete removes both)
+        # -- see PresetControlsController's own dual_write docs. Built with
+        # a Path.cwd() placeholder store (always constructible without an
+        # active workspace, mirroring single_experiment_app.py's own
+        # pattern) and immediately re-pointed at the real preset directory
+        # by _sync_preset_controls_availability below.
+        self.preset_controls = PresetControlsController(
+            conftype="Env",
+            workspace_store=WorkspacePresetStore(
+                Path.cwd(), directory_key="environment-builder"
+            ),
+            policy=ADVANCED_PRESET_POLICY,
+            dual_write=True,
+            build_workspace_payload=lambda _name: self._build_export_config_validated(),
+            build_registry_payload=lambda _name: self._build_registry_config(),
+            on_load=self._on_preset_loaded,
+            on_status=self._on_preset_status,
+            title=None,
         )
-        self.preset_select = pn.widgets.Select(
-            name="Saved presets",
-            options={},
-            value=None,
-        )
-        self.save_preset_btn = pn.widgets.Button(
-            name="Save",
-            button_type="primary",
-        )
-        self.load_preset_btn = pn.widgets.Button(
-            name="Load",
-            button_type="default",
-        )
-        self.delete_preset_btn = pn.widgets.Button(
-            name="Delete",
-            button_type="warning",
-        )
-        self.load_file_btn = pn.widgets.Button(
-            name="Load file",
-            button_type="default",
-        )
-        self.download_file_btn = pn.widgets.Button(
-            name="Download file",
-            button_type="default",
-        )
-        self.load_file_input = pn.widgets.FileInput(
-            name="",
-            accept=".json,application/json",
-            multiple=False,
-        )
-        self.load_file_input.css_classes = ["lw-env-builder-hidden-file-input"]
-        self.refresh_presets_btn = pn.widgets.Button(
-            name="Refresh list",
-            button_type="default",
+        self.preset_name = self.preset_controls.preset_name
+        self.preset_name.name = "Preset name"
+        self.preset_name.placeholder = "environment_builder_config"
+        self.preset_name.value = "environment_builder_config"
+        self.preset_select = self.preset_controls.preset_select
+        self.preset_select.name = "Saved presets"
+        self.save_preset_btn = self.preset_controls.save_button
+        self.load_preset_btn = self.preset_controls.load_button
+        self.delete_preset_btn = self.preset_controls.delete_button
+        self.refresh_presets_btn = self.preset_controls.refresh_button
+        self.preset_meta = self.preset_controls.storage_info
+        self.preset_overwrite_confirm = self.preset_controls.confirmation_host
+        self.load_file_btn, self.load_file_input = import_button(
+            "Import", accept=".json,application/json"
         )
         self.clear_last_btn = pn.widgets.Button(name="Undo last", button_type="default")
         self.clear_all_btn = pn.widgets.Button(
@@ -1310,75 +1536,19 @@ class _EnvironmentBuilderController:
         self.clear_arena_btn = pn.widgets.Button(
             name="Clear arena", button_type="warning"
         )
-        self.export_btn = pn.widgets.FileDownload(
-            name="",
-            label="Download file",
-            button_type="default",
+        self.download_file_btn, self.export_btn = export_button(
+            "Export",
             callback=self._export_json,
             filename="environment_builder_config.json",
         )
-        self.export_btn.css_classes = ["lw-env-builder-hidden-download-proxy"]
         self._register_field(self.preset_name, "preset_name")
         self._register_field(self.preset_select, "preset_select")
-        self.preset_meta = pn.pane.HTML(
-            "",
-            sizing_mode="stretch_width",
-            margin=(0, 0, 4, 0),
-            styles={
-                "font-size": "11px",
-                "line-height": "1.45",
-                "color": "rgba(17, 17, 17, 0.72)",
-                "padding": "8px 10px",
-                "text-align": "left",
-                "background": "rgba(252, 252, 253, 0.99)",
-                "border": "1px solid rgba(90, 71, 96, 0.10)",
-                "border-radius": "8px",
-                "overflow-wrap": "anywhere",
-            },
-        )
-        self._pending_overwrite_id: str | None = None
         self._suspend_arena_update = False
         self._last_valid_arena_controls = {
             "shape": str(self.arena_shape.value),
             "width": float(self.arena_width.value),
             "height": float(self.arena_height.value),
         }
-        self.preset_overwrite_text = pn.pane.Markdown(
-            "",
-            sizing_mode="stretch_width",
-            margin=0,
-            styles={
-                "font-size": "12px",
-                "line-height": "1.4",
-                "padding": "8px 10px",
-                "background": "rgba(255, 244, 214, 0.95)",
-                "border": "1px solid rgba(180, 120, 0, 0.22)",
-                "border-radius": "8px",
-                "color": "rgba(65, 45, 0, 0.92)",
-            },
-        )
-        self.confirm_overwrite_btn = pn.widgets.Button(
-            name="Yes, overwrite",
-            button_type="warning",
-            sizing_mode="stretch_width",
-        )
-        self.cancel_overwrite_btn = pn.widgets.Button(
-            name="No, cancel",
-            button_type="default",
-            sizing_mode="stretch_width",
-        )
-        self.preset_overwrite_confirm = pn.Column(
-            self.preset_overwrite_text,
-            pn.Row(
-                self.confirm_overwrite_btn,
-                self.cancel_overwrite_btn,
-                sizing_mode="stretch_width",
-                margin=(6, 0, 0, 0),
-            ),
-            sizing_mode="stretch_width",
-            margin=(4, 0, 0, 0),
-            visible=False,
-        )
         self._pending_reset_confirmation = False
         self.reset_confirm_text = pn.pane.Markdown(
             "",
@@ -1394,16 +1564,8 @@ class _EnvironmentBuilderController:
                 "color": "rgba(95, 20, 20, 0.95)",
             },
         )
-        self.confirm_reset_btn = pn.widgets.Button(
-            name="Yes, reset",
-            button_type="danger",
-            sizing_mode="stretch_width",
-        )
-        self.cancel_reset_btn = pn.widgets.Button(
-            name="No, cancel",
-            button_type="default",
-            sizing_mode="stretch_width",
-        )
+        self.confirm_reset_btn = confirm_button(name="Yes, reset")
+        self.cancel_reset_btn = cancel_button(name="No, cancel")
         self.reset_confirm_panel = pn.Column(
             self.reset_confirm_text,
             pn.Row(
@@ -1457,18 +1619,6 @@ class _EnvironmentBuilderController:
         self.load_file_btn.sizing_mode = "stretch_width"
         self.download_file_btn.width = None
         self.download_file_btn.sizing_mode = "stretch_width"
-        self.load_file_input.width = None
-        self.load_file_input.sizing_mode = "stretch_width"
-        self.load_file_input.styles = {
-            "position": "absolute",
-            "left": "-10000px",
-            "top": "auto",
-            "width": "1px",
-            "height": "1px",
-            "opacity": "0",
-            "overflow": "hidden",
-            "pointer-events": "none",
-        }
         self.apply_selected_btn.width = None
         self.apply_selected_btn.sizing_mode = "stretch_width"
         self.delete_selected_btn.width = None
@@ -1552,6 +1702,8 @@ class _EnvironmentBuilderController:
         self._table_columns = [
             "id",
             "type",
+            "amount",
+            "color",
             "x",
             "y",
             "x2",
@@ -1561,8 +1713,6 @@ class _EnvironmentBuilderController:
             "spread_y",
             "count",
             "width",
-            "color",
-            "amount",
             "odor_id",
         ]
         self.table = pn.widgets.Tabulator(
@@ -2030,43 +2180,22 @@ class _EnvironmentBuilderController:
         self.table.param.watch(self._on_table_selection_change, "selection")
         self.apply_selected_btn.on_click(self._on_apply_selected_object)
         self.delete_selected_btn.on_click(self._on_delete_selected_object)
-        self.save_preset_btn.on_click(self._on_save_preset)
-        self.load_preset_btn.on_click(self._on_load_preset)
-        self.delete_preset_btn.on_click(self._on_delete_preset)
-        self.load_file_btn.js_on_click(
-            args={"load_input": self.load_file_input},
-            code="""
-                const picker = document.createElement('input');
-                picker.type = 'file';
-                picker.accept = '.json,application/json';
-                picker.multiple = false;
-                picker.onchange = async () => {
-                    const file = picker.files && picker.files[0];
-                    if (!file) {
-                        return;
-                    }
-                    const dataUrl = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = () => resolve(reader.result || '');
-                        reader.onerror = () => reject(reader.error || new Error(`unable to read '${file.name}'`));
-                        reader.readAsDataURL(file);
-                    });
-                    const [, mime_type = '', , value = ''] = String(dataUrl).split(/[:;,]/, 4);
-                    load_input.setv({value, filename: file.name, mime_type});
-                };
-                picker.click();
-            """,
-        )
-        self.download_file_btn.js_on_click(
-            args={"download_proxy": self.export_btn},
-            code="""
-                download_proxy.setv({clicks: download_proxy.clicks + 1});
-            """,
-        )
+        # save_preset_btn/load_preset_btn/delete_preset_btn/refresh_presets_btn
+        # are PresetControlsController's own buttons (aliased above) -- the
+        # controller already wires their primary action internally
+        # (save_current/load_selected/delete_selected/refresh_list); only
+        # the post-action availability sync (disabled state, matching the
+        # old _refresh_preset_controls behavior) needs to be added here.
+        for _preset_btn in (
+            self.save_preset_btn,
+            self.load_preset_btn,
+            self.delete_preset_btn,
+            self.refresh_presets_btn,
+        ):
+            _preset_btn.on_click(
+                lambda _event: self._sync_preset_controls_availability()
+            )
         self.load_file_input.param.watch(self._on_load_file, "value")
-        self.refresh_presets_btn.on_click(self._on_refresh_presets)
-        self.confirm_overwrite_btn.on_click(self._on_confirm_overwrite_preset)
-        self.cancel_overwrite_btn.on_click(self._on_cancel_overwrite_preset)
         self.clear_last_btn.on_click(self._on_clear_last)
         self.confirm_reset_btn.on_click(self._on_confirm_reset_configurations)
         self.cancel_reset_btn.on_click(self._on_cancel_reset_configurations)
@@ -2076,7 +2205,6 @@ class _EnvironmentBuilderController:
         self.remove_wind_puff_btn.on_click(self._on_remove_wind_puff)
         self.add_thermo_source_btn.on_click(self._on_add_thermo_source)
         self.remove_thermo_source_btn.on_click(self._on_remove_thermo_source)
-        self.preset_name.param.watch(self._on_preset_name_change, "value")
 
         self._update_insert_hint()
         self._sync_arena_controls()
@@ -2085,11 +2213,21 @@ class _EnvironmentBuilderController:
         self._sync_food_grid_overlay()
         self._sync_odorscape_controls()
         self._sync_scape_preview()
-        self._refresh_preset_controls()
+        # The controller was constructed with a Path.cwd() placeholder
+        # store, so its own internal initial refresh_list() (already run
+        # during PresetControlsController.__init__) reflects that
+        # placeholder, not the real preset directory -- re-point at the
+        # real directory and refresh again now.
+        self._on_refresh_presets()
         self._refresh_object_controls()
         self._sync_arena_lock_state()
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the builder's view.
+
+        Returns:
+            The view component.
+        """
         intro = pn.pane.Markdown(
             (
                 "### Environment Builder\n"
@@ -2161,6 +2299,7 @@ class _EnvironmentBuilderController:
                     sizing_mode="stretch_width",
                     margin=0,
                 ),
+                self.preset_overwrite_confirm,
                 self.export_btn,
                 sizing_mode="stretch_width",
                 margin=0,
@@ -2241,6 +2380,7 @@ class _EnvironmentBuilderController:
         )
 
     def _update_insert_hint(self, *_: object) -> None:
+        """Refresh the hint telling the user what a canvas click will do."""
         is_border_segment = self.object_type.value == "Border segment"
         is_source_group = self.object_type.value == "Source group"
         self._set_field_visible(self.border_width, is_border_segment)
@@ -2266,17 +2406,20 @@ class _EnvironmentBuilderController:
         self.status.object = f"Click canvas to add a {self.object_type.value.lower()}."
 
     def _arena_dimensions(self) -> tuple[float, float]:
+        """The arena extent currently configured."""
         if self.arena_shape.value == "circular":
             diameter = max(float(self.arena_width.value) * 2.0, 0.0)
             return diameter, diameter
         return float(self.arena_width.value), float(self.arena_height.value)
 
     def _sync_arena_controls(self) -> None:
+        """Refresh the arena controls from the current arena."""
         is_circular = self.arena_shape.value == "circular"
         self.arena_width.name = "Arena radius (m)" if is_circular else "Arena width (m)"
         self._set_field_visible(self.arena_height, not is_circular)
 
     def _sync_arena_lock_state(self) -> None:
+        """Lock the height control to the width for a circular arena."""
         locked = bool(self._objects)
         self.arena_shape.disabled = locked
         self.arena_width.disabled = locked
@@ -2284,6 +2427,7 @@ class _EnvironmentBuilderController:
         self.arena_torus.disabled = locked
 
     def _on_arena_shape_change(self, event: object) -> None:
+        """Handle a change of the arena shape."""
         old = getattr(event, "old", None)
         new = getattr(event, "new", self.arena_shape.value)
         if self._suspend_arena_update:
@@ -2308,12 +2452,14 @@ class _EnvironmentBuilderController:
         self._update_arena()
 
     def _sync_odorscape_controls(self, *_: object) -> None:
+        """Show only the odor controls that apply to the chosen field type."""
         is_diffusion = self.odorscape_mode.value == "Diffusion"
         self._set_field_visible(self.odorscape_evap_const, is_diffusion)
         self._set_field_visible(self.odorscape_sigma_x, is_diffusion)
         self._set_field_visible(self.odorscape_sigma_y, is_diffusion)
 
     def _empty_scape_preview_sources(self) -> None:
+        """Clear the field preview data sources."""
         self.odorscape_contour_source.data = {
             "x": [],
             "y": [],
@@ -2356,6 +2502,11 @@ class _EnvironmentBuilderController:
         }
 
     def _iter_odor_preview_rows(self) -> list[_ObjectRow]:
+        """Iterate the sources contributing to the odor preview.
+
+        Yields:
+            Each odor-emitting source row.
+        """
         return [
             obj
             for obj in self._objects
@@ -2370,6 +2521,7 @@ class _EnvironmentBuilderController:
         ]
 
     def _build_odorscape_preview(self) -> None:
+        """Draw the odor field preview."""
         if not self.odorscape_enabled.value:
             self.odorscape_contour_source.data = {
                 "x": [],
@@ -2420,6 +2572,7 @@ class _EnvironmentBuilderController:
             }
 
     def _build_windscape_preview(self) -> None:
+        """Draw the wind field preview."""
         if not self.windscape_enabled.value or float(self.windscape_speed.value) <= 0:
             self.windscape_segment_source.data = {
                 "x0": [],
@@ -2479,6 +2632,7 @@ class _EnvironmentBuilderController:
         }
 
     def _build_thermoscape_preview(self) -> None:
+        """Draw the thermal field preview."""
         if not self.thermoscape_enabled.value:
             self.thermoscape_aura_source.data = {
                 "x": [],
@@ -2554,11 +2708,13 @@ class _EnvironmentBuilderController:
         }
 
     def _sync_scape_preview(self, *_: object) -> None:
+        """Redraw whichever field preview is active."""
         self._build_odorscape_preview()
         self._build_windscape_preview()
         self._build_thermoscape_preview()
 
     def _next_wind_puff_id(self) -> str:
+        """The identifier for the next wind puff added."""
         ids = []
         frame = self.wind_puffs_table.value
         if isinstance(frame, pd.DataFrame) and "id" in frame.columns:
@@ -2571,6 +2727,7 @@ class _EnvironmentBuilderController:
         return f"puff_{highest + 1:03d}"
 
     def _next_thermo_source_id(self) -> str:
+        """The identifier for the next thermal source added."""
         ids = []
         frame = self.thermo_sources_table.value
         if isinstance(frame, pd.DataFrame) and "id" in frame.columns:
@@ -2583,6 +2740,11 @@ class _EnvironmentBuilderController:
         return f"thermal_{highest + 1:03d}"
 
     def _on_add_wind_puff(self, _: object) -> None:
+        """Handle the button adding a wind puff.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         frame = self.wind_puffs_table.value
         if not isinstance(frame, pd.DataFrame):
             frame = _table_dataframe([], _WIND_PUFF_COLUMNS)
@@ -2600,6 +2762,11 @@ class _EnvironmentBuilderController:
         )[_WIND_PUFF_COLUMNS]
 
     def _on_remove_wind_puff(self, _: object) -> None:
+        """Handle the button removing a wind puff.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         frame = self.wind_puffs_table.value
         selection = list(self.wind_puffs_table.selection or [])
         if not isinstance(frame, pd.DataFrame) or not selection:
@@ -2610,6 +2777,11 @@ class _EnvironmentBuilderController:
         self.wind_puffs_table.selection = []
 
     def _on_add_thermo_source(self, _: object) -> None:
+        """Handle the button adding a thermal source.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         frame = self.thermo_sources_table.value
         if not isinstance(frame, pd.DataFrame):
             frame = _table_dataframe([], _THERMO_SOURCE_COLUMNS)
@@ -2624,6 +2796,11 @@ class _EnvironmentBuilderController:
         )[_THERMO_SOURCE_COLUMNS]
 
     def _on_remove_thermo_source(self, _: object) -> None:
+        """Handle the button removing a thermal source.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         frame = self.thermo_sources_table.value
         selection = list(self.thermo_sources_table.selection or [])
         if not isinstance(frame, pd.DataFrame) or not selection:
@@ -2634,6 +2811,7 @@ class _EnvironmentBuilderController:
         self.thermo_sources_table.selection = []
 
     def _sync_group_shape_controls(self, *_: object) -> None:
+        """Show only the extent controls that apply to the chosen group shape."""
         is_source_group = self.object_type.value == "Source group"
         shape = _normalize_group_shape(self.group_shape.value)
         is_circle = shape == "circle"
@@ -2651,12 +2829,18 @@ class _EnvironmentBuilderController:
             self.group_spread_y.value = float(self.group_spread_x.value)
 
     def _on_group_spread_x_change(self, event: object) -> None:
+        """Handle a change of the new group's horizontal extent.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if _normalize_group_shape(self.group_shape.value) == "circle":
             self.group_spread_y.value = float(
                 getattr(event, "new", self.group_spread_x.value)
             )
 
     def _sync_selected_group_shape_controls(self, *_: object) -> None:
+        """Show only the extent controls that apply to the selected group."""
         selected = self._selected_row()
         is_source_group = (
             selected is not None and selected.object_type == "Source group"
@@ -2681,47 +2865,55 @@ class _EnvironmentBuilderController:
             )
 
     def _on_selected_distribution_scale_x_change(self, event: object) -> None:
+        """Handle a change of the selected group's horizontal extent.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if _normalize_group_shape(self.selected_distribution_shape.value) == "circle":
             self.selected_distribution_scale_y.value = float(
                 getattr(event, "new", self.selected_distribution_scale_x.value)
             )
 
     def _group_display_value_mm(self, shape: str, scale_m: float | None) -> float:
+        """Convert a group's stored extent into the displayed millimetres.
+
+        A circular group's extent is its radius, while a rectangular one's is a
+        half-width, so the latter is doubled for display.
+
+        Args:
+            shape: The distribution shape.
+            scale_m: The stored extent in metres.
+
+        Returns:
+            The displayed value in millimetres.
+        """
         value_m = float(scale_m or 0.012)
         if _normalize_group_shape(shape) == "circle":
             return round(value_m * 1000.0, 4)
         return round(value_m * 2000.0, 4)
 
     def _group_scale_from_display_mm(self, shape: str, display_mm: float) -> float:
+        """Convert a displayed extent back into the stored form.
+
+        Args:
+            shape: The distribution shape.
+            display_mm: The displayed value in millimetres.
+
+        Returns:
+            The stored extent in metres.
+        """
         value_mm = float(display_mm)
         if _normalize_group_shape(shape) == "circle":
             return round(value_mm / 1000.0, 4)
         return round(value_mm / 2000.0, 4)
 
     def _preset_dir(self) -> Path:
+        """The workspace folder environment presets are stored in."""
         return get_workspace_dir("environments")
 
-    def _preset_filename(self, name: str) -> str:
-        cleaned = re.sub(r"[^a-zA-Z0-9._-]+", "_", name.strip()).strip("._-")
-        if not cleaned:
-            cleaned = "environment_builder_config"
-        if not cleaned.endswith(".json"):
-            cleaned += ".json"
-        return cleaned
-
-    def _preset_label_from_filename(self, filename: str) -> str:
-        return Path(filename).stem
-
-    def _registry_preset_value(self, name: str) -> str:
-        return f"{_REGISTRY_PRESET_PREFIX}{name}"
-
-    def _is_registry_preset(self, selected: str | None) -> bool:
-        return bool(selected and str(selected).startswith(_REGISTRY_PRESET_PREFIX))
-
-    def _registry_preset_name_from_value(self, selected: str) -> str:
-        return str(selected)[len(_REGISTRY_PRESET_PREFIX) :]
-
     def _next_counter_seed(self) -> int:
+        """The starting counter for newly generated object IDs."""
         highest = 0
         for obj in self._objects:
             match = re.search(r"_(\d+)$", obj.object_id)
@@ -2729,145 +2921,8 @@ class _EnvironmentBuilderController:
                 highest = max(highest, int(match.group(1)))
         return highest + 1 if highest else len(self._objects) + 1
 
-    def _refresh_preset_controls(self, *, selected_filename: str | None = None) -> None:
-        workspace_message = ""
-        workspace_options: dict[str, str] = {}
-        workspace_labels: set[str] = set()
-        workspace_available = True
-        try:
-            preset_dir = self._preset_dir()
-            preset_dir.mkdir(parents=True, exist_ok=True)
-        except WorkspaceError as exc:
-            preset_dir = None
-            workspace_available = False
-            workspace_message = f"Workspace environments directory unavailable: {exc}"
-        else:
-            preset_files = sorted(preset_dir.glob("*.json"))
-            workspace_labels = {
-                self._preset_label_from_filename(path.name) for path in preset_files
-            }
-            workspace_options = {
-                f"Workspace / {self._preset_label_from_filename(path.name)}": path.name
-                for path in preset_files
-            }
-
-        registry_options = {
-            f"Registry / {name}": self._registry_preset_value(name)
-            for name in sorted(str(key) for key in reg.conf.Env.dict.keys())
-            if name not in workspace_labels
-        }
-        options = {**workspace_options, **registry_options}
-        self.preset_select.options = options
-        self.preset_select.disabled = not bool(options)
-        self.save_preset_btn.disabled = not workspace_available
-        self.refresh_presets_btn.disabled = False
-
-        if not options:
-            self.preset_select.value = None
-            self.load_preset_btn.disabled = True
-        else:
-            self.load_preset_btn.disabled = False
-            if selected_filename in options.values():
-                self.preset_select.value = selected_filename
-            elif self.preset_select.value not in options.values():
-                self.preset_select.value = next(iter(options.values()))
-
-        meta_lines = ["<div>"]
-        if workspace_available and preset_dir is not None:
-            meta_lines.append(
-                f'Workspace preset directory:<br><code style="color: #4a8fd8;">{preset_dir}</code><br>'
-            )
-        elif workspace_message:
-            meta_lines.append(f"{workspace_message}<br>")
-        meta_lines.append(
-            f"{len(registry_options)} Registry environments from:<br>"
-            f'<code style="color: #4a8fd8;">{reg.conf.Env.path_to_dict}</code>'
-        )
-        meta_lines.append("</div>")
-        self.preset_meta.object = "".join(meta_lines)
-        if (
-            self._pending_overwrite_id is not None
-            and not self._preset_id_exists_in_visible_options(
-                self._pending_overwrite_id
-            )
-        ):
-            self._clear_overwrite_confirmation()
-
-    def _preset_id_exists_in_visible_options(self, preset_id: str) -> bool:
-        normalized_id = str(preset_id).strip()
-        if not normalized_id:
-            return False
-        options = self.preset_select.options
-        labels = options.keys() if isinstance(options, dict) else (options or [])
-        for label in labels:
-            label_text = str(label)
-            if " / " in label_text:
-                label_text = label_text.split(" / ", 1)[1]
-            if label_text == normalized_id:
-                return True
-        return False
-
-    def _show_overwrite_confirmation(self, preset_id: str) -> None:
-        self._pending_overwrite_id = preset_id
-        self.preset_overwrite_text.object = (
-            f'Unique ID "{preset_id}" already exists. Overwrite the existing preset?'
-        )
-        self.preset_overwrite_confirm.visible = True
-        self.status.object = (
-            f'Unique ID "{preset_id}" already exists. Confirm overwrite or cancel.'
-        )
-
-    def _clear_overwrite_confirmation(self) -> None:
-        self._pending_overwrite_id = None
-        self.preset_overwrite_text.object = ""
-        self.preset_overwrite_confirm.visible = False
-
-    def _on_preset_name_change(self, _: param.parameterized.Event) -> None:
-        self._clear_overwrite_confirmation()
-
-    def _on_confirm_overwrite_preset(self, _: object) -> None:
-        if not self._pending_overwrite_id:
-            return
-        self._perform_save_preset()
-
-    def _on_cancel_overwrite_preset(self, _: object) -> None:
-        pending_id = self._pending_overwrite_id
-        self._clear_overwrite_confirmation()
-        if pending_id:
-            self.status.object = f'Overwrite cancelled for "{pending_id}".'
-
-    def _perform_save_preset(self) -> None:
-        self._clear_overwrite_confirmation()
-        try:
-            preset_dir = self._preset_dir()
-            preset_dir.mkdir(parents=True, exist_ok=True)
-        except WorkspaceError as exc:
-            self.status.object = (
-                f"Cannot save preset without an active workspace: {exc}"
-            )
-            return
-
-        raw_name = self.preset_name.value.strip() or "environment_builder_config"
-        filename = self._preset_filename(raw_name)
-        target = preset_dir / filename
-        registry_id = self._preset_label_from_filename(filename)
-        validation_error = self._validate_configuration_for_storage()
-        if validation_error is not None:
-            self.status.object = f"{validation_error} Preset was not saved."
-            return
-        payload = self._build_export_config()
-        target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-        env_dict = util.AttrDict(reg.conf.Env.dict).get_copy()
-        env_dict[registry_id] = self._build_registry_config()
-        reg.conf.Env.set_dict(env_dict)
-        self._refresh_preset_controls(selected_filename=filename)
-        self.preset_name.value = registry_id
-        self.status.object = (
-            f'Saved environment preset "{self.preset_name.value}" to the workspace '
-            "and registered it in Env.txt."
-        )
-
     def _selected_row(self) -> _ObjectRow | None:
+        """The object row currently selected, if any."""
         selected_id = self._selected_object_id or self.selected_object.value
         if not selected_id:
             return None
@@ -2877,6 +2932,7 @@ class _EnvironmentBuilderController:
         return None
 
     def _selected_row_index(self) -> int | None:
+        """The index of the selected object row."""
         selected = self._selected_row()
         if selected is None:
             return None
@@ -2886,12 +2942,14 @@ class _EnvironmentBuilderController:
         return None
 
     def _object_options(self) -> dict[str, str]:
+        """The objects offered in the selection dropdown."""
         return {
             f"{obj.object_id} ({obj.object_type})": obj.object_id
             for obj in self._objects
         }
 
     def _odor_id_options(self) -> list[str]:
+        """The odor identifiers already in use."""
         odor_ids = {
             str(obj.odor_id).strip()
             for obj in self._objects
@@ -2900,6 +2958,11 @@ class _EnvironmentBuilderController:
         return sorted(odor_id for odor_id in odor_ids if odor_id)
 
     def _set_editor_disabled(self, disabled: bool) -> None:
+        """Enable or disable the object editor.
+
+        Args:
+            disabled: Whether it is disabled.
+        """
         widgets = [
             self.selected_object,
             self.selected_id,
@@ -2928,6 +2991,7 @@ class _EnvironmentBuilderController:
             widget.disabled = disabled
 
     def _clear_canvas_highlight(self) -> None:
+        """Remove the selection highlight from the canvas."""
         self.food_highlight_source.data = {"x": [], "y": [], "r": [], "color": []}
         self.source_group_circle_highlight_source.data = (
             self._empty_source_group_circle_highlight_data()
@@ -2948,6 +3012,7 @@ class _EnvironmentBuilderController:
         }
 
     def _update_canvas_highlight(self, obj: _ObjectRow | None) -> None:
+        """Highlight the selected object on the canvas."""
         self._clear_canvas_highlight()
         if obj is None:
             return
@@ -2996,27 +3061,37 @@ class _EnvironmentBuilderController:
             }
 
     def _set_selected_object(self, object_id: str | None) -> None:
-        self._syncing_selection = True
-        try:
-            self._selected_object_id = object_id
-            options = self._object_options()
-            if object_id is None or object_id not in options.values():
-                self.selected_object.value = None
-                self.table.selection = []
-                self._populate_editor(None)
-                self.selected_object.disabled = not bool(options)
-                self._update_canvas_highlight(None)
-                return
-            self.selected_object.value = object_id
-            row_index = self._selected_row_index()
-            self.table.selection = [] if row_index is None else [row_index]
-            obj = self._selected_row()
-            self._populate_editor(obj)
-            self._update_canvas_highlight(obj)
-        finally:
-            self._syncing_selection = False
+        """Select one object for editing.
+
+        Args:
+            object_id: The object to select, or None to clear.
+        """
+        self._selection.set_selected(object_id)
+
+    def _apply_selected_object(self, object_id: str | None) -> None:
+        # Called by self._selection (a SelectionSync) with its own
+        # re-entrancy guard already held -- keeps the dropdown, table
+        # selection, editor form, and canvas highlight all in sync from
+        # this one id.
+        """Write the editor's values back onto the selected object."""
+        self._selected_object_id = object_id
+        options = self._object_options()
+        if object_id is None or object_id not in options.values():
+            self.selected_object.value = None
+            self.table.selection = []
+            self._populate_editor(None)
+            self.selected_object.disabled = not bool(options)
+            self._update_canvas_highlight(None)
+            return
+        self.selected_object.value = object_id
+        row_index = self._selected_row_index()
+        self.table.selection = [] if row_index is None else [row_index]
+        obj = self._selected_row()
+        self._populate_editor(obj)
+        self._update_canvas_highlight(obj)
 
     def _sync_editor_visibility(self, obj: _ObjectRow | None) -> None:
+        """Show only the editor fields that apply to the selected object type."""
         object_type = obj.object_type if obj is not None else None
         is_border = object_type == "Border segment"
         is_source_unit = object_type == "Source unit"
@@ -3051,6 +3126,7 @@ class _EnvironmentBuilderController:
         self._sync_selected_group_shape_controls()
 
     def _set_substrate_type_options(self, substrate_type: str | None = None) -> None:
+        """Reload the substrate types offered in the editor."""
         options = list(SUBSTRATE_TYPE_OPTIONS)
         if substrate_type:
             substrate_value = str(substrate_type)
@@ -3059,6 +3135,7 @@ class _EnvironmentBuilderController:
         self.selected_substrate_type.options = options
 
     def _populate_editor(self, obj: _ObjectRow | None) -> None:
+        """Load the selected object's values into the editor."""
         self._sync_editor_visibility(obj)
         if obj is None:
             self._set_editor_disabled(True)
@@ -3111,6 +3188,7 @@ class _EnvironmentBuilderController:
     def _refresh_object_controls(
         self, *, selected_object_id: str | None = None
     ) -> None:
+        """Refresh the object selector and the editor's state."""
         self._sync_arena_lock_state()
         self.selected_odor_id.options = self._odor_id_options()
         options = self._object_options()
@@ -3130,12 +3208,14 @@ class _EnvironmentBuilderController:
         self._set_selected_object(target_id)
 
     def _on_selected_object_change(self, *_: object) -> None:
-        if self._syncing_selection:
+        """Handle a change of the selected object."""
+        if self._selection.syncing:
             return
         self._set_selected_object(self.selected_object.value)
 
     def _on_table_selection_change(self, *_: object) -> None:
-        if self._syncing_selection:
+        """Handle a selection made in the object table."""
+        if self._selection.syncing:
             return
         selection = list(self.table.selection or [])
         if not selection:
@@ -3148,18 +3228,27 @@ class _EnvironmentBuilderController:
         self._set_selected_object(self._objects[row_index].object_id)
 
     def _on_select_mode_change(self, *_: object) -> None:
+        # "Select" stays yellow (the portal-wide load/select color) in both
+        # states -- only the status text distinguishes select vs. insert mode.
+        """Handle a change between selecting and inserting on the canvas."""
         if self.select_mode.value:
-            self.select_mode.button_type = "success"
             self.status.object = (
                 "Select mode enabled. Click an object on the canvas to inspect it."
             )
         else:
-            self.select_mode.button_type = "primary"
             self.status.object = (
                 f"Click canvas to add a {self.object_type.value.lower()}."
             )
 
     def _iter_loaded_objects(self, config: dict[str, object]) -> list[_ObjectRow]:
+        """Iterate the objects of a loaded environment configuration.
+
+        Args:
+            config: The configuration to read.
+
+        Yields:
+            Each object row it describes.
+        """
         loaded: list[_ObjectRow] = []
         food_params = config.get("food_params")
         if isinstance(food_params, dict):
@@ -3301,6 +3390,11 @@ class _EnvironmentBuilderController:
         return loaded
 
     def _apply_config(self, config: dict[str, object]) -> None:
+        """Load an environment configuration into the builder.
+
+        Args:
+            config: The configuration to load.
+        """
         translated_config = _translate_builder_environment_payload(config)
         self._loaded_config = util.AttrDict(translated_config).get_copy()
         arena = translated_config.get("arena", {})
@@ -3457,75 +3551,95 @@ class _EnvironmentBuilderController:
         self._refresh_object_controls()
         self._update_insert_hint()
 
-    def _on_save_preset(self, _: object) -> None:
-        raw_name = self.preset_name.value.strip() or "environment_builder_config"
-        if (
-            self._preset_id_exists_in_visible_options(raw_name)
-            and self._pending_overwrite_id != raw_name
-        ):
-            self._show_overwrite_confirmation(raw_name)
-            return
-        self._perform_save_preset()
+    def _on_preset_loaded(self, ref: PresetRef, payload: object) -> None:
+        """Adopt a preset that was just loaded.
 
-    def _apply_loaded_preset_payload(
-        self,
-        payload: object,
-        *,
-        loaded_name: str,
-        status_prefix: str,
-    ) -> None:
+        Args:
+            ref: The loaded preset.
+            payload: Its contents.
+        """
         if not isinstance(payload, dict):
-            self.status.object = "Preset file is not a valid environment configuration."
-            return
+            raise ValueError("Preset is not a valid environment configuration.")
         self._apply_config(payload)
-        self.preset_name.value = loaded_name
-        self.status.object = f'{status_prefix} "{loaded_name}".'
+        self.preset_name.value = ref.name
 
-    def _on_load_preset(self, _: object) -> None:
-        self._clear_overwrite_confirmation()
-        selected = self.preset_select.value
-        if not selected:
-            self.status.object = "Select a saved preset first."
-            return
+    def _on_preset_status(self, message: str, *, tone: str = "neutral") -> None:
+        # PresetControlsController's own construction runs its initial
+        # refresh_list() (and so this callback) before self.status exists
+        # yet, since preset_controls is built early in __init__ -- no-op
+        # in that case; the real post-construction refresh at the end of
+        # __init__ (_on_refresh_presets) sets an accurate status anyway.
+        """Relay a status message from the preset controls.
 
-        if self._is_registry_preset(str(selected)):
-            registry_name = self._registry_preset_name_from_value(str(selected))
-            try:
-                payload = util.AttrDict(reg.conf.Env.getID(registry_name)).get_copy()
-            except Exception as exc:
-                self.status.object = f"Failed to load registry environment: {exc}"
-                return
-            loaded_name = registry_name
-            status_prefix = "Loaded registry environment"
-        else:
-            try:
-                path = self._preset_dir() / str(selected)
-            except WorkspaceError as exc:
-                self.status.object = (
-                    f"Cannot load workspace preset without an active workspace: {exc}"
-                )
-                return
+        Args:
+            message: The status text.
+        """
+        status = getattr(self, "status", None)
+        if status is not None:
+            status.object = message
 
-            try:
-                payload = json.loads(path.read_text(encoding="utf-8"))
-            except FileNotFoundError:
-                self._refresh_preset_controls()
-                self.status.object = "Selected preset file no longer exists."
-                return
-            except (OSError, json.JSONDecodeError) as exc:
-                self.status.object = f"Failed to read preset: {exc}"
-                return
-            loaded_name = path.stem
-            status_prefix = "Loaded environment preset"
-
-        self._apply_loaded_preset_payload(
-            payload,
-            loaded_name=loaded_name,
-            status_prefix=status_prefix,
+    def _resolve_preset_workspace_store(self) -> bool:
+        """Re-point preset_controls at the real preset directory. Returns
+        whether an active workspace is actually available. On failure,
+        points at a definitely-nonexistent sentinel directory instead of
+        leaving the Path.cwd() construction-time placeholder in place --
+        otherwise WorkspacePresetStore.list_presets() would glob stray
+        *.json files from the process's actual working directory."""
+        try:
+            preset_dir = self._preset_dir()
+            preset_dir.mkdir(parents=True, exist_ok=True)
+        except WorkspaceError:
+            self.preset_controls.workspace_store = WorkspacePresetStore(
+                Path.cwd() / ".larvaworld_env_presets_unavailable",
+                directory_key="environment-builder",
+            )
+            return False
+        self.preset_controls.workspace_store = WorkspacePresetStore(
+            preset_dir, directory_key="environment-builder"
         )
+        return True
+
+    def _sync_preset_controls_availability(self) -> None:
+        # Mirrors the old _refresh_preset_controls' disabled-state rules:
+        # Save requires an active workspace (dual_write always needs to
+        # write the workspace side too); Load is only useful once there's
+        # at least one preset (workspace or registry) to pick.
+        """Enable the preset controls only when a workspace is available."""
+        workspace_available = self._resolve_preset_workspace_store()
+        self.preset_controls.save_button.disabled = not workspace_available
+        self.preset_controls.load_button.disabled = not bool(
+            self.preset_controls.preset_select.options
+        )
+        if not workspace_available:
+            self.preset_controls.storage_info.object = (
+                "Storage info:\n"
+                "Workspace environments directory unavailable "
+                "(no active workspace).\n\n"
+                f"Registry presets from:\n  `{self.preset_controls.registry_store.source_path}`"
+            )
+
+    def _on_save_preset(self, _: object = None) -> None:
+        """Handle the save-preset button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
+        self.preset_controls.save_current()
+
+    def _on_load_preset(self, _: object = None) -> None:
+        """Handle the load-preset button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
+        self.preset_controls.load_selected()
 
     def _on_load_file(self, _: param.parameterized.Event) -> None:
-        self._clear_overwrite_confirmation()
+        """Handle an uploaded environment file.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         raw_value = self.load_file_input.value
         if raw_value in (None, b"", ""):
             return
@@ -3542,72 +3656,37 @@ class _EnvironmentBuilderController:
         except Exception as exc:
             self.status.object = f"Failed to load file: {exc}"
             return
-
-        self._apply_loaded_preset_payload(
-            payload,
-            loaded_name=loaded_name,
-            status_prefix="Loaded environment file",
-        )
-
-    def _on_delete_preset(self, _: object) -> None:
-        self._clear_overwrite_confirmation()
-        selected = self.preset_select.value
-        if not selected:
-            self.status.object = "Select a saved preset first."
+        if not isinstance(payload, dict):
+            self.status.object = "Preset file is not a valid environment configuration."
             return
+        self._apply_config(payload)
+        self.preset_name.value = loaded_name
+        self.status.object = f'Loaded environment file "{loaded_name}".'
 
-        deleted_workspace = False
-        deleted_registry = False
+    def _on_delete_preset(self, _: object = None) -> None:
+        """Handle the delete-preset button.
 
-        if self._is_registry_preset(str(selected)):
-            registry_name = self._registry_preset_name_from_value(str(selected))
-            reg.conf.Env.delete(registry_name)
-            deleted_registry = registry_name not in reg.conf.Env.dict
-            deleted_label = registry_name
-        else:
-            try:
-                path = self._preset_dir() / str(selected)
-            except WorkspaceError as exc:
-                self.status.object = (
-                    f"Cannot delete workspace preset without an active workspace: {exc}"
-                )
-                return
+        Args:
+            _event: The widget event that triggered this.
+        """
+        self.preset_controls.delete_selected()
 
-            deleted_label = path.stem
-            try:
-                path.unlink()
-                deleted_workspace = True
-            except FileNotFoundError:
-                deleted_workspace = False
-            except OSError as exc:
-                self.status.object = f"Failed to delete preset file: {exc}"
-                return
+    def _on_refresh_presets(self, _: object = None) -> None:
+        """Handle the refresh-presets button.
 
-            reg.conf.Env.delete(deleted_label)
-            deleted_registry = deleted_label not in reg.conf.Env.dict
-
-        self._refresh_preset_controls()
-        removed_targets: list[str] = []
-        if deleted_workspace:
-            removed_targets.append("workspace")
-        if deleted_registry:
-            removed_targets.append("registry")
-        if not removed_targets:
-            self.status.object = (
-                f'Preset "{deleted_label}" was already missing from the selected store.'
-            )
-            return
-        removed_text = " and ".join(removed_targets)
-        self.status.object = f'Deleted preset "{deleted_label}" from {removed_text}.'
-
-    def _on_refresh_presets(self, _: object) -> None:
-        self._clear_overwrite_confirmation()
-        self._refresh_preset_controls(
-            selected_filename=str(self.preset_select.value or "")
-        )
-        self.status.object = "Refreshed environment preset list."
+        Args:
+            _event: The widget event that triggered this.
+        """
+        self._resolve_preset_workspace_store()
+        self.preset_controls.refresh_list()
+        self._sync_preset_controls_availability()
 
     def _on_apply_selected_object(self, _: object) -> None:
+        """Handle the button applying the editor's changes.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         current = self._selected_row()
         if current is None:
             self.status.object = "Select an object to edit first."
@@ -3734,6 +3813,11 @@ class _EnvironmentBuilderController:
         self.status.object = f'Updated object "{updated.object_id}".'
 
     def _on_delete_selected_object(self, _: object) -> None:
+        """Handle the button deleting the selected object.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         current = self._selected_row()
         if current is None:
             self.status.object = "Select an object to delete first."
@@ -3748,6 +3832,7 @@ class _EnvironmentBuilderController:
         self.status.object = f'Deleted object "{current.object_id}".'
 
     def _apply_arena_visuals(self) -> None:
+        """Redraw the arena outline and its background."""
         self._sync_arena_controls()
         width, height = self._arena_dimensions()
         self._arena_source.data = {"x": [0.0], "y": [0.0], "w": [width], "h": [height]}
@@ -3769,6 +3854,11 @@ class _EnvironmentBuilderController:
         self._sync_scape_preview()
 
     def _restore_last_valid_arena_controls(self) -> None:
+        """Restore the arena controls after a rejected change.
+
+        An arena change that would leave placed objects outside is refused, and
+        the controls are rewound so they keep matching the drawn arena.
+        """
         previous = dict(self._last_valid_arena_controls)
         self._suspend_arena_update = True
         try:
@@ -3780,6 +3870,7 @@ class _EnvironmentBuilderController:
         self._apply_arena_visuals()
 
     def _update_arena(self, *_: object) -> None:
+        """Apply the arena controls, if the result stays valid."""
         if self._suspend_arena_update:
             self._apply_arena_visuals()
             return
@@ -3796,6 +3887,7 @@ class _EnvironmentBuilderController:
         self._apply_arena_visuals()
 
     def _sync_food_grid_overlay(self, *_: object) -> None:
+        """Redraw the food grid overlay."""
         width, height = self._arena_dimensions()
         self._food_grid_overlay_source.data = {
             "x": [0.0],
@@ -3809,6 +3901,15 @@ class _EnvironmentBuilderController:
         self._rebuild_food_grid_cells()
 
     def _inside_arena(self, x: float, y: float) -> bool:
+        """Report whether a point lies inside the arena.
+
+        Args:
+            x: The x coordinate.
+            y: The y coordinate.
+
+        Returns:
+            True when the point is contained.
+        """
         width, height = self._arena_dimensions()
         if self.arena_shape.value == "rectangular":
             return abs(x) <= width / 2 and abs(y) <= height / 2
@@ -3819,6 +3920,16 @@ class _EnvironmentBuilderController:
         return (nx * nx + ny * ny) <= 1.0
 
     def _inside_arena_with_margin(self, x: float, y: float, margin: float) -> bool:
+        """Report whether a circle fits inside the arena.
+
+        Args:
+            x: The centre's x coordinate.
+            y: Its y coordinate.
+            margin: The circle's radius.
+
+        Returns:
+            True when the whole circle is contained.
+        """
         width, height = self._arena_dimensions()
         safe_margin = max(float(margin), 0.0)
         half_width = (width / 2.0) - safe_margin
@@ -3834,6 +3945,14 @@ class _EnvironmentBuilderController:
     def _validate_source_group_members_within_arena(
         self, obj: _ObjectRow
     ) -> str | None:
+        """Check that a group's members all fall inside the arena.
+
+        Args:
+            obj: The group to check.
+
+        Returns:
+            The problem found, or None when the group is placeable.
+        """
         expected_count = int(obj.distribution_n or 0)
         positions = self._group_member_positions(obj)
         if expected_count > 0 and len(positions) != expected_count:
@@ -3851,6 +3970,14 @@ class _EnvironmentBuilderController:
         return None
 
     def _validate_object_within_arena(self, obj: _ObjectRow) -> str | None:
+        """Check that one object falls inside the arena.
+
+        Args:
+            obj: The object to check.
+
+        Returns:
+            The problem found, or None when the object is placeable.
+        """
         if obj.x is None or obj.y is None:
             return f'Object "{obj.object_id}" is missing primary coordinates.'
         if not self._inside_arena(float(obj.x), float(obj.y)):
@@ -3871,6 +3998,11 @@ class _EnvironmentBuilderController:
         return None
 
     def _validate_configuration_for_storage(self) -> str | None:
+        """Check the whole configuration before it is stored.
+
+        Returns:
+            The problem found, or None when it can be stored.
+        """
         for obj in self._objects:
             error = self._validate_object_within_arena(obj)
             if error is not None:
@@ -3878,7 +4010,16 @@ class _EnvironmentBuilderController:
         return None
 
     def _pick_object_at(self, x: float, y: float) -> _ObjectRow | None:
-        nearest: tuple[float, _ObjectRow] | None = None
+        """Find the object a canvas click selects.
+
+        Args:
+            x: The click's x coordinate.
+            y: Its y coordinate.
+
+        Returns:
+            The nearest object under the click, or None.
+        """
+        candidates: list[HitCandidate[_ObjectRow]] = []
         group_lookup = {
             obj.object_id: obj
             for obj in self._objects
@@ -3897,8 +4038,8 @@ class _EnvironmentBuilderController:
                 continue
             distance = math.hypot(x - float(member_x), y - float(member_y))
             tolerance = max(float(member_radius or 0.0), 0.004)
-            if distance <= tolerance and (nearest is None or distance < nearest[0]):
-                nearest = (distance, parent)
+            if distance <= tolerance:
+                candidates.append(HitCandidate(parent.object_id, distance, parent))
         for obj in self._objects:
             if obj.object_type == "Border segment":
                 x0 = float(obj.x or 0.0)
@@ -3915,8 +4056,8 @@ class _EnvironmentBuilderController:
                 py = y0 + t * dy
                 distance = math.hypot(x - px, y - py)
                 tolerance = max(float(obj.width or 0.001) * 3.0, 0.008)
-                if distance <= tolerance and (nearest is None or distance < nearest[0]):
-                    nearest = (distance, obj)
+                if distance <= tolerance:
+                    candidates.append(HitCandidate(obj.object_id, distance, obj))
                 continue
 
             ox = float(obj.x or 0.0)
@@ -3931,22 +4072,37 @@ class _EnvironmentBuilderController:
             else:
                 radius = max(float(obj.radius or 0.008), 0.004)
             distance = math.hypot(x - ox, y - oy)
-            if distance <= radius and (nearest is None or distance < nearest[0]):
-                nearest = (distance, obj)
+            if distance <= radius:
+                candidates.append(HitCandidate(obj.object_id, distance, obj))
 
-        return None if nearest is None else nearest[1]
+        nearest = pick_nearest(candidates)
+        return None if nearest is None else nearest.ref
 
-    def _on_tap(self, event: Tap) -> None:
-        x = round(float(event.x), 4)
-        y = round(float(event.y), 4)
-        if self.select_mode.value:
-            selected = self._pick_object_at(x, y)
-            if selected is None:
-                self.status.object = "No object found at that location."
-                return
-            self._set_selected_object(selected.object_id)
-            self.status.object = f'Selected "{selected.object_id}" from canvas.'
+    def _on_tap_select(self, x: float, y: float) -> None:
+        """Handle a canvas click in selection mode.
+
+        Args:
+            x: The click's x coordinate.
+            y: Its y coordinate.
+        """
+        x = round(x, 4)
+        y = round(y, 4)
+        selected = self._pick_object_at(x, y)
+        if selected is None:
+            self.status.object = "No object found at that location."
             return
+        self._set_selected_object(selected.object_id)
+        self.status.object = f'Selected "{selected.object_id}" from canvas.'
+
+    def _on_tap_insert(self, x: float, y: float) -> None:
+        """Handle a canvas click in insertion mode.
+
+        Args:
+            x: The click's x coordinate.
+            y: Its y coordinate.
+        """
+        x = round(x, 4)
+        y = round(y, 4)
         if not self._inside_arena(x, y):
             self.status.object = "Click inside arena bounds."
             return
@@ -3963,7 +4119,24 @@ class _EnvironmentBuilderController:
             color=self.object_color.value,
         )
 
+    def _on_tap(self, event: Tap) -> None:
+        """Handle a canvas click.
+
+        Args:
+            event: The widget event that triggered this.
+        """
+        self._tap_dispatcher.on_tap(event)
+
     def _tap_border(self, x: float, y: float) -> None:
+        """Handle a canvas click while drawing a border.
+
+        A border takes two clicks: the first fixes its start and shows a preview,
+        the second completes the segment.
+
+        Args:
+            x: The click's x coordinate.
+            y: Its y coordinate.
+        """
         if self._border_start is None:
             self._border_start = (x, y)
             self._show_border_preview(x=x, y=y, color=self.object_color.value)
@@ -3983,6 +4156,14 @@ class _EnvironmentBuilderController:
         self._update_insert_hint()
 
     def _next_id(self, prefix: str) -> str:
+        """Generate the identifier for a new object.
+
+        Args:
+            object_type: The object's type.
+
+        Returns:
+            The identifier.
+        """
         object_id = f"{prefix}_{self._counter:03d}"
         self._counter += 1
         return object_id
@@ -3990,6 +4171,12 @@ class _EnvironmentBuilderController:
     def _add_point_object(
         self, *, object_type: str, x: float, y: float, radius: float, color: str
     ) -> None:
+        """Add a point object at a canvas position.
+
+        Args:
+            x: The x coordinate.
+            y: The y coordinate.
+        """
         if object_type == "Source unit":
             object_id = self._next_id("food")
             candidate = _ObjectRow(
@@ -4083,6 +4270,14 @@ class _EnvironmentBuilderController:
     def _add_border_object(
         self, *, x0: float, y0: float, x1: float, y1: float, width: float, color: str
     ) -> None:
+        """Add a border between two canvas positions.
+
+        Args:
+            x0: The first point's x coordinate.
+            y0: Its y coordinate.
+            x1: The second point's x coordinate.
+            y1: Its y coordinate.
+        """
         object_id = self._next_id("border")
         candidate = _ObjectRow(
             object_id=object_id,
@@ -4118,14 +4313,27 @@ class _EnvironmentBuilderController:
         self._refresh_object_controls(selected_object_id=object_id)
 
     def _show_border_preview(self, *, x: float, y: float, color: str) -> None:
+        """Draw the preview of a border being placed.
+
+        Args:
+            x: The start's x coordinate.
+            y: Its y coordinate.
+            color: The preview colour.
+        """
         self.border_preview_source.data = {"x": [x], "y": [y], "color": [color]}
 
     def _clear_border_preview(self) -> None:
+        """Remove the border preview."""
         self.border_preview_source.data = {"x": [], "y": [], "color": []}
 
     def _append_source_row(
         self, source: ColumnDataSource, row: dict[str, object]
     ) -> None:
+        """Add one source row to the drawn shapes.
+
+        Args:
+            obj: The object row to draw.
+        """
         data = {key: list(value) for key, value in source.data.items()}
         for key, value in row.items():
             data[key].append(value)
@@ -4134,10 +4342,16 @@ class _EnvironmentBuilderController:
     def _append_rows(
         self, source: ColumnDataSource, rows: list[dict[str, object]]
     ) -> None:
+        """Add several object rows to the drawn shapes.
+
+        Args:
+            rows: The object rows to draw.
+        """
         for row in rows:
             self._append_source_row(source, row)
 
     def _empty_source_group_circle_data(self) -> dict[str, list[object]]:
+        """Empty data for the group circle glyphs."""
         return {
             "x": [],
             "y": [],
@@ -4149,6 +4363,7 @@ class _EnvironmentBuilderController:
         }
 
     def _empty_source_group_xy_data(self) -> dict[str, list[object]]:
+        """Empty data for the group rectangle glyphs."""
         return {
             "x": [],
             "y": [],
@@ -4161,12 +4376,15 @@ class _EnvironmentBuilderController:
         }
 
     def _empty_source_group_circle_highlight_data(self) -> dict[str, list[object]]:
+        """Empty data for the group circle highlight."""
         return {"x": [], "y": [], "r": [], "color": []}
 
     def _empty_source_group_xy_highlight_data(self) -> dict[str, list[object]]:
+        """Empty data for the group rectangle highlight."""
         return {"x": [], "y": [], "w": [], "h": [], "color": []}
 
     def _empty_food_grid_cell_data(self) -> dict[str, list[object]]:
+        """Empty data for the food grid cells."""
         return {
             "x": [],
             "y": [],
@@ -4180,6 +4398,7 @@ class _EnvironmentBuilderController:
         }
 
     def _rebuild_food_grid_cells(self) -> None:
+        """Rebuild the drawn food grid cells."""
         if not bool(self.food_grid_enabled.value):
             self._food_grid_cell_source.data = self._empty_food_grid_cell_data()
             return
@@ -4223,6 +4442,7 @@ class _EnvironmentBuilderController:
         self._food_grid_cell_source.data = data
 
     def _empty_source_group_member_data(self) -> dict[str, list[object]]:
+        """Empty data for the group members."""
         return {
             "x": [],
             "y": [],
@@ -4236,6 +4456,15 @@ class _EnvironmentBuilderController:
         }
 
     def _group_member_positions(self, obj: _ObjectRow) -> list[tuple[float, float]]:
+        """Lay out a group's members within its footprint.
+
+        Args:
+            obj: The group row.
+
+        Returns:
+            One position per member, seeded stably so the preview does
+            not jitter between redraws.
+        """
         if obj.object_type != "Source group" or obj.x is None or obj.y is None:
             return []
         count = int(obj.distribution_n or 0)
@@ -4275,6 +4504,14 @@ class _EnvironmentBuilderController:
             np.random.set_state(state)
 
     def _build_group_member_rows(self, obj: _ObjectRow) -> list[dict[str, object]]:
+        """Build the drawn rows for a group's members.
+
+        Args:
+            obj: The group row.
+
+        Returns:
+            The member rows.
+        """
         positions = self._group_member_positions(obj)
         if not positions:
             return []
@@ -4298,6 +4535,11 @@ class _EnvironmentBuilderController:
         ]
 
     def _on_clear_last(self, _: object) -> None:
+        """Handle the button removing the last placed object.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if self._border_start is not None:
             self._border_start = None
             self._clear_border_preview()
@@ -4314,6 +4556,7 @@ class _EnvironmentBuilderController:
         self.status.object = "Removed last object."
 
     def _show_reset_confirmation(self) -> None:
+        """Ask the user to confirm resetting the presets."""
         self._pending_reset_confirmation = True
         self.reset_confirm_text.object = (
             "This action will clear all placed objects and recreate the Env registry "
@@ -4325,22 +4568,34 @@ class _EnvironmentBuilderController:
         )
 
     def _clear_reset_confirmation(self) -> None:
+        """Dismiss the reset confirmation."""
         self._pending_reset_confirmation = False
         self.reset_confirm_text.object = ""
         self.reset_confirm_panel.visible = False
 
     def _on_confirm_reset_configurations(self, _: object) -> None:
+        """Handle the confirm button, resetting the stored presets.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if not self._pending_reset_confirmation:
             return
         self._on_clear_all(None)
 
     def _on_cancel_reset_configurations(self, _: object) -> None:
+        """Handle the cancel button, abandoning the reset.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if not self._pending_reset_confirmation:
             return
         self._clear_reset_confirmation()
         self.status.object = "Reset configurations cancelled."
 
     def _clear_arena_contents(self) -> None:
+        """Remove every object placed in the arena."""
         self._objects.clear()
         self._border_start = None
         self._counter = 1
@@ -4391,12 +4646,21 @@ class _EnvironmentBuilderController:
         self._sync_scape_preview()
 
     def _on_clear_arena(self, _: object) -> None:
-        self._clear_overwrite_confirmation()
+        """Handle the button clearing the arena.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._clear_reset_confirmation()
         self._clear_arena_contents()
         self.status.object = "Cleared all arena objects."
 
     def _on_clear_all(self, _: object) -> None:
+        """Handle the button clearing the arena and its fields.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         if not self._pending_reset_confirmation:
             self._show_reset_confirmation()
             return
@@ -4405,19 +4669,20 @@ class _EnvironmentBuilderController:
         try:
             reg_config.resetConfs(conftypes=["Env"], recreate=True)
         except Exception as exc:
-            self._refresh_preset_controls()
+            self._on_refresh_presets()
             self.status.object = (
                 "Cleared all placed objects, but failed to recreate the Env registry: "
                 f"{exc}"
             )
             return
 
-        self._refresh_preset_controls()
+        self._on_refresh_presets()
         self.status.object = (
             "Cleared all placed objects and recreated the Env registry."
         )
 
     def _rebuild_sources(self) -> None:
+        """Redraw every glyph from the current object rows."""
         self._clear_border_preview()
         self.food_source.data = {
             "x": [],
@@ -4600,10 +4865,13 @@ class _EnvironmentBuilderController:
         self._sync_scape_preview()
 
     def _refresh_table(self) -> None:
+        """Redraw the table listing the placed objects."""
         rows = [
             {
                 "id": obj.object_id,
                 "type": obj.object_type,
+                "amount": obj.amount,
+                "color": obj.color,
                 "x": obj.x,
                 "y": obj.y,
                 "x2": obj.x2,
@@ -4613,15 +4881,18 @@ class _EnvironmentBuilderController:
                 "spread_y": obj.distribution_scale_y,
                 "count": obj.distribution_n,
                 "width": obj.width,
-                "color": obj.color,
-                "amount": obj.amount,
                 "odor_id": obj.odor_id,
             }
             for obj in self._objects
         ]
-        self.table.value = pd.DataFrame(rows)
+        self.table.value = pd.DataFrame(rows, columns=self._table_columns)
 
     def _build_export_config(self) -> dict[str, object]:
+        """Assemble the environment as a stored configuration.
+
+        Returns:
+            The configuration.
+        """
         base_config = util.AttrDict(self._loaded_config).get_copy()
         source_units: dict[str, dict[str, object]] = {}
         source_groups: dict[str, dict[str, object]] = {}
@@ -4802,14 +5073,41 @@ class _EnvironmentBuilderController:
         return dict(base_config)
 
     def _build_registry_config(self) -> util.AttrDict:
+        """Assemble the environment for storage in the registry.
+
+        Returns:
+            The configuration.
+        """
         return _translate_builder_environment_payload(self._build_export_config())
 
+    def _build_export_config_validated(self) -> dict[str, object]:
+        # PresetControlsController's dual-write save calls
+        # build_workspace_payload before build_registry_payload, so
+        # raising here blocks both writes -- validation only needs to
+        # happen once per save.
+        """Assemble the environment, refusing an invalid one.
+
+        Returns:
+            The configuration, or None when validation failed.
+        """
+        validation_error = self._validate_configuration_for_storage()
+        if validation_error is not None:
+            raise ValueError(f"{validation_error} Preset was not saved.")
+        return self._build_export_config()
+
     def _export_json(self) -> io.StringIO:
+        """Build the JSON file the export button downloads.
+
+        Returns:
+            The file contents.
+        """
         payload = self._build_export_config()
         return io.StringIO(json.dumps(payload, indent=2))
 
 
 class _InsertSection(param.Parameterized):
+    """Form section for inserting a new object into the arena."""
+
     object_type = param.Selector(
         default="Source unit",
         objects=["Source unit", "Source group", "Border segment"],
@@ -4841,6 +5139,8 @@ class _InsertSection(param.Parameterized):
 
 
 class _OdorScapeSection(param.Parameterized):
+    """Form section for the environment's odor field."""
+
     enabled = param.Boolean(
         default=False,
         label="Enable odorscape",
@@ -4900,6 +5200,8 @@ class _OdorScapeSection(param.Parameterized):
 
 
 class _WindScapeSection(param.Parameterized):
+    """Form section for the environment's wind field."""
+
     enabled = param.Boolean(
         default=False,
         label="Enable windscape",
@@ -4924,6 +5226,8 @@ class _WindScapeSection(param.Parameterized):
 
 
 class _ThermoScapeSection(param.Parameterized):
+    """Form section for the environment's thermal field."""
+
     enabled = param.Boolean(
         default=False,
         label="Enable thermoscape",
@@ -4943,6 +5247,8 @@ class _ThermoScapeSection(param.Parameterized):
 
 
 class _PresetSection(param.Parameterized):
+    """Form section for saving and loading environment presets."""
+
     preset_name = param.String(
         default="environment_builder_config",
         label="Unique ID",
@@ -4989,6 +5295,13 @@ def _sync_param_with_widget(
     parameter_name: str,
     widget: pn.viewable.Viewable,
 ) -> None:
+    """Keep a parameter and its widget in step.
+
+    Args:
+        parameterized: The object holding the parameter.
+        name: The parameter name.
+        widget: The widget bound to it.
+    """
     state = {"syncing_param": False, "syncing_widget": False}
 
     def _from_param(event: param.parameterized.Event) -> None:
@@ -5018,12 +5331,14 @@ def _sync_param_with_widget(
 
 
 class _EnvironmentBuilderV2Controller:
+    """State behind the environment builder's canvas-driven layout."""
+
     def __init__(self) -> None:
+        """Build the canvas-driven builder controller."""
         self.runtime = _EnvironmentBuilderController()
         self._syncing_area_dims = False
         self._syncing_group_scale = False
         self._syncing_food_grid_dims = False
-        self.runtime.clear_all_btn.name = "Reset configurations"
         self.runtime.selected_color.width = 52
         self.runtime.selected_color.sizing_mode = "fixed"
         self.runtime.select_mode.width = None
@@ -5158,6 +5473,7 @@ class _EnvironmentBuilderV2Controller:
         self._sync_canvas_title()
 
     def _bind_sections(self) -> None:
+        """Wire the form sections to the shared builder state."""
         for section, parameter_name, widget in (
             (self.arena, "torus", self.runtime.arena_torus),
             (self.insert, "object_type", self.runtime.object_type),
@@ -5246,12 +5562,14 @@ class _EnvironmentBuilderV2Controller:
         self._sync_food_grid_dims_from_runtime()
 
     def _sync_canvas_title(self, *_: object) -> None:
+        """Refresh the canvas heading."""
         unique_id = (
             self.presets.preset_name or ""
         ).strip() or "environment_builder_config"
         self.runtime.fig.title.text = f"Environment: {unique_id}"
 
     def _sync_area_dims_from_widgets(self, *_: object) -> None:
+        """Apply the arena size entered in the form."""
         if self._syncing_area_dims:
             return
         dims = (
@@ -5267,6 +5585,7 @@ class _EnvironmentBuilderV2Controller:
             self._syncing_area_dims = False
 
     def _sync_group_distribution_scale_from_widgets(self, *_: object) -> None:
+        """Apply the group extent entered in the form."""
         if self._syncing_group_scale:
             return
         shape = _normalize_group_shape(self.runtime.group_shape.value)
@@ -5292,6 +5611,7 @@ class _EnvironmentBuilderV2Controller:
     def _sync_group_distribution_widgets_from_param(
         self, *_: param.parameterized.Event
     ) -> None:
+        """Refresh the group extent fields from the current object."""
         if self._syncing_group_scale:
             return
         shape = _normalize_group_shape(self.runtime.group_shape.value)
@@ -5312,6 +5632,7 @@ class _EnvironmentBuilderV2Controller:
             self._syncing_group_scale = False
 
     def _sync_food_grid_dims_from_v2(self, *_: object) -> None:
+        """Apply the food grid size entered in the form."""
         if self._syncing_food_grid_dims:
             return
         dims = (int(self.food_grid_dims_x.value), int(self.food_grid_dims_y.value))
@@ -5327,6 +5648,7 @@ class _EnvironmentBuilderV2Controller:
             self._syncing_food_grid_dims = False
 
     def _sync_food_grid_dims_from_runtime(self, *_: object) -> None:
+        """Refresh the food grid fields from the drawn grid."""
         if self._syncing_food_grid_dims:
             return
         dims = (
@@ -5345,6 +5667,7 @@ class _EnvironmentBuilderV2Controller:
             self._syncing_food_grid_dims = False
 
     def _sync_food_grid_dims_from_param(self, *_: param.parameterized.Event) -> None:
+        """Refresh the food grid fields from the stored configuration."""
         if self._syncing_food_grid_dims:
             return
         dims = tuple(int(value) for value in self.food_grid.grid_dims)
@@ -5368,6 +5691,15 @@ class _EnvironmentBuilderV2Controller:
         *,
         widget_overrides: dict[str, object] | None = None,
     ) -> pn.Param:
+        """Build the control editing one parameter.
+
+        Args:
+            obj: The object being edited.
+            name: The parameter name.
+
+        Returns:
+            The control component.
+        """
         return pn.Param(
             section.param,
             parameters=parameters,
@@ -5385,6 +5717,15 @@ class _EnvironmentBuilderV2Controller:
         header_right: pn.viewable.Viewable | None = None,
         compact: bool = False,
     ) -> pn.Column:
+        """Build a titled box grouping form fields.
+
+        Args:
+            title: The group heading.
+            *objects: Its contents.
+
+        Returns:
+            The box component.
+        """
         title_styles = dict(_FAMILY_TITLE_STYLES)
         if header_right is not None:
             title_styles["margin"] = "-6px 0 0 0"
@@ -5414,6 +5755,15 @@ class _EnvironmentBuilderV2Controller:
     def _make_bound_switch(
         section: param.Parameterized, parameter_name: str
     ) -> pn.widgets.Switch:
+        """Build a switch bound to one parameter.
+
+        Args:
+            obj: The object holding the parameter.
+            name: The parameter name.
+
+        Returns:
+            The switch widget.
+        """
         widget = pn.widgets.Switch(
             name="", value=bool(getattr(section, parameter_name)), width=18, margin=0
         )
@@ -5421,6 +5771,12 @@ class _EnvironmentBuilderV2Controller:
         return widget
 
     def _arena_panel(self) -> pn.viewable.Viewable:
+        """Build the arena form panel.
+
+        Returns:
+            The panel component.
+        """
+
         @pn.depends(self.arena.param.geometry, self.runtime.table.param.value)
         def _view(geometry: str, _table_value: object) -> pn.Column:
             locked = bool(self.runtime._objects)
@@ -5454,6 +5810,12 @@ class _EnvironmentBuilderV2Controller:
         return _view
 
     def _insert_panel(self) -> pn.viewable.Viewable:
+        """Build the object insertion panel.
+
+        Returns:
+            The panel component.
+        """
+
         @pn.depends(self.insert.param.object_type)
         def _view(object_type: str) -> pn.Column:
             children: list[object] = [
@@ -5524,6 +5886,12 @@ class _EnvironmentBuilderV2Controller:
         return _view
 
     def _food_grid_panel(self) -> pn.viewable.Viewable:
+        """Build the food grid panel.
+
+        Returns:
+            The panel component.
+        """
+
         @pn.depends(self.insert.param.enabled)
         def _view(enabled: bool) -> pn.Column:
             children: list[object] = [self._param_pane(self.insert, ["enabled"])]
@@ -5558,6 +5926,12 @@ class _EnvironmentBuilderV2Controller:
         return _view
 
     def _odorscape_panel(self) -> pn.viewable.Viewable:
+        """Build the odor field panel.
+
+        Returns:
+            The panel component.
+        """
+
         @pn.depends(self.odorscape.param.enabled, self.odorscape.param.mode)
         def _view(enabled: bool, mode: str) -> pn.Column:
             children: list[object] = []
@@ -5589,6 +5963,12 @@ class _EnvironmentBuilderV2Controller:
         return _view
 
     def _windscape_panel(self) -> pn.viewable.Viewable:
+        """Build the wind field panel.
+
+        Returns:
+            The panel component.
+        """
+
         @pn.depends(self.windscape.param.enabled)
         def _view(enabled: bool) -> pn.Column:
             children: list[object] = []
@@ -5621,6 +6001,12 @@ class _EnvironmentBuilderV2Controller:
         return _view
 
     def _thermoscape_panel(self) -> pn.viewable.Viewable:
+        """Build the thermal field panel.
+
+        Returns:
+            The panel component.
+        """
+
         @pn.depends(self.thermoscape.param.enabled)
         def _view(enabled: bool) -> pn.Column:
             children: list[object] = []
@@ -5647,6 +6033,11 @@ class _EnvironmentBuilderV2Controller:
         return _view
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the builder's view.
+
+        Returns:
+            The view component.
+        """
         intro = pn.pane.Markdown(
             (
                 "### Environment Builder\n"
@@ -5677,44 +6068,32 @@ class _EnvironmentBuilderV2Controller:
             collapsed=False,
             sizing_mode="stretch_width",
         )
-        presets = pn.Card(
-            pn.Column(
-                self._param_pane(
-                    self.presets,
-                    ["preset_name"],
-                    widget_overrides={"preset_name": {"type": pn.widgets.TextInput}},
-                ),
-                self.runtime.preset_select,
-                self.runtime.refresh_presets_btn,
-                pn.Row(
-                    self.runtime.save_preset_btn,
-                    self.runtime.load_preset_btn,
-                    self.runtime.delete_preset_btn,
+        self.runtime.clear_all_btn.name = "Reset Presets"
+        self.runtime.clear_all_btn.param.update(width=160, sizing_mode="fixed")
+        presets = build_preset_controls_panel(
+            self.runtime.preset_controls,
+            name_field=self._param_pane(
+                self.presets,
+                ["preset_name"],
+                widget_overrides={"preset_name": {"type": pn.widgets.TextInput}},
+            ),
+            reset_slot=self.runtime.clear_all_btn,
+            extra_sections=[
+                pn.Column(
+                    self.runtime.load_file_input,
+                    self.runtime.export_btn,
+                    pn.Row(
+                        self.runtime.load_file_btn,
+                        self.runtime.download_file_btn,
+                        sizing_mode="stretch_width",
+                        margin=(4, 0, 0, 0),
+                    ),
                     sizing_mode="stretch_width",
-                    margin=(4, 0, 0, 0),
-                ),
-                self.runtime.preset_meta,
-                self.runtime.load_file_input,
-                self.runtime.export_btn,
-                pn.Row(
-                    self.runtime.load_file_btn,
-                    self.runtime.download_file_btn,
-                    sizing_mode="stretch_width",
-                    margin=(4, 0, 0, 0),
-                ),
-                pn.Row(
-                    self.runtime.clear_all_btn,
-                    sizing_mode="stretch_width",
-                    margin=(4, 0, 0, 0),
+                    margin=0,
                 ),
                 self.runtime.reset_confirm_panel,
-                self.runtime.preset_overwrite_confirm,
-                sizing_mode="stretch_width",
-                margin=0,
-            ),
-            title="Stored Configurations",
-            collapsed=False,
-            sizing_mode="stretch_width",
+            ],
+            show_status=False,
         )
         table_card = pn.Card(
             self.runtime.table,
@@ -5788,6 +6167,11 @@ class _EnvironmentBuilderV2Controller:
 
 
 def environment_builder_app() -> pn.viewable.Viewable:
+    """Build the environment builder app.
+
+    Returns:
+        The app component.
+    """
     pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS, ENV_BUILDER_RAW_CSS])
     controller = _EnvironmentBuilderV2Controller()
     template = pn.template.MaterialTemplate(

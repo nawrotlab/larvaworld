@@ -3,10 +3,18 @@ Helper methods used for importing data
 """
 
 from __future__ import annotations
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from collections import OrderedDict
+from contextlib import contextmanager
+from pathlib import Path, PurePosixPath
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
+import glob
 import os
 import os.path
+import re
+import stat
+import tempfile
+import zipfile
 
 import numpy as np
 import pandas as pd
@@ -17,7 +25,11 @@ from .. import reg, util
 
 __all__: list[str] = [
     "init_endpoint_dataframe_from_timeseries",
+    "estimate_timestep_from_timeseries",
+    "count_midline_points_in_raw_data",
+    "estimate_arena_dimensions",
     "read_timeseries_from_raw_files_per_parameter",
+    "convert_spine_files_to_per_parameter_txt",
     "read_timeseries_from_raw_files_per_larva",
     "get_Schleyer_metadata_inv_x",
     "constrain_selected_tracks",
@@ -29,7 +41,532 @@ __all__: list[str] = [
     "interpolate_timeseries_dataframe",
     "finalize_timeseries_dataframe",
     "generate_dataframes",
+    "DLCImportError",
+    "DLCScaleValidationError",
+    "discover_deeplabcut_source_directories",
+    "read_deeplabcut_tracks",
 ]
+
+
+_DLC_SUFFIXES = (".h5", ".hdf5", ".csv")
+_DLC_SCALE_RANGE_MM = (0.1, 10.0)
+
+
+class DLCImportError(ValueError):
+    """Raised when a DeepLabCut source cannot be converted safely."""
+
+
+class DLCScaleValidationError(DLCImportError):
+    """Raised when declared coordinate units imply an implausible larva length."""
+
+
+def _is_dlc_data_file(path: Path | PurePosixPath) -> bool:
+    """Report whether a path names a DeepLabCut track file.
+
+    Args:
+        path: The path to test.
+
+    Returns:
+        True if the suffix is one DeepLabCut writes tracks to.
+    """
+    return path.suffix.lower() in _DLC_SUFFIXES
+
+
+def _safe_zip_infos(archive: zipfile.ZipFile) -> list[zipfile.ZipInfo]:
+    """Return archive members after rejecting unsafe ZIP paths and links."""
+    infos = archive.infolist()
+    for info in infos:
+        member = PurePosixPath(info.filename)
+        if (
+            member.is_absolute()
+            or ".." in member.parts
+            or "\\" in info.filename
+            or info.flag_bits & 0x1
+        ):
+            raise DLCImportError(f"Unsafe ZIP member: {info.filename!r}")
+        mode = info.external_attr >> 16
+        if stat.S_ISLNK(mode):
+            raise DLCImportError(f"ZIP symlinks are not supported: {info.filename!r}")
+    return infos
+
+
+@contextmanager
+def _materialized_zip_source(source: Path) -> Iterator[Path]:
+    """Extract a validated ZIP into a temporary directory for one import."""
+    try:
+        archive = zipfile.ZipFile(source)
+    except (OSError, zipfile.BadZipFile) as exc:
+        raise DLCImportError(f"Invalid DeepLabCut ZIP archive: {source}") from exc
+    with archive, tempfile.TemporaryDirectory(prefix="larvaworld-dlc-") as temp_dir:
+        infos = _safe_zip_infos(archive)
+        archive.extractall(temp_dir, members=infos)
+        yield Path(temp_dir)
+
+
+def discover_deeplabcut_source_directories(source: str | Path) -> list[str]:
+    """Return relative directories containing DLC CSV/HDF5 files in a folder or ZIP."""
+    path = Path(source).expanduser()
+    if path.is_dir():
+        directories = {
+            file.parent.relative_to(path).as_posix()
+            for file in path.rglob("*")
+            if file.is_file() and _is_dlc_data_file(file)
+        }
+        return sorted(directories)
+    if not path.is_file() or path.suffix.lower() != ".zip":
+        return []
+
+    try:
+        with zipfile.ZipFile(path) as archive:
+            infos = _safe_zip_infos(archive)
+    except (OSError, zipfile.BadZipFile) as exc:
+        raise DLCImportError(f"Invalid DeepLabCut ZIP archive: {path}") from exc
+    directories = {
+        PurePosixPath(info.filename).parent.as_posix() or "."
+        for info in infos
+        if not info.is_dir() and _is_dlc_data_file(PurePosixPath(info.filename))
+    }
+    return sorted(directories)
+
+
+def _direct_dlc_files(directory: Path) -> list[Path]:
+    """List the DeepLabCut track files directly inside a directory.
+
+    Args:
+        directory: The directory to scan. Subdirectories are not descended.
+
+    Returns:
+        The matching files, sorted by name. Empty if the path is not a
+        directory.
+    """
+    if not directory.is_dir():
+        return []
+    return sorted(
+        file
+        for file in directory.iterdir()
+        if file.is_file() and _is_dlc_data_file(file)
+    )
+
+
+def _deduplicated_paths(paths: Sequence[Path]) -> list[Path]:
+    """Drop duplicate paths while preserving order.
+
+    Paths are compared after resolution, so different spellings of the same
+    location collapse to one entry.
+
+    Args:
+        paths: The paths to deduplicate.
+
+    Returns:
+        The resolved, unique paths in first-occurrence order.
+    """
+    unique: OrderedDict[Path, None] = OrderedDict()
+    for path in paths:
+        unique[path.resolve()] = None
+    return list(unique)
+
+
+@contextmanager
+def _deeplabcut_source_roots(
+    source_dir: str | list[str], parent_dir: str, merged: bool
+) -> Iterator[list[Path]]:
+    """Resolve the directories holding a DeepLabCut import's track files.
+
+    A ZIP source is extracted for the duration of the context and cleaned up on
+    exit, so the yielded roots are only valid inside the ``with`` block.
+
+    Args:
+        source_dir: One source directory, several of them, or a ZIP archive.
+        parent_dir: Directory the sources are resolved relative to.
+        merged: When True, the sources are treated as one merged recording
+            rather than as separate ones.
+
+    Yields:
+        The resolved, deduplicated source directories.
+    """
+    source_paths = (
+        [Path(path).expanduser() for path in source_dir]
+        if isinstance(source_dir, list)
+        else [Path(source_dir).expanduser()]
+    )
+    if (
+        len(source_paths) == 1
+        and source_paths[0].is_file()
+        and source_paths[0].suffix.lower() == ".zip"
+    ):
+        with _materialized_zip_source(source_paths[0]) as extracted_root:
+            selected = (extracted_root / parent_dir).resolve()
+            try:
+                selected.relative_to(extracted_root.resolve())
+            except ValueError as exc:
+                raise DLCImportError(
+                    f"Unsafe ZIP source directory: {parent_dir!r}"
+                ) from exc
+            if not selected.is_dir():
+                raise DLCImportError(
+                    f"DeepLabCut source directory {parent_dir!r} was not found in {source_paths[0]}."
+                )
+            if merged:
+                roots = [selected] if _direct_dlc_files(selected) else []
+                roots.extend(
+                    path for path in sorted(selected.iterdir()) if path.is_dir()
+                )
+            else:
+                roots = [selected]
+            yield _deduplicated_paths(roots)
+        return
+
+    roots: list[Path] = []
+    for source_path in source_paths:
+        if source_path.is_dir():
+            roots.append(source_path)
+        elif _is_dlc_data_file(source_path):
+            roots.append(source_path.parent)
+    yield _deduplicated_paths(roots)
+
+
+def _recording_key(path: Path) -> str:
+    """Derive the recording identity shared by a file's DeepLabCut variants.
+
+    DeepLabCut appends a ``DLC_...`` scorer suffix to each exported file; this
+    strips it so that the ``.h5`` and ``.csv`` exports of one recording group
+    together.
+
+    Args:
+        path: The track file path.
+
+    Returns:
+        The recording key.
+    """
+    stem = path.stem
+    return stem.split("DLC_", 1)[0].rstrip("_-.") or stem
+
+
+def _recording_sources(roots: Sequence[Path]) -> list[list[Path]]:
+    """Group the track files under the given roots by recording.
+
+    Where one recording was exported in several formats, the HDF5 export is
+    preferred over the CSV one.
+
+    Args:
+        roots: The directories to scan.
+
+    Returns:
+        One list of files per recording, in discovery order.
+    """
+    groups: OrderedDict[tuple[Path, str], list[Path]] = OrderedDict()
+    for root in roots:
+        for file in _direct_dlc_files(root):
+            groups.setdefault((file.parent.resolve(), _recording_key(file)), []).append(
+                file
+            )
+
+    preferred_suffixes = {".h5": 0, ".hdf5": 0, ".csv": 1}
+    return [
+        sorted(
+            files, key=lambda file: (preferred_suffixes[file.suffix.lower()], file.name)
+        )
+        for _, files in groups.items()
+    ]
+
+
+def _read_deeplabcut_dataframe(file: Path) -> pd.DataFrame:
+    """Read one DeepLabCut export into a dataframe.
+
+    Args:
+        file: The ``.csv``, ``.h5`` or ``.hdf5`` file to read.
+
+    Returns:
+        The track data, with its MultiIndex columns preserved.
+
+    Raises:
+        DLCImportError: If the file does not carry MultiIndex columns, and so
+            is not a DeepLabCut export.
+    """
+    if file.suffix.lower() == ".csv":
+        dataframe = pd.read_csv(file, header=[0, 1, 2], index_col=0)
+    else:
+        dataframe = pd.read_hdf(file)
+    if not isinstance(dataframe.columns, pd.MultiIndex):
+        raise DLCImportError(
+            f"DeepLabCut file {file} does not have MultiIndex columns."
+        )
+    return dataframe
+
+
+def _dlc_column_levels(dataframe: pd.DataFrame) -> tuple[int, int]:
+    """Locate the body-part and coordinate levels of a DeepLabCut frame.
+
+    The level names vary between DeepLabCut versions and export paths, so they
+    are detected rather than assumed.
+
+    Args:
+        dataframe: The track data.
+
+    Returns:
+        The positional index of the body-part level and of the coordinate
+        level.
+    """
+    names = [
+        str(name).lower() if name is not None else ""
+        for name in dataframe.columns.names
+    ]
+    coord_level = next((i for i, name in enumerate(names) if name == "coords"), None)
+    if coord_level is None:
+        coord_level = next(
+            (
+                i
+                for i in range(dataframe.columns.nlevels)
+                if {"x", "y"}.issubset(
+                    {
+                        str(value).lower()
+                        for value in dataframe.columns.get_level_values(i)
+                    }
+                )
+            ),
+            None,
+        )
+    if coord_level is None:
+        raise DLCImportError(
+            "DeepLabCut columns must include x and y coordinate labels."
+        )
+    bodypart_level = next(
+        (i for i, name in enumerate(names) if name in {"bodypart", "bodyparts"}), None
+    )
+    if bodypart_level is None:
+        bodypart_level = coord_level - 1
+    if bodypart_level < 0:
+        raise DLCImportError("DeepLabCut columns do not identify body parts.")
+    return bodypart_level, coord_level
+
+
+def _lateral_bodypoint(
+    name: str, known_names: Sequence[str] | None = None
+) -> tuple[str, str] | None:
+    """Split a left/right body-point name into its base and its side.
+
+    Recognizes both the short form (``"tail_l"``) and the long one
+    (``"tail_left"``).
+
+    Args:
+        name: The body-point name.
+        known_names: The other body-point names. Required to split the
+            separator-less compact form (``"tailL"``), which is only accepted
+            when the opposite-side partner is also present.
+
+    Returns:
+        The base name and the side as ``"l"`` or ``"r"``, or None if the name
+        is not one half of a lateral pair.
+    """
+    normalized = name.strip()
+    short = re.fullmatch(r"(.+?)[_\-\s]+([lr])", normalized, flags=re.IGNORECASE)
+    if short is not None:
+        return short.group(1).strip(), short.group(2).lower()
+    long = re.fullmatch(r"(.+?)[_\-\s]*(left|right)", normalized, flags=re.IGNORECASE)
+    if long is not None:
+        return long.group(1).strip(), long.group(2)[0].lower()
+    compact = re.fullmatch(r"(.+?)([lr])", normalized, flags=re.IGNORECASE)
+    if compact is not None and known_names is not None:
+        base, side = compact.group(1), compact.group(2).lower()
+        partner = f"{base}{'R' if side == 'l' else 'L'}"
+        if any(candidate.lower() == partner.lower() for candidate in known_names):
+            return base, side
+    return None
+
+
+def _resolved_dlc_points(
+    dataframe: pd.DataFrame,
+) -> tuple[list[str], list[tuple[pd.Series, pd.Series]]]:
+    """Resolve ordered DLC points, including left/right pairs and he/T*/A* labels.
+
+    The default source order is head to tail. ``he`` denotes the head point;
+    ``T1``, ``T2``, ... denote thoracic points and ``A1``, ``A2``, ... denote
+    abdominal points. Left/right pairs are averaged into one midline point.
+    """
+    bodypart_level, coord_level = _dlc_column_levels(dataframe)
+    columns: OrderedDict[str, dict[str, pd.Series]] = OrderedDict()
+    for column in dataframe.columns:
+        coord = str(column[coord_level]).lower()
+        if coord not in {"x", "y"}:
+            continue
+        bodypart = str(column[bodypart_level]).strip()
+        if not bodypart:
+            raise DLCImportError("DeepLabCut bodypoint names cannot be empty.")
+        values = columns.setdefault(bodypart, {})
+        if coord in values:
+            raise DLCImportError(
+                f"DeepLabCut bodypoint {bodypart!r} has multiple {coord!r} columns."
+            )
+        values[coord] = dataframe[column]
+
+    for bodypart, values in columns.items():
+        if set(values) != {"x", "y"}:
+            raise DLCImportError(
+                f"DeepLabCut bodypoint {bodypart!r} must contain exactly x and y coordinates."
+            )
+
+    resolved_names: list[str] = []
+    resolved_values: list[tuple[pd.Series, pd.Series]] = []
+    resolved_lateral: set[str] = set()
+    for bodypart, values in columns.items():
+        lateral = _lateral_bodypoint(bodypart, columns)
+        if lateral is None:
+            resolved_names.append(bodypart)
+            resolved_values.append((values["x"], values["y"]))
+            continue
+        base, side = lateral
+        if base in resolved_lateral:
+            continue
+        partner = next(
+            (
+                candidate
+                for candidate in columns
+                if _lateral_bodypoint(candidate, columns)
+                == (base, "r" if side == "l" else "l")
+            ),
+            None,
+        )
+        if partner is None:
+            raise DLCImportError(
+                f"DeepLabCut lateral bodypoint {bodypart!r} is missing its left/right partner."
+            )
+        resolved_lateral.add(base)
+        partner_values = columns[partner]
+        resolved_names.append(base)
+        resolved_values.append(
+            (
+                (values["x"] + partner_values["x"]) / 2,
+                (values["y"] + partner_values["y"]) / 2,
+            )
+        )
+
+    if not resolved_values:
+        raise DLCImportError("No DeepLabCut x/y bodypoint coordinates were found.")
+    return resolved_names, resolved_values
+
+
+def _canonical_dlc_track(
+    dataframe: pd.DataFrame,
+) -> tuple[pd.DataFrame, tuple[str, ...]]:
+    """Convert a DeepLabCut frame into larvaworld's midline column layout.
+
+    Args:
+        dataframe: The raw DeepLabCut track data.
+
+    Returns:
+        The track in canonical ``point<i>_x`` / ``point<i>_y`` columns, and the
+        resolved body-point names in midline order.
+    """
+    point_names, point_values = _resolved_dlc_points(dataframe)
+    columns = util.nam.midline_xy(len(point_values), flat=True)
+    track = pd.DataFrame(index=dataframe.index)
+    for (x_values, y_values), x_column, y_column in zip(
+        point_values, columns[::2], columns[1::2]
+    ):
+        track[x_column] = pd.to_numeric(x_values, errors="coerce")
+        track[y_column] = pd.to_numeric(y_values, errors="coerce")
+    numeric_index = pd.to_numeric(track.index, errors="coerce")
+    track.index = (
+        pd.Index(numeric_index, name=track.index.name)
+        if not np.isnan(numeric_index).any()
+        else pd.RangeIndex(len(track))
+    )
+    return track, tuple(point_names)
+
+
+def _validate_dlc_scale(tracks: Sequence[pd.DataFrame], npoints: int) -> None:
+    """Check that imported DeepLabCut tracks are in millimetres.
+
+    The median head-to-tail length across the tracks is compared against the
+    range plausible for larva data, which catches imports left in pixel units.
+    No check is performed for fewer than two midline points.
+
+    Args:
+        tracks: The canonical tracks to check.
+        npoints: The number of midline points per track.
+
+    Raises:
+        DLCScaleValidationError: If the median length falls outside the
+            expected millimetre range, indicating a missing ``pixel_to_mm``.
+    """
+    if npoints < 2:
+        return
+    columns = util.nam.midline_xy(npoints, flat=True)
+    lengths = np.concatenate(
+        [
+            np.hypot(
+                track[columns[-2]].to_numpy() - track[columns[0]].to_numpy(),
+                track[columns[-1]].to_numpy() - track[columns[1]].to_numpy(),
+            )
+            for track in tracks
+        ]
+    )
+    median_length = float(np.nanmedian(lengths))
+    low, high = _DLC_SCALE_RANGE_MM
+    if np.isfinite(median_length) and not low <= median_length <= high:
+        raise DLCScaleValidationError(
+            f"DeepLabCut median head-tail length is {median_length:.3g} mm; expected roughly "
+            f"{low:g}-{high:g} mm. Provide a valid filesystem.pixel_to_mm for pixel coordinates."
+        )
+
+
+def read_deeplabcut_tracks(
+    source_dir: str | list[str],
+    parent_dir: str = ".",
+    merged: bool = False,
+    pixel_to_mm: float | None = None,
+) -> tuple[list[pd.DataFrame], int]:
+    """Read generic single-animal DeepLabCut CSV/HDF5 tracks.
+
+    DLC likelihood columns are ignored. Source bodypoints default to header order
+    from head to tail. The aliases ``he``, ``T1``/``T2``/... (thoracic), and
+    ``A1``/``A2``/... (abdominal) are therefore accepted as an ordered midline.
+    Coordinates whose median head-tail length is outside the expected millimetre
+    range require a valid ``pixel_to_mm`` conversion factor.
+    """
+    with _deeplabcut_source_roots(source_dir, parent_dir, merged) as roots:
+        recordings = _recording_sources(roots)
+        if not recordings:
+            raise DLCImportError("No DeepLabCut CSV or HDF5 tracking files were found.")
+
+        tracks: list[pd.DataFrame] = []
+        schema: tuple[str, ...] | None = None
+        for files in recordings:
+            errors: list[str] = []
+            for file in files:
+                try:
+                    track, point_names = _canonical_dlc_track(
+                        _read_deeplabcut_dataframe(file)
+                    )
+                    break
+                except (
+                    OSError,
+                    ValueError,
+                    KeyError,
+                    ImportError,
+                    DLCImportError,
+                ) as exc:
+                    errors.append(f"{file.name}: {exc}")
+            else:
+                raise DLCImportError(
+                    "Unable to read DeepLabCut recording: " + "; ".join(errors)
+                )
+            if schema is None:
+                schema = point_names
+            elif schema != point_names:
+                raise DLCImportError(
+                    f"DeepLabCut recordings have incompatible point schemas: {schema} != {point_names}."
+                )
+            tracks.append(track)
+
+    if pixel_to_mm is not None:
+        if pixel_to_mm <= 0:
+            raise DLCScaleValidationError("DeepLabCut pixel_to_mm must be positive.")
+        for track in tracks:
+            track.loc[:, :] = track.to_numpy() * float(pixel_to_mm)
+    npoints = len(schema or ())
+    _validate_dlc_scale(tracks, npoints)
+    return tracks, npoints
 
 
 def init_endpoint_dataframe_from_timeseries(
@@ -64,12 +601,172 @@ def init_endpoint_dataframe_from_timeseries(
     return e
 
 
+def estimate_timestep_from_timeseries(
+    df: pd.DataFrame,
+    t_col: str = "t",
+    agent_level: str = "AgentID",
+) -> float:
+    """
+    Estimates the mean tracking timestep from the timestamps of a raw timeseries.
+
+    Trackers that record at a variable framerate cannot be described by the nominal
+    framerate stored in their lab format. This computes the timestep actually realized
+    by a recording, as the mean interval between consecutive samples of the same agent.
+    Intervals are taken per agent so that the transition from one agent's last sample to
+    the next agent's first one is never counted as a timestep.
+
+    Args:
+        df: The raw timeseries dataframe, indexed by agent ID and holding a column of
+            timestamps in seconds.
+        t_col: The name of the timestamp column. Defaults to 't'.
+        agent_level: The name of the index level holding the agent IDs.
+            Defaults to 'AgentID'.
+
+    Returns:
+        The mean timestep in seconds.
+
+    Raises:
+        ValueError: If the timestamps yield no positive interval to average over,
+            meaning every agent is tracked for a single sample.
+
+    Notes:
+        Only positive intervals are averaged. The mean is meaningful when tracks are
+        contiguous, which holds for trackers that assign a new agent ID after losing an
+        animal rather than leaving a gap in the existing track. For a tracker that does
+        leave long gaps within a track, the mean is pulled above the true timestep; the
+        estimate is reported through `vprint` so such a case is visible.
+
+    """
+    diffs = df.groupby(level=agent_level)[t_col].diff()
+    diffs = diffs[diffs > 0]
+    if diffs.empty:
+        raise ValueError(
+            f"Cannot estimate the timestep : no positive interval between consecutive "
+            f"'{t_col}' values within any agent."
+        )
+    dt = float(diffs.mean())
+    vprint(
+        f"**--- Timestep estimated from the data : dt={dt:.4f} s (fr={1 / dt:.2f} Hz) -----",
+        1,
+    )
+    return dt
+
+
+def count_midline_points_in_raw_data(
+    source_dir: str,
+    source_id: Optional[str] = None,
+    structure: str = "per_parameter",
+) -> Optional[int]:
+    """
+    Counts the midline points a raw dataset actually holds.
+
+    The number of tracked midline points is a property of the recording, not of the lab,
+    so a lab format's nominal value can disagree with the data at hand. This inspects the
+    first line of the raw files to count the points that are really there.
+
+    Two raw layouts are recognized, both of the 'per_parameter' structure : the
+    per-parameter txt files, where the x-coordinate file holds one column per midline
+    point, and the tracker's own `.spine` files, where a recording tag, an agent ID and a
+    timestamp are followed by one interleaved x/y pair per midline point.
+
+    Args:
+        source_dir: The folder holding the dataset's files.
+        source_id: The ID of the dataset, used as the filename prefix.
+        structure: The lab-format's filesystem structure. Defaults to 'per_parameter'.
+
+    Returns:
+        The number of midline points, or None if it cannot be determined from the raw
+        files, in which case the caller should fall back to the lab-format's value.
+
+    Notes:
+        The 'per_larva' structure is not counted from the data : there the mapping of file
+        columns onto midline, contour and centroid points is defined by the lab format's
+        read_sequence rather than by the file itself, so the file alone is not conclusive.
+
+    """
+    if structure != "per_parameter" or not source_id:
+        return None
+
+    def _first_line(path: str) -> Optional[str]:
+        """Read a file's first line, returning None if it cannot be opened."""
+        try:
+            with open(path) as f:
+                return f.readline()
+        except OSError:
+            return None
+
+    # The per-parameter txt files hold one column per midline point.
+    line = _first_line(f"{source_dir}/{source_id}_x_spine.txt")
+    if line is not None:
+        Npoints = len(line.strip().split("\t"))
+        return Npoints if Npoints > 0 else None
+
+    # A raw spine file holds [tag, agent ID, t] followed by interleaved x/y pairs.
+    spine_files = sorted(
+        glob.glob(f"{source_dir}/{source_id}/**/*.spine", recursive=True)
+    ) or sorted(glob.glob(f"{source_dir}/{source_id}*.spine"))
+    if spine_files:
+        line = _first_line(spine_files[0])
+        if line is not None:
+            Ncols = len(line.split())
+            if Ncols > 3 and (Ncols - 3) % 2 == 0:
+                return (Ncols - 3) // 2
+    return None
+
+
+def estimate_arena_dimensions(
+    s: pd.DataFrame,
+    rescale_by: Optional[float] = None,
+) -> Optional[Tuple[float, float]]:
+    """
+    Estimates the arena dimensions from the space covered by the tracked coordinates.
+
+    The extent the animals cover approximates the tracked arena, which is useful when the
+    lab format's nominal arena does not describe the setup a dataset was recorded in. The
+    estimate is a lower bound : it is the area the animals actually visited, so it shrinks
+    if they avoided the borders or if few animals were tracked.
+
+    Args:
+        s: The timeseries dataframe, holding the coordinate columns of the tracked points.
+        rescale_by: The factor converting the coordinates to meters, matching the lab
+            format's preprocessing. Applied to the estimate if provided.
+
+    Returns:
+        The (x, y) arena dimensions in the units implied by rescale_by, or None if the
+        dataframe holds no usable coordinates, in which case the caller should fall back
+        to the lab-format's value.
+
+    """
+    x_cols = [c for c in s.columns if str(c).endswith("_x")]
+    y_cols = [c for c in s.columns if str(c).endswith("_y")]
+    if not x_cols or not y_cols:
+        return None
+    x = s[x_cols].to_numpy(dtype=float)
+    y = s[y_cols].to_numpy(dtype=float)
+    if not np.any(np.isfinite(x)) or not np.any(np.isfinite(y)):
+        return None
+    width = float(np.nanmax(x) - np.nanmin(x))
+    height = float(np.nanmax(y) - np.nanmin(y))
+    if not np.isfinite(width) or not np.isfinite(height) or width <= 0 or height <= 0:
+        return None
+    if rescale_by:
+        width *= rescale_by
+        height *= rescale_by
+    vprint(
+        f"**--- Arena dimensions estimated from the data : "
+        f"({width:.4f}, {height:.4f}) -----",
+        1,
+    )
+    return width, height
+
+
 def read_timeseries_from_raw_files_per_parameter(
     pref: str,
     tracker: Optional[Any] = None,
     dt: Optional[float] = None,
     Npoints: Optional[int] = None,
     Ncontour: Optional[int] = None,
+    estimate_dt: bool = False,
 ) -> pd.DataFrame:
     """
     Reads timeseries data stored in txt files of the lab-specific Jovanic format and returns them as a pd.Dataframe.
@@ -88,6 +785,12 @@ def read_timeseries_from_raw_files_per_parameter(
     dt : float, optional
         The tracker timestep.
         If not provided it is set to the lab-format's default value
+    estimate_dt : boolean
+        Whether to estimate the timestep from the timestamps of the data instead of
+        using the lab-format's nominal value. The estimate replaces the dt argument and
+        is written back to the tracker, so that it also reaches the imported dataset's
+        configuration. Meant for trackers of a variable framerate.
+        Defaults to False
 
     Returns
     -------
@@ -142,8 +845,138 @@ def read_timeseries_from_raw_files_per_parameter(
     # df[aID] = "Larva_" + df[aID].astype(str)
 
     df.set_index(keys=[aID], inplace=True, drop=True)
+
+    # A variable-framerate tracker is not described by its nominal timestep. Estimate the
+    # realized one before it is used to build the tick index, and write it back so that
+    # the rest of the import and the stored dataset configuration agree with the data.
+    if estimate_dt:
+        dt = estimate_timestep_from_timeseries(df, t_col=t, agent_level=aID)
+        if tracker is not None:
+            tracker.dt = dt
+
     df["Step"] = df["t"] / dt
     return df
+
+
+# The filename suffixes of the per-parameter txt files, in the order they are written.
+PER_PARAMETER_TXT_SUFFIXES: tuple[str, ...] = ("larvaid", "t", "x_spine", "y_spine")
+
+
+def convert_spine_files_to_per_parameter_txt(
+    source_files: Sequence[str],
+    target_dir: str,
+    source_id: str,
+    Npoints: int = 11,
+    id_offset: int = 100000,
+    id_base: int = 0,
+    id_prefix: str = "Larva_",
+    overwrite: bool = False,
+) -> dict[str, int]:
+    """
+    Converts raw tracker `.spine` files into the per-parameter txt files of the Jovanic format.
+
+    A `.spine` file holds one row per tracked larva per frame, with whitespace-separated
+    columns ``[recording_tag, track_id, t, x1, y1, x2, y2, ..., xN, yN]``, the midline
+    coordinates being interleaved. Track IDs are unique only within a single recording.
+
+    This function concatenates any number of such files into the four tab-separated,
+    header-less files expected by `read_timeseries_from_raw_files_per_parameter`, namely
+    ``{source_id}_larvaid.txt``, ``{source_id}_t.txt``, ``{source_id}_x_spine.txt`` and
+    ``{source_id}_y_spine.txt``. The recording tag column is dropped, the track IDs of each
+    file are offset so that they remain unique after concatenation, and the interleaved
+    coordinates are split into a block of x and a block of y columns.
+
+    Args:
+        source_files: Paths of the `.spine` files to concatenate, in the desired order.
+        target_dir: Directory to write the per-parameter txt files into. Created if missing.
+        source_id: The dataset ID, used as the filename prefix of the written files.
+        Npoints: The number of tracked midline points per larva. Defaults to 11.
+        id_offset: The per-file increment applied to the track IDs to keep them unique.
+            Defaults to 100000.
+        id_base: A constant added to every track ID. Pass a distinct value per dataset when
+            several datasets are to be compared, so that their agent IDs stay distinct as
+            well. Defaults to 0.
+        id_prefix: A string prepended to every track ID, making the agent IDs strings as
+            everywhere else in larvaworld. Purely numeric agent IDs are rejected downstream
+            when the dataset is replayed as a simulation, so only pass an empty string if
+            the imported dataset is meant for dataframe-level analysis alone.
+            Defaults to 'Larva_'.
+        overwrite: Whether to rewrite the files if they already exist. Defaults to False.
+
+    Returns:
+        A dictionary with the number of source files, rows and unique tracks written.
+
+    Raises:
+        ValueError: If no source files are given, if a file does not have the
+            ``3 + 2 * Npoints`` columns implied by Npoints, or if a file holds track IDs
+            that are not smaller than id_offset.
+
+    Notes:
+        The optional ``{source_id}_state.txt`` file of the Jovanic format holds behavioral
+        state annotations. It is not part of the raw tracker output and is therefore not
+        written here; the reader treats it as optional.
+
+    """
+    if len(source_files) == 0:
+        raise ValueError(f"No source files provided for the dataset '{source_id}'.")
+
+    Ncols = 3 + 2 * Npoints
+    paths = {
+        suf: f"{target_dir}/{source_id}_{suf}.txt" for suf in PER_PARAMETER_TXT_SUFFIXES
+    }
+
+    if not overwrite and all(os.path.isfile(f) for f in paths.values()):
+        ids = pd.read_csv(paths["larvaid"], header=None, sep="\t")
+        vprint(
+            f"**--- Per-parameter txt files for '{source_id}' already exist. Skipping conversion -----",
+            1,
+        )
+        return {
+            "files": len(source_files),
+            "rows": ids.shape[0],
+            "tracks": int(ids[0].nunique()),
+        }
+
+    dfs = []
+    for i, f in enumerate(source_files):
+        df = pd.read_csv(f, sep=r"\s+", header=None)
+        if df.shape[1] != Ncols:
+            raise ValueError(
+                f"File '{f}' has {df.shape[1]} columns while {Ncols} are expected for Npoints={Npoints}."
+            )
+        # Drop the recording tag column and make the track IDs unique across files.
+        df = df.iloc[:, 1:]
+        df.columns = range(df.shape[1])
+        if df[0].max() >= id_offset:
+            raise ValueError(
+                f"File '{f}' holds track IDs of at least {id_offset}, which breaks the ID offsetting. "
+                f"Raise the id_offset argument."
+            )
+        df[0] = df[0] + id_base + (i + 1) * id_offset
+        dfs.append(df)
+
+    d = pd.concat(dfs, ignore_index=True)
+
+    os.makedirs(target_dir, exist_ok=True)
+    kws = {"header": False, "index": False, "sep": "\t"}
+    # Columns of the concatenated dataframe : [track_id, t, x1, y1, ..., xN, yN]
+    larvaids = id_prefix + d[0].astype(str) if id_prefix else d[0]
+    larvaids.to_csv(paths["larvaid"], **kws)
+    d[[1]].to_csv(paths["t"], **kws)
+    d.iloc[:, 2::2].to_csv(paths["x_spine"], **kws)
+    d.iloc[:, 3::2].to_csv(paths["y_spine"], **kws)
+
+    res = {
+        "files": len(source_files),
+        "rows": d.shape[0],
+        "tracks": int(d[0].nunique()),
+    }
+    vprint(
+        f"**--- Converted {res['files']} spine files to the per-parameter format of '{source_id}' "
+        f"({res['rows']} rows, {res['tracks']} tracks) -----",
+        1,
+    )
+    return res
 
 
 def read_timeseries_from_raw_files_per_larva(
@@ -230,6 +1063,7 @@ def get_Schleyer_metadata_inv_x(dir: str) -> bool:
     try:
 
         def read_Schleyer_metadata(dir):
+            """Parse a Schleyer-lab recording's ``metadata.txt`` into a dict."""
             d = {}
             with open(os.path.join(dir, "vidAndLogs/metadata.txt")) as f:
                 for j, line in enumerate(f):
@@ -256,6 +1090,7 @@ def get_Schleyer_metadata_inv_x(dir: str) -> bool:
         #         return invert_x_array
 
         def get_odor_pos(meta_dict, arena_dims):
+            """Read the odor source position, in arena-relative coordinates."""
             ar_x, ar_y = arena_dims
             try:
                 odor_side = meta_dict["OdorA_Side"]
@@ -337,7 +1172,13 @@ def constrain_selected_tracks(
             df["head_x"].dropna().groupby(aID).count().nlargest(max_Nagents).index
         ]
         vprint(f"**--- Number of tracks limited to {max_Nagents} larvae -----", 1)
-    df.sort_index(inplace=True)
+    # The index holds only the AgentID at this point, and it is not unique : the
+    # (Step, AgentID) index is set later, by finalize_timeseries_dataframe. Sorting groups
+    # each agent's rows together, but only a stable sort keeps them in temporal order
+    # within a group. An unstable one reorders samples inside a track, which leaves the
+    # timestamps non-monotonic and makes the endpoint metrics derived from the first and
+    # last timestamp of each agent meaningless.
+    df.sort_index(inplace=True, kind="stable")
     return df
 
 
@@ -390,11 +1231,17 @@ def match_larva_ids_including_by_length(
     pairs = {}
 
     def common_member(a, b):
+        """Return the elements shared by two collections."""
         a_set = set(a)
         b_set = set(b)
         return a_set & b_set
 
     def eval(t0, xy0, l0, t1, xy1, l1):
+        """Score how plausibly two track fragments are the same animal.
+
+        Combines the time gap, the body-length mismatch and the spatial jump
+        into one weighted cost; non-positive time gaps are rejected outright.
+        """
         tt = t1 - t0
         if tt <= 0:
             return max_error * 2
@@ -403,6 +1250,7 @@ def match_larva_ids_including_by_length(
         return wt * tt + wl * ll + ws * dd
 
     def get_extrema(ss, pars):
+        """Collect each track's first and last timestamp and position."""
         ids = ss.index.unique().tolist()
 
         mins = ss[t].groupby(aID).min()
@@ -415,6 +1263,7 @@ def match_larva_ids_including_by_length(
         return ids, mins, maxs, first_xy, last_xy, durs
 
     def update_extrema(id0, id1, ids, mins, maxs, first_xy, last_xy):
+        """Fold track ``id0`` into ``id1`` and drop its extrema entries."""
         mins[id1], first_xy[id1] = mins[id0], first_xy[id0]
         del mins[id0]
         del maxs[id0]
@@ -469,6 +1318,16 @@ def match_larva_ids_including_by_length(
 
 
 def comp_length(df: pd.DataFrame, e: pd.DataFrame, Npoints: int) -> None:
+    """Compute per-step body length and its per-agent median.
+
+    Length is the sum of the distances between consecutive midline points. The
+    step data gains a ``length`` column and the endpoint data its median.
+
+    Args:
+        df: The step data, modified in place.
+        e: The endpoint data, modified in place.
+        Npoints: The number of midline points.
+    """
     xys = util.nam.xy(util.nam.midline(Npoints, type="point"), flat=True)
     xy2 = df[xys].values.reshape(-1, Npoints, 2)
     xy3 = np.sum(np.diff(xy2, axis=1) ** 2, axis=2)

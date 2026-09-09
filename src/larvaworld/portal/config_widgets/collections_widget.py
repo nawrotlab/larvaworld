@@ -1,3 +1,7 @@
+"""
+Widget for choosing which output groups a simulation records.
+"""
+
 from __future__ import annotations
 
 import panel as pn
@@ -15,6 +19,14 @@ def build_collections_widget(
     *,
     wrap: bool = True,
 ) -> object:
+    """Build the widget editing the recorded output groups.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     fields = [field for field in _COLLECTIONS_FIELDS if field in owner.param]
     controls = param_controls(owner, parameters=fields)
     section = family_box(

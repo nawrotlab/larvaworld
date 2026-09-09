@@ -591,7 +591,7 @@ def save_plot(fig: "Figure", filepath: str, filename: str) -> None:
     Example:
         >>> save_plot(fig, '/path/to/output.png', 'output.png')
     """
-    fig.savefig(filepath, dpi=300, facecolor=None)
+    fig.savefig(filepath, dpi=300, facecolor=None, bbox_inches="tight", pad_inches=0.1)
     try:
         from matplotlib import pyplot as plt
 

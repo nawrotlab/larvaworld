@@ -60,7 +60,7 @@ def test_workspace_dir_requires_configured_workspace() -> None:
 
 
 def test_launch_notebook_requires_active_workspace() -> None:
-    url, error = notebook_workspace.launch_notebook_for_item("wf.dataset_manager")
+    url, error = notebook_workspace.launch_notebook_for_item("wf.open_dataset")
 
     assert url is None
     assert error == "Configure an active workspace before opening notebooks."

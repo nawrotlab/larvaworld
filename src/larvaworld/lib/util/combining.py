@@ -5,6 +5,7 @@ Methods for detecting and combining files
 from __future__ import annotations
 
 import os
+import subprocess
 
 import numpy as np
 
@@ -17,6 +18,16 @@ __all__: list[str] = [
 
 
 def select_filenames(filenames: list[str], suf: str = "", pref: str = "") -> list[str]:
+    """Filter filenames by prefix and suffix.
+
+    Args:
+        filenames: The filenames to filter.
+        suf: Required suffix. An empty string matches everything.
+        pref: Required prefix. An empty string matches everything.
+
+    Returns:
+        The filenames matching both constraints.
+    """
     return [f for f in filenames if (f.endswith(suf) and f.startswith(pref))]
 
 
@@ -90,6 +101,18 @@ def combine_images(
     """
 
     def get_dxy(N: int, size: tuple[int, int] = (1000, 1000)) -> tuple[int, int]:
+        """Compute the per-cell size of a grid holding N items.
+
+        The grid is 2 columns wide for up to 4 items, 3 for up to 9, and 4
+        beyond that; cell height preserves the aspect ratio of ``size``.
+
+        Args:
+            N: The number of items to lay out.
+            size: The overall ``(width, height)`` of the grid.
+
+        Returns:
+            The ``(width, height)`` of a single cell.
+        """
         x, y = size
         if N <= 4:
             dx = int(x / 2)
@@ -134,6 +157,38 @@ def combine_images(
     print(f"Images combined as {filepath}")
 
 
+def _ffmpeg_exe() -> str:
+    """Resolve an ffmpeg binary: prefer the one `imageio_ffmpeg` bundles
+    (the same backend `larvaworld.lib.screen.drawing`'s own video export
+    already relies on via `imageio.get_writer`), so this works in any
+    environment with that package installed, regardless of whether a
+    system-wide `ffmpeg` is on PATH. Falls back to the bare command name
+    if `imageio_ffmpeg` isn't installed, matching the previous behavior.
+    """
+    try:
+        import imageio_ffmpeg
+
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        return "ffmpeg"
+
+
+def _video_duration(file: str) -> float:
+    """Read a video's duration via imageio (which itself defers to the
+    same bundled ffmpeg backend) instead of shelling out to a separate
+    `ffprobe` binary, which -- unlike `imageio_ffmpeg`'s bundled ffmpeg --
+    has no equivalent bundled fallback and would otherwise require a
+    system-wide install just for this duration check.
+    """
+    import imageio
+
+    reader = imageio.get_reader(file)
+    try:
+        return float(reader.get_meta_data()["duration"])
+    finally:
+        reader.close()
+
+
 def combine_videos(
     files: list[str] | None = None,
     file_dir: str = ".",
@@ -144,7 +199,9 @@ def combine_videos(
     Merge multiple video files into a single side-by-side video.
 
     Uses ffmpeg to horizontally stack videos. All videos must have identical
-    duration. Requires ffmpeg and ffprobe installed on system.
+    duration. Uses the ffmpeg binary bundled with `imageio_ffmpeg` if
+    installed (see `_ffmpeg_exe`), falling back to a system-wide `ffmpeg`
+    otherwise.
 
     Args:
         files: List of video file paths (.mp4). If None, scans file_dir for .mp4 files
@@ -166,16 +223,7 @@ def combine_videos(
         raise ValueError("At least two video files are required to combine.")
 
     # Check if all videos have the same duration
-    durations = []
-    for file in files:
-        result = (
-            os.popen(
-                f'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{file}"'
-            )
-            .read()
-            .strip()
-        )
-        durations.append(float(result))
+    durations = [_video_duration(file) for file in files]
 
     if len(set(durations)) != 1:
         raise ValueError("All videos must have the same duration.")
@@ -190,10 +238,26 @@ def combine_videos(
 
     filter_complex += f"hstack=inputs={len(files)}[outv]"
 
-    input_files = " ".join([f"-i {file}" for file in files])
-    os.system(
-        f'ffmpeg {input_files} -filter_complex "{filter_complex}" -map "[outv]" -c:v libx264 -crf 23 {filepath}'
-    )
+    # subprocess with an argument list, not a single shell string: cmd.exe's
+    # quoting rules for nested double quotes are unreliable (a single
+    # os.system string here silently failed with "The filename, directory
+    # name, or volume label syntax is incorrect" on Windows), and an
+    # argument list also sidesteps shell-injection risk from filenames.
+    args = [_ffmpeg_exe()]
+    for file in files:
+        args += ["-i", file]
+    args += [
+        "-filter_complex",
+        filter_complex,
+        "-map",
+        "[outv]",
+        "-c:v",
+        "libx264",
+        "-crf",
+        "23",
+        filepath,
+    ]
+    subprocess.run(args, check=True)
 
     print(f"Videos combined as {filepath}")
 

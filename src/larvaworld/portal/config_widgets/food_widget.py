@@ -1,3 +1,7 @@
+"""
+Widget for editing the food sources of an environment.
+"""
+
 from __future__ import annotations
 
 import param
@@ -15,10 +19,26 @@ __all__ = ["build_food_conf_widget"]
 
 
 def _ordered_names(instance: param.Parameterized, preferred: list[str]) -> list[str]:
+    """Order a configuration's fields for display.
+
+    Args:
+        obj: The object being edited.
+
+    Returns:
+        The field names, in display order.
+    """
     return [name for name in preferred if name in instance.param and name != "name"]
 
 
 def _build_food_grid_editor(food_grid: param.Parameterized) -> object:
+    """Build the editor for the food grid.
+
+    Args:
+        grid: The grid being edited.
+
+    Returns:
+        The editor component.
+    """
     return parameterized_editor(
         food_grid,
         parameter_order=_ordered_names(
@@ -36,6 +56,14 @@ def _build_food_grid_editor(food_grid: param.Parameterized) -> object:
 
 
 def _build_food_unit_item(unit: param.Parameterized, key: str) -> object:
+    """Build the editor for one food source.
+
+    Args:
+        source: The source being edited.
+
+    Returns:
+        The editor component.
+    """
     return family_box(
         key,
         parameterized_editor(
@@ -62,6 +90,14 @@ def _build_food_unit_item(unit: param.Parameterized, key: str) -> object:
 
 
 def _build_food_group_item(group: param.Parameterized, key: str) -> object:
+    """Build the editor for one food source group.
+
+    Args:
+        group: The group being edited.
+
+    Returns:
+        The editor component.
+    """
     return family_box(
         key,
         parameterized_editor(
@@ -92,6 +128,14 @@ def _build_food_group_item(group: param.Parameterized, key: str) -> object:
 
 
 def build_food_conf_widget(food_conf: param.Parameterized) -> object:
+    """Build the widget editing the environment's food.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     return collapsible_family_box(
         "Food params",
         classattr_section(

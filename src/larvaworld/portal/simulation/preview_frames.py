@@ -1,3 +1,10 @@
+"""
+Rendering of simulation preview frames.
+
+Runs a short simulation and captures its frames, so a configuration can be
+previewed before the full run is launched.
+"""
+
 from __future__ import annotations
 
 from math import isfinite, nan
@@ -9,6 +16,14 @@ _INVALID_XY: tuple[float, float] = (nan, nan)
 
 
 def _copy_xy(value: Any) -> tuple[float, float] | None:
+    """Copy a coordinate pair out of a live agent.
+
+    Args:
+        value: The coordinate pair.
+
+    Returns:
+        An independent copy.
+    """
     try:
         x_raw = value[0]
         y_raw = value[1]
@@ -25,6 +40,14 @@ def _copy_xy(value: Any) -> tuple[float, float] | None:
 
 
 def _copy_path(value: Any) -> tuple[tuple[float, float], ...]:
+    """Copy a traced path out of a live agent.
+
+    Args:
+        value: The path coordinates.
+
+    Returns:
+        An independent copy.
+    """
     try:
         iterator = iter(value)
     except TypeError:
@@ -38,6 +61,15 @@ def _copy_path(value: Any) -> tuple[tuple[float, float], ...]:
 
 
 def _copy_positions(values: Any, count: int) -> tuple[tuple[float, float], ...]:
+    """Copy a fixed number of positions out of a live agent.
+
+    Args:
+        values: The positions.
+        count: How many to copy.
+
+    Returns:
+        An independent copy.
+    """
     copied: list[tuple[float, float]] = []
     for index in range(count):
         point = None
@@ -50,6 +82,14 @@ def _copy_positions(values: Any, count: int) -> tuple[tuple[float, float], ...]:
 
 
 def _copy_segment_polygons(agent: Any) -> tuple[tuple[tuple[float, float], ...], ...]:
+    """Copy an agent's body segment outlines.
+
+    Args:
+        agent: The agent to copy from.
+
+    Returns:
+        The segment polygons.
+    """
     polygons: list[tuple[tuple[float, float], ...]] = []
     for seg in getattr(agent, "segs", ()):
         polygon = _copy_path(getattr(seg, "vertices", ()))
@@ -59,6 +99,14 @@ def _copy_segment_polygons(agent: Any) -> tuple[tuple[tuple[float, float], ...],
 
 
 def _is_explicit_contour_agent(agent: Any) -> bool:
+    """Report whether an agent draws its own contour.
+
+    Args:
+        agent: The agent to test.
+
+    Returns:
+        True when the agent carries an explicit contour.
+    """
     class_names = {cls.__name__ for cls in type(agent).mro()}
     return bool({"LarvaContoured", "LarvaReplayContoured"} & class_names)
 
@@ -100,6 +148,17 @@ def capture_larva_frame(
     include_midlines: bool = True,
     include_trails: bool = True,
 ) -> LarvaPreviewFrame:
+    """Capture the current pose of every larva.
+
+    The captured values are copied, since the agents keep mutating as the
+    preview simulation advances.
+
+    Args:
+        launcher: The running preview simulation.
+
+    Returns:
+        One frame of preview state.
+    """
     agents = launcher.agents
     n_agents = len(agents)
     centroids = _copy_positions(agents.get_position(), n_agents)
@@ -183,6 +242,14 @@ def generate_preview_frames(
     include_midlines: bool = True,
     include_trails: bool = True,
 ) -> list[LarvaPreviewFrame]:
+    """Run a short simulation and capture its frames.
+
+    Args:
+        launcher: The preview simulation to run.
+
+    Returns:
+        The captured frames.
+    """
     if preview_steps <= 0:
         return []
 

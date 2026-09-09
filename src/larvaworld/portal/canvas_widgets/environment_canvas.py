@@ -1,3 +1,10 @@
+"""
+The interactive arena canvas.
+
+Renders the arena, its sources and its borders, and turns click and drag
+gestures into edits of the underlying environment state.
+"""
+
 from __future__ import annotations
 
 import math
@@ -34,12 +41,29 @@ ENV_CANVAS_X_HALF_RANGE = ENV_CANVAS_Y_HALF_RANGE * (
 
 
 def _empty(keys: Iterable[str]) -> dict[str, list[Any]]:
+    """Build an empty data source with the given columns.
+
+    Args:
+        keys: The column names.
+
+    Returns:
+        The empty column data.
+    """
     return {key: [] for key in keys}
 
 
 def _rows_to_data(
     rows: Iterable[dict[str, Any]], keys: Iterable[str]
 ) -> dict[str, list[Any]]:
+    """Transpose row records into column data.
+
+    Args:
+        rows: The rows to transpose.
+        keys: The column names.
+
+    Returns:
+        The column data.
+    """
     data = _empty(keys)
     for row in rows:
         for key in data:
@@ -48,6 +72,15 @@ def _rows_to_data(
 
 
 def _safe_float(value: Any, default: float = 0.0) -> float:
+    """Coerce a value into a float.
+
+    Args:
+        value: The value to coerce.
+        default: Returned when it cannot be coerced.
+
+    Returns:
+        The float, or the default.
+    """
     try:
         if value is None:
             return default
@@ -57,6 +90,15 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
 
 
 def _safe_int(value: Any, default: int = 0) -> int:
+    """Coerce a value into an integer.
+
+    Args:
+        value: The value to coerce.
+        default: Returned when it cannot be coerced.
+
+    Returns:
+        The integer, or the default.
+    """
     try:
         if value is None:
             return default
@@ -66,6 +108,14 @@ def _safe_int(value: Any, default: int = 0) -> int:
 
 
 def _valid_xy(value: Any) -> tuple[float, float] | None:
+    """Report whether a value is a usable coordinate pair.
+
+    Args:
+        value: The value to test.
+
+    Returns:
+        True when both coordinates are finite.
+    """
     if not isinstance(value, (list, tuple)) or len(value) < 2:
         return None
     try:
@@ -79,6 +129,14 @@ def _valid_xy(value: Any) -> tuple[float, float] | None:
 
 
 def _valid_path(value: Any) -> tuple[tuple[float, float], ...]:
+    """Report whether a value is a usable path of coordinates.
+
+    Args:
+        value: The value to test.
+
+    Returns:
+        True when it holds at least two valid points.
+    """
     if not isinstance(value, (list, tuple)):
         return ()
     points = tuple(
@@ -90,6 +148,14 @@ def _valid_path(value: Any) -> tuple[tuple[float, float], ...]:
 def _closed_path(
     points: tuple[tuple[float, float], ...],
 ) -> tuple[tuple[float, float], ...]:
+    """Close a path by repeating its first point.
+
+    Args:
+        points: The path points.
+
+    Returns:
+        The closed path.
+    """
     if len(points) >= 3 and points[0] != points[-1]:
         return (*points, points[0])
     return points
@@ -99,6 +165,15 @@ def _nearest_endpoint(
     point: tuple[float, float],
     path: tuple[tuple[float, float], ...],
 ) -> tuple[float, float]:
+    """Find the path endpoint closest to a point.
+
+    Args:
+        point: The reference point.
+        path: The path to search.
+
+    Returns:
+        The nearer of the path's two ends.
+    """
     first = path[0]
     last = path[-1]
     first_dist_sq = (point[0] - first[0]) ** 2 + (point[1] - first[1]) ** 2
@@ -107,12 +182,29 @@ def _nearest_endpoint(
 
 
 def _optional_float(value: Any, default: float) -> float:
+    """Coerce a value into a float, allowing None.
+
+    Args:
+        value: The value to coerce.
+        default: Returned when it cannot be coerced.
+
+    Returns:
+        The float, or the default.
+    """
     if value is None:
         return default
     return _safe_float(value, default)
 
 
 def _distribution_scale_pair(obj: CanvasObject) -> tuple[float, float]:
+    """Read a group's distribution extent.
+
+    Args:
+        obj: The canvas object holding the group.
+
+    Returns:
+        The extent along each axis.
+    """
     if obj.object_type == "source_group":
         return (
             _safe_float(obj.distribution_scale_x or 0.012, 0.012),
@@ -125,6 +217,16 @@ def _distribution_scale_pair(obj: CanvasObject) -> tuple[float, float]:
 
 
 def _mix_hex_colors(color_a: Any, color_b: Any, ratio: float) -> str:
+    """Blend two colours.
+
+    Args:
+        color_a: The first colour.
+        color_b: The second colour.
+        ratio: How far to blend towards the second.
+
+    Returns:
+        The blended colour.
+    """
     ratio = max(0.0, min(1.0, float(ratio)))
 
     def _parse(color: Any) -> tuple[int, int, int]:
@@ -170,6 +272,15 @@ def _source_visual_state(
     amount: float | None,
     color: str | None,
 ) -> tuple[str, str, float, float, float]:
+    """The colours and opacities sources are drawn with.
+
+    Args:
+        obj: The canvas object.
+        selected: Whether it is selected.
+
+    Returns:
+        Its visual state.
+    """
     base_color = str(color or DEFAULT_SOURCE_COLOR)
     has_food = amount is not None and _safe_float(amount) > 0
     fill_color = _mix_hex_colors(base_color, "#ffffff", 0.0 if has_food else 0.68)
@@ -184,6 +295,18 @@ def _source_visual_state(
 
 
 def _stable_preview_seed(*parts: object) -> int:
+    """Derive a deterministic seed from a set of identifying values.
+
+    The canvas previews are redrawn on every state change, so their scattered
+    positions are seeded from the object's identity rather than drawn at
+    random; otherwise the preview would jitter on each redraw.
+
+    Args:
+        *parts: The values identifying what is being drawn.
+
+    Returns:
+        The derived seed.
+    """
     seed = 2166136261
     for part in parts:
         for char in str(part):
@@ -193,6 +316,15 @@ def _stable_preview_seed(*parts: object) -> int:
 
 
 def _stable_member_angle(obj: CanvasObject, member_index: int) -> float:
+    """Derive a group member's preview heading, stable across redraws.
+
+    Args:
+        obj: The canvas object holding the group.
+        member_index: The member's index within it.
+
+    Returns:
+        The heading in radians.
+    """
     seed = _stable_preview_seed(
         "larva_member_angle",
         obj.object_id,
@@ -210,6 +342,14 @@ def _stable_member_angle(obj: CanvasObject, member_index: int) -> float:
 
 
 def _normalize_group_shape(value: str | None) -> str:
+    """Normalize a group's distribution shape name.
+
+    Args:
+        value: The stored shape.
+
+    Returns:
+        The canonical shape name.
+    """
     shape = str(value or "circle").strip().lower()
     if shape in {"oval", "ellipse", "elliptic"}:
         return "oval"
@@ -219,6 +359,16 @@ def _normalize_group_shape(value: str | None) -> str:
 
 
 def _rotate_point(x: float, y: float, angle: float) -> tuple[float, float]:
+    """Rotate a point about the origin.
+
+    Args:
+        x: The x coordinate.
+        y: The y coordinate.
+        angle: The rotation in radians.
+
+    Returns:
+        The rotated coordinates.
+    """
     cos_a = math.cos(angle)
     sin_a = math.sin(angle)
     return (x * cos_a - y * sin_a, x * sin_a + y * cos_a)
@@ -235,6 +385,14 @@ def _build_odor_layers(
     color: str | None,
     source_id: str | None,
 ) -> list[dict[str, object]]:
+    """Build the concentration rings drawn around odor sources.
+
+    Args:
+        rows: The source rows to draw rings for.
+
+    Returns:
+        The ring column data.
+    """
     if x is None or y is None or not odor_id:
         return []
     if odor_intensity is None or odor_spread is None:
@@ -275,6 +433,14 @@ def _build_odor_peak(
     color: str | None,
     source_id: str | None,
 ) -> dict[str, object] | None:
+    """Build the markers showing each odor's peak.
+
+    Args:
+        rows: The source rows to mark.
+
+    Returns:
+        The marker column data.
+    """
     if x is None or y is None or not odor_id:
         return None
     if odor_intensity is None or odor_spread is None:
@@ -307,11 +473,18 @@ class EnvironmentCanvas:
         height: int = ENV_CANVAS_HEIGHT,
         editable: bool = False,
         snap_heads_to_midline: bool = False,
+        show_larva_groups: bool = True,
     ) -> None:
+        """Build the canvas and its data sources.
+
+        Args:
+            **kwargs: Canvas settings, forwarded to the parent class.
+        """
         self.width = int(width)
         self.height = int(height)
         self.editable = bool(editable)
         self.snap_heads_to_midline = bool(snap_heads_to_midline)
+        self._show_larva_groups = bool(show_larva_groups)
         self._state: EnvironmentCanvasState | None = None
         self._arena = CanvasArena("rectangular", (0.2, 0.2))
 
@@ -898,10 +1071,12 @@ class EnvironmentCanvas:
         )
         self.fig.add_layout(self._environment_legend)
         self.fig.add_layout(self._larva_legend)
+        self.set_larva_groups_visible(self._show_larva_groups)
 
         self._pane = pn.pane.Bokeh(self.fig, sizing_mode="stretch_width")
 
     def _environment_legend_items(self) -> list[LegendItem]:
+        """The legend entries for the environment objects."""
         return [
             LegendItem(
                 label="Source units",
@@ -945,6 +1120,7 @@ class EnvironmentCanvas:
         ]
 
     def _larva_legend_items(self) -> list[LegendItem]:
+        """The legend entries for the larva preview."""
         return [
             LegendItem(
                 label="Larva groups",
@@ -984,10 +1160,31 @@ class EnvironmentCanvas:
             ),
         ]
 
+    def set_larva_groups_visible(self, visible: bool) -> None:
+        """Show or hide the static larva-group preview renderers."""
+        self._show_larva_groups = bool(visible)
+        for renderer in (
+            self._larva_group_circle_renderer,
+            self._larva_group_ellipse_renderer,
+            self._larva_group_rect_renderer,
+            self._larva_group_member_renderer,
+        ):
+            renderer.visible = self._show_larva_groups
+
     def view(self) -> pn.viewable.Viewable:
+        """Build the canvas view.
+
+        Returns:
+            The view component.
+        """
         return self._pane
 
     def set_larva_frame(self, frame: LarvaPreviewFrame) -> None:
+        """Draw one frame of the larva preview.
+
+        Args:
+            frame: The preview frame.
+        """
         centroid_rows: list[dict[str, Any]] = []
         head_rows: list[dict[str, Any]] = []
         midline_rows: list[dict[str, Any]] = []
@@ -1113,6 +1310,11 @@ class EnvironmentCanvas:
     def set_dynamic_overlays(
         self, *, rings: tuple[CanvasRingOverlay, ...] = ()
     ) -> None:
+        """Draw the transient overlays, such as range rings.
+
+        Args:
+            overlays: The overlays to draw.
+        """
         ring_rows: list[dict[str, Any]] = []
         for ring in rings:
             if not (math.isfinite(ring.x) and math.isfinite(ring.y)):
@@ -1135,11 +1337,13 @@ class EnvironmentCanvas:
         )
 
     def clear_dynamic_overlays(self) -> None:
+        """Remove the transient overlays."""
         self.dynamic_ring_source.data = _empty(
             ["x", "y", "r", "color", "line_width", "line_alpha", "line_dash"]
         )
 
     def clear_larva_frame(self) -> None:
+        """Remove the larva preview."""
         self.sim_larva_centroid_source.data = _empty(["x", "y", "color", "id"])
         self.sim_larva_head_source.data = _empty(["x", "y", "color", "id"])
         self.sim_larva_midline_source.data = _empty(["xs", "ys", "color", "id"])
@@ -1149,6 +1353,7 @@ class EnvironmentCanvas:
         self.sim_larva_label_source.data = _empty(["x", "y", "label", "color", "id"])
 
     def clear(self) -> None:
+        """Clear every drawn object from the canvas."""
         self.arena_source.data = {"x": [], "y": [], "w": [], "h": []}
         self.food_grid_overlay_source.data = {
             "x": [],
@@ -1253,6 +1458,11 @@ class EnvironmentCanvas:
         self._state = None
 
     def set_state(self, state: EnvironmentCanvasState) -> None:
+        """Redraw the canvas from a new state.
+
+        Args:
+            state: The environment state to draw.
+        """
         self._arena = state.arena
         self.clear()
         self._state = state
@@ -1262,6 +1472,11 @@ class EnvironmentCanvas:
         self._apply_objects(state.objects)
 
     def set_selected_object(self, object_id: str | None) -> None:
+        """Highlight one object as selected.
+
+        Args:
+            object_id: The object to highlight, or None to clear.
+        """
         self.food_highlight_source.data = {"x": [], "y": [], "r": [], "color": []}
         self.source_group_circle_highlight_source.data = {
             "x": [],
@@ -1355,6 +1570,7 @@ class EnvironmentCanvas:
             }
 
     def _arena_dimensions(self) -> tuple[float, float]:
+        """The arena extent currently drawn."""
         dims = self._arena.dims
         width = abs(_safe_float(dims[0] if len(dims) > 0 else 0.2, 0.2))
         height = abs(_safe_float(dims[1] if len(dims) > 1 else width, width))
@@ -1365,6 +1581,11 @@ class EnvironmentCanvas:
         return width, height
 
     def _apply_arena(self, arena: CanvasArena, *, show_arena_outline: bool) -> None:
+        """Draw the arena boundary.
+
+        Args:
+            arena: The arena to draw.
+        """
         self._arena = arena
         width, height = self._arena_dimensions()
         origin = getattr(arena, "coordinate_origin", "centered")
@@ -1397,6 +1618,11 @@ class EnvironmentCanvas:
         self.fig.y_range.end = center_y + y_span / 2
 
     def _apply_food_grid(self, food_grid: dict[str, Any] | None) -> None:
+        """Draw the food grid.
+
+        Args:
+            food_grid: The grid to draw, or None to clear it.
+        """
         if not isinstance(food_grid, dict):
             return
         width, height = self._arena_dimensions()
@@ -1458,6 +1684,11 @@ class EnvironmentCanvas:
         )
 
     def _apply_scapes(self, state: EnvironmentCanvasState) -> None:
+        """Draw the odor, wind and thermal fields.
+
+        Args:
+            state: The environment state holding them.
+        """
         try:
             self._apply_odorscape(state.odorscape, state.objects)
         except Exception:
@@ -1486,6 +1717,12 @@ class EnvironmentCanvas:
     def _apply_odorscape(
         self, odorscape: dict[str, Any] | None, objects: tuple[CanvasObject, ...]
     ) -> None:
+        """Draw the odor field.
+
+        Args:
+            odorscape: The field configuration.
+            objects: The objects emitting into it.
+        """
         if not isinstance(odorscape, dict):
             return
         color = str(odorscape.get("color") or DEFAULT_SOURCE_COLOR)
@@ -1525,6 +1762,11 @@ class EnvironmentCanvas:
         )
 
     def _apply_windscape(self, windscape: dict[str, Any] | None) -> None:
+        """Draw the wind field.
+
+        Args:
+            windscape: The field configuration.
+        """
         if not isinstance(windscape, dict):
             return
         speed = _safe_float(windscape.get("wind_speed"), 0.0)
@@ -1570,6 +1812,11 @@ class EnvironmentCanvas:
         )
 
     def _apply_thermoscape(self, thermoscape: dict[str, Any] | None) -> None:
+        """Draw the thermal field.
+
+        Args:
+            thermoscape: The field configuration.
+        """
         if not isinstance(thermoscape, dict):
             return
         spread = max(_safe_float(thermoscape.get("spread"), 0.1), 0.001)
@@ -1639,6 +1886,11 @@ class EnvironmentCanvas:
         )
 
     def _apply_objects(self, objects: tuple[CanvasObject, ...]) -> None:
+        """Draw the placed objects.
+
+        Args:
+            objects: The objects to draw.
+        """
         food_rows: list[dict[str, Any]] = []
         odor_rows: list[dict[str, Any]] = []
         peak_rows: list[dict[str, Any]] = []
@@ -1795,6 +2047,16 @@ class EnvironmentCanvas:
     def _odor_rows_for(
         self, obj: CanvasObject, x: Any, y: Any
     ) -> list[dict[str, object]]:
+        """Build the odor rings for one source.
+
+        Args:
+            obj: The source object.
+            x: Its x coordinate.
+            y: Its y coordinate.
+
+        Returns:
+            The ring rows.
+        """
         return _build_odor_layers(
             x=None if x is None else _safe_float(x),
             y=None if y is None else _safe_float(y),
@@ -1809,6 +2071,16 @@ class EnvironmentCanvas:
     def _odor_peak_for(
         self, obj: CanvasObject, x: Any, y: Any
     ) -> dict[str, object] | None:
+        """Build the peak marker for one source.
+
+        Args:
+            obj: The source object.
+            x: Its x coordinate.
+            y: Its y coordinate.
+
+        Returns:
+            The marker row, or None when the source emits no odor.
+        """
         return _build_odor_peak(
             x=None if x is None else _safe_float(x),
             y=None if y is None else _safe_float(y),
@@ -1831,6 +2103,16 @@ class EnvironmentCanvas:
         *,
         default_color: str = DEFAULT_SOURCE_COLOR,
     ) -> None:
+        """Add a group's distribution footprint to the drawn shapes.
+
+        Args:
+            obj: The group object.
+            circle_rows: The circle shapes collected so far.
+            ellipse_rows: The ellipse shapes collected so far.
+            rect_rows: The rectangle shapes collected so far.
+            fill_alpha: The footprint's fill opacity.
+            line_alpha: Its outline opacity.
+        """
         if obj.x is None or obj.y is None:
             return
         if obj.distribution_show_shape is False:
@@ -1865,6 +2147,14 @@ class EnvironmentCanvas:
         ellipse_source: ColumnDataSource,
         rect_source: ColumnDataSource,
     ) -> None:
+        """Highlight a selected group's footprint.
+
+        Args:
+            obj: The group object.
+            circle_source: The circle data source.
+            ellipse_source: The ellipse data source.
+            rect_source: The rectangle data source.
+        """
         if obj.x is None or obj.y is None:
             return
         scale_x, scale_y = _distribution_scale_pair(obj)
@@ -1899,6 +2189,15 @@ class EnvironmentCanvas:
             }
 
     def _group_member_positions(self, obj: CanvasObject) -> list[tuple[float, float]]:
+        """Lay out a group's members within its footprint.
+
+        Args:
+            obj: The group object.
+
+        Returns:
+            One position per member, seeded stably so the preview does
+            not jitter between redraws.
+        """
         if (
             obj.object_type not in {"source_group", "larva_group"}
             or obj.x is None
@@ -1940,6 +2239,14 @@ class EnvironmentCanvas:
     def _group_member_rows(
         self, obj: CanvasObject, *, default_color: str = DEFAULT_SOURCE_COLOR
     ) -> list[dict[str, Any]]:
+        """Build the drawn rows for a group's members.
+
+        Args:
+            obj: The group object.
+
+        Returns:
+            The member rows.
+        """
         positions = self._group_member_positions(obj)
         if not positions:
             return []

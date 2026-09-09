@@ -1,3 +1,7 @@
+"""
+Widget for editing a spatial distribution of agents or sources.
+"""
+
 from __future__ import annotations
 
 import param
@@ -12,6 +16,14 @@ def build_distribution_widget(
     *,
     title: str = "Distribution",
 ) -> object:
+    """Build the widget editing a spatial distribution.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     children = [
         param_control(distribution, parameter_name="shape"),
         param_control(distribution, parameter_name="mode"),

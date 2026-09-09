@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Optional
 import inspect
 import os
 import shutil
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -75,6 +76,17 @@ class _GenProxy(AttrDict):
     """
 
     def __getattr__(self, name: str) -> Any:
+        """Resolve a generator class on first access.
+
+        Args:
+            name: The generator name.
+
+        Returns:
+            The generator class.
+
+        Raises:
+            AttributeError: If no such generator exists.
+        """
         try:
             return super().__getitem__(name)
         except KeyError:
@@ -125,6 +137,20 @@ _LAZY_GEN_REGISTRATIONS = {
 
 
 def __getattr__(name: str) -> Any:
+    """Resolve a generator by importing the module that registers it.
+
+    Generator classes register themselves on import, so an unknown name is
+    resolved by importing its owning module and looking again.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved object.
+
+    Raises:
+        AttributeError: If no module registers that name.
+    """
     module_path = _LAZY_GEN_REGISTRATIONS.get(name)
     if module_path is not None:
         from importlib import import_module
@@ -164,6 +190,12 @@ class SimConfiguration(RuntimeOps, SimMetricOps, SimOps):
     runtype = param.Selector(objects=SIMTYPES, doc="The simulation mode")
 
     def __init__(self, runtype: str, **kwargs: Any) -> None:
+        """Build the simulation configuration and resolve its output directory.
+
+        Args:
+            runtype: The simulation mode.
+            **kwargs: Configuration values, forwarded to the parent class.
+        """
         self.param.add_parameter("experiment", self.exp_selector_param(runtype))
         super().__init__(runtype=runtype, **kwargs)
 
@@ -178,13 +210,41 @@ class SimConfiguration(RuntimeOps, SimMetricOps, SimOps):
 
     @property
     def path_to_runtype_data(self) -> str:
+        """The directory this simulation mode writes its output under."""
+        try:
+            from larvaworld.portal.workspace import get_active_workspace
+
+            workspace = get_active_workspace()
+            if workspace is not None:
+                return str(workspace.experiments_dir)
+        except Exception:
+            # Core/API usage remains available without the optional Portal
+            # stack or a configured workspace.
+            pass
         return f"{SIM_DIR}/{self.runtype.lower()}_runs"
 
     def generate_id(self, runtype: str, exp: str) -> str:
+        """Generate an identifier for a run.
+
+        Args:
+            runtype: The simulation mode.
+            experiment: The experiment name.
+
+        Returns:
+            The generated run ID.
+        """
         idx = reg.config.next_idx(exp, conftype=runtype)
         return f"{exp}_{idx}"
 
     def exp_selector_param(self, runtype: str) -> param.Selector | param.Parameter:
+        """Build the selector listing the experiments of a mode.
+
+        Args:
+            runtype: The simulation mode.
+
+        Returns:
+            The selector parameter.
+        """
         defaults = {
             "Exp": "dish",
             "Batch": "PItest_off",
@@ -227,6 +287,14 @@ class SimConfigurationParams(SimConfiguration):
         sample: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
+        """Build the configuration, expanding its stored experiment settings.
+
+        Args:
+            runtype: The simulation mode.
+            experiment: The stored experiment to expand.
+            parameters: Explicit parameters overriding the stored ones.
+            **kwargs: Further configuration values.
+        """
         if parameters is None:
             if runtype in CONFTYPES:
                 ct = reg.conf[runtype]
@@ -259,7 +327,16 @@ class SimConfigurationParams(SimConfiguration):
                 else:
                     kwargs[k] = parameters[k]
 
-        if "larva_groups" in parameters:
+        # Only override larva_groups when the caller actually asked for an
+        # override -- otherwise (matching the "None means not provided"
+        # convention just above) leave `parameters.larva_groups` as given,
+        # since update_larva_groups() merges these kwargs into every group
+        # unconditionally, including None, which would silently clobber
+        # values already set on `parameters` itself (e.g. a group's own
+        # `sample` from ExpConf.imitation_exp).
+        if "larva_groups" in parameters and any(
+            v is not None for v in (modelIDs, groupIDs, N, sample)
+        ):
             from .larvagroup import update_larva_groups
 
             parameters.larva_groups = update_larva_groups(
@@ -384,6 +461,18 @@ class FoodConf(NestedConf):
         o: str = "G",
         **kwargs: Any,
     ) -> FoodConf:
+        """Build a food configuration for a conditioning assay.
+
+        Args:
+            N: The number of source pairs.
+            x: Their horizontal offset from the centre.
+            grid: An optional food grid to add.
+            **kwargs: Further source settings.
+
+        Returns:
+            The configuration, pairing a conditioned and an
+            unconditioned odor source.
+        """
         F = gen.Food
         CS_kws = {"odor": Odor.oO(o=o, id="CS"), "c": colors[0], **kwargs}
         UCS_kws = {"odor": Odor.oO(o=o, id="UCS"), "c": colors[1], **kwargs}
@@ -419,6 +508,15 @@ class FoodConf(NestedConf):
         o: str = "G",
         **kwargs: Any,
     ) -> FoodConf:
+        """Build a food configuration with two patches.
+
+        Args:
+            type: The substrate the patches hold.
+            **kwargs: Further source settings.
+
+        Returns:
+            The configuration.
+        """
         F = gen.Food
         kws = {"odor": Odor.oO(o=o), "c": c, "r": r, "a": a, "sub": [q, type], **kwargs}
         su = {
@@ -440,6 +538,14 @@ class FoodConf(NestedConf):
         a: float = 0.1,
         **kwargs: Any,
     ) -> FoodConf:
+        """Build a food configuration with a single patch.
+
+        Args:
+            **kwargs: The patch's settings.
+
+        Returns:
+            The configuration.
+        """
         kws = {"c": c, "r": r, "a": a, "sub": [q, type], **kwargs}
         return cls.su(id=id, grid=grid, sg=sg, **kws)
 
@@ -451,6 +557,15 @@ class FoodConf(NestedConf):
         sg: dict[str, Any] = {},
         **kwargs: Any,
     ) -> FoodConf:
+        """Build one food source entry.
+
+        Args:
+            id: The source identifier.
+            **kwargs: Its settings.
+
+        Returns:
+            The source entry.
+        """
         return cls(
             source_groups=sg, source_units=gen.Food(**kwargs).entry(id), food_grid=grid
         )
@@ -462,6 +577,15 @@ class FoodConf(NestedConf):
         sg: dict[str, Any] = {},
         **kwargs: Any,
     ) -> FoodConf:
+        """Build several food source entries at once.
+
+        Args:
+            N: How many to build.
+            **kwargs: Their settings.
+
+        Returns:
+            The source entries.
+        """
         return cls(
             source_groups=sg,
             source_units=source_generator(genmode="Unit", **kwargs),
@@ -476,6 +600,15 @@ class FoodConf(NestedConf):
         su: dict[str, Any] = {},
         **kwargs: Any,
     ) -> FoodConf:
+        """Build one food source group entry.
+
+        Args:
+            id: The group identifier.
+            **kwargs: Its settings.
+
+        Returns:
+            The group entry.
+        """
         return cls(
             source_groups=gen.FoodGroup(**kwargs).entry(id),
             source_units=su,
@@ -489,6 +622,15 @@ class FoodConf(NestedConf):
         su: dict[str, Any] = {},
         **kwargs: Any,
     ) -> FoodConf:
+        """Build several food source group entries at once.
+
+        Args:
+            ids: The group identifiers.
+            **kwargs: Their settings.
+
+        Returns:
+            The group entries.
+        """
         return cls(
             source_groups=source_generator(genmode="Group", **kwargs),
             source_units=su,
@@ -505,6 +647,14 @@ class FoodConf(NestedConf):
         o: str = "D",
         **kwargs: Any,
     ) -> FoodConf:
+        """Build four food sources, one per arena corner.
+
+        Args:
+            d: Their distance from the centre.
+
+        Returns:
+            The configuration, each source carrying its own odor.
+        """
         ps = [(-d, -d), (-d, d), (d, -d), (d, d)]
         l = [
             gen.Food(
@@ -566,6 +716,11 @@ class EnvConf(NestedConf):
     )
 
     def __init__(self, odorscape: Any = None, **kwargs: Any) -> None:
+        """Build the environment configuration.
+
+        Args:
+            **kwargs: Environment settings, forwarded to the parent class.
+        """
         if odorscape is not None and isinstance(odorscape, AttrDict):
             mode = odorscape.odorscape
             odorscape_classes = list(EnvConf.param.odorscape.class_)
@@ -587,14 +742,27 @@ class EnvConf(NestedConf):
 
     @classmethod
     def food_params_class(cls) -> Any:
+        """The class describing this environment's food."""
         return EnvConf.param.food_params.class_
 
     @classmethod
     def arena_class(cls) -> Any:
+        """The class describing this environment's arena."""
         return EnvConf.param.arena.class_
 
     @classmethod
     def maze(cls, n: int = 15, h: float = 0.1, o: str = "G", **kwargs: Any) -> EnvConf:
+        """Build a maze environment.
+
+        Args:
+            n: The maze's cell count per side.
+            h: The arena size.
+            **kwargs: Further environment settings.
+
+        Returns:
+            The environment configuration.
+        """
+
         def get_maze(
             nx: int = 15,
             ny: int = 15,
@@ -643,6 +811,16 @@ class EnvConf(NestedConf):
         o: str = "G",
         **kwargs: Any,
     ) -> EnvConf:
+        """Build the two-team game environment.
+
+        Args:
+            dim: The arena size.
+            x: The horizontal offset of the goals.
+            y: Their vertical offset.
+
+        Returns:
+            The environment configuration.
+        """
         x = np.round(x * dim, 3)
         y = np.round(y * dim, 3)
         F = gen.Food
@@ -667,6 +845,14 @@ class EnvConf(NestedConf):
     def foodNodor_4corners(
         cls, dim: float = 0.2, o: str = "D", **kwargs: Any
     ) -> EnvConf:
+        """Build an environment with a food source in each corner.
+
+        Args:
+            dim: The arena size.
+
+        Returns:
+            The environment configuration.
+        """
         return cls.rect(
             dim,
             f=cls.food_params_class().foodNodor_4corners(d=dim / 4, o=o, **kwargs),
@@ -675,12 +861,32 @@ class EnvConf(NestedConf):
 
     @classmethod
     def CS_UCS(cls, dim: float = 0.1, o: str = "G", **kwargs: Any) -> EnvConf:
+        """Build a conditioning environment.
+
+        Args:
+            N: The number of source pairs.
+            x: Their horizontal offset.
+            grid: An optional food grid.
+            **kwargs: Further settings.
+
+        Returns:
+            The environment configuration.
+        """
         return cls.dish(
             dim, f=cls.food_params_class().CS_UCS(x=0.4 * dim, o=o, **kwargs), o=o
         )
 
     @classmethod
     def double_patch(cls, dim: float = 0.24, o: str = "G", **kwargs: Any) -> EnvConf:
+        """Build a two-patch environment.
+
+        Args:
+            type: The substrate the patches hold.
+            **kwargs: Further settings.
+
+        Returns:
+            The environment configuration.
+        """
         return cls.rect(
             dim,
             f=cls.food_params_class().double_patch(x=0.25 * dim, o=o, **kwargs),
@@ -695,12 +901,29 @@ class EnvConf(NestedConf):
         c: int = 1,
         **kwargs: Any,
     ) -> EnvConf:
+        """Build an environment with a single odor gradient.
+
+        Args:
+            **kwargs: The gradient's settings.
+
+        Returns:
+            The environment configuration.
+        """
         return cls.rect(
             dim, f=cls.food_params_class().su(odor=Odor.oO(o=o, c=c), **kwargs), o=o
         )
 
     @classmethod
     def dish(cls, xy: float = 0.1, **kwargs: Any) -> EnvConf:
+        """Build a circular dish environment.
+
+        Args:
+            r: The dish radius.
+            **kwargs: Further settings.
+
+        Returns:
+            The environment configuration.
+        """
         assert isinstance(xy, float)
         return cls.scapes(
             arena=cls.arena_class()(geometry="circular", dims=(xy, xy)), **kwargs
@@ -708,6 +931,15 @@ class EnvConf(NestedConf):
 
     @classmethod
     def rect(cls, xy: float | tuple[float, float] = 0.1, **kwargs: Any) -> EnvConf:
+        """Build a rectangular arena environment.
+
+        Args:
+            x: The arena size.
+            **kwargs: Further settings.
+
+        Returns:
+            The environment configuration.
+        """
         if isinstance(xy, float):
             dims = (xy, xy)
         elif isinstance(xy, tuple):
@@ -728,6 +960,14 @@ class EnvConf(NestedConf):
         bl: dict[str, Any] = {},
         **kwargs: Any,
     ) -> EnvConf:
+        """Build an environment carrying wind and thermal fields.
+
+        Args:
+            **kwargs: The fields' settings.
+
+        Returns:
+            The environment configuration.
+        """
         if f is None:
             f = cls.food_params_class()()
         if o == "D":
@@ -784,27 +1024,51 @@ class LabFormat(NestedConf):
 
     @property
     def path(self) -> str:
+        """The root directory of this lab format's data."""
         return f"{DATA_DIR}/{self.labID}Group"
 
     @property
     def raw_folder(self) -> str:
+        """The directory holding the format's raw recordings."""
         return f"{self.path}/raw"
 
     @property
     def processed_folder(self) -> str:
+        """The directory imported datasets are written to."""
         return f"{self.path}/processed"
 
     def get_source_dir(
         self, parent_dir: str, raw_folder: Optional[str] = None, merged: bool = False
     ) -> str | list[str]:
+        """Resolve the directory one recording is read from.
+
+        Args:
+            parent_dir: The recording's parent directory.
+            raw_folder: The raw data root. Defaults to the format's own.
+            merged: Whether several recordings are merged into one dataset.
+
+        Returns:
+            The source directory, or directories when merging.
+        """
         if raw_folder is None:
             raw_folder = self.raw_folder
+        raw_path = Path(raw_folder).expanduser()
+        if raw_path.is_file() and raw_path.suffix.lower() == ".zip":
+            return str(raw_path)
         source_dir = f"{raw_folder}/{parent_dir}"
         if merged:
             source_dir = [f"{source_dir}/{f}" for f in os.listdir(source_dir)]
         return source_dir
 
     def get_store_sequence(self, mode: str = "semifull") -> list[str]:
+        """Return the order in which parameter groups are stored.
+
+        Args:
+            mode: The storage mode.
+
+        Returns:
+            The group keys, in storage order.
+        """
         if mode == "full":
             return self.filesystem.read_sequence[1:]
         elif mode == "minimal":
@@ -822,6 +1086,7 @@ class LabFormat(NestedConf):
 
     @property
     def import_func(self) -> Any:
+        """The function reading this format's raw files."""
         from ..process import lab_specific_import_functions as d
 
         return d[self.labID]
@@ -832,20 +1097,73 @@ class LabFormat(NestedConf):
         raw_folder: Optional[str] = None,
         merged: bool = False,
         save_mode: str = "semifull",
+        estimate_dt: Optional[bool] = None,
+        estimate_midline_points: bool = True,
         **kwargs: Any,
     ) -> tuple[pd.DataFrame | None, pd.DataFrame | None]:
+        """Read one recording into step and endpoint dataframes.
+
+        Args:
+            parent_dir: The recording's directory.
+            raw_folder: The raw data root.
+            save_mode: Which parameter groups to keep.
+            **kwargs: Forwarded to the format's import function.
+
+        Returns:
+            The step and endpoint data.
+        """
         source_dir = self.get_source_dir(parent_dir, raw_folder, merged)
+        # The number of tracked midline points is a property of the recording rather than
+        # of the lab, so prefer the count found in the raw data over the lab-format's
+        # nominal value. The nominal value is kept if the data cannot settle the question.
+        if estimate_midline_points:
+            from ..process.import_aux import count_midline_points_in_raw_data
+
+            Npoints = count_midline_points_in_raw_data(
+                source_dir=source_dir[0]
+                if isinstance(source_dir, list)
+                else source_dir,
+                source_id=kwargs.get("source_id"),
+                structure=self.filesystem.structure,
+            )
+            if Npoints is not None and Npoints != self.tracker.Npoints:
+                vprint(
+                    f"**--- Midline points counted in the data : {Npoints}, "
+                    f"overriding the {self.labID} value of {self.tracker.Npoints} -----",
+                    1,
+                )
+                self.tracker.Npoints = Npoints
         if self.filesystem.structure == "per_larva":
             read_sequence = self.filesystem.read_sequence
             store_sequence = self.get_store_sequence(save_mode)
+        # A constant-framerate tracker is fully described by its nominal timestep, so the
+        # timestep is never estimated for one. A variable-framerate tracker is not, so its
+        # timestep is estimated from the data unless the caller opts out, in which case
+        # the lab-format's nominal value is used.
+        if self.tracker.constant_framerate:
+            estimate_dt = False
+        elif estimate_dt is None:
+            estimate_dt = True
         import_params = inspect.signature(self.import_func).parameters
         import_kws = {
             "tracker": self.tracker,
             "filesystem": self.filesystem,
             **kwargs,
         }
+        if "estimate_dt" in import_params:
+            import_kws["estimate_dt"] = estimate_dt
+        elif estimate_dt:
+            vprint(
+                f"**--- The {self.labID} import does not support timestep estimation. "
+                f"Using the lab-format value dt={self.tracker.dt} -----",
+                2,
+            )
         if "source_dir" in import_params:
             import_kws["source_dir"] = source_dir
+        if "parent_dir" in import_params:
+            import_kws["parent_dir"] = parent_dir
+        if "merged" in import_params:
+            import_kws["merged"] = merged
         if "source_files" in import_params and "source_files" not in import_kws:
             source_dirs = [source_dir] if isinstance(source_dir, str) else source_dir
             import_kws["source_files"] = util.flatten_list(
@@ -871,6 +1189,23 @@ class LabFormat(NestedConf):
         age: float = 0.0,
         refID: Optional[str] = None,
     ) -> LarvaDataset:
+        """Build a dataset from an imported recording.
+
+        Args:
+            step: The imported step data.
+            end: The imported endpoint data.
+            parent_dir: The recording's directory.
+            id: The dataset identifier.
+            group_id: The group the dataset belongs to.
+            N: The number of agents.
+            sample: The reference dataset it was sampled from.
+            color: Its display colour.
+            epochs: Its life-history epochs.
+            age: The agents' age.
+
+        Returns:
+            The constructed dataset.
+        """
         if group_id is None:
             group_id = parent_dir
         if id is None:
@@ -895,6 +1230,11 @@ class LabFormat(NestedConf):
                 life=[age, epochs],
             ).nestedConf,
             "env_params": self.env_params.nestedConf,
+            "provenance": {
+                "origin": "imported",
+                "run_manifest": None,
+                "lineage": [],
+            },
             **self.tracker.nestedConf,
             "step": step,
             "end": end,
@@ -923,6 +1263,7 @@ class LabFormat(NestedConf):
         refID: Optional[str] = None,
         enrich_conf: Optional[AttrDict | dict[str, Any]] = None,
         save_dataset: bool = True,
+        estimate_arena_dimensions: bool = False,
         **kwargs: Any,
     ) -> LarvaDataset | None:
         """
@@ -971,6 +1312,25 @@ class LabFormat(NestedConf):
              Defaults to True.
          enrich_conf: dict, optional
              The configuration for enriching the imported dataset with secondary parameters.
+         estimate_dt: boolean, optional
+             Whether to estimate the tracker timestep from the timestamps of the data
+             instead of using the lab-format's nominal value. Only meaningful for lab
+             formats declaring a variable framerate (tracker.constant_framerate=False),
+             where it defaults to True and can be set to False to keep the nominal value.
+             A constant-framerate format never estimates its timestep. The estimate
+             replaces the lab-format's dt and fr in the imported dataset's configuration.
+         estimate_midline_points: boolean
+             Whether to count the tracked midline points in the raw data and use that
+             count when it differs from the lab-format's value. If the count cannot be
+             determined from the raw files the lab-format's value is kept.
+             Defaults to True.
+         estimate_arena_dimensions: boolean
+             Whether to estimate the arena dimensions from the space the tracked
+             coordinates cover and use them instead of the lab-format's arena. The
+             estimate is a lower bound, as it only covers the area the animals visited,
+             so the lab-format's arena is preferable whenever it is known. If the
+             estimation fails the lab-format's arena is kept.
+             Defaults to False.
          **kwargs: keyword arguments
              Additional keyword arguments to be passed to the lab_specific build-function.
 
@@ -993,6 +1353,23 @@ class LabFormat(NestedConf):
             return None
         else:
             step = step.astype(float)
+            # The arena is estimated from the imported coordinates rather than from the
+            # raw files, so that it works the same for every lab format. The coordinates
+            # are still in the tracker's own unit at this point, so the lab-format's
+            # rescaling factor is applied to reach the meters the arena is defined in.
+            if estimate_arena_dimensions:
+                from ..process.import_aux import (
+                    estimate_arena_dimensions as _estimate_arena,
+                )
+
+                dims = _estimate_arena(step, rescale_by=self.preprocess.rescale_by)
+                if dims is not None:
+                    vprint(
+                        f"**--- Overriding the {self.labID} arena "
+                        f"{tuple(self.env_params.arena.dims)} with {dims} -----",
+                        1,
+                    )
+                    self.env_params.arena.dims = dims
             d = self.build_dataset(
                 step,
                 end,
@@ -1157,12 +1534,29 @@ class ExpConf(SimOps):
     enrichment = ClassAttr(gen.EnrichConf, doc="The post-simulation processing")
 
     def __init__(self, id: Optional[str] = None, **kwargs: Any) -> None:
+        """Build the experiment configuration.
+
+        Args:
+            **kwargs: Experiment settings, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
     @classmethod
     def imitation_exp(cls, refID: str, mID: str = "explorer", **kwargs: Any) -> ExpConf:
+        """Build an experiment imitating a reference dataset.
+
+        Args:
+            refID: The dataset to imitate.
+            mID: The model to imitate it with.
+            **kwargs: Further experiment settings.
+
+        Returns:
+            The experiment configuration.
+        """
         c = reg.conf.Ref.getRef(refID)
+        group_id = f"Imitation {refID}"
         kws = {
+            "group_id": group_id,
             "sample": refID,
             "model": mID,
             "color": c.color,
@@ -1173,13 +1567,14 @@ class ExpConf(SimOps):
             dt=c.dt,
             duration=c.duration,
             env_params=gen.Env(**c.env_params),
-            larva_groups=AttrDict({f"Imitation {refID}": gen.LarvaGroup(**kws)}),
+            larva_groups=AttrDict({group_id: gen.LarvaGroup(**kws)}),
             experiment="dish",
             **kwargs,
         )
 
     @property
     def agent_confs(self) -> list[Any]:
+        """The configuration of every agent the experiment places."""
         confs = []
         for gID, gConf in self.larva_groups.items():
             lg = LarvaGroup(**gConf, id=gID)

@@ -1,3 +1,11 @@
+"""
+State model behind the interactive arena canvas.
+
+Holds the arena, the placed objects and the preview overlays as plain data, so
+that the canvas rendering and the configuration mapping share one source of
+truth.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -13,6 +21,8 @@ CanvasObjectType = Literal[
 
 @dataclass(frozen=True)
 class CanvasArena:
+    """The arena as the canvas draws it: its extent and geometry."""
+
     geometry: str
     dims: tuple[float, float]
     torus: bool = False
@@ -21,6 +31,8 @@ class CanvasArena:
 
 @dataclass(frozen=True)
 class CanvasObject:
+    """One object placed on the canvas, with its type, pose and size."""
+
     object_id: str
     object_type: CanvasObjectType
     x: float | None = None
@@ -44,6 +56,12 @@ class CanvasObject:
 
 @dataclass(frozen=True)
 class EnvironmentCanvasState:
+    """The full state the arena canvas renders.
+
+    Holds the arena, the placed objects and any preview overlays, so that the
+    canvas and the environment configuration share one representation.
+    """
+
     arena: CanvasArena
     objects: tuple[CanvasObject, ...] = ()
     food_grid: dict[str, Any] | None = None
@@ -55,6 +73,8 @@ class EnvironmentCanvasState:
 
 @dataclass(frozen=True)
 class LarvaPreviewFrame:
+    """One frame of the larva preview drawn over the canvas."""
+
     tick: int
     centroids: tuple[tuple[float, float], ...] = ()
     heads: tuple[tuple[float, float], ...] = ()
@@ -68,6 +88,8 @@ class LarvaPreviewFrame:
 
 @dataclass(frozen=True)
 class CanvasRingOverlay:
+    """A ring drawn on the canvas to mark a radius or range."""
+
     x: float
     y: float
     radius: float

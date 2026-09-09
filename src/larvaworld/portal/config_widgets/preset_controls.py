@@ -1,3 +1,11 @@
+"""
+Preset management shared by the configuration editors.
+
+Provides the dual-store save, load, delete and reset controls that let a
+configuration be kept either in the workspace or in the registry, together
+with the catalog listing what is stored.
+"""
+
 from __future__ import annotations
 
 import copy
@@ -11,6 +19,15 @@ import panel as pn
 import param
 
 from larvaworld.lib import reg
+from larvaworld.portal.buttons import (
+    cancel_button,
+    confirm_button,
+    delete_button,
+    load_button,
+    refresh_button,
+    reset_button,
+    save_button,
+)
 
 __all__ = [
     "PresetSource",
@@ -22,6 +39,8 @@ __all__ = [
     "RegistryPresetStore",
     "WorkspacePresetStore",
     "PresetControlsController",
+    "build_preset_controls_panel",
+    "build_preset_select_only_panel",
     "build_user_preset_controls",
     "build_advanced_preset_controls",
 ]
@@ -31,12 +50,16 @@ _PRESET_NAME_INVALID = re.compile(r"[^a-zA-Z0-9._-]+")
 
 
 class PresetSource:
+    """Where a preset is stored: the workspace or the registry."""
+
     REGISTRY = "registry"
     WORKSPACE = "workspace"
 
 
 @dataclass(frozen=True)
 class PresetRef:
+    """A reference to one stored preset, by name and source."""
+
     source: str
     name: str
     display_label: str
@@ -48,10 +71,20 @@ class PresetRef:
 
 @dataclass(frozen=True)
 class PresetCatalog:
+    """The presets available for one configuration type."""
+
     refs: tuple[PresetRef, ...]
     by_token: dict[str, PresetRef]
 
     def resolve(self, token: str | None) -> PresetRef | None:
+        """Look up a preset by its selector token.
+
+        Args:
+            token: The token the selector reports.
+
+        Returns:
+            The preset reference, or None when the token is unknown.
+        """
         if not token:
             return None
         return self.by_token.get(str(token))
@@ -59,6 +92,12 @@ class PresetCatalog:
 
 @dataclass(frozen=True)
 class PresetActionPolicy:
+    """Which preset actions a given app allows.
+
+    Distinguishes the user-facing apps, which save only to the workspace, from
+    the advanced ones that may also write the registry.
+    """
+
     can_load_registry: bool
     can_load_workspace: bool
     can_save_registry: bool
@@ -68,16 +107,40 @@ class PresetActionPolicy:
     can_reset_registry: bool
 
     def can_load(self, source: str) -> bool:
+        """Whether presets may be loaded from a store.
+
+        Args:
+            source: The store to test.
+
+        Returns:
+            True when loading is allowed.
+        """
         if source == PresetSource.REGISTRY:
             return self.can_load_registry
         return self.can_load_workspace
 
     def can_save(self, source: str) -> bool:
+        """Whether presets may be saved to a store.
+
+        Args:
+            source: The store to test.
+
+        Returns:
+            True when saving is allowed.
+        """
         if source == PresetSource.REGISTRY:
             return self.can_save_registry
         return self.can_save_workspace
 
     def can_delete(self, source: str) -> bool:
+        """Whether presets may be deleted from a store.
+
+        Args:
+            source: The store to test.
+
+        Returns:
+            True when deletion is allowed.
+        """
         if source == PresetSource.REGISTRY:
             return self.can_delete_registry
         return self.can_delete_workspace
@@ -106,42 +169,81 @@ ADVANCED_PRESET_POLICY = PresetActionPolicy(
 
 @dataclass(frozen=True)
 class WorkspacePresetRecord:
+    """One preset as stored in the workspace."""
+
     name: str
     filename: str
     path: Path
 
 
 class RegistryPresetStore:
+    """Preset storage backed by the configuration registry."""
+
     def __init__(self, conftype: str) -> None:
+        """Build the store for one conftype.
+
+        Args:
+            conftype: The configuration type it holds.
+        """
         if conftype not in reg.conf:
             raise ValueError(f'Unknown conftype "{conftype}".')
         self.conftype = str(conftype)
 
     @property
     def _conf(self) -> Any:
+        """The registry accessor for this conftype."""
         return reg.conf[self.conftype]
 
     @property
     def source_path(self) -> str:
+        """Where this store keeps its presets."""
         return str(self._conf.path_to_dict)
 
     def list_ids(self) -> list[str]:
+        """The names of the stored presets."""
         self._conf.load()
         return sorted(str(name) for name in self._conf.confIDs)
 
     def exists(self, name: str) -> bool:
+        """Report whether a preset is stored.
+
+        Args:
+            name: The preset name.
+
+        Returns:
+            True when it exists.
+        """
         return str(name) in set(self.list_ids())
 
     def load(self, name: str) -> Any:
+        """Read one stored preset.
+
+        Args:
+            name: The preset name.
+
+        Returns:
+            The stored payload.
+        """
         self._conf.load()
         payload = self._conf.getID(str(name))
         return copy.deepcopy(payload)
 
     def save(self, name: str, payload: Any) -> None:
+        """Write one preset to the registry.
+
+        Args:
+            name: The preset name.
+            payload: The configuration to store.
+        """
         self._conf.setID(str(name), payload)
         self._conf.load()
 
     def delete(self, name: str) -> None:
+        """Remove one preset from the registry.
+
+        Args:
+            name: The preset name.
+        """
         target = str(name)
         if target not in self._conf.confIDs:
             raise FileNotFoundError(f'Registry preset "{target}" does not exist.')
@@ -149,21 +251,38 @@ class RegistryPresetStore:
         self._conf.load()
 
     def reset_defaults(self) -> None:
+        """Restore this conftype's registry entries to their shipped defaults."""
         self._conf.reset(recreate=True)
         self._conf.load()
 
 
 class WorkspacePresetStore:
+    """Preset storage backed by the workspace directory."""
+
     def __init__(self, directory: str | Path, *, directory_key: str) -> None:
+        """Build the store for one workspace folder.
+
+        Args:
+            directory: The folder the presets are kept in.
+        """
         self.directory = Path(directory).expanduser().resolve()
         self.directory_key = str(directory_key)
 
     @property
     def source_path(self) -> str:
+        """Where this store keeps its presets."""
         return str(self.directory)
 
     @staticmethod
     def normalize_name(name: str) -> str:
+        """Turn a preset name into a safe file name.
+
+        Args:
+            name: The name as entered.
+
+        Returns:
+            The normalized file stem.
+        """
         raw = str(name or "").strip()
         if not raw:
             raise ValueError("Preset name cannot be empty.")
@@ -180,6 +299,14 @@ class WorkspacePresetStore:
         return cleaned
 
     def _resolve_workspace_file(self, filename: str) -> Path:
+        """Resolve a preset file inside the store's folder.
+
+        Args:
+            filename: The preset file name.
+
+        Returns:
+            The resolved path, checked to stay inside the folder.
+        """
         raw = str(filename or "").strip()
         if not raw:
             raise ValueError("Workspace filename cannot be empty.")
@@ -197,6 +324,7 @@ class WorkspacePresetStore:
         return resolved
 
     def list_presets(self) -> list[WorkspacePresetRecord]:
+        """The presets stored in this folder."""
         if not self.directory.is_dir():
             return []
         records: list[WorkspacePresetRecord] = []
@@ -213,18 +341,43 @@ class WorkspacePresetStore:
         return records
 
     def exists_name(self, name: str) -> bool:
+        """Report whether a preset name is taken.
+
+        Args:
+            name: The preset name.
+
+        Returns:
+            True when a file already holds it.
+        """
         safe = self.normalize_name(name)
         filename = f"{safe}.json"
         target = self._resolve_workspace_file(filename)
         return target.is_file()
 
     def load(self, filename: str) -> Any:
+        """Read one stored preset.
+
+        Args:
+            filename: The preset file name.
+
+        Returns:
+            The stored payload.
+        """
         target = self._resolve_workspace_file(filename)
         if not target.is_file():
             raise FileNotFoundError(f'Workspace preset "{filename}" does not exist.')
         return json.loads(target.read_text(encoding="utf-8"))
 
     def save(self, name: str, payload: Any) -> Path:
+        """Write one preset to the workspace.
+
+        Args:
+            name: The preset name.
+            payload: The configuration to store.
+
+        Returns:
+            The file it was written to.
+        """
         safe = self.normalize_name(name)
         filename = f"{safe}.json"
         target = self._resolve_workspace_file(filename)
@@ -236,6 +389,11 @@ class WorkspacePresetStore:
         return target
 
     def delete(self, filename: str) -> None:
+        """Remove one preset from the workspace.
+
+        Args:
+            filename: The preset file name.
+        """
         target = self._resolve_workspace_file(filename)
         if not target.is_file():
             raise FileNotFoundError(f'Workspace preset "{filename}" does not exist.')
@@ -244,11 +402,19 @@ class WorkspacePresetStore:
 
 @dataclass
 class _PendingConfirmation:
+    """A destructive preset action awaiting confirmation."""
+
     message: str
     execute: Callable[[], bool]
 
 
 class PresetControlsController:
+    """State behind the preset save, load, delete and reset controls.
+
+    Spans both stores, so a preset can be kept in the workspace or promoted to
+    the registry according to the app's policy.
+    """
+
     def __init__(
         self,
         *,
@@ -264,7 +430,13 @@ class PresetControlsController:
         title: str | None = "Stored Configurations",
         preset_name_after_refresh: bool = False,
         confirm_destructive: bool = True,
+        dual_write: bool = False,
     ) -> None:
+        """Build the controller over both preset stores.
+
+        Args:
+            **kwargs: Controller settings, forwarded to the parent class.
+        """
         self.conftype = str(conftype)
         self.workspace_store = workspace_store
         self.registry_store = RegistryPresetStore(conftype)
@@ -277,6 +449,23 @@ class PresetControlsController:
         self.on_status = on_status
         self.preset_name_after_refresh = bool(preset_name_after_refresh)
         self.confirm_destructive = bool(confirm_destructive)
+        # Some callers (e.g. Environment Builder) treat a workspace preset
+        # and its same-named registry entry as one linked unit rather than
+        # two independent presets: Save always writes both, Delete always
+        # removes both. This deliberately bypasses the normal single-
+        # target save_target toggle -- only meaningful (and only allowed)
+        # when the policy permits saving/deleting both sides.
+        self.dual_write = bool(dual_write)
+        if self.dual_write and not (
+            policy.can_save_workspace
+            and policy.can_save_registry
+            and policy.can_delete_workspace
+            and policy.can_delete_registry
+        ):
+            raise ValueError(
+                "dual_write requires a policy that allows saving and "
+                "deleting both workspace and registry presets."
+            )
         self.catalog = PresetCatalog(refs=tuple(), by_token={})
         self._pending_confirmation: _PendingConfirmation | None = None
 
@@ -293,22 +482,10 @@ class PresetControlsController:
         self.preset_select = pn.widgets.Select(
             name="Preset to load", options={}, sizing_mode="stretch_width"
         )
-        self.refresh_button = pn.widgets.Button(
-            name="Refresh list", button_type="default", sizing_mode="stretch_width"
-        )
-        self.load_button = pn.widgets.Button(
-            name="Load", button_type="primary", sizing_mode="stretch_width"
-        )
-        self.save_button = pn.widgets.Button(
-            name="Save",
-            button_type="primary",
-            sizing_mode="stretch_width",
-        )
-        self.delete_button = pn.widgets.Button(
-            name="Delete",
-            button_type="warning",
-            sizing_mode="stretch_width",
-        )
+        self.refresh_button = refresh_button(name="Refresh list")
+        self.load_button = load_button(name="Load")
+        self.save_button = save_button(name="Save")
+        self.delete_button = delete_button(name="Delete")
         self.save_target = (
             pn.widgets.RadioButtonGroup(
                 name="Save target",
@@ -316,14 +493,11 @@ class PresetControlsController:
                 value="Workspace",
                 button_type="default",
             )
-            if self.policy.can_save_registry
+            if self.policy.can_save_registry and not self.dual_write
             else None
         )
         self.reset_button = (
-            pn.widgets.Button(
-                name="Reset registry defaults",
-                button_type="danger",
-            )
+            reset_button(name="Reset registry defaults", sizing_mode=None)
             if self.policy.can_reset_registry
             else None
         )
@@ -378,12 +552,19 @@ class PresetControlsController:
         self.refresh_list()
 
     def _set_status(self, message: str, *, tone: str = "neutral") -> None:
+        """Show a status message beside the controls.
+
+        Args:
+            message: The message text.
+            tone: How to style it.
+        """
         self.status.object = f"<div>{message}</div>"
         self.status.visible = tone in {"warning", "danger"}
         if self.on_status is not None:
             self.on_status(message, tone=tone)
 
     def _set_storage_info(self) -> None:
+        """Show where the selected preset is stored."""
         self.storage_info.object = (
             "Storage info:\n"
             f"Workspace preset directory:\n  `{self.workspace_store.source_path}`\n\n"
@@ -391,12 +572,33 @@ class PresetControlsController:
         )
 
     def _token_for_registry(self, name: str) -> str:
+        """Build the selector token for a registry preset.
+
+        Args:
+            name: The preset name.
+
+        Returns:
+            The token.
+        """
         return f"registry:{self.conftype}:{name}"
 
     def _token_for_workspace(self, filename: str) -> str:
+        """Build the selector token for a workspace preset.
+
+        Args:
+            filename: The preset file name.
+
+        Returns:
+            The token.
+        """
         return f"workspace:{self.workspace_store.directory_key}:{filename}"
 
     def _build_catalog(self) -> PresetCatalog:
+        """Build the catalog of presets across both stores.
+
+        Returns:
+            The catalog.
+        """
         refs: list[PresetRef] = []
         for name in self.registry_store.list_ids():
             refs.append(
@@ -425,6 +627,7 @@ class PresetControlsController:
         )
 
     def refresh_list(self) -> bool:
+        """Reload the presets offered in the selector."""
         current = str(self.preset_select.value or "")
         try:
             self.catalog = self._build_catalog()
@@ -433,28 +636,49 @@ class PresetControlsController:
             return False
 
         options = {ref.display_label: ref.token for ref in self.catalog.refs}
-        self.preset_select.options = options
-        if current in self.catalog.by_token:
-            self.preset_select.value = current
-        elif options:
-            self.preset_select.value = next(iter(options.values()))
-        else:
-            self.preset_select.value = None
+        # discard_events: repopulating the list and falling back to a sane
+        # value when the previous selection vanished is bookkeeping, not a
+        # user pick -- must not fire a consumer's "auto-load on selection
+        # change" watcher (see build_preset_select_only_panel), which would
+        # otherwise silently load whatever this falls back to.
+        with param.parameterized.discard_events(self.preset_select):
+            self.preset_select.options = options
+            if current in self.catalog.by_token:
+                self.preset_select.value = current
+            elif options:
+                self.preset_select.value = next(iter(options.values()))
+            else:
+                self.preset_select.value = None
 
         self._set_storage_info()
         self._set_status("Refreshed preset list.", tone="success")
         return True
 
     def _selected_ref(self) -> PresetRef | None:
+        """The preset currently selected, if any."""
         return self.catalog.resolve(str(self.preset_select.value or ""))
 
     def _resolve_saved_ref(self, *, source: str, token: str) -> PresetRef | None:
+        """Resolve the preset a save just wrote.
+
+        Args:
+            target_name: The name it was saved under.
+
+        Returns:
+            Its reference, or None when it cannot be resolved.
+        """
         ref = self.catalog.resolve(token)
         if ref is None or ref.source != source:
             return None
         return ref
 
     def _run_on_save_callback(self, ref: PresetRef, payload: Any) -> bool:
+        """Notify the owning app that a preset was saved.
+
+        Args:
+            ref: The saved preset.
+            payload: What was stored.
+        """
         if self.on_save is None:
             return True
         try:
@@ -468,24 +692,34 @@ class PresetControlsController:
         return True
 
     def _request_confirmation(self, message: str, execute: Callable[[], bool]) -> None:
+        """Hold a destructive action until the user confirms it.
+
+        Args:
+            message: What the user is being asked.
+            execute: The action to run on confirmation.
+
+        Returns:
+            False, since the action has not run yet.
+        """
         self._pending_confirmation = _PendingConfirmation(
             message=message, execute=execute
         )
 
-        confirm_button = pn.widgets.Button(
-            name="Confirm", button_type="danger", sizing_mode="stretch_width"
-        )
-        cancel_button = pn.widgets.Button(
-            name="Cancel", button_type="default", sizing_mode="stretch_width"
-        )
-        confirm_button.on_click(lambda _event: self.confirm_pending_action())
-        cancel_button.on_click(lambda _event: self.cancel_pending_action())
+        confirm_btn = confirm_button(name="Confirm")
+        cancel_btn = cancel_button(name="Cancel")
+        confirm_btn.on_click(lambda _event: self.confirm_pending_action())
+        cancel_btn.on_click(lambda _event: self.cancel_pending_action())
         self.confirmation_host.objects = [
             pn.pane.HTML(f"<div>{message}</div>", margin=(0, 0, 6, 0)),
-            pn.Row(confirm_button, cancel_button, sizing_mode="stretch_width"),
+            pn.Row(confirm_btn, cancel_btn, sizing_mode="stretch_width"),
         ]
 
     def confirm_pending_action(self) -> bool:
+        """Run the action awaiting confirmation.
+
+        Returns:
+            Whether it succeeded.
+        """
         pending = self._pending_confirmation
         if pending is None:
             return False
@@ -494,6 +728,7 @@ class PresetControlsController:
         return pending.execute()
 
     def cancel_pending_action(self) -> bool:
+        """Discard the action awaiting confirmation."""
         if self._pending_confirmation is None:
             return False
         self._pending_confirmation = None
@@ -502,6 +737,11 @@ class PresetControlsController:
         return True
 
     def load_selected(self) -> bool:
+        """Load the selected preset into the editor.
+
+        Returns:
+            Whether it was loaded.
+        """
         ref = self._selected_ref()
         if ref is None:
             self._set_status("Select a preset to load.", tone="warning")
@@ -530,14 +770,29 @@ class PresetControlsController:
         return True
 
     def _normalized_name(self) -> str:
+        """The entered preset name, normalized for storage."""
         return WorkspacePresetStore.normalize_name(self.preset_name.value or "")
 
     def save_current(self) -> bool:
+        """Save the current configuration to the chosen store.
+
+        Returns:
+            Whether it was saved.
+        """
         try:
             target_name = self._normalized_name()
         except ValueError as exc:
             self._set_status(str(exc), tone="warning")
             return False
+
+        if self.dual_write:
+            if self.before_save is not None:
+                try:
+                    self.before_save(target_name, PresetSource.WORKSPACE)
+                except Exception as exc:
+                    self._set_status(str(exc), tone="warning")
+                    return False
+            return self._save_dual(target_name)
 
         target_source = PresetSource.WORKSPACE
         if self.save_target is not None and self.save_target.value == "Registry":
@@ -559,6 +814,14 @@ class PresetControlsController:
         return self._save_registry(target_name)
 
     def _save_workspace(self, target_name: str) -> bool:
+        """Save the current configuration to the workspace.
+
+        Args:
+            target_name: The name to save under.
+
+        Returns:
+            Whether it was saved.
+        """
         exists = self.workspace_store.exists_name(target_name)
 
         def _execute() -> bool:
@@ -594,6 +857,14 @@ class PresetControlsController:
         return _execute()
 
     def _save_registry(self, target_name: str) -> bool:
+        """Save the current configuration to the registry.
+
+        Args:
+            target_name: The name to save under.
+
+        Returns:
+            Whether it was saved.
+        """
         exists = self.registry_store.exists(target_name)
 
         def _execute() -> bool:
@@ -631,11 +902,66 @@ class PresetControlsController:
             return False
         return _execute()
 
+    def _save_dual(self, target_name: str) -> bool:
+        """Save the current configuration to both stores.
+
+        Args:
+            target_name: The name to save under.
+
+        Returns:
+            Whether it was saved. An existing name in either store is
+            confirmed before overwriting.
+        """
+        exists = self.workspace_store.exists_name(
+            target_name
+        ) or self.registry_store.exists(target_name)
+
+        def _execute() -> bool:
+            try:
+                workspace_payload = self.build_workspace_payload(target_name)
+                registry_payload = self.build_registry_payload(target_name)
+                target = self.workspace_store.save(target_name, workspace_payload)
+                self.registry_store.save(target_name, registry_payload)
+            except Exception as exc:
+                self._set_status(f"Save failed: {exc}", tone="danger")
+                return False
+            self.refresh_list()
+            token = self._token_for_workspace(target.name)
+            if token in self.catalog.by_token:
+                self.preset_select.value = token
+            ref = self._resolve_saved_ref(source=PresetSource.WORKSPACE, token=token)
+            if ref is not None:
+                self._run_on_save_callback(ref, workspace_payload)
+            self._set_status(
+                f'Saved "{target.stem}" to workspace and registry.', tone="success"
+            )
+            return True
+
+        if exists and self.confirm_destructive:
+            self._request_confirmation(
+                (
+                    f'"{target_name}" already exists in the workspace and/or '
+                    "registry. Overwrite both?"
+                ),
+                _execute,
+            )
+            self._set_status("Overwrite confirmation required.", tone="warning")
+            return False
+        return _execute()
+
     def delete_selected(self) -> bool:
+        """Delete the selected preset, after confirmation.
+
+        Returns:
+            Whether it was deleted.
+        """
         ref = self._selected_ref()
         if ref is None:
             self._set_status("Select a preset to delete.", tone="warning")
             return False
+
+        if self.dual_write:
+            return self._delete_dual(ref.name)
 
         if ref.source == PresetSource.REGISTRY and not self.policy.can_delete_registry:
             self._set_status(
@@ -671,7 +997,66 @@ class PresetControlsController:
             return False
         return _execute()
 
+    def _delete_dual(self, name: str) -> bool:
+        """Delete a preset from both stores, after confirmation.
+
+        Args:
+            name: The preset name.
+
+        Returns:
+            Whether it was deleted from either store.
+        """
+
+        def _execute() -> bool:
+            deleted_workspace = False
+            deleted_registry = False
+            try:
+                if self.workspace_store.exists_name(name):
+                    filename = f"{WorkspacePresetStore.normalize_name(name)}.json"
+                    self.workspace_store.delete(filename)
+                    deleted_workspace = True
+            except Exception as exc:
+                self._set_status(f"Delete failed: {exc}", tone="danger")
+                return False
+            try:
+                if self.registry_store.exists(name):
+                    self.registry_store.delete(name)
+                    deleted_registry = True
+            except Exception as exc:
+                self._set_status(f"Delete failed: {exc}", tone="danger")
+                return False
+            self.refresh_list()
+            if not (deleted_workspace or deleted_registry):
+                self._set_status(
+                    f'Preset "{name}" was already missing from workspace and registry.',
+                    tone="warning",
+                )
+                return True
+            removed = " and ".join(
+                target
+                for target, deleted in (
+                    ("workspace", deleted_workspace),
+                    ("registry", deleted_registry),
+                )
+                if deleted
+            )
+            self._set_status(f'Deleted "{name}" from {removed}.', tone="success")
+            return True
+
+        if self.confirm_destructive:
+            self._request_confirmation(
+                f'Delete "{name}" from workspace and registry?', _execute
+            )
+            self._set_status("Delete confirmation required.", tone="warning")
+            return False
+        return _execute()
+
     def request_reset_registry(self) -> bool:
+        """Ask the user to confirm resetting the registry to its defaults.
+
+        Returns:
+            Whether the reset ran.
+        """
         if not self.policy.can_reset_registry:
             self._set_status(
                 "Registry reset is not allowed in this workflow.", tone="warning"
@@ -701,7 +1086,134 @@ class PresetControlsController:
         return _execute()
 
 
+def build_preset_controls_panel(
+    controller: PresetControlsController,
+    *,
+    title: str = "Stored Configurations",
+    name_field: Any = None,
+    reset_slot: pn.widgets.Button | None = None,
+    save_target_slot: pn.widgets.RadioButtonGroup | None = None,
+    extra_sections: list[Any] | None = None,
+    show_status: bool = True,
+) -> pn.Card:
+    """Canonical "Stored Configurations" layout, shared across portal apps
+    (Environment Builder, Single Experiment, Model Inspector) so the same
+    preset save/load/delete UI looks and behaves identically everywhere.
+
+    Order: name field -> preset select -> [refresh, reset_slot] row ->
+    save_target_slot (if given) -> [save, load, delete] row -> storage
+    info -> extra_sections (app-specific extras, e.g. Environment
+    Builder's file import/export) -> confirmation host -> status (if
+    show_status).
+
+    Args:
+        controller: The panel's PresetControlsController.
+        title: Card title.
+        name_field: Widget/view for the preset name field. Defaults to
+            `controller.preset_name`; pass a different view (e.g. a
+            relabeled param pane) to customize its presentation only.
+        reset_slot: Optional button placed next to Refresh (e.g. a
+            registry-reset or reset-to-defaults action).
+        save_target_slot: Optional Workspace/Registry `RadioButtonGroup`
+            (`controller.save_target`) placed just above the Save/Load/
+            Delete row, so the target of the next Save is visible and
+            actually choosable. `PresetControlsController` builds this
+            widget whenever its policy allows registry saves and
+            `dual_write` is off, but leaves it unrendered unless a caller
+            passes it here -- pass `controller.save_target` explicitly to
+            surface it.
+        extra_sections: Optional app-specific views appended after the
+            storage info, before the confirmation host.
+        show_status: Whether to include `controller.status`. Some apps
+            route preset status messages into their own shared status
+            pane instead (via `on_status`) and omit this.
+    """
+    if name_field is None:
+        name_field = controller.preset_name
+    refresh_row = [controller.refresh_button]
+    if reset_slot is not None:
+        refresh_row.append(reset_slot)
+    children: list[Any] = [
+        name_field,
+        controller.preset_select,
+        pn.Row(*refresh_row, sizing_mode="stretch_width", margin=(4, 0, 0, 0)),
+    ]
+    if save_target_slot is not None:
+        children.append(save_target_slot)
+    children.extend(
+        [
+            pn.Row(
+                controller.save_button,
+                controller.load_button,
+                controller.delete_button,
+                sizing_mode="stretch_width",
+                margin=(4, 0, 0, 0),
+            ),
+            controller.storage_info,
+        ]
+    )
+    if extra_sections:
+        children.extend(extra_sections)
+    children.append(controller.confirmation_host)
+    if show_status:
+        children.append(controller.status)
+    return pn.Card(
+        pn.Column(*children, sizing_mode="stretch_width", margin=0),
+        title=title,
+        collapsed=False,
+        sizing_mode="stretch_width",
+    )
+
+
+def build_preset_select_only_panel(
+    controller: PresetControlsController,
+    *,
+    title: str | None = None,
+) -> pn.viewable.Viewable:
+    """
+    Minimal "pick a stored config" view: just `controller.preset_select`,
+    with the selected entry loaded automatically on change -- no visible
+    Refresh/Save/Load/Delete/Reset buttons. Use where a screen only needs
+    to *pick* a stored config inline (e.g. embedded in another editor),
+    not manage it; use `build_preset_controls_panel` for a full,
+    self-contained management panel instead.
+
+    Reuses `controller` entirely for data/catalog/loading -- only the
+    rendering differs from `build_preset_controls_panel`. `controller`
+    still needs its own `policy`/`on_load`/etc. configured normally; this
+    function just calls `controller.refresh_list()` once to populate the
+    dropdown and wires selection changes straight to
+    `controller.load_selected()`, standing in for an explicit Load click.
+
+    Args:
+        controller: The panel's PresetControlsController.
+        title: Optional label shown above the dropdown. `None` omits it.
+
+    Returns:
+        A `pn.Column` with the (optional) title and the select widget --
+        not a `pn.Card`, so it doesn't nest a Card inside a caller's own
+        Card/Column.
+    """
+    controller.refresh_list()
+    controller.preset_select.param.watch(
+        lambda _event: controller.load_selected(), "value"
+    )
+    children: list[Any] = []
+    if title is not None:
+        children.append(pn.pane.Markdown(f"##### {title}", margin=(0, 0, 4, 0)))
+    children.append(controller.preset_select)
+    return pn.Column(*children, sizing_mode="stretch_width", margin=0)
+
+
 def _payload_to_jsonable(payload: Any) -> Any:
+    """Convert a preset payload into JSON-serializable form.
+
+    Args:
+        payload: The payload to convert.
+
+    Returns:
+        The JSON-ready payload.
+    """
     if isinstance(payload, param.Parameterized):
         nested = getattr(payload, "nestedConf", None)
         if nested is not None:
@@ -722,6 +1234,16 @@ def build_user_preset_controls(
     on_save: Callable[[PresetRef, Any], None] | None = None,
     on_status: Callable[..., None] | None = None,
 ) -> pn.Column:
+    """Build preset controls for a user-facing app.
+
+    These save to the workspace only, keeping the shipped registry intact.
+
+    Args:
+        **kwargs: Controller settings.
+
+    Returns:
+        The controller and its panel.
+    """
     controller = PresetControlsController(
         conftype=conftype,
         workspace_store=WorkspacePresetStore(
@@ -749,6 +1271,14 @@ def build_advanced_preset_controls(
     on_save: Callable[[PresetRef, Any], None] | None = None,
     on_status: Callable[..., None] | None = None,
 ) -> pn.Column:
+    """Build preset controls that may also write the registry.
+
+    Args:
+        **kwargs: Controller settings.
+
+    Returns:
+        The controller and its panel.
+    """
     controller = PresetControlsController(
         conftype=conftype,
         workspace_store=WorkspacePresetStore(

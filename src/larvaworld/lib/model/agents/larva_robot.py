@@ -1,3 +1,10 @@
+"""
+Larva-shaped agents for the 2D robot simulation.
+
+Adapts the robot control loop to the larva body model, so that sensor-driven
+Braitenberg behaviour can be simulated with the same body as the larva agents.
+"""
+
 from __future__ import annotations
 from typing import Any
 
@@ -40,6 +47,13 @@ class LarvaRobot(LarvaSim):
     def __init__(
         self, larva_pars: dict[str, Any], genome: Any | None = None, **kwargs: Any
     ) -> None:
+        """Build the robot larva.
+
+        Args:
+            larva_pars: The larva model configuration.
+            genome: The genome this larva was built from, if any.
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         super().__init__(**larva_pars, **kwargs)
         self.genome = genome
 
@@ -79,6 +93,13 @@ class ObstacleLarvaRobot(LarvaRobot):
     min_actuator_value = PositiveNumber(35.0, doc="Motor ctrl_min_actuator_value")
 
     def __init__(self, larva_pars: dict[str, Any], **kwargs: Any) -> None:
+        """Build the obstacle-avoiding robot larva and its sensors.
+
+        Args:
+            larva_pars: The larva model configuration, including its
+                sensorimotor settings.
+            **kwargs: Agent attributes, forwarded to the parent class.
+        """
         kws = larva_pars.sensorimotor
         larva_pars.pop("sensorimotor", None)
         super().__init__(larva_pars=larva_pars, **kws, **kwargs)

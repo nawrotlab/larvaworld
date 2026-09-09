@@ -1,7 +1,15 @@
+"""
+The portal's workspace: where datasets and configurations live.
+
+Resolves, validates and switches the active workspace, and holds the global
+configuration recording the known ones.
+"""
+
 from __future__ import annotations
 
 import json
 import os
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -9,7 +17,7 @@ from typing import Literal
 
 
 WorkspaceKind = Literal[
-    "environments", "experiments", "datasets", "analysis", "metadata"
+    "environments", "experiments", "datasets", "analysis", "metadata", "parameters"
 ]
 
 WORKSPACE_DIR_NAMES: dict[WorkspaceKind, str] = {
@@ -18,6 +26,7 @@ WORKSPACE_DIR_NAMES: dict[WorkspaceKind, str] = {
     "datasets": "experiments",
     "analysis": "analysis",
     "metadata": "metadata",
+    "parameters": "parameters",
 }
 WORKSPACE_METADATA_FILENAME = "workspace.json"
 GLOBAL_CONFIG_FILENAME = "workspace.json"
@@ -33,6 +42,8 @@ class WorkspaceError(RuntimeError):
 
 @dataclass(frozen=True)
 class WorkspaceValidation:
+    """The outcome of checking a directory as a workspace."""
+
     path: Path
     exists: bool
     is_dir: bool
@@ -44,7 +55,10 @@ class WorkspaceValidation:
 
 @dataclass(frozen=True)
 class WorkspaceState:
+    """The active workspace and the paths derived from it."""
+
     root: Path
+    workspace_id: str
     name: str
     metadata_path: Path
     environments_dir: Path
@@ -52,17 +66,28 @@ class WorkspaceState:
     datasets_dir: Path
     analysis_dir: Path
     metadata_dir: Path
+    parameters_dir: Path
 
 
 def _utc_now_iso() -> str:
+    """Return the current UTC time as an ISO-8601 string."""
     return datetime.now(timezone.utc).isoformat()
 
 
 def _resolve_path(path: str | Path) -> Path:
+    """Expand and resolve a user-supplied path.
+
+    Args:
+        path: The path to resolve.
+
+    Returns:
+        The absolute path, with ``~`` expanded.
+    """
     return Path(path).expanduser().resolve()
 
 
 def _portal_config_dir() -> Path:
+    """The directory the portal keeps its own configuration in."""
     raw_override = os.getenv("LARVAWORLD_PORTAL_CONFIG_DIR", "").strip()
     if raw_override:
         return _resolve_path(raw_override)
@@ -75,18 +100,43 @@ def _portal_config_dir() -> Path:
 
 
 def _global_config_path() -> Path:
+    """The file recording the known and active workspaces."""
     return _portal_config_dir() / GLOBAL_CONFIG_FILENAME
 
 
 def _workspace_metadata_dir(root: Path) -> Path:
+    """The directory a workspace keeps its metadata in.
+
+    Args:
+        root: The workspace root.
+
+    Returns:
+        The metadata directory.
+    """
     return root / WORKSPACE_DIR_NAMES["metadata"]
 
 
 def _workspace_metadata_path(root: Path) -> Path:
+    """The file a workspace records its own metadata in.
+
+    Args:
+        root: The workspace root.
+
+    Returns:
+        The metadata file path.
+    """
     return _workspace_metadata_dir(root) / WORKSPACE_METADATA_FILENAME
 
 
 def _reserved_workspace_paths() -> set[Path]:
+    """Paths that must never be used as a workspace.
+
+    Covers the repository and package roots, so that a stray selection cannot
+    have the portal write datasets into the source tree.
+
+    Returns:
+        The reserved paths.
+    """
     return {
         _REPO_ROOT,
         _REPO_ROOT / "src",
@@ -96,10 +146,26 @@ def _reserved_workspace_paths() -> set[Path]:
 
 
 def _is_reserved_workspace_path(path: Path) -> bool:
+    """Report whether a path is reserved against use as a workspace.
+
+    Args:
+        path: The resolved candidate path.
+
+    Returns:
+        True when the path is reserved.
+    """
     return path in _reserved_workspace_paths()
 
 
 def _nearest_existing_parent(path: Path) -> Path | None:
+    """Walk up until an existing directory is found.
+
+    Args:
+        path: The starting path.
+
+    Returns:
+        The nearest ancestor that exists.
+    """
     candidate = path
     while not candidate.exists():
         if candidate.parent == candidate:
@@ -109,6 +175,17 @@ def _nearest_existing_parent(path: Path) -> Path | None:
 
 
 def _path_writable(path: Path) -> bool:
+    """Report whether a path can be written to.
+
+    A path that does not yet exist is judged by its nearest existing parent,
+    since that is where it would be created.
+
+    Args:
+        path: The path to test.
+
+    Returns:
+        True when it is writable.
+    """
     existing_parent = _nearest_existing_parent(path)
     if existing_parent is None or not existing_parent.is_dir():
         return False
@@ -116,6 +193,11 @@ def _path_writable(path: Path) -> bool:
 
 
 def read_global_workspace_config() -> dict[str, object]:
+    """Read the portal's global workspace configuration.
+
+    Returns:
+        The stored configuration, empty when none has been written.
+    """
     path = _global_config_path()
     try:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -126,12 +208,122 @@ def read_global_workspace_config() -> dict[str, object]:
 
 
 def write_global_workspace_config(data: dict[str, object]) -> None:
+    """Write the portal's global workspace configuration.
+
+    Args:
+        data: The configuration to store.
+    """
     path = _global_config_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
+def _known_workspace_entry(
+    *, root: Path, workspace_id: str, name: str, last_opened_at: str | None = None
+) -> dict[str, str]:
+    """Build the record kept for one known workspace.
+
+    Args:
+        root: The workspace root.
+        name: Its display name.
+
+    Returns:
+        The record.
+    """
+    return {
+        "workspace_id": workspace_id,
+        "name": name,
+        "path": str(root),
+        "last_opened_at": last_opened_at or _utc_now_iso(),
+    }
+
+
+def _remember_workspace(
+    *, root: Path, workspace_id: str, name: str, mark_opened: bool = True
+) -> None:
+    """Add or refresh a workspace in the global, path-portable catalog."""
+    data = read_global_workspace_config()
+    raw_known = data.get("known_workspaces", [])
+    known = (
+        [item for item in raw_known if isinstance(item, dict)]
+        if isinstance(raw_known, list)
+        else []
+    )
+    previous = next(
+        (item for item in known if item.get("workspace_id") == workspace_id), None
+    )
+    previous_opened = previous.get("last_opened_at") if previous else None
+    entry = _known_workspace_entry(
+        root=root,
+        workspace_id=workspace_id,
+        name=name,
+        last_opened_at=None if mark_opened else previous_opened,
+    )
+    filtered = [
+        item
+        for item in known
+        if item.get("workspace_id") != workspace_id
+        and _resolve_path(str(item.get("path", ""))) != root
+    ]
+    filtered.append(entry)
+    data["known_workspaces"] = sorted(
+        filtered, key=lambda item: str(item.get("name", "")).casefold()
+    )
+    write_global_workspace_config(data)
+
+
+def get_known_workspaces() -> list[dict[str, object]]:
+    """Return known workspaces, retaining unavailable paths for inspection."""
+    data = read_global_workspace_config()
+    raw_known = data.get("known_workspaces", [])
+    if not isinstance(raw_known, list):
+        return []
+    records: list[dict[str, object]] = []
+    seen_ids: set[str] = set()
+    for item in raw_known:
+        if not isinstance(item, dict):
+            continue
+        workspace_id = item.get("workspace_id")
+        raw_path = item.get("path")
+        if not isinstance(workspace_id, str) or not isinstance(raw_path, str):
+            continue
+        root = _resolve_path(raw_path)
+        # A moved workspace may have been opened again under a new path. The
+        # last catalog entry for its stable UUID is the authoritative one.
+        if workspace_id in seen_ids:
+            continue
+        seen_ids.add(workspace_id)
+        records.append(
+            {
+                "workspace_id": workspace_id,
+                "name": item.get("name") or _default_workspace_name(root),
+                "path": root,
+                "last_opened_at": item.get("last_opened_at"),
+                "available": root.is_dir(),
+            }
+        )
+    return records
+
+
+def forget_known_workspace(workspace_id: str) -> None:
+    """Forget a catalog reference without deleting any workspace files."""
+    data = read_global_workspace_config()
+    raw_known = data.get("known_workspaces", [])
+    if isinstance(raw_known, list):
+        data["known_workspaces"] = [
+            item
+            for item in raw_known
+            if not isinstance(item, dict) or item.get("workspace_id") != workspace_id
+        ]
+    write_global_workspace_config(data)
+
+
 def get_active_workspace_path() -> Path | None:
+    """Return the configured active workspace path.
+
+    Returns:
+        The path, or None when no workspace is configured.
+    """
     data = read_global_workspace_config()
     raw = data.get("active_workspace")
     if not isinstance(raw, str) or not raw.strip():
@@ -140,22 +332,60 @@ def get_active_workspace_path() -> Path | None:
 
 
 def set_active_workspace_path(path: str | Path) -> Path:
+    """Record a workspace as the active one.
+
+    Args:
+        path: The workspace root.
+        name: Its display name.
+
+    Returns:
+        The updated global configuration.
+    """
     resolved = _resolve_path(path)
-    write_global_workspace_config({"active_workspace": str(resolved)})
+    data = read_global_workspace_config()
+    data["active_workspace"] = str(resolved)
+    write_global_workspace_config(data)
+    try:
+        metadata = read_workspace_metadata(resolved)
+        workspace_id = metadata.get("workspace_id")
+        name = metadata.get("workspace_name")
+        if isinstance(workspace_id, str) and workspace_id and isinstance(name, str):
+            _remember_workspace(
+                root=resolved, workspace_id=workspace_id, name=name, mark_opened=True
+            )
+    except (OSError, json.JSONDecodeError):
+        pass
     return resolved
 
 
 def clear_active_workspace_path() -> None:
-    write_global_workspace_config({})
+    """Forget the active workspace, keeping it known."""
+    data = read_global_workspace_config()
+    data.pop("active_workspace", None)
+    write_global_workspace_config(data)
 
 
 def read_workspace_metadata(path: str | Path) -> dict[str, object]:
+    """Read one workspace's own metadata.
+
+    Args:
+        path: The workspace root.
+
+    Returns:
+        The metadata, empty when none has been written.
+    """
     root = _resolve_path(path)
     metadata_path = _workspace_metadata_path(root)
     return json.loads(metadata_path.read_text(encoding="utf-8"))
 
 
 def write_workspace_metadata(path: str | Path, data: dict[str, object]) -> None:
+    """Write one workspace's own metadata.
+
+    Args:
+        path: The workspace root.
+        data: The metadata to store.
+    """
     root = _resolve_path(path)
     metadata_path = _workspace_metadata_path(root)
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
@@ -163,6 +393,15 @@ def write_workspace_metadata(path: str | Path, data: dict[str, object]) -> None:
 
 
 def validate_workspace(path: str | Path) -> WorkspaceValidation:
+    """Check whether a directory can serve as a workspace.
+
+    Args:
+        path: The candidate directory.
+
+    Returns:
+        The validation, listing the errors that block the choice and
+        the warnings worth showing alongside it.
+    """
     resolved = _resolve_path(path)
     exists = resolved.exists()
     is_dir = resolved.is_dir() if exists else False
@@ -199,12 +438,32 @@ def validate_workspace(path: str | Path) -> WorkspaceValidation:
 
 
 def _default_workspace_name(root: Path) -> str:
+    """Derive a display name from a workspace's directory name.
+
+    Args:
+        root: The workspace root.
+
+    Returns:
+        The display name.
+    """
     return root.name or "Larvaworld Workspace"
 
 
 def initialize_workspace(
     path: str | Path, *, name: str | None = None
 ) -> WorkspaceState:
+    """Create a workspace's directory structure and metadata.
+
+    Args:
+        path: The workspace root.
+        name: Its display name. Derived from the directory when omitted.
+
+    Returns:
+        The initialized workspace state.
+
+    Raises:
+        WorkspaceError: If the directory cannot serve as a workspace.
+    """
     resolved = _resolve_path(path)
     validation = validate_workspace(resolved)
     if validation.errors:
@@ -215,6 +474,7 @@ def initialize_workspace(
         (resolved / dirname).mkdir(parents=True, exist_ok=True)
 
     created_at = _utc_now_iso()
+    workspace_id = str(uuid.uuid4())
     metadata_path = _workspace_metadata_path(resolved)
     if metadata_path.exists():
         try:
@@ -222,11 +482,15 @@ def initialize_workspace(
             existing_created = existing.get("created_at")
             if isinstance(existing_created, str) and existing_created.strip():
                 created_at = existing_created
+            existing_workspace_id = existing.get("workspace_id")
+            if isinstance(existing_workspace_id, str) and existing_workspace_id.strip():
+                workspace_id = existing_workspace_id
         except (OSError, json.JSONDecodeError):
             pass
 
     metadata: dict[str, object] = {
         "schema_version": WORKSPACE_SCHEMA_VERSION,
+        "workspace_id": workspace_id,
         "workspace_name": (name or _default_workspace_name(resolved)).strip()
         or _default_workspace_name(resolved),
         "created_at": created_at,
@@ -234,10 +498,28 @@ def initialize_workspace(
         "folders": {kind: dirname for kind, dirname in WORKSPACE_DIR_NAMES.items()},
     }
     write_workspace_metadata(resolved, metadata)
-    return load_workspace(resolved)
+    state = load_workspace(resolved)
+    _remember_workspace(
+        root=state.root,
+        workspace_id=state.workspace_id,
+        name=state.name,
+        mark_opened=True,
+    )
+    return state
 
 
 def load_workspace(path: str | Path) -> WorkspaceState:
+    """Load an existing workspace.
+
+    Args:
+        path: The workspace root.
+
+    Returns:
+        The workspace state.
+
+    Raises:
+        WorkspaceError: If the directory is not a usable workspace.
+    """
     resolved = _resolve_path(path)
     validation = validate_workspace(resolved)
     if validation.errors:
@@ -248,12 +530,21 @@ def load_workspace(path: str | Path) -> WorkspaceState:
         raise WorkspaceError("Workspace is not initialized.")
 
     metadata = read_workspace_metadata(resolved)
+    workspace_id = metadata.get("workspace_id")
+    if not isinstance(workspace_id, str) or not workspace_id.strip():
+        # Schema-v1 workspaces created before manifest support are upgraded
+        # in place the first time they are opened.
+        workspace_id = str(uuid.uuid4())
+        metadata["workspace_id"] = workspace_id
+        metadata["updated_at"] = _utc_now_iso()
+        write_workspace_metadata(resolved, metadata)
     name = metadata.get("workspace_name")
     if not isinstance(name, str) or not name.strip():
         name = _default_workspace_name(resolved)
 
-    return WorkspaceState(
+    state = WorkspaceState(
         root=resolved,
+        workspace_id=workspace_id,
         name=name,
         metadata_path=_workspace_metadata_path(resolved),
         environments_dir=resolved / WORKSPACE_DIR_NAMES["environments"],
@@ -261,10 +552,23 @@ def load_workspace(path: str | Path) -> WorkspaceState:
         datasets_dir=resolved / WORKSPACE_DIR_NAMES["datasets"],
         analysis_dir=resolved / WORKSPACE_DIR_NAMES["analysis"],
         metadata_dir=resolved / WORKSPACE_DIR_NAMES["metadata"],
+        parameters_dir=resolved / WORKSPACE_DIR_NAMES["parameters"],
     )
+    _remember_workspace(
+        root=state.root,
+        workspace_id=state.workspace_id,
+        name=state.name,
+        mark_opened=True,
+    )
+    return state
 
 
 def get_active_workspace() -> WorkspaceState | None:
+    """Return the active workspace, if one is configured and usable.
+
+    Returns:
+        The workspace state, or None.
+    """
     active_path = get_active_workspace_path()
     if active_path is None:
         return None
@@ -275,6 +579,14 @@ def get_active_workspace() -> WorkspaceState | None:
 
 
 def require_active_workspace() -> WorkspaceState:
+    """Return the active workspace, insisting that one is configured.
+
+    Returns:
+        The workspace state.
+
+    Raises:
+        WorkspaceError: If no valid workspace is active.
+    """
     workspace = get_active_workspace()
     if workspace is None:
         raise WorkspaceError("No valid active workspace is configured.")
@@ -284,6 +596,16 @@ def require_active_workspace() -> WorkspaceState:
 def get_workspace_dir(
     kind: WorkspaceKind, *, workspace: WorkspaceState | None = None
 ) -> Path:
+    """Return one of the active workspace's sub-directories.
+
+    Args:
+        kind: Which directory to return, such as the datasets or the
+            experiments folder.
+        workspace: The workspace to read. Defaults to the active one.
+
+    Returns:
+        The directory path.
+    """
     state = workspace or require_active_workspace()
     mapping: dict[WorkspaceKind, Path] = {
         "environments": state.environments_dir,
@@ -291,11 +613,17 @@ def get_workspace_dir(
         "datasets": state.datasets_dir,
         "analysis": state.analysis_dir,
         "metadata": state.metadata_dir,
+        "parameters": state.parameters_dir,
     }
     return mapping[kind]
 
 
 def get_notebook_workspace_dir(*, workspace: WorkspaceState | None = None) -> Path:
+    """Return the directory notebooks are launched from.
+
+    Returns:
+        The notebook directory.
+    """
     state = workspace or require_active_workspace()
     path = state.metadata_dir / "notebooks"
     path.mkdir(parents=True, exist_ok=True)

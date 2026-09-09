@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 import os
+from contextvars import ContextVar
 import param
 
 from ... import vprint, CONF_DIR, DATA_DIR, CONFTYPES
@@ -20,6 +21,11 @@ __all__: list[str] = [
     "conf",
     "resetConfs",
 ]
+
+
+_REGISTRY_PERSISTENCE_SUSPENDED: ContextVar[bool] = ContextVar(
+    "larvaworld_registry_persistence_suspended", default=False
+)
 
 
 def next_idx(id: str, conftype: str = "Exp") -> int:
@@ -52,7 +58,8 @@ def next_idx(id: str, conftype: str = "Exp") -> int:
     if id not in d[conftype]:
         d[conftype][id] = 0
     d[conftype][id] += 1
-    util.save_dict(d, f)
+    if not _REGISTRY_PERSISTENCE_SUSPENDED.get():
+        util.save_dict(d, f)
     return d[conftype][id]
 
 
@@ -197,6 +204,8 @@ class ConfType(param.Parameterized):
             bool: True if the save operation was successful, False otherwise.
 
         """
+        if _REGISTRY_PERSISTENCE_SUSPENDED.get():
+            return True
         return util.save_dict(self.dict, self.path_to_dict)
 
     def set_dict(self, d: dict[str, Any]) -> None:
@@ -358,11 +367,19 @@ class ConfType(param.Parameterized):
             dict or None: The expanded configuration dictionary if successful, otherwise None.
 
         """
+        # A copy throughout. `expand` exists so that a caller can adjust a
+        # configuration before running it, and both the configuration itself and
+        # every sub-configuration substituted into it below are live objects of
+        # the registry: without copying, `p = expand(id); p.enrichment = {}`
+        # silently reconfigures the stored experiment for the rest of the
+        # process, and reaches into the Env and Model stores as well.
         if conf is None:
             if id in self.dict:
-                conf = self.dict[id]
+                conf = self.dict[id].get_copy()
             else:
                 return None
+        else:
+            conf = util.AttrDict(conf).get_copy()
         subks = self.CONFTYPE_SUBKEYS[self.conftype]
         if len(subks) > 0:
             for subID, subk in subks.items():
@@ -370,10 +387,10 @@ class ConfType(param.Parameterized):
                 if subID == "larva_groups" and subk == "Model":
                     for k, v in conf["larva_groups"].items():
                         if v.model in ids:
-                            v.model = reg.conf[subk].getID(v.model)
+                            v.model = reg.conf[subk].getID(v.model).get_copy()
                 else:
                     if conf[subID] in ids:
-                        conf[subID] = reg.conf[subk].getID(conf[subID])
+                        conf[subID] = reg.conf[subk].getID(conf[subID]).get_copy()
 
         return conf
 

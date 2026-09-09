@@ -1,3 +1,11 @@
+"""
+Experiment-specific termination and progression conditions.
+
+Each condition watches the running simulation and ends it, or advances its
+phase, when the experiment's own criterion is met -- a larva reaching a
+source, a preference being established, or a life stage completing.
+"""
+
 from __future__ import annotations
 
 import random
@@ -87,12 +95,22 @@ class ExpCondition:
         return False
 
     def set_state(self, text: str) -> None:
+        """Set the displayed experiment state.
+
+        Args:
+            text: The state description.
+        """
         try:
             self.env.screen_manager.screen_state.set_text(text)
         except:
             pass
 
     def flash_text(self, text: str) -> None:
+        """Show a message on screen briefly.
+
+        Args:
+            text: The message.
+        """
         try:
             self.env.input_box.flash_text(text)
         except:
@@ -100,10 +118,12 @@ class ExpCondition:
 
     @property
     def agents(self):
+        """The agents the condition watches."""
         return self.env.agents
 
     @property
     def sources(self):
+        """The sources the condition watches."""
         return self.env.sources
 
 
@@ -145,10 +165,17 @@ class PrefTrainCondition(ExpCondition):
         self.UCS_sources = [f for f in self.sources if f.odor.id == "UCS"]
 
     def move_larvae_to_center(self):
+        """Return every larva to the arena centre between trials."""
         for a in self.env.agents:
             a.reset_larva_pose()
 
     def toggle_odors(self, CS_intensity=2.0, UCS_intensity=0.0):
+        """Switch which odor is paired with reward.
+
+        Args:
+            CS_UCS: Whether the conditioned odor is rewarded.
+            on_food: Whether the reward is present.
+        """
         for f in self.CS_sources:
             f.odor.intensity = CS_intensity
             f.visible = True if CS_intensity > 0 else False
@@ -157,6 +184,7 @@ class PrefTrainCondition(ExpCondition):
             f.visible = True if UCS_intensity > 0 else False
 
     def init_test(self):
+        """Set the arena up for a test trial."""
         for f in self.CS_sources:
             if f.unique_id == "CS_r":
                 self.CS_sources.remove(f)
@@ -167,6 +195,11 @@ class PrefTrainCondition(ExpCondition):
                 self.env.delete_agent(f)
 
     def start_trial(self, on_food=True):
+        """Begin the next training or test trial.
+
+        Args:
+            on_food: Whether the trial is rewarded.
+        """
         c = self.peak_intensity
         if on_food:
             self.CS_counter += 1
@@ -200,6 +233,14 @@ class PrefTrainCondition(ExpCondition):
                 self.move_larvae_to_center()
 
     def check(self):
+        """Advance the training schedule and report completion.
+
+        Args:
+            ff: The running simulation.
+
+        Returns:
+            True once every trial has run.
+        """
         for i, ep in enumerate(self.env.sim_epochs):
             if self.env.Nticks == ep["start"]:
                 q = ep["substrate"]["quality"]
@@ -222,7 +263,14 @@ class PrefTrainCondition(ExpCondition):
 
 
 class CatchMeCondition(ExpCondition):
+    """Ends a pursuit game once one group has held the lead long enough."""
+
     def __init__(self, **kwargs):
+        """Build the pursuit condition.
+
+        Args:
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.set_target_group("Left" if random.uniform(0, 1) > 0.5 else "Right")
         for f in self.targets:
@@ -230,12 +278,25 @@ class CatchMeCondition(ExpCondition):
         self.score = {self.target_group: 0.0, self.follower_group: 0.0}
 
     def set_target_group(self, group):
+        """Switch which group is being pursued.
+
+        Args:
+            group: The group to pursue.
+        """
         self.target_group = group
         self.follower_group = "Right" if self.target_group == "Left" else "Left"
         self.targets = [f for f in self.agents if f.group == self.target_group]
         self.followers = [f for f in self.agents if f.group == self.follower_group]
 
     def check(self):
+        """Report whether either group has won the pursuit.
+
+        Args:
+            ff: The running simulation.
+
+        Returns:
+            True once a group has held the lead long enough.
+        """
         if self.env.Nticks == 0:
             self.flash_text("Catch me")
         targets_pos = [f.get_position() for f in self.targets]
@@ -265,7 +326,14 @@ class CatchMeCondition(ExpCondition):
 
 
 class KeepFlagCondition(ExpCondition):
+    """Ends a game once a larva has held the flag for the required time."""
+
     def __init__(self, **kwargs):
+        """Build the flag-holding condition.
+
+        Args:
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         for f in self.sources:
             if f.unique_id == "Flag":
@@ -274,6 +342,14 @@ class KeepFlagCondition(ExpCondition):
         self.r_t = 0
 
     def check(self):
+        """Report whether a larva has held the flag long enough.
+
+        Args:
+            ff: The running simulation.
+
+        Returns:
+            True once the holding time is reached.
+        """
         if self.env.Nticks == 0:
             self.flash_text("Keep the flag")
         dur = 180
@@ -300,7 +376,14 @@ class KeepFlagCondition(ExpCondition):
 
 
 class CaptureFlagCondition(ExpCondition):
+    """Ends a game once a team has carried the flag back to its base."""
+
     def __init__(self, **kwargs):
+        """Build the flag-capture condition.
+
+        Args:
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         for f in self.sources:
             if f.unique_id == "Flag":
@@ -315,6 +398,15 @@ class CaptureFlagCondition(ExpCondition):
         self.r_dst0 = self.flag.radius * 2 + self.r_base.radius * 2
 
     def check(self):
+        """Report whether either team has carried the flag home.
+
+        Args:
+            ff: The running simulation.
+
+        Returns:
+            True once a team has captured the flag.
+        """
+
         def compute_dst(point1, point2):
             x1, y1 = point1
             x2, y2 = point2

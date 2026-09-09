@@ -127,6 +127,14 @@ DEFAULT_STIMULUS: StimulusSpec = StimulusSpec(
 
 
 def module_kind(module_id: str) -> str:
+    """The kind one inspectable module belongs to.
+
+    Args:
+        module_id: The module.
+
+    Returns:
+        Its kind.
+    """
     if module_id not in MODULE_KINDS:
         raise ModuleInspectorError(
             "invalid_module",
@@ -137,6 +145,14 @@ def module_kind(module_id: str) -> str:
 
 
 def signals_for_kind(kind: str) -> tuple[str, ...]:
+    """The signals one kind of module reports.
+
+    Args:
+        kind: The module kind.
+
+    Returns:
+        The signal names.
+    """
     if kind == "effector":
         return EFFECTOR_SIGNALS
     if kind == "feeder":
@@ -151,6 +167,14 @@ def signals_for_kind(kind: str) -> tuple[str, ...]:
 
 
 def module_modes(module_id: str) -> tuple[str, ...]:
+    """The modes one module offers.
+
+    Args:
+        module_id: The module.
+
+    Returns:
+        The mode names.
+    """
     if module_id not in INSPECTABLE_MODULES:
         raise ModuleInspectorError(
             "invalid_module",
@@ -162,6 +186,14 @@ def module_modes(module_id: str) -> tuple[str, ...]:
 
 
 def mode_label(module_id: str, mode: str) -> str:
+    """The display label of one mode.
+
+    Args:
+        mode: The mode name.
+
+    Returns:
+        The label.
+    """
     short = MD.brainDB[module_id].ModeShortNames.get(mode)
     return f"{mode} ({short})" if short else mode
 
@@ -193,6 +225,17 @@ def default_module_config(module_id: str, mode: str) -> Any:
 def build_standalone_module(
     module_id: str, mode: str, conf: Any | None = None, *, dt: float = DEFAULT_DT
 ) -> Any:
+    """Build one module on its own, outside an agent.
+
+    Args:
+        module_id: The module to build.
+        mode: Its implementation mode.
+        conf: Its configuration.
+        dt: The timestep.
+
+    Returns:
+        The module instance.
+    """
     if conf is None:
         conf = default_module_config(module_id, mode)
     # Never mutate the (possibly shared) config returned by moduleDB.
@@ -220,6 +263,14 @@ def build_standalone_module(
 
 
 def detect_signals(module: Any, kind: str) -> tuple[str, ...]:
+    """Determine which signals a built module reports.
+
+    Args:
+        module: The module instance.
+
+    Returns:
+        The signal names.
+    """
     if kind == "sensor":
         return SENSOR_SIGNALS
     candidates = signals_for_kind(kind)
@@ -227,6 +278,14 @@ def detect_signals(module: Any, kind: str) -> tuple[str, ...]:
 
 
 def module_input_range(module: Any) -> tuple[float, float]:
+    """The activation range one module accepts.
+
+    Args:
+        module_id: The module.
+
+    Returns:
+        Its lower and upper input bounds.
+    """
     rng = getattr(module, "input_range", None)
     if rng is not None and len(rng) == 2 and rng[0] is not None and rng[1] is not None:
         return (float(rng[0]), float(rng[1]))
@@ -234,6 +293,7 @@ def module_input_range(module: Any) -> tuple[float, float]:
 
 
 def list_inspectable_modules() -> tuple[ModuleVariantSpec, ...]:
+    """The modules the inspector can run standalone."""
     specs: list[ModuleVariantSpec] = []
     for module_id in INSPECTABLE_MODULES:
         kind = module_kind(module_id)
@@ -252,6 +312,16 @@ def list_inspectable_modules() -> tuple[ModuleVariantSpec, ...]:
 
 
 def stimulus_series(stim: StimulusSpec, steps: int, dt: float) -> list[float]:
+    """Build the stimulus a module is driven with.
+
+    Args:
+        spec: The stimulus specification.
+        steps: How many timesteps to generate.
+        dt: The timestep.
+
+    Returns:
+        The stimulus value per timestep.
+    """
     values: list[float] = []
     for tick in range(steps):
         t = tick * dt
@@ -312,6 +382,19 @@ def run_module_trace(
     a_in: float = DEFAULT_A_IN,
     stimulus: StimulusSpec | None = None,
 ) -> ModuleTraceResult:
+    """Run one module standalone and record its output.
+
+    Args:
+        module_id: The module to run.
+        mode: Its mode.
+        conf: Its configuration.
+        dt: The timestep.
+        steps: How many timesteps to run.
+        stimulus: The stimulus to drive it with.
+
+    Returns:
+        The recorded trace.
+    """
     if steps <= 0:
         raise ModuleInspectorError(
             "invalid_trace_steps",
@@ -385,6 +468,14 @@ def run_module_trace(
 
 
 def _coerce_float(value: Any) -> float | None:
+    """Coerce a value into a float.
+
+    Args:
+        value: The value to coerce.
+
+    Returns:
+        The float, or None when it cannot be coerced.
+    """
     if isinstance(value, bool):
         return float(value)
     if isinstance(value, Real):

@@ -53,7 +53,7 @@ def test_loading_app_shows_workspace_setup_when_bootstrap_ready_without_workspac
     assert workspace_card.visible is True
 
 
-def test_loading_app_clears_persisted_workspace_until_user_reselects(
+def test_loading_app_keeps_persisted_workspace_across_restarts(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -82,9 +82,11 @@ def test_loading_app_clears_persisted_workspace_until_user_reselects(
     loading_card = row.objects[1]
     workspace_card = row.objects[2]
 
-    assert get_active_workspace_path() is None
-    assert loading_card.visible is False
-    assert workspace_card.visible is True
+    # The workspace survives a restart, so a returning user is taken straight
+    # to the landing page instead of being asked to choose a folder again.
+    assert get_active_workspace_path() == workspace_root
+    assert loading_card.visible is True
+    assert workspace_card.visible is False
 
 
 def test_landing_renders_normally_with_active_workspace(tmp_path: Path) -> None:

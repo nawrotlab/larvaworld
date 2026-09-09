@@ -120,7 +120,7 @@ scape configuration controls.
 
 - Select a stored `LabFormat` configuration
 - Inspect and edit tracker, filesystem, preprocessing, and environment settings
-- Choose or browse to a raw-data root
+- Set the raw-data root path or use **Browse** to open a native folder picker for the host OS (macOS: AppleScript; Linux: `zenity`, `kdialog`, or `yad` when available; WSL2: Windows dialog with Linux paths via `wslpath`; otherwise a Tk fallback when a display is available)
 - Discover candidate raw datasets from the selected source
 - Import one selected candidate through the central Larvaworld import backend
 - Save the imported dataset under the active workspace

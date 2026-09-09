@@ -1,3 +1,11 @@
+"""
+Turner modules generating lateral bending.
+
+Provides the turner interface and its alternative implementations, from a
+constant or sinusoidal torque to a neural oscillator whose intrinsic dynamics
+produce the alternating head casts.
+"""
+
 from __future__ import annotations
 from typing import Any
 
@@ -157,6 +165,11 @@ class NeuralOscillator(Turner):
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the oscillator and run it to its limit cycle.
+
+        Args:
+            **kwargs: Turner parameters, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.param.base_activation.bounds = self.activation_range
         self.r1 = self.activation_range[1] - self.base_activation
@@ -180,11 +193,21 @@ class NeuralOscillator(Turner):
         self.warm_up()
 
     def warm_up(self) -> None:
+        """Run the network unforced so it settles onto its limit cycle.
+
+        Without this the first simulated timesteps would reflect the arbitrary
+        initial conditions rather than the oscillator's own dynamics.
+        """
         for i in range(1000):
             if random.uniform(0, 1) < 0.5:
                 self.step()
 
     def update(self) -> None:
+        """Convert the incoming activation into the network's drive.
+
+        Negative and positive inputs are scaled by separate coefficients, so
+        the network can respond asymmetrically to opposing stimuli.
+        """
         if self.input < 0:
             a = self.r0 * self.input
         elif self.input >= 0:
@@ -192,13 +215,23 @@ class NeuralOscillator(Turner):
         self.activation = self.base_activation + a
 
     def act(self) -> None:
+        """Advance the network and emit the left-right activity difference."""
         self.oscillate()
         self.output = self.E_r - self.E_l
 
     def inact(self) -> None:
+        """Emit no torque while inactive."""
         self.output = 0
 
     def oscillate(self) -> None:
+        """Integrate the coupled excitatory-inhibitory network one timestep.
+
+        Two mutually inhibiting excitatory-inhibitory pairs, one per body side,
+        each with its own slow adaptation variable. The adaptation makes the
+        active side fatigue and yield to the other, producing the alternating
+        head casts. The drive sets both the integration gain and the adaptation
+        time constant.
+        """
         A = self.activation
         t = self.scaled_tau
         tau_h = 3 / (1 + (0.04 * A) ** 2)
@@ -236,6 +269,15 @@ class NeuralOscillator(Turner):
         self.H_C_r += t_h * (-self.H_C_r + self.E_r)
 
     def compute_R(self, x: float, h: float) -> float:
+        """Apply the network's saturating activation function.
+
+        Args:
+            x: The net input to a population.
+            h: The half-activation threshold, raised by adaptation.
+
+        Returns:
+            The firing rate, zero for non-positive input.
+        """
         if x > 0:
             r = self.m * x**self.n / (x**self.n + h**self.n)
             return r
@@ -243,6 +285,12 @@ class NeuralOscillator(Turner):
             return 0.0
 
     def get_state(self) -> list[float]:
+        """Return the full network state.
+
+        Returns:
+            The activity and adaptation of both excitatory and both inhibitory
+            populations.
+        """
         state = [
             self.E_l,
             self.H_E_l,

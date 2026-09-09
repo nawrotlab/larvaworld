@@ -1,3 +1,10 @@
+"""
+Obstacle geometry for the 2D robot simulation.
+
+Provides the wall and box primitives that the robots' proximity sensors detect
+and that block their motion.
+"""
+
 from __future__ import annotations
 from typing import Any
 import numpy as np
@@ -38,6 +45,12 @@ class Obstacle(GroupedObject, ViewableLine):
     def __init__(
         self, model: Any | None = None, edges: Any | None = None, **kwargs: Any
     ) -> None:
+        """Build the obstacle.
+
+        Args:
+            model: The simulation model the obstacle belongs to.
+            **kwargs: Obstacle attributes, forwarded to the parent classes.
+        """
         Object.__init__(self, model=model)
         ViewableLine.__init__(self, **kwargs)
 
@@ -72,6 +85,14 @@ class Box(Obstacle, Pos2D):
     ) -> None:
         # self.x = x
         # self.y = y
+        """Build a square obstacle centred on a point.
+
+        Args:
+            x: The centre's x coordinate.
+            y: The centre's y coordinate.
+            size: The edge length.
+            **kwargs: Obstacle attributes, forwarded to the parent class.
+        """
         self.size = size
 
         vert1 = geometry.Point(x - size / 2, y - size / 2)
@@ -113,6 +134,13 @@ class Wall(Obstacle):
         point2: geometry.Point = geometry.Point(-1, 1),
         **kwargs: Any,
     ) -> None:
+        """Build a straight wall between two points.
+
+        Args:
+            point1: The wall's first endpoint.
+            point2: The wall's second endpoint.
+            **kwargs: Obstacle attributes, forwarded to the parent class.
+        """
         self.point1 = point1
         self.point2 = point2
 
@@ -146,6 +174,12 @@ class Border(Obstacle):
     def __init__(
         self, vertices: list[Any] = [], points: Any | None = None, **kwargs: Any
     ) -> None:
+        """Build a multi-segment border.
+
+        Args:
+            points: The border's vertices.
+            **kwargs: Obstacle attributes, forwarded to the parent class.
+        """
         self.points = points
         self.border_xy, self.border_lines = self.define_lines(vertices)
         edges = []
@@ -164,6 +198,14 @@ class Border(Obstacle):
         # print(points)
         # print(len(points))
 
+        """Build the border's line segments from its vertices.
+
+        Args:
+            vertices: The border vertices, taken in consecutive pairs.
+
+        Returns:
+            The vertex pairs and their corresponding line geometries.
+        """
         lines = [
             geometry.LineString([tuple(p1), tuple(p2)])
             for (p1, p2) in util.SuperList(vertices).in_pairs
@@ -176,6 +218,14 @@ class Border(Obstacle):
         return xy, ls
 
     def contained(self, p: Any) -> bool:
+        """Report whether a point lies on the border.
+
+        Args:
+            p: The point to test.
+
+        Returns:
+            True when the point is within the border's width of a segment.
+        """
         return any(
             [l.distance(geometry.Point(p)) < self.width for l in self.border_lines]
         )

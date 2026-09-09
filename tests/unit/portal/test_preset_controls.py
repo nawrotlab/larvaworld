@@ -17,6 +17,8 @@ from larvaworld.portal.config_widgets.preset_controls import (
     RegistryPresetStore,
     WorkspacePresetStore,
     build_advanced_preset_controls,
+    build_preset_controls_panel,
+    build_preset_select_only_panel,
     build_user_preset_controls,
 )
 
@@ -49,6 +51,7 @@ def _new_controller(
     on_status=None,
     build_workspace_payload=None,
     build_registry_payload=None,
+    dual_write=False,
 ) -> PresetControlsController:
     return PresetControlsController(
         conftype="Env",
@@ -64,6 +67,7 @@ def _new_controller(
         on_save=on_save,
         on_status=on_status,
         title="Stored Configurations",
+        dual_write=dual_write,
     )
 
 
@@ -401,6 +405,110 @@ def test_advanced_reset_registry_leaves_workspace_presets_untouched(
     assert "Registry / custom_env" not in controller.preset_select.options
 
 
+def test_dual_write_requires_full_save_and_delete_policy(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="dual_write"):
+        _new_controller(
+            tmp_path / "presets", policy=USER_PRESET_POLICY, dual_write=True
+        )
+
+
+def test_dual_write_hides_save_target_toggle(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    controller = _new_controller(
+        tmp_path / "presets", policy=ADVANCED_PRESET_POLICY, dual_write=True
+    )
+    assert controller.save_target is None
+
+
+def test_dual_write_save_writes_both_workspace_and_registry(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    workspace_dir = tmp_path / "presets"
+    workspace_payload = _env_payload("dish")
+    workspace_payload["marker"] = "workspace"
+    registry_payload = _env_payload("dish")
+    registry_payload["marker"] = "registry"
+
+    controller = _new_controller(
+        workspace_dir,
+        policy=ADVANCED_PRESET_POLICY,
+        dual_write=True,
+        build_workspace_payload=lambda _name: workspace_payload,
+        build_registry_payload=lambda _name: registry_payload,
+    )
+    controller.preset_name.value = "dish_linked"
+
+    assert controller.save_current() is True
+    assert (workspace_dir / "dish_linked.json").is_file()
+    saved_workspace = json.loads((workspace_dir / "dish_linked.json").read_text())
+    assert saved_workspace["marker"] == "workspace"
+    saved_registry = reg.conf.Env.getID("dish_linked")
+    assert saved_registry["marker"] == "registry"
+
+
+def test_dual_write_save_overwrite_requires_confirmation_once_for_both(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    workspace_dir = tmp_path / "presets"
+    controller = _new_controller(
+        workspace_dir, policy=ADVANCED_PRESET_POLICY, dual_write=True
+    )
+    controller.preset_name.value = "dish_linked"
+    assert controller.save_current() is True
+
+    # Saving under the same name again must ask for confirmation, since it
+    # already exists in both stores.
+    assert controller.save_current() is False
+    assert controller.confirm_pending_action() is True
+    assert (workspace_dir / "dish_linked.json").is_file()
+    assert "dish_linked" in reg.conf.Env.confIDs
+
+
+def test_dual_write_delete_removes_from_both_stores(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    workspace_dir = tmp_path / "presets"
+    controller = _new_controller(
+        workspace_dir, policy=ADVANCED_PRESET_POLICY, dual_write=True
+    )
+    controller.preset_name.value = "dish_linked"
+    controller.save_current()
+    controller.refresh_list()
+    controller.preset_select.value = controller.preset_select.options[
+        "Workspace / dish_linked"
+    ]
+
+    assert controller.delete_selected() is False  # confirmation required
+    assert controller.confirm_pending_action() is True
+
+    assert not (workspace_dir / "dish_linked.json").is_file()
+    assert "dish_linked" not in reg.conf.Env.confIDs
+
+
+def test_dual_write_delete_handles_entry_present_in_only_one_store(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    # A preset that only ever made it into one store (e.g. a prior partial
+    # failure) must still be deletable without erroring on the missing side.
+    workspace_dir = tmp_path / "presets"
+    workspace_dir.mkdir(parents=True)
+    (workspace_dir / "workspace_only.json").write_text("{}\n", encoding="utf-8")
+
+    controller = _new_controller(
+        workspace_dir, policy=ADVANCED_PRESET_POLICY, dual_write=True
+    )
+    controller.refresh_list()
+    controller.preset_select.value = controller.preset_select.options[
+        "Workspace / workspace_only"
+    ]
+    controller.confirm_destructive = False
+
+    assert controller.delete_selected() is True
+    assert not (workspace_dir / "workspace_only.json").is_file()
+    assert "workspace_only" not in reg.conf.Env.confIDs
+
+
 def test_policy_constants_match_expected_permissions() -> None:
     assert USER_PRESET_POLICY.can_save_registry is False
     assert USER_PRESET_POLICY.can_delete_registry is False
@@ -409,3 +517,84 @@ def test_policy_constants_match_expected_permissions() -> None:
     assert ADVANCED_PRESET_POLICY.can_save_registry is True
     assert ADVANCED_PRESET_POLICY.can_delete_registry is True
     assert ADVANCED_PRESET_POLICY.can_reset_registry is True
+
+
+def test_build_preset_controls_panel_hides_save_target_by_default(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    controller = _new_controller(
+        tmp_path / "presets", policy=ADVANCED_PRESET_POLICY, dual_write=False
+    )
+    assert controller.save_target is not None
+
+    panel = build_preset_controls_panel(controller)
+
+    rendered = list(panel.select(pn.widgets.RadioButtonGroup))
+    assert controller.save_target not in rendered
+
+
+def test_build_preset_controls_panel_shows_save_target_when_passed(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    controller = _new_controller(
+        tmp_path / "presets", policy=ADVANCED_PRESET_POLICY, dual_write=False
+    )
+    assert controller.save_target is not None
+
+    panel = build_preset_controls_panel(
+        controller, save_target_slot=controller.save_target
+    )
+
+    rendered = list(panel.select(pn.widgets.RadioButtonGroup))
+    assert controller.save_target in rendered
+
+
+def test_build_preset_select_only_panel_has_no_crud_buttons(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    workspace_dir = tmp_path / "presets"
+    workspace_dir.mkdir(parents=True)
+    (workspace_dir / "dish.json").write_text("{}\n", encoding="utf-8")
+
+    controller = _new_controller(workspace_dir)
+    panel = build_preset_select_only_panel(controller)
+
+    buttons = list(panel.select(pn.widgets.Button))
+    assert buttons == []
+    selects = list(panel.select(pn.widgets.Select))
+    assert selects == [controller.preset_select]
+    assert "Workspace / dish" in controller.preset_select.options
+
+
+def test_build_preset_select_only_panel_auto_loads_on_selection_change(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    workspace_dir = tmp_path / "presets"
+    workspace_dir.mkdir(parents=True)
+    (workspace_dir / "dish.json").write_text("{}\n", encoding="utf-8")
+
+    loaded: list[str] = []
+    controller = _new_controller(
+        workspace_dir, on_load=lambda ref, _payload: loaded.append(ref.name)
+    )
+    build_preset_select_only_panel(controller)
+
+    controller.preset_select.value = controller.preset_select.options[
+        "Workspace / dish"
+    ]
+
+    assert loaded == ["dish"]
+
+
+def test_build_preset_select_only_panel_optional_title(
+    tmp_path: Path, isolated_env_conf_dir: Path
+) -> None:
+    controller = _new_controller(tmp_path / "presets")
+
+    untitled = build_preset_select_only_panel(controller)
+    assert list(untitled.select(pn.pane.Markdown)) == []
+
+    titled = build_preset_select_only_panel(controller, title="Environment")
+    markdown_panes = list(titled.select(pn.pane.Markdown))
+    assert len(markdown_panes) == 1
+    assert "Environment" in markdown_panes[0].object

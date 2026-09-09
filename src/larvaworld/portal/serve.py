@@ -1,7 +1,15 @@
+"""
+Entry point serving the portal.
+
+Builds the Panel application, mounts every app under its route and starts the
+server.
+"""
+
 from __future__ import annotations
 
 import base64
 import os
+import signal
 import sys
 import threading
 import time
@@ -11,9 +19,6 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any, Callable
 
-from larvaworld.portal.workspace import clear_active_workspace_path
-
-
 # String-only mapping to keep unit tests free of heavy imports.
 APP_ID_TO_FACTORY_PATH: dict[str, str] = {
     # Portal apps
@@ -21,9 +26,11 @@ APP_ID_TO_FACTORY_PATH: dict[str, str] = {
     "loading": "larvaworld.portal.serve:loading_app",
     "landing": "larvaworld.portal.landing_app:landing_app",
     "notebook": "larvaworld.portal.notebook_launch_app:notebook_launch_app",
+    "wf.explore": "larvaworld.portal.explore.explore_app:explore_app",
     "wf.run_experiment": "larvaworld.portal.simulation.single_experiment_app:single_experiment_app",
     "wf.open_dataset": "larvaworld.portal.datasets.import_datasets_app:import_datasets_app",
     "wf.dataset_manager": "larvaworld.portal.datasets.dataset_manager_app:dataset_manager_app",
+    "wf.export_center": "larvaworld.portal.datasets.analysis_app:analysis_app",
     "wf.environment_builder": "larvaworld.portal.models_architecture.environment_builder_app:environment_builder_app",
     "dev.conftypes": "larvaworld.portal.config_widgets.conftypes_demo_app:conftypes_demo_app",
     # Legacy destinations (served as-is)
@@ -38,7 +45,10 @@ SERVED_APP_IDS: set[str] = set(APP_ID_TO_FACTORY_PATH.keys())
 
 
 class _BootstrapState:
+    """Tracks how far the portal has progressed through startup."""
+
     def __init__(self) -> None:
+        """Build the startup progress tracker."""
         self.lock = threading.Lock()
         self.started = False
         self.ready = False
@@ -49,6 +59,11 @@ class _BootstrapState:
         self.total_steps = 1
 
     def snapshot(self) -> dict[str, Any]:
+        """Return the current progress.
+
+        Returns:
+            The step reached, the total, and any error.
+        """
         with self.lock:
             elapsed = max(time.monotonic() - self.started_at, 0.0)
             percent = (
@@ -72,6 +87,11 @@ class _BootstrapState:
             }
 
     def begin(self, total_steps: int) -> None:
+        """Record that startup has begun.
+
+        Args:
+            total_steps: How many steps startup will run.
+        """
         with self.lock:
             self.started = True
             self.ready = False
@@ -82,19 +102,31 @@ class _BootstrapState:
             self.total_steps = max(total_steps, 1)
 
     def set_step(self, step: str) -> None:
+        """Record which step is running.
+
+        Args:
+            step: The step's description.
+        """
         with self.lock:
             self.current_step = step
 
     def complete_step(self) -> None:
+        """Record that the current step finished."""
         with self.lock:
             self.completed_steps = min(self.completed_steps + 1, self.total_steps)
 
     def fail(self, error: str) -> None:
+        """Record that startup failed.
+
+        Args:
+            error: What went wrong.
+        """
         with self.lock:
             self.error = error
             self.current_step = "Initialization failed"
 
     def finish(self) -> None:
+        """Record that startup completed."""
         with self.lock:
             self.ready = True
             self.current_step = "Ready"
@@ -106,7 +138,8 @@ _BOOTSTRAP_THREAD: threading.Thread | None = None
 
 
 def _loading_gif_data_uris() -> list[str]:
-    gifs_dir = Path(__file__).with_name("icons") / "gifs"
+    """The animations shown on the loading screen."""
+    gifs_dir = Path(__file__).parent / "media" / "gifs"
     if not gifs_dir.exists():
         return []
     uris: list[str] = []
@@ -123,6 +156,14 @@ _LOADING_GIF_URIS = _loading_gif_data_uris()
 
 
 def _import_attr(path: str) -> object:
+    """Import an attribute named by a dotted path.
+
+    Args:
+        path: The dotted path to the attribute.
+
+    Returns:
+        The imported object.
+    """
     module_name, attr_name = path.split(":", 1)
     module = import_module(module_name)
     return getattr(module, attr_name)
@@ -130,10 +171,30 @@ def _import_attr(path: str) -> object:
 
 @lru_cache(maxsize=None)
 def _resolve_target(path: str) -> Any:
+    """Resolve an app factory from its dotted path.
+
+    Args:
+        path: The dotted path to the factory.
+
+    Returns:
+        The factory.
+    """
     return _import_attr(path)
 
 
 def _lazy_factory(path: str) -> Callable[..., Any]:
+    """Wrap an app factory so its module imports on first request.
+
+    Keeps startup light: an app's dependencies are only imported when someone
+    actually opens it.
+
+    Args:
+        path: The dotted path to the factory.
+
+    Returns:
+        The wrapping factory.
+    """
+
     def _factory(*args: Any, **kwargs: Any) -> Any:
         target = _resolve_target(path)
         if callable(target):
@@ -144,6 +205,7 @@ def _lazy_factory(path: str) -> Callable[..., Any]:
 
 
 def _warmup_steps() -> list[tuple[str, str]]:
+    """The startup steps the loading screen reports progress for."""
     skipped = {"/", "loading"}
     seen_paths: set[str] = set()
     steps: list[tuple[str, str]] = []
@@ -161,6 +223,7 @@ def _warmup_steps() -> list[tuple[str, str]]:
 
 
 def _run_bootstrap() -> None:
+    """Run the startup steps, recording progress as each completes."""
     steps = _warmup_steps()
     _BOOTSTRAP_STATE.begin(total_steps=2 + len(steps))
     try:
@@ -186,6 +249,7 @@ def _run_bootstrap() -> None:
 
 
 def _start_bootstrap_once() -> None:
+    """Start the background startup, at most once per process."""
     global _BOOTSTRAP_THREAD
     if _BOOTSTRAP_THREAD is not None and _BOOTSTRAP_THREAD.is_alive():
         return
@@ -198,17 +262,24 @@ def _start_bootstrap_once() -> None:
 
 
 def loading_app() -> Any:
+    """Build the page shown while the portal starts up.
+
+    Returns:
+        The page component.
+    """
     import panel as pn
     from larvaworld.portal.panel_components import PORTAL_RAW_CSS
+    from larvaworld.portal.workspace import get_active_workspace
     from larvaworld.portal.workspace_ui import WorkspaceUiController
 
     _start_bootstrap_once()
-    clear_active_workspace_path()
 
     pn.extension(raw_css=[PORTAL_RAW_CSS])
 
     redirect = pn.pane.HTML("", margin=0)
-    workspace_state = {"confirmed": False}
+    # The active workspace persists across restarts, so a returning user is
+    # already confirmed here and never sees the workspace prompt again.
+    workspace_state = {"confirmed": get_active_workspace() is not None}
     workspace_ui = WorkspaceUiController(
         theme="dark",
         on_workspace_change=lambda workspace: (
@@ -232,8 +303,9 @@ def loading_app() -> Any:
         pn.pane.HTML(
             (
                 '<div style="font-size:13px;line-height:1.5;color:#cbd5e1;">'
-                "Select or initialize a Larvaworld workspace before entering the portal. "
-                "Notebooks and other persistent workflows are disabled until a workspace is configured."
+                "Larvaworld stores your simulation runs, imported datasets and saved "
+                "configurations in a workspace folder. The suggested folder below is "
+                "ready to use - confirm it once and Larvaworld will remember it."
                 "</div>"
             ),
             margin=(0, 0, 14, 0),
@@ -296,6 +368,12 @@ def loading_app() -> Any:
             if workspace_state["confirmed"]:
                 card.visible = True
                 workspace_card.visible = False
+                if not redirect.object:
+                    redirect.object = (
+                        '<script>window.location.replace("/landing");</script>'
+                        '<div style="font-size:12px;color:#86efac;">'
+                        "Workspace ready. Redirecting to landing...</div>"
+                    )
             else:
                 card.visible = False
                 redirect.object = ""
@@ -313,10 +391,12 @@ def loading_app() -> Any:
             return
         background_state["index"] = index
         root.styles = {
-            "background": (
-                "linear-gradient(rgba(0,0,0,0.68), rgba(0,0,0,0.78)), "
-                f"url('{_LOADING_GIF_URIS[index]}') center / cover no-repeat"
-            ),
+            "background-color": "#3a3a3a",
+            "background-image": f"url('{_LOADING_GIF_URIS[index]}')",
+            "background-position": "center center",
+            "background-size": "contain",
+            "background-repeat": "no-repeat",
+            "background-attachment": "fixed",
             "min-height": "100vh",
             "padding": "0",
         }
@@ -356,6 +436,15 @@ def loading_app() -> Any:
 
 
 def _env_flag(name: str, default: bool) -> bool:
+    """Read a boolean setting from the environment.
+
+    Args:
+        name: The variable name.
+        default: The value used when it is unset.
+
+    Returns:
+        The setting.
+    """
     raw = os.getenv(name)
     if raw is None:
         return default
@@ -363,12 +452,22 @@ def _env_flag(name: str, default: bool) -> bool:
 
 
 def _default_open_browser() -> bool:
+    """Whether to open a browser on startup, by platform.
+
+    Returns:
+        True on the desktop platforms.
+    """
     if sys.platform.startswith("win") or sys.platform == "darwin":
         return True
     return bool(os.getenv("DISPLAY") or os.getenv("WAYLAND_DISPLAY"))
 
 
 def main() -> None:
+    """Start the portal server and serve every app."""
+    import asyncio
+    import logging
+    import warnings
+
     import panel as pn
 
     port = int(os.getenv("LARVAWORLD_PORTAL_PORT", "5006"))
@@ -376,12 +475,91 @@ def main() -> None:
 
     _start_bootstrap_once()
 
+    # Suppress harmless Bokeh validation warnings and WebSocket connection messages
+    logging.getLogger("bokeh.core.validation").setLevel(logging.ERROR)
+    logging.getLogger("bokeh.server.views.ws").setLevel(logging.ERROR)
+    logging.getLogger("tornado.iostream").setLevel(logging.CRITICAL)
+    logging.getLogger("tornado.websocket").setLevel(logging.CRITICAL)
+    logging.getLogger("tornado.access").setLevel(logging.CRITICAL)
+    logging.getLogger("panel.io.document").setLevel(logging.ERROR)
+    logging.getLogger("bokeh.server.server").setLevel(logging.ERROR)
+    logging.getLogger("asyncio").setLevel(logging.CRITICAL)
+
+    # Suppress WebSocket closed warnings
+    warnings.simplefilter("ignore", RuntimeWarning)
+    warnings.simplefilter("ignore", category=Warning)
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
+    warnings.filterwarnings("ignore", message=".*WebSocketClosedError.*")
+    warnings.filterwarnings("ignore", message=".*StreamClosedError.*")
+
+    # Suppress unhandled exception in asyncio event loop
+    def _handle_exception(loop: object, context: dict) -> None:
+        exc = context.get("exception")
+        if exc and "WebSocketClosedError" in str(type(exc).__name__):
+            return
+        if exc and "StreamClosedError" in str(type(exc).__name__):
+            return
+        logging.getLogger("asyncio").exception("Unhandled exception in event loop")
+
+    # Custom logging filter to suppress WebSocket closed errors
+    class _WebSocketErrorFilter(logging.Filter):
+        """Suppresses the websocket errors logged when a browser tab is closed."""
+
+        def filter(self, record: logging.LogRecord) -> bool:
+            if "WebSocketClosedError" in record.getMessage():
+                return False
+            if "StreamClosedError" in record.getMessage():
+                return False
+            if "Task exception was never retrieved" in record.getMessage():
+                return False
+            return True
+
+    # Apply filter to all handlers
+    filter_instance = _WebSocketErrorFilter()
+    for handler in logging.root.handlers:
+        handler.addFilter(filter_instance)
+
+    # Suppress WebSocket exceptions in traceback output
+    _original_excepthook = sys.excepthook
+
+    def _suppress_websocket_excepthook(
+        exc_type: type, exc_value: BaseException, tb: object
+    ) -> None:
+        if "WebSocketClosedError" in str(exc_type):
+            return
+        if "StreamClosedError" in str(exc_type):
+            return
+        _original_excepthook(exc_type, exc_value, tb)
+
+    sys.excepthook = _suppress_websocket_excepthook
+
+    def _signal_handler(sig: int, frame: object) -> None:
+        sys.exit(0)
+
+    # Set up event loop exception handler
+    try:
+        loop = asyncio.get_event_loop()
+        loop.set_exception_handler(_handle_exception)
+    except RuntimeError:
+        pass
+
+    signal.signal(signal.SIGINT, _signal_handler)
+    if sys.platform != "win32":
+        signal.signal(signal.SIGTERM, _signal_handler)
+
     apps: dict[str, Callable[..., Any]] = {
         app_id: _lazy_factory(factory_path)
         for app_id, factory_path in APP_ID_TO_FACTORY_PATH.items()
     }
 
-    pn.serve(apps, port=port, show=open_browser)
+    pn.serve(
+        apps,
+        port=port,
+        show=open_browser,
+        threaded=False,
+        num_procs=1,
+        use_xheaders=False,
+    )
 
 
 if __name__ == "__main__":

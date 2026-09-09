@@ -45,6 +45,17 @@ _SYMBOL_TO_MODULE = {
 
 def __getattr__(name: str) -> Any:
     # First treat submodule names
+    """Resolve a public name by importing its module on first access.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved object.
+
+    Raises:
+        AttributeError: If no submodule exports that name.
+    """
     module_path = _NAME_TO_MODULE.get(name)
     if module_path is not None:
         mod = import_module(module_path)
@@ -61,6 +72,7 @@ def __getattr__(name: str) -> Any:
 
 
 def __dir__() -> list[str]:
+    """Return the public names, including the not-yet-imported ones."""
     return sorted(list(globals().keys()) + __all__)
 
 

@@ -1,3 +1,11 @@
+"""
+The replayed larva, driven by recorded data.
+
+Reproduces an experimentally tracked animal by replaying its stored midline and
+contour coordinates, so that recorded behaviour can be rendered and inspected
+with the same viewer as a simulation.
+"""
+
 from __future__ import annotations
 from typing import Any
 
@@ -42,6 +50,12 @@ class LarvaReplay(Larva):
     __displayname__ = "Replay larva"
 
     def __init__(self, data: Any, **kwargs: Any) -> None:
+        """Build the replayed larva from its recorded track.
+
+        Args:
+            data: The recorded timeseries for this animal.
+            **kwargs: Larva attributes, forwarded to the parent class.
+        """
         self.data = data
         fo0 = self.data.front_orientation[0]
         if np.isnan(fo0):

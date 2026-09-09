@@ -1,3 +1,10 @@
+"""
+Shared Panel components for the portal's chrome.
+
+Provides the header, footer, cards and lanes that give every app the same
+frame.
+"""
+
 from __future__ import annotations
 
 import base64
@@ -7,7 +14,17 @@ from pathlib import Path
 
 import panel as pn
 
-from larvaworld.portal.landing_registry import DOCS_ROOT, GITHUB_ISSUES, GITHUB_ROOT
+from larvaworld.portal.about import build_about_content
+from larvaworld.portal.parameter_database.parameter_db_app import (
+    _build_parameter_db_dropdown,
+)
+from larvaworld.portal.landing_registry import (
+    DOCS_ROOT,
+    DOCS_TUTORIALS,
+    GITHUB_ISSUES,
+    GITHUB_ROOT,
+    PYPI_ROOT,
+)
 from larvaworld.portal.registry_logic import (
     compute_badges,
     compute_primary_action,
@@ -176,6 +193,14 @@ PORTAL_RAW_CSS = """
   align-self: center !important;
 }
 
+.lw-portal-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  align-self: center !important;
+}
+
 .lw-portal-header-right {
   display: flex;
   align-items: center;
@@ -299,8 +324,24 @@ PORTAL_RAW_CSS = """
   box-shadow: none !important;
 }
 
+.lw-portal-workspace-trigger-shell:hover::after {
+  content: "Workspace";
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.96);
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 31;
+}
+
 .lw-portal-icon-link:hover,
-.lw-portal-topbar .lw-portal-settings-btn .bk-btn:hover {
+.lw-portal-topbar .lw-portal-workspace-btn .bk-btn:hover {
   text-decoration: none;
 }
 
@@ -310,18 +351,18 @@ PORTAL_RAW_CSS = """
   object-fit: contain;
 }
 
-.lw-portal-settings-btn .bk-btn {
+.lw-portal-workspace-btn .bk-btn {
   text-decoration: none;
   padding: 0 12px;
   font-size: 13px;
   font-weight: 500;
 }
 
-.lw-portal-settings-btn {
+.lw-portal-workspace-btn {
   margin: 0 !important;
 }
 
-.lw-portal-settings-dropdown-wrap {
+.lw-portal-workspace-dropdown-wrap {
   position: relative;
   display: flex;
   display: inline-flex;
@@ -335,7 +376,7 @@ PORTAL_RAW_CSS = """
   overflow: visible;
 }
 
-.lw-portal-settings-panel {
+.lw-portal-workspace-panel {
   position: absolute;
   top: 40px;
   right: 0;
@@ -353,14 +394,14 @@ PORTAL_RAW_CSS = """
   pointer-events: auto;
 }
 
-.lw-portal-settings-title {
+.lw-portal-workspace-title {
   font-size: 13px;
   font-weight: 650;
   margin: 0 0 6px 0;
   color: #111111;
 }
 
-.lw-portal-settings-title--dark {
+.lw-portal-workspace-title--dark {
   color: rgba(241,245,249,0.96) !important;
 }
 
@@ -374,7 +415,7 @@ PORTAL_RAW_CSS = """
   color: rgba(241,245,249,0.92) !important;
 }
 
-.lw-portal-settings-body {
+.lw-portal-workspace-body {
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -389,12 +430,12 @@ PORTAL_RAW_CSS = """
   backdrop-filter: none;
 }
 
-.lw-portal-settings-row {
+.lw-portal-workspace-row {
   font-size: 12px;
   color: rgba(0,0,0,0.72);
 }
 
-.lw-portal-settings-advanced {
+.lw-portal-workspace-advanced {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -405,31 +446,31 @@ PORTAL_RAW_CSS = """
   padding: 0 !important;
 }
 
-.lw-portal-settings-check {
+.lw-portal-workspace-check {
   color: rgba(17,17,17,0.72);
   font-size: 12px;
   line-height: 1;
 }
 
-.lw-portal-settings-panel .bk,
-.lw-portal-settings-panel label,
-.lw-portal-settings-panel .bk-input-group,
-.lw-portal-settings-panel .bk-form-group {
+.lw-portal-workspace-panel .bk,
+.lw-portal-workspace-panel label,
+.lw-portal-workspace-panel .bk-input-group,
+.lw-portal-workspace-panel .bk-form-group {
   color: #111111 !important;
 }
 
-.lw-portal-settings-body .bk,
-.lw-portal-settings-body label,
-.lw-portal-settings-body .bk-input-group,
-.lw-portal-settings-body .bk-form-group {
+.lw-portal-workspace-body .bk,
+.lw-portal-workspace-body label,
+.lw-portal-workspace-body .bk-input-group,
+.lw-portal-workspace-body .bk-form-group {
   color: #111111 !important;
 }
 
-.lw-portal-settings-panel * {
+.lw-portal-workspace-panel * {
   color: #111111 !important;
 }
 
-.lw-portal-settings-body * {
+.lw-portal-workspace-body * {
   color: #111111 !important;
 }
 
@@ -488,8 +529,8 @@ PORTAL_RAW_CSS = """
   color: rgba(17,17,17,0.82);
 }
 
-.lw-portal-workspace-controls--dark .lw-portal-settings-title,
-.lw-portal-workspace-controls--dark .lw-portal-settings-title--dark,
+.lw-portal-workspace-controls--dark .lw-portal-workspace-title,
+.lw-portal-workspace-controls--dark .lw-portal-workspace-title--dark,
 .lw-portal-workspace-controls--dark .lw-portal-field-label,
 .lw-portal-workspace-controls--dark .lw-portal-field-label--dark,
 .lw-portal-workspace-controls--dark label,
@@ -617,7 +658,7 @@ PORTAL_RAW_CSS = """
   fill: #ffffff !important;
 }
 
-.lw-portal-settings-panel .lw-portal-workspace-input .bk-input-group input {
+.lw-portal-workspace-panel .lw-portal-workspace-input .bk-input-group input {
   width: 100% !important;
   min-height: 36px;
   padding: 7px 10px !important;
@@ -627,9 +668,9 @@ PORTAL_RAW_CSS = """
   box-shadow: none !important;
 }
 
-.lw-portal-settings-panel .bk-input-group,
-.lw-portal-settings-panel .bk-form-group,
-.lw-portal-settings-panel .bk-input-group input {
+.lw-portal-workspace-panel .bk-input-group,
+.lw-portal-workspace-panel .bk-form-group,
+.lw-portal-workspace-panel .bk-input-group input {
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
@@ -648,7 +689,7 @@ PORTAL_RAW_CSS = """
 }
 
 .lw-portal-root.lw-portal-dark .lw-portal-card-subtitle,
-.lw-portal-root.lw-portal-dark .lw-portal-settings-row {
+.lw-portal-root.lw-portal-dark .lw-portal-workspace-row {
   color: rgba(203, 213, 225, 0.9);
 }
 
@@ -677,7 +718,6 @@ PORTAL_RAW_CSS = """
 
 .lw-portal-banner-main {
   display: flex;
-  align-items: stretch;
   gap: 0;
   height: 300px;
 }
@@ -687,17 +727,27 @@ PORTAL_RAW_CSS = """
 }
 
 .lw-portal-banner-media {
-  flex: 0 0 74%;
+  flex: 0 0 80%;
   min-width: 0;
-  min-height: 300px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #3a3a3a;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
 }
 
 .lw-portal-banner-gif {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  margin: auto;
+  object-fit: contain;
+  object-position: center;
   display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  min-height: 300px;
 }
 
 .lw-portal-banner-copy {
@@ -707,7 +757,7 @@ PORTAL_RAW_CSS = """
   gap: 8px;
   padding: 16px 58px 16px 16px;
   height: 300px;
-  flex: 1 1 26%;
+  flex: 1 1 20%;
   overflow: hidden;
 }
 
@@ -829,7 +879,8 @@ PORTAL_RAW_CSS = """
   position: absolute;
   top: -35px;
   right: 8px;
-  z-index: 7;
+  /* Stay below the MaterialTemplate header so its popovers overlay landing content. */
+  z-index: 1;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -1200,11 +1251,205 @@ button.lw-portal-qs-top-tab--active,
 .lw-portal-footer-link:hover {
   color: #111111;
 }
+
+.lw-about-dropdown-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.lw-about-trigger-shell {
+  position: relative;
+  width: 22px;
+  min-width: 22px;
+  max-width: 22px;
+  height: 22px;
+  min-height: 22px;
+  max-height: 22px;
+  flex: 0 0 22px;
+  margin: 0 !important;
+}
+
+.lw-about-trigger-button,
+.lw-about-trigger-button .bk-btn,
+.lw-about-trigger-button button,
+.lw-about-trigger-button .mdc-button,
+.lw-about-trigger-button [class*="mdc-button"] {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.lw-about-trigger-shell:hover::after {
+  content: "About";
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.96);
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 31;
+}
+
+.lw-about-dropdown-panel {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  width: min(420px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.14);
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+  box-sizing: border-box;
+  z-index: 30;
+  color: #111111;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.lw-about-dropdown-panel h3 {
+  font-size: 17px;
+  font-weight: 650;
+  margin: 0 0 4px 0;
+  color: #111111;
+}
+
+.lw-about-dropdown-panel p,
+.lw-about-dropdown-panel ul {
+  margin: 0 0 10px 0;
+  color: rgba(17,17,17,0.86);
+}
+
+.lw-about-dropdown-panel ul {
+  padding-left: 20px;
+}
+
+.lw-about-dropdown-panel a {
+  color: #1f5fa8;
+  text-decoration: none;
+}
+
+.lw-about-dropdown-panel a:hover {
+  text-decoration: underline;
+}
+
+.lw-parameter-db-dropdown-wrap {
+  position: relative;
+  display: flex;
+  display: inline-flex;
+  align-items: center;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  flex: 0 0 22px;
+  align-self: center !important;
+  margin-right: 0 !important;
+  overflow: visible;
+}
+
+.lw-parameter-db-trigger-shell {
+  position: relative;
+  width: 22px;
+  min-width: 22px;
+  max-width: 22px;
+  height: 22px;
+  min-height: 22px;
+  max-height: 22px;
+  flex: 0 0 22px;
+  margin: 0 !important;
+}
+
+.lw-parameter-db-trigger-button,
+.lw-parameter-db-trigger-button .bk-btn,
+.lw-parameter-db-trigger-button button,
+.lw-parameter-db-trigger-button .mdc-button,
+.lw-parameter-db-trigger-button [class*="mdc-button"] {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.lw-parameter-db-trigger-shell:hover::after {
+  content: "Parameter database";
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.96);
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 31;
+}
+
+/* .lw-parameter-db-dropdown-panel / --large are marker classes only (used
+   for test/discovery purposes on the Python-level component). The actual
+   visual box (.lw-parameter-db-panel-surface and friends) is styled via
+   _DraggableResizablePopup's own `stylesheets` param in
+   parameter_database/parameter_db_app.py, not here: ReactiveHTML
+   components render into their own scope and reliably picking up
+   document-level raw_css there is not guaranteed. */
+
+.lw-parameter-db-dropdown-panel h3 {
+  font-size: 17px;
+  font-weight: 650;
+  margin: 0 0 4px 0;
+  color: #111111;
+}
+
+.lw-parameter-db-dropdown-panel p {
+  margin: 0 0 10px 0;
+  color: rgba(17,17,17,0.86);
+}
 """.strip()
 
 
 def _load_icon_data_uri(filename: str, mime_type: str) -> str:
-    icon_path = Path(__file__).with_name("icons") / filename
+    """Read a bundled icon and encode it for inline use.
+
+    Args:
+        filename: The icon file's name.
+        mime_type: Its MIME type.
+
+    Returns:
+        The data URI, or an empty string when the icon is missing.
+    """
+    icon_path = Path(__file__).parent / "media" / "icons" / filename
     try:
         encoded = base64.b64encode(icon_path.read_bytes()).decode("ascii")
     except OSError:
@@ -1213,6 +1458,7 @@ def _load_icon_data_uri(filename: str, mime_type: str) -> str:
 
 
 def _resolve_portal_version() -> str:
+    """The larvaworld version shown in the portal footer."""
     try:
         return im.version("larvaworld")
     except Exception:
@@ -1221,11 +1467,36 @@ def _resolve_portal_version() -> str:
 
 _LOGO_DATA_URI = _load_icon_data_uri("LarvaWorld_logo.png", "image/png")
 _RTD_ICON_DATA_URI = _load_icon_data_uri("RTD_logo.svg", "image/svg+xml")
+_TUTORIAL_ICON_DATA_URI = _load_icon_data_uri("tutorial_icon.svg", "image/svg+xml")
 _GITHUB_ICON_DATA_URI = _load_icon_data_uri("github_logo.svg", "image/svg+xml")
+_PYPI_ICON_DATA_URI = _load_icon_data_uri("pypi_logo.svg", "image/svg+xml")
+_ABOUT_ICON_DATA_URI = _load_icon_data_uri("info_icon.svg", "image/svg+xml")
+_PARAMETER_DB_ICON_DATA_URI = _load_icon_data_uri("parameter_icon.png", "image/png")
 _PORTAL_VERSION = _resolve_portal_version()
 
 
+def _about_button_icon_html() -> str:
+    """The markup for the about button's icon."""
+    if not _ABOUT_ICON_DATA_URI:
+        return '<div style="font-size:20px;" title="About">ℹ️</div>'
+    return (
+        f'<img src="{_ABOUT_ICON_DATA_URI}" '
+        f'style="width:22px;height:22px;object-fit:contain;" title="About"/>'
+    )
+
+
+def _parameter_db_button_icon_html() -> str:
+    """The markup for the parameter database button's icon."""
+    if not _PARAMETER_DB_ICON_DATA_URI:
+        return '<div style="font-size:20px;" title="Parameter database">📊</div>'
+    return (
+        f'<img src="{_PARAMETER_DB_ICON_DATA_URI}" '
+        f'style="width:22px;height:22px;object-fit:contain;" title="Parameter database"/>'
+    )
+
+
 def _portal_logo_html(*, version: str) -> str:
+    """The markup for the portal logo."""
     logo_img = ""
     if _LOGO_DATA_URI:
         logo_img = f'<img class="lw-portal-logo-img" src="{_LOGO_DATA_URI}" alt="Larvaworld logo"/>'
@@ -1244,11 +1515,19 @@ def _portal_logo_html(*, version: str) -> str:
 
 
 def _header_links_html() -> str:
+    """The markup for the header's external links."""
     docs_icon = ""
     if _RTD_ICON_DATA_URI:
         docs_icon = (
             f'<img class="lw-portal-header-icon" src="{_RTD_ICON_DATA_URI}" '
             'alt="Read the Docs logo"/>'
+        )
+
+    tutorial_icon = '<span style="font-size:22px;" aria-hidden="true">🎓</span>'
+    if _TUTORIAL_ICON_DATA_URI:
+        tutorial_icon = (
+            f'<img class="lw-portal-header-icon" src="{_TUTORIAL_ICON_DATA_URI}" '
+            'alt="Education icon"/>'
         )
 
     github_icon = ""
@@ -1258,21 +1537,45 @@ def _header_links_html() -> str:
             'alt="GitHub logo"/>'
         )
 
+    pypi_icon = ""
+    if _PYPI_ICON_DATA_URI:
+        pypi_icon = (
+            f'<img class="lw-portal-header-icon" src="{_PYPI_ICON_DATA_URI}" '
+            'alt="PyPI logo"/>'
+        )
+
     return (
         '<div class="lw-portal-header-right">'
         f'<a class="lw-portal-icon-link" href="{escape(DOCS_ROOT)}" '
         'target="_blank" rel="noopener noreferrer" title="Read the Docs">'
         f"{docs_icon}"
         "</a>"
+        f'<a class="lw-portal-icon-link" href="{escape(DOCS_TUTORIALS)}" '
+        'target="_blank" rel="noopener noreferrer" title="Tutorial course" '
+        'aria-label="Tutorial course">'
+        f"{tutorial_icon}"
+        "</a>"
         f'<a class="lw-portal-icon-link" href="{escape(GITHUB_ROOT)}" '
         'target="_blank" rel="noopener noreferrer" title="GitHub">'
         f"{github_icon}"
+        "</a>"
+        f'<a class="lw-portal-icon-link" href="{escape(PYPI_ROOT)}" '
+        'target="_blank" rel="noopener noreferrer" title="PyPI">'
+        f"{pypi_icon}"
         "</a>"
         "</div>"
     )
 
 
 def _badge_html(badge: str) -> str:
+    """Render one badge as markup.
+
+    Args:
+        badge: The badge to render.
+
+    Returns:
+        The markup.
+    """
     cls = "lw-portal-badge"
     if badge.strip().lower() in {"under construction", "planned"}:
         cls += " lw-portal-badge--under-construction"
@@ -1287,6 +1590,16 @@ def _button_html(
     extra_classes: tuple[str, ...] = (),
     tooltip: str | None = None,
 ) -> str:
+    """Render a card's primary action as markup.
+
+    Args:
+        label: The button text.
+        href: Where it leads.
+        enabled: Whether it is clickable.
+
+    Returns:
+        The markup.
+    """
     normalized_label = label.strip().lower()
     button_classes = ["lw-portal-btn"]
     if normalized_label in {"learn more", "notebook"}:
@@ -1310,6 +1623,14 @@ def _button_html(
 
 
 def _subtitle_html(text: str) -> str:
+    """Render a card subtitle as markup.
+
+    Args:
+        text: The subtitle text.
+
+    Returns:
+        The markup.
+    """
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     if not lines:
         lines = [""]
@@ -1317,6 +1638,11 @@ def _subtitle_html(text: str) -> str:
 
 
 def build_footer() -> pn.viewable.Viewable:
+    """Build the footer shown on every portal page.
+
+    Returns:
+        The footer component.
+    """
     html = (
         '<div class="lw-portal-footer-shell"><div class="lw-portal-footer-bar">'
         "<span>&copy; Larvaworld</span>"
@@ -1335,54 +1661,148 @@ def build_footer() -> pn.viewable.Viewable:
     return pn.pane.HTML(html, margin=0, sizing_mode="stretch_width")
 
 
-def build_template_header() -> pn.viewable.Viewable:
-    workspace_ui = WorkspaceUiController()
-    left = pn.pane.HTML(
-        _portal_logo_html(version=_PORTAL_VERSION),
+def _build_about_dropdown() -> pn.viewable.Viewable:
+    # About trigger, built the same way as the workspace trigger in
+    # WorkspaceUiController: a visible HTML icon pane plus an invisible
+    # Button stacked on top for the click handling, wrapped in a small
+    # shell (see .lw-portal-workspace-trigger-shell / -led / -button).
+    """Build the header's about menu.
+
+    Returns:
+        The menu component.
+    """
+    about_led = pn.pane.HTML(_about_button_icon_html(), margin=0)
+    about_button = pn.widgets.Button(
+        name="",
         margin=0,
-        css_classes=["lw-portal-header-left"],
+        css_classes=["lw-about-trigger-button"],
     )
-    links = pn.pane.HTML(
-        _header_links_html(),
+    about_trigger_view = pn.Column(
+        about_led,
+        about_button,
+        margin=0,
+        width=22,
+        height=22,
+        css_classes=["lw-about-trigger-shell"],
+    )
+    about_panel = pn.Column(
+        build_about_content(_PORTAL_VERSION),
+        visible=False,
+        css_classes=["lw-about-dropdown-panel"],
         margin=0,
     )
+
+    def _toggle_about(_: object) -> None:
+        about_panel.visible = not about_panel.visible
+
+    about_button.on_click(_toggle_about)
+
+    return pn.Column(
+        about_trigger_view,
+        about_panel,
+        css_classes=["lw-about-dropdown-wrap"],
+        margin=(0, 0, 0, 8),
+        sizing_mode="fixed",
+        width_policy="min",
+    )
+
+
+def _build_workspace_dropdown(
+    workspace_ui: WorkspaceUiController,
+) -> pn.viewable.Viewable:
+    """Build the header's workspace menu.
+
+    Args:
+        workspace_ui: The workspace controller the menu drives.
+
+    Returns:
+        The menu component.
+    """
     workspace_controls = workspace_ui.build_controls()
-    settings_body = pn.Column(
+    workspace_body = pn.Column(
         workspace_controls,
-        css_classes=["lw-portal-settings-body"],
+        css_classes=["lw-portal-workspace-body"],
         sizing_mode="stretch_width",
         margin=0,
     )
-    settings_panel = pn.Column(
-        settings_body,
+    workspace_panel = pn.Column(
+        workspace_body,
         visible=get_active_workspace() is None,
-        css_classes=["lw-portal-settings-panel"],
+        css_classes=["lw-portal-workspace-panel"],
         margin=0,
     )
 
-    def _toggle_settings(_: object) -> None:
-        settings_panel.visible = not settings_panel.visible
+    def _toggle_workspace(_: object) -> None:
+        workspace_panel.visible = not workspace_panel.visible
 
-    workspace_ui.trigger_button.on_click(_toggle_settings)
+    workspace_ui.trigger_button.on_click(_toggle_workspace)
 
-    settings_dropdown = pn.Column(
+    return pn.Column(
         workspace_ui.trigger_view,
-        settings_panel,
-        css_classes=["lw-portal-settings-dropdown-wrap"],
+        workspace_panel,
+        css_classes=["lw-portal-workspace-dropdown-wrap"],
         margin=0,
         sizing_mode="fixed",
         width_policy="min",
     )
+
+
+def _build_header_controls_panel(
+    workspace_ui: WorkspaceUiController,
+) -> pn.viewable.Viewable:
+    """Parameter Database + workspace dropdowns, combined so every header
+    (landing template and every sub-app) places both together as one unit."""
+    return pn.Row(
+        _build_parameter_db_dropdown(),
+        _build_workspace_dropdown(workspace_ui),
+        css_classes=["lw-portal-header-controls"],
+        margin=0,
+        sizing_mode="fixed",
+        width_policy="min",
+    )
+
+
+def build_template_header() -> pn.viewable.Viewable:
+    """Build the header used by the landing page.
+
+    Returns:
+        The header component.
+    """
+    workspace_ui = WorkspaceUiController()
+
+    # Logo and about button
+    logo_pane = pn.pane.HTML(
+        _portal_logo_html(version=_PORTAL_VERSION),
+        margin=0,
+        css_classes=["lw-portal-header-left"],
+    )
+
+    about_dropdown = _build_about_dropdown()
+
+    left_row = pn.Row(
+        logo_pane,
+        about_dropdown,
+        margin=0,
+        width_policy="min",
+        sizing_mode="fixed",
+    )
+
+    links = pn.pane.HTML(
+        _header_links_html(),
+        margin=0,
+    )
+    controls_panel = _build_header_controls_panel(workspace_ui)
+
     right = pn.Row(
         links,
-        settings_dropdown,
+        controls_panel,
         css_classes=["lw-portal-header-right-wrap"],
         margin=0,
         sizing_mode="fixed",
         width_policy="min",
     )
     header_row = pn.Row(
-        left,
+        left_row,
         pn.Spacer(),
         pn.Spacer(sizing_mode="stretch_width"),
         right,
@@ -1390,12 +1810,18 @@ def build_template_header() -> pn.viewable.Viewable:
         sizing_mode="stretch_width",
         margin=0,
     )
+
     return header_row
 
 
 def build_app_header(
     *, title: str, back_href: str = "/landing"
 ) -> pn.viewable.Viewable:
+    """Build the header used by the individual apps.
+
+    Returns:
+        The header component.
+    """
     workspace_ui = WorkspaceUiController()
     back_button = pn.pane.HTML(
         (
@@ -1409,11 +1835,12 @@ def build_app_header(
         f'<div class="lw-portal-app-title">{escape(title)}</div>',
         margin=0,
     )
+    controls_panel = _build_header_controls_panel(workspace_ui)
     return pn.Row(
         back_button,
         title_pane,
         pn.Spacer(sizing_mode="stretch_width"),
-        workspace_ui.chip_pane,
+        controls_panel,
         css_classes=["lw-portal-app-topbar"],
         sizing_mode="stretch_width",
         margin=0,
@@ -1429,6 +1856,14 @@ def render_card(
     notebook_enabled: bool = True,
     notebook_disabled_reason: str | None = None,
 ) -> pn.viewable.Viewable:
+    """Render one landing entry as a card.
+
+    Args:
+        item: The landing entry.
+
+    Returns:
+        The card component.
+    """
     action = compute_primary_action(item)
     badges = compute_badges(item)
     card_href = resolve_target(item) or f"/{item.id}"
@@ -1555,6 +1990,14 @@ def render_lane(
     notebook_enabled: bool = True,
     notebook_disabled_reason: str | None = None,
 ) -> pn.viewable.Viewable:
+    """Render one lane of landing cards.
+
+    Args:
+        lane: The lane specification.
+
+    Returns:
+        The lane component.
+    """
     title = pn.pane.HTML(
         f'<div class="lw-portal-section-title">{escape(lane.title)}</div>', margin=0
     )

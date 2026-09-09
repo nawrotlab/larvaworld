@@ -1,3 +1,10 @@
+"""
+Optimization helpers and stochastic bout-duration generators.
+
+Provides a Nelder-Mead wrapper, the DEB beta function, and two generative models
+of behavioural bout durations (critical-branching and exponential).
+"""
+
 from __future__ import annotations
 
 import math

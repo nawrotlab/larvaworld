@@ -18,6 +18,7 @@ __all__: list[str] = [
     "deb",
     "epochs",
     "freq",
+    "ga",
     "grid",
     "hist",
     "metric",
@@ -130,6 +131,17 @@ _FUNCTION_TO_MODULE = {
 
 
 def __getattr__(name: str):
+    """Resolve a public name by importing its module on first access.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved object.
+
+    Raises:
+        AttributeError: If no submodule exports that name.
+    """
     module_path = _SUBMODULES.get(name)
     if module_path is None:
         # Check if it's a class
@@ -159,4 +171,5 @@ def __getattr__(name: str):
 
 
 def __dir__() -> list[str]:
+    """Return the public names, including the not-yet-imported ones."""
     return sorted(list(globals().keys()) + list(__all__))

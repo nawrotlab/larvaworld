@@ -13,6 +13,8 @@ import pytest
 
 from larvaworld.lib.plot.table import (
     arrange_index_labels,
+    diff_df,
+    mdiff_table,
     modelConfTable,
     mpl_table,
     error_table,
@@ -289,6 +291,135 @@ class TestModelConfTable:
         row = df[df["parameter"] == "EEB"]
         assert not row.empty
         assert float(row["value"].iloc[0]) == 0.0
+
+    def test_model_conf_table_includes_every_module_not_just_intermitter(self):
+        """
+        Regression test: gen_rows2's `isinstance(p, param.Parameterized)`
+        filter matched nothing for brain modules OTHER than intermitter
+        (module_conf() returns plain AttrDicts of scalars/typed
+        distribution objects, never Parameterized instances) -- and,
+        confirmed directly, ALSO nothing for body/physics/sensorimotor/
+        energetics (class_defaults()-based dicts are plain AttrDicts too).
+        So every module except the separately special-cased intermitter
+        silently produced zero rows, for every model.
+        """
+
+        def _return_df(df, row_colors, mID, **kwargs):
+            return df
+
+        with patch("larvaworld.lib.plot.table.conf_table", side_effect=_return_df):
+            df_explorer = modelConfTable(mID="explorer")
+            df_navigator = modelConfTable(mID="navigator")
+
+        for df, expected_modules in [
+            (
+                df_explorer,
+                {"CRAWLER", "INTERFERENCE", "TURNER", "INTERMITTER", "BODY", "PHYSICS"},
+            ),
+            (
+                df_navigator,
+                {
+                    "CRAWLER",
+                    "INTERFERENCE",
+                    "TURNER",
+                    "INTERMITTER",
+                    "OLFACTOR",
+                    "BODY",
+                    "PHYSICS",
+                },
+            ),
+        ]:
+            present = set(df.index) - {""}
+            assert expected_modules <= present
+
+    def test_model_conf_table_excludes_mode_and_run_mode(self):
+        """mode/run_mode are selectors, not values worth a table row."""
+
+        def _return_df(df, row_colors, mID, **kwargs):
+            return df
+
+        with patch("larvaworld.lib.plot.table.conf_table", side_effect=_return_df):
+            df = modelConfTable(mID="explorer")
+
+        assert "mode" not in df["parameter"].values
+        assert "run_mode" not in df["parameter"].values
+
+
+@pytest.mark.fast
+class TestMdiffTable:
+    """Regression tests for mdiff_table (real registry, no mocking)."""
+
+    def test_mdiff_table_without_explicit_dIDs(self):
+        """
+        dIDs used to be a required positional arg even though the underlying
+        diff_df already defaults it to mIDs -- and a separate bug (the table's
+        name passed positionally into AutoBasePlot's `fig` slot, colliding with
+        the explicit `fig=` kwarg) meant this call never actually worked even
+        once dIDs was optional.
+        """
+        import matplotlib.figure
+
+        fig = mdiff_table(mIDs=["explorer", "navigator"], return_fig=True)
+
+        assert isinstance(fig, matplotlib.figure.Figure)
+
+    def test_mdiff_table_has_spanning_larva_models_header_with_no_column_gap(self):
+        """
+        Regression test for the visual rewrite: a "Larva models" header
+        should span just the model-name columns (not "parameter"/"MODULE"),
+        and adding it must not perturb the model columns' own widths --
+        matplotlib's Table recomputes each column's width as the max width
+        of any cell claiming that column index on every draw, so a single
+        cell naively spanning multiple columns previously inflated the
+        first of those columns and pushed the rest apart, leaving a blank
+        gap between the model-name columns.
+        """
+        fig = mdiff_table(mIDs=["explorer", "navigator"], return_fig=True)
+        fig.canvas.draw()
+        ax = fig.axes[0]
+        mpl_table_obj = ax.tables[0]
+
+        assert any(
+            t.get_text() == "Larva models" for t in ax.texts
+        ), "Expected a free-floating 'Larva models' header label"
+
+        col1 = mpl_table_obj[(0, 1)]
+        col2 = mpl_table_obj[(0, 2)]
+        gap = col2.get_x() - (col1.get_x() + col1.get_width())
+        assert abs(gap) < 1e-6, f"Model columns should be contiguous, got gap={gap}"
+
+    def test_diff_df_resolves_missing_key_to_class_default_not_none(self):
+        """
+        A field entirely absent from a model's *stored* flattened config
+        (because it happens to sit at its class-level default, e.g. a
+        turner's ``input_noise``/``output_noise``) should diff as that
+        default value, not as a blank ``None`` -- "explorer has no value"
+        was misleading: the model does have a value (0.0), it just wasn't
+        serialized. A field whose entire *module* is genuinely absent from
+        one side (e.g. "explorer" has no olfactor at all) must still show
+        None, since there is no mode to resolve a default against.
+        """
+        from larvaworld.lib import reg
+
+        m = reg.conf.Model.getID("explorer").get_copy()
+        m2 = m.get_copy()
+        m2.brain.turner.input_noise = 0.5623
+        m2.brain.turner.output_noise = 0.3187
+
+        df, _ = diff_df(mIDs=["explorer", "modified"], ms=[m, m2])
+        df = df.set_index("parameter")
+
+        assert df.loc["input_noise", "explorer"] == 0.0
+        assert df.loc["input_noise", "modified"] == pytest.approx(0.5623)
+        assert df.loc["output_noise", "explorer"] == 0.0
+        assert df.loc["output_noise", "modified"] == pytest.approx(0.3187)
+
+        df2, _ = diff_df(
+            mIDs=["explorer", "navigator"],
+            ms=[m, reg.conf.Model.getID("navigator")],
+        )
+        df2 = df2.set_index("parameter")
+        assert df2.loc["Odor", "explorer"] is None
 
 
 @pytest.mark.fast

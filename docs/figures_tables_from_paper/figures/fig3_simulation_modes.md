@@ -109,7 +109,7 @@ For detailed information on each mode, see :ref:`simulation-modes-detailed`.
 
 - **Table 2**: Simulation modes (detailed descriptions)
 - **Diagram 11**: Simulation Types Comparison (from mermaid_diagrams)
-- **CLI Tutorial**: `docs/tutorials/cli.ipynb`
+- **CLI Tutorial**: `docs/tutorials/1_getting_started/command_line_interface.ipynb`
 
 ---
 

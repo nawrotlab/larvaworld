@@ -1,3 +1,10 @@
+"""
+Evolutionary optimization of model parameters.
+
+Runs a genetic algorithm over the model search space, scoring each generation
+against a reference dataset and breeding the best genomes into the next.
+"""
+
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, List, Optional
 
@@ -21,6 +28,14 @@ from ..plot import diff_df
 from ..process import Evaluation
 from ..util import AttrDict
 from .base_run import BaseRun
+from .manifest import (
+    RunManifestSession,
+    attach_manifest_to_datasets,
+    derive_seed,
+    deterministic_random_context,
+    json_ready,
+    prepare_master_seed,
+)
 
 __all__: list[str] = [
     "GAevaluation",
@@ -31,6 +46,15 @@ __all__: list[str] = [
 
 
 def dst2source_evaluation(robot: Any, source_xy: dict) -> float:
+    """Score a genome by how closely it approaches an odor source.
+
+    Args:
+        robot: The simulated agent.
+        source_xy: The source positions.
+
+    Returns:
+        The fitness value.
+    """
     traj = np.array(robot.trajectory)
     dst = np.sqrt(np.diff(traj[:, 0]) ** 2 + np.diff(traj[:, 1]) ** 2)
     cum_dst = np.sum(dst)
@@ -42,10 +66,26 @@ def dst2source_evaluation(robot: Any, source_xy: dict) -> float:
 
 
 def cum_dst(robot: Any, **kwargs: Any) -> float:
+    """Score a genome by the distance it covered.
+
+    Args:
+        robot: The simulated agent.
+
+    Returns:
+        The cumulative distance.
+    """
     return robot.cum_dst / robot.length
 
 
 def bend_error_exclusion(robot: Any) -> bool:
+    """Reject a genome whose body bend became unrealistic.
+
+    Args:
+        robot: The simulated agent.
+
+    Returns:
+        True when the genome should be excluded.
+    """
     if robot.body_bend_errors >= 20:
         return True
     else:
@@ -108,6 +148,11 @@ class GAevaluation(Evaluation):
     )
 
     def __init__(self, **kwargs: Any):
+        """Build the evaluation scoring each generation.
+
+        Args:
+            **kwargs: Forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
         self.exclude_func = (
@@ -329,16 +374,33 @@ class GAlauncher(BaseRun):
         self,
         dataset: Optional[LarvaDataset] = None,
         evaluator: Optional[GAevaluation] = None,
+        _record_manifest: bool = True,
+        _source_manifest: str | None = None,
         **kwargs: Any,
     ):
         """
         Simulation mode 'Ga' launches a genetic algorith optimization simulation of a specified agent model.
         """
+        self._record_manifest = _record_manifest
+        self._source_manifest = _source_manifest
         super().__init__(runtype="Ga", **kwargs)
         if evaluator is None:
             evaluator = GAevaluation(dataset=dataset, **self.p.ga_eval_kws)
         self.evaluator = evaluator
         self.selector = GAselector(**self.p.ga_select_kws)
+
+    def _manifest_invocation(self, seed: int) -> dict[str, Any]:
+        """Describe how the search was invoked."""
+        return {
+            "run_class": f"{type(self).__module__}:{type(self).__qualname__}",
+            "resolved_parameters": json_ready(self.parameters),
+            "constructor": {},
+            "runtime_options": {
+                "store_data": bool(self.store_data),
+                "screen_kws": json_ready(self.screen_kws),
+            },
+            "execute": {"method": "simulate", "kwargs": {"seed": seed}},
+        }
 
     def setup(self) -> None:
         """
@@ -387,7 +449,7 @@ class GAlauncher(BaseRun):
 
         self.build_generation()
 
-    def simulate(self):
+    def simulate(self, seed: int | None = None):
         """
         Simulates the genetic algorithm process.
 
@@ -398,10 +460,45 @@ class GAlauncher(BaseRun):
         Returns:
             Genome: The best genome found during the simulation.
         """
-        self.sim_setup()
-        while self.running:
-            self.sim_step()
-        return self.best_genome
+        master_seed = prepare_master_seed(seed)
+        self._manifest_master_seed = master_seed
+        generation_count = self.selector.Ngenerations or 0
+        self._generation_seeds = {
+            f"generation_{index}": derive_seed(master_seed, ("generation", index))
+            for index in range(1, generation_count + 1)
+        }
+        session = None
+        if self._record_manifest:
+            session = RunManifestSession(
+                run=self,
+                invocation=self._manifest_invocation(master_seed),
+                seed=master_seed,
+                child_seeds=self._generation_seeds,
+                source_manifest=self._source_manifest,
+            )
+        try:
+            with deterministic_random_context(master_seed):
+                self.sim_setup(seed=master_seed)
+                while self.running:
+                    self.sim_step()
+            if session is not None:
+                session.finish(
+                    scientific_result={
+                        "best_fitness": self.best_fitness,
+                        "best_configuration": getattr(
+                            getattr(self, "best_genome", None), "mConf", None
+                        ),
+                    }
+                )
+            return self.best_genome
+        except KeyboardInterrupt as exc:
+            if session is not None:
+                session.abort(str(exc) or "GA interrupted")
+            raise
+        except BaseException as exc:
+            if session is not None:
+                session.fail(exc)
+            raise
 
     def build_generation(self, sorted_genomes: dict | None = None) -> None:
         """
@@ -424,6 +521,17 @@ class GAlauncher(BaseRun):
         """
         self.prestart_generation_time = util.TimeUtil.current_time_sec()
         self.generation_num += 1
+        generation_key = f"generation_{self.generation_num}"
+        generation_seed = self._generation_seeds.setdefault(
+            generation_key,
+            derive_seed(
+                self._manifest_master_seed, ("generation", self.generation_num)
+            ),
+        )
+        random.seed(generation_seed)
+        np.random.seed(generation_seed % (2**32))
+        if getattr(self, "_manifest_session", None) is not None:
+            self._manifest_session.set_child_seeds(self._generation_seeds)
         self.genome_dict = self.selector.create_generation(sorted_genomes)
         confs = [
             {
@@ -525,7 +633,15 @@ class GAlauncher(BaseRun):
             if self.best_genome is None or g0.fitness > self.best_genome.fitness:
                 self.best_genome = g0
                 self.best_fitness = self.best_genome.fitness
-                reg.conf.Model.setID(self.selector.bestConfID, self.best_genome.mConf)
+                # new_genome() injects a fixed, non-optimized life_history
+                # constant (needed to instantiate a live agent during the
+                # GA run) that the base model was never given -- registering
+                # it verbatim under bestConfID would make every later
+                # base-vs-best model diff flag life_history as "different"
+                # (it isn't -- it's a constant, not an optimization result).
+                mConf_to_register = self.best_genome.mConf.get_copy()
+                mConf_to_register.pop("life_history", None)
+                reg.conf.Model.setID(self.selector.bestConfID, mConf_to_register)
         vprint(f"Generation {Ngen} best_fitness : {self.best_fitness}", 1)
         if self.store_data:
             self.all_genomes_dic += [
@@ -632,6 +748,10 @@ class GAlauncher(BaseRun):
         self.agents.nest_record(self.collectors["end"])
         self.create_output()
         self.data_collection = LarvaDatasetCollection.from_agentpy_output(self.output)
+        if getattr(self, "_manifest_session", None) is not None:
+            attach_manifest_to_datasets(
+                self.data_collection.datasets, self._manifest_session
+            )
         self.sorted_genomes = self.eval_robots(
             ds=self.data_collection.datasets,
             Ngen=self.generation_num,
@@ -703,15 +823,17 @@ class GAlauncher(BaseRun):
         try:
             cols = [p.name for k, p in self.selector.space_objs.items()]
             self.corr_df = df[["fitness"] + cols].corr()
-        except:
-            pass
+        except Exception as exc:
+            vprint(f"Could not compute GA parameter correlation matrix: {exc}", 1)
         try:
+            mConf_for_diff = self.best_genome.mConf.get_copy()
+            mConf_for_diff.pop("life_history", None)
             self.diff_df, row_colors = diff_df(
                 mIDs=[self.selector.base_model, self.selector.bestConfID],
-                ms=[self.selector.mConf0, self.best_genome.mConf],
+                ms=[self.selector.mConf0, mConf_for_diff],
             )
-        except:
-            pass
+        except Exception as exc:
+            vprint(f"Could not compute GA best-vs-base model diff: {exc}", 1)
 
     def build_threads(self, robots: list) -> list:
         """
@@ -767,10 +889,17 @@ class GA_thread(threading.Thread):
     """
 
     def __init__(self, robots: list):
+        """Build the worker evaluating one genome.
+
+        Args:
+            robots: The agents to step.
+
+        """
         threading.Thread.__init__(self)
         self.robots = robots
 
     def step(self) -> None:
+        """Advance every agent this worker owns by one timestep."""
         for robot in self.robots:
             robot.step()
 

@@ -1,3 +1,11 @@
+"""
+Body geometry of the simulated larva.
+
+Defines the stored body plans, the contour they generate, and the segmented
+body whose joints the locomotor drives. Also provides the sensor mounting
+points used by the touch modality.
+"""
+
 from __future__ import annotations
 from typing import Any, Optional, Sequence
 
@@ -57,11 +65,24 @@ class BodyContour(LineClosed):
     )
 
     def __init__(self, **kwargs):
+        """Build the contour and its base vertices.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
 
         self.generate_base_vertices()
 
     def generate_base_vertices(self) -> None:
+        """Build the outline vertices from the body plan's guide points.
+
+        The guide points give half the outline; it is mirrored to close the
+        shape.
+
+        Returns:
+            The contour vertices.
+        """
         if not self.guide_points:
             self.guide_points = body_plans[self.body_plan]
         if self.symmetry == "bilateral":
@@ -74,6 +95,7 @@ class BodyContour(LineClosed):
     # TODO make this more explicit
     @property
     def width_to_length_ratio(self) -> float:
+        """The body's mean width, relative to its length."""
         return np.mean(np.array(self.guide_points)[:, 1])
 
 
@@ -97,16 +119,23 @@ class ShapeMobile(LineClosed, MobileVector):
     base_vertices = XYLine(doc="The list of 2d points")
 
     def __init__(self, **kwargs):
+        """Build the movable shape and cache its length ratio.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.length_ratio = self.get_length_ratio()
         self.update_vertices()
 
     def get_length_ratio(self) -> float:
+        """Return the outline's extent along its long axis."""
         xs = np.array(self.base_vertices)[:, 0]
         return -np.min(xs) + np.max(xs)
 
     @param.depends("pos", "orientation", "length", watch=True)
     def update_vertices(self) -> None:
+        """Re-place the outline vertices at the current pose."""
         self.vertices = self.translate(
             self.length / self.length_ratio * np.array(self.base_vertices)
         )
@@ -128,15 +157,32 @@ class ShapeViewable(ShapeMobile, Viewable):
 
     def draw(self, v, **kwargs) -> None:
         # self.update_vertices()
+        """Render the shape as a filled polygon.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Accepted for signature compatibility; unused.
+        """
         v.draw_polygon(self.vertices, filled=True, color=self.color)
 
 
 class BodyMobile(ShapeMobile, BodyContour):
+    """A body whose length and mass stay consistent with each other.
+
+    Adds the density-based relation between body length and mass to the
+    movable shape, so that growth updates both together.
+    """
+
     density = PositiveNumber(
         300.0, softmax=10000.0, step=1.0, doc="The density of the larva body in kg/m**2"
     )
 
     def __init__(self, **kwargs):
+        """Build the body and record its initial length.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.initial_length = self.length
         self.body_bend = 0
@@ -151,9 +197,11 @@ class BodyMobile(ShapeMobile, BodyContour):
         So, when using a scaling factor sf where sim_length=sf*length ==> sim_mass=sf**2 * mass"""
 
     def compute_mass_from_length(self):
+        """Set the mass implied by the current length and density."""
         self.mass = self.density * self.length**2 * self.width_to_length_ratio
 
     def adjust_shape_to_mass(self):
+        """Set the length implied by the current mass and density."""
         self.length = np.sqrt(self.mass / (self.density * self.width_to_length_ratio))
 
 
@@ -185,6 +233,13 @@ class SegmentedBody(BodyMobile):
     segs = ItemListParam(item_type=ShapeViewable, doc="The body segments.")
 
     def __init__(self, **kwargs):
+        """Build the segmented body and place its segments.
+
+        Segment lengths default to an even split of the body length.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         # If segment ratio is not provided, generate equal-length segments
         if self.segment_ratio is None:
@@ -196,6 +251,7 @@ class SegmentedBody(BodyMobile):
 
     @property
     def Nangles(self) -> int:
+        """The number of joint angles, one fewer than the segments."""
         return self.Nsegs - 1
 
     def segmentize(self, centered: bool = True, closed: bool = False) -> np.ndarray:
@@ -265,6 +321,11 @@ class SegmentedBody(BodyMobile):
         return ps
 
     def generate_seg_positions(self) -> list[tuple[float, float]]:
+        """Lay the segments out head to tail along the body axis.
+
+        Returns:
+            The centre position of each segment.
+        """
         N = self.Nsegs
         ls_x = np.cos(self.orientation) * self.length * self.segment_ratio
         ls_y = np.sin(self.orientation) * self.length / N
@@ -274,6 +335,7 @@ class SegmentedBody(BodyMobile):
         ]
 
     def generate_segs(self) -> None:
+        """Construct the body segments at their computed positions."""
         self.segs = util.ItemList(
             objs=self.Nsegs,
             cls=self.param.segs.item_type,
@@ -284,6 +346,11 @@ class SegmentedBody(BodyMobile):
         )
 
     def compute_body_bend(self) -> None:
+        """Set the body bend from the leading joint angles.
+
+        Only the angles counted towards the bend are summed, so that the
+        measure reflects the front of the body rather than its whole length.
+        """
         angles = [
             util.angle_dif(
                 self.segs[i].get_orientation(),
@@ -296,17 +363,28 @@ class SegmentedBody(BodyMobile):
 
     @property
     def head(self) -> ShapeViewable:
+        """The leading body segment."""
         return self.segs[0]
 
     @property
     def tail(self) -> ShapeViewable:
+        """The trailing body segment."""
         return self.segs[-1]
 
     @property
     def direction(self) -> float:
+        """The heading of the leading segment."""
         return self.head.get_orientation()
 
     def get_shape(self, scale=1):
+        """Return the body outline as one merged polygon.
+
+        Args:
+            scale: Factor applied to the segment polygons.
+
+        Returns:
+            The union of the segment shapes.
+        """
         ps = [geometry.Polygon(seg.vertices) for seg in self.segs]
         if scale != 1:
             ps = [affinity.scale(p, xfact=scale, yfact=scale) for p in ps]
@@ -314,6 +392,7 @@ class SegmentedBody(BodyMobile):
 
     @property
     def global_midspine_of_body(self) -> tuple[float, float]:
+        """The midpoint of the body axis, in world coordinates."""
         if self.Nsegs == 1:
             return self.head.get_position()
         elif self.Nsegs == 2:
@@ -328,10 +407,17 @@ class SegmentedBody(BodyMobile):
 
     @param.depends("length", watch=True)
     def update_seg_lengths(self) -> None:
+        """Rescale the segments after the body length changed."""
         for i in range(self.Nsegs):
             self.segs[i].length = self.length * self.segment_ratio[i]
 
     def move_body(self, dx, dy) -> None:
+        """Translate the whole body.
+
+        Args:
+            dx: The x displacement.
+            dy: The y displacement.
+        """
         x0, y0 = self.get_position()
         self.set_position((x0 + dx, y0 + dy))
         for i, seg in enumerate(self.segs):
@@ -339,6 +425,15 @@ class SegmentedBody(BodyMobile):
             seg.set_position((x + dx, y + dy))
 
     def valid_Dbend_range(self, idx=0) -> tuple[float, float]:
+        """Return the bend change admissible at one joint.
+
+        Args:
+            idx: The joint index.
+            ang: The proposed bend change.
+
+        Returns:
+            The change clipped to the joint's angular limits.
+        """
         if self.Nsegs > idx + 1:
             dang = util.wrap_angle_to_0(
                 self.segs[idx + 1].get_orientation() - self.segs[idx].get_orientation()
@@ -348,6 +443,12 @@ class SegmentedBody(BodyMobile):
         return (-np.pi + dang), (np.pi + dang)
 
     def set_color(self, colors) -> None:
+        """Colour the segments.
+
+        Args:
+            colors: One colour per segment, or a single colour applied
+                to all of them.
+        """
         if len(colors) != self.Nsegs:
             colors = [tuple(colors)] * self.Nsegs
         for seg, col in zip(self.segs, colors):
@@ -355,17 +456,26 @@ class SegmentedBody(BodyMobile):
 
     @property
     def midline_xy(self) -> list[tuple]:
+        """The midline points, from the head end to the tail end."""
         return [seg.front_end for seg in self.segs] + [self.tail.rear_end]
 
     @property
     def front_orientation(self) -> float:
+        """The leading segment's heading, wrapped to [0, 2pi)."""
         return self.head.get_orientation() % (2 * np.pi)
 
     @property
     def rear_orientation(self) -> float:
+        """The trailing segment's heading, wrapped to [0, 2pi)."""
         return self.tail.get_orientation() % (2 * np.pi)
 
     def draw_segs(self, v, **kwargs) -> None:
+        """Render every body segment.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Forwarded to the segment drawing.
+        """
         self.segs.draw(v, **kwargs)
 
 
@@ -386,19 +496,37 @@ class SegmentedBodySensored(SegmentedBody):
     """
 
     def __init__(self, **kwargs):
+        """Build the body with an empty sensor set.
+
+        Args:
+            **kwargs: Attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.sensors = util.AttrDict()
         self.define_sensor("olfactor", (1, 0), modality="olfaction")
 
     @property
     def olfactor_pos(self) -> tuple:
+        """The position of the olfactory sensor, at the head tip."""
         return self.head.front_end
 
     @property
     def olfactor_point(self) -> geometry.Point:
+        """The olfactory sensor position, as a geometry point."""
         return geometry.Point(self.olfactor_pos[0], self.olfactor_pos[1])
 
     def define_sensor(self, sensor, pos_on_body, modality) -> None:
+        """Mount a sensor at a position along the body.
+
+        The body-relative position is resolved to the segment containing it,
+        so the sensor follows that segment as the body bends.
+
+        Args:
+            sensor: The sensor name.
+            pos_on_body: Its position, as a fraction of body length from the
+                head, and an offset across the body axis.
+            modality: The sensory modality it belongs to.
+        """
         x, y = pos_on_body
         for i, (r, cum_r) in enumerate(
             zip(self.segment_ratio, np.cumsum(self.segment_ratio))
@@ -416,16 +544,35 @@ class SegmentedBodySensored(SegmentedBody):
         )
 
     def get_sensor_position(self, sensor) -> tuple:
+        """Return a sensor's current world position.
+
+        Args:
+            sensor: The sensor name.
+
+        Returns:
+            Its position.
+        """
         d = self.sensors[sensor]
         return self.segs[d.seg_idx].translate(tuple(d.local_pos * self.length))
 
     def add_touch_sensors(self, idx) -> None:
+        """Mount touch sensors at the given body positions.
+
+        Args:
+            idx: The indices of the standard mounting points to use.
+        """
         for i in idx:
             self.define_sensor(
                 f"touch_sensor_{i}", self.base_vertices[i], modality="touch"
             )
 
     def draw_sensors(self, v, **kwargs) -> None:
+        """Render the mounted sensors.
+
+        Args:
+            v: The viewer to draw into.
+            **kwargs: Accepted for signature compatibility; unused.
+        """
         for s in self.sensors:
             pos = self.get_sensor_position(s)
             v.draw_circle(
@@ -437,8 +584,17 @@ class SegmentedBodySensored(SegmentedBody):
             )
 
     def get_sensors_by_modality(self, modality) -> list[str]:
+        """List the sensors of one modality.
+
+        Args:
+            modality: The modality to select.
+
+        Returns:
+            The matching sensor names.
+        """
         return [s for s, dic in self.sensors.items() if dic["modality"] == modality]
 
     @property
     def touch_sensorIDs(self) -> list[str]:
+        """The names of the mounted touch sensors."""
         return self.get_sensors_by_modality("touch")

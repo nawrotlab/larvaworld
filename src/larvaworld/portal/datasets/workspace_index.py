@@ -1,3 +1,10 @@
+"""
+Indexing of the datasets stored in a workspace.
+
+Lists the imported and simulated datasets a workspace holds, reading only the
+stored metadata rather than the datasets themselves.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -16,6 +23,14 @@ logger = logging.getLogger(__name__)
 
 
 def _normalize_group_id(value: Any) -> str | None:
+    """Normalize a dataset's group identifier.
+
+    Args:
+        value: The stored group ID.
+
+    Returns:
+        The normalized ID, or None when unset.
+    """
     if not isinstance(value, str):
         return None
     normalized = value.strip().strip("/")
@@ -25,6 +40,14 @@ def _normalize_group_id(value: Any) -> str | None:
 def _path_parts_after_workspace_experiments(
     dataset_dir: Path,
 ) -> tuple[str, ...] | None:
+    """Split a dataset path relative to the workspace experiments folder.
+
+    Args:
+        dataset_dir: The dataset directory.
+
+    Returns:
+        The path segments below the experiments folder.
+    """
     parts = dataset_dir.resolve().parts
     for marker in ("experiments", "datasets"):
         try:
@@ -40,6 +63,14 @@ def _path_parts_after_workspace_experiments(
 
 
 def _record_from_dataset_dir(dataset_dir: Path) -> WorkspaceDatasetRecord | None:
+    """Build a listing record from an imported dataset's directory.
+
+    Args:
+        dataset_dir: The dataset directory.
+
+    Returns:
+        The record, or None when the directory holds no dataset.
+    """
     dataset_dir = dataset_dir.expanduser().resolve()
     data_dir = dataset_dir / "data"
     conf_path = data_dir / "conf.txt"
@@ -109,6 +140,14 @@ def _record_from_dataset_dir(dataset_dir: Path) -> WorkspaceDatasetRecord | None
 def _simulation_record_from_conf_path(
     conf_path: Path, *, experiments_dir: Path
 ) -> WorkspaceReplayDatasetRecord | None:
+    """Build a listing record from a simulated dataset's configuration.
+
+    Args:
+        conf_path: The stored configuration file.
+
+    Returns:
+        The record, or None when the configuration is unreadable.
+    """
     conf_path = conf_path.expanduser().resolve()
     if conf_path.name != "conf.txt" or conf_path.parent.name != "data":
         return None
@@ -126,7 +165,7 @@ def _simulation_record_from_conf_path(
             dataset_dir,
         )
         return None
-    if len(rel.parts) < 4:
+    if len(rel.parts) < 3:
         logger.debug(
             "Ignoring simulation dataset with unsupported layout: %s", dataset_dir
         )
@@ -134,6 +173,10 @@ def _simulation_record_from_conf_path(
     run_id = rel.parts[0].strip()
     if not run_id:
         return None
+    # Single Experiment writes runs directly as <run_id>/data/conf.txt (3
+    # parts); batch/multi-member runs add an extra subfolder per member
+    # (<run_id>/<member_id>/data/conf.txt, >=4 parts).
+    member_id = dataset_dir.name if len(rel.parts) >= 4 else None
 
     config = load_dict(str(conf_path))
     if not config:
@@ -173,19 +216,154 @@ def _simulation_record_from_conf_path(
         h5_path=h5_path,
         group_id=group_id,
         run_id=run_id,
-        member_id=dataset_dir.name,
+        member_id=member_id,
         ref_id=ref_id,
         n_agents=n_agents,
     )
 
 
 def get_workspace_dataset(dataset_dir: Path) -> WorkspaceDatasetRecord | None:
+    """Load one dataset from the workspace.
+
+    Args:
+        dataset_dir: The dataset directory.
+
+    Returns:
+        The dataset, or None when the directory holds none.
+    """
     return _record_from_dataset_dir(dataset_dir)
+
+
+def _lab_id_from_data_dir_group_folder(folder_name: str) -> str:
+    """Derive the lab format from a bundled data folder's name.
+
+    Args:
+        folder_name: The folder name.
+
+    Returns:
+        The lab ID, or None when it cannot be derived.
+    """
+    return (
+        folder_name[: -len("Group")] if folder_name.endswith("Group") else folder_name
+    )
+
+
+def _record_from_data_dir_dataset_dir(
+    dataset_dir: Path, data_root: Path
+) -> WorkspaceDatasetRecord | None:
+    """Build a listing record for a dataset bundled with the package.
+
+    Args:
+        dataset_dir: The dataset directory.
+        data_root: The bundled data root.
+
+    Returns:
+        The record, or None when the directory holds no dataset.
+    """
+    dataset_dir = dataset_dir.expanduser().resolve()
+    data_dir = dataset_dir / "data"
+    conf_path = data_dir / "conf.txt"
+    h5_path = data_dir / "data.h5"
+
+    if not dataset_dir.is_dir():
+        return None
+    if not conf_path.is_file() or not h5_path.is_file():
+        return None
+
+    try:
+        relative_parts = dataset_dir.relative_to(data_root.resolve()).parts
+    except ValueError:
+        return None
+    # <LabName>Group/processed/<group_id...>/<dataset> -- the layout every
+    # bundled reference dataset ships under (e.g.
+    # SchleyerGroup/processed/exploration/30controls). Anything else under
+    # DATA_DIR (e.g. SimGroup/eval_runs/... simulation output) isn't a
+    # reference dataset in this sense and is intentionally left alone.
+    if len(relative_parts) < 3 or relative_parts[1] != "processed":
+        logger.debug(
+            "Ignoring DATA_DIR dataset outside a <Lab>Group/processed layout: %s",
+            dataset_dir,
+        )
+        return None
+
+    config = load_dict(str(conf_path))
+    if not config:
+        logger.debug(
+            "Ignoring DATA_DIR dataset with malformed or empty config: %s", conf_path
+        )
+        return None
+
+    lab_id = _lab_id_from_data_dir_group_folder(relative_parts[0])
+    path_group_id = _normalize_group_id("/".join(relative_parts[2:-1]))
+    config_group_id = _normalize_group_id(config.get("group_id"))
+    larva_group = config.get("larva_group", {})
+    larva_group_id = None
+    if isinstance(larva_group, dict):
+        larva_group_id = _normalize_group_id(larva_group.get("group_id"))
+
+    dataset_id = config.get("id")
+    if not isinstance(dataset_id, str) or not dataset_id.strip():
+        dataset_id = dataset_dir.name
+
+    ref_id = config.get("refID")
+    if not isinstance(ref_id, str) or not ref_id.strip():
+        ref_id = None
+
+    n_agents = config.get("N")
+    if not isinstance(n_agents, int):
+        agent_ids = config.get("agent_ids")
+        if isinstance(agent_ids, list):
+            n_agents = len(agent_ids)
+        else:
+            n_agents = None
+
+    return WorkspaceDatasetRecord(
+        dataset_id=dataset_id.strip(),
+        dataset_dir=dataset_dir,
+        data_dir=data_dir,
+        conf_path=conf_path,
+        h5_path=h5_path,
+        lab_id=lab_id,
+        group_id=config_group_id or larva_group_id or path_group_id,
+        ref_id=ref_id,
+        n_agents=n_agents,
+    )
+
+
+def list_data_dir_datasets() -> list[WorkspaceDatasetRecord]:
+    """Scan the package's own bundled DATA_DIR (e.g.
+    src/larvaworld/data/SchleyerGroup/processed/...) for shipped reference
+    datasets -- independent of any workspace, since these ship with the
+    package itself rather than being imported by a user.
+    """
+    from larvaworld import DATA_DIR
+
+    data_root = Path(DATA_DIR).expanduser().resolve()
+    candidates: set[Path] = set()
+    for conf_path in data_root.rglob("conf.txt"):
+        if conf_path.parent.name != "data":
+            continue
+        candidates.add(conf_path.parent.parent.resolve())
+
+    records: list[WorkspaceDatasetRecord] = []
+    for dataset_dir in sorted(candidates):
+        record = _record_from_data_dir_dataset_dir(dataset_dir, data_root)
+        if record is not None:
+            records.append(record)
+    return records
 
 
 def list_workspace_datasets(
     workspace: WorkspaceState | None = None,
 ) -> list[WorkspaceDatasetRecord]:
+    """List the imported datasets a workspace holds.
+
+    Args:
+        workspace: The workspace to scan. Defaults to the active one.
+
+    Returns:
+        One lightweight record per dataset.
+    """
     datasets_dir = get_workspace_dir("datasets", workspace=workspace)
     candidates: set[Path] = set()
     for conf_path in datasets_dir.rglob("conf.txt"):
@@ -204,6 +382,14 @@ def list_workspace_datasets(
 def list_workspace_simulation_datasets(
     workspace: WorkspaceState | None = None,
 ) -> list[WorkspaceReplayDatasetRecord]:
+    """List the simulated datasets a workspace holds.
+
+    Args:
+        workspace: The workspace to scan. Defaults to the active one.
+
+    Returns:
+        One lightweight record per dataset.
+    """
     experiments_dir = get_workspace_dir("experiments", workspace=workspace)
     records: list[WorkspaceReplayDatasetRecord] = []
     for conf_path in sorted(experiments_dir.rglob("conf.txt")):
@@ -215,3 +401,19 @@ def list_workspace_simulation_datasets(
     return sorted(
         records, key=lambda r: (str(r.run_id), r.dataset_id, str(r.conf_path))
     )
+
+
+def list_all_workspace_datasets(
+    workspace: WorkspaceState | None = None,
+) -> tuple[list[WorkspaceDatasetRecord], list[WorkspaceReplayDatasetRecord]]:
+    """List every dataset a workspace holds, imported and simulated.
+
+    Args:
+        workspace: The workspace to scan. Defaults to the active one.
+
+    Returns:
+        One lightweight record per dataset.
+    """
+    imported = list_workspace_datasets(workspace=workspace)
+    simulated = list_workspace_simulation_datasets(workspace=workspace)
+    return imported, simulated

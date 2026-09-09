@@ -173,6 +173,33 @@ class TestBatchRun:
         assert mock_batch_run.results is None
         assert mock_batch_run.figs == {}
 
+    def test_manifest_records_effective_child_overrides(self, tmp_path):
+        batch_run = BatchRun(
+            experiment="PItest_off",
+            space_search={"gain_dict.CS": 0.0},
+            exp="PItest_off",
+            exp_kws={"enrichment": None},
+            iterations=1,
+            N=1,
+            duration=0.02,
+            screen_kws={"show_display": False},
+            id="manifest-overrides",
+            dir=str(tmp_path / "manifest-overrides"),
+        )
+        run_id = batch_run.run_ids[0]
+        invocation = batch_run._manifest_invocation(
+            77, {}, {repr(run_id): 123}, "simulate"
+        )
+
+        assert invocation["constructor"]["model_kwargs"]["duration"] == 0.02
+        assert invocation["constructor"]["model_kwargs"]["N"] == 1
+        child = invocation["constructor"]["resolved_children"][0]
+        assert child["parameters"]["duration"] == 0.02
+        assert (
+            child["parameters"]["larva_groups"]["navigator_x2"]["distribution"]["N"]
+            == 1
+        )
+
     def test_single_sim(self, mock_batch_run):
         """Test _single_sim method."""
         mock_batch_run.model = Mock()
@@ -390,18 +417,31 @@ class TestBatchRun:
 
     def test_simulate(self, mock_batch_run):
         """Test simulate method."""
-        mock_batch_run.run = Mock()
-        mock_batch_run.experiment = "test_experiment"
+        mock_batch_run.run_ids = [(None, None)]
+        mock_batch_run._model_kwargs = {}
+        mock_batch_run._manifest_invocation = Mock(return_value={})
+        mock_batch_run.experiment = "chemorbit"
         mock_batch_run.PI_heatmap = Mock()
         mock_batch_run.plot_results = Mock()
         mock_batch_run.par_df = pd.DataFrame({"param1": [1, 2, 3]})
         mock_batch_run.figs = {"fig1": Mock()}
 
-        with patch("larvaworld.lib.sim.batch_run.util.storeH5") as mock_store_h5:
+        with (
+            patch("larvaworld.lib.sim.batch_run.util.storeH5") as mock_store_h5,
+            patch("larvaworld.lib.sim.batch_run.ap.Experiment.run") as mock_run,
+            patch(
+                "larvaworld.lib.sim.batch_run.RunManifestSession"
+            ) as manifest_session,
+        ):
+            manifest_session.return_value.reference = {
+                "manifest_id": "manifest",
+                "workspace_id": "workspace",
+                "manifest_path": "/tmp/run_manifest.json",
+            }
             result = mock_batch_run.simulate(n_jobs=4)
 
-            # Check that run was called
-            mock_batch_run.run.assert_called_once_with(n_jobs=4)
+            mock_run.assert_called_once_with(mock_batch_run, n_jobs=4)
+            manifest_session.return_value.finish.assert_called_once()
 
             # Check that PI_heatmap was not called (experiment doesn't contain "PI")
             mock_batch_run.PI_heatmap.assert_not_called()
@@ -415,16 +455,56 @@ class TestBatchRun:
             # Check return value
             assert result == (mock_batch_run.par_df, mock_batch_run.figs)
 
+    def test_run_preserves_agentpy_return_value(self, mock_batch_run):
+        """BatchRun.run keeps the public AgentPy return contract."""
+        mock_batch_run.run_ids = [(None, None)]
+        mock_batch_run._model_kwargs = {}
+        mock_batch_run._manifest_invocation = Mock(return_value={})
+        agentpy_result = object()
+
+        with (
+            patch(
+                "larvaworld.lib.sim.batch_run.ap.Experiment.run",
+                return_value=agentpy_result,
+            ) as mock_run,
+            patch(
+                "larvaworld.lib.sim.batch_run.RunManifestSession"
+            ) as manifest_session,
+        ):
+            manifest_session.return_value.reference = {
+                "manifest_id": "manifest",
+                "workspace_id": "workspace",
+                "manifest_path": "/tmp/run_manifest.json",
+            }
+
+            result = mock_batch_run.run(n_jobs=2)
+
+        mock_run.assert_called_once_with(mock_batch_run, n_jobs=2)
+        mock_batch_run._manifest_invocation.assert_called_once()
+        assert mock_batch_run._manifest_invocation.call_args.args[-1] == "run"
+        assert result is agentpy_result
+
     def test_simulate_with_PI(self, mock_batch_run):
         """Test simulate method with PI experiment."""
-        mock_batch_run.run = Mock()
-        mock_batch_run.experiment = "test_PI_experiment"
+        mock_batch_run.run_ids = [(None, None)]
+        mock_batch_run._model_kwargs = {}
+        mock_batch_run._manifest_invocation = Mock(return_value={})
+        mock_batch_run.experiment = "PItest_off"
         mock_batch_run.PI_heatmap = Mock()
         mock_batch_run.plot_results = Mock()
         mock_batch_run.par_df = pd.DataFrame({"param1": [1, 2, 3]})
         mock_batch_run.figs = {"fig1": Mock()}
 
-        with patch("larvaworld.lib.sim.batch_run.util.storeH5") as mock_store_h5:
+        with (
+            patch("larvaworld.lib.sim.batch_run.util.storeH5") as mock_store_h5,
+            patch("larvaworld.lib.sim.batch_run.ap.Experiment.run"),
+            patch("larvaworld.lib.sim.batch_run.RunManifestSession") as session,
+        ):
+            session.return_value.reference = {
+                "manifest_id": "manifest",
+                "workspace_id": "workspace",
+                "manifest_path": "/tmp/run_manifest.json",
+            }
             result = mock_batch_run.simulate(n_jobs=4)
 
             # Check that PI_heatmap was called

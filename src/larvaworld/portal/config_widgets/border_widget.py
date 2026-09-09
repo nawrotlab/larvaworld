@@ -1,3 +1,7 @@
+"""
+Widget for editing the borders placed in an environment.
+"""
+
 from __future__ import annotations
 
 import param
@@ -13,10 +17,26 @@ __all__ = ["build_border_widget"]
 
 
 def _ordered_names(instance: param.Parameterized, preferred: list[str]) -> list[str]:
+    """Order a configuration's fields for display.
+
+    Args:
+        obj: The object being edited.
+
+    Returns:
+        The field names, in display order.
+    """
     return [name for name in preferred if name in instance.param and name != "name"]
 
 
 def _build_border_item_widget(border: param.Parameterized, key: str) -> object:
+    """Build the editor for one border.
+
+    Args:
+        border: The border being edited.
+
+    Returns:
+        The editor component.
+    """
     return family_box(
         key,
         parameterized_editor(
@@ -30,6 +50,14 @@ def _build_border_item_widget(border: param.Parameterized, key: str) -> object:
 
 
 def build_border_widget(env_conf: param.Parameterized) -> object:
+    """Build the widget editing the environment's borders.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     return collapsible_family_box(
         "Border list",
         classdict_editor(

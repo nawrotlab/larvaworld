@@ -1,3 +1,7 @@
+"""
+Portal apps and helpers for working with datasets.
+"""
+
 from __future__ import annotations
 
 from importlib import import_module
@@ -9,19 +13,40 @@ __all__: list[str] = [
     "WorkspaceDatasetRecord",
     "build_workspace_proc_folder",
     "discover_raw_datasets",
+    "EndpointDataFrameTable",
     "get_workspace_dataset",
     "import_into_workspace",
+    "LarvaDatasetTablesWidget",
     "list_workspace_datasets",
     "list_workspace_simulation_datasets",
+    "StepDataFrameTable",
 ]
 
 
 def __getattr__(name: str) -> Any:
+    """Resolve a public name by importing its module on first access.
+
+    Args:
+        name: The attribute being accessed.
+
+    Returns:
+        The resolved object.
+
+    Raises:
+        AttributeError: If no submodule exports that name.
+    """
     if name in {"ImportRequest", "WorkspaceDatasetRecord"}:
         module = import_module("larvaworld.portal.datasets.models")
         return getattr(module, name)
     if name in {"RawDatasetCandidate", "discover_raw_datasets"}:
         module = import_module("larvaworld.portal.datasets.discovery")
+        return getattr(module, name)
+    if name in {
+        "EndpointDataFrameTable",
+        "LarvaDatasetTablesWidget",
+        "StepDataFrameTable",
+    }:
+        module = import_module("larvaworld.portal.datasets.dataframe_widgets")
         return getattr(module, name)
     if name in {"build_workspace_proc_folder", "import_into_workspace"}:
         module = import_module("larvaworld.portal.datasets.import_adapter")

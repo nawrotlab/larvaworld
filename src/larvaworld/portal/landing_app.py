@@ -1,3 +1,10 @@
+"""
+The portal's landing page.
+
+Presents the available apps as lanes of cards, with the quick-start entry
+points for each workflow.
+"""
+
 from __future__ import annotations
 
 import base64
@@ -29,7 +36,15 @@ from larvaworld.portal.workspace import get_active_workspace
 
 
 def _load_banner_gif_data_uri(filename: str) -> str:
-    gif_path = Path(__file__).with_name("icons") / "gifs" / filename
+    """Read a banner animation and encode it for inline use.
+
+    Args:
+        filename: The animation file's name.
+
+    Returns:
+        The data URI, empty when the file is missing.
+    """
+    gif_path = Path(__file__).parent / "media" / "gifs" / filename
     try:
         encoded = base64.b64encode(gif_path.read_bytes()).decode("ascii")
     except OSError:
@@ -38,6 +53,7 @@ def _load_banner_gif_data_uri(filename: str) -> str:
 
 
 def _banner_slides() -> list[dict[str, str]]:
+    """The slides shown in the landing page banner."""
     slide_configs = [
         {
             "filename": "Bisegmental_simplification_of_the_larva_body.gif",
@@ -49,11 +65,20 @@ def _banner_slides() -> list[dict[str, str]]:
             "url": "https://computational-systems-neuroscience.de/wp-content/uploads/2024/10/1.mp4",
         },
         {
-            "filename": "Locomotory_model_for_Drosophila_larva.gif",
-            "title": "Locomotory model for Drosophila larva",
+            "filename": "Locomotory_model_top.gif",
+            "title": "Uncoupled rhythmic oscillations",
             "description": (
-                "The locomotory model combines crawling rhythms and directional control in a "
-                "single pipeline. Use it to inspect how motor components shape trajectory behavior."
+                "Crawling and lateral bending rhythms in the segmental network. "
+                "Observe how intrinsic oscillations generate rhythmic motor output independent of sensory input."
+            ),
+            "url": "https://computational-systems-neuroscience.de/wp-content/uploads/2024/10/2.mp4",
+        },
+        {
+            "filename": "Locomotory_model_bottom.gif",
+            "title": "Intermittent coupled oscillators",
+            "description": (
+                "Coupled oscillations and intermittent behavior in directional control circuits. "
+                "Inspect how motor components dynamically interact to modulate trajectory behavior."
             ),
             "url": "https://computational-systems-neuroscience.de/wp-content/uploads/2024/10/2.mp4",
         },
@@ -103,6 +128,14 @@ def _banner_slides() -> list[dict[str, str]]:
 
 
 def _banner_media_html(slide: dict[str, str], *, play_token: int) -> str:
+    """Render one banner slide's animation.
+
+    Args:
+        slide: The slide to render.
+
+    Returns:
+        The markup.
+    """
     return (
         '<img class="lw-portal-banner-gif" '
         f'src="{slide["data_uri"]}#play-{play_token}" alt="{escape(slide["title"])}" />'
@@ -110,6 +143,14 @@ def _banner_media_html(slide: dict[str, str], *, play_token: int) -> str:
 
 
 def _banner_text_html(slide: dict[str, str]) -> str:
+    """Render one banner slide's caption.
+
+    Args:
+        slide: The slide to render.
+
+    Returns:
+        The markup.
+    """
     return (
         '<div class="lw-portal-banner-title">'
         f'{escape(slide["title"])}'
@@ -123,7 +164,12 @@ def _banner_text_html(slide: dict[str, str]) -> str:
 
 
 def landing_app() -> pn.viewable.Viewable:
-    pn.extension(raw_css=[PORTAL_RAW_CSS])
+    """Build the portal's landing page.
+
+    Returns:
+        The page component.
+    """
+    pn.extension("tabulator", raw_css=[PORTAL_RAW_CSS])
     if get_active_workspace() is None:
         return pn.Column(
             pn.pane.HTML(
@@ -151,6 +197,8 @@ def landing_app() -> pn.viewable.Viewable:
 
     topbar = build_template_header()
     template.header.append(topbar)
+
+    banner: pn.viewable.Viewable | None = None
     slides = _banner_slides()
     if slides:
         active_slide = {"index": 0, "play_token": 0}
@@ -222,7 +270,6 @@ def landing_app() -> pn.viewable.Viewable:
             sizing_mode="stretch_width",
             margin=(4, 0, 10, 0),
         )
-        root.append(banner)
         _set_slide(0)
 
         doc = pn.state.curdoc
@@ -274,6 +321,16 @@ def landing_app() -> pn.viewable.Viewable:
         """
     )
 
+    # Planned placeholders are dead ends for a first-time visitor, so they stay
+    # out of the default view and appear only behind an explicit toggle.
+    show_planned = {"value": False}
+
+    def _is_visible(item_id: str) -> bool:
+        item = ITEMS.get(item_id)
+        if item is None or item.status == "hidden":
+            return False
+        return item.status == "ready" or show_planned["value"]
+
     def _quick_start_grid(mode_id: str) -> pn.viewable.Viewable:
         mode = mode_by_id[mode_id]
         cards = [
@@ -286,7 +343,7 @@ def landing_app() -> pn.viewable.Viewable:
                 notebook_disabled_reason=notebook_disabled_reason,
             )
             for item_id in mode.item_ids
-            if item_id in ITEMS and ITEMS[item_id].status != "hidden"
+            if _is_visible(item_id)
         ]
         return pn.GridBox(
             *cards,
@@ -441,24 +498,54 @@ def landing_app() -> pn.viewable.Viewable:
             )
         )
     root.append(quick_start)
+    if banner is not None:
+        root.append(banner)
 
     # Lanes
-    for lane in LANES:
-        lane_items = [
-            ITEMS[item_id]
-            for item_id in lane.item_ids
-            if ITEMS[item_id].status != "hidden"
-        ]
-        root.append(
-            render_lane(
-                lane,
-                items=lane_items,
-                notebook_urls=notebook_urls,
-                notebook_names=notebook_names,
-                notebook_enabled=notebook_enabled,
-                notebook_disabled_reason=notebook_disabled_reason,
+    lanes_container = pn.Column(sizing_mode="stretch_width", margin=0)
+
+    def _build_lanes() -> list[pn.viewable.Viewable]:
+        views: list[pn.viewable.Viewable] = []
+        for lane in LANES:
+            lane_items = [
+                ITEMS[item_id] for item_id in lane.item_ids if _is_visible(item_id)
+            ]
+            if not lane_items:
+                continue
+            views.append(
+                render_lane(
+                    lane,
+                    items=lane_items,
+                    notebook_urls=notebook_urls,
+                    notebook_names=notebook_names,
+                    notebook_enabled=notebook_enabled,
+                    notebook_disabled_reason=notebook_disabled_reason,
+                )
             )
-        )
+        return views
+
+    planned_count = sum(
+        1
+        for lane in LANES
+        for item_id in lane.item_ids
+        if ITEMS[item_id].status == "planned"
+    )
+    show_planned_toggle = pn.widgets.Checkbox(
+        name=f"Show planned features ({planned_count} not built yet)",
+        value=False,
+        margin=(10, 0, 0, 2),
+    )
+
+    def _on_show_planned(event: object) -> None:
+        show_planned["value"] = bool(getattr(event, "new", False))
+        lanes_container[:] = _build_lanes()
+        quick_start_cards[:] = [_quick_start_grid(active_mode_id)]
+
+    show_planned_toggle.param.watch(_on_show_planned, "value")
+
+    lanes_container[:] = _build_lanes()
+    root.append(lanes_container)
+    root.append(show_planned_toggle)
 
     template.main.append(root)
     template.main.append(build_footer())

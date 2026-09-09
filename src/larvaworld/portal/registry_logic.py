@@ -1,3 +1,10 @@
+"""
+Logic behind the portal's landing registry.
+
+Validates the registered entries, resolves their targets and computes the
+badges and primary action each card shows.
+"""
+
 from __future__ import annotations
 
 import warnings
@@ -13,6 +20,12 @@ from larvaworld.portal.registry_types import LandingItem, PrimaryAction
 
 
 def validate_registry(*, strict: bool = True) -> None:
+    """Check the landing registry for malformed or unresolvable entries.
+
+    Returns:
+        The problems found, empty when the registry is consistent.
+    """
+
     def _err(msg: str) -> None:
         raise ValueError(f"[larvaworld.portal] {msg}")
 
@@ -101,6 +114,14 @@ def validate_registry(*, strict: bool = True) -> None:
 
 
 def resolve_target(item: LandingItem) -> str | None:
+    """Resolve where a landing entry's primary action leads.
+
+    Args:
+        item: The landing entry.
+
+    Returns:
+        The target route, or None when the entry has no target.
+    """
     if item.kind == "panel_app":
         return f"/{item.panel_app_id}"
     if item.kind == "external_link":
@@ -109,11 +130,19 @@ def resolve_target(item: LandingItem) -> str | None:
 
 
 def compute_badges(item: LandingItem) -> list[str]:
+    """Build the badges shown on a landing card.
+
+    Args:
+        item: The landing entry.
+
+    Returns:
+        The badges to display.
+    """
     badges: list[str] = []
 
-    if item.level == "core":
-        badges.append("Core")
-    elif item.level == "advanced":
+    # "core" is the overwhelming majority, so badging it carries no information
+    # and only adds noise to every card. Only the exceptions are badged.
+    if item.level == "advanced":
         badges.append("Advanced")
     elif item.level == "demo":
         badges.append("Demo")
@@ -129,6 +158,14 @@ def compute_badges(item: LandingItem) -> list[str]:
 
 
 def compute_primary_action(item: LandingItem) -> PrimaryAction:
+    """Build the main button a landing card offers.
+
+    Args:
+        item: The landing entry.
+
+    Returns:
+        The action, or None when the entry offers none.
+    """
     if item.status == "hidden":
         return PrimaryAction(label="Hidden", href=None, enabled=False)
 

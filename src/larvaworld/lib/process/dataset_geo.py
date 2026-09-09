@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import movingpandas as mpd
 import numpy as np
 import pandas as pd
+from pint_pandas import PintType
 
 warnings.filterwarnings("ignore")
 
@@ -46,8 +47,21 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         dt: Optional[float] = None,
         **kwargs: Any,
     ) -> None:
+        """Build the dataset, optionally populating it from step data.
+
+        Args:
+            step: Step data used to build the trajectory collection. When None,
+                the dataset is created empty.
+            dt: The timestep in seconds. Used both to build the trajectories
+                and to define the dataset framerate in the configuration.
+            **kwargs: Forwarded to :class:`BaseLarvaDataset`.
+        """
         if step is not None:
             self.init_mpd(step, dt=dt)
+        # dt is consumed above to build the trajectories, but it also defines the
+        # dataset's framerate, so it has to reach the configuration as well.
+        if dt is not None:
+            kwargs.setdefault("dt", dt)
         BaseLarvaDataset.__init__(self, **kwargs)
 
     # @property
@@ -75,7 +89,6 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
             >>> gdf.geometry  # 'xy' column with Point objects
         """
         import geopandas as gpd
-        from pint_pandas import PintType
 
         if len(step.index.names) != 1 or "datetime" not in step.index.names:
             max_tick = step[["x", "y"]].dropna().index.unique("Step").max()
@@ -167,19 +180,24 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
             self.endpoint_data = end.sort_index()
 
     @property
-    def traj_dic(self):
+    def traj_dic(self) -> util.AttrDict:
+        """The contained trajectories, keyed by agent ID."""
         return util.AttrDict({traj.id: traj for traj in self})
 
     @property
-    def dt_mag(self):
-        from pint_pandas import PintType
-
+    def dt_mag(self) -> float:
+        """The timestep in seconds, as a plain number without its unit."""
         assert self.config.dt is not None
         _dt = self.config.dt * PintType.ureg.s
         return _dt.magnitude
 
     @property
-    def iter(self):
+    def iter(self) -> Any:
+        """Iterate over the dataset agent by agent.
+
+        Yields:
+            Tuples of the agent's trajectory and its endpoint data row.
+        """
         for id in list(self.traj_dic.keys()):
             yield self.traj_dic[id], self.endpoint_data.loc[id]
 
@@ -196,18 +214,31 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
                 shp.affinity.translate, xoff=xy0.x, yoff=xy0.y
             )
 
-    def add_speed(self, name=None, **kwargs):
+    def add_speed(self, name: str | None = None, **kwargs: Any) -> None:
+        """Compute the speed of every trajectory and register its unit.
+
+        Args:
+            name: Column name to store the speed under. Defaults to the
+                registry's canonical velocity parameter.
+            **kwargs: Forwarded to ``movingpandas.Trajectory.add_speed``.
+        """
         if name is None:
             name = reg.getPar("v")
 
         for tr in self:
             tr.add_speed(name=name, **kwargs)
             tr.df = tr.df.loc[tr.df["xy"] != None]
-        from pint_pandas import PintType
 
         self.set_dtype(name, self.spatial_unit / PintType.ureg.s)
 
-    def add_distance(self, name=None, **kwargs):
+    def add_distance(self, name: str | None = None, **kwargs: Any) -> None:
+        """Compute the step-wise distance of every trajectory.
+
+        Args:
+            name: Column name to store the distance under. Defaults to the
+                registry's canonical distance parameter.
+            **kwargs: Forwarded to ``movingpandas.Trajectory.add_distance``.
+        """
         if name is None:
             name = reg.getPar("d")
         for tr in self:
@@ -215,17 +246,34 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
             tr.df = tr.df.loc[tr.df["xy"] != None]
         self.set_dtype(name, self.spatial_unit)
 
-    def add_acceleration(self, name=None, **kwargs):
+    def add_acceleration(self, name: str | None = None, **kwargs: Any) -> None:
+        """Compute the acceleration of every trajectory and register its unit.
+
+        Args:
+            name: Column name to store the acceleration under. Defaults to the
+                registry's canonical acceleration parameter.
+            **kwargs: Forwarded to ``movingpandas.Trajectory.add_acceleration``.
+        """
         if name is None:
             name = reg.getPar("a")
         for tr in self:
             tr.add_acceleration(name=name, **kwargs)
             tr.df = tr.df.loc[tr.df["xy"] != None]
-        from pint_pandas import PintType
 
         self.set_dtype(name, self.spatial_unit / PintType.ureg.s**2)
 
-    def scale_to_length(self, pars=None, ks=None):
+    def scale_to_length(
+        self, pars: list[str] | None = None, ks: list[str] | None = None
+    ) -> None:
+        """Add body-length-scaled copies of the given parameters.
+
+        Does nothing when the endpoint data carries no body length.
+
+        Args:
+            pars: Parameter column names to scale.
+            ks: Registry parameter keys, resolved to names when ``pars`` is
+                not given.
+        """
         if "length" not in self.endpoint_data.keys():
             return
         if pars is None and ks is not None:
@@ -236,7 +284,16 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
             for p in valid:
                 tr.df[util.nam.scal(p)] = tr.df[p] / l
 
-    def get_means(self, pars=None, ks=None):
+    def get_means(
+        self, pars: list[str] | None = None, ks: list[str] | None = None
+    ) -> None:
+        """Store the per-agent time average of the given parameters.
+
+        Args:
+            pars: Parameter column names to average.
+            ks: Registry parameter keys, resolved to names when ``pars`` is
+                not given.
+        """
         if pars is None and ks is not None:
             pars = reg.getPar(ks)
         valid = [p for p in pars if self.cols_exist_in_all_traj([p])]
@@ -248,14 +305,29 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
             )
 
     @property
-    def dtypes(self):
+    def dtypes(self) -> pd.Series:
+        """The unit-aware column dtypes shared across the trajectories."""
         return pd.concat([traj.df.dtypes for traj in self]).drop_duplicates()
 
-    def drop_xy_Nones(self):
+    def drop_xy_Nones(self) -> None:
+        """Drop the rows whose position geometry is missing."""
         for tr in self:
             tr.df = tr.df.loc[tr.df["xy"] != None]
 
-    def detect_pauses(self, max_scaled_diameter=0.3, min_duration=timedelta(seconds=1)):
+    def detect_pauses(
+        self,
+        max_scaled_diameter: float = 0.3,
+        min_duration: timedelta = timedelta(seconds=1),
+    ) -> None:
+        """Detect pause epochs and store them on the dataset.
+
+        A pause is a stretch during which the agent stays within a circle whose
+        diameter is scaled by its own body length.
+
+        Args:
+            max_scaled_diameter: Pause circle diameter, in body lengths.
+            min_duration: Minimum duration for a stop to count as a pause.
+        """
         dic = util.AttrDict({"times": [], "segments": [], "points": []})
         for traj in self:
             l = self.endpoint_data["length"].loc[traj.id].magnitude
@@ -270,34 +342,80 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         self.epoch_dict["pause"] = dic
 
     @property
-    def spatial_unit(self):
+    def spatial_unit(self) -> Any:
+        """The unit in which spatial metrics are expressed."""
         return self.spatial_pint_unit.units
 
     @property
-    def spatial_pint_unit(self):
+    def spatial_pint_unit(self) -> PintType:
+        """The pint dtype used for spatial columns."""
         return PintType("pint[m]")
         # return PintType(f'pint[{self.config.u}]')
 
     @property
-    def temporal_pint_unit(self):
+    def temporal_pint_unit(self) -> PintType:
+        """The pint dtype used for temporal columns."""
         return PintType("pint[s]")
 
-    def cols_exist_in_all_traj(self, cols):
+    def cols_exist_in_all_traj(self, cols: list[str]) -> bool:
+        """Report whether every trajectory carries all the given columns.
+
+        Args:
+            cols: The column names to look for.
+
+        Returns:
+            True if each trajectory has all of them.
+        """
         return all([util.cols_exist(cols, traj.df) for traj in self])
 
-    def time_to_datetime(self, t):
+    def time_to_datetime(self, t: float) -> Any:
+        """Convert a time in seconds to the datetime index used internally.
+
+        Args:
+            t: The time in seconds.
+
+        Returns:
+            The corresponding datetime.
+        """
         return pd.to_datetime(t, unit="s")
 
-    def get_locations_at(self, t):
+    def get_locations_at(self, t: Any) -> Any:
+        """Return every agent's position at a given time.
+
+        Args:
+            t: A time in seconds, a datetime, or the strings ``"start"`` or
+                ``"end"``.
+
+        Returns:
+            The positions at that time.
+        """
         if t not in ["start", "end"]:
             if not isinstance(t, datetime):
                 t = self.time_to_datetime(t)
         return super().get_locations_at(t)
 
-    def get_locations_at_tick(self, tick):
+    def get_locations_at_tick(self, tick: int) -> Any:
+        """Return every agent's position at a given simulation tick.
+
+        Args:
+            tick: The tick index.
+
+        Returns:
+            The positions at that tick.
+        """
         return self.get_locations_at(tick * self.dt_mag)
 
-    def get_segments_between(self, t1, t2):
+    def get_segments_between(self, t1: Any, t2: Any) -> Any:
+        """Return the trajectory segments spanning a time interval.
+
+        Args:
+            t1: Interval start, as a time in seconds, a datetime, or
+                ``"start"``/``"end"``.
+            t2: Interval end, in the same forms.
+
+        Returns:
+            The segments overlapping the interval.
+        """
         if t1 not in ["start", "end"]:
             if not isinstance(t1, datetime):
                 t1 = self.time_to_datetime(t1)
@@ -306,7 +424,22 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
                 t2 = self.time_to_datetime(t2)
         return super().get_segments_between(t1, t2)
 
-    def get_complete_segments_between(self, t1, t2):
+    def get_complete_segments_between(self, t1: float, t2: float) -> list[Any]:
+        """Return segments only for agents tracked across the whole interval.
+
+        Unlike :meth:`get_segments_between`, agents whose track starts after
+        ``t1`` or ends before ``t2`` are excluded rather than truncated.
+
+        Args:
+            t1: Interval start, in seconds.
+            t2: Interval end, in seconds.
+
+        Returns:
+            One dataframe slice per fully-covering agent.
+
+        Raises:
+            RuntimeError: If either bound is ``"start"`` or ``"end"``.
+        """
         if t1 in ["start", "end"] or t2 in ["start", "end"]:
             raise
         tt0, tt1 = reg.getPar(["t0", "t_fin"])
@@ -316,10 +449,27 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
             if e[tt0].magnitude < t1 and e[tt1].magnitude >= t2
         ]
 
-    def get_segments_between_ticks(self, tick1, tick2):
+    def get_segments_between_ticks(self, tick1: int, tick2: int) -> Any:
+        """Return the trajectory segments spanning a tick interval.
+
+        Args:
+            tick1: The first tick.
+            tick2: The last tick.
+
+        Returns:
+            The segments overlapping the interval.
+        """
         return self.get_segments_between(tick1 * self.dt_mag, tick2 * self.dt_mag)
 
-    def get_length_from_traj_with_nans(self, traj):
+    def get_length_from_traj_with_nans(self, traj: Any) -> float | None:
+        """Return a trajectory's path length, tolerating missing positions.
+
+        Args:
+            traj: The trajectory to measure.
+
+        Returns:
+            The path length, or None if it cannot be computed.
+        """
         try:
             return traj.get_length()
         except:
@@ -450,7 +600,13 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
             self.endpoint_data[l] = {traj.id: traj.df[l].values.mean() for traj in self}
             self.set_dtype(l, self.spatial_unit)
 
-    def load_contour(self, drop=True):
+    def load_contour(self, drop: bool = True) -> None:
+        """Build contour polygons and their derived area and centroid columns.
+
+        Args:
+            drop: When True, drop the raw contour coordinate columns once the
+                polygons have been built.
+        """
         xy_flat = self.config.contour_xy
         xy_pairs = xy_flat.in_pairs
         if self.cols_exist_in_all_traj(xy_flat):
@@ -467,7 +623,18 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
                     tr.df = tr.df.drop(columns=xy_flat)
             self.set_dtype(cols="area", units=self.spatial_unit**2)
 
-    def set_dtype(self, cols, units):
+    def set_dtype(self, cols: str | list[str], units: Any) -> None:
+        """Attach pint units to columns of the step and endpoint data.
+
+        Args:
+            cols: One column name, or a list of them.
+            units: A single unit applied to every column, or a list of units
+                matching ``cols`` one-to-one.
+
+        Raises:
+            RuntimeError: If a unit list is given whose length differs from
+                the column list.
+        """
         # print(cols,units)
         if not isinstance(cols, list):
             cols = [cols]
@@ -492,7 +659,16 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
                 )
 
     @classmethod
-    def from_ID(cls, refID, **kwargs):
+    def from_ID(cls, refID: str, **kwargs: Any) -> "GeoLarvaDataset":
+        """Build a geo dataset from a stored reference dataset.
+
+        Args:
+            refID: The reference ID to load.
+            **kwargs: Accepted for signature compatibility; unused.
+
+        Returns:
+            The constructed dataset, with its step and endpoint data set.
+        """
         d = reg.conf.Ref.loadRef(refID)
         d.load(h5_ks=["midline", "contour"])
         step = d.step_data
@@ -501,10 +677,23 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         inst.set_data(end=inst.build_endpoint_data(), step=inst.get_step_data())
         return inst
 
-    def path_to_file(self, file="geostep"):
+    def path_to_file(self, file: str = "geostep") -> str:
+        """Return the on-disk path of one of the dataset's stored files.
+
+        Args:
+            file: The file stem, without extension.
+
+        Returns:
+            The absolute path.
+        """
         return f"{self.config.data_dir}/{file}.txt"
 
-    def save(self, refID=None):
+    def save(self, refID: str | None = None) -> None:
+        """Write the dataset and its configuration to disk.
+
+        Args:
+            refID: Reference ID to register the stored dataset under.
+        """
         # print(self.config.dir)
         self.save_dict(self.df, "geodf.txt")
         self.save_dict(self.get_step_data(), "geostep.txt")
@@ -515,10 +704,16 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         vprint(f"***** Dataset {self.config.id} stored.-----", 1)
 
     @property
-    def df(self):
+    def df(self) -> pd.DataFrame:
+        """All trajectories concatenated into a single dataframe."""
         return pd.concat([tr.df for tr in self])
 
-    def get_step_data(self):
+    def get_step_data(self) -> pd.DataFrame:
+        """Return the step data in the canonical ``(Step, AgentID)`` layout.
+
+        Returns:
+            The concatenated trajectories, re-indexed and sorted.
+        """
         df = self.df.reset_index()
         df.set_index(
             keys=["Step", "AgentID"], inplace=True, drop=True, verify_integrity=False
@@ -527,7 +722,8 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         return df
 
     @property
-    def duration(self):
+    def duration(self) -> float:
+        """The dataset's total recorded duration, in seconds."""
         idx = self.df.index
         return (idx.max() - idx.min()).total_seconds()
 
@@ -563,7 +759,6 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
             >>> interp_df = self.interpolate_traj(dt=0.1)
             >>> interp_df.loc[10]  # All agents at timestep 10
         """
-        from pint_pandas import PintType
 
         dtu = dt * PintType.ureg.sec
         e = self.endpoint_data
@@ -596,10 +791,16 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
         df[xy] = df[xy].astype({p: float for p in xy})
         return df
 
-    def load_traj(self):
+    def load_traj(self) -> Any:
+        """Return the interpolated trajectory data."""
         return self.interpolate_traj()
 
-    def load(self, **kwargs):
+    def load(self, **kwargs: Any) -> None:
+        """Read the stored step and endpoint data back into the dataset.
+
+        Args:
+            **kwargs: Accepted for signature compatibility; unused.
+        """
         s = pd.DataFrame(util.load_dict(self.path_to_file("geostep")))
         e = pd.DataFrame(util.load_dict(self.path_to_file("geoend")))
         self.set_data(step=s, end=e)
@@ -612,7 +813,12 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
     # def endpoint_data_path(self):
     #     return f'{self.data_dir}/end.txt'
 
-    def match_ids(self):
+    def match_ids(self) -> None:
+        """Merge track fragments that plausibly belong to the same animal.
+
+        Candidate pairs are those whose endpoints are close in space and
+        consecutive in time, and whose body lengths agree.
+        """
         verbose = 1
         vprint("**--- Initializing matchIDs algorithm -----", verbose)
         Nids0 = self.config.N
@@ -717,7 +923,12 @@ class GeoLarvaDataset(BaseLarvaDataset, mpd.TrajectoryCollection):
             verbose,
         )
 
-    def comp_spatial(self):
+    def comp_spatial(self) -> None:
+        """Compute the standard spatial metrics for the whole dataset.
+
+        Adds distance and speed, their body-length-scaled counterparts, and the
+        per-agent means of the velocity parameters.
+        """
         self.add_distance(overwrite=True)
         self.add_speed(overwrite=True)
         self.scale_to_length(ks=["d", "v"])

@@ -1,3 +1,10 @@
+"""
+Generic editor for any stored configuration type.
+
+Builds a form from the conftype's own parameter definitions, so that a new
+configuration type becomes editable without a bespoke widget.
+"""
+
 from __future__ import annotations
 
 from typing import Any
@@ -12,6 +19,7 @@ from larvaworld.lib.param.nested_parameter_group import NestedConf
 from larvaworld.portal.config_widgets.conftype_actions import (
     ConftypeActionsController,
 )
+from larvaworld.portal.buttons import add_button, remove_button
 from larvaworld.portal.config_widgets.enrichment_widget import build_enrichment_widget
 
 __all__ = [
@@ -22,10 +30,26 @@ __all__ = [
 
 
 def _is_parameterized_class(config_cls: type[Any]) -> bool:
+    """Report whether a class is a param-backed config.
+
+    Args:
+        config_cls: The class to test.
+
+    Returns:
+        True when it can back a conftype editor.
+    """
     return isinstance(config_cls, type) and issubclass(config_cls, param.Parameterized)
 
 
 def _generated_agent_class_name(config_cls: type[Any]) -> str | None:
+    """Derive the generated class name a conftype registers under.
+
+    Args:
+        config_cls: The configuration class.
+
+    Returns:
+        The generated name.
+    """
     agent_class = getattr(config_cls, "agent_class", None)
     if callable(agent_class):
         try:
@@ -40,6 +64,15 @@ def _generated_agent_class_name(config_cls: type[Any]) -> str | None:
 def _matches_conftype_class(
     config_cls: type[param.Parameterized], candidate_cls: type[Any]
 ) -> bool:
+    """Report whether a class backs a given conftype.
+
+    Args:
+        config_cls: The class being edited.
+        candidate_cls: The registered class.
+
+    Returns:
+        True when they match.
+    """
     if not _is_parameterized_class(candidate_cls):
         return False
     if candidate_cls is config_cls:
@@ -60,6 +93,14 @@ def resolve_conftype(
     *,
     conftype: str | None = None,
 ):
+    """Find the conftype a configuration class belongs to.
+
+    Args:
+        config_cls: The configuration class.
+
+    Returns:
+        The conftype name, or None when it is not registered.
+    """
     if not _is_parameterized_class(config_cls):
         raise TypeError(
             "config_cls must be a subclass of param.Parameterized or NestedConf."
@@ -98,6 +139,14 @@ def resolve_conftype(
 
 
 def _serialize_value(value: Any) -> Any:
+    """Convert one edited value into its stored form.
+
+    Args:
+        value: The value to serialize.
+
+    Returns:
+        The stored representation.
+    """
     if isinstance(value, param.Parameterized):
         return _serialize_parameterized(value)
     if isinstance(value, dict):
@@ -110,6 +159,14 @@ def _serialize_value(value: Any) -> Any:
 
 
 def _serialize_parameterized(instance: param.Parameterized) -> util.AttrDict:
+    """Convert an edited object into its stored form.
+
+    Args:
+        instance: The object to serialize.
+
+    Returns:
+        The stored representation.
+    """
     if isinstance(instance, NestedConf):
         return instance.nestedConf
 
@@ -122,6 +179,15 @@ def _serialize_parameterized(instance: param.Parameterized) -> util.AttrDict:
 
 
 def _instantiate_classattr(parameter: ClassAttr) -> param.Parameterized:
+    """Instantiate the class a parameter selects.
+
+    Args:
+        parameter: The class-valued parameter.
+        cls: The class to instantiate.
+
+    Returns:
+        The new instance.
+    """
     nested_cls = (
         parameter.class_[0] if isinstance(parameter.class_, tuple) else parameter.class_
     )
@@ -131,6 +197,15 @@ def _instantiate_classattr(parameter: ClassAttr) -> param.Parameterized:
 def _widget_overrides(
     instance: param.Parameterized, parameter_names: list[str]
 ) -> dict[str, Any]:
+    """Build the widget overrides for an object's form.
+
+    Args:
+        instance: The object being edited.
+        parameter_names: The parameters to render.
+
+    Returns:
+        The overrides, keyed by parameter name.
+    """
     widgets: dict[str, Any] = {}
     for name in parameter_names:
         parameter = instance.param.objects(instance=False)[name]
@@ -148,6 +223,12 @@ def _widget_overrides(
 
 
 class ConftypeWidgetController:
+    """Editor state for one stored configuration type.
+
+    Builds the form from the conftype's own parameter definitions and keeps
+    the edited values in step with the stored configuration.
+    """
+
     def __init__(
         self,
         config_cls: type[param.Parameterized],
@@ -156,6 +237,12 @@ class ConftypeWidgetController:
         title: str | None = None,
         allow_reset: bool = True,
     ) -> None:
+        """Build the controller for one configuration class.
+
+        Args:
+            config_cls: The configuration class being edited.
+            **kwargs: Further controller settings.
+        """
         self.config_cls = config_cls
         self.conf_type = resolve_conftype(config_cls, conftype=conftype)
         self.allow_reset = allow_reset
@@ -229,9 +316,16 @@ class ConftypeWidgetController:
         )
 
     def _new_instance(self) -> param.Parameterized:
+        """Build a fresh configuration instance at its defaults."""
         return self.config_cls()
 
     def _set_status(self, message: str, *, tone: str = "neutral") -> None:
+        """Show a status message beside the editor.
+
+        Args:
+            message: The message text.
+            tone: How to style it.
+        """
         palette = {
             "neutral": "#52606d",
             "success": "#166534",
@@ -244,6 +338,7 @@ class ConftypeWidgetController:
         )
 
     def _refresh_preset_options(self, *, select_id: str | None = None) -> None:
+        """Reload the stored configurations offered in the selector."""
         self.conf_type.load()
         options = {config_id: config_id for config_id in self.conf_type.confIDs}
         self.preset_select.options = options
@@ -254,38 +349,86 @@ class ConftypeWidgetController:
             self.preset_select.value = next(iter(options.values()), None)
 
     def _render_editor(self) -> None:
+        """Rebuild the form for the current configuration."""
         self._editor_host.objects = [self._build_parameterized_section(self._current)]
 
     def _on_select_change(self, event: param.parameterized.Event) -> None:
+        """Handle a change of the selected configuration.
+
+        Args:
+            event: The widget event that triggered this.
+        """
         if event.new:
             self.config_id_input.value = str(event.new)
 
     def _apply_loaded_config(self, _config_id: str, config: Any) -> None:
+        """Apply a loaded configuration to the editor.
+
+        Args:
+            _config_id: The configuration's name.
+            config: The loaded configuration.
+        """
         self._current = config
         self.config_id_input.value = str(_config_id)
         self._render_editor()
 
     def _after_save(self, config_id: str, _payload: Any) -> None:
+        """Refresh the editor after a configuration was saved.
+
+        Args:
+            config_id: The name it was saved under.
+            _payload: The stored payload.
+        """
         self._refresh_preset_options(select_id=config_id)
 
     def _after_delete(self, config_id: str) -> None:
+        """Refresh the editor after a configuration was deleted.
+
+        Args:
+            config_id: The deleted configuration's name.
+        """
         self._refresh_preset_options()
         if self.config_id_input.value == config_id:
             self.config_id_input.value = ""
 
     def _after_reset(self, selected_id: str | None) -> None:
+        """Refresh the editor after the store was reset.
+
+        Args:
+            selected_id: The configuration to select afterwards.
+        """
         self._refresh_preset_options(select_id=selected_id)
 
     def _on_load(self, _event: Any = None) -> None:
+        """Handle the load button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.actions.load_selected()
 
     def _on_save(self, _event: Any = None) -> None:
+        """Handle the save button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.actions.save_current()
 
     def _on_delete(self, _event: Any = None) -> None:
+        """Handle the delete button.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.actions.delete_selected()
 
     def _on_request_reset(self, _event: Any = None) -> None:
+        """Handle the reset button, asking for confirmation first.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self.actions.request_reset()
 
     def _build_parameterized_section(
@@ -294,6 +437,14 @@ class ConftypeWidgetController:
         *,
         title: str | None = None,
     ) -> pn.Column:
+        """Build the form section for one nested object.
+
+        Args:
+            instance: The object being edited.
+
+        Returns:
+            The section component.
+        """
         section = pn.Column(sizing_mode="stretch_width", margin=(0, 0, 10, 0))
         heading = title or instance.name or type(instance).__name__
         section.append(
@@ -344,16 +495,22 @@ class ConftypeWidgetController:
         name: str,
         parameter: ClassAttr,
     ) -> pn.Card:
+        """Build the form section for a class-valued parameter.
+
+        Args:
+            owner: The object being edited.
+            name: The parameter name.
+            parameter: The parameter object.
+
+        Returns:
+            The section component.
+        """
         nested_value = getattr(owner, name)
         title = name.replace("_", " ").title()
         content = pn.Column(sizing_mode="stretch_width")
 
         if nested_value is None:
-            create_button = pn.widgets.Button(
-                name=f"Initialize {title}",
-                button_type="primary",
-                sizing_mode="stretch_width",
-            )
+            create_btn = add_button(name=f"Initialize {title}")
 
             def _create(_event: Any = None) -> None:
                 try:
@@ -366,8 +523,8 @@ class ConftypeWidgetController:
                 self._render_editor()
                 self._set_status(f'Initialized "{title}".', tone="success")
 
-            create_button.on_click(_create)
-            content.append(create_button)
+            create_btn.on_click(_create)
+            content.append(create_btn)
         else:
             if name == "enrichment":
                 content.append(build_enrichment_widget(nested_value, wrap=False))
@@ -390,6 +547,16 @@ class ConftypeWidgetController:
         name: str,
         parameter: ClassDict,
     ) -> pn.Card:
+        """Build the form section for a dictionary-valued parameter.
+
+        Args:
+            owner: The object being edited.
+            name: The parameter name.
+            parameter: The parameter object.
+
+        Returns:
+            The section component.
+        """
         title = name.replace("_", " ").title()
         items = getattr(owner, name)
         if items is None:
@@ -406,16 +573,8 @@ class ConftypeWidgetController:
             placeholder="Enter a key and click Add item",
             sizing_mode="stretch_width",
         )
-        add_button = pn.widgets.Button(
-            name="Add item",
-            button_type="primary",
-            sizing_mode="stretch_width",
-        )
-        delete_button = pn.widgets.Button(
-            name="Delete item",
-            button_type="warning",
-            sizing_mode="stretch_width",
-        )
+        add_btn = add_button(name="Add item")
+        delete_btn = remove_button(name="Delete item")
         editor_host = pn.Column(sizing_mode="stretch_width")
 
         def _refresh_nested_editor() -> None:
@@ -483,8 +642,8 @@ class ConftypeWidgetController:
             _refresh_nested_editor()
             self._set_status(f'Deleted "{item_key}" from "{title}".', tone="success")
 
-        add_button.on_click(_add_item)
-        delete_button.on_click(_delete_item)
+        add_btn.on_click(_add_item)
+        delete_btn.on_click(_delete_item)
         select.param.watch(lambda _event: _refresh_nested_editor(), "value")
 
         _refresh_nested_editor()
@@ -493,7 +652,7 @@ class ConftypeWidgetController:
             pn.Column(
                 select,
                 key_input,
-                pn.Row(add_button, delete_button, sizing_mode="stretch_width"),
+                pn.Row(add_btn, delete_btn, sizing_mode="stretch_width"),
                 editor_host,
                 sizing_mode="stretch_width",
             ),
@@ -511,6 +670,15 @@ def build_conftype_widget(
     title: str | None = None,
     allow_reset: bool = True,
 ):
+    """Build the editor for one configuration type.
+
+    Args:
+        config_cls: The configuration class to edit.
+        **kwargs: Further controller settings.
+
+    Returns:
+        The controller and its view.
+    """
     controller = ConftypeWidgetController(
         config_cls,
         conftype=conftype,

@@ -273,6 +273,19 @@ class Color:
         max_g: int = 255,
         max_b: int = 255,
     ) -> tuple[int, int, int]:
+        """Draw a random RGB colour within the given per-channel bounds.
+
+        Args:
+            min_r: Minimum red value.
+            min_g: Minimum green value.
+            min_b: Minimum blue value.
+            max_r: Maximum red value.
+            max_g: Maximum green value.
+            max_b: Maximum blue value.
+
+        Returns:
+            The sampled ``(r, g, b)`` triplet.
+        """
         r = random.randint(min_r, max_r)
         g = random.randint(min_g, max_g)
         b = random.randint(min_b, max_b)
@@ -280,6 +293,15 @@ class Color:
 
     @staticmethod
     def random_bright(min_value: int = 200) -> tuple[int, int, int]:
+        """Draw a random bright RGB colour.
+
+        Args:
+            min_value: Lower bound applied to every channel, so that the
+                sampled colour stays light.
+
+        Returns:
+            The sampled ``(r, g, b)`` triplet.
+        """
         r = random.randint(min_value, 255)
         g = random.randint(min_value, 255)
         b = random.randint(min_value, 255)
@@ -293,6 +315,17 @@ class Color:
         lim: float = 1.0,
         color_range: list[tuple[int, int, int]] = [RED, GREEN],
     ) -> tuple[float, float, float] | list[tuple[float, float, float]]:
+        """Map a signal onto a colour gradient by its normalized magnitude.
+
+        Args:
+            a: A scalar value, or an array of them.
+            lim: The magnitude mapped onto the far end of the gradient.
+            color_range: The two colours the gradient interpolates between.
+
+        Returns:
+            The interpolated colour for a scalar input, or a list of colours
+            for an array input.
+        """
         t = np.clip(np.abs(a) / lim, a_min=0, a_max=1)
         (r1, b1, g1), (r2, b2, g2) = color_range
         r, b, g = r2 - r1, b2 - b1, g2 - g1

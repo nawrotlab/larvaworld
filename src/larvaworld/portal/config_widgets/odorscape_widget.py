@@ -1,3 +1,7 @@
+"""
+Widget for editing an environment's odor landscape.
+"""
+
 from __future__ import annotations
 
 import param
@@ -12,10 +16,26 @@ __all__ = ["build_odorscape_widget"]
 
 
 def _ordered_names(instance: param.Parameterized, preferred: list[str]) -> list[str]:
+    """Order a configuration's fields for display.
+
+    Args:
+        obj: The object being edited.
+
+    Returns:
+        The field names, in display order.
+    """
     return [name for name in preferred if name in instance.param and name != "name"]
 
 
 def _build_odorscape_editor(layer: param.Parameterized) -> object:
+    """Build the editor for the odor field.
+
+    Args:
+        odorscape: The field being edited.
+
+    Returns:
+        The editor component.
+    """
     custom_builders = {}
     if "grid_dims" in layer.param:
         custom_builders["grid_dims"] = (
@@ -59,6 +79,14 @@ def _build_odorscape_editor(layer: param.Parameterized) -> object:
 
 
 def build_odorscape_widget(env_conf: param.Parameterized) -> object:
+    """Build the widget editing the environment's odor field.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     return classattr_section(
         env_conf,
         name="odorscape",

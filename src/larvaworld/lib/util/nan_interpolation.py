@@ -4,6 +4,8 @@ Methods for managing nans in timeseries data
 
 from __future__ import annotations
 
+from typing import Any, Callable
+
 import numpy as np
 import scipy as sp
 from scipy.signal import butter, sosfiltfilt
@@ -17,31 +19,52 @@ __all__: list[str] = [
 ]
 
 
-def nan_helper(y):
+def nan_helper(
+    y: np.ndarray,
+) -> tuple[np.ndarray, Callable[[np.ndarray], np.ndarray]]:
     """
-    Helper to handle indices and logical indices of NaNs.
+    Handle indices and logical indices of NaNs.
 
-    Input:
-        - y, 1d numpy array with possible NaNs
-    Output:
-        - nans, logical indices of NaNs
-        - index, a function, with signature indices= index(logical_indices),
-          to convert logical indices of NaNs to 'equivalent' indices
+    Args:
+        y: 1D array with possible NaNs.
+
+    Returns:
+        A tuple of the logical NaN mask and a function converting that mask
+        into the equivalent positional indices.
+
     Example:
         >>> # linear interpolation of NaNs
-        >>> nans, x= nan_helper(y)
-        >>> y[nans]= np.interp(x(nans), x(~nans), y[~nans])
+        >>> nans, x = nan_helper(y)
+        >>> y[nans] = np.interp(x(nans), x(~nans), y[~nans])
     """
     return np.isnan(y), lambda z: z.nonzero()[0]
 
 
-def interpolate_nans(y):
+def interpolate_nans(y: np.ndarray) -> np.ndarray:
+    """
+    Replace NaNs in a 1D array by linear interpolation, in place.
+
+    Args:
+        y: 1D array with possible NaNs.
+
+    Returns:
+        The same array with its NaNs filled.
+    """
     nans, x = nan_helper(y)
     y[nans] = np.interp(x(nans), x(~nans), y[~nans])
     return y
 
 
-def parse_array_at_nans(a):
+def parse_array_at_nans(a: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Locate the contiguous non-NaN stretches of an array.
+
+    Args:
+        a: 1D array with possible NaNs.
+
+    Returns:
+        A tuple of the start and end indices of each non-NaN stretch.
+    """
     a = np.insert(a, 0, np.nan)
     a = np.insert(a, -1, np.nan)
     dif = np.diff(np.isnan(a).astype(int))
@@ -50,7 +73,25 @@ def parse_array_at_nans(a):
     return ds, de
 
 
-def apply_sos_filter_to_array_with_nans(sos, x, padlen: int = 6):
+def apply_sos_filter_to_array_with_nans(
+    sos: np.ndarray, x: np.ndarray, padlen: int = 6
+) -> np.ndarray:
+    """
+    Apply a second-order-sections filter, skipping over NaN gaps.
+
+    Each contiguous non-NaN stretch longer than ``padlen`` is filtered
+    independently, so that gaps do not smear across the signal. If the
+    stretch-wise pass fails, the filter is applied to the whole array instead.
+
+    Args:
+        sos: Second-order-sections filter coefficients.
+        x: The signal to filter.
+        padlen: Minimum stretch length, and the filter padding length.
+
+    Returns:
+        The filtered signal, NaN wherever the input was NaN or the stretch was
+        too short to filter.
+    """
     try:
         A = np.full_like(x, np.nan)
         ds, de = parse_array_at_nans(x)
@@ -63,7 +104,9 @@ def apply_sos_filter_to_array_with_nans(sos, x, padlen: int = 6):
         return sosfiltfilt(sos, x, padlen=padlen)
 
 
-def apply_filter_to_array_with_nans_multidim(a, freq: float, fr: float, N: int = 1):
+def apply_filter_to_array_with_nans_multidim(
+    a: np.ndarray, freq: float, fr: float, N: int = 1
+) -> np.ndarray:
     """
     Power-spectrum of signal.
 
@@ -110,7 +153,29 @@ def apply_filter_to_array_with_nans_multidim(a, freq: float, fr: float, N: int =
         raise ValueError("Method implement for up to 3-dimensional array")
 
 
-def convex_hull(xs=None, ys=None, N=None, interp_nans: bool = True):
+def convex_hull(
+    xs: np.ndarray | None = None,
+    ys: np.ndarray | None = None,
+    N: int | None = None,
+    interp_nans: bool = True,
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Compute the convex hull of each row of a set of 2D point clouds.
+
+    NaNs are dropped before the hull is computed. Rows whose hull has fewer
+    than ``N`` vertices are padded with NaN, and rows for which no hull can be
+    computed are left entirely NaN.
+
+    Args:
+        xs: Array of shape ``(Nrows, Ncols)`` holding the x coordinates.
+        ys: Array of shape ``(Nrows, Ncols)`` holding the y coordinates.
+        N: Number of hull vertices to keep per row.
+        interp_nans: When True, interpolate the NaN padding of each hull row.
+
+    Returns:
+        The x and y coordinates of the hull vertices, each of shape
+        ``(Nrows, N)``.
+    """
     Nrows, Ncols = xs.shape
     xs = [xs[i][~np.isnan(xs[i])] for i in range(Nrows)]
     ys = [ys[i][~np.isnan(ys[i])] for i in range(Nrows)]

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import zipfile
 
 from larvaworld.portal.datasets.discovery import discover_raw_datasets
 
@@ -55,3 +56,28 @@ def test_discover_raw_datasets_groups_jovanic_candidates_by_source_id(
     ]
     assert all(candidate.source_path == day1.resolve() for candidate in candidates)
     assert all(candidate.warnings == [] for candidate in candidates)
+
+
+def test_discover_raw_datasets_accepts_deeplabcut_zip_source(tmp_path: Path) -> None:
+    archive = tmp_path / "deeplabcut.zip"
+    with zipfile.ZipFile(archive, "w") as output:
+        output.writestr("recording/trialDLC_result.csv", "scorer\n")
+
+    candidates = discover_raw_datasets("DeepLabCut", archive)
+
+    assert [candidate.candidate_id for candidate in candidates] == ["recording"]
+    assert [candidate.parent_dir for candidate in candidates] == ["recording"]
+    assert candidates[0].source_path == archive.resolve()
+
+
+def test_discover_raw_datasets_accepts_deeplabcut_folder_source(tmp_path: Path) -> None:
+    raw_root = tmp_path / "deeplabcut"
+    recording = raw_root / "recording"
+    recording.mkdir(parents=True)
+    (recording / "trialDLC_result.csv").write_text("scorer\n", encoding="utf-8")
+
+    candidates = discover_raw_datasets("DeepLabCut", raw_root)
+
+    assert [candidate.candidate_id for candidate in candidates] == ["recording"]
+    assert [candidate.parent_dir for candidate in candidates] == ["recording"]
+    assert candidates[0].source_path == recording.resolve()

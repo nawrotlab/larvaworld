@@ -137,49 +137,61 @@ def modelConfTable(
     from ..model import moduleDB as MD
 
     def mIDtable_data(m, columns):
-        def gen_rows2(d, parent, data):
-            for k, p in d.items():
-                if isinstance(p, param.Parameterized):
-                    ddd = [getattr(p, pname) for pname in columns]
-                    row = [parent] + ddd
-                    data.append(row)
+        # mode/run_mode are mode SELECTORS, not values worth a table row.
+        excluded_params = {"mode", "run_mode"}
+
+        def gen_rows(d, parent, data):
+            """
+            Emit one or more table rows for every param in a raw-value
+            dict `d`, under module label `parent`.
+
+            `module_conf()`/`body_kws()`/`physics_kws()`/etc. all return
+            plain AttrDicts of scalars and, where applicable, real typed
+            distribution objects (e.g. intermitter's pause_dist) -- never
+            `param.Parameterized` instances. The previous implementation's
+            `isinstance(p, param.Parameterized)` check accordingly matched
+            nothing for any of these dicts (confirmed directly: body_kws/
+            physics_kws/sensorimotor_kws/energetics_kws all return plain
+            AttrDicts too), so every module except the separately
+            special-cased "intermitter" silently produced zero rows.
+            """
+            for p, v in d.items():
+                if p in excluded_params or v is None:
+                    continue
+                dist_name = getattr(v, "name", None)
+                if dist_name is not None:
+                    vs1, vs2 = reg.get_dist(k=p, k0=parent, v=v, return_tabrows=True)
+                    data.append(vs1)
+                    data.append(vs2)
+                else:
+                    # Scalar / non-distribution parameters (e.g. floats like EEB)
+                    # should still be represented in the table.
+                    data.append([parent, p, "-", v, "-"])
 
         data = []
         for k in MD.BrainMods:
             d0 = m.brain[k]
-            if d0 is not None:
-                if k == "intermitter":
-                    d = MD.module_conf(mID=k, as_entry=False, **d0)
-                    run_mode = d["run_mode"]
-                    for p in d.keylist:
-                        if p == "run_dist" and run_mode == "stridechain":
-                            continue
-                        if p == "stridechain_dist" and run_mode == "exec":
-                            continue
-                        v = d[p]
-                        if v is not None:
-                            dist_name = getattr(v, "name", None)
-                            if dist_name is not None:
-                                vs1, vs2 = reg.get_dist(
-                                    k=p, k0=k, v=v, return_tabrows=True
-                                )
-                                data.append(vs1)
-                                data.append(vs2)
-                            else:
-                                # Scalar / non-distribution parameters (e.g. floats like EEB)
-                                # should still be represented in the table.
-                                data.append([k, p, "-", v, "-"])
-                else:
-                    gen_rows2(d0, k, data)
+            if d0 is None:
+                continue
+            d = MD.module_conf(mID=k, as_entry=False, **d0)
+            if k == "intermitter":
+                run_mode = d.get("run_mode")
+                if run_mode == "stridechain":
+                    d = d.get_copy()
+                    d.pop("run_dist", None)
+                elif run_mode == "exec":
+                    d = d.get_copy()
+                    d.pop("stridechain_dist", None)
+            gen_rows(d, k, data)
 
-        gen_rows2(MD.body_kws(**m.body), "body", data)
-        gen_rows2(MD.physics_kws(**m.physics), "physics", data)
+        gen_rows(MD.body_kws(**m.body), "body", data)
+        gen_rows(MD.physics_kws(**m.physics), "physics", data)
         if "sensorimotor" in m and m.sensorimotor is not None:
-            gen_rows2(MD.sensorimotor_kws(**m.sensorimotor), "sensorimotor", data)
+            gen_rows(MD.sensorimotor_kws(**m.sensorimotor), "sensorimotor", data)
         if m.energetics is not None:
             d = MD.energetics_kws(DEB_kws=m.energetics.DEB, gut_kws=m.energetics.gut)
-            gen_rows2(d.DEB, "DEB", data)
-            gen_rows2(d.gut, "gut", data)
+            gen_rows(d.DEB, "DEB", data)
+            gen_rows(d.gut, "gut", data)
 
         df = pd.DataFrame(data, columns=["field"] + columns)
         df.set_index(["field"], inplace=True)
@@ -188,7 +200,7 @@ def modelConfTable(
     if m is None:
         m = reg.conf.Model.getID(mID)
     df = mIDtable_data(m, columns=columns)
-    row_colors = [None] + [MD.ModuleColorDict[ii] for ii in df.index.values]
+    row_colors = [None] + [MD.ModuleColorDict.get(ii, "grey") for ii in df.index.values]
     df.index = arrange_index_labels(df.index)
     return conf_table(df, row_colors, mID=mID, colWidths=colWidths, **kwargs)
 
@@ -356,7 +368,7 @@ def mpl_table(
 @funcs.graph("model diff")
 def mdiff_table(
     mIDs: Sequence[str],
-    dIDs: Sequence[str],
+    dIDs: Optional[Sequence[str]] = None,
     show: bool = False,
     save_to: Optional[str] = None,
     save_as: Optional[str] = None,
@@ -370,7 +382,7 @@ def mdiff_table(
 
     Args:
         mIDs: List of model identifiers to compare
-        dIDs: List of display identifiers for models
+        dIDs: List of display identifiers for models. Defaults to mIDs
         show: Whether to display table. Defaults to False
         save_to: Directory to save table. Defaults to None
         save_as: Filename for saved table. Defaults to None
@@ -383,12 +395,32 @@ def mdiff_table(
         >>> fig = mdiff_table(mIDs=['model_A', 'model_B'], dIDs=['A', 'B'])
     """
     data, row_colors = diff_df(mIDs=mIDs, dIDs=dIDs)
+    if dIDs is None:
+        dIDs = mIDs
+    n_models = len(dIDs)
+
+    def _fmt(v: Any) -> Any:
+        # Consistent, compact numeric formatting -- raw float repr (e.g.
+        # 0.5623000000000001) previously flooded cells with noise.
+        if isinstance(v, bool) or v is None:
+            return v
+        if isinstance(v, float):
+            return round(v, 3)
+        return v
+
+    data = data.copy()
+    for c in dIDs:
+        data[c] = data[c].apply(_fmt)
+
+    param_col_width = 0.22
+    model_col_width = (1.0 - param_col_width) / n_models
+    colWidths = [param_col_width] + [model_col_width] * n_models
+
     mpl_kws = {
         "name": "mdiff_table",
         "header0": "MODULE",
         "header0_color": "darkred",
-        "name": "mdiff_table",
-        "figsize": (24, 14),
+        "figsize": (max(16, 8 + 8 * n_models), 14),
         "adjust_kws": {"left": 0.3, "right": 0.95},
         "font_size": 14,
         "highlighted_celltext_dict": {
@@ -398,6 +430,9 @@ def mdiff_table(
         "cellLoc": "center",
         "rowLoc": "center",
         "row_colors": row_colors,
+        "colWidths": colWidths,
+        # Reserve a top band for the "Larva models" spanning header added below.
+        "bbox": (0, 0, 1, 0.9),
     }
     mpl_kws.update(kwargs)
 
@@ -406,8 +441,57 @@ def mdiff_table(
     mpl._cells[(0, 0)].set_text_props(weight="bold", color="w")
     mpl._cells[(0, 0)].set_facecolor(mpl_kws["header0_color"])
 
+    # Spanning "Larva models" header above the model-name columns only (not
+    # the "parameter"/"MODULE" columns), so the model-name row reads as one
+    # visually grouped block instead of just more column headers.
+    #
+    # matplotlib's Table recomputes every column's width as the max width of
+    # ANY cell claiming that column index (Table._do_cell_alignment, run on
+    # every draw) -- a single cell spanning multiple column indices with an
+    # oversized width would inflate just the first of those columns and push
+    # the rest apart. Instead, add one same-width, textless cell per
+    # underlying model column at row -1 (matching each column's real width
+    # exactly, so no width gets perturbed) to form a continuous colored bar,
+    # then draw the "Larva models" label as free-floating axes text centered
+    # over the whole bar -- centering it *within* a single cell would bias
+    # it toward whichever column happens to sit at the middle index.
+    fig.canvas.draw()
+    header_height = mpl._cells[(0, 1)].get_height()
+    for col in range(1, n_models + 1):
+        w = mpl._cells[(0, col)].get_width()
+        mpl.add_cell(
+            -1,
+            col,
+            width=w,
+            height=header_height,
+            loc="center",
+            text="",
+            facecolor=mpl_kws["header0_color"],
+        )
+    fig.canvas.draw()
+    x_left = mpl._cells[(-1, 1)].get_x()
+    last = mpl._cells[(-1, n_models)]
+    x_right = last.get_x() + last.get_width()
+    y_center = last.get_y() + last.get_height() / 2
+    ax.text(
+        (x_left + x_right) / 2,
+        y_center,
+        "Larva models",
+        ha="center",
+        va="center",
+        transform=ax.transAxes,
+        weight="bold",
+        color="w",
+        fontsize=mpl_kws["font_size"],
+    )
+
     P = plot.AutoBasePlot(
-        "mdiff_table", save_as=save_as, save_to=save_to, show=show, fig=fig, axs=ax
+        name="mdiff_table",
+        save_as=save_as,
+        save_to=save_to,
+        show=show,
+        fig=fig,
+        axs=ax,
     )
     return P.get()
 
@@ -501,6 +585,39 @@ def diff_df(
     """
     from ..model import moduleDB as MD
 
+    def _resolve_missing_default(m: Any, k: str) -> Any:
+        """
+        Best-effort resolution of a flattened key missing from a model's
+        stored config, via its brain module's class-level default.
+
+        Model configs are stored without fields already at their class
+        default (e.g. a turner's ``input_noise``/``output_noise`` default
+        to 0.0 and are commonly omitted), so a plain ``k in m`` miss does
+        not mean the model has no value for ``k`` -- only that it wasn't
+        serialized. Resolves via the actual param class backing the same
+        brain module + mode present on ``m`` itself (covers module-level
+        params as well as inherited Effector-level ones such as the noise
+        params, which ``module_conf``'s default dict deliberately excludes
+        for display purposes); returns None (former behavior) if
+        unresolvable.
+        """
+        parts = k.split(".")
+        if len(parts) < 3 or parts[0] != "brain":
+            return None
+        mod, leaf = parts[1], parts[-1]
+        mode = m.get(f"brain.{mod}.mode")
+        if mode is None:
+            return None
+        try:
+            cls = MD.brainDB[mod].get_class(mode=mode)
+            return (
+                cls.param[leaf].default
+                if cls is not None and leaf in cls.param
+                else None
+            )
+        except Exception:
+            return None
+
     dic = {}
     if dIDs is None:
         dIDs = mIDs
@@ -510,7 +627,10 @@ def diff_df(
     ks = util.unique_list(util.flatten_list([m.keylist for m in ms]))
 
     for k in ks:
-        entry = {dID: m[k] if k in m else None for dID, m in zip(dIDs, ms)}
+        entry = {
+            dID: m[k] if k in m else _resolve_missing_default(m, k)
+            for dID, m in zip(dIDs, ms)
+        }
         l = list(entry.values())
         if all([a == l[0] for a in l]):
             continue
@@ -528,7 +648,7 @@ def diff_df(
     df.set_index(["field"], inplace=True)
     df.sort_index(inplace=True)
 
-    row_colors = [None] + [MD.ModuleColorDict[ii] for ii in df.index.values]
+    row_colors = [None] + [MD.ModuleColorDict.get(ii, "grey") for ii in df.index.values]
     df.index = arrange_index_labels(df.index)
 
     return df, row_colors

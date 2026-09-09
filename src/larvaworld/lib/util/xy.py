@@ -56,7 +56,6 @@ __all__: list[str] = [
     "eudiNxN",
     "compute_dst",
     "comp_extrema",
-    # "align_trajectories",
     "fixate_larva",
     "epoch_overlap",
     "epoch_slices",
@@ -421,6 +420,12 @@ class Collision(Exception):
     """
 
     def __init__(self, object1: Any, object2: Any) -> None:
+        """Record the pair of objects involved in the collision.
+
+        Args:
+            object1: The first colliding object.
+            object2: The second colliding object.
+        """
         self.object1 = object1
         self.object2 = object2
 
@@ -830,6 +835,12 @@ def concat_datasets(
             dt = dts[0]
             dic = {"sec": 1, "min": 60, "hour": 60 * 60, "day": 24 * 60 * 60}
             df0["Step"] *= dt / dic[unit]
+    if not df0.index.is_unique:
+        # Agent IDs are only unique within a dataset, so pooling datasets that number
+        # their agents the same way leaves a duplicated index, which plotting libraries
+        # cannot align against. The IDs are kept as a column, where the DatasetID and
+        # GroupID columns already carry the grouping the plots plot by.
+        df0.reset_index(drop=False, inplace=True)
     return df0
 
 
@@ -900,7 +911,19 @@ def apply_per_level(
         >>> result = apply_per_level(data, np.mean, level='AgentID')
     """
 
-    def init_A(Ndims):
+    def init_A(Ndims: int) -> np.ndarray:
+        """Allocate a NaN-filled result array matching the input index.
+
+        Args:
+            Ndims: 1 for a per-agent timeseries, 2 to add the trailing
+                dimension of ``Ai``.
+
+        Returns:
+            The allocated array.
+
+        Raises:
+            ValueError: If ``Ndims`` is neither 1 nor 2.
+        """
         ids = s.index.unique("AgentID").values
         Nids = len(ids)
         N = s.index.unique("Step").size
@@ -1111,76 +1134,6 @@ def comp_extrema(
         aa[i_max] = 1
     return aa
 
-    """
-    NOTE:Refactored as a method of LarvaDataset class
-def align_trajectories(
-    s,
-    c,
-    d=None,
-    track_point=None,
-    arena_dims=None,
-    transposition="origin",
-    replace=True,
-    **kwargs,
-):
-    if transposition in ["", None, np.nan]:
-        return
-    mode = transposition
-
-    xy_flat = c.all_xy.existing(s)
-    xy_pairs = xy_flat.in_pairs
-
-    if replace:
-        ss = s
-    else:
-        ss = copy.deepcopy(s[xy_flat])
-
-    if mode == "arena":
-        # reg.vprint('Centralizing trajectories in arena center')
-        if arena_dims is None:
-            arena_dims = c.env_params.arena.dims
-        x0, y0 = arena_dims
-        X, Y = x0 / 2, y0 / 2
-
-        for x, y in xy_pairs:
-            ss[x] -= X
-            ss[y] -= Y
-        return ss
-    else:
-        if track_point is None:
-            track_point = c.point
-        XY = nam.xy(track_point) if cols_exist(nam.xy(track_point), s) else ["x", "y"]
-        if not cols_exist(XY, s):
-            raise ValueError(
-                "Defined point xy coordinates do not exist. Can not align trajectories! "
-            )
-        ids = s.index.unique(level="AgentID").values
-        Nticks = len(s.index.unique("Step"))
-        if mode == "origin":
-            vprint("Aligning trajectories to common origin")
-            xy = [s[XY].xs(id, level="AgentID").dropna().values[0] for id in ids]
-        elif mode == "center":
-            vprint(
-                "Centralizing trajectories in trajectory center using min-max positions"
-            )
-            xy_max = [s[XY].xs(id, level="AgentID").max().values for id in ids]
-            xy_min = [s[XY].xs(id, level="AgentID").min().values for id in ids]
-            xy = [(max + min) / 2 for max, min in zip(xy_max, xy_min)]
-        else:
-            raise ValueError('Supported modes are "arena", "origin" and "center"!')
-        xs = np.array([x for x, y in xy] * Nticks)
-        ys = np.array([y for x, y in xy] * Nticks)
-
-        for x, y in xy_pairs:
-            ss[x] = ss[x].values - xs
-            ss[y] = ss[y].values - ys
-
-        if d is not None:
-            d.store(ss, f"traj.{mode}")
-            vprint(f"traj_aligned2{mode} stored")
-        return ss
-    """
-
 
 def fixate_larva(
     s: pd.DataFrame,
@@ -1211,12 +1164,20 @@ def fixate_larva(
         >>> s_fixed, bg = fixate_larva(step_data, config, (0.2, 0.2), P1='centroid', P2='head')
     """
     pars = c.all_xy.existing(s)
-    if not nam.xy(P1).exist_in(s):
-        raise ValueError(f" The requested {P1} is not part of the dataset")
+    P1_xy = nam.xy(P1)
+    if not P1_xy.exist_in(s):
+        # Live-simulation datasets (the "pose" collection) store the single
+        # tracked reference point under bare x/y rather than a
+        # point-prefixed pair (e.g. centroid_x/centroid_y) -- fall back to
+        # that instead of failing outright.
+        if P1 in (None, "centroid") and nam.xy("").exist_in(s):
+            P1_xy = nam.xy("")
+        else:
+            raise ValueError(f" The requested {P1} is not part of the dataset")
     vprint(f"Fixing {P1} to arena center")
     X, Y = arena_dims
-    xy = s[nam.xy(P1)].values
-    xy_start = s[nam.xy(P1)].dropna().values[0]
+    xy = s[P1_xy].values
+    xy_start = s[P1_xy].dropna().values[0]
     bg_x = (xy[:, 0] - xy_start[0]) / X
     bg_y = (xy[:, 1] - xy_start[1]) / Y
 

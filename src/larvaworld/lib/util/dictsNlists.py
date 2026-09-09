@@ -50,10 +50,24 @@ class AttrDict(dict):
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Build the dictionary and expose its entries as attributes.
+
+        Args:
+            *args: Positional arguments forwarded to :class:`dict`.
+            **kwargs: Keyword arguments forwarded to :class:`dict`.
+        """
         super(AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self.autonest(d=self)
 
     def autonest(self, d: dict) -> dict:
+        """Convert every nested plain dict into an :class:`AttrDict`, in place.
+
+        Args:
+            d: The dictionary to convert.
+
+        Returns:
+            The same mapping, with nested dicts replaced.
+        """
         for k, data in d.items():
             d[k] = self.from_nested_dicts(data)
         return d
@@ -67,6 +81,15 @@ class AttrDict(dict):
             return cls(data)
 
     def replace_keys(self, pairs: dict = {}) -> "AttrDict":
+        """Return a copy with some top-level keys renamed.
+
+        Args:
+            pairs: Mapping of old key to new key. Keys absent from it are
+                carried over unchanged.
+
+        Returns:
+            The renamed dictionary.
+        """
         dic = {}
         for k, v in self.items():
             if k in list(pairs.keys()):
@@ -76,9 +99,22 @@ class AttrDict(dict):
         return AttrDict(dic)
 
     def get_copy(self) -> "AttrDict":
+        """Return a deep copy of this dictionary."""
         return AttrDict(copy.deepcopy(self))
 
     def flatten(self, parent_key: str = "", sep: str = ".") -> "AttrDict":
+        """Flatten the nested structure into dotted single-level keys.
+
+        Empty nested dicts are preserved as the sentinel ``"empty_dict"`` so
+        that :meth:`unflatten` can restore them.
+
+        Args:
+            parent_key: Prefix applied to every key, used when recursing.
+            sep: Separator placed between key levels.
+
+        Returns:
+            The flattened dictionary.
+        """
         items = []
         for k, v in self.items():
             new_key = parent_key + sep + k if parent_key else k
@@ -93,6 +129,17 @@ class AttrDict(dict):
         return AttrDict(dict(items))
 
     def unflatten(self, sep: str = ".") -> "AttrDict":
+        """Rebuild a nested dictionary from dotted single-level keys.
+
+        Inverse of :meth:`flatten`; the ``"empty_dict"`` sentinel is restored
+        to an empty mapping.
+
+        Args:
+            sep: Separator between key levels.
+
+        Returns:
+            The nested dictionary.
+        """
         dic = {}
         for k, v in self.items():
             if v == "empty_dict":
@@ -107,11 +154,24 @@ class AttrDict(dict):
         return AttrDict(dic)
 
     def update_existingdict(self, dic: dict) -> None:
+        """Update only the keys that already exist, in place.
+
+        Args:
+            dic: The new values. Keys absent from this dictionary are ignored.
+        """
         for k, v in dic.items():
             if k in list(self.keys()):
                 self[k] = v
 
     def update_existingdict_by_suffix(self, dic: dict) -> None:
+        """Update existing keys matched by suffix, in place.
+
+        Each incoming key is matched against the tail of the existing keys.
+        Ambiguous suffixes matching more than one key are reported and skipped.
+
+        Args:
+            dic: Mapping of key suffix to new value.
+        """
         for k, v in dic.items():
             k1s = [k0 for k0 in self.keylist if k0.endswith(k)]
             if len(k1s) == 1:
@@ -121,41 +181,101 @@ class AttrDict(dict):
                 print(f"Non unique suffix : {k}")
 
     def update_nestdict(self, dic: dict) -> "AttrDict":
+        """Update nested entries addressed by their flattened keys.
+
+        Args:
+            dic: Mapping of dotted key to new value. Missing keys are added.
+
+        Returns:
+            The updated nested dictionary.
+        """
         dic0_f = self.flatten()
         dic0_f.update(dic)
         return dic0_f.unflatten()
 
     def update_nestdict_copy(self, dic: dict) -> "AttrDict":
+        """Return a deep copy updated by :meth:`update_nestdict`.
+
+        Args:
+            dic: Mapping of dotted key to new value.
+
+        Returns:
+            The updated copy, leaving this dictionary untouched.
+        """
         return self.get_copy().update_nestdict(dic)
 
     def new_dict(self, dic: dict) -> "AttrDict":
+        """Return a deep copy updated with the given nested values.
+
+        Args:
+            dic: Mapping of dotted key to new value.
+
+        Returns:
+            The updated copy.
+        """
         return self.get_copy().update_nestdict(dic)
 
     def update_existingnestdict(self, dic: dict) -> "AttrDict":
+        """Update only the nested entries that already exist.
+
+        Args:
+            dic: Mapping of dotted key to new value. Unknown keys are ignored.
+
+        Returns:
+            The updated nested dictionary.
+        """
         dic0_f = self.flatten()
         dic0_f.update_existingdict(dic)
         return dic0_f.unflatten()
 
     def update_existingnestdict_by_suffix(self, dic: dict) -> "AttrDict":
+        """Update existing nested entries matched by key suffix.
+
+        Args:
+            dic: Mapping of key suffix to new value.
+
+        Returns:
+            The updated nested dictionary.
+        """
         dic0_f = self.flatten()
         dic0_f.update_existingdict_by_suffix(dic)
         return dic0_f.unflatten()
 
     def save(self, file: str) -> None:
+        """Write this dictionary to disk.
+
+        Args:
+            file: Destination path. Pickle is attempted first, then JSON.
+        """
         save_dict(self, file)
 
     @classmethod
     def load(cls, file: str) -> "AttrDict":
+        """Read a dictionary from disk.
+
+        Args:
+            file: Source path. Pickle is attempted first, then JSON.
+
+        Returns:
+            The loaded dictionary, empty if the file could not be read.
+        """
         return load_dict(file)
 
     def print(self, flat: bool = False) -> None:
+        """Print the dictionary for inspection.
+
+        Args:
+            flat: When True, print one dotted key per line. When False, print
+                the nested structure with indentation.
+        """
         if flat:
             for k, v in self.flatten().items():
                 print(f"      {k} : {v}")
         else:
             pref0 = "     "
 
-            def print_nested_level(d, pref=pref0):
+            def print_nested_level(d: dict, pref: str = pref0) -> None:
+                """Print one nesting level, recursing into nested dicts."""
                 for k, v in d.items():
                     if not isinstance(v, dict):
                         print(f"{pref}{k} : {v}")
@@ -167,10 +287,19 @@ class AttrDict(dict):
 
     @property
     def keylist(self) -> "SuperList":
+        """The top-level keys, as a :class:`SuperList`."""
         return SuperList(self.keys())
 
     @classmethod
     def merge_dicts(cls, l: list[dict]) -> "AttrDict":
+        """Merge dictionaries at the top level only.
+
+        Args:
+            l: The dictionaries to merge. Later entries win on key collisions.
+
+        Returns:
+            The merged dictionary.
+        """
         D = {}
         for d in l:
             for k, v in d.items():
@@ -179,6 +308,17 @@ class AttrDict(dict):
 
     @classmethod
     def merge_nestdicts(cls, l: list[dict]) -> "AttrDict":
+        """Merge nested dictionaries entry by entry.
+
+        Merging happens on the flattened representation, so nested branches are
+        combined rather than replaced wholesale.
+
+        Args:
+            l: The dictionaries to merge. Later entries win on key collisions.
+
+        Returns:
+            The merged nested dictionary.
+        """
         D = {}
         for d in l:
             for k, v in AttrDict(d).flatten().items():
@@ -272,18 +412,35 @@ class bidict(dict):
     """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        """Build the mapping and its inverse.
+
+        Args:
+            *args: Positional arguments forwarded to :class:`dict`.
+            **kwargs: Keyword arguments forwarded to :class:`dict`.
+        """
         super(bidict, self).__init__(*args, **kwargs)
         self.inverse = {}
         for key, value in self.items():
             self.inverse.setdefault(value, []).append(key)
 
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key: Any, value: Any) -> None:
+        """Set an entry, keeping the inverse mapping consistent.
+
+        Args:
+            key: The key to set.
+            value: The value to associate with it.
+        """
         if key in self:
             self.inverse[self[key]].remove(key)
         super(bidict, self).__setitem__(key, value)
         self.inverse.setdefault(value, []).append(key)
 
-    def __delitem__(self, key) -> None:
+    def __delitem__(self, key: Any) -> None:
+        """Delete an entry, keeping the inverse mapping consistent.
+
+        Args:
+            key: The key to remove.
+        """
         self.inverse.setdefault(self[key], []).remove(key)
         if self[key] in self.inverse and not self.inverse[self[key]]:
             del self.inverse[self[key]]
@@ -316,14 +473,17 @@ class SuperList(list):
 
     @property
     def N(self) -> int:
+        """The number of elements."""
         return len(self)
 
     @property
     def sorted(self) -> "SuperList":
+        """A sorted copy of the list."""
         return SuperList(sorted(self))
 
     @property
     def flatten(self) -> "SuperList":
+        """A recursively flattened copy, with nested lists spliced in."""
         l = SuperList()
         for a in self:
             if not isinstance(a, list):
@@ -335,6 +495,7 @@ class SuperList(list):
 
     @property
     def unique(self) -> "SuperList":
+        """A copy with duplicates dropped, keeping first-occurrence order."""
         if len(self) == 0:
             return SuperList()
         elif len(self) == 1:
@@ -345,6 +506,14 @@ class SuperList(list):
             return SuperList([x for x in self if not (x in seen or seen_add(x))])
 
     def group_by_n(self, n: int = 2) -> "SuperList":
+        """Split the list into consecutive groups of ``n``.
+
+        Args:
+            n: The group size. A trailing shorter group is kept as-is.
+
+        Returns:
+            The list of groups.
+        """
         Nmore = int(len(self) % n)
         N = int((len(self) - Nmore) / n)
         g = [self[i * n : (i + 1) * n] for i in range(N)]
@@ -354,28 +523,77 @@ class SuperList(list):
 
     @property
     def in_pairs(self) -> "SuperList":
+        """The list split into consecutive pairs."""
         return self.group_by_n(n=2)
 
-    def existing(self, df) -> "SuperList":
+    def existing(self, df: Any) -> "SuperList":
+        """Select the entries that name existing columns.
+
+        Args:
+            df: A dataframe, or a sequence of column names.
+
+        Returns:
+            The subset present in ``df``.
+        """
         return SuperList(existing_cols(self, df))
 
-    def nonexisting(self, df) -> "SuperList":
+    def nonexisting(self, df: Any) -> "SuperList":
+        """Select the entries that do not name existing columns.
+
+        Args:
+            df: A dataframe, or a sequence of column names.
+
+        Returns:
+            The subset absent from ``df``.
+        """
         return SuperList(nonexisting_cols(self, df))
 
-    def exist_in(self, df) -> bool:
+    def exist_in(self, df: Any) -> bool:
+        """Report whether every entry names an existing column.
+
+        Args:
+            df: A dataframe, or a sequence of column names.
+
+        Returns:
+            True if all entries are present in ``df``.
+        """
         return cols_exist(self, df)
 
-    def __add__(self, *args, **kwargs) -> "SuperList":  # real signature unknown
+    def __add__(self, *args: Any, **kwargs: Any) -> "SuperList":
         """Return self+value."""
         return SuperList(super().__add__(*args, **kwargs))
 
     def suf(self, suf: str = "") -> "SuperList":
+        """Select the entries ending with a suffix.
+
+        Args:
+            suf: The required suffix.
+
+        Returns:
+            The matching entries.
+        """
         return SuperList([i for i in self if i.endswith(suf)])
 
     def pref(self, pref: str = "") -> "SuperList":
+        """Select the entries starting with a prefix.
+
+        Args:
+            pref: The required prefix.
+
+        Returns:
+            The matching entries.
+        """
         return SuperList([i for i in self if i.startswith(pref)])
 
     def contains(self, l: str = "") -> "SuperList":
+        """Select the entries containing a substring.
+
+        Args:
+            l: The required substring.
+
+        Returns:
+            The matching entries.
+        """
         return SuperList([i for i in self if l in i])
 
 
@@ -391,14 +609,37 @@ class ItemList(agentpy.sequences.AgentSequence, list):
         >>> items.speed = 5.0  # Sets speed=5.0 on all agents
     """
 
-    def __init__(self, objs=(), cls=None, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self, objs: Any = (), cls: type | None = None, *args: Any, **kwargs: Any
+    ) -> None:
+        """Build the sequence from existing objects, or by constructing them.
+
+        Args:
+            objs: The objects to hold, or an integer count of objects to build
+                from ``cls``.
+            cls: The class instantiated when ``objs`` is a count.
+            *args: Positional arguments forwarded to ``cls``.
+            **kwargs: Keyword arguments forwarded to ``cls``. List values are
+                broadcast element-wise across the constructed objects.
+        """
         if isinstance(objs, int):
             objs = self._obj_gen(objs, cls, *args, **kwargs)
         super().__init__(objs)
 
     @staticmethod
-    def _obj_gen(n: int, cls, *args: Any, **kwargs: Any):
-        """Generate objects for sequence."""
+    def _obj_gen(n: int, cls: type, *args: Any, **kwargs: Any) -> Any:
+        """Generate objects for the sequence.
+
+        Args:
+            n: The number of objects to build.
+            cls: The class to instantiate.
+            *args: Positional arguments forwarded to ``cls``.
+            **kwargs: Keyword arguments forwarded to ``cls``. List values are
+                broadcast element-wise.
+
+        Yields:
+            The constructed objects.
+        """
         for i in range(n):
             # AttrIter values get broadcasted among agents
             i_kwargs = {
@@ -406,7 +647,14 @@ class ItemList(agentpy.sequences.AgentSequence, list):
             }
             yield cls(**i_kwargs)
 
-    def __setattr__(self, name: str, value) -> None:
+    def __setattr__(self, name: str, value: Any) -> None:
+        """Set an attribute on every held object.
+
+        Args:
+            name: The attribute name.
+            value: The value to assign. A list is distributed element-wise;
+                any other value is applied to every object.
+        """
         if isinstance(value, list):
             # Apply each value to each agent
             for obj, v in zip(self, value):

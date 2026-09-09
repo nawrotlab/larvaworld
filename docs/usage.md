@@ -85,7 +85,7 @@ larvaworld Exp dish -N 5 -duration 3.0 -vis_mode video
 larvaworld Exp dish -N 5 -duration 3.0 -dir /path/to/output
 ```
 
-For more CLI details, see the full {doc}`CLI tutorial <tutorials/cli>`.
+For more CLI details, see the full {doc}`CLI tutorial <tutorials/1_getting_started/command_line_interface>`.
 
 ---
 

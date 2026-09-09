@@ -3,13 +3,16 @@ Larvaworld parameter database
 """
 
 from __future__ import annotations
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 import param
 
 from .. import reg, util, funcs
 from ..util import AttrDict, SuperList, nam
+
+if TYPE_CHECKING:
+    from .data_aux import LarvaworldParam
 
 __all__: list[str] = [
     "output_keys",
@@ -146,6 +149,11 @@ class ParamClass:
     """
 
     def __init__(self) -> None:
+        """Build the parameter database.
+
+        Args:
+            **kwargs: Database attributes, forwarded to the parent class.
+        """
         self.func_dict = funcs.param_computing
         self.k_ops = AttrDict(
             {
@@ -178,35 +186,98 @@ class ParamClass:
 
     @property
     def dkeys(self) -> SuperList:
+        """The parameter keys, indexed by their long name."""
         return SuperList([p.d for k, p in self.dict.items()]).sorted
 
     @property
     def pkeys(self) -> SuperList:
+        """The parameter keys, indexed by their column name."""
         return SuperList([p.p for k, p in self.dict.items()]).sorted
 
     @property
     def ks(self) -> SuperList:
+        """Every registered parameter key."""
         return SuperList(self.dict.keys()).sorted
 
     def build(self) -> None:
+        """Build the whole parameter database.
+
+        Registers the base parameters first, then the angular, spatial, chunk,
+        simulation and DEB families derived from them.
+        """
         self.dict = AttrDict()
         self.kdict = AttrDict()
-        self.build_initial()
-        self.build_angular()
-        self.build_spatial()
-        self.build_chunks()
-        self.build_sim_pars()
-        self.build_deb_pars()
+        self.category_dict: dict[str, str] = {}
+        for category, builder in (
+            ("initial", self.build_initial),
+            ("angular", self.build_angular),
+            ("spatial", self.build_spatial),
+            ("chunks", self.build_chunks),
+            ("sim_pars", self.build_sim_pars),
+            ("deb_pars", self.build_deb_pars),
+        ):
+            before = set(self.dict.keys())
+            builder()
+            for k in set(self.dict.keys()) - before:
+                self.category_dict[k] = category
         self.p2k_dict = AttrDict({p.p: p.k for k, p in self.dict.items()})
         self.d2k_dict = AttrDict({p.d: p.k for k, p in self.dict.items()})
 
-    def add(self, **kwargs: Any) -> None:
+    def add(self, **kwargs: Any) -> str:
+        """Register one parameter.
+
+        Args:
+            **kwargs: The parameter's key, name, unit and limits.
+        """
         prepar = reg.prepare_LarvaworldParam(**kwargs)
         self.dict[prepar.k] = prepar
+        return prepar.k
+
+    def category_of(self, k: str) -> str:
+        """
+        Return the builder-family category tag for parameter key k, or "custom"
+        if it was registered outside the standard build() pipeline.
+        """
+        return self.category_dict.get(k, "custom")
+
+    def add_and_instantiate(
+        self, *, overwrite: bool = False, category: str = "custom", **kwargs: Any
+    ) -> str:
+        """
+        Register a new parameter spec and eagerly instantiate it into kdict.
+
+        Unlike add(), which only stores the prepared spec in self.dict, this also
+        realizes the LarvaworldParam instance via update_kdict so the parameter is
+        immediately usable (e.g. via getPar). Raises ValueError if the resulting
+        key already exists in self.dict and overwrite is not set; in that case
+        self.dict/self.kdict are left unmodified.
+        """
+        prepar = reg.prepare_LarvaworldParam(**kwargs)
+        if prepar.k in self.dict and not overwrite:
+            raise ValueError(
+                f"parameter key {prepar.k!r} already exists; pass overwrite=True to replace it"
+            )
+        self.dict[prepar.k] = prepar
+        self.category_dict[prepar.k] = category
+        self.kdict.pop(prepar.k, None)
+        self.update_kdict([prepar.k])
+        return prepar.k
+
+    def remove(self, k: str) -> None:
+        """
+        Remove a parameter from the registry: drops it from self.dict,
+        self.kdict (if instantiated), and self.category_dict. Raises
+        KeyError if k is not a registered parameter.
+        """
+        if k not in self.dict:
+            raise KeyError(k)
+        del self.dict[k]
+        self.kdict.pop(k, None)
+        self.category_dict.pop(k, None)
 
     def build_initial(self) -> None:
+        """Register the primary tracked parameters."""
         kws1 = {
-            "vfunc": param.Number,
             "lim": (0.0, None),
             "dtype": float,
             "u": reg.units.s,
@@ -225,7 +296,6 @@ class ParamClass:
         )
 
         kws2 = {
-            "vfunc": param.Integer,
             "lim": (0, None),
             "v0": 0,
             "dtype": int,
@@ -256,6 +326,19 @@ class ParamClass:
         k_den: Optional[str] = None,
         **kwargs: Any,
     ) -> None:
+        """Register the time derivative of a parameter.
+
+        Args:
+            k0: The key of the parameter being differentiated.
+            k_time: The key of the time parameter.
+            p: The derived parameter's column name.
+            k: Its registry key.
+            d: Its long name.
+            sym: Its display symbol.
+            k_num: The numerator key.
+            k_den: The denominator key.
+            **kwargs: Further parameter attributes.
+        """
         if k0 is not None:
             b = self.dict[k0]
             if p is None:
@@ -280,13 +363,20 @@ class ParamClass:
             "d": d,
             "sym": sym,
             "u": b_num.u / b_den.u,
-            "vfunc": param.Number,
             "required_ks": [k_num, k_den],
         }
         kws.update(kwargs)
         self.add(**kws)
 
     def add_operators(self, k0: str) -> None:
+        """Register the summary statistics of a parameter.
+
+        Adds its maximum, mean, standard deviation, initial, final and
+        cumulative forms.
+
+        Args:
+            k0: The key of the parameter to summarize.
+        """
         b = self.dict[k0]
         kws0 = {"u": b.u, "required_ks": [k0]}
 
@@ -315,6 +405,14 @@ class ParamClass:
     def add_chunk(
         self, pc: str, kc: str, func: Any = None, required_ks: list[str] = []
     ) -> None:
+        """Register a behavioural epoch type and its derived parameters.
+
+        Args:
+            pc: The epoch's column name.
+            kc: Its registry key.
+            func: The function detecting it.
+            required_ks: The keys its detection depends on.
+        """
         f_kws = {"func": func, "required_ks": required_ks}
 
         ptr = nam.dur_ratio(pc)
@@ -332,7 +430,7 @@ class ParamClass:
             k=ktr,
             sym=nam.tex.sub("r", kc),
             disp=f"time fraction in {pc}s",
-            vfunc=param.Magnitude,
+            param_class=param.Magnitude,
             required_ks=[nam.cum(nam.dur(pc)), nam.cum(nam.dur(""))],
             func=self.func_dict.tr(pc),
         )
@@ -341,7 +439,6 @@ class ParamClass:
             k=kN,
             sym=nam.tex.sub("N", f"{pc}s"),
             disp=f"# {pc}s",
-            vfunc=param.Integer,
             codename=f"brain.locomotor.intermitter.N{pc}s",
             dtype=int,
             **f_kws,
@@ -351,14 +448,15 @@ class ParamClass:
             k=kt,
             sym=nam.tex.sub(nam.tex.Delta("t"), kc),
             disp=f"{pc} duration",
-            vfunc=param.Number,
             u=reg.units.s,
             **f_kws,
         )
 
         for ii in ["on", "off"]:
             self.add(p=f"{pN_mu}_{ii}_food", k=f"{kN_mu}_{ii}_food")
-            self.add(p=f"{ptr}_{ii}_food", k=f"{ktr}_{ii}_food", vfunc=param.Magnitude)
+            self.add(
+                p=f"{ptr}_{ii}_food", k=f"{ktr}_{ii}_food", param_class=param.Magnitude
+            )
 
         self.add_rate(
             k_num=kN,
@@ -378,6 +476,13 @@ class ParamClass:
             self.add_operators(k0=kl)
 
     def add_chunk_track(self, kc: str, k: str, pc: Optional[str] = None) -> None:
+        """Register the tracked change of a parameter over an epoch.
+
+        Args:
+            kc: The epoch key.
+            k: The tracked parameter's key.
+            **kwargs: Further parameter attributes.
+        """
         if pc is None:
             pc = self.dict[kc].p
         # bc = self.dict[kc]
@@ -431,6 +536,22 @@ class ParamClass:
         disp_a: Optional[str] = None,
         func_v: Any = None,
     ) -> None:
+        """Register the velocity and acceleration of a parameter.
+
+        Args:
+            k0: The key of the base parameter.
+            p_v: The velocity's column name.
+            k_v: Its registry key.
+            d_v: Its long name.
+            sym_v: Its display symbol.
+            disp_v: Its display name.
+            p_a: The acceleration's column name.
+            k_a: Its registry key.
+            d_a: Its long name.
+            sym_a: Its display symbol.
+            disp_a: Its display name.
+            func_v: The velocity's function.
+        """
         b = self.dict[k0]
         b_dt = self.dict["dt"]
         if p_v is None:
@@ -487,6 +608,12 @@ class ParamClass:
         )
 
     def add_scaled(self, k0: str, **kwargs: Any) -> None:
+        """Register the body-length-scaled form of a parameter.
+
+        Args:
+            k0: The key of the parameter to scale.
+            **kwargs: Further parameter attributes.
+        """
         b = self.dict[k0]
         b_l = self.dict["l"]
 
@@ -500,7 +627,6 @@ class ParamClass:
             "u": b.u / b_l.u,
             "sym": nam.tex.mathring(b.sym),
             "disp": f"scaled {b.disp}",
-            "vfunc": param.Number,
             "required_ks": [k0],
             "func": func,
         }
@@ -509,6 +635,12 @@ class ParamClass:
         self.add(**kws)
 
     def add_unwrap(self, k0: str, **kwargs: Any) -> None:
+        """Register the unwrapped form of an angular parameter.
+
+        Args:
+            k0: The key of the parameter to unwrap.
+            **kwargs: Further parameter attributes.
+        """
         b = self.dict[k0]
 
         kws = {
@@ -522,13 +654,18 @@ class ParamClass:
             "required_ks": [k0],
             "dv": b.dv,
             "v0": b.v0,
-            "vfunc": param.Number,
             "func": self.func_dict.unwrap(b.d, in_deg=False),
         }
         kws.update(kwargs)
         self.add(**kws)
 
     def add_dst(self, point: str = "", **kwargs: Any) -> None:
+        """Register distance to a point of interest.
+
+        Args:
+            point: The point distance is measured to.
+            **kwargs: Further parameter attributes.
+        """
         xd, yd = nam.xy(point)
         xk, bx = [(k, p) for k, p in self.dict.items() if p.d == xd][0]
         yk, by = [(k, p) for k, p in self.dict.items() if p.d == yd][0]
@@ -553,7 +690,6 @@ class ParamClass:
             "required_ks": [xk, yk],
             "dv": dv,
             "v0": 0.0,
-            "vfunc": param.Number,
             "func": self.func_dict.dst(point=point),
         }
         kws.update(kwargs)
@@ -561,6 +697,12 @@ class ParamClass:
         self.add(**kws)
 
     def add_freq(self, k0: str, **kwargs: Any) -> None:
+        """Register the dominant frequency of a parameter.
+
+        Args:
+            k0: The key of the parameter to analyse.
+            **kwargs: Further parameter attributes.
+        """
         b = self.dict[k0]
         kws = {
             "p": nam.freq(b.p),
@@ -569,7 +711,6 @@ class ParamClass:
             "u": reg.units.Hz,
             "sym": nam.tex.sub(b.sym, "freq"),
             "disp": f"{b.disp} frequency",
-            "vfunc": param.Number,
             "required_ks": [k0],
             "func": self.func_dict.freq(b.d),
         }
@@ -577,6 +718,12 @@ class ParamClass:
         self.add(**kws)
 
     def add_phi(self, k0: str, **kwargs: Any) -> None:
+        """Register the stride-cycle phase at which a parameter peaks.
+
+        Args:
+            k0: The key of the parameter to analyse.
+            **kwargs: Further parameter attributes.
+        """
         b = self.dict[k0]
         kws = {
             "p": nam.phi(b.p),
@@ -586,12 +733,17 @@ class ParamClass:
             "sym": nam.tex.sub("Phi", b.sym),
             "disp": f"{b.disp} phase",
             "lim": (0, 2 * np.pi),
-            "vfunc": param.Number,
         }
         kws.update(kwargs)
         self.add(**kws)
 
     def add_dsp(self, range: tuple[int, int] = (0, 40)) -> None:
+        """Register dispersal over a time window.
+
+        Args:
+            range: The ``(start, stop)`` window in seconds.
+            **kwargs: Further parameter attributes.
+        """
         a = "dispersion"
         k0 = "dsp"
         s0 = nam.tex.circledast("d")
@@ -605,7 +757,6 @@ class ParamClass:
             u=reg.units.m,
             sym=nam.tex.subsup(s0, f"{r0}", f"{r1}"),
             disp=f'dispersal in {dur}"',
-            vfunc=param.Number,
             func=self.func_dict.dsp(range),
             required_ks=["x", "y"],
         )
@@ -614,6 +765,12 @@ class ParamClass:
         self.add_operators(k0=f"s{k}")
 
     def add_tor(self, dur: int) -> None:
+        """Register tortuosity over a rolling window.
+
+        Args:
+            dur: The window duration in seconds.
+            **kwargs: Further parameter attributes.
+        """
         p0 = "tortuosity"
         k0 = "tor"
         k = f"{k0}{dur}"
@@ -622,17 +779,17 @@ class ParamClass:
             k=k,
             sym=nam.tex.sub(k0, str(dur)),
             disp=f"{p0} over {dur}''",
-            vfunc=param.Magnitude,
+            param_class=param.Magnitude,
             func=self.func_dict.tor(dur),
         )
         self.add_operators(k0=k)
 
     def build_angular(self) -> None:
+        """Register the angular parameter family."""
         kws = {
             "dv": np.round(np.pi / 180, 2),
             "u": reg.units.rad,
             "v0": 0.0,
-            "vfunc": param.Number,
             "dtype": float,
         }
         self.add(
@@ -695,7 +852,8 @@ class ParamClass:
             self.add_operators(k0=k0)
 
     def build_spatial(self) -> None:
-        kws = {"u": reg.units.m, "vfunc": param.Number}
+        """Register the spatial parameter family."""
+        kws = {"u": reg.units.m}
         self.add(
             **{
                 "p": "length",
@@ -712,7 +870,10 @@ class ParamClass:
         self.add_freq(k0="l")
         self.add_operators(k0="l")
 
-        for point in ["", "centroid"]:
+        # The midline endpoints are registered alongside the tracked point and the
+        # centroid, so that their pathlengths and speeds are describable parameters
+        # rather than bare dataframe columns.
+        for point in ["", "centroid", "head", "tail"]:
             px, py = nam.xy(point)
             self.add(
                 **{"p": px, "disp": f"{point} X position", "sym": f"{point} X", **kws}
@@ -787,13 +948,56 @@ class ParamClass:
         ]:
             self.add_dsp(range=i)
         self.add(
-            **{"p": "tortuosity", "k": "tor", "vfunc": param.Magnitude, "sym": "tor"}
+            **{
+                "p": "tortuosity",
+                "k": "tor",
+                "param_class": param.Magnitude,
+                "sym": "tor",
+            }
         )
         for dur in [1, 2, 5, 10, 20, 60]:
             self.add_tor(dur=dur)
         self.add(**{"p": "anemotaxis", "sym": "anemotaxis"})
+        self.build_occupancy()
+
+    def build_occupancy(self) -> None:
+        """Parameters describing where in a bounded arena an agent spends its time.
+
+        The radial position is normalized by the arena radius, so that 0 is the arena
+        centre and 1 its boundary, and the measures are comparable across arena sizes.
+        A uniformly distributed agent yields a mean normalized radius of 2/3 rather
+        than 1/2, because the area available grows with the radius; the border
+        occupancies compare against the corresponding area fractions.
+        """
+        self.add(
+            p="radial_position",
+            k="rr",
+            param_class=param.Magnitude,
+            sym=nam.tex.sub("r", "norm"),
+            disp="normalized radial position",
+            required_ks=["x", "y"],
+        )
+        self.add_operators(k0="rr")
+        for pct in (10, 25):
+            self.add(
+                p=f"border_occupancy_{pct}",
+                k=f"bocc{pct}",
+                param_class=param.Magnitude,
+                sym=nam.tex.sub("f", f"b{pct}"),
+                disp=f"time fraction in the outer {pct}% of the arena radius",
+                required_ks=["rr"],
+            )
+        self.add(
+            p="centrophily",
+            k="cphi",
+            sym=nam.tex.sub("C", "phi"),
+            disp="centrophily index",
+            lim=(-1.0, 1.0),
+            required_ks=["rr"],
+        )
 
     def build_chunks(self) -> None:
+        """Register the behavioural epoch families."""
         d0 = {
             "str": "stride",
             "pau": "pause",
@@ -837,6 +1041,7 @@ class ParamClass:
                 self.add_freq(k0=kc)
 
     def build_sim_pars(self) -> None:
+        """Register the simulation-only parameters."""
         L = "brain.locomotor"
         IF = f"{L}.interference"
         Im = f"{L}.intermitter"
@@ -867,6 +1072,24 @@ class ParamClass:
                     "u": reg.units.rad,
                 }
             )
+        self.add(
+            **{
+                "p": "brain.turner.input_noise",
+                "k": "In_T",
+                "d": "turner input noise",
+                "sym": nam.tex.sub("In", "T"),
+                "disp": "TURNER input noise.",
+            }
+        )
+        self.add(
+            **{
+                "p": "brain.turner.output_noise",
+                "k": "On_T",
+                "d": "turner output noise",
+                "sym": nam.tex.sub("On", "T"),
+                "disp": "TURNER output noise.",
+            }
+        )
         self.add(
             **{
                 "p": "cur_attenuation",
@@ -1087,6 +1310,7 @@ class ParamClass:
                 self.add(**{"p": p0, "k": k0, "disp": f"{b.disp} {ii} food"})
 
     def build_deb_pars(self) -> None:
+        """Register the DEB energetics parameters."""
         ks = ["f_am", "sf_am_Vg", "f_am_V", "sf_am_V", "sf_am_A", "sf_am_M"]
         ps = [
             "amount_eaten",
@@ -1134,10 +1358,25 @@ class ParamRegistry(ParamClass):
     """
 
     def __init__(self) -> None:
+        """Build the parameter registry over the parameter database.
+
+        Args:
+            **kwargs: Registry attributes, forwarded to the parent class.
+        """
         super().__init__()
         self.PI = AttrDict()
 
     def get(self, k: str, d: Any, compute: bool = True):
+        """Read a parameter's values from a dataset, computing them if needed.
+
+        Args:
+            k: The parameter key.
+            d: The dataset to read from.
+            compute: Whether to compute the parameter when it is absent.
+
+        Returns:
+            The parameter's values.
+        """
         if k not in self.ks:
             raise ValueError(f'parameter key "{k}" not in database')
         self.update_kdict(ks=[k])
@@ -1166,13 +1405,39 @@ class ParamRegistry(ParamClass):
             print(f"Parameter {p.disp} not found")
 
     def compute(self, k: str, d: Any) -> None:
-        p = self.kdict[k]
+        # `kdict` is populated lazily, so a parameter that has never been asked
+        # for is absent from it. `get` realizes the key before indexing; do the
+        # same here, or computing a not-yet-realized parameter raises KeyError.
+        """Compute a parameter into a dataset.
+
+        Args:
+            k: The parameter key.
+            d: The dataset to compute it into.
+        """
+        p = self.get_param(k)
         res = p.exists(d)
         if not any(list(res.values())):
             k0s = p.required_ks
             for k0 in k0s:
                 self.compute(k0, d)
             p.compute(d)
+
+    def get_param(self, k: str) -> "LarvaworldParam":
+        """
+        Return the live LarvaworldParam instance for key k, instantiating it
+        (via update_kdict) if not already realized.
+
+        Args:
+            k: Short-key of the parameter.
+
+        Returns:
+            LarvaworldParam: The parameter instance.
+
+        Raises:
+            KeyError: If k is not a registered parameter key.
+        """
+        self.update_kdict(ks=[k])
+        return self.kdict[k]
 
     def getPar(
         self,
@@ -1210,24 +1475,32 @@ class ParamRegistry(ParamClass):
             raise
 
         if isinstance(k, str):
-            self.update_kdict(ks=[k])
-            par = self.kdict[k]
+            par = self.get_param(k)
             if isinstance(to_return, list):
                 return [getattr(par, i) for i in to_return]
             elif isinstance(to_return, str):
                 return getattr(par, to_return)
         else:
-            self.update_kdict(ks=k)
-            pars = [self.kdict[kk] for kk in k]
+            pars = [self.get_param(kk) for kk in k]
             if isinstance(to_return, list):
                 return [[getattr(par, i) for par in pars] for i in to_return]
             elif isinstance(to_return, str):
                 return [getattr(par, to_return) for par in pars]
 
     def runtime_pars(self) -> list[str]:
+        """The column names of every registered parameter."""
         return [v.d for k, v in self.kdict.items()]
 
     def auto_load(self, ks: list[str], datasets: list[Any]) -> AttrDict:
+        """Collect one parameter's values across several datasets.
+
+        Args:
+            ks: The parameter keys to load.
+            datasets: The datasets to read from.
+
+        Returns:
+            The values per parameter and dataset.
+        """
         dic = {}
         for k in ks:
             dic[k] = {}
@@ -1257,6 +1530,15 @@ class ParamRegistry(ParamClass):
         return df
 
     def output_reporters(self, ks: list[str], agents: list[Any]) -> AttrDict:
+        """Build the reporters recording a set of parameters.
+
+        Args:
+            ks: The parameter keys to record.
+            agents: The agents to record from.
+
+        Returns:
+            The reporter per parameter.
+        """
         self.update_kdict(ks=ks)
         D = self.kdict
         dic = {}
@@ -1273,6 +1555,15 @@ class ParamRegistry(ParamClass):
     def get_reporters(
         self, agents: list[Any], cs: Optional[list[str]] = None
     ) -> AttrDict:
+        """Build the step and endpoint reporters for a simulation.
+
+        Args:
+            ks: The parameter keys to record.
+            agents: The agents to record from.
+
+        Returns:
+            The reporters, split into step and endpoint groups.
+        """
         O = output_dict
         if cs is None:
             cs = ["pose"]
@@ -1300,6 +1591,14 @@ class ParamRegistry(ParamClass):
         )
 
     def select_output(self, pref: str) -> AttrDict:
+        """Select the stored output group matching a prefix.
+
+        Args:
+            pref: The output group prefix.
+
+        Returns:
+            The group's step and endpoint parameter keys.
+        """
         return AttrDict(
             {
                 p.d: p.codename
@@ -1310,4 +1609,12 @@ class ParamRegistry(ParamClass):
 
     @property
     def brain_output(self) -> AttrDict:
+        """Build the output specification for a brain configuration.
+
+        Args:
+            conf: The brain configuration.
+
+        Returns:
+            The parameters each configured module reports.
+        """
         return self.select_output(pref="brain")

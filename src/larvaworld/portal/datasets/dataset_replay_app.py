@@ -1,3 +1,10 @@
+"""
+The dataset replay app.
+
+Plays a recorded dataset back in the browser, with the arena and the tracked
+animals rendered from the stored coordinates.
+"""
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -10,6 +17,7 @@ import panel as pn
 
 from larvaworld.lib import reg, sim
 from larvaworld.lib.process.dataset import LarvaDataset
+from larvaworld.portal.buttons import run_button
 from larvaworld.portal.canvas_widgets import EnvironmentCanvas
 from larvaworld.portal.datasets.replay_data import (
     build_environment_state_for_member,
@@ -25,6 +33,7 @@ from larvaworld.portal.datasets.replay_models import (
     ReplaySource,
 )
 from larvaworld.portal.panel_components import PORTAL_RAW_CSS, build_app_header
+from larvaworld.portal.manifest_catalog import ManifestCatalogController
 from larvaworld.portal.runtime.display_shortcuts import (
     DISPLAY_SHORTCUTS_RAW_CSS,
     build_display_shortcuts_dialog,
@@ -69,10 +78,27 @@ DATASET_REPLAY_RAW_CSS = """
 
 
 def _status_html(text: str) -> str:
+    """Render a status line as markup.
+
+    Args:
+        text: The status text.
+
+    Returns:
+        The markup.
+    """
     return f'<div class="lw-dataset-replay-status">{escape(text)}</div>'
 
 
 def _control_tile(title: str, *children: object) -> pn.Card:
+    """Build a titled tile grouping replay controls.
+
+    Args:
+        title: The tile heading.
+        *objects: Its contents.
+
+    Returns:
+        The tile component.
+    """
     return pn.Card(
         pn.Column(*children, sizing_mode="stretch_width", margin=0),
         title=title,
@@ -84,6 +110,15 @@ def _control_tile(title: str, *children: object) -> pn.Card:
 
 
 def _subcontrol_tile(title: str, *children: object) -> pn.Card:
+    """Build a nested tile of replay controls.
+
+    Args:
+        title: The tile heading.
+        *objects: Its contents.
+
+    Returns:
+        The tile component.
+    """
     return pn.Card(
         pn.Column(*children, sizing_mode="stretch_width", margin=0),
         title=title,
@@ -96,20 +131,52 @@ def _subcontrol_tile(title: str, *children: object) -> pn.Card:
 
 
 def _safe_slug(value: str) -> str:
+    """Turn a value into a safe file-name fragment.
+
+    Args:
+        value: The value to slugify.
+
+    Returns:
+        The slug.
+    """
     slug = re.sub(r"[^A-Za-z0-9._-]+", "_", value.strip())
     slug = slug.strip("._-")
     return slug
 
 
 def _replay_param(name: str):
+    """Look up one replay parameter's definition.
+
+    Args:
+        name: The parameter name.
+
+    Returns:
+        The parameter object.
+    """
     return reg.gen.Replay.param[name]
 
 
 def _replay_param_default(name: str):
+    """The default value of one replay parameter.
+
+    Args:
+        name: The parameter name.
+
+    Returns:
+        Its default.
+    """
     return _replay_param(name).default
 
 
 def _replay_param_objects(name: str) -> tuple[Any, ...]:
+    """The values one replay parameter admits.
+
+    Args:
+        name: The parameter name.
+
+    Returns:
+        The admissible values.
+    """
     objects = getattr(_replay_param(name), "objects", None)
     if objects is None:
         return ()
@@ -117,10 +184,26 @@ def _replay_param_objects(name: str) -> tuple[Any, ...]:
 
 
 def _replay_param_doc(name: str) -> str | None:
+    """The documentation of one replay parameter.
+
+    Args:
+        name: The parameter name.
+
+    Returns:
+        Its documentation text.
+    """
     return getattr(_replay_param(name), "doc", None)
 
 
 def _replay_param_soft_limits(name: str) -> tuple[Any | None, Any | None]:
+    """The soft range of one replay parameter.
+
+    Args:
+        name: The parameter name.
+
+    Returns:
+        Its soft lower and upper bounds.
+    """
     parameter = _replay_param(name)
     softbounds = getattr(parameter, "softbounds", None)
     if softbounds:
@@ -129,6 +212,16 @@ def _replay_param_soft_limits(name: str) -> tuple[Any | None, Any | None]:
 
 
 def _within_soft_limits(value: int, low: int | None, high: int | None) -> bool:
+    """Report whether a value lies inside a soft range.
+
+    Args:
+        value: The value to test.
+        low: The lower bound.
+        high: The upper bound.
+
+    Returns:
+        True when the value is within range.
+    """
     if low is not None and value < low:
         return False
     if high is not None and value > high:
@@ -137,18 +230,30 @@ def _within_soft_limits(value: int, low: int | None, high: int | None) -> bool:
 
 
 def _apply_widget_help(widget: pn.viewable.Viewable, help_text: str | None):
+    """Attach help text to a widget.
+
+    Args:
+        widget: The widget to annotate.
+        help_text: The text to show.
+    """
     if help_text and hasattr(widget, "description"):
         widget.description = help_text
     return widget
 
 
 class _DatasetReplayController:
+    """State behind the dataset replay app."""
+
     _FIX_SEGMENT_NONE = "__none__"
     _FIX_SEGMENT_FRONT = "front"
     _FIX_SEGMENT_REAR = "rear"
 
     def __init__(self) -> None:
+        """Build the controller and its replay widgets."""
         self.workspace = get_active_workspace()
+        self.manifest_catalog = ManifestCatalogController(
+            modes=("Replay",), title="Dataset Replay Manifests"
+        )
         self.canvas = EnvironmentCanvas(
             width=_REPLAY_CANVAS_WIDTH,
             height=_REPLAY_CANVAS_HEIGHT,
@@ -280,9 +385,7 @@ class _DatasetReplayController:
             end=120,
             disabled=True,
         )
-        self.open_pygame_replay_btn = pn.widgets.Button(
-            name="Run replay", button_type="primary"
-        )
+        self.open_pygame_replay_btn = run_button(name="Run replay", sizing_mode=None)
         self.display_shortcuts_dialog_controller = build_display_shortcuts_dialog(
             note=(
                 "These shortcuts apply only to the native pygame display opened by "
@@ -339,9 +442,15 @@ class _DatasetReplayController:
         self.canvas._sim_larva_head_renderer.visible = True
 
     def _set_status(self, text: str) -> None:
+        """Show a status message.
+
+        Args:
+            text: The status text.
+        """
         self.status_pane.object = _status_html(text)
 
     def _reload_source_options(self) -> None:
+        """Reload the replayable datasets offered in the selector."""
         previous = self.source_select.value
         options = self._source_options()
         self.source_select.options = options
@@ -357,6 +466,7 @@ class _DatasetReplayController:
             self.canvas.clear_dynamic_overlays()
 
     def _source_options(self) -> dict[str, str]:
+        """The replay sources available."""
         by_label: dict[str, list[ReplaySource]] = defaultdict(list)
         for source in self._sources:
             by_label[source.label].append(source)
@@ -376,6 +486,14 @@ class _DatasetReplayController:
 
     @staticmethod
     def _source_disambiguator(source: ReplaySource) -> str:
+        """Build the suffix distinguishing sources that share a name.
+
+        Args:
+            source: The replay source.
+
+        Returns:
+            The disambiguating text.
+        """
         token = str(source.token)
         if token.startswith("workspace:"):
             raw = token.split("workspace:", 1)[1]
@@ -396,6 +514,11 @@ class _DatasetReplayController:
         return token
 
     def _on_source_change(self, _event=None) -> None:
+        """Handle a change of the selected replay source.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         token = self.source_select.value
         source = self._source_by_token.get(str(token))
         if source is None:
@@ -430,6 +553,11 @@ class _DatasetReplayController:
         self._show_native_replay_blocker_status_if_needed()
 
     def _on_any_control_change(self, _event=None) -> None:
+        """Handle a change to any replay control.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._refresh_close_inspection_controls()
         self._refresh_native_segment_count_options()
         self._render()
@@ -437,12 +565,23 @@ class _DatasetReplayController:
         self._show_native_replay_blocker_status_if_needed()
 
     def _on_show_display_change(self, _event=None) -> None:
+        """Handle a change of the live-display toggle.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._refresh_native_replay_control_state()
 
     def _on_save_video_change(self, _event=None) -> None:
+        """Handle a change of the video-recording toggle.
+
+        Args:
+            _event: The widget event that triggered this.
+        """
         self._refresh_native_replay_control_state()
 
     def _refresh_native_replay_control_state(self) -> None:
+        """Enable or disable the native replay controls to match the selection."""
         controls_locked = bool(self._native_replay_controls_locked)
         show_display = bool(self.show_display.value)
         save_video = bool(self.save_video.value)
@@ -455,6 +594,11 @@ class _DatasetReplayController:
         )
 
     def _native_replay_blocker(self) -> str | None:
+        """Report what prevents a native replay, if anything.
+
+        Returns:
+            The reason, or None when a replay can run.
+        """
         if self._prepared is None:
             return "Select a replay source to begin."
         visible_tokens = [str(token) for token in self.member_visibility.value]
@@ -471,11 +615,17 @@ class _DatasetReplayController:
         return None
 
     def _show_native_replay_blocker_status_if_needed(self) -> None:
+        """Explain why a native replay cannot run, when it cannot."""
         blocker = self._native_replay_blocker()
         if blocker is not None and blocker.startswith("Native replay is unavailable"):
             self._set_status(blocker)
 
     def _set_native_replay_controls_disabled(self, disabled: bool) -> None:
+        """Enable or disable the native replay controls.
+
+        Args:
+            disabled: Whether they are disabled.
+        """
         self._native_replay_controls_locked = bool(disabled)
         self.show_display.disabled = bool(disabled)
         self.save_video.disabled = bool(disabled)
@@ -484,9 +634,11 @@ class _DatasetReplayController:
         self._refresh_native_replay_control_state()
 
     def _visible_member_tokens(self) -> list[str]:
+        """The replay members currently shown."""
         return [str(token) for token in self.member_visibility.value]
 
     def _single_visible_member_token(self) -> str | None:
+        """The one shown member, or None when several are shown."""
         visible_tokens = self._visible_member_tokens()
         if len(visible_tokens) != 1:
             return None
@@ -495,6 +647,14 @@ class _DatasetReplayController:
     def _prepared_member_for_token(
         self, token: str | None
     ) -> PreparedReplayMember | None:
+        """Look up a prepared replay member.
+
+        Args:
+            token: The member's selector token.
+
+        Returns:
+            The member, or None when it is not prepared.
+        """
         if token is None or self._prepared is None:
             return None
         return self._prepared.members.get(token)
@@ -502,6 +662,14 @@ class _DatasetReplayController:
     def _native_fix_points_for_member(
         self, member: PreparedReplayMember
     ) -> list[tuple[str, int]]:
+        """The body points a member's replay can be fixed on.
+
+        Args:
+            member: The replay member.
+
+        Returns:
+            The available fix points.
+        """
         items: list[tuple[str, int]] = []
         mapping = member.native_track_point_by_ui_track_point or {}
         for ui_idx in sorted(mapping.keys()):
@@ -519,6 +687,15 @@ class _DatasetReplayController:
         native_fix_point: int | None,
         native_fix_points: set[int],
     ) -> dict[str, str]:
+        """The orientations available once a fix point is chosen.
+
+        Args:
+            native_fix_point: The chosen fix point.
+            native_fix_points: Every available fix point.
+
+        Returns:
+            The orientation options.
+        """
         allowed_fix_segments = set(_replay_param_objects("fix_segment"))
         options: dict[str, str] = {"None": _DatasetReplayController._FIX_SEGMENT_NONE}
         if native_fix_point is None:
@@ -536,17 +713,20 @@ class _DatasetReplayController:
         return options
 
     def _selected_native_fix_point(self) -> int | None:
+        """The body point the replay is fixed on."""
         if self.fix_point.value is None:
             return None
         return int(self.fix_point.value)
 
     def _selected_fix_segment(self) -> str | None:
+        """The body segment the replay is oriented by."""
         value = self.fix_segment.value
         if value in [None, self._FIX_SEGMENT_NONE]:
             return None
         return str(value)
 
     def _refresh_close_inspection_controls(self) -> None:
+        """Refresh the controls that fix the view on one body point."""
         controls_locked = bool(self._native_replay_controls_locked)
         token = self._single_visible_member_token()
         member = self._prepared_member_for_token(token)
@@ -594,6 +774,14 @@ class _DatasetReplayController:
     def _native_segment_count_options_for_member(
         member: PreparedReplayMember,
     ) -> dict[str, int]:
+        """The segment counts a member's body can be drawn with.
+
+        Args:
+            member: The replay member.
+
+        Returns:
+            The available counts.
+        """
         low, high = _replay_param_soft_limits("draw_Nsegs")
         low = int(low) if low is not None else None
         high = int(high) if high is not None else None
@@ -610,6 +798,7 @@ class _DatasetReplayController:
         return options
 
     def _refresh_native_segment_count_options(self) -> None:
+        """Reload the segment counts offered for the current member."""
         token = self._single_visible_member_token()
         member = self._prepared_member_for_token(token)
         if member is None:
@@ -629,12 +818,21 @@ class _DatasetReplayController:
         )
 
     def _native_replay_video_output_dir(self) -> Path:
+        """The directory a recorded replay is written to."""
         return (
             get_workspace_dir("analysis", workspace=self.workspace)
             / "dataset_replay_media"
         )
 
     def _native_replay_video_name(self, selected_member_token: str) -> str:
+        """The file name a recorded replay is written under.
+
+        Args:
+            selected_member_token: The member being replayed.
+
+        Returns:
+            The file name.
+        """
         raw = (self.video_filename.value or "").strip()
         if raw:
             base = raw[:-4] if raw.lower().endswith(".mp4") else raw
@@ -648,6 +846,14 @@ class _DatasetReplayController:
     def _native_replay_screen_kws(
         self, selected_member_token: str
     ) -> tuple[dict[str, Any], Path | None]:
+        """The screen options a native replay runs with.
+
+        Args:
+            selected_member_token: The member being replayed.
+
+        Returns:
+            The screen configuration.
+        """
         show_display = bool(self.show_display.value)
         save_video = bool(self.save_video.value)
         screen_kws: dict[str, Any] = {
@@ -673,7 +879,27 @@ class _DatasetReplayController:
             )
         return screen_kws, video_target
 
+    def _native_replay_run_dir(self, selected_member_token: str) -> Path:
+        """The directory a native replay writes its output to.
+
+        Args:
+            selected_member_token: The member being replayed.
+
+        Returns:
+            The directory.
+        """
+        root = get_workspace_dir("experiments", workspace=self.workspace)
+        base_name = self._native_replay_video_name(selected_member_token)
+        candidate = root / f"replay_{base_name}"
+        if not candidate.exists():
+            return candidate
+        index = 2
+        while (root / f"replay_{base_name}_{index}").exists():
+            index += 1
+        return root / f"replay_{base_name}_{index}"
+
     def _selected_time_range(self) -> tuple[float, float] | None:
+        """The time window the replay covers."""
         if not self.use_time_range.value:
             return _replay_param_default("time_range")
         time_range = (
@@ -685,6 +911,7 @@ class _DatasetReplayController:
         return time_range
 
     def _selected_replay_member_token(self) -> str | None:
+        """The member the native replay will run."""
         visible_tokens = [str(token) for token in self.member_visibility.value]
         if len(visible_tokens) == 0:
             self._set_status("Select one visible member for native replay.")
@@ -697,6 +924,14 @@ class _DatasetReplayController:
         return visible_tokens[0]
 
     def _source_member_for_token(self, token: str):
+        """Look up a replay member by its selector token.
+
+        Args:
+            token: The member's token.
+
+        Returns:
+            The member, or None when the token is unknown.
+        """
         if self._prepared is None:
             return None
         source = self._prepared.source
@@ -712,6 +947,11 @@ class _DatasetReplayController:
         agent_indices: tuple[int, ...] | None,
         time_range: tuple[float, float] | None,
     ) -> tuple[Any, LarvaDataset | None]:
+        """Assemble the parameters a native replay runs with.
+
+        Returns:
+            The replay configuration.
+        """
         assert self._prepared is not None
         source_member = self._source_member_for_token(selected_member_token)
         if source_member is None:
@@ -818,7 +1058,9 @@ class _DatasetReplayController:
         dataset: LarvaDataset | None,
         screen_kws: dict[str, Any],
         video_target: Path | None,
+        run_dir: Path,
     ) -> None:
+        """Run the replay in the native viewer."""
         launcher = None
         try:
             launcher = sim.ReplayRun(
@@ -826,6 +1068,8 @@ class _DatasetReplayController:
                 dataset=dataset,
                 screen_kws=screen_kws,
                 store_data=False,
+                id=run_dir.name,
+                dir=str(run_dir),
             )
             launcher.run()
         except Exception as exc:
@@ -843,9 +1087,11 @@ class _DatasetReplayController:
             self._set_status(f"Native replay finished. Video target: {video_target}.")
         else:
             self._set_status("Native pygame replay finished.")
+        self.manifest_catalog.refresh()
         self._set_native_replay_controls_disabled(False)
 
     def _on_open_pygame_replay(self, *_: object) -> None:
+        """Handle the button opening the native replay viewer."""
         if self._prepared is None:
             self._set_status("Select a replay source to begin.")
             return
@@ -875,6 +1121,7 @@ class _DatasetReplayController:
             self._set_status(f"Native replay failed: {exc}")
             return
         screen_kws, video_target = self._native_replay_screen_kws(selected_member_token)
+        run_dir = self._native_replay_run_dir(selected_member_token)
 
         if video_target is not None:
             self._set_status(
@@ -896,6 +1143,7 @@ class _DatasetReplayController:
                     dataset=dataset,
                     screen_kws=screen_kws,
                     video_target=video_target,
+                    run_dir=run_dir,
                 )
             )
             return
@@ -904,9 +1152,11 @@ class _DatasetReplayController:
             dataset=dataset,
             screen_kws=screen_kws,
             video_target=video_target,
+            run_dir=run_dir,
         )
 
     def _render(self) -> None:
+        """Redraw the in-browser replay from the current selection."""
         if self._prepared is None:
             return
         visible_tokens = [str(token) for token in self.member_visibility.value]
@@ -974,6 +1224,18 @@ class _DatasetReplayController:
     def _show_arena_outline_for_mode(
         transposition: str | None, member: PreparedReplayMember
     ) -> bool:
+        """Report whether the arena outline suits the chosen alignment.
+
+        Drawing the arena around tracks that have been transposed would misplace
+        it, so the outline is hidden for those modes.
+
+        Args:
+            transposition: The alignment mode.
+            member: The replay member.
+
+        Returns:
+            True when the outline should be drawn.
+        """
         if transposition == "arena":
             return True
         if transposition is None and member_has_arena_geometry(member):
@@ -981,6 +1243,11 @@ class _DatasetReplayController:
         return False
 
     def view(self) -> pn.viewable.Viewable:
+        """Build the app's view.
+
+        Returns:
+            The view component.
+        """
         intro = pn.pane.HTML(
             (
                 '<div class="lw-dataset-replay-intro">'
@@ -1055,14 +1322,21 @@ class _DatasetReplayController:
             intro,
             self.display_shortcuts_dialog,
             pn.Row(controls, main, sizing_mode="stretch_width"),
+            self.manifest_catalog.view(),
             css_classes=["lw-dataset-replay-root"],
             sizing_mode="stretch_width",
         )
 
 
 def dataset_replay_app() -> pn.viewable.Viewable:
+    """Build the dataset replay app.
+
+    Returns:
+        The app component.
+    """
     pn.extension(
-        raw_css=[PORTAL_RAW_CSS, DATASET_REPLAY_RAW_CSS, DISPLAY_SHORTCUTS_RAW_CSS]
+        "tabulator",
+        raw_css=[PORTAL_RAW_CSS, DATASET_REPLAY_RAW_CSS, DISPLAY_SHORTCUTS_RAW_CSS],
     )
     controller = _DatasetReplayController()
     template = pn.template.MaterialTemplate(

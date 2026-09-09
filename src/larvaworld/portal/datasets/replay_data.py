@@ -1,3 +1,10 @@
+"""
+Data preparation behind the dataset replay app.
+
+Builds the catalog of replayable sources and turns a chosen one into the
+per-frame render state the browser draws.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -31,11 +38,21 @@ from larvaworld.portal.workspace import WorkspaceState
 
 @dataclass(frozen=True)
 class ReplayRenderState:
+    """Everything the browser needs to draw one replay frame."""
+
     frame: LarvaPreviewFrame
     rings: tuple[CanvasRingOverlay, ...] = ()
 
 
 def build_source_catalog(workspace: WorkspaceState | None) -> list[ReplaySource]:
+    """List the datasets that can be replayed.
+
+    Args:
+        workspace: The workspace to scan. Defaults to the active one.
+
+    Returns:
+        One replay source per dataset or dataset group.
+    """
     sources: list[ReplaySource] = []
     if workspace is not None:
         records = list_workspace_datasets(workspace=workspace)
@@ -146,6 +163,14 @@ def build_source_catalog(workspace: WorkspaceState | None) -> list[ReplaySource]
 
 
 def prepare_replay_source(source: ReplaySource) -> PreparedReplaySource:
+    """Resolve a replay source's data for playback.
+
+    Args:
+        source: The source to prepare.
+
+    Returns:
+        The source with each member's coordinates loaded.
+    """
     prepared = PreparedReplaySource(source=source)
     for member in source.members:
         loaded_member = _prepare_member(member)
@@ -164,6 +189,14 @@ def build_environment_state_for_member(
     show_arena_outline: bool = True,
     coordinate_origin: ReplayCoordinateOrigin | None = None,
 ) -> EnvironmentCanvasState:
+    """Build the canvas state showing a member's arena.
+
+    Args:
+        member: The replay member.
+
+    Returns:
+        The canvas state, or None when the member records no arena.
+    """
     if not allow_static_layers:
         state_coordinate_origin = coordinate_origin or member.coordinate_origin
         arena = _canvas_arena_from_member(member)
@@ -202,10 +235,26 @@ def build_environment_state_for_member(
 
 
 def member_has_arena_geometry(member: PreparedReplayMember) -> bool:
+    """Report whether a member records an arena.
+
+    Args:
+        member: The replay member.
+
+    Returns:
+        True when its arena can be drawn.
+    """
     return _canvas_arena_from_member(member) is not None
 
 
 def _canvas_arena_from_member(member: PreparedReplayMember) -> CanvasArena | None:
+    """Build the canvas arena a member describes.
+
+    Args:
+        member: The replay member.
+
+    Returns:
+        The arena, or None when it is not recorded.
+    """
     env_conf = _member_env_conf(member)
     arena_conf = _get_env_value(env_conf, "arena", None)
     if arena_conf is None:
@@ -229,6 +278,14 @@ def _canvas_arena_from_member(member: PreparedReplayMember) -> CanvasArena | Non
 
 
 def _member_env_conf(member: PreparedReplayMember) -> Any | None:
+    """Read a member's stored environment configuration.
+
+    Args:
+        member: The replay member.
+
+    Returns:
+        The environment configuration, empty when absent.
+    """
     if member.env_params is not None:
         return member.env_params
     if member.env_conf_id and member.env_conf_id in reg.conf.Env.confIDs:
@@ -237,6 +294,16 @@ def _member_env_conf(member: PreparedReplayMember) -> Any | None:
 
 
 def _get_env_value(value: Any, key: str, default: Any = None) -> Any:
+    """Read a key from an environment configuration.
+
+    Args:
+        value: The configuration to read.
+        key: The key to look up.
+        default: Returned when the key is absent.
+
+    Returns:
+        The value found, or the default.
+    """
     if value is None:
         return default
     if hasattr(value, "get"):
@@ -266,6 +333,14 @@ def build_render_state(
     show_segments: bool = True,
     show_body_contours: bool = False,
 ) -> ReplayRenderState:
+    """Build the state the browser draws for a replay.
+
+    Args:
+        prepared: The prepared replay source.
+
+    Returns:
+        The render state, frame by frame.
+    """
     body_geometry_enabled = bool(show_heads or show_midlines or show_segments)
     contour_geometry_enabled = bool(show_body_contours)
     needs_aligned_history = bool(
@@ -436,6 +511,14 @@ def build_render_state(
 
 
 def _prepare_member(member: ReplaySourceMember) -> PreparedReplayMember:
+    """Load and align one replay member's coordinates.
+
+    Args:
+        member: The member to prepare.
+
+    Returns:
+        The prepared member.
+    """
     if member.workspace_record is not None:
         return _prepare_workspace_member(member)
     dataset = _load_dataset(member)
@@ -489,6 +572,14 @@ def _prepare_member(member: ReplaySourceMember) -> PreparedReplayMember:
 
 
 def _prepare_workspace_member(member: ReplaySourceMember) -> PreparedReplayMember:
+    """Load and align one workspace member's coordinates.
+
+    Args:
+        member: The member to prepare.
+
+    Returns:
+        The prepared member.
+    """
     assert member.workspace_record is not None
     record = member.workspace_record
     conf = util.load_dict(str(record.conf_path))
@@ -568,12 +659,28 @@ def _prepare_workspace_member(member: ReplaySourceMember) -> PreparedReplayMembe
 
 
 def _load_dataset(member: ReplaySourceMember) -> LarvaDataset:
+    """Load the dataset behind a replay member.
+
+    Args:
+        member: The replay member.
+
+    Returns:
+        The dataset.
+    """
     if member.registry_ref_id:
         return reg.conf.Ref.loadRef(id=member.registry_ref_id, load=False)
     raise ValueError(f"Cannot load replay source member: {member.token}")
 
 
 def _resolve_arena_dims(dataset: LarvaDataset) -> tuple[float, float]:
+    """Read a dataset's arena dimensions.
+
+    Args:
+        dataset: The dataset to read.
+
+    Returns:
+        The arena width and height.
+    """
     try:
         dims = dataset.c.env_params.arena.dims
         return (float(dims[0]), float(dims[1]))
@@ -584,6 +691,15 @@ def _resolve_arena_dims(dataset: LarvaDataset) -> tuple[float, float]:
 def _resolve_xy_columns(
     dataset: LarvaDataset, df: pd.DataFrame, *, track_point: int
 ) -> list[str]:
+    """Find the coordinate columns of a dataset.
+
+    Args:
+        dataset: The dataset.
+        df: Its timeseries data.
+
+    Returns:
+        The x and y column names.
+    """
     if track_point >= 0:
         point = dataset.c.get_track_point(track_point)
         exact = list(util.nam.xy(point))
@@ -610,6 +726,14 @@ def _resolve_xy_columns(
 
 
 def _plain_mapping(value: Any) -> dict[str, Any] | None:
+    """Convert a config object into a plain mapping.
+
+    Args:
+        value: The value to convert.
+
+    Returns:
+        The mapping, empty when the value is not one.
+    """
     if not isinstance(value, dict):
         return None
     return dict(value)
@@ -622,6 +746,18 @@ def _aligned_xy(
     arena_dims: tuple[float, float],
     coordinate_origin: str = "corner",
 ) -> pd.DataFrame:
+    """Align a track's coordinates for display.
+
+    Args:
+        xy: The tracked coordinates.
+        transposition: How to align them, as the replay configuration asks.
+        arena_dims: The arena width and height.
+        coordinate_origin: Whether the stored coordinates are measured from
+            the arena corner or its centre.
+
+    Returns:
+        The aligned coordinates.
+    """
     offsets_by_agent = _alignment_offsets_by_agent(
         xy,
         transposition=transposition,
@@ -634,6 +770,19 @@ def _aligned_xy(
 def _infer_coordinate_origin(
     xy: pd.DataFrame, arena_dims: tuple[float, float]
 ) -> ReplayCoordinateOrigin:
+    """Infer whether coordinates are measured from the corner or the centre.
+
+    Datasets differ in this convention and rarely record it, so it is inferred
+    from whether the tracked values fall in the arena's positive quadrant or
+    straddle zero.
+
+    Args:
+        xy: The tracked coordinates.
+        arena_dims: The arena width and height.
+
+    Returns:
+        The inferred origin.
+    """
     if xy.empty:
         return "corner"
     try:
@@ -671,6 +820,17 @@ def _alignment_offsets_by_agent(
     arena_dims: tuple[float, float],
     coordinate_origin: str,
 ) -> dict[object, tuple[float, float]]:
+    """Compute the offset each agent's track is shifted by.
+
+    Args:
+        xy: The tracked coordinates.
+        transposition: The requested alignment mode.
+        arena_dims: The arena width and height.
+        coordinate_origin: The convention the coordinates are stored in.
+
+    Returns:
+        The offset per agent.
+    """
     mode = transposition
     if mode in {"", "none", "stored"}:
         mode = None
@@ -706,6 +866,15 @@ def _apply_alignment_offsets(
     *,
     offsets_by_agent: dict[object, tuple[float, float]],
 ) -> pd.DataFrame:
+    """Shift each agent's track by its offset.
+
+    Args:
+        xy: The tracked coordinates.
+        offsets_by_agent: The offset per agent.
+
+    Returns:
+        The shifted coordinates.
+    """
     if xy.empty:
         return xy.copy()
     out = []
@@ -721,6 +890,14 @@ def _apply_alignment_offsets(
 
 
 def parse_agent_indices(raw: str) -> tuple[int, ...] | None:
+    """Parse a user-entered agent selection.
+
+    Args:
+        raw: The entered text, such as a comma-separated list.
+
+    Returns:
+        The selected indices, empty when the text selects all.
+    """
     text = str(raw).strip()
     if text == "":
         return None
@@ -739,6 +916,14 @@ def parse_agent_indices(raw: str) -> tuple[int, ...] | None:
 
 
 def select_member_xy(member: PreparedReplayMember, *, track_point: int) -> pd.DataFrame:
+    """Read the coordinates a replay member displays.
+
+    Args:
+        member: The prepared member.
+
+    Returns:
+        Its coordinates.
+    """
     if track_point == -1:
         return member.xy_default.copy()
     if track_point < -1:
@@ -759,6 +944,15 @@ def filter_xy_by_agent_indices(
     *,
     agent_indices: tuple[int, ...] | None,
 ) -> pd.DataFrame:
+    """Restrict coordinates to the selected agents.
+
+    Args:
+        xy: The tracked coordinates.
+        member_agent_ids: The agents to keep.
+
+    Returns:
+        The restricted coordinates.
+    """
     if agent_indices is None:
         return xy
     if not member_agent_ids:
@@ -784,6 +978,14 @@ def _select_and_align_geometry_by_point(
     offsets_by_agent: dict[object, tuple[float, float]],
 ) -> dict[int, pd.DataFrame]:
     # Deprecated in the replay frame hot path; retained for compatibility.
+    """Align the per-body-point coordinate frames against each other.
+
+    Args:
+        xy_by_point: The coordinates of each tracked body point.
+
+    Returns:
+        The aligned coordinates.
+    """
     selected: dict[int, pd.DataFrame] = {}
     for idx, xy in xy_by_point.items():
         filtered = filter_xy_by_agent_indices(
@@ -814,6 +1016,15 @@ def _geometry_points_for_agents_at_tick(
     offsets_by_agent: dict[object, tuple[float, float]],
     min_points: int,
 ) -> dict[object, tuple[tuple[float, float], ...]]:
+    """Collect every agent's body points at one timestep.
+
+    Args:
+        xy_by_point: The coordinates of each tracked body point.
+        tick: The timestep to read.
+
+    Returns:
+        The body points per agent.
+    """
     if not emitted_agent_ids:
         return {}
     emitted_set = set(emitted_agent_ids)
@@ -847,6 +1058,14 @@ def _geometry_points_for_agents_at_tick(
 def _segment_polygons_from_midline(
     midline: tuple[tuple[float, float], ...],
 ) -> tuple[tuple[tuple[float, float], ...], ...]:
+    """Build the drawn body outline from a midline.
+
+    Args:
+        midline: The midline points.
+
+    Returns:
+        One polygon per body segment.
+    """
     if len(midline) < 2:
         return ()
     lengths: list[float] = []
@@ -881,12 +1100,29 @@ def _segment_polygons_from_midline(
 
 
 def _agent_ids_from_step_index(step: pd.DataFrame) -> tuple[object, ...]:
+    """Read the agent IDs out of a step index.
+
+    Args:
+        step: The timeseries data.
+
+    Returns:
+        The agent IDs.
+    """
     return tuple(step.index.get_level_values("AgentID").unique())
 
 
 def _build_registry_xy_by_track_point(
     dataset: LarvaDataset, step: pd.DataFrame
 ) -> dict[int, pd.DataFrame]:
+    """Collect the coordinates of each tracked point, for a registry dataset.
+
+    Args:
+        dataset: The dataset.
+        step: Its timeseries data.
+
+    Returns:
+        The coordinates per track point.
+    """
     xy_by_track_point: dict[int, pd.DataFrame] = {}
     npoints = int(dataset.c.Npoints or 0)
     for idx in range(max(npoints, 0)):
@@ -902,6 +1138,15 @@ def _build_registry_xy_by_track_point(
 def _build_registry_native_track_point_mapping(
     dataset: LarvaDataset, step: pd.DataFrame
 ) -> dict[int, int]:
+    """Map a registry dataset's own point names to the replay's.
+
+    Args:
+        dataset: The dataset.
+        step: Its timeseries data.
+
+    Returns:
+        The mapping.
+    """
     mapping: dict[int, int] = {}
     npoints = int(dataset.c.Npoints or 0)
     for ui_idx in range(max(npoints, 0)):
@@ -913,11 +1158,28 @@ def _build_registry_native_track_point_mapping(
 
 
 def _native_replay_missing_columns(step: pd.DataFrame) -> tuple[str, ...]:
+    """List the coordinate columns a native replay needs but lacks.
+
+    Args:
+        step: The timeseries data.
+
+    Returns:
+        The missing column names.
+    """
     required = ("front_orientation", "rear_orientation")
     return tuple(col for col in required if col not in step.columns)
 
 
 def _workspace_point_name(conf: dict[str, Any], native_idx: int) -> str:
+    """Resolve a workspace dataset's body point name.
+
+    Args:
+        conf: The dataset configuration.
+        native_idx: The point's index in the dataset.
+
+    Returns:
+        The point name.
+    """
     npoints = int(conf.get("Npoints") or 0)
     if native_idx <= 0 or npoints <= 0:
         return "centroid"
@@ -929,6 +1191,15 @@ def _workspace_point_name(conf: dict[str, Any], native_idx: int) -> str:
 
 
 def _read_workspace_hdf_group(h5_path: Path, key: str) -> pd.DataFrame | None:
+    """Read one parameter group out of a stored dataset.
+
+    Args:
+        h5_path: The dataset's HDF5 file.
+        key: The group to read.
+
+    Returns:
+        The group's data, or None when it is absent.
+    """
     full_key = f"/{key}"
     with pd.HDFStore(h5_path, mode="r") as store:
         if full_key not in set(store.keys()):
@@ -943,6 +1214,15 @@ def _join_workspace_spatial_group(
     group_name: str,
     dataset_id: str,
 ) -> pd.DataFrame:
+    """Merge a spatial parameter group into the step data.
+
+    Args:
+        base: The step data.
+        group: The group to merge.
+
+    Returns:
+        The merged data.
+    """
     if group is None:
         return base
     if not group.index.equals(base.index):
@@ -961,6 +1241,18 @@ def _build_workspace_spatial_step(
     h5_path: Path,
     dataset_id: str,
 ) -> pd.DataFrame:
+    """Assemble the step data a workspace replay needs.
+
+    Loads the midline and contour groups alongside the base step data, since
+    a replay draws the body rather than a single point.
+
+    Args:
+        step: The base step data.
+        h5_path: The dataset's HDF5 file.
+
+    Returns:
+        The assembled step data.
+    """
     spatial_step = step.copy()
     base_spatial = _read_workspace_hdf_group(h5_path, "base_spatial")
     spatial_step = _join_workspace_spatial_group(
@@ -992,6 +1284,15 @@ def _resolve_workspace_xy_columns(
     *,
     dataset_id: str,
 ) -> list[str]:
+    """Find the coordinate columns of a workspace dataset.
+
+    Args:
+        spatial_step: The assembled step data.
+        conf: The dataset configuration.
+
+    Returns:
+        The x and y column names.
+    """
     x_name = conf.get("x")
     y_name = conf.get("y")
     if (
@@ -1033,6 +1334,15 @@ def _resolve_workspace_xy_columns(
 def _build_workspace_native_track_point_mapping(
     step: pd.DataFrame, conf: dict[str, Any]
 ) -> dict[int, int]:
+    """Map a workspace dataset's own point names to the replay's.
+
+    Args:
+        step: The timeseries data.
+        conf: The dataset configuration.
+
+    Returns:
+        The mapping.
+    """
     mapping: dict[int, int] = {}
     npoints = int(conf.get("Npoints") or 0)
     for ui_idx, point_name in enumerate(util.nam.midline(npoints, type="point")):
@@ -1048,6 +1358,14 @@ def _has_native_point_xy(
     native_track_point: int,
     point_name_for_native_index: Any,
 ) -> bool:
+    """Report whether the step data carries per-point coordinates.
+
+    Args:
+        step: The timeseries data.
+
+    Returns:
+        True when the body points are tracked individually.
+    """
     point_name = point_name_for_native_index(int(native_track_point))
     cols = list(util.nam.xy(point_name))
     return all(col in step.columns for col in cols)
@@ -1062,6 +1380,14 @@ def _choose_native_default_track_point(
     centroid_xy: list[str],
     point_name_for_native_index: Any,
 ) -> int | None:
+    """Choose the point a replay follows by default.
+
+    Args:
+        mapping: The available track points.
+
+    Returns:
+        The default point's name.
+    """
     if _has_native_point_xy(
         step,
         native_track_point=configured_point_idx,
@@ -1085,6 +1411,15 @@ def _choose_native_default_track_point(
 def _build_body_xy_by_point(
     step: pd.DataFrame, npoints: int
 ) -> dict[int, pd.DataFrame]:
+    """Collect the midline coordinates of each body point.
+
+    Args:
+        step: The timeseries data.
+        npoints: The number of midline points.
+
+    Returns:
+        The coordinates per point.
+    """
     xy_by_point: dict[int, pd.DataFrame] = {}
     for idx, point_name in enumerate(util.nam.midline(max(npoints, 0), type="point")):
         cols = list(util.nam.xy(point_name))
@@ -1098,6 +1433,15 @@ def _build_body_xy_by_point(
 def _build_contour_xy_by_point(
     step: pd.DataFrame, ncontour: int
 ) -> dict[int, pd.DataFrame]:
+    """Collect the contour coordinates of each contour point.
+
+    Args:
+        step: The timeseries data.
+        ncontour: The number of contour points.
+
+    Returns:
+        The coordinates per point.
+    """
     xy_by_point: dict[int, pd.DataFrame] = {}
     for idx, point_name in enumerate(util.nam.contour(max(ncontour, 0))):
         cols = list(util.nam.xy(point_name))
@@ -1111,6 +1455,15 @@ def _build_contour_xy_by_point(
 def _build_workspace_xy_by_track_point(
     step: pd.DataFrame, conf: dict[str, Any]
 ) -> dict[int, pd.DataFrame]:
+    """Collect the coordinates of each tracked point, for a workspace dataset.
+
+    Args:
+        step: The timeseries data.
+        conf: The dataset configuration.
+
+    Returns:
+        The coordinates per track point.
+    """
     xy_by_track_point: dict[int, pd.DataFrame] = {}
     npoints = int(conf.get("Npoints") or 0)
     for idx, point_name in enumerate(util.nam.midline(npoints, type="point")):

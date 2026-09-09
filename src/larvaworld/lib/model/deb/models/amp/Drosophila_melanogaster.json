@@ -1,0 +1,398 @@
+{
+  "metadata": {
+    "species": "Drosophila_melanogaster",
+    "typified_model": "abp"
+  },
+  "parameters": [
+    {
+      "symbol": "T_ref",
+      "unit": "K",
+      "value": 293.1,
+      "free": 0,
+      "description": "Reference temperature"
+    },
+    {
+      "symbol": "T_A",
+      "unit": "K",
+      "value": 28890.0,
+      "free": 1,
+      "description": "Arrhenius temperature"
+    },
+    {
+      "symbol": "z",
+      "unit": "-",
+      "value": 0.05054,
+      "free": 1,
+      "description": "zoom factor"
+    },
+    {
+      "symbol": "F_m",
+      "unit": "l/d.cm^2",
+      "value": 6.5,
+      "free": 0,
+      "description": "{F_m}, max spec searching rate"
+    },
+    {
+      "symbol": "kap_X",
+      "unit": "-",
+      "value": 0.8,
+      "free": 0,
+      "description": "digestion efficiency of food to reserve"
+    },
+    {
+      "symbol": "kap_P",
+      "unit": "-",
+      "value": 0.1,
+      "free": 0,
+      "description": "faecation efficiency of food to faeces"
+    },
+    {
+      "symbol": "v",
+      "unit": "cm/d",
+      "value": 0.03568,
+      "free": 1,
+      "description": "energy conductance"
+    },
+    {
+      "symbol": "kap",
+      "unit": "-",
+      "value": 0.8024,
+      "free": 1,
+      "description": "allocation fraction to soma"
+    },
+    {
+      "symbol": "kap_R",
+      "unit": "-",
+      "value": 0.95,
+      "free": 0,
+      "description": "reproduction efficiency"
+    },
+    {
+      "symbol": "p_M",
+      "unit": "J/d.cm^3",
+      "value": 8674.0,
+      "free": 1,
+      "description": "[p_M], vol-spec somatic maint"
+    },
+    {
+      "symbol": "p_T",
+      "unit": "J/d.cm^2",
+      "value": 0.0,
+      "free": 0,
+      "description": "{p_T}, surf-spec somatic maint"
+    },
+    {
+      "symbol": "k_J",
+      "unit": "1/d",
+      "value": 0.002,
+      "free": 0,
+      "description": "maturity maint rate coefficient"
+    },
+    {
+      "symbol": "E_G",
+      "unit": "J/cm^3",
+      "value": 4434.0,
+      "free": 1,
+      "description": "[E_G], spec cost for structure"
+    },
+    {
+      "symbol": "E_Hb",
+      "unit": "J",
+      "value": 0.1853,
+      "free": 1,
+      "description": "maturity at birth"
+    },
+    {
+      "symbol": "E_Hp",
+      "unit": "J",
+      "value": 285.5,
+      "free": 1,
+      "description": "maturity at puberty"
+    },
+    {
+      "symbol": "h_a",
+      "unit": "1/d^2",
+      "value": 2.653e-8,
+      "free": 1,
+      "description": "Weibull aging acceleration"
+    },
+    {
+      "symbol": "s_G",
+      "unit": "-",
+      "value": 0.0001,
+      "free": 0,
+      "description": "Gompertz stress coefficient"
+    },
+    {
+      "symbol": "E_He",
+      "unit": "J",
+      "value": 0.6475,
+      "free": 1,
+      "description": "maturity at emergence"
+    },
+    {
+      "symbol": "del_M",
+      "unit": "-",
+      "value": 0.629,
+      "free": 1,
+      "description": "shape coefficient for head capsule of larva"
+    },
+    {
+      "symbol": "del_Mw",
+      "unit": "-",
+      "value": 0.3808,
+      "free": 1,
+      "description": "shape coefficient for wing length of imago"
+    },
+    {
+      "symbol": "f",
+      "unit": "-",
+      "value": 1.0,
+      "free": 0,
+      "description": "scaled functional response for 0-var data"
+    },
+    {
+      "symbol": "f_DR",
+      "unit": "-",
+      "value": 0.9916,
+      "free": 1,
+      "description": "scaled functional response for DR diet"
+    },
+    {
+      "symbol": "f_F424",
+      "unit": "-",
+      "value": 1.604,
+      "free": 1,
+      "description": "scaled functional response for F424 diet"
+    },
+    {
+      "symbol": "f_HS",
+      "unit": "-",
+      "value": 0.8974,
+      "free": 1,
+      "description": "scaled functional response for HS diet"
+    },
+    {
+      "symbol": "f_JAZZ",
+      "unit": "-",
+      "value": 1.962,
+      "free": 1,
+      "description": "scaled functional response for JAZZ diet"
+    },
+    {
+      "symbol": "kap_V",
+      "unit": "-",
+      "value": -1.526e-54,
+      "free": 1,
+      "description": "conversion efficient E -> V -> E"
+    },
+    {
+      "symbol": "s_1",
+      "unit": "-",
+      "value": 4.526,
+      "free": 1,
+      "description": "stress at instar 1: L_1^2/ L_b^2"
+    },
+    {
+      "symbol": "s_2",
+      "unit": "-",
+      "value": 3.303,
+      "free": 1,
+      "description": "stress at instar 2: L_2^2/ L_1^2"
+    }
+  ],
+  "data_predictions": [
+    {
+      "data": 0.7,
+      "prd": 0.7236,
+      "RE": 0.03378,
+      "symbol": "ab",
+      "unit": "d",
+      "description": "age at birth"
+    },
+    {
+      "data": 1.9,
+      "prd": 2.154,
+      "RE": 0.1336,
+      "symbol": "t1",
+      "unit": "d",
+      "description": "duration of instar 1"
+    },
+    {
+      "data": 1.6,
+      "prd": 1.705,
+      "RE": 0.06548,
+      "symbol": "t2",
+      "unit": "d",
+      "description": "duration of instar 2"
+    },
+    {
+      "data": 7.8,
+      "prd": 5.932,
+      "RE": 0.2394,
+      "symbol": "tj",
+      "unit": "d",
+      "description": "time since birth at pupation"
+    },
+    {
+      "data": 11.5,
+      "prd": 11.57,
+      "RE": 0.006436,
+      "symbol": "tj_F424",
+      "unit": "d",
+      "description": "time to 50% pupation, F424"
+    },
+    {
+      "data": 9.912,
+      "prd": 9.926,
+      "RE": 0.001312,
+      "symbol": "tj_JAZZ",
+      "unit": "d",
+      "description": "time to 50% pupation, JAZZ"
+    },
+    {
+      "data": 4.2,
+      "prd": 0.152,
+      "RE": 0.9638,
+      "symbol": "tje",
+      "unit": "d",
+      "description": "time since pupation at emergence"
+    },
+    {
+      "data": 57.94,
+      "prd": 57.65,
+      "RE": 0.005068,
+      "symbol": "am_BD_LD",
+      "unit": "d",
+      "description": "mean adult lifespan, BD (LD)"
+    },
+    {
+      "data": 0.06,
+      "prd": 0.05788,
+      "RE": 0.03541,
+      "symbol": "Lb",
+      "unit": "cm",
+      "description": "physical length of young instar 1"
+    },
+    {
+      "data": 0.13,
+      "prd": 0.1231,
+      "RE": 0.0529,
+      "symbol": "L1",
+      "unit": "cm",
+      "description": "physical length at end of instar 1"
+    },
+    {
+      "data": 0.25,
+      "prd": 0.2238,
+      "RE": 0.1049,
+      "symbol": "L2",
+      "unit": "cm",
+      "description": "physical length at end of instar 2"
+    },
+    {
+      "data": 0.38,
+      "prd": 0.4629,
+      "RE": 0.2181,
+      "symbol": "Lj",
+      "unit": "cm",
+      "description": "physical length of pupa"
+    },
+    {
+      "data": 0.188,
+      "prd": 0.2007,
+      "RE": 0.06781,
+      "symbol": "Lw_e_f_F424",
+      "unit": "cm",
+      "description": "adult wing length,female, F424"
+    },
+    {
+      "data": 0.216,
+      "prd": 0.2013,
+      "RE": 0.06819,
+      "symbol": "Lw_e_f_JAZZ",
+      "unit": "cm",
+      "description": "adult wing length,female, JAZZ"
+    },
+    {
+      "data": 0.35,
+      "prd": 0.3572,
+      "RE": 0.02062,
+      "symbol": "Wd_e_f",
+      "unit": "mg",
+      "description": "dry weight at eclosion, female"
+    },
+    {
+      "data": 11.2,
+      "prd": 12.78,
+      "RE": 0.1412,
+      "symbol": "Ri",
+      "unit": "#/d",
+      "description": "mean daily fecundity (first 10 d), eggs per female per day"
+    },
+    {
+      "data": 0.02,
+      "prd": 0.03568,
+      "RE": 0.7841,
+      "symbol": "psd.v",
+      "unit": "cm/d",
+      "description": "energy conductance"
+    },
+    {
+      "data": 18.0,
+      "prd": 8674.0,
+      "RE": 480.9,
+      "symbol": "psd.p_M",
+      "unit": "J/d.cm^3",
+      "description": "vol-spec som maint"
+    },
+    {
+      "data": 0.002,
+      "prd": 0.002,
+      "RE": 0.0,
+      "symbol": "psd.k_J",
+      "unit": "1/d",
+      "description": "maturity maint rate coefficient"
+    },
+    {
+      "data": 0.3,
+      "prd": 0.001022,
+      "RE": 0.9966,
+      "symbol": "psd.k",
+      "unit": "-",
+      "description": "maintenance ratio"
+    },
+    {
+      "data": 0.8,
+      "prd": 0.8024,
+      "RE": 0.003061,
+      "symbol": "psd.kap",
+      "unit": "-",
+      "description": "allocation fraction to soma"
+    },
+    {
+      "data": 0.8,
+      "prd": 0.8021,
+      "RE": 0.002664,
+      "symbol": "psd.kap_G",
+      "unit": "-",
+      "description": "growth efficiency"
+    },
+    {
+      "data": 0.95,
+      "prd": 0.95,
+      "RE": 0.0,
+      "symbol": "psd.kap_R",
+      "unit": "-",
+      "description": "reproduction efficiency"
+    },
+    {
+      "data": 0.01,
+      "prd": 0.2635,
+      "RE": 25.35,
+      "symbol": "psd.s_s",
+      "unit": "-",
+      "description": "supply stress"
+    }
+  ]
+}

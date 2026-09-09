@@ -1,3 +1,11 @@
+"""
+The offline larva, simulated without the physics engine.
+
+Integrates the locomotor output directly into a pose, bypassing the segmented
+body simulation. Used for fast behavioural runs where only the trajectory
+matters.
+"""
+
 from __future__ import annotations
 from typing import Any
 
@@ -32,6 +40,11 @@ class LarvaOffline(LarvaRobot):
     """
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the offline larva with its pose aligned to its orientation.
+
+        Args:
+            **kwargs: Larva attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.fo = self.orientation
         self.ro = self.orientation

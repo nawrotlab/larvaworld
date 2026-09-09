@@ -1,3 +1,7 @@
+"""
+Registry of the entries shown on the portal's landing page.
+"""
+
 from __future__ import annotations
 
 from larvaworld.portal.registry_types import (
@@ -8,8 +12,10 @@ from larvaworld.portal.registry_types import (
 )
 
 DOCS_ROOT = "https://larvaworld.readthedocs.io/en/latest/"
+DOCS_TUTORIALS = f"{DOCS_ROOT}tutorials/index.html#tutorials"
 GITHUB_ROOT = "https://github.com/nawrotlab/larvaworld"
 GITHUB_ISSUES = f"{GITHUB_ROOT}/issues"
+PYPI_ROOT = "https://pypi.org/project/larvaworld/"
 
 DOCS_WEB_APPS = f"{DOCS_ROOT}visualization/web_applications.html"
 DOCS_EXPERIMENT_VIEWER = f"{DOCS_WEB_APPS}#experiment-viewer"
@@ -25,6 +31,7 @@ DOCS_BATCH_RUNS = f"{DOCS_ROOT}working_with_larvaworld/batch_runs_advanced.html"
 DOCS_REFERENCE_DATASETS = f"{DOCS_ROOT}data_pipeline/reference_datasets.html"
 DOCS_DATA_PROCESSING = f"{DOCS_ROOT}data_pipeline/data_processing.html"
 DOCS_PLOTTING_API = f"{DOCS_ROOT}visualization/plotting_api.html"
+DOCS_DATASET_REPLAY = f"{DOCS_WEB_APPS}#dataset-replay"
 
 DOCS_ARENAS_SUBSTRATES = f"{DOCS_ROOT}agents_environments/arenas_and_substrates.html"
 DOCS_AGENT_ARCHITECTURE = (
@@ -37,26 +44,28 @@ DOCS_GA_OPTIMIZATION = (
 )
 DOCS_COMPARE_DATASETS = f"{DOCS_MODEL_EVALUATION}#statistical-comparison-plots"
 
+# Paths are relative to ``docs/tutorials`` and include the tutorial section folder.
 NOTEBOOK_TUTORIAL_BY_ITEM_ID: dict[str, str] = {
-    "wf.run_experiment": "single_simulation.ipynb",
-    "wf.open_dataset": "import_datasets.ipynb",
-    "track_viewer": "replay.ipynb",
-    "wf.dataset_manager": "import_datasets.ipynb",
-    "larva_models": "library_interface.ipynb",
-    "locomotory_modules": "custom_module.ipynb",
-    "wf.environment_builder": "environment_configuration.ipynb",
-    "wf.model_evaluation": "model_evaluation.ipynb",
-    "wf.ga_optimization": "genetic_algorithm_optimization.ipynb",
-    "wf.compare_datasets": "model_evaluation.ipynb",
+    "wf.run_experiment": "1_getting_started/single_simulation.ipynb",
+    "wf.open_dataset": "3_experimental_data/import_datasets.ipynb",
+    "track_viewer": "3_experimental_data/replay.ipynb",
+    "larva_models": "1_getting_started/python_api_basics.ipynb",
+    "locomotory_modules": "6_extending_larvaworld/custom_brain_modules.ipynb",
+    "wf.environment_builder": "4_models_and_environments/environment_configuration.ipynb",
+    "wf.model_evaluation": "5_optimization_and_evaluation/model_evaluation.ipynb",
+    "wf.ga_optimization": (
+        "5_optimization_and_evaluation/genetic_algorithm_optimization.ipynb"
+    ),
+    "wf.compare_datasets": "5_optimization_and_evaluation/model_evaluation.ipynb",
 }
 
 
 # ---- Deterministic ordering: these lists define display order. ----
 
 PINNED_QUICK_START: list[str] = [
+    "wf.explore",
     "wf.run_experiment",
     "wf.export_center",
-    "wf.deb_explorer",
 ]
 
 QUICK_START_MODES: list[QuickStartModeSpec] = [
@@ -65,9 +74,9 @@ QUICK_START_MODES: list[QuickStartModeSpec] = [
         title="User mode",
         color="#e7c575",
         item_ids=[
+            "wf.explore",
             "wf.run_experiment",
             "wf.export_center",
-            "wf.deb_explorer",
         ],
     ),
     QuickStartModeSpec(
@@ -76,8 +85,8 @@ QUICK_START_MODES: list[QuickStartModeSpec] = [
         color="#c1b0c2",
         item_ids=[
             "wf.environment_builder",
+            "locomotory_modules",
             "larva_models",
-            "wf.ga_optimization",
         ],
     ),
     QuickStartModeSpec(
@@ -99,6 +108,7 @@ LANES: list[LaneSpec] = [
         title="Simulation & Optimization",
         lane="simulate",
         item_ids=[
+            "wf.explore",
             "wf.run_experiment",
             "wf.model_evaluation",
             "wf.ga_optimization",
@@ -131,6 +141,29 @@ LANES: list[LaneSpec] = [
 
 ITEMS: dict[str, LandingItem] = {
     # ---- Real Panel apps (id == panel_app_id) ----
+    "wf.explore": LandingItem(
+        id="wf.explore",
+        kind="panel_app",
+        status="ready",
+        lane="simulate",
+        level="core",
+        title="Explore",
+        subtitle=(
+            "Run a ready-made behavioral simulation.\n"
+            "The simulation produces datasets with Step and Endpoint data.\n"
+            "Those datasets are used to generate the preview figures. No setup."
+        ),
+        cta="Watch",
+        panel_app_id="wf.explore",
+        learn_more=LearnMore(docs_url=DOCS_EXPERIMENT_TYPES),
+        preview_md=(
+            "### Explore\n"
+            "- Browse curated experiments grouped by behavior\n"
+            "- Run a short simulation with one click and no configuration\n"
+            "- Inspect the Step and Endpoint data produced by the simulation\n"
+            "- See figures generated from those datasets and a plain-language explanation\n"
+        ),
+    ),
     "track_viewer": LandingItem(
         id="track_viewer",
         kind="panel_app",
@@ -263,7 +296,6 @@ ITEMS: dict[str, LandingItem] = {
             issue_url=GITHUB_ISSUES,
             docs_url=DOCS_SINGLE_EXPERIMENTS,
         ),
-        badges=["Developer"],
         preview_md=(
             "### Single Experiment\n"
             "- Pick an experiment template from the Larvaworld registry\n"
@@ -401,26 +433,26 @@ ITEMS: dict[str, LandingItem] = {
     ),
     "wf.export_center": LandingItem(
         id="wf.export_center",
-        kind="placeholder",
-        status="planned",
+        kind="panel_app",
+        status="ready",
         lane="data",
         level="core",
         title="Analysis",
+        panel_app_id="wf.export_center",
         subtitle=(
-            "Inspect selected datasets through analysis views.\n"
-            "Build plots and summary comparisons interactively.\n"
-            "Prepare deeper post-processing workflows."
+            "Select datasets and generate plots.\n"
+            "Explore available analysis functions.\n"
+            "Build analysis visualizations interactively."
         ),
         cta="Analyze",
-        prereq_hint="Not available yet in the web UI.",
         learn_more=LearnMore(
-            issue_url=GITHUB_ISSUES,
-            docs_url=DOCS_PLOTTING_API,
+            docs_url=DOCS_DATASET_REPLAY,
         ),
         preview_md=(
-            "### Analysis (Planned)\n"
-            "- Open dataset-centric analysis tools\n"
-            "- Build comparison plots and summaries\n"
+            "### Analysis & Plotting\n"
+            "- Select one or more datasets for analysis\n"
+            "- Filter available plots by dataset compatibility\n"
+            "- Generate and explore visualizations\n"
         ),
     ),
     "wf.environment_builder": LandingItem(
@@ -441,7 +473,6 @@ ITEMS: dict[str, LandingItem] = {
             issue_url=GITHUB_ISSUES,
             docs_url=DOCS_ARENAS_SUBSTRATES,
         ),
-        badges=["Developer"],
         preview_md=(
             "### Environment Builder\n"
             "- Configure arena geometry, borders, and obstacles\n"

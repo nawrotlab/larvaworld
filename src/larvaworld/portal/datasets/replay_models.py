@@ -1,3 +1,7 @@
+"""
+Records describing a replay source and its prepared frames.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -24,6 +28,8 @@ ReplayCoordinateOrigin = Literal["corner", "centered"]
 
 @dataclass(frozen=True)
 class ReplaySourceMember:
+    """One dataset within a replayable source."""
+
     token: str
     label: str
     source_type: ReplaySourceType
@@ -35,6 +41,8 @@ class ReplaySourceMember:
 
 @dataclass(frozen=True)
 class ReplaySource:
+    """A dataset, or group of them, offered for replay."""
+
     token: str
     label: str
     source_type: ReplaySourceType
@@ -43,6 +51,8 @@ class ReplaySource:
 
 @dataclass(frozen=True)
 class PreparedReplayMember:
+    """A replay member with its frames resolved."""
+
     token: str
     label: str
     color: str
@@ -64,6 +74,8 @@ class PreparedReplayMember:
 
 @dataclass
 class PreparedReplaySource:
+    """A replay source with every member prepared."""
+
     source: ReplaySource
     members: dict[str, PreparedReplayMember] = field(default_factory=dict)
     nticks: int = 0

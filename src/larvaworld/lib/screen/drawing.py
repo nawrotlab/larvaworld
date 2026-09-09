@@ -56,7 +56,12 @@ class MediaDrawOps(NestedConf):
         snapshot_interval_in_sec: Seconds between snapshots
         video_file: Filename for saved videos (without .mp4 extension)
         media_dir: Directory for saving media files
-        fps: Video frames per second
+        fps: Real-time playback speed multiplier for saved video, NOT a
+            literal output frame rate -- one video frame is written per
+            simulation tick, so playback duration = Nticks * dt / fps.
+            fps=1 yields exact real-time playback (a `duration`-second
+            simulation produces a `duration`-second video); the default of
+            60 produces a 60x sped-up preview.
         save_video: Whether to save video output
         vis_mode: Screen visualization mode ('video' or 'image')
         show_display: Whether to launch pygame visualization
@@ -103,6 +108,7 @@ class MediaDrawOps(NestedConf):
 
     @property
     def active(self) -> bool:
+        """Whether any media output is enabled."""
         return (
             self.save_video
             or self.image_mode
@@ -112,6 +118,7 @@ class MediaDrawOps(NestedConf):
 
     @property
     def video_filepath(self) -> str | None:
+        """The path the recorded video is written to, if any."""
         if self.media_dir is not None and self.video_file is not None:
             return f"{self.media_dir}/{self.video_file}.mp4"
         else:
@@ -119,6 +126,7 @@ class MediaDrawOps(NestedConf):
 
     @property
     def image_filepath(self) -> str | None:
+        """The path the captured images are written to, if any."""
         if self.media_dir is not None and self.image_file is not None:
             return f"{self.media_dir}/{self.image_file}.png"
         else:
@@ -126,11 +134,20 @@ class MediaDrawOps(NestedConf):
 
     @property
     def overlap_mode(self) -> bool:
+        """Whether successive frames are drawn over one another."""
         return self.image_mode == "overlap"
 
     def new_video_writer(
         self, fps: int, video_filepath: str | None = None
     ) -> Any | None:
+        """Open a video writer for the run.
+
+        Args:
+            fps: The frame rate to record at.
+
+        Returns:
+            The writer, or None when video output is disabled.
+        """
         if self.save_video:
             if video_filepath is None:
                 video_filepath = self.video_filepath
@@ -142,6 +159,14 @@ class MediaDrawOps(NestedConf):
         return vid_writer
 
     def new_image_writer(self, image_filepath: str | None = None) -> Any | None:
+        """Open an image writer for the run.
+
+        Args:
+            path: The destination path.
+
+        Returns:
+            The writer, or None when image output is disabled.
+        """
         if self.image_mode:
             if image_filepath is None:
                 image_filepath = self.image_filepath
@@ -243,21 +268,53 @@ class ScreenOps(ColorDrawOps, AgentDrawOps, MediaDrawOps):
 
 
 class ScreenArea(Area2DPixel):
+    """The region of the display the simulation space is drawn into.
+
+    Maps simulation coordinates onto screen pixels.
+    """
+
     def __init__(self, model: Any, **kwargs: Any) -> None:
+        """Build the screen area and size it to the simulation space.
+
+        Args:
+            **kwargs: Area attributes, forwarded to the parent class.
+        """
         self.model = model
         self.space_dims = self.model.p.env_params.arena.dims
         super().__init__(dims=util.get_window_dims(self.space_dims), **kwargs)
 
     def space2screen_pos(self, pos: Any) -> Any:
+        """Convert a simulation position into screen coordinates.
+
+        Args:
+            pos: The position in simulation space.
+
+        Returns:
+            The corresponding screen position.
+        """
         return self.adjust_pos_to_area(
             pos=pos, area=self.model.space, scaling_factor=self.model.scaling_factor
         )
 
     def get_rect_at_screen_pos(self, pos: tuple[int, int] = (0, 0)) -> Any:
+        """Return a rectangle centred on a simulation position.
+
+        Args:
+            pos: The position in simulation space.
+
+        Returns:
+            The screen rectangle.
+        """
         return self.get_rect_at_pos(self.space2screen_pos(pos))
 
 
 class ScreenAreaZoomable(ScreenArea):
+    """A screen area that can be panned and zoomed.
+
+    Maintains the affine transform between simulation space and the
+    screen, and updates it as the view moves.
+    """
+
     zoom = PositiveNumber(1.0, doc="Zoom factor")
     center = param.Parameter(np.array([0.0, 0.0]), doc="Center xy")
     center_lim = param.Parameter(np.array([0.0, 0.0]), doc="Center xy lim")
@@ -265,15 +322,29 @@ class ScreenAreaZoomable(ScreenArea):
     _translation = param.Parameter(np.zeros(2), doc="Translation of xy")
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the zoomable area at its initial zoom level.
+
+        Args:
+            **kwargs: Area attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.set_bounds()
 
     @property
     def display_size(self) -> tuple[int, int]:
+        """The display size at the current zoom level."""
         return (np.array(self.dims) / self.zoom).astype(int)
 
     @param.depends("zoom", "center", watch=True)
     def set_bounds(self) -> None:
+        """Recompute the transform mapping simulation space onto the screen.
+
+        Args:
+            left: The left edge of the visible region.
+            right: Its right edge.
+            bottom: Its bottom edge.
+            top: Its top edge.
+        """
         s, z = self.model.scaling_factor, self.zoom
         rw, rh = self.w / self.space_dims[0], self.h / self.space_dims[1]
         self._scale = np.array([[rw, 0.0], [0.0, -rh]]) / z / s
@@ -281,14 +352,35 @@ class ScreenAreaZoomable(ScreenArea):
         self.center_lim = (z - 1) * s * np.array(self.space_dims) / 2
 
     def _transform(self, position: Any) -> Any:
+        """Apply the current transform to a position.
+
+        Args:
+            position: The position in simulation space.
+
+        Returns:
+            The screen pixel it maps to.
+        """
         return np.round(self._scale.dot(position) + self._translation).astype(int)
 
     def move_center(self, dx: float = 0, dy: float = 0, pos: Any | None = None) -> None:
+        """Pan the view.
+
+        Args:
+            dx: The horizontal shift, as a fraction of the view.
+            dy: The vertical shift.
+            pos: An explicit centre to move to instead.
+        """
         if pos is None:
             pos = self.center - self.center_lim * [dx, dy]
         self.center = np.clip(pos, self.center_lim, -self.center_lim)
 
     def zoom_screen(self, sign: int, pos: Any | None = None) -> None:
+        """Zoom the view in or out.
+
+        Args:
+            sign: Positive to zoom out, negative to zoom in.
+            pos: The point held fixed. Defaults to the mouse position.
+        """
         d_zoom = -0.01 * sign
         if pos is None:
             pos = self.mouse_position
@@ -302,6 +394,8 @@ class ScreenAreaZoomable(ScreenArea):
 
     @param.depends("zoom", watch=True)
     def update_scale(self) -> None:
+        """Re-pick the displayed scale bar to suit the current zoom."""
+
         def closest(lst, k):
             return lst[min(range(len(lst)), key=lambda i: abs(lst[i] - k))]
 
@@ -345,10 +439,21 @@ class ScreenAreaZoomable(ScreenArea):
 
 
 class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
+    """A screen area backed by a pygame display surface.
+
+    Provides the primitive drawing operations, each taking simulation
+    coordinates and converting them to pixels.
+    """
+
     caption = param.String("", doc="The caption of the screen window")
     scene = param.String(None, doc="The scene ID to be loaded from file")
 
     def __init__(self, background_motion: Any | None = None, **kwargs: Any) -> None:
+        """Build the pygame-backed screen area.
+
+        Args:
+            **kwargs: Area attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.bg = background_motion
 
@@ -388,6 +493,7 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
 
     @property
     def mouse_position(self) -> Any:
+        """The mouse position, in simulation coordinates."""
         import pygame
 
         p = np.array(pygame.mouse.get_pos()) - self._translation
@@ -395,11 +501,18 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
 
     @property
     def new_display_surface(self) -> Any:
+        """A fresh surface sized to the display."""
         import pygame
 
         return pygame.Surface(self.display_size, pygame.SRCALPHA)
 
     def _draw_arena(self, tank_color: Any, screen_color: Any) -> None:
+        """Render the arena boundary and its background.
+
+        Args:
+            tank_color: The colour inside the arena.
+            screen_color: The colour outside it.
+        """
         import pygame
 
         surf1 = self.new_display_surface
@@ -411,6 +524,7 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
         self.v.blit(surf2, (0, 0))
 
     def init_screen(self) -> Any:
+        """Open the display surface, windowed or offscreen."""
         import pygame
 
         flags = pygame.HWSURFACE | pygame.DOUBLEBUF
@@ -429,6 +543,15 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
         filled: bool = True,
         width: float = 0.01,
     ) -> None:
+        """Draw a circle in simulation coordinates.
+
+        Args:
+            position: The centre.
+            radius: The radius.
+            color: The colour.
+            filled: Whether to fill the circle.
+            width: The outline width.
+        """
         import pygame
 
         p = self._transform(position)
@@ -443,6 +566,14 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
         filled: bool = True,
         width: float = 0.01,
     ) -> None:
+        """Draw a polygon in simulation coordinates.
+
+        Args:
+            vertices: The polygon's corners.
+            color: The colour.
+            filled: Whether to fill the polygon.
+            width: The outline width.
+        """
         if vertices is not None and len(vertices) > 1:
             import pygame
 
@@ -451,6 +582,12 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
             pygame.draw.polygon(self.v, color, vs, w)
 
     def draw_convex(self, points: Any, **kwargs: Any) -> None:
+        """Draw the convex hull of a set of points.
+
+        Args:
+            points: The points to enclose.
+            **kwargs: Drawing options.
+        """
         from scipy.spatial import ConvexHull
 
         ps = np.array(points)
@@ -464,6 +601,14 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
         filled: bool = True,
         width: float = 0.01,
     ) -> None:
+        """Draw a coloured cell grid.
+
+        Args:
+            vertices: The corners of every cell.
+            colors: The colour of every cell.
+            filled: Whether to fill the cells.
+            width: The outline width.
+        """
         all_vertices = [
             [self._transform(v) for v in vertices] for vertices in all_vertices
         ]
@@ -478,6 +623,15 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
         closed: bool = False,
         width: float = 0.01,
     ) -> None:
+        """Draw a connected sequence of line segments.
+
+        Args:
+            vertices: The points to connect.
+            color: The colour.
+            closed: Whether to close the loop.
+            width: The line width.
+            dynamic_color: Whether each segment takes its own colour.
+        """
         import pygame
 
         vs = [self._transform(v) for v in vertices]
@@ -495,6 +649,14 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
         color: Any = (0, 0, 0),
         width: float = 0.01,
     ) -> None:
+        """Draw a single line segment.
+
+        Args:
+            start: The first endpoint.
+            end: The second endpoint.
+            color: The colour.
+            width: The line width.
+        """
         import pygame
 
         start = self._transform(start)
@@ -510,6 +672,15 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
         filled: bool = True,
         width: float = 0.01,
     ) -> None:
+        """Draw a circle blended with the background.
+
+        Args:
+            position: The centre.
+            radius: The radius.
+            color: The colour, including its alpha.
+            filled: Whether to fill the circle.
+            width: The outline width.
+        """
         import pygame
 
         r = int(self._scale[0, 0] * radius)
@@ -519,11 +690,23 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
         self.v.blit(s, self._transform(position) - r)
 
     def draw_text_box(self, font: Any, rect: Any) -> None:
+        """Draw a text box.
+
+        Args:
+            text_box: The box to render.
+            text_font_r: Its rectangle.
+        """
         import pygame
 
         self.v.blit(font, rect)
 
     def draw_envelope(self, points: list[tuple[float, float]], **kwargs: Any) -> None:
+        """Draw the bounding box enclosing a set of points.
+
+        Args:
+            points: The points to enclose.
+            **kwargs: Drawing options.
+        """
         vs = list(geometry.MultiPoint(points).envelope.exterior.coords)
         self.draw_polygon(vs, **kwargs)
 
@@ -537,6 +720,16 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
         phi: float = 0,
         s: int = 10,
     ) -> None:
+        """Draw a line marked with direction arrows.
+
+        Args:
+            start: The first endpoint.
+            end: The second endpoint.
+            color: The colour.
+            width: The line width.
+            dl: The spacing between arrows.
+            phi: The phase offset of the arrow pattern.
+        """
         import math
 
         a0 = math.atan2(end[1] - start[1], end[0] - start[0])
@@ -561,6 +754,7 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
             l += dl
 
     def set_background(self) -> None:
+        """Load the background image, scaled to the display."""
         import pygame
 
         path = f"{ROOT_DIR}/lib/screen/background.png"
@@ -573,6 +767,7 @@ class ScreenAreaPygame(ScreenAreaZoomable, ScreenOps):
         self.tw_max = int(self.v.get_width() / self.tw) + 2
 
     def draw_background(self, bg: list[float] = [0, 0, 0]) -> None:
+        """Draw the background, shifted to follow the view."""
         import pygame
 
         if self.bgimage is not None and self.bgimagerect is not None:
@@ -614,6 +809,12 @@ class ScreenManager(ScreenAreaPygame):
     """
 
     def __init__(self, **kwargs: Any) -> None:
+        """Build the screen manager for a simulation run.
+
+        Args:
+            model: The simulation being rendered.
+            **kwargs: Screen options, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.selected_type = ""
         self.selected_agents = []
@@ -633,11 +834,13 @@ class ScreenManager(ScreenAreaPygame):
         self.closed = False
 
     def increase_fps(self) -> None:
+        """Raise the playback frame rate."""
         if self._fps < 60:
             self._fps += 1
         vprint(f"viewer.fps: {self._fps}", 1)
 
     def decrease_fps(self) -> None:
+        """Lower the playback frame rate."""
         if self._fps > 1:
             self._fps -= 1
         vprint(f"viewer.fps: {self._fps}", 1)
@@ -770,6 +973,7 @@ class ScreenManager(ScreenAreaPygame):
             self._render()
 
     def _render(self) -> Any:
+        """Draw one frame and present it."""
         import pygame
 
         if self.show_display:
@@ -789,6 +993,7 @@ class ScreenManager(ScreenAreaPygame):
 
     @property
     def display_only_mode(self) -> bool:
+        """Whether the run only displays, recording no media."""
         return (
             self.show_display
             and not self.save_video
@@ -799,6 +1004,7 @@ class ScreenManager(ScreenAreaPygame):
 
     @property
     def should_draw_live_frame(self) -> bool:
+        """Whether a frame should be drawn on the current timestep."""
         cadence = max(1, int(self.display_every_n_steps))
         return cadence == 1 or self.model.Nticks % cadence == 0
 
@@ -837,22 +1043,27 @@ class ScreenManager(ScreenAreaPygame):
 
     @property
     def screen_color(self) -> tuple[int, int, int]:
+        """The colour outside the arena."""
         return (200, 200, 200) if not self.black_background else (50, 50, 50)
 
     @property
     def tank_color(self) -> Any:
+        """The colour inside the arena."""
         return util.Color.WHITE if not self.black_background else util.Color.BLACK
 
     @property
     def sidepanel_color(self) -> Any:
+        """The side panel's background colour."""
         return util.Color.BLACK if not self.black_background else util.Color.WHITE
 
     @property
     def snapshot_tick(self) -> bool:
+        """The timestep at which a snapshot is due."""
         return (self.model.Nticks - 1) % self.snapshot_interval == 0
 
     @property
     def snapshot_valid(self) -> bool:
+        """Whether a snapshot should be captured now."""
         return (
             self.vis_mode == "image"
             and self.image_mode == "snapshots"
@@ -861,12 +1072,14 @@ class ScreenManager(ScreenAreaPygame):
 
     @property
     def render_valid(self) -> bool:
+        """Whether rendering is enabled and due."""
         m = self.vis_mode
         return (m == "image" and self.overlap_mode) or (
             m == "video" and (self.image_mode != "snapshots" or self.snapshot_tick)
         )
 
     def step(self) -> None:
+        """Advance the display by one simulation timestep."""
         self.check()
         if self.active:
             self.screen_clock.tick_clock()
@@ -1180,14 +1393,23 @@ class ScreenManager(ScreenAreaPygame):
         if self.intro_text:
             import pygame
 
+            rect = self.get_rect_at_screen_pos()
+            text = m.configuration_text
+            n_lines = text.count("\n") + 1
+            # Scale the font down as the window shrinks and as the number of
+            # crucial info lines grows (run-type dependent), so the box
+            # never crops off-screen; never render larger than the
+            # previous fixed 30px default.
+            font_size = max(12, min(30, int(0.75 * rect.height / (n_lines * 1.6))))
+
             box = _rendering.ScreenTextBoxRect(
-                text=m.configuration_text,
+                text=text,
                 text_color="lightgreen",
                 color="white",
                 visible=True,
-                frame_rect=self.get_rect_at_screen_pos(),
+                frame_rect=rect,
                 font_type="comicsansms",
-                font_size=30,
+                font_size=font_size,
             )
             box.draw(self)
             self._render()
@@ -1278,6 +1500,14 @@ class ScreenManager(ScreenAreaPygame):
             b._draw(v=self)
 
     def item_pos(self, item: str) -> tuple[int, int]:
+        """Return the screen position of a fixed overlay item.
+
+        Args:
+            item: The overlay item's name.
+
+        Returns:
+            Its position, as a fraction of the display.
+        """
         item_pos_scale = util.AttrDict(
             {
                 "clock": (0.85, 0.94),
@@ -1289,6 +1519,14 @@ class ScreenManager(ScreenAreaPygame):
         return self.get_relative_pos(item_pos_scale[item])
 
     def item_textfonts(self) -> None:
+        """Return the fonts used by a fixed overlay item.
+
+        Args:
+            item: The overlay item's name.
+
+        Returns:
+            Its font configuration.
+        """
         rel_pos = {
             "clock": [
                 (0.85, 0.94),
@@ -1332,6 +1570,12 @@ class ScreenManager(ScreenAreaPygame):
             self.side_panel.draw(self)
 
     def load_scene_from_file(self, file_path: str, m: Any) -> list[Any]:
+        """Load a saved scene definition.
+
+        Args:
+            file_path: The scene file.
+            scene: The scene to populate.
+        """
         from ..model import Box, Wall
 
         obs = []
@@ -1429,6 +1673,11 @@ class GA_ScreenManager(ScreenManager):
         scene: str = "no_boxes",
         **kwargs: Any,
     ) -> None:
+        """Build the screen manager for an evolutionary run.
+
+        Args:
+            **kwargs: Screen options, forwarded to the parent class.
+        """
         super().__init__(
             model=model,
             panel_width=panel_width,

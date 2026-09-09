@@ -59,7 +59,27 @@ def segments_intersection_p(
     p2_y: float,
     p3_x: float,
     p3_y: float,
-):
+) -> geometry.Point | None:
+    """
+    Compute the intersection of two segments given as raw coordinates.
+
+    Coordinate-level implementation backing :func:`segments_intersection`. The
+    segments are ``(p0 -> p1)`` and ``(p2 -> p3)``.
+
+    Args:
+        p0_x: X coordinate of the first segment's start point.
+        p0_y: Y coordinate of the first segment's start point.
+        p1_x: X coordinate of the first segment's end point.
+        p1_y: Y coordinate of the first segment's end point.
+        p2_x: X coordinate of the second segment's start point.
+        p2_y: Y coordinate of the second segment's start point.
+        p3_x: X coordinate of the second segment's end point.
+        p3_y: Y coordinate of the second segment's end point.
+
+    Returns:
+        The intersection point, or None if the segments do not intersect
+        within their extents.
+    """
     EPSILON = 0.000001
     s1_x = p1_x - p0_x
     s1_y = p1_y - p0_y

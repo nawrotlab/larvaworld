@@ -1,3 +1,10 @@
+"""
+Rotatable surface objects for the 2D robot simulation.
+
+Provides the rotatable surface primitive, its triangular specialization used to
+draw the robots, and the light source the light sensors respond to.
+"""
+
 from __future__ import annotations
 from typing import Any, Tuple
 import math
@@ -37,6 +44,15 @@ class RotSurface(Object):
     def __init__(
         self, x: float, y: float, direction: float, surf: Any, **kwargs: Any
     ) -> None:
+        """Build the rotatable surface.
+
+        Args:
+            x: The centre x coordinate.
+            y: The centre y coordinate.
+            direction: The heading in radians.
+            surf: The surface to render.
+            **kwargs: Object attributes, forwarded to the parent class.
+        """
         super().__init__(**kwargs)
         self.x = x
         self.y = y
@@ -45,12 +61,18 @@ class RotSurface(Object):
         self.speed = 0
 
     def step(self) -> None:
+        """Advance the surface along its heading by one timestep."""
         dx = self.speed * math.cos(self.direction)
         dy = self.speed * math.sin(self.direction)
         self.x += dx
         self.y += dy
 
     def draw(self, viewer: Any) -> None:
+        """Render the surface, rotated to its heading.
+
+        Args:
+            viewer: The viewer to draw into.
+        """
         import pygame
 
         degrees = math.degrees(self.direction)
@@ -90,6 +112,16 @@ class RotTriangle(RotSurface):
         color_bg: Tuple[int, int, int],
         direction: float,
     ) -> None:
+        """Build the triangular surface.
+
+        Args:
+            x: The centre x coordinate.
+            y: The centre y coordinate.
+            size: The triangle size.
+            color_fg: The foreground colour.
+            color_bg: The background colour.
+            **kwargs: Object attributes, forwarded to the parent class.
+        """
         self.size = size
         self.color_fg = color_fg
         self.color_bg = color_bg
@@ -150,6 +182,16 @@ class LightSource(RotSurface):
         color_bg: Tuple[int, int, int] = util.Color.BLACK,
         **kwargs: Any,
     ) -> None:
+        """Build the light source.
+
+        Args:
+            x: The centre x coordinate.
+            y: The centre y coordinate.
+            emitting_power: The emitted light intensity.
+            color_fg: The foreground colour.
+            color_bg: The background colour.
+            **kwargs: Object attributes, forwarded to the parent class.
+        """
         self.emitting_power = emitting_power
         self.color_fg = color_fg
         self.color_bg = color_bg
@@ -171,6 +213,7 @@ class LightSource(RotSurface):
         super().__init__(x, y, 0, self.surf, **kwargs)
 
     def get_saved_scene_repr(self) -> str:
+        """Return the source as a line for a saved scene file."""
         return (
             self.__class__.__name__
             + " "

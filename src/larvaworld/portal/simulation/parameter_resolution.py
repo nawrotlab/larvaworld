@@ -1,3 +1,11 @@
+"""
+Merging of edited parameters into a simulation configuration.
+
+Reconciles what the builder produced with the stored configuration, coercing
+each value to the shape the configuration expects rather than overwriting
+whole branches.
+"""
+
 from __future__ import annotations
 
 import math
@@ -21,6 +29,14 @@ __all__ = [
 
 
 def _normalize_scalar(value: Any) -> Any:
+    """Normalize a scalar read out of an edited payload.
+
+    Args:
+        value: The value to normalize.
+
+    Returns:
+        The normalized value.
+    """
     nested_conf = getattr(type(value), "nestedConf", None)
     if nested_conf is not None:
         return _normalize_scalar(value.nestedConf)
@@ -41,6 +57,19 @@ def _normalize_scalar(value: Any) -> Any:
 
 
 def _coerce_like(template: Any, value: Any) -> Any:
+    """Coerce a value to the shape of the stored template.
+
+    Merging an edited payload into a configuration must preserve the
+    configuration's own types, so each value is coerced to match what the
+    template holds rather than replacing it outright.
+
+    Args:
+        template: The stored value whose shape is preserved.
+        value: The edited value.
+
+    Returns:
+        The coerced value.
+    """
     if isinstance(template, tuple) and isinstance(value, list):
         return tuple(
             _coerce_like(item_template, item_value)
@@ -61,6 +90,14 @@ def _coerce_like(template: Any, value: Any) -> Any:
 
 
 def _coerce_xy_sequences(value: Any) -> Any:
+    """Coerce nested coordinate lists into tuples.
+
+    Args:
+        value: The coordinates to coerce.
+
+    Returns:
+        The coerced coordinates.
+    """
     if isinstance(value, dict):
         return util.AttrDict(
             {str(key): _coerce_xy_sequences(item) for key, item in value.items()}
@@ -87,6 +124,15 @@ def _builder_obstacle_border_vertices(
     *,
     segments: int = 18,
 ) -> list[tuple[float, float]]:
+    """Build the border vertices approximating a circular obstacle.
+
+    Args:
+        pos: The obstacle's centre.
+        radius: Its radius.
+
+    Returns:
+        The vertices.
+    """
     x0, y0 = float(pos[0]), float(pos[1])
     n_segments = max(6, int(segments))
     points = [
@@ -111,6 +157,14 @@ def _builder_obstacle_border_vertices(
 def _translate_builder_environment_payload(
     environment_payload: util.AttrDict,
 ) -> util.AttrDict:
+    """Convert the builder's payload into environment parameters.
+
+    Args:
+        environment_payload: The builder payload.
+
+    Returns:
+        The environment parameters.
+    """
     payload = _coerce_xy_sequences(environment_payload.get_copy())
     obstacles = payload.get("obstacles", {})
     if not isinstance(obstacles, dict) or not obstacles:
@@ -141,6 +195,15 @@ def _translate_builder_environment_payload(
 
 
 def _merge_object_like(template: Any, payload: Any) -> Any:
+    """Merge an edited object into its stored counterpart.
+
+    Args:
+        template: The stored object.
+        payload: The edited object.
+
+    Returns:
+        The merged object.
+    """
     if isinstance(template, dict) and isinstance(payload, dict):
         if not template:
             return util.AttrDict(_normalize_scalar(payload))
@@ -155,6 +218,15 @@ def _merge_object_like(template: Any, payload: Any) -> Any:
 
 
 def _merge_collection_like(template: Any, payload: Any) -> util.AttrDict:
+    """Merge an edited collection into its stored counterpart.
+
+    Args:
+        template: The stored collection.
+        payload: The edited collection.
+
+    Returns:
+        The merged collection.
+    """
     if not isinstance(payload, dict):
         return util.AttrDict()
     if not isinstance(template, dict) or not template:
@@ -173,6 +245,15 @@ def apply_environment_payload(
     env_params: util.AttrDict,
     environment_payload: util.AttrDict,
 ) -> util.AttrDict:
+    """Apply an edited environment onto a stored configuration.
+
+    Args:
+        env_params: The stored environment parameters.
+        environment_payload: The edited payload.
+
+    Returns:
+        The updated environment parameters.
+    """
     merged = env_params.get_copy()
     payload = _translate_builder_environment_payload(environment_payload)
 
@@ -232,6 +313,15 @@ def resolve_base_experiment_parameters(
     experiment_id: str,
     environment_payload: util.AttrDict | None = None,
 ) -> util.AttrDict:
+    """Resolve the parameters an experiment run starts from.
+
+    Args:
+        experiment_id: The stored experiment.
+        environment_payload: The edited environment, if any.
+
+    Returns:
+        The resolved parameters.
+    """
     parameters = reg.conf.Exp.getID(experiment_id).get_copy()
     parameters["duration"] = float(parameters.get("duration", 5.0))
     if environment_payload is not None:

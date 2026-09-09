@@ -1,3 +1,7 @@
+"""
+Widget for editing an environment's thermal landscape.
+"""
+
 from __future__ import annotations
 
 from typing import Any, Callable
@@ -25,6 +29,14 @@ _DEFAULT_THERMO_DTEMPS = {
 
 
 def _ordered_names(instance: param.Parameterized, preferred: list[str]) -> list[str]:
+    """Order a configuration's fields for display.
+
+    Args:
+        obj: The object being edited.
+
+    Returns:
+        The field names, in display order.
+    """
     return [name for name in preferred if name in instance.param and name != "name"]
 
 
@@ -36,6 +48,15 @@ def _attribute_control(
     doc: str | None = None,
     after_update: Callable[[], None] | None = None,
 ) -> pn.Column:
+    """Build the control editing one thermal attribute.
+
+    Args:
+        obj: The object being edited.
+        name: The attribute name.
+
+    Returns:
+        The control component.
+    """
     state = {"syncing": False}
     widget.value = getattr(owner, attr_name)
 
@@ -54,6 +75,14 @@ def _attribute_control(
 
 
 def _build_thermoscape_editor(thermoscape: param.Parameterized) -> object:
+    """Build the editor for the thermal field.
+
+    Args:
+        thermoscape: The field being edited.
+
+    Returns:
+        The editor component.
+    """
     if not hasattr(thermoscape, "plate_temp"):
         thermoscape.plate_temp = 22.0
     if not hasattr(thermoscape, "thermo_spread"):
@@ -124,6 +153,14 @@ def _build_thermoscape_editor(thermoscape: param.Parameterized) -> object:
 
 
 def build_thermoscape_widget(env_conf: param.Parameterized) -> object:
+    """Build the widget editing the environment's thermal field.
+
+    Args:
+        **kwargs: Widget settings.
+
+    Returns:
+        The widget component.
+    """
     return classattr_section(
         env_conf,
         name="thermoscape",

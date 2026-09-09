@@ -15,6 +15,8 @@ extensions = [
     "autoapi.extension",
     "sphinxcontrib.mermaid",  # Mermaid diagrams
     "myst_nb",  # Jupyter notebook support (includes myst_parser)
+    "sphinx_design",  # Grids, cards, dropdowns, tabs, badges
+    "sphinx_copybutton",  # Copy button on code blocks
 ]
 
 # MyST Parser configuration
@@ -50,12 +52,19 @@ exclude_patterns = [
     "_build",
     "Thumbs.db",
     ".DS_Store",
+    # Pre-refactor snapshots kept for rollback only; not part of the documentation.
+    "tutorials/legacy/**",
+    # Notebook output, generated locally and git-ignored.
+    "tutorials/media/**",
+    "tutorials/*/media/**",
 ]
 
 # Options for HTML output
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
-# html_css_files = ["custom.css"]  # Disabled to use default RTD theme styling
+# custom.css targets the Furo theme and stays disabled while the RTD theme is used.
+# html_css_files = ["custom.css"]
+html_css_files = ["tutorials.css"]  # opt-in helpers for the tutorial course pages
 
 # AutoAPI configuration
 autoapi_dirs = ["../src/larvaworld"]

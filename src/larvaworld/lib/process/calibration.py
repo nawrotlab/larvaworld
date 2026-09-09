@@ -30,6 +30,17 @@ __all__: list[str] = [
 
 
 def comp_linear(d: LarvaDataset, mode: str = "minimal") -> None:
+    """Compute linear distances, velocities and accelerations per midline point.
+
+    Results are written back into the dataset's step data in place.
+
+    Args:
+        d: The dataset to annotate.
+        mode: ``"full"`` processes every midline point except the head;
+            ``"minimal"`` processes only the dataset's defined tracking point,
+            and is skipped when that point is the head or the centroid, since
+            the front segment orientation is then undefined.
+    """
     s, e, c = d.data
     assert isinstance(c, DatasetConfig)
     points = c.midline_points
